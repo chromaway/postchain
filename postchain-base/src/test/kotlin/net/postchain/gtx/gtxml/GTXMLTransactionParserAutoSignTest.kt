@@ -12,7 +12,7 @@ class GTXMLTransactionParserAutoSignTest {
 
     @Test
     fun autoSign_autosigning_for_empty_signatures_successfully() {
-        val xml = javaClass.getResource("/net/postchain/gtx/gtxml/auto-sign/tx_two_empty_signatures.xml").readText()
+        val xml = readResourceFile("tx_two_empty_signatures.xml")
 
         val pubKey0 = pubKey(0)
         val privKey0 = privKey(0)
@@ -68,7 +68,7 @@ class GTXMLTransactionParserAutoSignTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun autoSign_autosigning_no_signer_throws_exception() {
-        val xml = javaClass.getResource("/net/postchain/gtx/gtxml/auto-sign/tx_no_signer.xml").readText()
+        val xml = readResourceFile("tx_no_signer.xml")
 
         GTXMLTransactionParser.parseGTXMLTransaction(xml,
                 TransactionContext(null, mapOf(), true, mapOf()))
@@ -76,7 +76,7 @@ class GTXMLTransactionParserAutoSignTest {
 
     @Test
     fun autoSign_no_autosigning_and_no_signer_successfully() {
-        val xml = javaClass.getResource("/net/postchain/gtx/gtxml/auto-sign/tx_two_empty_signatures.xml").readText()
+        val xml = readResourceFile("tx_two_empty_signatures.xml")
 
         val pubKey0 = pubKey(0)
         val pubKey1 = pubKey(1)
@@ -114,7 +114,7 @@ class GTXMLTransactionParserAutoSignTest {
 
     @Test
     fun autoSign_autosigning_no_signatures_element_successfully() {
-        val xml = javaClass.getResource("/net/postchain/gtx/gtxml/auto-sign/tx_no_signatures_element.xml").readText()
+        val xml = readResourceFile("tx_no_signatures_element.xml")
 
         val pubKey0 = pubKey(0)
         val privKey0 = privKey(0)
@@ -157,5 +157,9 @@ class GTXMLTransactionParserAutoSignTest {
         )
 
         assert(actual).isEqualTo(expected)
+    }
+
+    private fun readResourceFile(filename: String): String {
+        return javaClass.getResource("/net/postchain/gtx/gtxml/auto-sign/$filename").readText()
     }
 }

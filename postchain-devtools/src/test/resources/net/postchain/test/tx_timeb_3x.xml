@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<test>
+    <block>
+        <transaction blockchainRID="78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
+                     failure="false">
+            <signers>
+                <!-- pubKey(0) -->
+                <bytea>03A301697BDFCD704313BA48E51D567543F2A182031EFD6915DDC07BBCC4E16070</bytea>
+            </signers>
+            <operations>
+                <operation name="timeb">
+                    <int>1530403200000</int>
+                    <int>9999999999999</int>
+                </operation>
+            </operations>
+            <signatures>
+                <bytea>08A9F033C5A046486EDF94DB47769805283B5AF40E060B6F988C3D2789D415CCCD4FC5FE1AD902E4922314ED3B4E3643401FE2BF7C35E1E556930E2CB7468F08</bytea>
+            </signatures>
+        </transaction>
+
+        <transaction blockchainRID="78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
+                     failure="false">
+            <signers>
+                <!-- pubKey(0) -->
+                <bytea>03A301697BDFCD704313BA48E51D567543F2A182031EFD6915DDC07BBCC4E16070</bytea>
+            </signers>
+            <operations>
+                <operation name="timeb">
+                    <int>1530403200000</int>
+                    <int>9999999999998</int>
+                </operation>
+            </operations>
+            <signatures>
+                <bytea>78B28C43ECEC059B36EAF632DD09BFC8553070B5E7FFBF1579E742892A86FB8F75ABAA32188F0EBE2D8FD04D95D87CC982D13B3650E78561B60A1ED518B63D72</bytea>
+            </signatures>
+        </transaction>
+
+        <!-- Failure tx -->
+        <transaction blockchainRID="78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
+                     failure="true">
+            <signers>
+                <!-- pubKey(0) -->
+                <bytea>03A301697BDFCD704313BA48E51D567543F2A182031EFD6915DDC07BBCC4E16070</bytea>
+            </signers>
+            <operations>
+                <operation name="timeb">
+                    <int>1530403200000</int>
+                    <int>9999999999997</int>
+                </operation>
+            </operations>
+            <signatures>
+                <bytea>4D8AB7CB68964F9BF72338B7E6DE97ABC5FA5F25F7FC8B01586780EED637F7015CC5FEBBA1A7BD1D68F141C056F3AC5E4F0B0B9F081107FEC15733137B5873F4</bytea>
+            </signatures>
+        </transaction>
+
+    </block>
+</test>

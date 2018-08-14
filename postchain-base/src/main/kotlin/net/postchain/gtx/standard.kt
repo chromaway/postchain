@@ -16,7 +16,7 @@ class GTX_nop(u: Unit, opData: ExtOpData) : GTXOperation(opData) {
     }
 
     override fun isCorrect(): Boolean {
-        return true;
+        return true
     }
 }
 
