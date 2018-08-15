@@ -39,8 +39,6 @@ class DataLayer(val engine: BlockchainEngine,
 }
 
 fun createDataLayer(config: Configuration, chainId: Long, nodeIndex: Int): DataLayer {
-
-
     val blockchainSubset = config.subset("blockchain.$chainId")
     val blockchainConfiguration = getBlockchainConfiguration(blockchainSubset, chainId, nodeIndex)
     val storage = baseStorage(config, nodeIndex)

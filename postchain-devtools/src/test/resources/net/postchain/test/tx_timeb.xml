@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<test>
+    <block>
+        <transaction blockchainRID="78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
+                     failure="false">
+            <signers>
+                <!-- pubKey(0) -->
+                <bytea>03A301697BDFCD704313BA48E51D567543F2A182031EFD6915DDC07BBCC4E16070</bytea>
+            </signers>
+            <operations>
+                <operation name="timeb">
+                    <int>1530403200000</int>
+                    <int>9999999999999</int>
+                </operation>
+            </operations>
+            <signatures>
+                <bytea>08A9F033C5A046486EDF94DB47769805283B5AF40E060B6F988C3D2789D415CCCD4FC5FE1AD902E4922314ED3B4E3643401FE2BF7C35E1E556930E2CB7468F08</bytea>
+            </signatures>
+        </transaction>
+
+    </block>
+</test>

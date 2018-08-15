@@ -131,6 +131,7 @@ open class IntegrationTest {
 
     private var expectedSuccessRids = mutableMapOf<Long, MutableList<ByteArray>>()
 
+    // TODO: [et]: Check out nullability for return value
     protected fun enqueueTx(node: DataLayer, data: ByteArray, expectedConfirmationHeight: Long): Transaction? {
         val tx = node.blockchainConfiguration.getTransactionFactory().decodeTransaction(data)
         node.txQueue.enqueue(tx)

@@ -8,9 +8,7 @@ class ByteArrayKey(val byteArray: ByteArray) {
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (super.equals(other)) return true
-        if (other is ByteArrayKey) {
-            return other.byteArray.contentEquals(byteArray)
-        } else return false
+        return (other as? ByteArrayKey)?.byteArray?.contentEquals(byteArray) ?: false
     }
 
     override fun hashCode(): Int {
@@ -21,3 +19,10 @@ class ByteArrayKey(val byteArray: ByteArray) {
         return byteArray.toHex()
     }
 }
+
+/**
+ * Returns [ByteArrayKey] for given [ByteArray] object
+ */
+fun ByteArray.byteArrayKeyOf() =
+        ByteArrayKey(this)
+
