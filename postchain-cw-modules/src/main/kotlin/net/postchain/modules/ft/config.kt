@@ -91,7 +91,7 @@ fun makeFTRegisterRules(config: GTXValue): FTRegisterRules {
 //        }
 //        return FTRegisterRules(arrayOf(::checkRegistration), arrayOf())
 //    }
-    return FTRegisterRules( arrayOf(), arrayOf())
+    return FTRegisterRules(arrayOf(), arrayOf())
 }
 
 /**
@@ -127,7 +127,7 @@ fun makeFTAccountFactory(config: GTXValue, blockchainRID: ByteArray): AccountFac
  */
 fun makeBaseFTConfig(config: GTXValue, blockchainRID: ByteArray): FTConfig {
     val blockchainRID = blockchainRID
-    val ftConfig = config["gtx"]!!["ft"]?: throw Exception("No ft module") // MARK
+    val ftConfig = config["gtx"]!!["ft"] ?: throw Exception("No ft module") // MARK
 
     val cs = SECP256K1CryptoSystem()
     val ac = AccountUtil(blockchainRID, cs)
