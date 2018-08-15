@@ -268,6 +268,7 @@ open class IntegrationTest {
     protected fun getBestHeight(node: DataLayer): Long {
         return node.blockQueries.getBestHeight().get()
     }
+
 }
 
 
