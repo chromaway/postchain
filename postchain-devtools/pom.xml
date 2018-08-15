@@ -41,6 +41,13 @@
             <version>1.2.21</version>
         </dependency>
 
+        <!-- CLI -->
+        <dependency>
+            <groupId>com.github.ajalt</groupId>
+            <artifactId>clikt</artifactId>
+            <version>1.4.0</version>
+        </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>junit</groupId>
@@ -52,6 +59,7 @@
             <artifactId>JUnitParams</artifactId>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
 
     <build>

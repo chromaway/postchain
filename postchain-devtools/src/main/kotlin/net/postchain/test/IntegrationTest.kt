@@ -31,7 +31,9 @@ open class IntegrationTest {
     val configOverrides = MapConfiguration(mutableMapOf<String, String>())
     val cryptoSystem = SECP256K1CryptoSystem()
 
-    companion object : KLogging()
+    companion object : KLogging() {
+        const val DEFAULT_CONFIG_FILE = "config.properties"
+    }
 
     fun privKey(index: Int): ByteArray {
         // private key index 0 is all zeroes except byte 16 which is 1
@@ -173,11 +175,12 @@ open class IntegrationTest {
     }
 
     protected fun createEngines(count: Int): Array<DataLayer> {
-        return Array(count, { createDataLayer(it, count) })
+        return Array(count) { createDataLayer(it, count, DEFAULT_CONFIG_FILE) }
     }
 
-    protected fun createConfig(nodeIndex: Int, nodeCount: Int = 1): Configuration {
-        val propertiesFile = File("config.properties")
+    protected fun createConfig(nodeIndex: Int, nodeCount: Int = 1, configFile: String)
+            : Configuration {
+        val propertiesFile = File(configFile)
         val params = Parameters()
         // Read first file directly via the builder
         val builder = FileBasedConfigurationBuilder(PropertiesConfiguration::class.java)
@@ -205,9 +208,8 @@ open class IntegrationTest {
         return composite
     }
 
-    protected fun createDataLayer(nodeIndex: Int, nodeCount: Int = 1): DataLayer {
-
-        val config = createConfig(nodeIndex, nodeCount)
+    protected fun createDataLayer(nodeIndex: Int, nodeCount: Int = 1, configFile: String = DEFAULT_CONFIG_FILE): DataLayer {
+        val config = createConfig(nodeIndex, nodeCount, configFile)
         val chainId = config.getLong("activechainids")
 
         val dataLayer = createDataLayer(config, chainId, nodeIndex)

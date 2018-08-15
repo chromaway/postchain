@@ -1,43 +1,47 @@
 package net.postchain.test
 
+import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.subcommands
+import com.github.ajalt.clikt.parameters.options.option
 import java.io.File
 
 /**
- * Main function, everything starts here
- *
- * @param args { -t | --test } <path_to_gtxml_file> [ <blockchainRID> ]
+ * Root Cli object
  */
-fun main(args: Array<String>) {
-    if (args.isEmpty()) {
-        usage()
+class Cli : CliktCommand(name = "postchain-devtools") {
 
-    } else {
-        var i = 0
-        while (i < args.size) {
-            when (args[i]) {
-                "-h", "--help" -> {
-                    usage()
-                }
+    val config by option(
+            names = *arrayOf("--config", "-c"),
+            help = "Path to config file")
 
-                "-t", "--test" -> {
-                    var filename = args[++i]
-                    var blockchainRID = if (i + 1 < args.size) args[++i] else null
-                    println("gtxml file will be processed: $filename\n")
+    override fun run() {}
+}
 
-                    val result = TestLauncher().runXMLGTXTests(
-                            File(filename).readText(),
-                            blockchainRID)
+/**
+ * Cli test command
+ */
+class TestCommand : CliktCommand(name = "test", help = "Tests gtxml file") {
 
-                    println("\nTest ${if (result) "passed" else "failed"}")
-                }
-            }
+    private val filename by option(
+            names = *arrayOf("--filename", "-f"),
+            help = "Path to gtxml file")
 
-            i++
-        }
+    private val blockchainRID by option(
+            names = *arrayOf("--blockchain-rid", "-rid"),
+            help = "BlockchainRID Hexadecimal string")
+
+    override fun run() {
+        println("Gtxml file will be processed: $filename\n")
+
+        val result = TestLauncher().runXMLGTXTests(
+                File(filename).readText(),
+                blockchainRID,
+                (context.parent?.command as? Cli)?.config)
+
+        println("\nTest ${if (result) "passed" else "failed"}")
     }
 }
 
-private fun usage() {
-    println("Usage: java -jar postchain-devtools.jar " +
-            "{ -t | --test } <path_to_gtxml_file> [ <blockchainRID> ]")
-}
+fun main(args: Array<String>) = Cli()
+        .subcommands(TestCommand())
+        .main(args)
