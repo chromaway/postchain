@@ -6,11 +6,8 @@ import net.postchain.base.BaseBlockQueries
 import net.postchain.base.BaseBlockchainConfigurationData
 import net.postchain.base.Storage
 import net.postchain.base.data.BaseBlockchainConfiguration
-import net.postchain.common.hexStringToByteArray
-import net.postchain.base.secp256k1_derivePubKey
 import net.postchain.core.*
 import nl.komponents.kovenant.Promise
-import org.apache.commons.configuration2.Configuration
 
 open class GTXBlockchainConfiguration(configData: BlockchainConfigurationData, val module: GTXModule)
     : BaseBlockchainConfiguration(configData as BaseBlockchainConfigurationData) {
@@ -43,7 +40,7 @@ open class GTXBlockchainConfiguration(configData: BlockchainConfigurationData, v
     }
 }
 
-open class GTXBlockchainConfigurationFactory() : BlockchainConfigurationFactory {
+open class GTXBlockchainConfigurationFactory : BlockchainConfigurationFactory {
     override fun makeBlockchainConfiguration(configData: BlockchainConfigurationData): BlockchainConfiguration {
         return GTXBlockchainConfiguration(configData, createGtxModule(configData.blockchainRID, configData.data))
     }

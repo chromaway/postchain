@@ -2,11 +2,9 @@
 
 package net.postchain.gtx
 
-import net.postchain.base.BaseBlockchainConfigurationData
 import net.postchain.core.EContext
 import net.postchain.core.Transactor
 import net.postchain.core.UserMistake
-import org.apache.commons.configuration2.Configuration
 
 interface GTXModule {
     fun makeTransactor(opData: ExtOpData): Transactor

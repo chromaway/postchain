@@ -2,12 +2,9 @@
 
 package net.postchain.modules.ft
 
-import com.sun.java.swing.plaf.gtk.GTKColorType
 import net.postchain.base.SECP256K1CryptoSystem
-import net.postchain.common.hexStringToByteArray
 import net.postchain.core.ByteArrayKey
 import net.postchain.gtx.GTXValue
-import org.apache.commons.configuration2.Configuration
 
 /**
  * Create rules to be checked when verifying and applying [FT_issue_op]. Retrieve assets and allowed issuers from the

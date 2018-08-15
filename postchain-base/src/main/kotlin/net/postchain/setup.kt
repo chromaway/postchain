@@ -10,13 +10,9 @@ import net.postchain.core.BlockchainConfiguration
 import net.postchain.core.BlockchainConfigurationFactory
 import net.postchain.core.TransactionQueue
 import net.postchain.ebft.BlockchainEngine
-import org.apache.commons.configuration2.CompositeConfiguration
 import org.apache.commons.configuration2.Configuration
-import org.apache.commons.configuration2.builder.fluent.Configurations
-import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler
 import org.apache.commons.dbcp2.BasicDataSource
 import org.apache.commons.dbutils.QueryRunner
-import java.io.File
 import javax.sql.DataSource
 
 fun getBlockchainConfiguration(config: Configuration, chainId: Long, nodeIndex: Int): BlockchainConfiguration {

@@ -8,7 +8,6 @@ import net.postchain.base.BaseBlockchainConfigurationData
 import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.test.EbftIntegrationTest
-import org.apache.commons.configuration2.Configuration
 import org.junit.Assert
 import org.junit.Test
 import java.util.concurrent.LinkedBlockingQueue

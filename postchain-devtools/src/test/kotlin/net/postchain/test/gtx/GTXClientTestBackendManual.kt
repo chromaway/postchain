@@ -5,7 +5,6 @@ package net.postchain.test.gtx
 import net.postchain.configurations.GTXTestModule
 import net.postchain.gtx.GTXBlockchainConfigurationFactory
 import net.postchain.test.EbftIntegrationTest
-import net.postchain.test.IntegrationTest
 import org.junit.Test
 
 class GTXClientTestBackendManual: EbftIntegrationTest() {

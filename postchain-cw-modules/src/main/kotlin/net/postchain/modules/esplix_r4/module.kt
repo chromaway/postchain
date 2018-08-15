@@ -2,7 +2,6 @@ package net.postchain.modules.esplix_r4
 
 import net.postchain.core.EContext
 import net.postchain.gtx.*
-import org.apache.commons.configuration2.Configuration
 
 class EsplixModule(val config: EsplixConfig) : SimpleGTXModule<EsplixConfig>(
         config,

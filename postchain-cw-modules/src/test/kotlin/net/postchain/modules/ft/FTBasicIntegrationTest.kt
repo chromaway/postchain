@@ -1,7 +1,5 @@
 package net.postchain.modules.ft
 
-import net.postchain.DataLayer
-import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.toHex
 import net.postchain.core.Transaction
 import net.postchain.gtx.GTXBlockchainConfigurationFactory
@@ -101,7 +99,7 @@ class FTBasicIntegrationTest: FTIntegrationTest() {
                     "account_id"="${aliceAccountID.toHex()}",
                     "asset_id"="USD"
                    }""").get()
-        println(history);
+        println(history)
         val gson = make_gtx_gson()
         val historyGTX = gson.fromJson<GTXValue>(history, GTXValue::class.java)
         Assert.assertEquals(5, historyGTX.asArray().size)
@@ -111,7 +109,7 @@ class FTBasicIntegrationTest: FTIntegrationTest() {
                     "account_id"="${bobAccountID.toHex()}",
                     "asset_id"="USD"
                    }""").get()
-        println(history2);
+        println(history2)
         val history2GTX = gson.fromJson<GTXValue>(history2, GTXValue::class.java)
         Assert.assertEquals(4, history2GTX.asArray().size)
 

@@ -2,14 +2,9 @@ package net.postchain.base
 
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.BlockchainConfigurationData
-import net.postchain.gtx.DictGTXValue
-import net.postchain.gtx.GTXNull
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.gtx
-import net.postchain.gtx.messages.DictPair
 import org.apache.commons.configuration2.Configuration
-import org.apache.commons.configuration2.MapConfiguration
-import java.util.*
 
 /*
 

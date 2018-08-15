@@ -4,7 +4,6 @@ package net.postchain.modules.ft
 
 import net.postchain.core.EContext
 import net.postchain.gtx.*
-import org.apache.commons.configuration2.Configuration
 
 /**
  * FT Module including valid operations and queries

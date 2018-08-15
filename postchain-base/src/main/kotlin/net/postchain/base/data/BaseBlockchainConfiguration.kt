@@ -2,17 +2,8 @@
 
 package net.postchain.base.data
 
-import net.postchain.base.BaseBlockBuildingStrategy
-import net.postchain.base.BaseBlockHeader
-import net.postchain.base.BaseBlockQueries
-import net.postchain.base.BaseBlockWitness
-import net.postchain.base.CryptoSystem
-import net.postchain.base.SECP256K1CryptoSystem
-import net.postchain.base.Signer
-import net.postchain.base.Storage
+import net.postchain.base.*
 import net.postchain.core.*
-import org.apache.commons.configuration2.Configuration
-import net.postchain.base.BaseBlockchainConfigurationData
 
 open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurationData) :
         BlockchainConfiguration {

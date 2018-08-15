@@ -4,12 +4,10 @@ package net.postchain.core
 
 // TODO: remove core's dependency on base
 import net.postchain.base.Storage
+import net.postchain.gtx.GTXValue
 import nl.komponents.kovenant.Promise
-import org.apache.commons.configuration2.Configuration
 import java.sql.Connection
 import java.util.*
-import java.util.stream.Stream
-import net.postchain.gtx.GTXValue
 
 /*
 1. Manager reads JSON and finds BlockchainConfigurationFactory class name.

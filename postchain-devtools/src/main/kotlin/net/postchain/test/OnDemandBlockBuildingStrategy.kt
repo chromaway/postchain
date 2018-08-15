@@ -1,13 +1,7 @@
 package net.postchain.test
 
 import net.postchain.base.BaseBlockchainConfigurationData
-import net.postchain.core.BlockBuilder
-import net.postchain.core.BlockBuildingStrategy
-import net.postchain.core.BlockData
-import net.postchain.core.BlockQueries
-import net.postchain.core.BlockchainConfiguration
-import net.postchain.core.TransactionQueue
-import org.apache.commons.configuration2.Configuration
+import net.postchain.core.*
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 

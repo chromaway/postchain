@@ -7,7 +7,6 @@ import net.postchain.base.Signer
 import net.postchain.base.data.BaseBlockBuilder
 import net.postchain.core.*
 import net.postchain.gtx.*
-import org.apache.commons.configuration2.Configuration
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.ScalarHandler
 

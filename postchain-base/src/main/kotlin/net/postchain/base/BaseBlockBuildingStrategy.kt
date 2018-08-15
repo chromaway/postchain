@@ -3,7 +3,6 @@
 package net.postchain.base
 
 import net.postchain.core.*
-import org.apache.commons.configuration2.Configuration
 
 class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
                                 val blockchainConfiguration: BlockchainConfiguration,
@@ -29,10 +28,7 @@ class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
 
     override fun shouldStopBuildingBlock(bb: BlockBuilder): Boolean {
         val abb = bb as AbstractBlockBuilder
-        if (abb.transactions.size >= maxBlockTransactions)
-            return true
-        else
-            return false
+        return abb.transactions.size >= maxBlockTransactions
     }
 
     override fun blockCommitted(blockData: BlockData) {

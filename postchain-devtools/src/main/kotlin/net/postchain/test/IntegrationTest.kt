@@ -13,21 +13,17 @@ import net.postchain.ebft.BlockchainEngine
 import org.apache.commons.configuration2.CompositeConfiguration
 import org.apache.commons.configuration2.Configuration
 import org.apache.commons.configuration2.MapConfiguration
-import org.apache.commons.configuration2.builder.fluent.Configurations
+import org.apache.commons.configuration2.PropertiesConfiguration
+import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder
+import org.apache.commons.configuration2.builder.fluent.Parameters
 import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler
+import org.apache.commons.configuration2.io.ClasspathLocationStrategy
 import org.junit.After
-import org.junit.Assert.assertArrayEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.File
-import org.apache.commons.configuration2.PropertiesConfiguration
-import org.apache.commons.configuration2.io.ClasspathLocationStrategy
-import org.spongycastle.asn1.ua.DSTU4145NamedCurves.params
-import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder
-import org.apache.commons.configuration2.builder.fluent.Parameters
 
 
 open class IntegrationTest {
@@ -254,7 +250,7 @@ open class IntegrationTest {
         val blockData = blockBuilder.getBlockData()
         // Simulate other peers sign the block
         val blockHeader = blockData.header
-        var i = 0;
+        var i = 0
         while (!witnessBuilder.isComplete()) {
             witnessBuilder.applySignature(cryptoSystem.makeSigner(pubKey(i), privKey(i))(blockHeader.rawData))
             i++
