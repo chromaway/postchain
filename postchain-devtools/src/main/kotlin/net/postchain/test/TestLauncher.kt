@@ -18,7 +18,7 @@ class TestLauncher : IntegrationTest() {
 
     private val jaxbContext = JAXBContext.newInstance("net.postchain.base.gtxml")
 
-    fun runXMLGTXTests(xml: String, blockchainRID: String?): Boolean {
+    fun runXMLGTXTests(xml: String, blockchainRID: String?, configFile: String? = null): Boolean {
         var res = true
 
         configOverrides.setProperty(
@@ -28,7 +28,7 @@ class TestLauncher : IntegrationTest() {
                 "blockchain.1.gtx.modules",
                 listOf(StandardOpsGTXModule::class.qualifiedName))
 
-        val dataLayer = createDataLayer(0)
+        val dataLayer = createDataLayer(0, configFile = configFile ?: DEFAULT_CONFIG_FILE)
         val testType = parseTest(xml)
 
         var blockNum = 0L
