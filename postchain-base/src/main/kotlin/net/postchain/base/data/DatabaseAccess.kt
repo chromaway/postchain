@@ -10,6 +10,9 @@ import org.apache.commons.dbutils.handlers.*
 
 interface DatabaseAccess {
     class BlockInfo(val blockIid: Long, val blockHeader: ByteArray, val witness: ByteArray)
+
+    fun initialize(ctx: EContext, blockchainRID: ByteArray, expectedDbVersion: Int)
+
     fun getBlockchainRID(ctx: EContext): ByteArray?
     fun insertBlock(ctx: EContext, height: Long): Long
     fun insertTransaction(ctx: BlockEContext, tx: Transaction): Long
@@ -30,10 +33,14 @@ interface DatabaseAccess {
     fun getBlockTxHashes(ctx: EContext, blokcIid: Long): List<ByteArray>
     fun getTxBytes(ctx: EContext, rid: ByteArray): ByteArray?
     fun isTransactionConfirmed(ctx: EContext, txRID: ByteArray): Boolean
-    fun initialize(ctx: EContext, blockchainRID: ByteArray, expectedDbVersion: Int)
+
+    // Configurations
+
+    fun getConfigurationData(context: EContext, height: Long): ByteArray
+    fun addConfigurationData(context: EContext, height: Long, data: ByteArray)
 }
 
-class SQLDatabaseAccess(): DatabaseAccess {
+class SQLDatabaseAccess : DatabaseAccess {
     var r = QueryRunner()
     private val intRes = ScalarHandler<Int>()
     private val longRes = ScalarHandler<Long>()
@@ -256,11 +263,30 @@ class SQLDatabaseAccess(): DatabaseAccess {
                 "    tx_data bytea NOT NULL," +
                 "    tx_hash bytea NOT NULL," +
                 "    block_iid bigint NOT NULL REFERENCES blocks(block_iid)," +
-                "    UNIQUE (chain_id, tx_rid))");
+                "    UNIQUE (chain_id, tx_rid))")
 
+        // Configurations
+        r.update(ctx.conn, "CREATE TABLE configurations (" +
+                "configuration_iid BIGSERIAL PRIMARY KEY, " +
+                ", chain_id bigint NOT NULL" +
+                ", block_height BIGINT NOT NULL" +
+                ", configuration_data bytea NOT NULL" +
+                ")")
 
-        r.update(ctx.conn,"""CREATE INDEX transactions_block_iid_idx ON transactions(block_iid)""")
-        r.update(ctx.conn,"""CREATE INDEX blocks_chain_id_timestamp ON blocks(chain_id, timestamp)""")
+        r.update(ctx.conn, """CREATE INDEX transactions_block_iid_idx ON transactions(block_iid)""")
+        r.update(ctx.conn, """CREATE INDEX blocks_chain_id_timestamp ON blocks(chain_id, timestamp)""")
+        r.update(ctx.conn, """CREATE INDEX configurations_chain_id_to_height ON configurations(chain_id, block_height)""")
+    }
 
+    override fun getConfigurationData(context: EContext, height: Long): ByteArray {
+        return r.query(context.conn,
+                "SELECT configuration_data FROM configurations WHERE chain_id = ? and height = ?",
+                byteArrayRes, context.chainID, height)
+    }
+
+    override fun addConfigurationData(context: EContext, height: Long, data: ByteArray) {
+        return r.insert(context.conn,
+                "INSERT INTO configurations (chain_id, block_height, configuration_data) VALUES (?, ?, ?)",
+                ScalarHandler<Unit>(), context.chainID, height, data)
     }
 }

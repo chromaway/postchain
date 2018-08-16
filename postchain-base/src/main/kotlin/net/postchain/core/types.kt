@@ -38,7 +38,7 @@ open class BlockData(val header: BlockHeader, val transactions: List<ByteArray>)
 // Block-level witness is something which proves that block is valid and properly authorized
 
 interface BlockWitness {
-//    val blockRID: ByteArray
+    //    val blockRID: ByteArray
     fun getRawData(): ByteArray
 }
 
@@ -172,7 +172,7 @@ interface BlockBuilder {
 
 class InitialBlockData(val blockIID: Long, val chainID: Long, val prevBlockRID: ByteArray, val height: Long, val timestamp: Long)
 
-enum class TransactionStatus {UNKNOWN, REJECTED, WAITING, CONFIRMED}
+enum class TransactionStatus { UNKNOWN, REJECTED, WAITING, CONFIRMED }
 
 interface BlockStore {
     fun beginBlock(ctx: EContext): InitialBlockData
@@ -183,8 +183,9 @@ interface BlockStore {
     fun getBlockRIDs(ctx: EContext, height: Long): List<ByteArray> // returns null if height is out of range
     fun getLastBlockHeight(ctx: EContext): Long // height of the last block, first block has height 0
     fun getLastBlockTimestamp(ctx: EContext): Long
-//    fun getBlockData(ctx: EContext, blockRID: ByteArray): BlockData
+    //    fun getBlockData(ctx: EContext, blockRID: ByteArray): BlockData
     fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray
+
     fun getBlockHeader(ctx: EContext, blockRID: ByteArray): ByteArray
 
     fun getTxRIDsAtHeight(ctx: EContext, height: Long): Array<ByteArray>
@@ -193,4 +194,10 @@ interface BlockStore {
 
     fun isTransactionConfirmed(ctx: EContext, txRID: ByteArray): Boolean
     fun getConfirmationProofMaterial(ctx: EContext, txRID: ByteArray): Any
+}
+
+
+interface ConfigurationDataStore {
+    fun getConfigurationData(context: EContext, height: Long): ByteArray
+    fun addConfigurationData(context: EContext, height: Long, data: ByteArray)
 }

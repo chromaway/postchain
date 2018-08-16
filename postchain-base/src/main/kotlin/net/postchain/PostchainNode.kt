@@ -59,7 +59,7 @@ class PostchainNode {
                 nodeIndex,
                 commConfiguration,
                 connManager
-                )
+        )
     }
 
     /**
@@ -104,8 +104,9 @@ class PostchainNode {
      * @param nodeIndex index of the local node
      */
     fun start(configFile: String, nodeIndex: Int) {
-        val params = Parameters();
-        val builder = FileBasedConfigurationBuilder<PropertiesConfiguration>(PropertiesConfiguration::class.java).configure(params.properties().setFileName(configFile).setListDelimiterHandler(DefaultListDelimiterHandler(',')))
+        val params = Parameters()
+        val builder = FileBasedConfigurationBuilder<PropertiesConfiguration>(PropertiesConfiguration::class.java)
+                .configure(params.properties().setFileName(configFile).setListDelimiterHandler(DefaultListDelimiterHandler(',')))
         val config = builder.getConfiguration()
         start(config, nodeIndex)
     }
@@ -132,16 +133,18 @@ fun keygen() {
  */
 fun main(args: Array<String>) {
     var i = 0
-    var nodeIndex = 0;
+    var nodeIndex = 0
     var config = ""
     while (i < args.size) {
         when (args[i]) {
             "-i", "--nodeIndex" -> {
                 nodeIndex = parseInt(args[++i])!!
             }
+
             "-c", "--config" -> {
                 config = args[++i]
             }
+
             "-k", "--keygen" -> {
                 keygen()
                 exitProcess(0)
