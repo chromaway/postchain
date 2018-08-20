@@ -2,9 +2,13 @@
 
 package net.postchain
 
-import net.postchain.base.*
+import net.postchain.PostchainNode.blockchainInstance
+import net.postchain.PostchainNode.connManager
+import net.postchain.base.BasePeerCommConfiguration
+import net.postchain.base.DynamicPortPeerInfo
+import net.postchain.base.PeerInfo
+import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
-import net.postchain.common.toHex
 import net.postchain.ebft.BlockchainInstanceModel
 import net.postchain.ebft.EBFTBlockchainInstance
 import net.postchain.ebft.makeConnManager
@@ -15,7 +19,6 @@ import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder
 import org.apache.commons.configuration2.builder.fluent.Parameters
 import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler
-import kotlin.system.exitProcess
 
 /**
  * A postchain node
@@ -23,7 +26,7 @@ import kotlin.system.exitProcess
  * @property connManager instance of [PeerConnectionManager]
  * @property blockchainInstance instance of [EBFTBlockchainInstance]
  */
-class PostchainNode {
+object PostchainNode {
 
     lateinit var connManager: PeerConnectionManager<EbftMessage>
     lateinit var blockchainInstance: EBFTBlockchainInstance
@@ -73,17 +76,18 @@ class PostchainNode {
         // special Array<PeerInfo> for dynamic ports
         val peerInfos = config.getProperty("testpeerinfos")
         if (peerInfos != null) {
-            if (peerInfos is PeerInfo) {
-                return arrayOf(peerInfos)
+            return if (peerInfos is PeerInfo) {
+                arrayOf(peerInfos)
             } else {
-                return (peerInfos as List<PeerInfo>).toTypedArray()
+                (peerInfos as List<PeerInfo>).toTypedArray()
             }
         }
 
-        var peerCount = 0;
+        var peerCount = 0
         config.getKeys("node").forEach { peerCount++ }
-        peerCount = peerCount / 4
-        return Array(peerCount, {
+        peerCount /= 4
+
+        return Array(peerCount) {
             val port = config.getInt("node.$it.port")
             val host = config.getString("node.$it.host")
             val pubKey = config.getString("node.$it.pubkey").hexStringToByteArray()
@@ -93,8 +97,6 @@ class PostchainNode {
                 PeerInfo(host, port, pubKey)
             }
         }
-
-        )
     }
 
     /**
@@ -111,50 +113,4 @@ class PostchainNode {
         start(config, nodeIndex)
     }
 
-
-}
-
-/**
- * Cryptographic key generator. Will generate a pair of public and private keys and print to stdout.
- */
-fun keygen() {
-    val cs = SECP256K1CryptoSystem()
-    // check that privkey is between 1 - 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140 to be valid?
-    val privkey = cs.getRandomBytes(32)
-    val pubkey = secp256k1_derivePubKey(privkey)
-    println("privkey:\t${privkey.toHex()}")
-    println("pubkey: \t${pubkey.toHex()}")
-}
-
-/**
- * Main function, everything starts here
- *
- * @param args [ { --nodeIndex | -i } <index> ] [ { --config | -c } <configFile> ] [ {--keygen | -k } ]
- */
-fun main(args: Array<String>) {
-    var i = 0
-    var nodeIndex = 0
-    var config = ""
-    while (i < args.size) {
-        when (args[i]) {
-            "-i", "--nodeIndex" -> {
-                nodeIndex = parseInt(args[++i])!!
-            }
-
-            "-c", "--config" -> {
-                config = args[++i]
-            }
-
-            "-k", "--keygen" -> {
-                keygen()
-                exitProcess(0)
-            }
-        }
-        i++
-    }
-    if (config == "") {
-        config = "config/config.$nodeIndex.properties"
-    }
-    val node = PostchainNode()
-    node.start(config, nodeIndex)
 }

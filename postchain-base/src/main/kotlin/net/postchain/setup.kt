@@ -42,7 +42,7 @@ fun createDataLayer(config: Configuration, chainId: Long, nodeIndex: Int): DataL
     val blockchainSubset = config.subset("blockchain.$chainId")
     val blockchainConfiguration = getBlockchainConfiguration(blockchainSubset, chainId, nodeIndex)
     val storage = baseStorage(config, nodeIndex)
-    withWriteConnection(storage, chainId, { blockchainConfiguration.initializeDB(it); true })
+    withWriteConnection(storage, chainId) { blockchainConfiguration.initializeDB(it); true }
 
     val blockQueries = blockchainConfiguration.makeBlockQueries(storage)
 

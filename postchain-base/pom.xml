@@ -107,6 +107,13 @@
             <version>${spark-core.version}</version>
         </dependency>
 
+        <!-- Cli -->
+        <dependency>
+            <groupId>com.beust</groupId>
+            <artifactId>jcommander</artifactId>
+            <version>1.72</version>
+        </dependency>
+
         <!-- Test dependencies -->
         <dependency>
             <groupId>org.easymock</groupId>
@@ -208,7 +215,7 @@
                         <configuration>
                             <archive>
                                 <manifest>
-                                    <mainClass>net.postchain.PostchainNodeKt</mainClass>
+                                    <mainClass>net.postchain.AppKt</mainClass>
                                 </manifest>
                                 <manifestEntries>
                                     <Class-Path>backend.jar</Class-Path>

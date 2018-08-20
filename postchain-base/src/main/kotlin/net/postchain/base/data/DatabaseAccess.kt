@@ -267,7 +267,7 @@ class SQLDatabaseAccess : DatabaseAccess {
 
         // Configurations
         r.update(ctx.conn, "CREATE TABLE configurations (" +
-                "configuration_iid BIGSERIAL PRIMARY KEY, " +
+                "configuration_iid BIGSERIAL PRIMARY KEY" +
                 ", chain_id bigint NOT NULL" +
                 ", block_height BIGINT NOT NULL" +
                 ", configuration_data bytea NOT NULL" +
