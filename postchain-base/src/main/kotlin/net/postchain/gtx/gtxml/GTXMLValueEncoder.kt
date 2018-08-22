@@ -26,18 +26,14 @@ object GTXMLValueEncoder {
 
     fun encodeGTXMLValueToJAXBElement(gtxValue: GTXValue): JAXBElement<*> {
         return when (gtxValue) {
-        /**
-         * Note: null element will be equal to:
-         *      `<null xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>`
-         */
+            /**
+             * Note: null element will be equal to:
+             *      `<null xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>`
+             */
             is GTXNull -> objectFactory.createNull(null)
             is StringGTXValue -> objectFactory.createString(gtxValue.string)
             is IntegerGTXValue -> objectFactory.createInt(BigInteger.valueOf(gtxValue.integer))
-        /**
-         * Can't use [ObjectFactory.createBytea] because [HexBinaryAdapter] are not called in this case.
-         * Therefore we call it manually.
-         */
-            is ByteArrayGTXValue -> objectFactory.createBytearrayElement(gtxValue.bytearray)
+            is ByteArrayGTXValue -> objectFactory.createBytea(gtxValue.bytearray) // See comments in GTXMLValueEncodeScalarsTest
             is ArrayGTXValue -> createArrayElement(gtxValue)
             is DictGTXValue -> createDictElement(gtxValue)
             else -> throw IllegalArgumentException("Unknown type of gtxValue")

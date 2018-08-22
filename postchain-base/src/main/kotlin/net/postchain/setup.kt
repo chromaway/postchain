@@ -23,6 +23,7 @@ fun getBlockchainConfiguration(config: Configuration, chainId: Long, nodeIndex: 
     val baseConfig = BaseBlockchainConfigurationData.readFromCommonsConfiguration(
             config, chainId, nodeIndex
     )
+
     return factory.makeBlockchainConfiguration(baseConfig,
             BaseBlockchainContext(baseConfig.blockchainRID, nodeIndex, chainId))
 }
@@ -41,8 +42,9 @@ class TestNodeEngine(val engine: BlockchainEngine,
 fun createDataLayer(config: Configuration, chainId: Long, nodeIndex: Int): TestNodeEngine {
     val blockchainSubset = config.subset("blockchain.$chainId")
     val blockchainConfiguration = getBlockchainConfiguration(blockchainSubset, chainId, nodeIndex)
+
     val storage = baseStorage(config, nodeIndex)
-    withWriteConnection(storage, chainId, { blockchainConfiguration.initializeDB(it); true })
+    withWriteConnection(storage, chainId) { blockchainConfiguration.initializeDB(it); true }
 
     val blockQueries = blockchainConfiguration.makeBlockQueries(storage)
 
@@ -86,8 +88,7 @@ fun baseStorage(config: Configuration, nodeIndex: Int): BaseStorage {
     readDataSource.maxTotal = 2
     readDataSource.defaultReadOnly = true
 
-    val storage = BaseStorage(writeDataSource, readDataSource, nodeIndex)
-    return storage
+    return BaseStorage(writeDataSource, readDataSource, nodeIndex)
 }
 
 fun createBasicDataSource(config: Configuration): BasicDataSource {
@@ -115,10 +116,8 @@ fun wipeDatabase(dataSource: DataSource, config: Configuration) {
 private fun createSchemaIfNotExists(dataSource: DataSource, schema: String) {
     val queryRunner = QueryRunner()
     val conn = dataSource.connection
-    try {
+    conn.use { conn ->
         queryRunner.update(conn, "CREATE SCHEMA IF NOT EXISTS $schema")
         conn.commit()
-    } finally {
-        conn.close()
     }
 }

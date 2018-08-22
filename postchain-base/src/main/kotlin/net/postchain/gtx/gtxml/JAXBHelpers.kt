@@ -17,8 +17,7 @@ operator fun <T> JAXBElement<T>.component1(): QName = name
 operator fun <T> JAXBElement<T>.component2(): T = value
 
 /**
- * In some cases we can't use [ObjectFactory.createBytea] because [HexBinaryAdapter] are not called.
- * Therefore we call it manually.
+ * See comments in GTXMLValueEncodeScalarsTest
  */
 fun ObjectFactory.createBytearrayElement(value: ByteArray): JAXBElement<String> {
     val marshaledValue = HexBinaryAdapter().marshal(value)
