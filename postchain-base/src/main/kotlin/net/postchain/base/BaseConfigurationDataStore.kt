@@ -5,7 +5,7 @@ import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.core.ConfigurationDataStore
 import net.postchain.core.EContext
 
-class BaseConfigurationDataStore : ConfigurationDataStore {
+object BaseConfigurationDataStore : ConfigurationDataStore {
 
     val db: DatabaseAccess = SQLDatabaseAccess()
 
@@ -13,7 +13,7 @@ class BaseConfigurationDataStore : ConfigurationDataStore {
         return db.getConfigurationData(context, height)
     }
 
-    override fun addConfigurationData(context: EContext, height: Long, data: ByteArray) {
-        db.addConfigurationData(context, height, data)
+    override fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long {
+        return db.addConfigurationData(context, height, data)
     }
 }

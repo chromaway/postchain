@@ -37,7 +37,7 @@ interface DatabaseAccess {
     // Configurations
 
     fun getConfigurationData(context: EContext, height: Long): ByteArray
-    fun addConfigurationData(context: EContext, height: Long, data: ByteArray)
+    fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long
 }
 
 class SQLDatabaseAccess : DatabaseAccess {
@@ -284,9 +284,9 @@ class SQLDatabaseAccess : DatabaseAccess {
                 byteArrayRes, context.chainID, height)
     }
 
-    override fun addConfigurationData(context: EContext, height: Long, data: ByteArray) {
+    override fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long {
         return r.insert(context.conn,
                 "INSERT INTO configurations (chain_id, block_height, configuration_data) VALUES (?, ?, ?)",
-                ScalarHandler<Unit>(), context.chainID, height, data)
+                longRes, context.chainID, height, data)
     }
 }

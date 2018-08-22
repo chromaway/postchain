@@ -199,5 +199,5 @@ interface BlockStore {
 
 interface ConfigurationDataStore {
     fun getConfigurationData(context: EContext, height: Long): ByteArray
-    fun addConfigurationData(context: EContext, height: Long, data: ByteArray)
+    fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long
 }

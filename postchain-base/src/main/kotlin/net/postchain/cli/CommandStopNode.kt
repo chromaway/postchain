@@ -5,6 +5,9 @@ import net.postchain.PostchainNode
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
 
+/**
+ * Not currently used
+ */
 @Parameters(commandDescription = "Stops node")
 class CommandStopNode : Command {
 

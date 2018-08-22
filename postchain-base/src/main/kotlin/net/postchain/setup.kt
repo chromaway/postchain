@@ -21,8 +21,8 @@ fun getBlockchainConfiguration(config: Configuration, chainId: Long, nodeIndex: 
 
     // TODO: BaseBlockchainConfigurationData is where the config magic happens
     val baseConfig = BaseBlockchainConfigurationData.readFromCommonsConfiguration(
-            config, chainId, nodeIndex
-    )
+            config, chainId, nodeIndex)
+
     return factory.makeBlockchainConfiguration(baseConfig)
 }
 
@@ -41,6 +41,13 @@ class DataLayer(val engine: BlockchainEngine,
 fun createDataLayer(config: Configuration, chainId: Long, nodeIndex: Int): DataLayer {
     val blockchainSubset = config.subset("blockchain.$chainId")
     val blockchainConfiguration = getBlockchainConfiguration(blockchainSubset, chainId, nodeIndex)
+
+/*
+    val gtxValue = (blockchainConfiguration as BaseBlockchainConfiguration).configData.data
+    val xml = GTXMLValueEncoder.encodeXMLGTXValue(gtxValue)
+    File("gtxml.xml").writeText(xml)
+*/
+
     val storage = baseStorage(config, nodeIndex)
     withWriteConnection(storage, chainId) { blockchainConfiguration.initializeDB(it); true }
 
@@ -52,11 +59,12 @@ fun createDataLayer(config: Configuration, chainId: Long, nodeIndex: Int): DataL
     val engine = BaseBlockchainEngine(blockchainConfiguration, storage,
             chainId, txQueue, strategy)
 
-    val node = DataLayer(engine,
+    return DataLayer(engine,
             txQueue,
-            blockchainConfiguration, storage,
-            blockQueries as BaseBlockQueries, strategy)
-    return node
+            blockchainConfiguration,
+            storage,
+            blockQueries as BaseBlockQueries,
+            strategy)
 }
 
 fun baseStorage(config: Configuration, nodeIndex: Int): BaseStorage {
@@ -74,8 +82,7 @@ fun baseStorage(config: Configuration, nodeIndex: Int): BaseStorage {
     readDataSource.maxTotal = 2
     readDataSource.defaultReadOnly = true
 
-    val storage = BaseStorage(writeDataSource, readDataSource, nodeIndex)
-    return storage
+    return BaseStorage(writeDataSource, readDataSource, nodeIndex)
 }
 
 fun createBasicDataSource(config: Configuration): BasicDataSource {
@@ -103,10 +110,8 @@ fun wipeDatabase(dataSource: DataSource, config: Configuration) {
 private fun createSchemaIfNotExists(dataSource: DataSource, schema: String) {
     val queryRunner = QueryRunner()
     val conn = dataSource.connection
-    try {
+    conn.use { conn ->
         queryRunner.update(conn, "CREATE SCHEMA IF NOT EXISTS $schema")
         conn.commit()
-    } finally {
-        conn.close()
     }
 }

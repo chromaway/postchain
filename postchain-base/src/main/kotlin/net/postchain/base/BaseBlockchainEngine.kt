@@ -14,7 +14,7 @@ import java.lang.Long.max
 val LOG_STATS = true
 
 fun ms(n1: Long, n2: Long): Long {
-    return (n2-n1)/1000000
+    return (n2 - n1) / 1000000
 }
 
 open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
@@ -23,8 +23,7 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
                                 private val tq: TransactionQueue,
                                 private val strategy: BlockBuildingStrategy,
                                 private val useParallelDecoding: Boolean = true
-) : BlockchainEngine
-{
+) : BlockchainEngine {
     companion object : KLogging()
 
     override fun initializeDB() {
@@ -37,10 +36,10 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
     private fun makeBlockBuilder(): ManagedBlockBuilder {
         val ctxt = s.openWriteConnection(chainID)
         val bb = bc.makeBlockBuilder(ctxt)
-        return BaseManagedBlockBuilder(ctxt, s, bb, { _bb ->
+        return BaseManagedBlockBuilder(ctxt, s, bb) { _bb ->
             val aBB = _bb as AbstractBlockBuilder
             tq.removeAll(aBB.transactions)
-        })
+        }
     }
 
     override fun addBlock(block: BlockDataWithWitness) {
@@ -73,8 +72,8 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
 
         if (LOG_STATS) {
             val nTransactions = block.transactions.size
-            val netRate = (nTransactions * 1000000000L) / max(tEnd-tBegin, 1)
-            val grossRate = (nTransactions * 1000000000L) / max(tDone-tStart, 1)
+            val netRate = (nTransactions * 1000000000L) / max(tEnd - tBegin, 1)
+            val grossRate = (nTransactions * 1000000000L) / max(tDone - tStart, 1)
             logger.info("""Loaded block (par), ${nTransactions} transactions, \
                 ${ms(tStart, tDone)} ms, ${netRate} net tps, ${grossRate} gross tps"""
             )
@@ -100,8 +99,8 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
 
         if (LOG_STATS) {
             val nTransactions = block.transactions.size
-            val netRate = (nTransactions * 1000000000L) / (tEnd-tBegin)
-            val grossRate = (nTransactions * 1000000000L) / (tDone-tStart)
+            val netRate = (nTransactions * 1000000000L) / (tEnd - tBegin)
+            val grossRate = (nTransactions * 1000000000L) / (tDone - tStart)
             logger.info("""Loaded block (seq), ${nTransactions} transactions, \
                 ${ms(tStart, tDone)} ms, ${netRate} net tps, ${grossRate} gross tps"""
             )
@@ -169,8 +168,8 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
         TimeLog.end("BaseBlockchainEngine.buildBlock().buildBlock")
 
         if (LOG_STATS) {
-            val netRate = (nTransactions * 1000000000L) / (tEnd-tBegin)
-            val grossRate = (nTransactions * 1000000000L) / (tDone-tStart)
+            val netRate = (nTransactions * 1000000000L) / (tEnd - tBegin)
+            val grossRate = (nTransactions * 1000000000L) / (tDone - tStart)
             logger.info("""Block is finalized, ${nTransactions} + ${nRejects} transactions, \
                 ${ms(tStart, tDone)} ms, ${netRate} net tps, ${grossRate} gross tps"""
             )

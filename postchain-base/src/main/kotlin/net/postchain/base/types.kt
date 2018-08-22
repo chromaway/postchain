@@ -2,20 +2,24 @@
 
 package net.postchain.base
 
-import net.postchain.core.*
+import net.postchain.core.BlockBuilder
+import net.postchain.core.EContext
+import net.postchain.core.Signature
+import net.postchain.core.Transaction
 import java.util.*
 import java.util.concurrent.CountDownLatch
 
 open class PeerInfo(val host: String, open val port: Int, val pubKey: ByteArray)
 
-class DynamicPortPeerInfo(host: String, pubKey: ByteArray): PeerInfo(host, 0, pubKey) {
+class DynamicPortPeerInfo(host: String, pubKey: ByteArray) : PeerInfo(host, 0, pubKey) {
     private val latch = CountDownLatch(1)
     private var assignedPortNumber = 0
 
-    override val port: Int get() {
-        latch.await()
-        return assignedPortNumber
-    }
+    override val port: Int
+        get() {
+            latch.await()
+            return assignedPortNumber
+        }
 
     fun portAssigned(port: Int) {
         assignedPortNumber = port
@@ -39,7 +43,7 @@ interface PeerResolver {
 }
 
 
-interface PeerCommConfiguration: PeerResolver {
+interface PeerCommConfiguration : PeerResolver {
     val peerInfo: Array<PeerInfo>
     val myIndex: Int
     val blockchainRID: ByteArray
@@ -73,12 +77,12 @@ interface Storage {
     fun openWriteConnection(chainID: Long): EContext
     fun closeWriteConnection(ectxt: EContext, commit: Boolean)
 
-    fun withSavepoint( ctxt: EContext, fn: ()->Unit ): Exception?
+    fun withSavepoint(ctxt: EContext, fn: () -> Unit): Exception?
 
     fun close()
 }
 
-fun<RT> withReadConnection(s: Storage, chainID: Long, fn: (EContext)->RT): RT {
+fun <RT> withReadConnection(s: Storage, chainID: Long, fn: (EContext) -> RT): RT {
     val ctx = s.openReadConnection(chainID)
     try {
         return fn(ctx)
@@ -87,18 +91,18 @@ fun<RT> withReadConnection(s: Storage, chainID: Long, fn: (EContext)->RT): RT {
     }
 }
 
-fun withWriteConnection(s: Storage, chainID: Long, fn: (EContext)->Boolean): Boolean {
+fun withWriteConnection(s: Storage, chainID: Long, fn: (EContext) -> Boolean): Boolean {
     val ctx = s.openWriteConnection(chainID)
     var commit = false
     try {
-       commit = fn(ctx)
+        commit = fn(ctx)
     } finally {
         s.closeWriteConnection(ctx, commit)
     }
     return commit
 }
 
-enum class Side {LEFT, RIGHT }
+enum class Side { LEFT, RIGHT }
 
 class MerklePathItem(val side: Side, val hash: ByteArray)
 

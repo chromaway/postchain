@@ -9,16 +9,13 @@ import net.postchain.base.DynamicPortPeerInfo
 import net.postchain.base.PeerInfo
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
+import net.postchain.config.CommonsConfigurationFactory
 import net.postchain.ebft.BlockchainInstanceModel
 import net.postchain.ebft.EBFTBlockchainInstance
 import net.postchain.ebft.makeConnManager
 import net.postchain.ebft.message.EbftMessage
 import net.postchain.network.PeerConnectionManager
 import org.apache.commons.configuration2.Configuration
-import org.apache.commons.configuration2.PropertiesConfiguration
-import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder
-import org.apache.commons.configuration2.builder.fluent.Parameters
-import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler
 
 /**
  * A postchain node
@@ -106,11 +103,7 @@ object PostchainNode {
      * @param nodeIndex index of the local node
      */
     fun start(configFile: String, nodeIndex: Int) {
-        val params = Parameters()
-        val builder = FileBasedConfigurationBuilder<PropertiesConfiguration>(PropertiesConfiguration::class.java)
-                .configure(params.properties().setFileName(configFile).setListDelimiterHandler(DefaultListDelimiterHandler(',')))
-        val config = builder.getConfiguration()
-        start(config, nodeIndex)
+        start(CommonsConfigurationFactory.readFromFile(configFile), nodeIndex)
     }
 
 }
