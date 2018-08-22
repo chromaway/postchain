@@ -67,6 +67,7 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
         return BaseManagedBlockBuilder(ctxt, s, bb) { _bb ->
             val aBB = _bb as AbstractBlockBuilder
             tq.removeAll(aBB.transactions)
+            strategy.blockCommitted(_bb.getBlockData())
         }
     }
 

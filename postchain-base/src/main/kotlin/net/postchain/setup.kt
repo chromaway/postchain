@@ -44,19 +44,17 @@ fun createDataLayer(config: Configuration, chainId: Long, nodeIndex: Int): TestN
     val blockchainConfiguration = getBlockchainConfiguration(blockchainSubset, chainId, nodeIndex)
 
     val storage = baseStorage(config, nodeIndex)
-    withWriteConnection(storage, chainId) { blockchainConfiguration.initializeDB(it); true }
-
-    val blockQueries = blockchainConfiguration.makeBlockQueries(storage)
 
     val txQueue = BaseTransactionQueue(blockchainSubset.getInt("queuecapacity", 2500))
 
     val engine = BaseBlockchainEngine(blockchainConfiguration, storage,
             chainId, txQueue)
+    engine.initializeDB()
 
     val node = TestNodeEngine(engine,
             txQueue,
             blockchainConfiguration,
-            blockQueries as BaseBlockQueries)
+            engine.getBlockQueries() as BaseBlockQueries)
     return node
 }
 

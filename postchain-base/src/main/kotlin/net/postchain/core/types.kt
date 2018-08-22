@@ -230,7 +230,7 @@ interface BlockchainInfrastructure {
     fun parseConfigurationString(rawData: String, format: String): ByteArray
     fun makeBlockchainConfiguration(rawConfigurationData: ByteArray, context: BlockchainContext): BlockchainConfiguration
     fun makeBlockchainEngine(configuration: BlockchainConfiguration): BlockchainEngine
-    fun makeBlockchainProcess(engine: BlockchainEngine): BlockchainProcess
+    //fun makeBlockchainProcess(engine: BlockchainEngine): BlockchainProcess
 }
 
 interface BlockchainInfrastructureFactory {
