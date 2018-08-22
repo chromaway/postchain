@@ -58,14 +58,6 @@ interface CryptoSystem {
     fun getRandomBytes(size: Int): ByteArray
 }
 
-/**
- * A block builder which automatically manages the connection
- */
-interface ManagedBlockBuilder : BlockBuilder {
-    fun maybeAppendTransaction(tx: Transaction): Exception?
-    fun rollback()
-}
-
 interface Storage {
     fun openReadConnection(chainID: Long): EContext
     fun closeReadConnection(ectxt: EContext)
@@ -98,7 +90,7 @@ fun withWriteConnection(s: Storage, chainID: Long, fn: (EContext)->Boolean): Boo
     return commit
 }
 
-enum class Side {LEFT, RIGHT }
+enum class Side {LEFT, RIGHT}
 
 class MerklePathItem(val side: Side, val hash: ByteArray)
 

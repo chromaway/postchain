@@ -6,10 +6,7 @@ import net.postchain.base.BaseBlockQueries
 import net.postchain.base.NetworkAwareTxQueue
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.Storage
-import net.postchain.core.BlockBuildingStrategy
-import net.postchain.core.BlockQueries
-import net.postchain.core.BlockchainConfiguration
-import net.postchain.core.TransactionQueue
+import net.postchain.core.*
 import net.postchain.createDataLayer
 import net.postchain.ebft.message.EbftMessage
 import net.postchain.network.PeerConnectionManager
@@ -73,14 +70,13 @@ class EBFTBlockchainInstance(
  */
 interface BlockchainInstanceModel {
     val blockchainConfiguration: BlockchainConfiguration
-    val storage: Storage
+    //val storage: Storage
     val blockQueries: BlockQueries
     val statusManager: BaseStatusManager
     val commManager: CommManager<EbftMessage>
 
     val txQueue: TransactionQueue
     val txForwardingQueue: TransactionQueue
-    val blockStrategy: BlockBuildingStrategy
     val engine: BlockchainEngine
     val blockDatabase: BaseBlockDatabase
     val blockManager: BlockManager
@@ -110,13 +106,12 @@ class EBFTBlockchainInstanceWorker(
     val stopMe = AtomicBoolean(false)
 
     override val blockchainConfiguration: BlockchainConfiguration
-    override val storage: Storage
+    //private val storage: Storage
     override val blockQueries: BlockQueries
     override val statusManager: BaseStatusManager
     override val commManager: CommManager<EbftMessage>
     override val txQueue: TransactionQueue
     override val txForwardingQueue: TransactionQueue
-    override val blockStrategy: BlockBuildingStrategy
     override val engine: BlockchainEngine
     override val blockDatabase: BaseBlockDatabase
     override val blockManager: BlockManager
@@ -146,13 +141,13 @@ class EBFTBlockchainInstanceWorker(
      */
     fun stop() {
         // Ordering is important.
-        // 1. Stop acceptin API calls
+        // 1. Stop accepting API calls
         stopMe.set(true)
         restApi?.stop()
-        // 2. Close the data sources so that new blocks cant be started
-        storage.close()
+        // 2. Close the engine so that new blocks cant be started
+        engine.close()
         // 3. Close the listening port and all TCP connections
-        // connManager.stop()
+        // connManager.stop() // TODO
         // 4. Stop any in-progress blocks
         blockDatabase.stop()
     }
@@ -160,10 +155,9 @@ class EBFTBlockchainInstanceWorker(
     init {
         val dataLayer = createDataLayer(config, chainId, nodeIndex)
         blockchainConfiguration = dataLayer.blockchainConfiguration
-        storage = dataLayer.storage
+        //storage = dataLayer.storage
         blockQueries = dataLayer.blockQueries
         txQueue = dataLayer.txQueue
-        blockStrategy = dataLayer.blockBuildingStrategy
         engine = dataLayer.engine
 
         val bestHeight = blockQueries.getBestHeight().get()
@@ -177,12 +171,14 @@ class EBFTBlockchainInstanceWorker(
         )
 
         blockDatabase = BaseBlockDatabase(engine, blockQueries, nodeIndex)
-        blockManager = BaseBlockManager(blockDatabase, statusManager, blockStrategy)
+        blockManager = BaseBlockManager(
+                blockDatabase,
+                statusManager,
+                engine.getBlockBuildingStrategy())
 
         val port = config.getInt("api.port", 7740)
         if (port != -1) {
-            val model = PostchainModel(txForwardingQueue, blockchainConfiguration.getTransactionFactory(),
-                    blockQueries as BaseBlockQueries)
+            val model = PostchainModel(txForwardingQueue, blockchainConfiguration.getTransactionFactory(), blockQueries)
             apiModel = model
             val basePath = config.getString("api.basepath", "")
             restApi = RestApi(model, port, basePath)

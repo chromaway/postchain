@@ -6,6 +6,8 @@ package net.postchain.core
 import net.postchain.base.Storage
 import net.postchain.gtx.GTXValue
 import nl.komponents.kovenant.Promise
+import org.apache.commons.configuration2.Configuration
+import sun.jvm.hotspot.opto.Block
 import java.sql.Connection
 import java.util.*
 
@@ -123,15 +125,14 @@ interface BlockchainConfiguration {
     fun getBlockBuildingStrategy(blockQueries: BlockQueries, transactionQueue: TransactionQueue): BlockBuildingStrategy
 }
 
-interface BlockchainConfigurationData {
-    val data: GTXValue
+interface BlockchainContext {
     val blockchainRID: ByteArray
     val nodeID: Int
     val chainID: Long
 }
 
 interface BlockchainConfigurationFactory {
-    fun makeBlockchainConfiguration(configData: BlockchainConfigurationData): BlockchainConfiguration
+    fun makeBlockchainConfiguration(configurationData: Any, context: BlockchainContext): BlockchainConfiguration
 }
 
 interface TransactionFactory {
@@ -193,4 +194,34 @@ interface BlockStore {
 
     fun isTransactionConfirmed(ctx: EContext, txRID: ByteArray): Boolean
     fun getConfirmationProofMaterial(ctx: EContext, txRID: ByteArray): Any
+}
+
+/**
+ * A block builder which automatically manages the connection
+ */
+interface ManagedBlockBuilder : BlockBuilder {
+    fun maybeAppendTransaction(tx: Transaction): Exception?
+    fun rollback()
+}
+
+interface BlockchainEngine {
+    fun initializeDB()
+    fun addBlock(block: BlockDataWithWitness)
+    fun loadUnfinishedBlock(block: BlockData): ManagedBlockBuilder
+    fun buildBlock(): ManagedBlockBuilder
+    fun getTransactionQueue(): TransactionQueue
+    fun getBlockBuildingStrategy(): BlockBuildingStrategy
+    fun getBlockQueries(): BlockQueries
+    fun close()
+}
+
+interface BlockchainInfrastructure {
+    fun parseConfigurationString(rawData: String, format: String): ByteArray
+    fun makeBlockchainConfiguration(rawConfigurationData: ByteArray, context: BlockchainContext): BlockchainConfiguration
+    fun makeBlockchainEngine(configuration: BlockchainConfiguration): BlockchainEngine
+//    fun makeBlockchainProcess(engine: BlockchainEngine): BlockchainProcess
+}
+
+interface BlockchainInfrastructureFactory {
+    fun makeBlockchainInfrastructure(config: Configuration): BlockchainInfrastructure
 }

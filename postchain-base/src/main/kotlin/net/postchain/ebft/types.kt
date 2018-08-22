@@ -2,7 +2,6 @@
 
 package net.postchain.ebft
 
-import net.postchain.base.ManagedBlockBuilder
 import net.postchain.core.BlockData
 import net.postchain.core.BlockDataWithWitness
 import net.postchain.core.Signature
@@ -127,9 +126,3 @@ interface StatusManager {
     fun getCommitSignature(): Signature?
 }
 
-interface BlockchainEngine {
-    fun initializeDB()
-    fun addBlock(block: BlockDataWithWitness)
-    fun loadUnfinishedBlock(block: BlockData): ManagedBlockBuilder
-    fun buildBlock(): ManagedBlockBuilder
-}

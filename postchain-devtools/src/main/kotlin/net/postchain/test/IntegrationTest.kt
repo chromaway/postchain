@@ -3,13 +3,17 @@
 package net.postchain.test
 
 import mu.KLogging
-import net.postchain.DataLayer
+import net.postchain.TestNodeEngine
 import net.postchain.base.*
 import net.postchain.base.data.BaseBlockchainConfiguration
+import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.createDataLayer
-import net.postchain.ebft.BlockchainEngine
+import net.postchain.core.BlockchainEngine
+import net.postchain.createTestNodeEngine
+import net.postchain.gtx.GTXValue
+import net.postchain.gtx.gtx
 import org.apache.commons.configuration2.CompositeConfiguration
 import org.apache.commons.configuration2.Configuration
 import org.apache.commons.configuration2.MapConfiguration
@@ -27,9 +31,10 @@ import java.io.File
 
 
 open class IntegrationTest {
-    protected val nodes = mutableListOf<DataLayer>()
+    protected val nodes = mutableListOf<TestNodeEngine>()
     val configOverrides = MapConfiguration(mutableMapOf<String, String>())
     val cryptoSystem = SECP256K1CryptoSystem()
+    var gtxConfig: GTXValue? = null
 
     companion object : KLogging() {
         const val DEFAULT_CONFIG_FILE = "config.properties"
@@ -134,7 +139,7 @@ open class IntegrationTest {
     private var expectedSuccessRids = mutableMapOf<Long, MutableList<ByteArray>>()
 
     // TODO: [et]: Check out nullability for return value
-    protected fun enqueueTx(node: DataLayer, data: ByteArray, expectedConfirmationHeight: Long): Transaction? {
+    protected fun enqueueTx(node: TestNodeEngine, data: ByteArray, expectedConfirmationHeight: Long): Transaction? {
         val tx = node.blockchainConfiguration.getTransactionFactory().decodeTransaction(data)
         node.txQueue.enqueue(tx)
         if (expectedConfirmationHeight >= 0) {
@@ -148,7 +153,7 @@ open class IntegrationTest {
         return tx
     }
 
-    protected fun verifyBlockchainTransactions(node: DataLayer) {
+    protected fun verifyBlockchainTransactions(node: TestNodeEngine) {
         val expectAtLeastHeight = expectedSuccessRids.keys.reduce { acc, l -> maxOf(l, acc) }
         val bestHeight = getBestHeight(node)
         assertTrue(bestHeight >= expectAtLeastHeight)
@@ -174,7 +179,7 @@ open class IntegrationTest {
         configOverrides.clear()
     }
 
-    protected fun createEngines(count: Int): Array<DataLayer> {
+    protected fun createEngines(count: Int): Array<TestNodeEngine> {
         return Array(count) { createDataLayer(it, count, DEFAULT_CONFIG_FILE) }
     }
 
@@ -194,7 +199,8 @@ open class IntegrationTest {
         // append nodeIndex to schema name
         baseConfig.setProperty("database.schema", baseConfig.getString("database.schema") + nodeIndex)
         baseConfig.setProperty("database.wipe", true)
-        baseConfig.setProperty("blockchain.$chainId.blocksigningprivkey", privKeyHex(nodeIndex))
+        baseConfig.setProperty("blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: newschool
+        baseConfig.setProperty("blockchain.$chainId.blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: oldschool
         for (i in 0 until nodeCount) {
             baseConfig.setProperty("node.$i.id", "node$i")
             baseConfig.setProperty("node.$i.host", "127.0.0.1")
@@ -208,11 +214,33 @@ open class IntegrationTest {
         return composite
     }
 
-    protected fun createDataLayer(nodeIndex: Int, nodeCount: Int = 1, configFile: String = DEFAULT_CONFIG_FILE): DataLayer {
+    protected fun createDataLayer(nodeIndex: Int, nodeCount: Int = 1, configFile: String = DEFAULT_CONFIG_FILE): TestNodeEngine {
         val config = createConfig(nodeIndex, nodeCount, configFile)
         val chainId = config.getLong("activechainids")
 
         val dataLayer = createDataLayer(config, chainId, nodeIndex)
+
+        // keep list of nodes to close after test
+        nodes.add(dataLayer)
+        return dataLayer
+    }
+
+    protected fun gtxConfigSigners(nodeCount: Int = 1): GTXValue {
+        return gtx(*Array(nodeCount, { gtx(pubKey(it))}))
+    }
+
+
+    protected fun createDataLayerNG(nodeIndex: Int, nodeCount: Int = 1, configFile: String = DEFAULT_CONFIG_FILE): TestNodeEngine {
+        val config = createConfig(nodeIndex, nodeCount, configFile)
+        val chainId = config.getLong("activechainids")
+
+        val infrastructure = BaseBlockchainInfrastructureFactory().makeBlockchainInfrastructure(config)
+
+        val blockchainRID = config.getString("blockchain.1.blockchainrid").hexStringToByteArray() // TODO
+
+        val dataLayer = createTestNodeEngine(infrastructure as BaseBlockchainInfrastructure,
+                gtxConfig!!, BaseBlockchainContext(blockchainRID, nodeIndex, chainId)
+        )
 
         // keep list of nodes to close after test
         nodes.add(dataLayer)
@@ -238,7 +266,7 @@ open class IntegrationTest {
         return Array(count, { createBasePeerCommConfiguration(count, it) })
     }
 */
-    protected fun buildBlockAndCommit(node: DataLayer) {
+    protected fun buildBlockAndCommit(node: TestNodeEngine) {
         buildBlockAndCommit(node.engine)
     }
 
@@ -263,12 +291,12 @@ open class IntegrationTest {
         return witness
     }
 
-    protected fun getTxRidsAtHeight(node: DataLayer, height: Long): Array<ByteArray> {
+    protected fun getTxRidsAtHeight(node: TestNodeEngine, height: Long): Array<ByteArray> {
         val list = node.blockQueries.getBlockRids(height).get()
         return node.blockQueries.getBlockTransactionRids(list[0]).get().toTypedArray()
     }
 
-    protected fun getBestHeight(node: DataLayer): Long {
+    protected fun getBestHeight(node: TestNodeEngine): Long {
         return node.blockQueries.getBestHeight().get()
     }
 
@@ -277,8 +305,8 @@ open class IntegrationTest {
 
 class TestBlockchainConfigurationFactory : BlockchainConfigurationFactory {
 
-    override fun makeBlockchainConfiguration(configData: BlockchainConfigurationData):
-            BlockchainConfiguration {
+    override fun makeBlockchainConfiguration(configData: Any, context: BlockchainContext): BlockchainConfiguration
+    {
         return IntegrationTest.TestBlockchainConfiguration(configData as BaseBlockchainConfigurationData)
     }
 }

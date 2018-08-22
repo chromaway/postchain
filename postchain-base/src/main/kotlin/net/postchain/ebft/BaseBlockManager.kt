@@ -57,7 +57,6 @@ class BaseBlockManager(val blockDB: BlockDatabase, val statusManager: StatusMana
             runDBOp({
                 blockDB.addBlock(block)
             }, {
-                blockStrategy.blockCommitted(block)
                 if (statusManager.onHeightAdvance(height + 1)) {
                     currentBlock = null
                 }
@@ -80,7 +79,6 @@ class BaseBlockManager(val blockDB: BlockDatabase, val statusManager: StatusMana
                     blockDB.commitBlock(statusManager.commitSignatures)
                 }, {
                     statusManager.onCommittedBlock(currentBlock!!.header.blockRID)
-                    blockStrategy.blockCommitted(currentBlock!!)
                     currentBlock = null
                 })
             }
