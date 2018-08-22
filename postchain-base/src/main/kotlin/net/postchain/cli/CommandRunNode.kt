@@ -25,6 +25,6 @@ class CommandRunNode : Command {
             nodeConfigFile = "config/config.$nodeIndex.properties"
         }
 
-        PostchainNode.start(nodeConfigFile, nodeIndex)
+        PostchainNode().start(nodeConfigFile, nodeIndex)
     }
 }

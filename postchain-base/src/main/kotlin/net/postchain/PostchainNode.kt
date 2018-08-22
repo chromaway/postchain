@@ -2,8 +2,6 @@
 
 package net.postchain
 
-import net.postchain.PostchainNode.blockchainInstance
-import net.postchain.PostchainNode.connManager
 import net.postchain.base.BasePeerCommConfiguration
 import net.postchain.base.DynamicPortPeerInfo
 import net.postchain.base.PeerInfo
@@ -23,7 +21,7 @@ import org.apache.commons.configuration2.Configuration
  * @property connManager instance of [PeerConnectionManager]
  * @property blockchainInstance instance of [EBFTBlockchainInstance]
  */
-object PostchainNode {
+class PostchainNode {
 
     lateinit var connManager: PeerConnectionManager<EbftMessage>
     lateinit var blockchainInstance: EBFTBlockchainInstance

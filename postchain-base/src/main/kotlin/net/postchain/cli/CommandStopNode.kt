@@ -17,6 +17,6 @@ class CommandStopNode : Command {
         println("stop-node will be executed with options: " +
                 "${ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE)}")
 
-        PostchainNode.stop()
+        PostchainNode().stop()
     }
 }
