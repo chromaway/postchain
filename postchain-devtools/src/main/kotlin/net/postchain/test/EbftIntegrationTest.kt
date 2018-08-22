@@ -15,7 +15,7 @@ open class EbftIntegrationTest : IntegrationTest() {
     protected fun createEBFTNode(nodeCount: Int, myIndex: Int): PostchainNode {
         configOverrides.setProperty("messaging.privkey", privKeyHex(myIndex))
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
-        val pn = PostchainNode()
+        val pn = PostchainNode
         pn.start(createConfig(myIndex, nodeCount, DEFAULT_CONFIG_FILE), myIndex)
         return pn
     }
