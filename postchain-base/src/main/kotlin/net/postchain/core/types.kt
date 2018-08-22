@@ -204,7 +204,11 @@ interface ManagedBlockBuilder : BlockBuilder {
     fun rollback()
 }
 
-interface BlockchainEngine {
+interface Shutdownable {
+    fun shutdown()
+}
+
+interface BlockchainEngine: Shutdownable {
     fun initializeDB()
     fun addBlock(block: BlockDataWithWitness)
     fun loadUnfinishedBlock(block: BlockData): ManagedBlockBuilder
@@ -212,14 +216,17 @@ interface BlockchainEngine {
     fun getTransactionQueue(): TransactionQueue
     fun getBlockBuildingStrategy(): BlockBuildingStrategy
     fun getBlockQueries(): BlockQueries
-    fun close()
+}
+
+interface BlockchainProcess: Shutdownable {
+    fun getEngine(): BlockchainEngine
 }
 
 interface BlockchainInfrastructure {
     fun parseConfigurationString(rawData: String, format: String): ByteArray
     fun makeBlockchainConfiguration(rawConfigurationData: ByteArray, context: BlockchainContext): BlockchainConfiguration
     fun makeBlockchainEngine(configuration: BlockchainConfiguration): BlockchainEngine
-//    fun makeBlockchainProcess(engine: BlockchainEngine): BlockchainProcess
+    fun makeBlockchainProcess(engine: BlockchainEngine): BlockchainProcess
 }
 
 interface BlockchainInfrastructureFactory {

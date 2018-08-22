@@ -56,7 +56,7 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
         return strategy
     }
 
-    override fun close() {
+    override fun shutdown() {
         s.close()
     }
 

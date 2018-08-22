@@ -33,7 +33,7 @@ class TestNodeEngine(val engine: BlockchainEngine,
                      val blockQueries: BaseBlockQueries) {
 
     fun close() {
-        engine.close()
+        engine.shutdown()
     }
 }
 

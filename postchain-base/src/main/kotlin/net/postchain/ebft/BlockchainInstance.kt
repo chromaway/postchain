@@ -2,10 +2,8 @@ package net.postchain.ebft
 
 import net.postchain.api.rest.PostchainModel
 import net.postchain.api.rest.RestApi
-import net.postchain.base.BaseBlockQueries
 import net.postchain.base.NetworkAwareTxQueue
 import net.postchain.base.PeerCommConfiguration
-import net.postchain.base.Storage
 import net.postchain.core.*
 import net.postchain.createDataLayer
 import net.postchain.ebft.message.EbftMessage
@@ -145,7 +143,7 @@ class EBFTBlockchainInstanceWorker(
         stopMe.set(true)
         restApi?.stop()
         // 2. Close the engine so that new blocks cant be started
-        engine.close()
+        engine.shutdown()
         // 3. Close the listening port and all TCP connections
         // connManager.stop() // TODO
         // 4. Stop any in-progress blocks

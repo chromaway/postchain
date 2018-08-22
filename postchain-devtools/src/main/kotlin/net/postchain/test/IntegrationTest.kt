@@ -220,7 +220,7 @@ open class IntegrationTest {
 
         val dataLayer = createDataLayer(config, chainId, nodeIndex)
 
-        // keep list of nodes to close after test
+        // keep list of nodes to shutdown after test
         nodes.add(dataLayer)
         return dataLayer
     }
@@ -242,7 +242,7 @@ open class IntegrationTest {
                 gtxConfig!!, BaseBlockchainContext(blockchainRID, nodeIndex, chainId)
         )
 
-        // keep list of nodes to close after test
+        // keep list of nodes to shutdown after test
         nodes.add(dataLayer)
         return dataLayer
     }
