@@ -7,7 +7,7 @@ import net.postchain.base.data.BaseManagedBlockBuilder
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
 import net.postchain.core.*
-import net.postchain.ebft.BlockchainEngine
+import net.postchain.core.BlockchainEngine
 import nl.komponents.kovenant.task
 import java.lang.Long.max
 
@@ -21,19 +21,47 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
                                 val s: Storage,
                                 private val chainID: Long,
                                 private val tq: TransactionQueue,
-                                private val strategy: BlockBuildingStrategy,
                                 private val useParallelDecoding: Boolean = true
 ) : BlockchainEngine {
     companion object : KLogging()
 
+    private lateinit var strategy: BlockBuildingStrategy
+    private lateinit var blockQueries: BlockQueries
+    private var initialized = false
+    private var closed = false
+
     override fun initializeDB() {
+        if (initialized) throw ProgrammerMistake("Engine is already initialized")
         withWriteConnection(s, chainID) { ctx ->
             bc.initializeDB(ctx)
             true
         }
+        // BlockQueries should be instantiated only after
+        // database is initialized
+        blockQueries = bc.makeBlockQueries(s)
+        strategy = bc.getBlockBuildingStrategy(blockQueries, tq)
+        initialized = true
+    }
+
+    override fun getTransactionQueue(): TransactionQueue {
+        return tq
+    }
+
+    override fun getBlockQueries(): BlockQueries {
+        return blockQueries
+    }
+
+    override fun getBlockBuildingStrategy(): BlockBuildingStrategy {
+        return strategy
+    }
+
+    override fun close() {
+        s.close()
     }
 
     private fun makeBlockBuilder(): ManagedBlockBuilder {
+        if (!initialized) throw ProgrammerMistake("Engine is not initialized yet")
+        if (closed) throw ProgrammerMistake("Engine is already closed")
         val ctxt = s.openWriteConnection(chainID)
         val bb = bc.makeBlockBuilder(ctxt)
         return BaseManagedBlockBuilder(ctxt, s, bb) { _bb ->

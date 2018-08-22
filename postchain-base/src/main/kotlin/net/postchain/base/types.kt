@@ -62,14 +62,6 @@ interface CryptoSystem {
     fun getRandomBytes(size: Int): ByteArray
 }
 
-/**
- * A block builder which automatically manages the connection
- */
-interface ManagedBlockBuilder : BlockBuilder {
-    fun maybeAppendTransaction(tx: Transaction): Exception?
-    fun rollback()
-}
-
 interface Storage {
     fun openReadConnection(chainID: Long): EContext
     fun closeReadConnection(ectxt: EContext)

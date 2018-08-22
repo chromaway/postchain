@@ -2,7 +2,7 @@
 
 package net.postchain.test.base
 
-import net.postchain.DataLayer
+import net.postchain.TestNodeEngine
 import net.postchain.test.IntegrationTest
 import net.postchain.core.*
 import org.junit.Assert.*
@@ -142,21 +142,21 @@ class BlockchainEngineTest : IntegrationTest() {
         assertTrue(riDsAtHeight0.contentDeepEquals(Array(2, { TestTransaction(it).getRID() })))
     }
 
-    private fun createBlockWithTxAndCommit(dataLayer: DataLayer, txCount: Int, startId: Int = 0): BlockData {
-        val blockBuilder = createBlockWithTx(dataLayer, txCount, startId)
+    private fun createBlockWithTxAndCommit(testNodeEngine: TestNodeEngine, txCount: Int, startId: Int = 0): BlockData {
+        val blockBuilder = createBlockWithTx(testNodeEngine, txCount, startId)
         commitBlock(blockBuilder)
         return blockBuilder.getBlockData()
     }
 
-    private fun createBlockWithTx(dataLayer: DataLayer, txCount: Int, startId: Int = 0): BlockBuilder {
+    private fun createBlockWithTx(testNodeEngine: TestNodeEngine, txCount: Int, startId: Int = 0): BlockBuilder {
         for (i in startId until startId + txCount) {
-            dataLayer.txQueue.enqueue(TestTransaction(i))
+            testNodeEngine.txQueue.enqueue(TestTransaction(i))
         }
-        return dataLayer.engine.buildBlock()
+        return testNodeEngine.engine.buildBlock()
     }
 
-    private fun loadUnfinishedAndCommit(dataLayer: DataLayer, blockData: BlockData) {
-        val blockBuilder = dataLayer.engine.loadUnfinishedBlock(blockData)
+    private fun loadUnfinishedAndCommit(testNodeEngine: TestNodeEngine, blockData: BlockData) {
+        val blockBuilder = testNodeEngine.engine.loadUnfinishedBlock(blockData)
         commitBlock(blockBuilder)
     }
 

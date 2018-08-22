@@ -28,13 +28,18 @@ class SQLModuleIntegrationTest: IntegrationTest() {
 
     @Test
     fun testBuildBlock() {
-        configOverrides.setProperty("blockchain.1.configurationfactory",
-                GTXBlockchainConfigurationFactory::class.qualifiedName)
-        configOverrides.setProperty("blockchain.1.gtx.modules",
-                listOf(SQLGTXModuleFactory::class.qualifiedName))
-        configOverrides.setProperty("blockchain.1.gtx.sqlmodules",
-                listOf(Paths.get(javaClass.getResource("sqlmodule1.sql").toURI()).toString()))
-        val node = createDataLayer(0)
+        val sqlModulePath = Paths.get(javaClass.getResource("sqlmodule1.sql").toURI()).toString()
+        gtxConfig = gtx(
+                "configurationfactory" to gtx(GTXBlockchainConfigurationFactory::class.qualifiedName!!),
+                "signers" to gtxConfigSigners(),
+                "gtx" to gtx(
+                        "modules" to gtx(listOf(gtx(SQLGTXModuleFactory::class.qualifiedName!!))),
+                        "sqlmodules" to gtx(listOf(gtx(sqlModulePath)))
+
+                )
+        )
+
+        val node = createDataLayerNG(0)
 
         enqueueTx(node, makeTx(0, "k", "v"), 0)
         buildBlockAndCommit(node)

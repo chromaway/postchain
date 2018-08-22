@@ -1,6 +1,6 @@
 package net.postchain.modules.perftest
 
-import net.postchain.DataLayer
+import net.postchain.TestNodeEngine
 import net.postchain.api.rest.PostchainModel
 import net.postchain.api.rest.RestApi
 import net.postchain.common.TimeLog
@@ -8,7 +8,6 @@ import net.postchain.configurations.GTXTestModule
 import net.postchain.gtx.GTXBlockchainConfigurationFactory
 import net.postchain.modules.ft.BaseFTModuleFactory
 import net.postchain.test.IntegrationTest
-import net.postchain.test.modules.ft.FTIntegrationTest
 import org.junit.Test
 
 /**
@@ -75,7 +74,7 @@ class SingleNodeManual : IntegrationTest() {
         println("buildBlock tps: ${txCount*1000/ TimeLog.getValue("BaseBlockchainEngine.buildBlock().buildBlock")}")
     }
 
-    private fun txCount(node: DataLayer): Pair<Long, Int> {
+    private fun txCount(node: TestNodeEngine): Pair<Long, Int> {
         val bestHeight = node.blockQueries.getBestHeight().get()
         var txCount = 0
         for (i in 0..bestHeight) {

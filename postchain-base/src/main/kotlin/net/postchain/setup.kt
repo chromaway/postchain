@@ -5,48 +5,43 @@ package net.postchain
 import net.postchain.base.*
 import net.postchain.base.data.BaseStorage
 import net.postchain.base.data.BaseTransactionQueue
-import net.postchain.core.BlockBuildingStrategy
-import net.postchain.core.BlockchainConfiguration
-import net.postchain.core.BlockchainConfigurationFactory
-import net.postchain.core.TransactionQueue
-import net.postchain.ebft.BlockchainEngine
+import net.postchain.core.*
+import net.postchain.core.BlockchainEngine
+import net.postchain.gtx.encodeGTXValue
+import net.postchain.gtx.GTXValue
 import org.apache.commons.configuration2.Configuration
 import org.apache.commons.dbcp2.BasicDataSource
 import org.apache.commons.dbutils.QueryRunner
 import javax.sql.DataSource
 
+// TODO: remove legacy
 fun getBlockchainConfiguration(config: Configuration, chainId: Long, nodeIndex: Int): BlockchainConfiguration {
     val bcfClass = Class.forName(config.getString("configurationfactory"))
     val factory = (bcfClass.newInstance() as BlockchainConfigurationFactory)
 
     // TODO: BaseBlockchainConfigurationData is where the config magic happens
     val baseConfig = BaseBlockchainConfigurationData.readFromCommonsConfiguration(
-            config, chainId, nodeIndex)
+            config, chainId, nodeIndex
+    )
 
-    return factory.makeBlockchainConfiguration(baseConfig)
+    return factory.makeBlockchainConfiguration(baseConfig,
+            BaseBlockchainContext(baseConfig.blockchainRID, nodeIndex, chainId))
 }
 
-class DataLayer(val engine: BlockchainEngine,
-                val txQueue: TransactionQueue,
-                val blockchainConfiguration: BlockchainConfiguration,
-                val storage: Storage,
-                val blockQueries: BaseBlockQueries,
-                val blockBuildingStrategy: BlockBuildingStrategy) {
+class TestNodeEngine(val engine: BlockchainEngine,
+                     val txQueue: TransactionQueue,
+                     val blockchainConfiguration: BlockchainConfiguration,
+                     val blockQueries: BaseBlockQueries) {
 
     fun close() {
-        storage.close()
+        engine.close()
     }
 }
 
-fun createDataLayer(config: Configuration, chainId: Long, nodeIndex: Int): DataLayer {
+// TODO: remove legacy
+fun createDataLayer(config: Configuration, chainId: Long, nodeIndex: Int): TestNodeEngine {
     val blockchainSubset = config.subset("blockchain.$chainId")
     val blockchainConfiguration = getBlockchainConfiguration(blockchainSubset, chainId, nodeIndex)
-
-/*
-    val gtxValue = (blockchainConfiguration as BaseBlockchainConfiguration).configData.data
-    val xml = GTXMLValueEncoder.encodeXMLGTXValue(gtxValue)
-    File("gtxml.xml").writeText(xml)
-*/
 
     val storage = baseStorage(config, nodeIndex)
     withWriteConnection(storage, chainId) { blockchainConfiguration.initializeDB(it); true }
@@ -54,17 +49,28 @@ fun createDataLayer(config: Configuration, chainId: Long, nodeIndex: Int): DataL
     val blockQueries = blockchainConfiguration.makeBlockQueries(storage)
 
     val txQueue = BaseTransactionQueue(blockchainSubset.getInt("queuecapacity", 2500))
-    val strategy = blockchainConfiguration.getBlockBuildingStrategy(blockQueries, txQueue)
 
     val engine = BaseBlockchainEngine(blockchainConfiguration, storage,
-            chainId, txQueue, strategy)
+            chainId, txQueue)
 
-    return DataLayer(engine,
+    val node = TestNodeEngine(engine,
             txQueue,
             blockchainConfiguration,
-            storage,
-            blockQueries as BaseBlockQueries,
-            strategy)
+            blockQueries as BaseBlockQueries)
+    return node
+}
+
+fun createTestNodeEngine(infrastructure: BaseBlockchainInfrastructure, config: GTXValue, bc: BlockchainContext): TestNodeEngine {
+    val rawConfig = encodeGTXValue(config)
+    val blockchainConfiguration = infrastructure.makeBlockchainConfiguration(rawConfig, bc)
+
+    val engine = infrastructure.makeBlockchainEngine(blockchainConfiguration)
+
+    val node = TestNodeEngine(engine,
+            engine.getTransactionQueue(),
+            blockchainConfiguration,
+            engine.getBlockQueries() as BaseBlockQueries)
+    return node
 }
 
 fun baseStorage(config: Configuration, nodeIndex: Int): BaseStorage {

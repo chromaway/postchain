@@ -9,8 +9,8 @@ import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.core.*
 import nl.komponents.kovenant.Promise
 
-open class GTXBlockchainConfiguration(configData: BlockchainConfigurationData, val module: GTXModule)
-    : BaseBlockchainConfiguration(configData as BaseBlockchainConfigurationData) {
+open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationData, val module: GTXModule)
+    : BaseBlockchainConfiguration(configData) {
     val txFactory = GTXTransactionFactory(blockchainRID, module, cryptoSystem)
 
     override fun getTransactionFactory(): TransactionFactory {
@@ -41,14 +41,15 @@ open class GTXBlockchainConfiguration(configData: BlockchainConfigurationData, v
 }
 
 open class GTXBlockchainConfigurationFactory : BlockchainConfigurationFactory {
-    override fun makeBlockchainConfiguration(configData: BlockchainConfigurationData): BlockchainConfiguration {
-        return GTXBlockchainConfiguration(configData, createGtxModule(configData.blockchainRID, configData.data))
+    override fun makeBlockchainConfiguration(configurationData: Any, context: BlockchainContext): BlockchainConfiguration {
+        return GTXBlockchainConfiguration(configurationData as BaseBlockchainConfigurationData,
+                createGtxModule(configurationData.blockchainRID, configurationData.data))
     }
 
     open fun createGtxModule(blockchainRID: ByteArray, data: GTXValue): GTXModule {
         val gtxConfig = data["gtx"]!!
         val list = gtxConfig["modules"]!!.asArray().map { it.asString() }
-        if (list == null || list.isEmpty()) {
+        if (list.isEmpty()) {
             throw UserMistake("Missing GTX module in config. expected property 'blockchain.<chainId>.gtx.modules'")
         }
 

@@ -18,7 +18,7 @@ class FullEbftTestNightly : EbftIntegrationTest() {
     companion object : KLogging()
 
     fun strat(node: PostchainNode): OnDemandBlockBuildingStrategy {
-        return node.getModel().blockStrategy as OnDemandBlockBuildingStrategy
+        return node.getModel().engine.getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
     }
 
     @Test

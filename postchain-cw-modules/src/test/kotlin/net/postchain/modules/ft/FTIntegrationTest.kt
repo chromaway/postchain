@@ -2,22 +2,16 @@
 
 package net.postchain.test.modules.ft
 
-import net.postchain.DataLayer
+import net.postchain.TestNodeEngine
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
-import net.postchain.common.toHex
 import net.postchain.core.Transaction
-import net.postchain.gtx.GTXBlockchainConfigurationFactory
 import net.postchain.gtx.GTXDataBuilder
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.gtx
-import net.postchain.gtx.make_gtx_gson
 import net.postchain.modules.ft.AccountUtil
-import net.postchain.modules.ft.BaseFTModuleFactory
 import net.postchain.modules.ft.BasicAccount
 import net.postchain.test.IntegrationTest
-import org.junit.Assert
-import org.junit.Test
 
 val testBlockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3".hexStringToByteArray()
 val myCS = SECP256K1CryptoSystem()
@@ -94,7 +88,7 @@ open class FTIntegrationTest : IntegrationTest() {
         return b.serialize()
     }
 
-    fun enqueueTx(node: DataLayer, data: ByteArray): Transaction? {
+    fun enqueueTx(node: TestNodeEngine, data: ByteArray): Transaction? {
         return enqueueTx(node, data, -1)
     }
 

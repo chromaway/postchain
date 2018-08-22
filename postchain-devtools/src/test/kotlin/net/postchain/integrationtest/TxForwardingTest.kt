@@ -8,6 +8,7 @@ import net.postchain.base.BaseBlockchainConfigurationData
 import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.test.EbftIntegrationTest
+import net.postchain.test.OnDemandBlockBuildingStrategy
 import org.junit.Assert
 import org.junit.Test
 import java.util.concurrent.LinkedBlockingQueue
@@ -15,7 +16,7 @@ import java.util.concurrent.LinkedBlockingQueue
 class TxForwardingTest: EbftIntegrationTest() {
 
     fun strat(node: PostchainNode): ThreeTxStrategy {
-        return node.getModel().blockStrategy as ThreeTxStrategy
+        return node.getModel().engine.getBlockBuildingStrategy() as ThreeTxStrategy
     }
 
     fun tx(id: Int): ApiTx {
