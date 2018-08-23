@@ -2,45 +2,47 @@ package net.postchain.ebft
 
 import net.postchain.api.rest.PostchainModel
 import net.postchain.api.rest.RestApi
-import net.postchain.base.NetworkAwareTxQueue
-import net.postchain.base.PeerCommConfiguration
+import net.postchain.base.*
+import net.postchain.base.data.BaseBlockchainConfiguration
+import net.postchain.common.hexStringToByteArray
 import net.postchain.core.*
-import net.postchain.createDataLayer
 import net.postchain.ebft.message.EbftMessage
 import net.postchain.network.PeerConnectionManager
 import org.apache.commons.configuration2.Configuration
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
-class EBFTBlockchainInstance(
-        val chainId: Long,
-        val config: Configuration,
-        val nodeIndex: Int,
-        val peerCommConfiguration: PeerCommConfiguration,
-        val connManager: PeerConnectionManager<EbftMessage>) {
-
-    var worker: EBFTBlockchainInstanceWorker
-
-    private fun buildWorker(): EBFTBlockchainInstanceWorker {
-        return EBFTBlockchainInstanceWorker(
-                chainId,
-                config,
-                nodeIndex,
-                peerCommConfiguration,
-                connManager
-        )
+/**
+ * Retrieve peer information from config, including networking info and public keys
+ *
+ * @param config configuration
+ * @return peer information
+ */
+fun createPeerInfos(config: Configuration): Array<PeerInfo> {
+    // this is for testing only. We can prepare the configuration with a
+    // special Array<PeerInfo> for dynamic ports
+    val peerInfos = config.getProperty("testpeerinfos")
+    if (peerInfos != null) {
+        return if (peerInfos is PeerInfo) {
+            arrayOf(peerInfos)
+        } else {
+            (peerInfos as List<PeerInfo>).toTypedArray()
+        }
     }
 
-    fun stop() {
-        worker.stop()
-    }
+    var peerCount = 0
+    config.getKeys("node").forEach { peerCount++ }
+    peerCount /= 4
 
-    fun getModel(): BlockchainInstanceModel {
-        return worker
-    }
-
-    init {
-        worker = buildWorker()
+    return Array(peerCount) {
+        val port = config.getInt("node.$it.port")
+        val host = config.getString("node.$it.host")
+        val pubKey = config.getString("node.$it.pubkey").hexStringToByteArray()
+        if (port == 0) {
+            DynamicPortPeerInfo(host, pubKey)
+        } else {
+            PeerInfo(host, port, pubKey)
+        }
     }
 }
 
@@ -66,16 +68,12 @@ class EBFTBlockchainInstance(
  * @property restApi contains information on the rest API, such as network parameters and available queries
  * @property apiModel
  */
-interface BlockchainInstanceModel {
+interface BlockchainInstanceModel: BlockchainProcess {
     val blockchainConfiguration: BlockchainConfiguration
-    //val storage: Storage
-    val blockQueries: BlockQueries
     val statusManager: BaseStatusManager
     val commManager: CommManager<EbftMessage>
 
-    val txQueue: TransactionQueue
     val txForwardingQueue: TransactionQueue
-    val engine: BlockchainEngine
     val blockDatabase: BaseBlockDatabase
     val blockManager: BlockManager
     val syncManager: SyncManager
@@ -85,6 +83,33 @@ interface BlockchainInstanceModel {
 }
 
 
+class EBFTSynchronizationInfrastructure(val config: Configuration): SynchronizationInfrastructure {
+    val privKey: ByteArray
+    val peerInfos: Array<PeerInfo>
+
+    init {
+        peerInfos = createPeerInfos(config)
+        privKey = config.getString("messaging.privkey").hexStringToByteArray()
+    }
+
+    override fun makeBlockchainProcess(engine: BlockchainEngine): BlockchainProcess {
+        val configuration = engine.getConfiguration() as BaseBlockchainConfiguration // TODO
+        val commConfiguration = BasePeerCommConfiguration(peerInfos,
+                configuration.blockchainRID,
+                configuration.configData.nodeID,
+                SECP256K1CryptoSystem(),
+                privKey
+        )
+        val connManager = makeConnManager(commConfiguration)
+        return EBFTBlockchainInstanceWorker(engine,
+                config,
+                configuration.configData.nodeID,
+                commConfiguration,
+                connManager
+        )
+    }
+}
+
 /**
  * A blockchain instance worker
  *
@@ -93,7 +118,7 @@ interface BlockchainInstanceModel {
  * @property peerInfos information relating to our peers
  */
 class EBFTBlockchainInstanceWorker(
-        chainId: Long,
+        private val engine: BlockchainEngine,
         config: Configuration,
         nodeIndex: Int,
         peerCommConfiguration: PeerCommConfiguration,
@@ -105,17 +130,18 @@ class EBFTBlockchainInstanceWorker(
 
     override val blockchainConfiguration: BlockchainConfiguration
     //private val storage: Storage
-    override val blockQueries: BlockQueries
     override val statusManager: BaseStatusManager
     override val commManager: CommManager<EbftMessage>
-    override val txQueue: TransactionQueue
     override val txForwardingQueue: TransactionQueue
-    override val engine: BlockchainEngine
     override val blockDatabase: BaseBlockDatabase
     override val blockManager: BlockManager
     override val syncManager: SyncManager
     override val restApi: RestApi?
     override val apiModel: PostchainModel?
+
+    override fun getEngine(): BlockchainEngine {
+        return engine
+    }
 
     /**
      * Create and run the [updateLoop] thread until [stopMe] is set.
@@ -137,7 +163,7 @@ class EBFTBlockchainInstanceWorker(
     /**
      * Stop the postchain node
      */
-    fun stop() {
+    override fun shutdown() {
         // Ordering is important.
         // 1. Stop accepting API calls
         stopMe.set(true)
@@ -151,12 +177,9 @@ class EBFTBlockchainInstanceWorker(
     }
 
     init {
-        val dataLayer = createDataLayer(config, chainId, nodeIndex)
-        blockchainConfiguration = dataLayer.blockchainConfiguration
-        //storage = dataLayer.storage
-        blockQueries = dataLayer.blockQueries
-        txQueue = dataLayer.txQueue
-        engine = dataLayer.engine
+        blockchainConfiguration = engine.getConfiguration()
+        val blockQueries = engine.getBlockQueries()
+        val txQueue = engine.getTransactionQueue()
 
         val bestHeight = blockQueries.getBestHeight().get()
         statusManager = BaseStatusManager(peerCommConfiguration.peerInfo.size, nodeIndex, bestHeight + 1)
@@ -176,7 +199,8 @@ class EBFTBlockchainInstanceWorker(
 
         val port = config.getInt("api.port", 7740)
         if (port != -1) {
-            val model = PostchainModel(txForwardingQueue, blockchainConfiguration.getTransactionFactory(), blockQueries)
+            val model = PostchainModel(txForwardingQueue, blockchainConfiguration.getTransactionFactory(),
+                    blockQueries as BaseBlockQueries)
             apiModel = model
             val basePath = config.getString("api.basepath", "")
             restApi = RestApi(model, port, basePath)

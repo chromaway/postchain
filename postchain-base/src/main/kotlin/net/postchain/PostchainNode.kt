@@ -9,7 +9,7 @@ import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.CommonsConfigurationFactory
 import net.postchain.ebft.BlockchainInstanceModel
-import net.postchain.ebft.EBFTBlockchainInstance
+import net.postchain.ebft.EBFTBlockchainInstanceWorker
 import net.postchain.ebft.makeConnManager
 import net.postchain.ebft.message.EbftMessage
 import net.postchain.network.PeerConnectionManager
@@ -24,15 +24,15 @@ import org.apache.commons.configuration2.Configuration
 class PostchainNode {
 
     lateinit var connManager: PeerConnectionManager<EbftMessage>
-    lateinit var blockchainInstance: EBFTBlockchainInstance
+    lateinit var blockchainInstance: EBFTBlockchainInstanceWorker
 
     fun stop() {
         connManager.stop()
-        blockchainInstance.stop()
+        blockchainInstance.shutdown()
     }
 
     fun getModel(): BlockchainInstanceModel {
-        return blockchainInstance.getModel()
+        return blockchainInstance
     }
 
     /**
@@ -51,8 +51,9 @@ class PostchainNode {
         val commConfiguration = BasePeerCommConfiguration(peerInfos, blockchainRID, nodeIndex, SECP256K1CryptoSystem(), privKey)
 
         connManager = makeConnManager(commConfiguration)
-        blockchainInstance = EBFTBlockchainInstance(
-                chainId,
+        val testNodeEngine = createDataLayer(config, chainId, nodeIndex)
+        blockchainInstance = EBFTBlockchainInstanceWorker(
+                testNodeEngine.engine,
                 config,
                 nodeIndex,
                 commConfiguration,

@@ -7,7 +7,6 @@ import net.postchain.base.data.BaseManagedBlockBuilder
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
 import net.postchain.core.*
-import net.postchain.core.BlockchainEngine
 import nl.komponents.kovenant.task
 import java.lang.Long.max
 
@@ -53,6 +52,10 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
 
     override fun getBlockBuildingStrategy(): BlockBuildingStrategy {
         return strategy
+    }
+
+    override fun getConfiguration(): BlockchainConfiguration {
+        return bc
     }
 
     override fun shutdown() {

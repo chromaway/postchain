@@ -220,17 +220,21 @@ interface BlockchainEngine: Shutdownable {
     fun getTransactionQueue(): TransactionQueue
     fun getBlockBuildingStrategy(): BlockBuildingStrategy
     fun getBlockQueries(): BlockQueries
+    fun getConfiguration(): BlockchainConfiguration
 }
 
 interface BlockchainProcess: Shutdownable {
     fun getEngine(): BlockchainEngine
 }
 
-interface BlockchainInfrastructure {
+interface SynchronizationInfrastructure {
+    fun makeBlockchainProcess(engine: BlockchainEngine): BlockchainProcess
+}
+
+interface BlockchainInfrastructure: SynchronizationInfrastructure {
     fun parseConfigurationString(rawData: String, format: String): ByteArray
     fun makeBlockchainConfiguration(rawConfigurationData: ByteArray, context: BlockchainContext): BlockchainConfiguration
     fun makeBlockchainEngine(configuration: BlockchainConfiguration): BlockchainEngine
-    //fun makeBlockchainProcess(engine: BlockchainEngine): BlockchainProcess
 }
 
 interface BlockchainInfrastructureFactory {

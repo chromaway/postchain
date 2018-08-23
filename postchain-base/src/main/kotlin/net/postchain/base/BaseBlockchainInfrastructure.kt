@@ -1,6 +1,5 @@
 package net.postchain.base
 
-import net.postchain.base.data.BaseStorage
 import net.postchain.base.data.BaseTransactionQueue
 import net.postchain.baseStorage
 import net.postchain.common.hexStringToByteArray
@@ -47,6 +46,10 @@ class BaseBlockchainInfrastructure(val config: Configuration) : BlockchainInfras
         val engine = BaseBlockchainEngine(bc, storage, bc.chainID, tq)
         engine.initializeDB()
         return engine
+    }
+
+    override fun makeBlockchainProcess(engine: BlockchainEngine): BlockchainProcess {
+        TODO("Nope")
     }
 
 }
