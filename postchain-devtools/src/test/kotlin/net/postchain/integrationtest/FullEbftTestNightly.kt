@@ -5,7 +5,7 @@ package net.postchain.integrationtest
 import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import mu.KLogging
-import net.postchain.PostchainNode
+import net.postchain.LegacyTestNode
 import net.postchain.test.EbftIntegrationTest
 import net.postchain.test.OnDemandBlockBuildingStrategy
 import org.junit.Assert.assertArrayEquals
@@ -17,7 +17,7 @@ import org.junit.runner.RunWith
 class FullEbftTestNightly : EbftIntegrationTest() {
     companion object : KLogging()
 
-    fun strat(node: PostchainNode): OnDemandBlockBuildingStrategy {
+    fun strat(node: LegacyTestNode): OnDemandBlockBuildingStrategy {
         return node.getModel().getEngine().getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
     }
 

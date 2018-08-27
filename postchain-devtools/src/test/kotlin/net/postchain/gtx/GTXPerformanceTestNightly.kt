@@ -5,7 +5,7 @@ package net.postchain.gtx
 import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import mu.KLogging
-import net.postchain.PostchainNode
+import net.postchain.LegacyTestNode
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.configurations.GTXTestModule
 import net.postchain.test.EbftIntegrationTest
@@ -19,7 +19,7 @@ import kotlin.system.measureNanoTime
 class GTXPerformanceTestNightly : EbftIntegrationTest() {
     companion object : KLogging()
 
-    fun strat(node: PostchainNode): OnDemandBlockBuildingStrategy {
+    fun strat(node: LegacyTestNode): OnDemandBlockBuildingStrategy {
         return node.getModel().getEngine().getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
     }
 

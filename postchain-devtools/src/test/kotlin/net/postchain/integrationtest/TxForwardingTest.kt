@@ -2,7 +2,7 @@
 
 package net.postchain.integrationtest
 
-import net.postchain.PostchainNode
+import net.postchain.LegacyTestNode
 import net.postchain.api.rest.ApiTx
 import net.postchain.base.BaseBlockchainConfigurationData
 import net.postchain.common.toHex
@@ -14,7 +14,7 @@ import java.util.concurrent.LinkedBlockingQueue
 
 class TxForwardingTest: EbftIntegrationTest() {
 
-    fun strat(node: PostchainNode): ThreeTxStrategy {
+    fun strat(node: LegacyTestNode): ThreeTxStrategy {
         return node.getModel().getEngine().getBlockBuildingStrategy() as ThreeTxStrategy
     }
 
