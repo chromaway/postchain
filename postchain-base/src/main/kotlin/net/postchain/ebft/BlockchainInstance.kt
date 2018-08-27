@@ -1,7 +1,7 @@
 package net.postchain.ebft
 
-import net.postchain.api.rest.PostchainModel
-import net.postchain.api.rest.RestApi
+import net.postchain.api.rest.controller.PostchainModel
+import net.postchain.api.rest.controller.RestApi
 import net.postchain.base.NetworkAwareTxQueue
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.core.*

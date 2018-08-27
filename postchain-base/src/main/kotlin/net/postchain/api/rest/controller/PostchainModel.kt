@@ -1,8 +1,11 @@
 // Copyright (c) 2017 ChromaWay Inc. See README for license information.
 
-package net.postchain.api.rest
+package net.postchain.api.rest.controller
 
 import mu.KLogging
+import net.postchain.api.rest.model.ApiStatus
+import net.postchain.api.rest.model.ApiTx
+import net.postchain.api.rest.model.TxRID
 import net.postchain.base.BaseBlockQueries
 import net.postchain.base.ConfirmationProof
 import net.postchain.common.TimeLog
@@ -15,25 +18,25 @@ import net.postchain.core.UserMistake
 
 open class PostchainModel(
         val txQueue: TransactionQueue,
-        val transactionFactory: TransactionFactory,
+        private val transactionFactory: TransactionFactory,
         val blockQueries: BaseBlockQueries
 ) : Model {
-    companion object: KLogging()
+    companion object : KLogging()
 
     override fun postTransaction(tx: ApiTx) {
-        var n = TimeLog.startSumConc("PostchainModel.postTransaction().decodeTransaction")
+        var nonce = TimeLog.startSumConc("PostchainModel.postTransaction().decodeTransaction")
         val decodedTransaction = transactionFactory.decodeTransaction(tx.bytes)
-        TimeLog.end("PostchainModel.postTransaction().decodeTransaction", n)
+        TimeLog.end("PostchainModel.postTransaction().decodeTransaction", nonce)
 
-        n = TimeLog.startSumConc("PostchainModel.postTransaction().isCorrect")
+        nonce = TimeLog.startSumConc("PostchainModel.postTransaction().isCorrect")
         if (!decodedTransaction.isCorrect()) {
             throw UserMistake("Transaction ${decodedTransaction.getRID()} is not correct")
         }
-        TimeLog.end("PostchainModel.postTransaction().isCorrect", n)
-        n = TimeLog.startSumConc("PostchainModel.postTransaction().enqueue")
+        TimeLog.end("PostchainModel.postTransaction().isCorrect", nonce)
+        nonce = TimeLog.startSumConc("PostchainModel.postTransaction().enqueue")
         if (!txQueue.enqueue(decodedTransaction))
             throw OverloadedException("Transaction queue is full")
-        TimeLog.end("PostchainModel.postTransaction().enqueue", n)
+        TimeLog.end("PostchainModel.postTransaction().enqueue", nonce)
     }
 
     override fun getTransaction(txRID: TxRID): ApiTx? {
@@ -48,13 +51,11 @@ open class PostchainModel(
 
     override fun getStatus(txRID: TxRID): ApiStatus {
         val status = txQueue.getTransactionStatus(txRID.bytes)
-        if (status != UNKNOWN)
-            return ApiStatus(status)
+        return if (status != UNKNOWN)
+            ApiStatus(status)
         else {
             val confirmed = blockQueries.isTransactionConfirmed(txRID.bytes).get()
-            return ApiStatus(
-                    if (confirmed) CONFIRMED else UNKNOWN
-            )
+            ApiStatus(if (confirmed) CONFIRMED else UNKNOWN)
         }
     }
 

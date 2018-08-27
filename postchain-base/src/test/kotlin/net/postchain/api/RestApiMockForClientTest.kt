@@ -2,7 +2,6 @@
 
 package net.postchain.api
 
-import net.postchain.api.rest.*
 import net.postchain.base.ConfirmationProof
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
@@ -10,6 +9,13 @@ import net.postchain.core.ProgrammerMistake
 import net.postchain.core.TransactionStatus
 import net.postchain.core.UserMistake
 import mu.KLogging
+import net.postchain.api.rest.controller.Model
+import net.postchain.api.rest.controller.Query
+import net.postchain.api.rest.controller.QueryResult
+import net.postchain.api.rest.controller.RestApi
+import net.postchain.api.rest.model.ApiStatus
+import net.postchain.api.rest.model.ApiTx
+import net.postchain.api.rest.model.TxRID
 import net.postchain.common.RestTools
 import org.junit.After
 import org.junit.Test

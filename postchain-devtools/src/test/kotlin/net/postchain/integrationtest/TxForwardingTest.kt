@@ -3,12 +3,11 @@
 package net.postchain.integrationtest
 
 import net.postchain.PostchainNode
-import net.postchain.api.rest.ApiTx
+import net.postchain.api.rest.model.ApiTx
 import net.postchain.base.BaseBlockchainConfigurationData
 import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.test.EbftIntegrationTest
-import net.postchain.test.OnDemandBlockBuildingStrategy
 import org.junit.Assert
 import org.junit.Test
 import java.util.concurrent.LinkedBlockingQueue

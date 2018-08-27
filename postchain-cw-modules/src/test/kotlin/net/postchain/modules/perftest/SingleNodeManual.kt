@@ -1,8 +1,8 @@
 package net.postchain.modules.perftest
 
 import net.postchain.TestNodeEngine
-import net.postchain.api.rest.PostchainModel
-import net.postchain.api.rest.RestApi
+import net.postchain.api.rest.controller.PostchainModel
+import net.postchain.api.rest.controller.RestApi
 import net.postchain.common.TimeLog
 import net.postchain.configurations.GTXTestModule
 import net.postchain.gtx.GTXBlockchainConfigurationFactory
