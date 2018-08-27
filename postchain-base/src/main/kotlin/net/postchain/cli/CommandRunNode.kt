@@ -9,7 +9,7 @@ import org.apache.commons.lang3.builder.ToStringStyle
 @Parameters(commandDescription = "Runs node")
 class CommandRunNode : Command {
 
-    @Parameter(names = ["-c", "--node-config"], description = "Configuration file of blockchain (.properties file)")
+    @Parameter(names = ["-nc", "--node-config"], description = "Configuration file of blockchain (.properties file)")
     private var nodeConfigFile = ""
 
     @Parameter(names = ["-i", "--node-index"], description = "Node index")

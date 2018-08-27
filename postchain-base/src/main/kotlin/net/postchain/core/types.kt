@@ -227,6 +227,10 @@ interface BlockchainProcess: Shutdownable {
     fun getEngine(): BlockchainEngine
 }
 
+interface BlockchainProcessManager: Shutdownable {
+    fun addBlockchain(chainID: Long)
+}
+
 interface SynchronizationInfrastructure {
     fun makeBlockchainProcess(engine: BlockchainEngine): BlockchainProcess
 }
@@ -237,7 +241,6 @@ interface BlockchainInfrastructure: SynchronizationInfrastructure {
     fun makeBlockchainEngine(configuration: BlockchainConfiguration): BlockchainEngine
 }
 
-interface BlockchainInfrastructureFactory {
+interface InfrastructureFactory {
     fun makeBlockchainInfrastructure(config: Configuration): BlockchainInfrastructure
 }
-

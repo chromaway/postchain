@@ -269,13 +269,13 @@ class SQLDatabaseAccess : DatabaseAccess {
         r.update(ctx.conn, "CREATE TABLE configurations (" +
                 "configuration_iid BIGSERIAL PRIMARY KEY" +
                 ", chain_id bigint NOT NULL" +
-                ", block_height BIGINT NOT NULL" +
+                ", height BIGINT NOT NULL" +
                 ", configuration_data bytea NOT NULL" +
                 ")")
 
         r.update(ctx.conn, """CREATE INDEX transactions_block_iid_idx ON transactions(block_iid)""")
         r.update(ctx.conn, """CREATE INDEX blocks_chain_id_timestamp ON blocks(chain_id, timestamp)""")
-        r.update(ctx.conn, """CREATE INDEX configurations_chain_id_to_height ON configurations(chain_id, block_height)""")
+        r.update(ctx.conn, """CREATE INDEX configurations_chain_id_to_height ON configurations(chain_id, height)""")
     }
 
     override fun getConfigurationData(context: EContext, height: Long): ByteArray {
@@ -286,7 +286,7 @@ class SQLDatabaseAccess : DatabaseAccess {
 
     override fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long {
         return r.insert(context.conn,
-                "INSERT INTO configurations (chain_id, block_height, configuration_data) VALUES (?, ?, ?)",
+                "INSERT INTO configurations (chain_id, height, configuration_data) VALUES (?, ?, ?)",
                 longRes, context.chainID, height, data)
     }
 }

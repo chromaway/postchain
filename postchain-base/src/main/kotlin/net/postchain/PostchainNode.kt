@@ -2,18 +2,56 @@
 
 package net.postchain
 
-import net.postchain.base.BasePeerCommConfiguration
-import net.postchain.base.DynamicPortPeerInfo
-import net.postchain.base.PeerInfo
-import net.postchain.base.SECP256K1CryptoSystem
+import net.postchain.base.BaseBlockchainContext
+import net.postchain.base.BaseBlockchainInfrastructure
+import net.postchain.base.BaseConfigurationDataStore
+import net.postchain.base.data.SQLDatabaseAccess
+import net.postchain.base.withReadConnection
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.CommonsConfigurationFactory
+import net.postchain.core.*
 import net.postchain.ebft.BlockchainInstanceModel
 import net.postchain.ebft.EBFTBlockchainInstanceWorker
-import net.postchain.ebft.makeConnManager
-import net.postchain.ebft.message.EbftMessage
+import net.postchain.ebft.EBFTSynchronizationInfrastructure
 import net.postchain.network.PeerConnectionManager
 import org.apache.commons.configuration2.Configuration
+
+class BaseBlockchainProcessManager(
+        val blockchainInfrastructure: BlockchainInfrastructure,
+        val synchronizationInfrastructure: SynchronizationInfrastructure,
+        val nodeConfig: Configuration
+) : BlockchainProcessManager {
+
+    val storage = baseStorage(nodeConfig, -1 ) // TODO: remove nodeIndex
+    val dbAccess = SQLDatabaseAccess()
+
+    val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
+
+    private fun runBlockchain(chainId: Long) {
+        blockchainProcesses[chainId]?.shutdown()
+
+        withReadConnection(storage, chainId) {
+            ctx ->
+            val blockchainRID = dbAccess.getBlockchainRID(ctx)!!
+            val confData = BaseConfigurationDataStore.getConfigurationData(ctx, 0)
+            val configuration = blockchainInfrastructure.makeBlockchainConfiguration(
+                    confData, BaseBlockchainContext(blockchainRID, -1, chainId)
+            )
+            val engine = blockchainInfrastructure.makeBlockchainEngine(configuration)
+            blockchainProcesses[chainId] = synchronizationInfrastructure.makeBlockchainProcess(engine) as EBFTBlockchainInstanceWorker
+            Unit
+        }
+    }
+
+    override fun addBlockchain(chainID: Long) {
+        runBlockchain(chainID)
+    }
+
+    override fun shutdown() {
+        storage.close()
+    }
+}
+
 
 /**
  * A postchain node
@@ -23,16 +61,16 @@ import org.apache.commons.configuration2.Configuration
  */
 class PostchainNode {
 
-    lateinit var connManager: PeerConnectionManager<EbftMessage>
-    lateinit var blockchainInstance: EBFTBlockchainInstanceWorker
+    //lateinit var connManager: PeerConnectionManager<EbftMessage>
+    lateinit var blockchainProcess: EBFTBlockchainInstanceWorker
 
     fun stop() {
-        connManager.stop()
-        blockchainInstance.shutdown()
+        //connManager.stop()
+        blockchainProcess.shutdown()
     }
 
     fun getModel(): BlockchainInstanceModel {
-        return blockchainInstance
+        return blockchainProcess
     }
 
     /**
@@ -41,58 +79,33 @@ class PostchainNode {
      * @param config configuration settings for the node
      * @param nodeIndex the index of the node
      */
-    fun start(config: Configuration, nodeIndex: Int) {
+    fun start(nodeConfig: Configuration, nodeIndex: Int) {
         // This will eventually become a list of chain ids.
         // But for now it's just a single integer.
-        val chainId = config.getLong("activechainids")
-        val peerInfos = createPeerInfos(config)
-        val privKey = config.getString("messaging.privkey").hexStringToByteArray()
-        val blockchainRID = config.getString("blockchain.${chainId}.blockchainrid").hexStringToByteArray() // TODO
-        val commConfiguration = BasePeerCommConfiguration(peerInfos, blockchainRID, nodeIndex, SECP256K1CryptoSystem(), privKey)
+        val chainId = nodeConfig.getLong("activechainids")
+        val blockchainRID = nodeConfig.getString("blockchain.${chainId}.blockchainrid").hexStringToByteArray() // TODO
 
-        connManager = makeConnManager(commConfiguration)
-        val testNodeEngine = createDataLayer(config, chainId, nodeIndex)
-        blockchainInstance = EBFTBlockchainInstanceWorker(
-                testNodeEngine.engine,
-                config,
-                nodeIndex,
-                commConfiguration,
-                connManager
-        )
+        val storage = baseStorage(nodeConfig, -1 /*Will be eliminate later*/)
+
+        val confData = withReadConnection(storage, chainId) {
+            BaseConfigurationDataStore.getConfigurationData(it, 0)
+        }
+
+        val blockchainInfrastructure = BaseBlockchainInfrastructure(nodeConfig)
+        val syncInfrastructure = EBFTSynchronizationInfrastructure(nodeConfig)
+        val configuration = blockchainInfrastructure.makeBlockchainConfiguration(
+                confData, BaseBlockchainContext(blockchainRID, nodeIndex, chainId))
+        val engine = blockchainInfrastructure.makeBlockchainEngine(configuration)
+        blockchainProcess = syncInfrastructure.makeBlockchainProcess(engine) as EBFTBlockchainInstanceWorker
     }
 
-    /**
-     * Retrieve peer information from config, including networking info and public keys
-     *
-     * @param config configuration
-     * @return peer information
-     */
-    fun createPeerInfos(config: Configuration): Array<PeerInfo> {
-        // this is for testing only. We can prepare the configuration with a
-        // special Array<PeerInfo> for dynamic ports
-        val peerInfos = config.getProperty("testpeerinfos")
-        if (peerInfos != null) {
-            return if (peerInfos is PeerInfo) {
-                arrayOf(peerInfos)
-            } else {
-                (peerInfos as List<PeerInfo>).toTypedArray()
-            }
-        }
+    fun verifyConfiguration(ctx: EContext, nodeConfig: Configuration, blockchainRID: ByteArray) {
+        val confData = BaseConfigurationDataStore.getConfigurationData(ctx, 0)
 
-        var peerCount = 0
-        config.getKeys("node").forEach { peerCount++ }
-        peerCount /= 4
-
-        return Array(peerCount) {
-            val port = config.getInt("node.$it.port")
-            val host = config.getString("node.$it.host")
-            val pubKey = config.getString("node.$it.pubkey").hexStringToByteArray()
-            if (port == 0) {
-                DynamicPortPeerInfo(host, pubKey)
-            } else {
-                PeerInfo(host, port, pubKey)
-            }
-        }
+        val blockchainInfrastructure = BaseBlockchainInfrastructure(nodeConfig)
+        val syncInfrastructure = EBFTSynchronizationInfrastructure(nodeConfig)
+        val configuration = blockchainInfrastructure.makeBlockchainConfiguration(
+                confData, BaseBlockchainContext(blockchainRID, ctx.nodeID, ctx.chainID))
     }
 
     /**

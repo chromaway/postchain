@@ -54,7 +54,7 @@ class BaseBlockchainInfrastructure(val config: Configuration) : BlockchainInfras
 
 }
 
-class BaseBlockchainInfrastructureFactory : BlockchainInfrastructureFactory {
+class BaseBlockchainInfrastructureFactory : InfrastructureFactory {
     override fun makeBlockchainInfrastructure(config: Configuration): BlockchainInfrastructure {
         return BaseBlockchainInfrastructure(config)
     }
