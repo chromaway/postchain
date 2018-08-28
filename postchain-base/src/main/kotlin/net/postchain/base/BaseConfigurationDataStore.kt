@@ -9,6 +9,10 @@ object BaseConfigurationDataStore : ConfigurationDataStore {
 
     val db: DatabaseAccess = SQLDatabaseAccess()
 
+    override fun findConfiguration(context: EContext, height: Long): Long {
+        TODO("")
+    }
+
     override fun getConfigurationData(context: EContext, height: Long): ByteArray {
         return db.getConfigurationData(context, height)
     }

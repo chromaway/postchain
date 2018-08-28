@@ -45,7 +45,7 @@ class CommandAddBlockchain : Command {
             ctx, nodeConfig ->
             BaseBlockStore().initialize(ctx, blockchainRID.hexStringToByteArray())
             BaseConfigurationDataStore.addConfigurationData(ctx, 0, encodedGtxValue)
-            PostchainNode().verifyConfiguration(ctx, nodeConfig, blockchainRID.hexStringToByteArray())
+            PostchainNode(nodeConfig).verifyConfiguration(ctx, nodeConfig, blockchainRID.hexStringToByteArray())
         }
     }
 }

@@ -57,7 +57,8 @@ class LegacyTestNode {
                 config,
                 nodeIndex,
                 commConfiguration,
-                connManager
+                connManager,
+                {}
         )
     }
 

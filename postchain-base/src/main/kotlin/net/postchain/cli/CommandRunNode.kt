@@ -3,6 +3,7 @@ package net.postchain.cli
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
 import net.postchain.PostchainNode
+import net.postchain.config.CommonsConfigurationFactory
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
 
@@ -15,6 +16,9 @@ class CommandRunNode : Command {
     @Parameter(names = ["-i", "--node-index"], description = "Node index")
     private var nodeIndex = 0
 
+    @Parameter(names = ["-c", "--chain-ids"], required = true)
+    private var chainIDs = listOf<Long>()
+
     override fun key(): String = "run-node"
 
     override fun execute() {
@@ -25,6 +29,8 @@ class CommandRunNode : Command {
             nodeConfigFile = "config/config.$nodeIndex.properties"
         }
 
-        PostchainNode().start(nodeConfigFile, nodeIndex)
+        val node = PostchainNode(CommonsConfigurationFactory.readFromFile(nodeConfigFile))
+
+        for (cid in chainIDs) node.start(cid)
     }
 }

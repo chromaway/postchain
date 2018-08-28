@@ -1,18 +1,47 @@
 package net.postchain.base
 
 import net.postchain.common.hexStringToByteArray
+import net.postchain.core.BlockchainContext
+import net.postchain.core.NODE_ID_AUTO
+import net.postchain.core.NODE_ID_READ_ONLY
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.gtx
 import org.apache.commons.configuration2.Configuration
 
 class BaseBlockchainConfigurationData(
         val data: GTXValue,
-        val blockchainRID: ByteArray,
-        val chainID: Long,
-        val nodeID: Int,
-        val blockSigner: Signer,
-        val subjectID: ByteArray
+        partialContext: BlockchainContext,
+        val blockSigner: Signer
 )  {
+
+    val context: BlockchainContext
+    val subjectID: ByteArray
+
+    init {
+        subjectID = partialContext.nodeRID!!
+        val nodeID: Int
+        if (partialContext.nodeID == NODE_ID_AUTO) {
+            if (subjectID == null) {
+                nodeID = NODE_ID_READ_ONLY
+            } else {
+                val index = getSigners().indexOfFirst { it.contentEquals(subjectID) }
+                if (index == -1) {
+                    nodeID = NODE_ID_READ_ONLY
+                } else {
+                    nodeID = index
+                }
+            }
+        } else {
+            nodeID = partialContext.nodeID
+        }
+        context = BaseBlockchainContext(
+                partialContext.blockchainRID,
+                nodeID,
+                partialContext.chainID,
+                partialContext.nodeRID
+        )
+    }
+
 
     fun getSigners(): List<ByteArray> {
         return data["signers"]!!.asArray().map { it.asByteArray() }
@@ -37,12 +66,13 @@ class BaseBlockchainConfigurationData(
             )
             return BaseBlockchainConfigurationData(
                     gConfig,
-                    gConfig["blockchainRID"]!!.asByteArray(),
-                    chainID,
-                    nodeID,
-                    signer,
-                    pubKey
-            )
+                    BaseBlockchainContext(
+                            gConfig["blockchainRID"]!!.asByteArray(),
+                            nodeID,
+                            chainID,
+                            pubKey
+                    ),
+                    signer)
         }
 
         private fun convertGTXConfigToGTXValue(config: Configuration): GTXValue {

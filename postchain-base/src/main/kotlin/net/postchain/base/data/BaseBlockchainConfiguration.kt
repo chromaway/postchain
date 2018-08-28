@@ -10,8 +10,8 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
     override val traits = setOf<String>()
     val cryptoSystem = SECP256K1CryptoSystem()
     val blockStore = BaseBlockStore()
-    override val chainID = configData.chainID
-    val blockchainRID = configData.blockchainRID
+    override val chainID = configData.context.chainID
+    val blockchainRID = configData.context.blockchainRID
 
     override fun decodeBlockHeader(rawBlockHeader: ByteArray): BlockHeader {
         return BaseBlockHeader(rawBlockHeader, cryptoSystem)

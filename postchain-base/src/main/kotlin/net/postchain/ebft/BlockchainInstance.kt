@@ -92,20 +92,21 @@ class EBFTSynchronizationInfrastructure(val config: Configuration): Synchronizat
         privKey = config.getString("messaging.privkey").hexStringToByteArray()
     }
 
-    override fun makeBlockchainProcess(engine: BlockchainEngine): BlockchainProcess {
+    override fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
         val configuration = engine.getConfiguration() as BaseBlockchainConfiguration // TODO
         val commConfiguration = BasePeerCommConfiguration(peerInfos,
                 configuration.blockchainRID,
-                configuration.configData.nodeID,
+                configuration.configData.context.nodeID,
                 SECP256K1CryptoSystem(),
                 privKey
         )
         val connManager = makeConnManager(commConfiguration)
         return EBFTBlockchainInstanceWorker(engine,
                 config,
-                configuration.configData.nodeID,
+                configuration.configData.context.nodeID,
                 commConfiguration,
-                connManager
+                connManager,
+                restartHandler
         )
     }
 }
@@ -122,7 +123,8 @@ class EBFTBlockchainInstanceWorker(
         config: Configuration,
         nodeIndex: Int,
         peerCommConfiguration: PeerCommConfiguration,
-        connManager: PeerConnectionManager<EbftMessage>
+        connManager: PeerConnectionManager<EbftMessage>,
+        val restartHandler: RestartHandler
 ) : BlockchainInstanceModel {
 
     lateinit var updateLoop: Thread

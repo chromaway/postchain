@@ -6,9 +6,8 @@ import net.postchain.base.*
 import net.postchain.base.data.BaseStorage
 import net.postchain.base.data.BaseTransactionQueue
 import net.postchain.core.*
-import net.postchain.core.BlockchainEngine
-import net.postchain.gtx.encodeGTXValue
 import net.postchain.gtx.GTXValue
+import net.postchain.gtx.encodeGTXValue
 import org.apache.commons.configuration2.Configuration
 import org.apache.commons.dbcp2.BasicDataSource
 import org.apache.commons.dbutils.QueryRunner
@@ -25,7 +24,7 @@ fun getBlockchainConfiguration(config: Configuration, chainId: Long, nodeIndex: 
     )
 
     return factory.makeBlockchainConfiguration(baseConfig,
-            BaseBlockchainContext(baseConfig.blockchainRID, nodeIndex, chainId))
+            BaseBlockchainContext(baseConfig.context.blockchainRID, nodeIndex, chainId, null))  // TODO
 }
 
 class TestNodeEngine(val engine: BlockchainEngine,
