@@ -17,9 +17,6 @@ import net.postchain.core.UserMistake
 import spark.Request
 import spark.Service
 
-
-class OverloadedException(message: String) : Exception(message)
-
 class RestApi(private val model: Model, private val listenPort: Int, private val basePath: String) {
 
     companion object : KLogging()
