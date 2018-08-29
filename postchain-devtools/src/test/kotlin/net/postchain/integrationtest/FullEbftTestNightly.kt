@@ -10,12 +10,10 @@ import net.postchain.test.EbftIntegrationTest
 import net.postchain.test.OnDemandBlockBuildingStrategy
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(JUnitParamsRunner::class)
-@Ignore
 class FullEbftTestNightly : EbftIntegrationTest() {
     companion object : KLogging()
 
@@ -24,13 +22,13 @@ class FullEbftTestNightly : EbftIntegrationTest() {
     }
 
     @Test
-    @Parameters("3, 1, 0",  "3, 2, 0", "3, 10, 0",
-                "3, 1, 10", "3, 2, 10", "3, 10, 10",
-                "4, 1, 0",  "4, 2, 0",  "4, 10, 0",
-                "4, 1, 10", "4, 2, 10", "4, 10, 10",
-                "8, 1, 0",  "8, 2, 0",  "8, 10, 0",
-                "8, 1, 10", "8, 2, 10", "8, 10, 10" //"25, 100, 0"
-                )
+    @Parameters("3, 1, 0", "3, 2, 0", "3, 10, 0",
+            "3, 1, 10", "3, 2, 10", "3, 10, 10",
+            "4, 1, 0", "4, 2, 0", "4, 10, 0",
+            "4, 1, 10", "4, 2, 10", "4, 10, 10",
+            "8, 1, 0", "8, 2, 0", "8, 10, 0",
+            "8, 1, 10", "8, 2, 10", "8, 10, 10" //"25, 100, 0"
+    )
     fun runXNodesWithYTxPerBlock(nodeCount: Int, blockCount: Int, txPerBlock: Int) {
         configOverrides.setProperty("blockchain.1.blockstrategy", OnDemandBlockBuildingStrategy::class.qualifiedName)
         createEbftNodes(nodeCount)
