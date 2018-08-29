@@ -10,10 +10,12 @@ import net.postchain.test.EbftIntegrationTest
 import net.postchain.test.OnDemandBlockBuildingStrategy
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(JUnitParamsRunner::class)
+@Ignore
 class FullEbftTestNightly : EbftIntegrationTest() {
     companion object : KLogging()
 
