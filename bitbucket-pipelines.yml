@@ -5,7 +5,7 @@ pipelines:
         caches:
           - maven
         script:
-          - mvn -B -P ci clean install -X
+          - mvn -B -P ci clean install
         services: 
           - postgres
 definitions: 
