@@ -2,8 +2,8 @@
 
 package net.postchain.integrationtest
 
-import net.postchain.PostchainNode
 import net.postchain.api.rest.model.ApiTx
+import net.postchain.LegacyTestNode
 import net.postchain.base.BaseBlockchainConfigurationData
 import net.postchain.common.toHex
 import net.postchain.core.*
@@ -14,8 +14,8 @@ import java.util.concurrent.LinkedBlockingQueue
 
 class TxForwardingTest: EbftIntegrationTest() {
 
-    fun strat(node: PostchainNode): ThreeTxStrategy {
-        return node.getModel().engine.getBlockBuildingStrategy() as ThreeTxStrategy
+    fun strat(node: LegacyTestNode): ThreeTxStrategy {
+        return node.getModel().getEngine().getBlockBuildingStrategy() as ThreeTxStrategy
     }
 
     fun tx(id: Int): ApiTx {
@@ -72,7 +72,7 @@ class TxForwardingTest: EbftIntegrationTest() {
         ebftNodes[2].getModel().apiModel!!.postTransaction(tx(8))
         strat(ebftNodes[2]).awaitCommitted(2)
 
-        val q0 = ebftNodes[2].getModel().blockQueries
+        val q0 = ebftNodes[2].getModel().getEngine().getBlockQueries()
         for (i in 0..2) {
             val b0 = q0.getBlockAtHeight(i.toLong()).get()
             Assert.assertEquals(3, b0.transactions.size)

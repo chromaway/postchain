@@ -20,6 +20,25 @@ import java.util.*
 // TODO: can we generalize conn? We can make it an Object, but then we have to do typecast everywhere...
 open class EContext(val conn: Connection, val chainID: Long, val nodeID: Int)
 
+/**
+ * Indicates that NodeID of a consensus group member node should be determined automatically
+ * the infrastructure
+ */
+const val NODE_ID_AUTO = -2
+
+/**
+ * Indicates that node is should be configured as read-only replica which has no special role
+ * in the consensus process and thus its identity does not matter.
+ */
+const val NODE_ID_READ_ONLY = -1
+
+/**
+ * Used when "node id" is not applicable to the blockchain configuration in question.
+ */
+const val NODE_ID_NA = -3
+
+const val NODE_ID_TODO = -1
+
 open class BlockEContext(conn: Connection, chainID: Long, nodeID: Int, val blockIID: Long, val timestamp: Long)
     : EContext(conn, chainID, nodeID)
 
@@ -127,6 +146,7 @@ interface BlockchainContext {
     val blockchainRID: ByteArray
     val nodeID: Int
     val chainID: Long
+    val nodeRID: ByteArray?
 }
 
 interface BlockchainConfigurationFactory {
@@ -196,6 +216,7 @@ interface BlockStore {
 }
 
 interface ConfigurationDataStore {
+    fun findConfiguration(context: EContext, height: Long): Long
     fun getConfigurationData(context: EContext, height: Long): ByteArray
     fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long
 }
@@ -220,20 +241,30 @@ interface BlockchainEngine: Shutdownable {
     fun getTransactionQueue(): TransactionQueue
     fun getBlockBuildingStrategy(): BlockBuildingStrategy
     fun getBlockQueries(): BlockQueries
+    fun getConfiguration(): BlockchainConfiguration
+    fun setRestartHandler(restartHandler: RestartHandler)
 }
 
 interface BlockchainProcess: Shutdownable {
     fun getEngine(): BlockchainEngine
 }
 
-interface BlockchainInfrastructure {
+interface BlockchainProcessManager: Shutdownable {
+    fun addBlockchain(chainID: Long)
+}
+
+typealias RestartHandler = () -> Unit
+
+interface SynchronizationInfrastructure {
+    fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess
+}
+
+interface BlockchainInfrastructure: SynchronizationInfrastructure {
     fun parseConfigurationString(rawData: String, format: String): ByteArray
     fun makeBlockchainConfiguration(rawConfigurationData: ByteArray, context: BlockchainContext): BlockchainConfiguration
     fun makeBlockchainEngine(configuration: BlockchainConfiguration): BlockchainEngine
-    //fun makeBlockchainProcess(engine: BlockchainEngine): BlockchainProcess
 }
 
-interface BlockchainInfrastructureFactory {
+interface InfrastructureFactory {
     fun makeBlockchainInfrastructure(config: Configuration): BlockchainInfrastructure
 }
-

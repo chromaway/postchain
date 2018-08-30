@@ -10,7 +10,6 @@ import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.createDataLayer
-import net.postchain.core.BlockchainEngine
 import net.postchain.createTestNodeEngine
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.gtx
@@ -239,7 +238,7 @@ open class IntegrationTest {
         val blockchainRID = config.getString("blockchain.1.blockchainrid").hexStringToByteArray() // TODO
 
         val dataLayer = createTestNodeEngine(infrastructure as BaseBlockchainInfrastructure,
-                gtxConfig!!, BaseBlockchainContext(blockchainRID, nodeIndex, chainId)
+                gtxConfig!!, BaseBlockchainContext(blockchainRID, nodeIndex, chainId, null) // TODO
         )
 
         // keep list of nodes to shutdown after test

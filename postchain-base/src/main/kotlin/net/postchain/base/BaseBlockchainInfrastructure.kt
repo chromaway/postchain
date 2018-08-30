@@ -1,6 +1,5 @@
 package net.postchain.base
 
-import net.postchain.base.data.BaseStorage
 import net.postchain.base.data.BaseTransactionQueue
 import net.postchain.baseStorage
 import net.postchain.common.hexStringToByteArray
@@ -26,18 +25,22 @@ class BaseBlockchainInfrastructure(val config: Configuration) : BlockchainInfras
     }
 
     override fun makeBlockchainConfiguration(rawConfigurationData: ByteArray, context: BlockchainContext): BlockchainConfiguration {
+
+        val actualContext: BlockchainContext
+        if (context.nodeRID == null) {
+            actualContext = BaseBlockchainContext(context.blockchainRID, context.nodeID, context.chainID, subjectID)
+        } else {
+            actualContext = context
+        }
+
         val gtxData = decodeGTXValue(rawConfigurationData)
-        val confData = BaseBlockchainConfigurationData(gtxData,
-                context.blockchainRID,
-                context.chainID,
-                context.nodeID,
-                blockSigner,
-                subjectID
+        val confData = BaseBlockchainConfigurationData(gtxData, actualContext,
+                blockSigner
         )
         val bcfClass = Class.forName(confData.data["configurationfactory"]!!.asString())
         val factory = (bcfClass.newInstance() as BlockchainConfigurationFactory)
 
-        return factory.makeBlockchainConfiguration(confData, context)
+        return factory.makeBlockchainConfiguration(confData, actualContext)
     }
 
     override fun makeBlockchainEngine(bc: BlockchainConfiguration): BaseBlockchainEngine
@@ -49,9 +52,13 @@ class BaseBlockchainInfrastructure(val config: Configuration) : BlockchainInfras
         return engine
     }
 
+    override fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
+        TODO("Nope")
+    }
+
 }
 
-class BaseBlockchainInfrastructureFactory : BlockchainInfrastructureFactory {
+class BaseBlockchainInfrastructureFactory : InfrastructureFactory {
     override fun makeBlockchainInfrastructure(config: Configuration): BlockchainInfrastructure {
         return BaseBlockchainInfrastructure(config)
     }

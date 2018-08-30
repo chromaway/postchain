@@ -5,7 +5,7 @@ package net.postchain.gtx
 import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import mu.KLogging
-import net.postchain.PostchainNode
+import net.postchain.LegacyTestNode
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.configurations.GTXTestModule
 import net.postchain.test.EbftIntegrationTest
@@ -19,8 +19,8 @@ import kotlin.system.measureNanoTime
 class GTXPerformanceTestNightly : EbftIntegrationTest() {
     companion object : KLogging()
 
-    fun strat(node: PostchainNode): OnDemandBlockBuildingStrategy {
-        return node.getModel().engine.getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
+    fun strat(node: LegacyTestNode): OnDemandBlockBuildingStrategy {
+        return node.getModel().getEngine().getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
     }
 
     fun makeTestTx(id: Long, value: String): ByteArray {
@@ -116,7 +116,7 @@ class GTXPerformanceTestNightly : EbftIntegrationTest() {
         for (i in 0 until blockCount) {
             for (tx in 0 until txPerBlock) {
                 val txf = ebftNodes[statusManager.primaryIndex()].getModel().blockchainConfiguration.getTransactionFactory()
-                ebftNodes[statusManager.primaryIndex()].getModel().txQueue.enqueue(
+                ebftNodes[statusManager.primaryIndex()].getModel().getEngine().getTransactionQueue().enqueue(
                         txf.decodeTransaction(makeTestTx(1, (txId++).toString()))
                 )
             }

@@ -5,7 +5,7 @@ package net.postchain.integrationtest
 import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import mu.KLogging
-import net.postchain.PostchainNode
+import net.postchain.LegacyTestNode
 import net.postchain.test.EbftIntegrationTest
 import net.postchain.test.OnDemandBlockBuildingStrategy
 import org.junit.Assert.assertArrayEquals
@@ -17,8 +17,8 @@ import org.junit.runner.RunWith
 class FullEbftTestNightly : EbftIntegrationTest() {
     companion object : KLogging()
 
-    fun strat(node: PostchainNode): OnDemandBlockBuildingStrategy {
-        return node.getModel().engine.getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
+    fun strat(node: LegacyTestNode): OnDemandBlockBuildingStrategy {
+        return node.getModel().getEngine().getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
     }
 
     @Test
@@ -37,16 +37,16 @@ class FullEbftTestNightly : EbftIntegrationTest() {
         var statusManager = ebftNodes[0].getModel().statusManager
         for (i in 0 until blockCount) {
             for (tx in 0 until txPerBlock) {
-                ebftNodes[statusManager.primaryIndex()].getModel().txQueue.enqueue(TestTransaction(txId++))
+                ebftNodes[statusManager.primaryIndex()].getModel().getEngine().getTransactionQueue().enqueue(TestTransaction(txId++))
             }
             strat(ebftNodes[statusManager.primaryIndex()]).triggerBlock()
             ebftNodes.forEach { strat(it).awaitCommitted(i) }
         }
 
-        val queries0 = ebftNodes[0].getModel().blockQueries
+        val queries0 = ebftNodes[0].getModel().getEngine().getBlockQueries()
         val referenceHeight = queries0.getBestHeight().get()
         ebftNodes.forEach { node ->
-            val queries = node.getModel().blockQueries
+            val queries = node.getModel().getEngine().getBlockQueries()
             assertEquals(referenceHeight, queries.getBestHeight().get())
             for (height in 0..referenceHeight) {
                 val rids = queries.getBlockRids(height).get()

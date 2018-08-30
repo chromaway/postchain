@@ -7,7 +7,6 @@ import net.postchain.base.data.BaseManagedBlockBuilder
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
 import net.postchain.core.*
-import net.postchain.core.BlockchainEngine
 import nl.komponents.kovenant.task
 import java.lang.Long.max
 
@@ -29,6 +28,13 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
     private lateinit var blockQueries: BlockQueries
     private var initialized = false
     private var closed = false
+
+    private var _restartHandler: RestartHandler? = null
+
+    override fun setRestartHandler(restartHandler: RestartHandler) {
+        _restartHandler = restartHandler
+    }
+
 
     override fun initializeDB() {
         if (initialized) throw ProgrammerMistake("Engine is already initialized")
@@ -55,6 +61,10 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
         return strategy
     }
 
+    override fun getConfiguration(): BlockchainConfiguration {
+        return bc
+    }
+
     override fun shutdown() {
         s.close()
     }
@@ -68,6 +78,14 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
             val aBB = _bb as AbstractBlockBuilder
             tq.removeAll(aBB.transactions)
             strategy.blockCommitted(_bb.getBlockData())
+            // TODO
+            /*
+            val myConfigurationHeight = BaseConfigurationDataStore.findConfiguration(ctxt, aBB.iBlockData.height)
+            val nextConfigurationHeight = BaseConfigurationDataStore.findConfiguration(ctxt, aBB.iBlockData.height + 1)
+            if (myConfigurationHeight != nextConfigurationHeight)
+                if (_restartHandler != null)
+                    _restartHandler!!()*/
+
         }
     }
 

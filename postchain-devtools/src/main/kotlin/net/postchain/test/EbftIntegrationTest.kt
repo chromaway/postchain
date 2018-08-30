@@ -2,20 +2,20 @@
 
 package net.postchain.test
 
-import net.postchain.PostchainNode
+import net.postchain.LegacyTestNode
 import org.junit.After
 
 open class EbftIntegrationTest : IntegrationTest() {
-    protected var ebftNodes: Array<PostchainNode> = arrayOf()
+    protected var ebftNodes: Array<LegacyTestNode> = arrayOf()
 
     open fun createEbftNodes(count: Int) {
         ebftNodes = Array(count) { createEBFTNode(count, it) }
     }
 
-    private fun createEBFTNode(nodeCount: Int, myIndex: Int): PostchainNode {
+    private fun createEBFTNode(nodeCount: Int, myIndex: Int): LegacyTestNode {
         configOverrides.setProperty("messaging.privkey", privKeyHex(myIndex))
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
-        val pn = PostchainNode()
+        val pn = LegacyTestNode()
         pn.start(createConfig(myIndex, nodeCount, DEFAULT_CONFIG_FILE), myIndex)
         return pn
     }

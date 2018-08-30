@@ -3,9 +3,6 @@ package net.postchain.cli
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
 import net.postchain.base.BaseConfigurationDataStore
-import net.postchain.base.withWriteConnection
-import net.postchain.baseStorage
-import net.postchain.config.CommonsConfigurationFactory
 import net.postchain.gtx.encodeGTXValue
 import net.postchain.gtx.gtxml.GTXMLValueParser
 import org.apache.commons.lang3.builder.ToStringBuilder
@@ -19,8 +16,8 @@ class CommandAddConfiguration : Command {
     @Parameter(names = ["-nc", "--node-config"], description = "Configuration file of blockchain (.properties file)")
     private var nodeConfigFile = ""
 
-    @Parameter(names = ["-a", "--archetype"], description = "Archetype of blockchain. Not currently used.")
-    private var archetype = "base"
+    @Parameter(names = ["-i", "--infrastructure"], description = "The type of blockchain infrastructure.")
+    private var infrastructureType = "base/ebft"
 
     @Parameter(names = ["-cid", "--chain-id"], description = "Id of blockchain", required = true)
     private var chainId = 0L
@@ -35,22 +32,18 @@ class CommandAddConfiguration : Command {
 
     override fun execute() {
         println("add-configuration will be executed with options: " +
-                "${ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE)}")
+                ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
         val gtxValue = GTXMLValueParser.parseGTXMLValue(
                 File(blockchainConfigFile).readText())
         val encodedGtxValue = encodeGTXValue(gtxValue)
 
-        val nodeConfiguration = CommonsConfigurationFactory.readFromFile(nodeConfigFile)
-        val storage = baseStorage(nodeConfiguration, -1 /*Will be eliminate later*/)
-
         var result = false
-        withWriteConnection(storage, chainId) {
+        runDBCommandBody(nodeConfigFile, chainId) {
+            ctx, _ ->
             result = BaseConfigurationDataStore
-                    .addConfigurationData(it, height, encodedGtxValue) > 0
-            true
+                    .addConfigurationData(ctx, height, encodedGtxValue) > 0
         }
-
         println(reportMessage(result))
     }
 

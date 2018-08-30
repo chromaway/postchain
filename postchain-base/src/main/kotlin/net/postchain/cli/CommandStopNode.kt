@@ -1,7 +1,7 @@
 package net.postchain.cli
 
 import com.beust.jcommander.Parameters
-import net.postchain.PostchainNode
+import net.postchain.LegacyTestNode
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
 
@@ -17,6 +17,6 @@ class CommandStopNode : Command {
         println("stop-node will be executed with options: " +
                 "${ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE)}")
 
-        PostchainNode().stop()
+        LegacyTestNode().stop()
     }
 }
