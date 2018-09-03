@@ -31,7 +31,7 @@ interface DatabaseAccess {
     fun getTxHash(ctx: EContext, txRID: ByteArray): ByteArray
     fun getBlockTxRIDs(ctx: EContext, blockIid: Long): List<ByteArray>
     fun getBlockTxHashes(ctx: EContext, blokcIid: Long): List<ByteArray>
-    fun getTxBytes(ctx: EContext, rid: ByteArray): ByteArray?
+    fun getTxBytes(ctx: EContext, txRID: ByteArray): ByteArray?
     fun isTransactionConfirmed(ctx: EContext, txRID: ByteArray): Boolean
 
     // Configurations
@@ -41,7 +41,7 @@ interface DatabaseAccess {
 }
 
 class SQLDatabaseAccess : DatabaseAccess {
-    var r = QueryRunner()
+    var queryRunner = QueryRunner()
     private val intRes = ScalarHandler<Int>()
     private val longRes = ScalarHandler<Long>()
     private val signatureRes = BeanListHandler<Signature>(Signature::class.java)
@@ -55,13 +55,13 @@ class SQLDatabaseAccess : DatabaseAccess {
     private val stringRes = ScalarHandler<String>()
 
     override fun insertBlock(ctx: EContext, height: Long): Long {
-        return r.insert(ctx.conn,
+        return queryRunner.insert(ctx.conn,
                 "INSERT INTO blocks (chain_id, block_height) VALUES (?, ?) RETURNING block_iid",
                 longRes, ctx.chainID, height)
     }
 
     override fun insertTransaction(ctx: BlockEContext, tx: Transaction): Long {
-        return r.insert(ctx.conn,
+        return queryRunner.insert(ctx.conn,
                 "INSERT INTO transactions (chain_id, tx_rid, tx_data, tx_hash, block_iid)" +
                         "VALUES (?, ?, ?, ?, ?) RETURNING tx_iid",
                 longRes,
@@ -69,32 +69,32 @@ class SQLDatabaseAccess : DatabaseAccess {
     }
 
     override fun finalizeBlock(ctx: BlockEContext, header: BlockHeader) {
-        r.update(ctx.conn,
+        queryRunner.update(ctx.conn,
                 "UPDATE blocks SET block_rid = ?, block_header_data = ?, timestamp = ? WHERE chain_id = ? AND block_iid = ?",
                 header.blockRID, header.rawData, (header as BaseBlockHeader).timestamp, ctx.chainID, ctx.blockIID
         )
     }
 
     override fun commitBlock(bctx: BlockEContext, w: BlockWitness) {
-        r.update(bctx.conn,
+        queryRunner.update(bctx.conn,
                 "UPDATE blocks SET block_witness = ? WHERE block_iid=?",
                 w.getRawData(), bctx.blockIID)
     }
 
     override fun getBlockHeight(ctx: EContext, blockRID: ByteArray): Long? {
-        return r.query(ctx.conn, "SELECT block_height FROM blocks where chain_id = ? and block_rid = ?",
+        return queryRunner.query(ctx.conn, "SELECT block_height FROM blocks where chain_id = ? and block_rid = ?",
                 nullableLongRes, ctx.chainID, blockRID)
     }
 
 
     override fun getBlockRIDs(ctx: EContext, height: Long): List<ByteArray> {
-        return r.query(ctx.conn,
+        return queryRunner.query(ctx.conn,
                 "SELECT block_rid FROM blocks WHERE chain_id = ? AND block_height = ?",
                 byteArrayListRes, ctx.chainID, height)
     }
 
     override fun getBlockHeader(ctx: EContext, blockRID: ByteArray): ByteArray {
-        return r.query(ctx.conn, "SELECT block_header_data FROM blocks where chain_id = ? and block_rid = ?",
+        return queryRunner.query(ctx.conn, "SELECT block_header_data FROM blocks where chain_id = ? and block_rid = ?",
                 byteArrayRes, ctx.chainID, blockRID)
     }
 
@@ -105,29 +105,29 @@ class SQLDatabaseAccess : DatabaseAccess {
             JOIN blocks b ON t.block_iid=b.block_iid
             WHERE b.block_rid=? AND b.chain_id=?
             ORDER BY tx_iid"""
-        return r.query(ctx.conn, sql, byteArrayListRes, blockRID, ctx.chainID)
+        return queryRunner.query(ctx.conn, sql, byteArrayListRes, blockRID, ctx.chainID)
     }
 
     override fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray {
-        return r.query(ctx.conn,
+        return queryRunner.query(ctx.conn,
                 "SELECT block_witness FROM blocks WHERE chain_id = ? AND block_rid = ?",
                 byteArrayRes, ctx.chainID, blockRID)
     }
 
     override fun getLastBlockHeight(ctx: EContext): Long {
-        return r.query(ctx.conn,
+        return queryRunner.query(ctx.conn,
                 "SELECT block_height FROM blocks WHERE chain_id = ? ORDER BY block_height DESC LIMIT 1",
                 longRes, ctx.chainID) ?: -1L
     }
 
     override fun getLastBlockTimestamp(ctx: EContext): Long {
-        return r.query(ctx.conn,
+        return queryRunner.query(ctx.conn,
                 "SELECT timestamp FROM blocks WHERE chain_id = ? ORDER BY timestamp DESC LIMIT 1",
                 longRes, ctx.chainID) ?: -1L
     }
 
     override fun getTxRIDsAtHeight(ctx: EContext, height: Long): Array<ByteArray> {
-        return r.query(ctx.conn,
+        return queryRunner.query(ctx.conn,
                 "SELECT tx_rid FROM " +
                         "transactions t " +
                         "INNER JOIN blocks b ON t.block_iid=b.block_iid " +
@@ -136,7 +136,7 @@ class SQLDatabaseAccess : DatabaseAccess {
     }
 
     override fun getBlockInfo(ctx: EContext, txRID: ByteArray): DatabaseAccess.BlockInfo {
-        val block = r.query(ctx.conn,
+        val block = queryRunner.query(ctx.conn,
                 """
                     SELECT b.block_iid, b.block_header_data, b.block_witness
                     FROM blocks b JOIN transactions t ON b.block_iid=t.block_iid
@@ -151,13 +151,13 @@ class SQLDatabaseAccess : DatabaseAccess {
     }
 
     override fun getTxHash(ctx: EContext, txRID: ByteArray): ByteArray {
-        return r.query(ctx.conn,
+        return queryRunner.query(ctx.conn,
                 "SELECT tx_hash FROM transactions WHERE tx_rid = ? and chain_id =?",
                 byteArrayRes, txRID, ctx.chainID)
     }
 
     override fun getBlockTxRIDs(ctx: EContext, blockIid: Long): List<ByteArray> {
-        return r.query(ctx.conn,
+        return queryRunner.query(ctx.conn,
                 "SELECT tx_rid FROM " +
                         "transactions t " +
                         "where t.block_iid=? order by tx_iid",
@@ -165,7 +165,7 @@ class SQLDatabaseAccess : DatabaseAccess {
     }
 
     override fun getBlockTxHashes(ctx: EContext, blockIid: Long): List<ByteArray> {
-        return r.query(ctx.conn,
+        return queryRunner.query(ctx.conn,
                 "SELECT tx_hash FROM " +
                         "transactions t " +
                         "where t.block_iid=? order by tx_iid",
@@ -173,14 +173,14 @@ class SQLDatabaseAccess : DatabaseAccess {
     }
 
 
-    override fun getTxBytes(ctx: EContext, rid: ByteArray): ByteArray? {
-        return r.query(ctx.conn, "SELECT tx_data FROM " +
+    override fun getTxBytes(ctx: EContext, txRID: ByteArray): ByteArray? {
+        return queryRunner.query(ctx.conn, "SELECT tx_data FROM " +
                 "transactions WHERE chain_id=? AND tx_rid=?",
-                nullableByteArrayRes, ctx.chainID, rid)
+                nullableByteArrayRes, ctx.chainID, txRID)
     }
 
     override fun isTransactionConfirmed(ctx: EContext, txRID: ByteArray): Boolean {
-        val res = r.query(ctx.conn,
+        val res = queryRunner.query(ctx.conn,
                 """
                         SELECT 1 FROM transactions t
                         WHERE t.chain_id=? AND t.tx_rid=?
@@ -189,7 +189,7 @@ class SQLDatabaseAccess : DatabaseAccess {
     }
 
     override fun getBlockchainRID(ctx: EContext): ByteArray? {
-        return r.query(ctx.conn, "SELECT blockchain_rid FROM blockchains WHERE chain_id = ?",
+        return queryRunner.query(ctx.conn, "SELECT blockchain_rid FROM blockchains WHERE chain_id = ?",
                 nullableByteArrayRes, ctx.chainID)
     }
 
@@ -207,20 +207,20 @@ class SQLDatabaseAccess : DatabaseAccess {
                     AND    c.relkind = 'r'
         """
 
-        val metaExists = r.query(ctx.conn, checkExists, ColumnListHandler<Int>())
+        val metaExists = queryRunner.query(ctx.conn, checkExists, ColumnListHandler<Int>())
         if (metaExists.size == 1) {
             // meta table already exists. Check the version
-            val versionString = r.query(ctx.conn, "SELECT value FROM meta WHERE key='version'", ScalarHandler<String>())
+            val versionString = queryRunner.query(ctx.conn, "SELECT value FROM meta WHERE key='version'", ScalarHandler<String>())
             val version = versionString.toInt()
             if (version != expectedDbVersion) {
                 throw UserMistake("Unexpected version '$version' in database. Expected '$expectedDbVersion'")
             }
 
             // Check that the blockchainRID is present for block_id
-            val dbRid = r.query(ctx.conn, "SELECT blockchain_rid from blockchains where chain_id=?",
+            val dbRid = queryRunner.query(ctx.conn, "SELECT blockchain_rid from blockchains where chain_id=?",
                     nullableByteArrayRes, ctx.chainID)
             if (dbRid == null) {
-                r.insert(ctx.conn, "INSERT INTO blockchains (chain_id, blockchain_rid) values (?, ?)",
+                queryRunner.insert(ctx.conn, "INSERT INTO blockchains (chain_id, blockchain_rid) values (?, ?)",
                         ScalarHandler<Unit>(), ctx.chainID, blockchainRID)
             } else if (!dbRid.contentEquals(blockchainRID)) {
                 throw UserMistake("The blockchainRID in db for chainId ${ctx.chainID} " +
@@ -231,20 +231,20 @@ class SQLDatabaseAccess : DatabaseAccess {
 
         // meta table does not exist! Assume database does not exist.
 
-        r.update(ctx.conn, """
+        queryRunner.update(ctx.conn, """
             CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)
             """)
-        r.update(ctx.conn, "INSERT INTO meta (key, value) values ('version', ?)", expectedDbVersion)
+        queryRunner.update(ctx.conn, "INSERT INTO meta (key, value) values ('version', ?)", expectedDbVersion)
 
         // Don't use "CREATE TABLE IF NOT EXISTS" because if they do exist
         // we must throw an error. If these tables exists but meta did not exist,
         // there is some serious problem that needs manual work
-        r.update(ctx.conn, "CREATE TABLE blockchains " +
+        queryRunner.update(ctx.conn, "CREATE TABLE blockchains " +
                 "(chain_id BIGINT PRIMARY KEY, blockchain_rid BYTEA NOT NULL)")
-        r.insert(ctx.conn, "INSERT INTO blockchains (chain_id, blockchain_rid) values (?, ?)",
+        queryRunner.insert(ctx.conn, "INSERT INTO blockchains (chain_id, blockchain_rid) values (?, ?)",
                 ScalarHandler<Unit>(), ctx.chainID, blockchainRID)
 
-        r.update(ctx.conn,
+        queryRunner.update(ctx.conn,
                 "CREATE TABLE blocks" +
                         " (block_iid BIGSERIAL PRIMARY KEY," +
                         "  block_height BIGINT NOT NULL, " +
@@ -256,7 +256,7 @@ class SQLDatabaseAccess : DatabaseAccess {
                         "  UNIQUE (chain_id, block_rid)," +
                         "  UNIQUE (chain_id, block_height))")
 
-        r.update(ctx.conn, "CREATE TABLE transactions (" +
+        queryRunner.update(ctx.conn, "CREATE TABLE transactions (" +
                 "    tx_iid BIGSERIAL PRIMARY KEY, " +
                 "    chain_id bigint NOT NULL," +
                 "    tx_rid bytea NOT NULL," +
@@ -266,26 +266,26 @@ class SQLDatabaseAccess : DatabaseAccess {
                 "    UNIQUE (chain_id, tx_rid))")
 
         // Configurations
-        r.update(ctx.conn, "CREATE TABLE configurations (" +
+        queryRunner.update(ctx.conn, "CREATE TABLE configurations (" +
                 "configuration_iid BIGSERIAL PRIMARY KEY" +
                 ", chain_id bigint NOT NULL" +
                 ", height BIGINT NOT NULL" +
                 ", configuration_data bytea NOT NULL" +
                 ")")
 
-        r.update(ctx.conn, """CREATE INDEX transactions_block_iid_idx ON transactions(block_iid)""")
-        r.update(ctx.conn, """CREATE INDEX blocks_chain_id_timestamp ON blocks(chain_id, timestamp)""")
-        r.update(ctx.conn, """CREATE INDEX configurations_chain_id_to_height ON configurations(chain_id, height)""")
+        queryRunner.update(ctx.conn, """CREATE INDEX transactions_block_iid_idx ON transactions(block_iid)""")
+        queryRunner.update(ctx.conn, """CREATE INDEX blocks_chain_id_timestamp ON blocks(chain_id, timestamp)""")
+        queryRunner.update(ctx.conn, """CREATE INDEX configurations_chain_id_to_height ON configurations(chain_id, height)""")
     }
 
     override fun getConfigurationData(context: EContext, height: Long): ByteArray {
-        return r.query(context.conn,
+        return queryRunner.query(context.conn,
                 "SELECT configuration_data FROM configurations WHERE chain_id = ? and height = ?",
                 byteArrayRes, context.chainID, height)
     }
 
     override fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long {
-        return r.insert(context.conn,
+        return queryRunner.insert(context.conn,
                 "INSERT INTO configurations (chain_id, height, configuration_data) VALUES (?, ?, ?)",
                 longRes, context.chainID, height, data)
     }

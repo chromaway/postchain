@@ -17,7 +17,7 @@ fun ms(n1: Long, n2: Long): Long {
 }
 
 open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
-                                val s: Storage,
+                                val storage: Storage,
                                 private val chainID: Long,
                                 private val tq: TransactionQueue,
                                 private val useParallelDecoding: Boolean = true
@@ -38,13 +38,13 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
 
     override fun initializeDB() {
         if (initialized) throw ProgrammerMistake("Engine is already initialized")
-        withWriteConnection(s, chainID) { ctx ->
+        withWriteConnection(storage, chainID) { ctx ->
             bc.initializeDB(ctx)
             true
         }
         // BlockQueries should be instantiated only after
         // database is initialized
-        blockQueries = bc.makeBlockQueries(s)
+        blockQueries = bc.makeBlockQueries(storage)
         strategy = bc.getBlockBuildingStrategy(blockQueries, tq)
         initialized = true
     }
@@ -66,15 +66,15 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
     }
 
     override fun shutdown() {
-        s.close()
+        storage.close()
     }
 
     private fun makeBlockBuilder(): ManagedBlockBuilder {
         if (!initialized) throw ProgrammerMistake("Engine is not initialized yet")
         if (closed) throw ProgrammerMistake("Engine is already closed")
-        val ctxt = s.openWriteConnection(chainID)
+        val ctxt = storage.openWriteConnection(chainID)
         val bb = bc.makeBlockBuilder(ctxt)
-        return BaseManagedBlockBuilder(ctxt, s, bb) { _bb ->
+        return BaseManagedBlockBuilder(ctxt, storage, bb) { _bb ->
             val aBB = _bb as AbstractBlockBuilder
             tq.removeAll(aBB.transactions)
             strategy.blockCommitted(_bb.getBlockData())

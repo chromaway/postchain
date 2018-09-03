@@ -63,11 +63,11 @@ fun txConfirmationTime(config: Unit, ctx: EContext, args: GTXValue): GTXValue {
     val dba = SQLDatabaseAccess()
     val txRID = args["txRID"]!!.asByteArray(true)
     val info = dba.getBlockInfo(ctx, txRID)
-    val timestamp = dba.r.query(ctx.conn,"SELECT timestamp FROM blocks WHERE block_iid = ?",
+    val timestamp = dba.queryRunner.query(ctx.conn,"SELECT timestamp FROM blocks WHERE block_iid = ?",
             ScalarHandler<Long>(), info.blockIid)
-    val blockRID = dba.r.query(ctx.conn,"SELECT block_rid FROM blocks WHERE block_iid = ?",
+    val blockRID = dba.queryRunner.query(ctx.conn,"SELECT block_rid FROM blocks WHERE block_iid = ?",
             ScalarHandler<ByteArray>(), info.blockIid)
-    val blockHeight = dba.r.query(ctx.conn,"SELECT block_height FROM blocks WHERE block_iid = ?",
+    val blockHeight = dba.queryRunner.query(ctx.conn,"SELECT block_height FROM blocks WHERE block_iid = ?",
             ScalarHandler<Long>(), info.blockIid)
     return gtx(
             "timestamp" to gtx(timestamp),

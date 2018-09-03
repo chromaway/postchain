@@ -208,7 +208,7 @@ interface BlockStore {
     fun getBlockHeader(ctx: EContext, blockRID: ByteArray): ByteArray
 
     fun getTxRIDsAtHeight(ctx: EContext, height: Long): Array<ByteArray>
-    fun getTxBytes(ctx: EContext, rid: ByteArray): ByteArray?
+    fun getTxBytes(ctx: EContext, txRID: ByteArray): ByteArray?
     fun getBlockTransactions(ctx: EContext, blockRID: ByteArray): List<ByteArray>
 
     fun isTransactionConfirmed(ctx: EContext, txRID: ByteArray): Boolean
