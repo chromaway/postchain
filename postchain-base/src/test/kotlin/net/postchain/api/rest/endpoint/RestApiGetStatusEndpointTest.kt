@@ -3,23 +3,21 @@ package net.postchain.api.rest.endpoint
 import io.restassured.RestAssured.given
 import net.postchain.api.rest.controller.Model
 import net.postchain.api.rest.controller.RestApi
+import net.postchain.api.rest.model.ApiStatus
 import net.postchain.api.rest.model.TxRID
-import net.postchain.base.BaseBlockWitness
-import net.postchain.base.ConfirmationProof
-import net.postchain.base.MerklePath
 import net.postchain.common.hexStringToByteArray
+import net.postchain.core.TransactionStatus
 import org.easymock.EasyMock.*
-import org.hamcrest.Matchers.isEmptyString
-import org.hamcrest.core.IsEqual.equalTo
+import org.hamcrest.Matchers.equalToIgnoringCase
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
 /**
- * [GetConfirmation] and [GetTx] endpoints have common part,
+ * [GetStatus] and [GetTx] endpoints have common part,
  * so see [RestApiGetTxEndpointTest] for additional tests
  */
-class RestApiGetConfirmationProofEndpointTest {
+class RestApiGetStatusEndpointTest {
 
     private val basePath = "/api/v1"
     private lateinit var restApi: RestApi
@@ -40,29 +38,17 @@ class RestApiGetConfirmationProofEndpointTest {
     }
 
     @Test
-    fun test_getConfirmationProof_ok() {
-        val expectedObject = ConfirmationProof(
-                txHashHex.toByteArray(),
-                byteArrayOf(0x0a, 0x0b, 0x0c),
-                BaseBlockWitness(
-                        byteArrayOf(0x0b),
-                        arrayOf()),
-                MerklePath())
-
-        expect(model.getConfirmationProof(TxRID(txHashHex.hexStringToByteArray())))
-                .andReturn(expectedObject)
+    fun test_getStatus_ok() {
+        expect(model.getStatus(TxRID(txHashHex.hexStringToByteArray())))
+                .andReturn(ApiStatus(TransactionStatus.CONFIRMED))
         replay(model)
 
         given().basePath(basePath).port(restApi.actualPort())
-                .get("/tx/$blockchainRID/$txHashHex/confirmationProof")
+                .get("/tx/$blockchainRID/$txHashHex/status")
                 .then()
                 .statusCode(200)
-                .body("hash", org.hamcrest.Matchers.not(isEmptyString()))
-                .body("blockHeader", equalTo("0A0B0C"))
-                .body("signatures.size()", equalTo(0))
-                .body("merklePath.size()", equalTo(0))
+                .body("status", equalToIgnoringCase("CONFIRMED"))
 
         verify(model)
     }
-
 }

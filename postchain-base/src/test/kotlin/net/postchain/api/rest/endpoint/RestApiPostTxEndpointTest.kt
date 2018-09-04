@@ -109,4 +109,42 @@ class RestApiPostTxEndpointTest {
         verify(model)
     }
 
+    @Test
+    fun test_postTx_when_blockchainRID_too_long_then_400_received() {
+        replay(model)
+
+        given().basePath(basePath).port(restApi.actualPort())
+                .body("a")
+                .post("/tx/${blockchainRID}0000")
+                .then()
+                .statusCode(400)
+
+        verify(model)
+    }
+
+    @Test
+    fun test_postTx_when_blockchainRID_too_short_then_400_received() {
+        replay(model)
+
+        given().basePath(basePath).port(restApi.actualPort())
+                .body("a")
+                .post("/tx/${blockchainRID.substring(1)}")
+                .then()
+                .statusCode(400)
+
+        verify(model)
+    }
+
+    @Test
+    fun test_postTx_when_blockchainRID_not_hex_then_400_received() {
+        replay(model)
+
+        given().basePath(basePath).port(restApi.actualPort())
+                .body("a")
+                .post("/tx/${blockchainRID.replaceFirst("a", "g")}")
+                .then()
+                .statusCode(400)
+
+        verify(model)
+    }
 }

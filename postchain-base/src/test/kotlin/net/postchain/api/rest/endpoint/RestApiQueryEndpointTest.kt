@@ -96,4 +96,55 @@ class RestApiQueryEndpointTest {
 
         verify(model)
     }
+
+    @Test
+    fun test_query_when_blockchainRID_too_long_then_400_received() {
+        val queryString = """{"a"="b", "c"=3}"""
+        val answerBody = """{"error":"Invalid blockchainRID. Expected 64 hex digits [0-9a-fA-F]"}"""
+
+        replay(model)
+
+        RestAssured.given().basePath(basePath).port(restApi.actualPort())
+                .body(queryString)
+                .post("/query/${blockchainRID}0000")
+                .then()
+                .statusCode(400)
+                .body(equalTo(answerBody))
+
+        verify(model)
+    }
+
+    @Test
+    fun test_query_when_blockchainRID_too_short_then_400_received() {
+        val queryString = """{"a"="b", "c"=3}"""
+        val answerBody = """{"error":"Invalid blockchainRID. Expected 64 hex digits [0-9a-fA-F]"}"""
+
+        replay(model)
+
+        RestAssured.given().basePath(basePath).port(restApi.actualPort())
+                .body(queryString)
+                .post("/query/${blockchainRID.substring(1)}")
+                .then()
+                .statusCode(400)
+                .body(equalTo(answerBody))
+
+        verify(model)
+    }
+
+    @Test
+    fun test_query_when_blockchainRID_not_hex_then_400_received() {
+        val queryString = """{"a"="b", "c"=3}"""
+        val answerBody = """{"error":"Invalid blockchainRID. Expected 64 hex digits [0-9a-fA-F]"}"""
+
+        replay(model)
+
+        RestAssured.given().basePath(basePath).port(restApi.actualPort())
+                .body(queryString)
+                .post("/query/${blockchainRID.replaceFirst("a", "g")}")
+                .then()
+                .statusCode(400)
+                .body(equalTo(answerBody))
+
+        verify(model)
+    }
 }

@@ -185,7 +185,7 @@ class RestApi(private val listenPort: Int, private val basePath: String) : Model
 
     private fun checkTxHashHex(request: Request): String {
         val hashHex = request.params(PARAM_HASH_HEX)
-        if (hashHex.length != 64 && !hashHex.matches(Regex("[0-9a-fA-F]{64}"))) {
+        if (!hashHex.matches(Regex("[0-9a-fA-F]{64}"))) {
             throw BadFormatError("Invalid hashHex. Expected 64 hex digits [0-9a-fA-F]")
         }
         return hashHex
@@ -193,7 +193,7 @@ class RestApi(private val listenPort: Int, private val basePath: String) : Model
 
     private fun checkBlockchainRID(request: Request): String {
         val blockchainRID = request.params(PARAM_BLOCKCHAIN_RID)
-        if (blockchainRID.length != 64 && !blockchainRID.matches(Regex("[0-9a-fA-F]{64}"))) {
+        if (!blockchainRID.matches(Regex("[0-9a-fA-F]{64}"))) {
             throw BadFormatError("Invalid blockchainRID. Expected 64 hex digits [0-9a-fA-F]")
         }
         return blockchainRID

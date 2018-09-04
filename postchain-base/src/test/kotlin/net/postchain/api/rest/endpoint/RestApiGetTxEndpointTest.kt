@@ -92,51 +92,6 @@ class RestApiGetTxEndpointTest {
     }
 
     @Test
-    fun test_getTx_when_hash_too_long_then_404_received() {
-        expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
-                .andReturn(null)
-                .anyTimes()
-        replay(model)
-
-        given().basePath(basePath).port(restApi.actualPort())
-                .get("/tx/$blockchainRID/${txHashHex}0000")
-                .then()
-                .statusCode(400)
-
-        verify(model)
-    }
-
-    @Test
-    fun test_getTx_when_hash_too_short_then_404_received() {
-        expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
-                .andReturn(null)
-                .anyTimes()
-        replay(model)
-
-        given().basePath(basePath).port(restApi.actualPort())
-                .get("/tx/$blockchainRID/${txHashHex.substring(1)}")
-                .then()
-                .statusCode(400)
-
-        verify(model)
-    }
-
-    @Test
-    fun test_getTx_when_hash_not_hex_then_400_received() {
-        expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
-                .andReturn(null)
-                .anyTimes()
-        replay(model)
-
-        given().basePath(basePath).port(restApi.actualPort())
-                .get("/tx/$blockchainRID/${txHashHex.replaceFirst("a", "g")}")
-                .then()
-                .statusCode(400)
-
-        verify(model)
-    }
-
-    @Test
     fun test_getTx_when_missing_blockchainRID_and_txHash_404_received() {
         expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(null)
@@ -177,6 +132,96 @@ class RestApiGetTxEndpointTest {
                 .get("/tx/$txHashHex")
                 .then()
                 .statusCode(404)
+
+        verify(model)
+    }
+
+    @Test
+    fun test_getTx_when_blockchainRID_too_long_then_400_received() {
+        expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
+                .andReturn(null)
+                .anyTimes()
+        replay(model)
+
+        given().basePath(basePath).port(restApi.actualPort())
+                .get("/tx/${blockchainRID}0000/$txHashHex")
+                .then()
+                .statusCode(400)
+
+        verify(model)
+    }
+
+    @Test
+    fun test_getTx_when_blockchainRID_too_short_then_400_received() {
+        expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
+                .andReturn(null)
+                .anyTimes()
+        replay(model)
+
+        given().basePath(basePath).port(restApi.actualPort())
+                .get("/tx/${blockchainRID.substring(1)}/$txHashHex")
+                .then()
+                .statusCode(400)
+
+        verify(model)
+    }
+
+    @Test
+    fun test_getTx_when_blockchainRID_not_hex_then_400_received() {
+        expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
+                .andReturn(null)
+                .anyTimes()
+        replay(model)
+
+        given().basePath(basePath).port(restApi.actualPort())
+                .get("/tx/${blockchainRID.replaceFirst("a", "g")}/$txHashHex")
+                .then()
+                .statusCode(400)
+
+        verify(model)
+    }
+
+    @Test
+    fun test_getTx_when_txHash_too_long_then_400_received() {
+        expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
+                .andReturn(null)
+                .anyTimes()
+        replay(model)
+
+        given().basePath(basePath).port(restApi.actualPort())
+                .get("/tx/$blockchainRID/${txHashHex}0000")
+                .then()
+                .statusCode(400)
+
+        verify(model)
+    }
+
+    @Test
+    fun test_getTx_when_txHash_too_short_then_400_received() {
+        expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
+                .andReturn(null)
+                .anyTimes()
+        replay(model)
+
+        given().basePath(basePath).port(restApi.actualPort())
+                .get("/tx/$blockchainRID/${txHashHex.substring(1)}")
+                .then()
+                .statusCode(400)
+
+        verify(model)
+    }
+
+    @Test
+    fun test_getTx_when_txHash_not_hex_then_400_received() {
+        expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
+                .andReturn(null)
+                .anyTimes()
+        replay(model)
+
+        given().basePath(basePath).port(restApi.actualPort())
+                .get("/tx/$blockchainRID/${txHashHex.replaceFirst("a", "g")}")
+                .then()
+                .statusCode(400)
 
         verify(model)
     }
