@@ -7,10 +7,10 @@ import net.postchain.core.EContext
 
 object BaseConfigurationDataStore : ConfigurationDataStore {
 
-    val db: DatabaseAccess = SQLDatabaseAccess()
+    private val db: DatabaseAccess = SQLDatabaseAccess()
 
     override fun findConfiguration(context: EContext, height: Long): Long {
-        TODO("")
+        return db.findConfiguration(context, height)
     }
 
     override fun getConfigurationData(context: EContext, height: Long): ByteArray {

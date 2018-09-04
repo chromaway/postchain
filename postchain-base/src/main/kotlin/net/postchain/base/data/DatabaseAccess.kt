@@ -36,6 +36,7 @@ interface DatabaseAccess {
 
     // Configurations
 
+    fun findConfiguration(context: EContext, height: Long): Long
     fun getConfigurationData(context: EContext, height: Long): ByteArray
     fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long
 }
@@ -278,9 +279,16 @@ class SQLDatabaseAccess : DatabaseAccess {
         queryRunner.update(ctx.conn, """CREATE INDEX configurations_chain_id_to_height ON configurations(chain_id, height)""")
     }
 
+    override fun findConfiguration(context: EContext, height: Long): Long {
+        return queryRunner.query(context.conn,
+                "SELECT configuration_data FROM configurations WHERE chain_id = ? AND height <= ? " +
+                        "ORDER BY block_height DESC LIMIT 1",
+                longRes, context.chainID, height)
+    }
+
     override fun getConfigurationData(context: EContext, height: Long): ByteArray {
         return queryRunner.query(context.conn,
-                "SELECT configuration_data FROM configurations WHERE chain_id = ? and height = ?",
+                "SELECT configuration_data FROM configurations WHERE chain_id = ? AND height = ?",
                 byteArrayRes, context.chainID, height)
     }
 
