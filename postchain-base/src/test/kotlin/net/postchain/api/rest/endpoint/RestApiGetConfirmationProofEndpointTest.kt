@@ -1,4 +1,4 @@
-package net.postchain.api
+package net.postchain.api.rest.endpoint
 
 import io.restassured.RestAssured
 import net.postchain.api.rest.controller.Model
@@ -33,7 +33,7 @@ class RestApiGetConfirmationProofEndpointTest {
     }
 
     @Test
-    fun test_getConfirmationProof_when_Tx_Does_Not_Exist_then_400_received() {
+    fun test_getConfirmationProof_when_tx_does_not_exist_then_400_received() {
         EasyMock.expect(model.getConfirmationProof(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(null)
         EasyMock.replay(model)

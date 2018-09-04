@@ -19,4 +19,5 @@ data class QueryResult(val json: String)
 data class ErrorBody(val error: String = "")
 
 class NotFoundError(message: String) : Exception(message)
+class BadFormatError(message: String) : Exception(message)
 class OverloadedException(message: String) : Exception(message)

@@ -1,4 +1,4 @@
-package net.postchain.api
+package net.postchain.api.rest.endpoint
 
 import io.restassured.RestAssured
 import net.postchain.api.rest.controller.Model

@@ -28,6 +28,7 @@ class RestApi(private val listenPort: Int, private val basePath: String) : Model
     private val models = mutableMapOf<String, Model>()
 
     init {
+        buildErrorHandler(http)
         buildRouter(http)
         logger.info { "Rest API listening on port ${actualPort()}" }
         logger.info { "Rest API attached on $basePath/" }
@@ -45,13 +46,16 @@ class RestApi(private val listenPort: Int, private val basePath: String) : Model
         return http.port()
     }
 
-    private fun buildRouter(http: Service) {
-
-        http.port(listenPort)
-
+    private fun buildErrorHandler(http: Service) {
         http.exception(NotFoundError::class.java) { error, _, response ->
             logger.error("NotFoundError:", error)
             response.status(404)
+            response.body(error(error))
+        }
+
+        http.exception(BadFormatError::class.java) { error, _, response ->
+            logger.error("BadFormatError:", error)
+            response.status(400)
             response.body(error(error))
         }
 
@@ -73,6 +77,11 @@ class RestApi(private val listenPort: Int, private val basePath: String) : Model
         }
 
         http.notFound { _, _ -> error(UserMistake("Not found")) }
+    }
+
+    private fun buildRouter(http: Service) {
+
+        http.port(listenPort)
 
         http.before { req, res ->
             res.header(ACCESS_CONTROL_ALLOW_ORIGIN, "*")
@@ -174,18 +183,18 @@ class RestApi(private val listenPort: Int, private val basePath: String) : Model
                 .json
     }
 
-    private fun checkHashHex(request: Request): String {
+    private fun checkTxHashHex(request: Request): String {
         val hashHex = request.params(PARAM_HASH_HEX)
-        if (hashHex.length != 64 && !hashHex.matches(Regex("[0-9a-f]{64}"))) {
-            throw NotFoundError("Invalid hashHex. Expected 64 hex digits [0-9a-f]")
+        if (hashHex.length != 64 && !hashHex.matches(Regex("[0-9a-fA-F]{64}"))) {
+            throw BadFormatError("Invalid hashHex. Expected 64 hex digits [0-9a-fA-F]")
         }
         return hashHex
     }
 
     private fun checkBlockchainRID(request: Request): String {
         val blockchainRID = request.params(PARAM_BLOCKCHAIN_RID)
-        if (blockchainRID.length != 64 && !blockchainRID.matches(Regex("[0-9a-f]{64}"))) {
-            throw NotFoundError("Invalid blockchainRID. Expected 64 hex digits [0-9a-f]")
+        if (blockchainRID.length != 64 && !blockchainRID.matches(Regex("[0-9a-fA-F]{64}"))) {
+            throw BadFormatError("Invalid blockchainRID. Expected 64 hex digits [0-9a-fA-F]")
         }
         return blockchainRID
     }
@@ -198,9 +207,10 @@ class RestApi(private val listenPort: Int, private val basePath: String) : Model
     }
 
     private fun runTxActionOnModel(request: Request, txAction: (Model, TxRID) -> Any?): Any? {
-        val hashHex = checkHashHex(request)
-        return txAction(model(request), toTxRID(hashHex))
-                ?: throw NotFoundError("Can't find tx with hash $hashHex")
+        val model = model(request)
+        val txHashHex = checkTxHashHex(request)
+        return txAction(model, toTxRID(txHashHex))
+                ?: throw NotFoundError("Can't find tx with hash $txHashHex")
     }
 
     private fun model(request: Request): Model {

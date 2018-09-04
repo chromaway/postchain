@@ -1,6 +1,6 @@
 // Copyright (c) 2017 ChromaWay Inc. See README for license information.
 
-package net.postchain.api
+package net.postchain.api.rest
 
 import io.restassured.RestAssured.given
 import net.postchain.base.SECP256K1CryptoSystem

@@ -1,4 +1,4 @@
-package net.postchain.api
+package net.postchain.api.rest.endpoint
 
 import io.restassured.RestAssured.given
 import net.postchain.api.rest.controller.Model
@@ -84,7 +84,7 @@ class RestApiGetTxEndpointTest {
         replay(model)
 
         given().basePath(basePath).port(restApi.actualPort())
-                .get("/tx/$txHashHex/element")
+                .get("/tx/$blockchainRID/$txHashHex/element")
                 .then()
                 .statusCode(404)
 
@@ -99,9 +99,9 @@ class RestApiGetTxEndpointTest {
         replay(model)
 
         given().basePath(basePath).port(restApi.actualPort())
-                .get("/tx/${txHashHex}0000")
+                .get("/tx/$blockchainRID/${txHashHex}0000")
                 .then()
-                .statusCode(404)
+                .statusCode(400)
 
         verify(model)
     }
@@ -114,9 +114,9 @@ class RestApiGetTxEndpointTest {
         replay(model)
 
         given().basePath(basePath).port(restApi.actualPort())
-                .get("/tx/${txHashHex.substring(1)}")
+                .get("/tx/$blockchainRID/${txHashHex.substring(1)}")
                 .then()
-                .statusCode(404)
+                .statusCode(400)
 
         verify(model)
     }
@@ -137,18 +137,47 @@ class RestApiGetTxEndpointTest {
     }
 
     @Test
-    fun test_getTx_when_missing_hash_404_received() {
+    fun test_getTx_when_missing_blockchainRID_and_txHash_404_received() {
         expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(null)
                 .anyTimes()
         replay(model)
 
         given().basePath(basePath).port(restApi.actualPort())
-                .get("/tx/")
+                .get("/tx")
                 .then()
                 .statusCode(404)
 
         verify(model)
     }
 
+    @Test
+    fun test_getTx_when_missing_txHash_404_received() {
+        expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
+                .andReturn(null)
+                .anyTimes()
+        replay(model)
+
+        given().basePath(basePath).port(restApi.actualPort())
+                .get("/tx/$blockchainRID")
+                .then()
+                .statusCode(404)
+
+        verify(model)
+    }
+
+    @Test
+    fun test_getTx_when_missing_blockchainRID_404_received() {
+        expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
+                .andReturn(null)
+                .anyTimes()
+        replay(model)
+
+        given().basePath(basePath).port(restApi.actualPort())
+                .get("/tx/$txHashHex")
+                .then()
+                .statusCode(404)
+
+        verify(model)
+    }
 }

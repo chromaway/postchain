@@ -1,6 +1,6 @@
 // Copyright (c) 2017 ChromaWay Inc. See README for license information.
 
-package net.postchain.api
+package net.postchain.api.rest
 
 import net.postchain.gtx.make_gtx_gson
 import net.postchain.common.hexStringToByteArray
