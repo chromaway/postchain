@@ -34,11 +34,11 @@ class RestApi(private val listenPort: Int, private val basePath: String) : Model
     }
 
     override fun attachModel(blockchainRID: String, model: Model) {
-        models[blockchainRID] = model
+        models[blockchainRID.toUpperCase()] = model
     }
 
     override fun detachModel(blockchainRID: String) {
-        models.remove(blockchainRID)
+        models.remove(blockchainRID.toUpperCase())
     }
 
     fun actualPort(): Int {
@@ -205,7 +205,7 @@ class RestApi(private val listenPort: Int, private val basePath: String) : Model
 
     private fun model(request: Request): Model {
         val blockchainRID = checkBlockchainRID(request)
-        return models[blockchainRID]
+        return models[blockchainRID.toUpperCase()]
                 ?: throw NotFoundError("Can't find blockchain with blockchainRID: $blockchainRID")
     }
 }

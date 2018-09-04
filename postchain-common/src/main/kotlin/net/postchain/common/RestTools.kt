@@ -9,10 +9,10 @@ import org.awaitility.kotlin.untilCallTo
 
 object RestTools {
 
-    fun awaitConfirmed(port: Int, txRidHex: String) {
+    fun awaitConfirmed(port: Int, blockchainRID: String, txRidHex: String) {
         await().untilCallTo {
             given().port(port)
-                    .get("/tx/$txRidHex/status")
+                    .get("/tx/$blockchainRID/$txRidHex/status")
                     .then()
                     .statusCode(200)
                     .extract()

@@ -21,14 +21,15 @@ import org.junit.Test
 class ApiIntegrationTestNightly : EbftIntegrationTest() {
 
     private val gson = JsonTools.buildGson()
-    private var hashHex = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
+    private var txHashHex = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
     @Test
     fun testMixedAPICalls() {
         createEbftNodes(3)
 
-        testStatusGet("/tx/$hashHex", 404)
-        testStatusGet("/tx/$hashHex/status", 200) {
+        testStatusGet("/tx/$blockchainRID/$txHashHex", 404)
+        testStatusGet("/tx/$blockchainRID/$txHashHex/status", 200) {
             assertEquals(
                     jsonAsMap(gson, "{\"status\"=\"unknown\"}"),
                     jsonAsMap(gson, it))
@@ -37,11 +38,11 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
         val tx = TestTransaction(1)
         testStatusPost(
                 0,
-                "/tx",
+                "/tx/$blockchainRID",
                 "{\"tx\": \"${tx.getRawData().toHex()}\"}",
                 200)
 
-        awaitConfirmed(tx)
+        awaitConfirmed(blockchainRID, tx)
     }
 
     @Test
@@ -58,19 +59,19 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
             for (i in 1..txCount) {
                 val tx = TestTransaction(++currentId)
                 testStatusPost(
-                        blockHeight % nodeCount, "/tx",
+                        blockHeight % nodeCount, "/tx/$blockchainRID",
                         "{\"tx\": \"${tx.getRawData().toHex()}\"}",
                         200)
             }
 
-            awaitConfirmed(TestTransaction(currentId))
+            awaitConfirmed(blockchainRID, TestTransaction(currentId))
             blockHeight++
 
             for (i in 0 until txCount) {
                 val tx = TestTransaction(currentId - i)
 
                 val body = given().port(ebftNodes[0].getModel().restApi!!.actualPort())
-                        .get("/tx/${tx.getRID().toHex()}/confirmationProof")
+                        .get("/tx/$blockchainRID/${tx.getRID().toHex()}/confirmationProof")
                         .then()
                         .statusCode(200)
                         .extract()
@@ -115,9 +116,10 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
         }
     }
 
-    private fun awaitConfirmed(tx: Transaction) {
+    private fun awaitConfirmed(blockchainRID: String, tx: Transaction) {
         RestTools.awaitConfirmed(
                 ebftNodes[0].getModel().restApi!!.actualPort(),
+                blockchainRID,
                 tx.getRID().toHex())
     }
 

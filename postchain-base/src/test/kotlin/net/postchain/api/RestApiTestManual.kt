@@ -14,6 +14,7 @@ import java.util.*
 class RestApiTestManual {
     private val port = 58373
     private val cryptoSystem = SECP256K1CryptoSystem()
+    private val blockchainRID = "78967BAA4768CBCEF11C508326FFB13A956689FCB6DC3BA17F4B895CBB1577A3"
 
     //    @Test
     fun testGtxTestModuleBackend() {
@@ -36,7 +37,7 @@ class RestApiTestManual {
 
         val transaction = GTXTransactionFactory(EMPTY_SIGNATURE, GTXTestModule(), cryptoSystem)
                 .decodeTransaction(txBytes)
-        RestTools.awaitConfirmed(port, transaction.getRID().toHex())
+        RestTools.awaitConfirmed(port, blockchainRID, transaction.getRID().toHex())
     }
 
     private fun buildTestTx(id: Long, value: String): ByteArray {
