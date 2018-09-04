@@ -13,13 +13,15 @@ import org.junit.Test
 class RestApiPostTxEndpointTest {
 
     private val basePath = "/api/v1"
+    private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
     private lateinit var restApi: RestApi
     private lateinit var model: Model
 
     @Before
     fun setup() {
         model = createMock(Model::class.java)
-        restApi = RestApi(model, 0, basePath)
+        restApi = RestApi(0, basePath)
+        restApi.attachModel(blockchainRID, model)
     }
 
     @After
@@ -35,7 +37,7 @@ class RestApiPostTxEndpointTest {
 
         given().basePath(basePath).port(restApi.actualPort())
                 .body("{\"tx\": \"$txHexString\"}")
-                .post("/tx")
+                .post("/tx/$blockchainRID")
                 .then()
                 .statusCode(200)
 
@@ -48,7 +50,7 @@ class RestApiPostTxEndpointTest {
 
         given().basePath(basePath).port(restApi.actualPort())
                 .body("")
-                .post("/tx")
+                .post("/tx/$blockchainRID")
                 .then()
                 .statusCode(400)
 
@@ -61,7 +63,7 @@ class RestApiPostTxEndpointTest {
 
         given().basePath(basePath).port(restApi.actualPort())
                 .body("{}")
-                .post("/tx")
+                .post("/tx/$blockchainRID")
                 .then()
                 .statusCode(400)
 
@@ -74,7 +76,7 @@ class RestApiPostTxEndpointTest {
 
         given().basePath(basePath).port(restApi.actualPort())
                 .body("{\"tx\": \"\"}")
-                .post("/tx")
+                .post("/tx/$blockchainRID")
                 .then()
                 .statusCode(400)
 
@@ -87,7 +89,7 @@ class RestApiPostTxEndpointTest {
 
         given().basePath(basePath).port(restApi.actualPort())
                 .body("{\"tx\": \"abc123z\"}")
-                .post("/tx")
+                .post("/tx/$blockchainRID")
                 .then()
                 .statusCode(400)
 
@@ -100,7 +102,7 @@ class RestApiPostTxEndpointTest {
 
         given().basePath(basePath).port(restApi.actualPort())
                 .body("a")
-                .post("/tx")
+                .post("/tx/$blockchainRID")
                 .then()
                 .statusCode(400)
 

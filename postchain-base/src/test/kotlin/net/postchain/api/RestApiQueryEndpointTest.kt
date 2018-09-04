@@ -16,13 +16,15 @@ import org.junit.Test
 class RestApiQueryEndpointTest {
 
     private val basePath = "/api/v1"
+    private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
     private lateinit var restApi: RestApi
     private lateinit var model: Model
 
     @Before
     fun setup() {
         model = createMock(Model::class.java)
-        restApi = RestApi(model, 0, basePath)
+        restApi = RestApi(0, basePath)
+        restApi.attachModel(blockchainRID, model)
     }
 
     @After
@@ -43,7 +45,7 @@ class RestApiQueryEndpointTest {
 
         RestAssured.given().basePath(basePath).port(restApi.actualPort())
                 .body(queryString)
-                .post("/query")
+                .post("/query/$blockchainRID")
                 .then()
                 .statusCode(200)
                 .body(equalTo(answerString))
@@ -65,7 +67,7 @@ class RestApiQueryEndpointTest {
 
         RestAssured.given().basePath(basePath).port(restApi.actualPort())
                 .body(queryString)
-                .post("/query")
+                .post("/query/$blockchainRID")
                 .then()
                 .statusCode(400)
                 .body(equalTo(answerBody))
@@ -87,7 +89,7 @@ class RestApiQueryEndpointTest {
 
         RestAssured.given().basePath(basePath).port(restApi.actualPort())
                 .body(queryString)
-                .post("/query")
+                .post("/query/$blockchainRID")
                 .then()
                 .statusCode(500)
                 .body(equalTo(answerBody))

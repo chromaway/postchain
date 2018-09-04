@@ -22,6 +22,7 @@ import org.junit.Test
 class RestApiMockForClientManual {
     val listenPort = 49545
     val basePath = "/basepath"
+    private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
     lateinit var restApi: RestApi
 
     companion object : KLogging()
@@ -35,7 +36,8 @@ class RestApiMockForClientManual {
     @Test
     fun startMockRestApi() {
         val model = MockModel()
-        restApi = RestApi(model, listenPort, basePath)
+        restApi = RestApi(listenPort, basePath)
+        restApi.attachModel(blockchainRID, model)
         logger.info("Ready to serve on port ${restApi.actualPort()}")
         Thread.sleep(600000) // Wait 10 minutes
     }

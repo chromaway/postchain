@@ -17,12 +17,14 @@ class RestApiGetConfirmationProofEndpointTest {
     private val basePath = "/api/v1"
     private lateinit var restApi: RestApi
     private lateinit var model: Model
-    private val hashHex = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
+    private val txHashHex = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
     @Before
     fun setup() {
         model = createMock(Model::class.java)
-        restApi = RestApi(model, 0, basePath)
+        restApi = RestApi(0, basePath)
+        restApi.attachModel(blockchainRID, model)
     }
 
     @After
@@ -32,12 +34,12 @@ class RestApiGetConfirmationProofEndpointTest {
 
     @Test
     fun test_getConfirmationProof_when_Tx_Does_Not_Exist_then_400_received() {
-        EasyMock.expect(model.getConfirmationProof(TxRID(hashHex.hexStringToByteArray())))
+        EasyMock.expect(model.getConfirmationProof(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(null)
         EasyMock.replay(model)
 
         RestAssured.given().basePath(basePath).port(restApi.actualPort())
-                .get("/tx/$hashHex/confirmationProof")
+                .get("/tx/$blockchainRID/$txHashHex/confirmationProof")
                 .then()
                 .statusCode(404)
 

@@ -2,13 +2,10 @@ package net.postchain.ebft
 
 import net.postchain.api.rest.controller.PostchainModel
 import net.postchain.api.rest.controller.RestApi
-import net.postchain.base.NetworkAwareTxQueue
-import net.postchain.base.PeerCommConfiguration
-
 import net.postchain.base.*
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.common.hexStringToByteArray
-
+import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.ebft.message.EbftMessage
 import net.postchain.network.PeerConnectionManager
@@ -72,7 +69,7 @@ fun createPeerInfos(config: Configuration): Array<PeerInfo> {
  * @property restApi contains information on the rest API, such as network parameters and available queries
  * @property apiModel
  */
-interface BlockchainInstanceModel: BlockchainProcess {
+interface BlockchainInstanceModel : BlockchainProcess {
     val blockchainConfiguration: BlockchainConfiguration
     val statusManager: BaseStatusManager
     val commManager: CommManager<EbftMessage>
@@ -87,7 +84,7 @@ interface BlockchainInstanceModel: BlockchainProcess {
 }
 
 
-class EBFTSynchronizationInfrastructure(val config: Configuration): SynchronizationInfrastructure {
+class EBFTSynchronizationInfrastructure(val config: Configuration) : SynchronizationInfrastructure {
     val privKey: ByteArray
     val peerInfos: Array<PeerInfo>
 
@@ -194,8 +191,7 @@ class EBFTBlockchainInstanceWorker(
         txForwardingQueue = NetworkAwareTxQueue(
                 txQueue,
                 commManager,
-                nodeIndex
-        )
+                nodeIndex)
 
         blockDatabase = BaseBlockDatabase(engine, blockQueries, nodeIndex)
         blockManager = BaseBlockManager(
@@ -205,11 +201,19 @@ class EBFTBlockchainInstanceWorker(
 
         val port = config.getInt("api.port", 7740)
         if (port != -1) {
-            val model = PostchainModel(txForwardingQueue, blockchainConfiguration.getTransactionFactory(),
-                    blockQueries as BaseBlockQueries)
-            apiModel = model
             val basePath = config.getString("api.basepath", "")
-            restApi = RestApi(model, port, basePath)
+            restApi = RestApi(port, basePath)
+
+            apiModel = PostchainModel(
+                    txForwardingQueue,
+                    blockchainConfiguration.getTransactionFactory(),
+                    blockQueries as BaseBlockQueries)
+
+            val blockchainRID = (blockchainConfiguration as BaseBlockchainConfiguration)
+                    .blockchainRID.toHex()
+
+            restApi.attachModel(blockchainRID, apiModel)
+
         } else {
             restApi = null
             apiModel = null

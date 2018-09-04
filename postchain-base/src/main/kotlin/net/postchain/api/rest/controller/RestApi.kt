@@ -8,6 +8,8 @@ import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALL
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_ORIGIN
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_REQUEST_HEADERS
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_REQUEST_METHOD
+import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_BLOCKCHAIN_RID
+import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_HASH_HEX
 import net.postchain.api.rest.json.JsonFactory
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
@@ -17,17 +19,26 @@ import net.postchain.core.UserMistake
 import spark.Request
 import spark.Service
 
-class RestApi(private val model: Model, private val listenPort: Int, private val basePath: String) {
+class RestApi(private val listenPort: Int, private val basePath: String) : Modellable {
 
     companion object : KLogging()
 
     private val http = Service.ignite()!!
     private val gson = JsonFactory.makeJson()
+    private val models = mutableMapOf<String, Model>()
 
     init {
         buildRouter(http)
         logger.info { "Rest API listening on port ${actualPort()}" }
         logger.info { "Rest API attached on $basePath/" }
+    }
+
+    override fun attachModel(blockchainRID: String, model: Model) {
+        models[blockchainRID] = model
+    }
+
+    override fun detachModel(blockchainRID: String) {
+        models.remove(blockchainRID)
     }
 
     fun actualPort(): Int {
@@ -38,27 +49,27 @@ class RestApi(private val model: Model, private val listenPort: Int, private val
 
         http.port(listenPort)
 
-        http.exception(NotFoundError::class.java) { e, _, res ->
-            logger.error("NotFoundError:", e)
-            res.status(404)
-            res.body(error(e))
+        http.exception(NotFoundError::class.java) { error, _, response ->
+            logger.error("NotFoundError:", error)
+            response.status(404)
+            response.body(error(error))
         }
 
-        http.exception(UserMistake::class.java) { e, _, res ->
-            logger.error("UserMistake:", e)
-            res.status(400)
-            res.body(error(e))
+        http.exception(UserMistake::class.java) { error, _, response ->
+            logger.error("UserMistake:", error)
+            response.status(400)
+            response.body(error(error))
         }
 
-        http.exception(OverloadedException::class.java) { e, _, res ->
-            res.status(503) // Service unavailable
-            res.body(error(e))
+        http.exception(OverloadedException::class.java) { error, _, response ->
+            response.status(503) // Service unavailable
+            response.body(error(error))
         }
 
-        http.exception(Exception::class.java) { e, _, res ->
-            logger.error("Exception:", e)
-            res.status(500)
-            res.body(error(e))
+        http.exception(Exception::class.java) { error, _, response ->
+            logger.error("Exception:", error)
+            response.status(500)
+            response.body(error(error))
         }
 
         http.notFound { _, _ -> error(UserMistake("Not found")) }
@@ -88,37 +99,38 @@ class RestApi(private val model: Model, private val listenPort: Int, private val
                 "OK"
             }
 
-            http.post("/tx") { req, _ ->
+            http.post("/tx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
                 val n = TimeLog.startSumConc("RestApi.buildRouter().postTx")
-                logger.debug("Request body: ${req.body()}")
-                val tx = toTransaction(req)
+                logger.debug("Request body: ${request.body()}")
+                val tx = toTransaction(request)
                 if (!tx.tx.matches(Regex("[0-9a-fA-F]{2,}"))) {
                     throw UserMistake("Invalid tx format. Expected {\"tx\": <hexString>}")
                 }
-                model.postTransaction(tx)
+                model(request).postTransaction(tx)
                 TimeLog.end("RestApi.buildRouter().postTx", n)
                 "{}"
             }
 
-            http.get("/tx/:hashHex", "application/json", { req, _ ->
-                val hashHex = checkHashHex(req)
-                model.getTransaction(toTxRID(hashHex))
-                        ?: throw NotFoundError("Can't find tx with hash $hashHex")
+            http.get("/tx/$PARAM_BLOCKCHAIN_RID/$PARAM_HASH_HEX", "application/json", { request, _ ->
+                runTxActionOnModel(request) { model, txRID ->
+                    model.getTransaction(txRID)
+                }
             }, gson::toJson)
 
-            http.get("/tx/:hashHex/confirmationProof", { req, _ ->
-                val hashHex = checkHashHex(req)
-                model.getConfirmationProof(toTxRID(hashHex))
-                        ?: throw NotFoundError("")
+            http.get("/tx/$PARAM_BLOCKCHAIN_RID/$PARAM_HASH_HEX/confirmationProof", { request, _ ->
+                runTxActionOnModel(request) { model, txRID ->
+                    model.getConfirmationProof(txRID)
+                }
             }, gson::toJson)
 
-            http.get("/tx/:hashHex/status", { req, _ ->
-                val hashHex = checkHashHex(req)
-                model.getStatus(toTxRID(hashHex))
+            http.get("/tx/$PARAM_BLOCKCHAIN_RID/$PARAM_HASH_HEX/status", { request, _ ->
+                runTxActionOnModel(request) { model, txRID ->
+                    model.getStatus(txRID)
+                }
             }, gson::toJson)
 
-            http.post("/query") { req, _ ->
-                handleQuery(req)
+            http.post("/query/$PARAM_BLOCKCHAIN_RID") { request, _ ->
+                handleQuery(request)
             }
         }
 
@@ -155,17 +167,27 @@ class RestApi(private val model: Model, private val listenPort: Int, private val
         return gson.toJson(ErrorBody(error.message ?: "Unknown error"))
     }
 
-    private fun handleQuery(req: Request): String {
-        logger.debug("Request body: ${req.body()}")
-        return model.query(Query(req.body())).json
+    private fun handleQuery(request: Request): String {
+        logger.debug("Request body: ${request.body()}")
+        return model(request)
+                .query(Query(request.body()))
+                .json
     }
 
-    private fun checkHashHex(req: Request): String {
-        val hashHex = req.params(":hashHex")
+    private fun checkHashHex(request: Request): String {
+        val hashHex = request.params(PARAM_HASH_HEX)
         if (hashHex.length != 64 && !hashHex.matches(Regex("[0-9a-f]{64}"))) {
             throw NotFoundError("Invalid hashHex. Expected 64 hex digits [0-9a-f]")
         }
         return hashHex
+    }
+
+    private fun checkBlockchainRID(request: Request): String {
+        val blockchainRID = request.params(PARAM_BLOCKCHAIN_RID)
+        if (blockchainRID.length != 64 && !blockchainRID.matches(Regex("[0-9a-f]{64}"))) {
+            throw NotFoundError("Invalid blockchainRID. Expected 64 hex digits [0-9a-f]")
+        }
+        return blockchainRID
     }
 
     fun stop() {
@@ -173,5 +195,17 @@ class RestApi(private val model: Model, private val listenPort: Int, private val
         // Ugly hack to workaround that there is no blocking stop.
         // Test cases won't work correctly without it
         Thread.sleep(100)
+    }
+
+    private fun runTxActionOnModel(request: Request, txAction: (Model, TxRID) -> Any?): Any? {
+        val hashHex = checkHashHex(request)
+        return txAction(model(request), toTxRID(hashHex))
+                ?: throw NotFoundError("Can't find tx with hash $hashHex")
+    }
+
+    private fun model(request: Request): Model {
+        val blockchainRID = checkBlockchainRID(request)
+        return models[blockchainRID]
+                ?: throw NotFoundError("Can't find blockchain with blockchainRID: $blockchainRID")
     }
 }

@@ -3,7 +3,9 @@ package net.postchain.modules.perftest
 import net.postchain.TestNodeEngine
 import net.postchain.api.rest.controller.PostchainModel
 import net.postchain.api.rest.controller.RestApi
+import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.common.TimeLog
+import net.postchain.common.toHex
 import net.postchain.configurations.GTXTestModule
 import net.postchain.gtx.GTXBlockchainConfigurationFactory
 import net.postchain.modules.ft.BaseFTModuleFactory
@@ -37,8 +39,10 @@ class SingleNodeManual : IntegrationTest() {
         configOverrides.setProperty("blockchain.1.queuecapacity", 100000)
         val node = createDataLayer(0)
         val model = PostchainModel(node.txQueue, node.blockchainConfiguration.getTransactionFactory(), node.blockQueries)
-        val api = RestApi(model, 8383, "")
-
+        val api = RestApi(8383, "")
+        api.attachModel(
+                (node.blockchainConfiguration as BaseBlockchainConfiguration).blockchainRID.toHex(),
+                model)
 
         // warm up
         val warmupDuration = 20000
@@ -69,9 +73,9 @@ class SingleNodeManual : IntegrationTest() {
 
         println("Total blocks: ${blockCount}")
         println("Total transaction count: $txCount")
-        println("Avg tx/block: ${txCount/(blockCount)}")
-        println("node tps: ${txCount*1000/testDuration}")
-        println("buildBlock tps: ${txCount*1000/ TimeLog.getValue("BaseBlockchainEngine.buildBlock().buildBlock")}")
+        println("Avg tx/block: ${txCount / (blockCount)}")
+        println("node tps: ${txCount * 1000 / testDuration}")
+        println("buildBlock tps: ${txCount * 1000 / TimeLog.getValue("BaseBlockchainEngine.buildBlock().buildBlock")}")
     }
 
     private fun txCount(node: TestNodeEngine): Pair<Long, Int> {

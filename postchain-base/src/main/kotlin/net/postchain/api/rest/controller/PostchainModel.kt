@@ -40,23 +40,24 @@ open class PostchainModel(
     }
 
     override fun getTransaction(txRID: TxRID): ApiTx? {
-        val promise = blockQueries.getTransaction(txRID.bytes)
-        val tx = promise.get() ?: return null
-        return ApiTx(tx.getRawData().toHex())
+        return blockQueries.getTransaction(txRID.bytes).get()
+                .takeIf { it != null }
+                ?.let { ApiTx(it.getRawData().toHex()) }
     }
 
     override fun getConfirmationProof(txRID: TxRID): ConfirmationProof? {
-        return blockQueries.getConfirmationProof(txRID.bytes).get() ?: return null
+        return blockQueries.getConfirmationProof(txRID.bytes).get()
     }
 
     override fun getStatus(txRID: TxRID): ApiStatus {
-        val status = txQueue.getTransactionStatus(txRID.bytes)
-        return if (status != UNKNOWN)
-            ApiStatus(status)
-        else {
-            val confirmed = blockQueries.isTransactionConfirmed(txRID.bytes).get()
-            ApiStatus(if (confirmed) CONFIRMED else UNKNOWN)
+        var status = txQueue.getTransactionStatus(txRID.bytes)
+
+        if (status == UNKNOWN) {
+            status = if (blockQueries.isTransactionConfirmed(txRID.bytes).get())
+                CONFIRMED else UNKNOWN
         }
+
+        return ApiStatus(status)
     }
 
     override fun query(query: Query): QueryResult {
