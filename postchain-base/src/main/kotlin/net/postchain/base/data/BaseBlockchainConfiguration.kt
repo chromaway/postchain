@@ -5,8 +5,9 @@ package net.postchain.base.data
 import net.postchain.base.*
 import net.postchain.core.*
 
-open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurationData) :
-        BlockchainConfiguration {
+open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurationData)
+    : BlockchainConfiguration {
+
     override val traits = setOf<String>()
     val cryptoSystem = SECP256K1CryptoSystem()
     val blockStore = BaseBlockStore()

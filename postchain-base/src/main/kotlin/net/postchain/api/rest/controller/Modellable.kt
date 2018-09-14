@@ -12,4 +12,9 @@ interface Modellable {
      */
     fun detachModel(blockchainRID: String)
 
+    /**
+     * Retrieves a model associated with key [blockchainRID]
+     */
+    fun retrieveModel(blockchainRID: String): Model?
+
 }

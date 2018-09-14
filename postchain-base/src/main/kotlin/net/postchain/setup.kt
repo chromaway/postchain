@@ -20,8 +20,7 @@ fun getBlockchainConfiguration(config: Configuration, chainId: Long, nodeIndex: 
 
     // TODO: BaseBlockchainConfigurationData is where the config magic happens
     val baseConfig = BaseBlockchainConfigurationData.readFromCommonsConfiguration(
-            config, chainId, nodeIndex
-    )
+            config, chainId, nodeIndex)
 
     return factory.makeBlockchainConfiguration(baseConfig,
             BaseBlockchainContext(baseConfig.context.blockchainRID, nodeIndex, chainId, null))  // TODO
@@ -38,11 +37,12 @@ class TestNodeEngine(val engine: BlockchainEngine,
 }
 
 // TODO: remove legacy
+@Deprecated("Legacy")
 fun createDataLayer(config: Configuration, chainId: Long, nodeIndex: Int): TestNodeEngine {
     val blockchainSubset = config.subset("blockchain.$chainId")
     val blockchainConfiguration = getBlockchainConfiguration(blockchainSubset, chainId, nodeIndex)
 
-    val storage = baseStorage(config, nodeIndex)
+    val storage = baseStorage(config, nodeIndex, null)
 
     val txQueue = BaseTransactionQueue(blockchainSubset.getInt("queuecapacity", 2500))
 
@@ -61,7 +61,7 @@ fun createTestNodeEngine(infrastructure: BaseBlockchainInfrastructure, config: G
     val rawConfig = encodeGTXValue(config)
     val blockchainConfiguration = infrastructure.makeBlockchainConfiguration(rawConfig, bc)
 
-    val engine = infrastructure.makeBlockchainEngine(blockchainConfiguration)
+    val engine = infrastructure.makeBlockchainEngine(blockchainConfiguration, true)
 
     val node = TestNodeEngine(engine,
             engine.getTransactionQueue(),
@@ -70,14 +70,19 @@ fun createTestNodeEngine(infrastructure: BaseBlockchainInfrastructure, config: G
     return node
 }
 
-fun baseStorage(config: Configuration, nodeIndex: Int): BaseStorage {
+fun baseStorage(config: Configuration, nodeIndex: Int, wipeDatabase: Boolean?): BaseStorage {
     val writeDataSource = createBasicDataSource(config)
     writeDataSource.maxWaitMillis = 0
     writeDataSource.defaultAutoCommit = false
     writeDataSource.maxTotal = 1
-    if (config.getBoolean("database.wipe", false)) {
-        wipeDatabase(writeDataSource, config)
+
+    when {
+        wipeDatabase != null -> if (wipeDatabase) {
+            wipeDatabase(writeDataSource, config)
+        }
+        config.getBoolean("database.wipe", false) -> wipeDatabase(writeDataSource, config)
     }
+
     createSchemaIfNotExists(writeDataSource, config.getString("database.schema"))
 
     val readDataSource = createBasicDataSource(config)

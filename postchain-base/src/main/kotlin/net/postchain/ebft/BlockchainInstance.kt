@@ -1,14 +1,11 @@
 package net.postchain.ebft
 
-import net.postchain.api.rest.controller.PostchainModel
-import net.postchain.api.rest.controller.RestApi
-import net.postchain.base.*
+import net.postchain.base.DynamicPortPeerInfo
+import net.postchain.base.PeerInfo
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.common.hexStringToByteArray
-import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.ebft.message.EbftMessage
-import net.postchain.network.PeerConnectionManager
 import org.apache.commons.configuration2.Configuration
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
@@ -71,42 +68,26 @@ fun createPeerInfos(config: Configuration): Array<PeerInfo> {
  */
 interface BlockchainInstanceModel : BlockchainProcess {
     val blockchainConfiguration: BlockchainConfiguration
-    val statusManager: BaseStatusManager
-    val commManager: CommManager<EbftMessage>
-
-    val txForwardingQueue: TransactionQueue
     val blockDatabase: BaseBlockDatabase
     val blockManager: BlockManager
+    val statusManager: BaseStatusManager
     val syncManager: SyncManager
-
-    val restApi: RestApi?
-    val apiModel: PostchainModel?
 }
 
-
 class EBFTSynchronizationInfrastructure(val config: Configuration) : SynchronizationInfrastructure {
-    val privKey: ByteArray
-    val peerInfos: Array<PeerInfo>
 
-    init {
-        peerInfos = createPeerInfos(config)
-        privKey = config.getString("messaging.privkey").hexStringToByteArray()
-    }
+    override fun makeBlockchainProcess(
+            engine: BlockchainEngine,
+            communicationManager: CommManager<EbftMessage>,
+            restartHandler: RestartHandler
+    ): BlockchainProcess {
 
-    override fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
-        val configuration = engine.getConfiguration() as BaseBlockchainConfiguration // TODO
-        val commConfiguration = BasePeerCommConfiguration(peerInfos,
-                configuration.blockchainRID,
-                configuration.configData.context.nodeID,
-                SECP256K1CryptoSystem(),
-                privKey
-        )
-        val connManager = makeConnManager(commConfiguration)
-        return EBFTBlockchainInstanceWorker(engine,
-                config,
-                configuration.configData.context.nodeID,
-                commConfiguration,
-                connManager,
+        val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
+
+        return EBFTBlockchainInstanceWorker(
+                engine,
+                blockchainConfig.configData.context.nodeID,
+                communicationManager,
                 restartHandler
         )
     }
@@ -121,26 +102,51 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
  */
 class EBFTBlockchainInstanceWorker(
         private val engine: BlockchainEngine,
-        config: Configuration,
         nodeIndex: Int,
-        peerCommConfiguration: PeerCommConfiguration,
-        connManager: PeerConnectionManager<EbftMessage>,
+        communicationManager: CommManager<EbftMessage>,
         val restartHandler: RestartHandler
 ) : BlockchainInstanceModel {
 
-    lateinit var updateLoop: Thread
-    val stopMe = AtomicBoolean(false)
+    private lateinit var updateLoop: Thread
+    private val stopMe = AtomicBoolean(false)
 
     override val blockchainConfiguration: BlockchainConfiguration
-    //private val storage: Storage
-    override val statusManager: BaseStatusManager
-    override val commManager: CommManager<EbftMessage>
-    override val txForwardingQueue: TransactionQueue
     override val blockDatabase: BaseBlockDatabase
     override val blockManager: BlockManager
+    override val statusManager: BaseStatusManager
     override val syncManager: SyncManager
-    override val restApi: RestApi?
-    override val apiModel: PostchainModel?
+
+    init {
+        blockchainConfiguration = engine.getConfiguration()
+        val blockQueries = engine.getBlockQueries()
+
+        val bestHeight = blockQueries.getBestHeight().get()
+        statusManager = BaseStatusManager(
+                communicationManager.peers.size,
+                nodeIndex,
+                bestHeight + 1)
+
+        blockDatabase = BaseBlockDatabase(
+                engine, blockQueries, nodeIndex)
+
+        blockManager = BaseBlockManager(
+                blockDatabase,
+                statusManager,
+                engine.getBlockBuildingStrategy())
+
+        // Give the SyncManager the BaseTransactionQueue and not the network-aware one,
+        // because we don't want tx forwarding/broadcasting when received through p2p network
+        syncManager = SyncManager(
+                statusManager,
+                blockManager,
+                blockDatabase,
+                communicationManager,
+                engine.getTransactionQueue(),
+                blockchainConfiguration)
+
+        statusManager.recomputeStatus()
+        startUpdateLoop(syncManager)
+    }
 
     override fun getEngine(): BlockchainEngine {
         return engine
@@ -170,7 +176,6 @@ class EBFTBlockchainInstanceWorker(
         // Ordering is important.
         // 1. Stop accepting API calls
         stopMe.set(true)
-        restApi?.stop()
         // 2. Close the engine so that new blocks cant be started
         engine.shutdown()
         // 3. Close the listening port and all TCP connections
@@ -178,52 +183,4 @@ class EBFTBlockchainInstanceWorker(
         // 4. Stop any in-progress blocks
         blockDatabase.stop()
     }
-
-    init {
-        blockchainConfiguration = engine.getConfiguration()
-        val blockQueries = engine.getBlockQueries()
-        val txQueue = engine.getTransactionQueue()
-
-        val bestHeight = blockQueries.getBestHeight().get()
-        statusManager = BaseStatusManager(peerCommConfiguration.peerInfo.size, nodeIndex, bestHeight + 1)
-        commManager = makeCommManager(peerCommConfiguration, connManager)
-
-        txForwardingQueue = NetworkAwareTxQueue(
-                txQueue,
-                commManager,
-                nodeIndex)
-
-        blockDatabase = BaseBlockDatabase(engine, blockQueries, nodeIndex)
-        blockManager = BaseBlockManager(
-                blockDatabase,
-                statusManager,
-                engine.getBlockBuildingStrategy())
-
-        val port = config.getInt("api.port", 7740)
-        if (port != -1) {
-            val basePath = config.getString("api.basepath", "")
-            restApi = RestApi(port, basePath)
-
-            apiModel = PostchainModel(
-                    txForwardingQueue,
-                    blockchainConfiguration.getTransactionFactory(),
-                    blockQueries as BaseBlockQueries)
-
-            val blockchainRID = (blockchainConfiguration as BaseBlockchainConfiguration)
-                    .blockchainRID.toHex()
-
-            restApi.attachModel(blockchainRID, apiModel)
-
-        } else {
-            restApi = null
-            apiModel = null
-        }
-
-        // Give the SyncManager the BaseTransactionQueue and not the network-aware one,
-        // because we don't want tx forwarding/broadcasting when received through p2p network
-        syncManager = SyncManager(statusManager, blockManager, blockDatabase, commManager, txQueue, blockchainConfiguration)
-        statusManager.recomputeStatus()
-        startUpdateLoop(syncManager)
-    }
-
 }

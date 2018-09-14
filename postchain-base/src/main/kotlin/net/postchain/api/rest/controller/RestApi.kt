@@ -42,6 +42,10 @@ class RestApi(private val listenPort: Int, private val basePath: String) : Model
         models.remove(blockchainRID.toUpperCase())
     }
 
+    override fun retrieveModel(blockchainRID: String): Model? {
+        return models[blockchainRID.toUpperCase()]
+    }
+
     fun actualPort(): Int {
         return http.port()
     }

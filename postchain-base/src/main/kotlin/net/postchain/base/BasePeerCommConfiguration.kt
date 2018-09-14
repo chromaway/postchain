@@ -5,12 +5,13 @@ package net.postchain.base
 class BasePeerCommConfiguration(override val peerInfo: Array<PeerInfo>,
                                 override val blockchainRID: ByteArray,
                                 override val myIndex: Int,
-                                private val cryptoSystem: CryptoSystem, private val privKey: ByteArray) : PeerCommConfiguration {
-
+                                private val cryptoSystem: CryptoSystem,
+                                private val privKey: ByteArray
+) : PeerCommConfiguration {
 
     override fun resolvePeer(peerID: ByteArray): PeerInfo? {
         for (peer in peerInfo) {
-            if (peer.pubKey.equals(peerID))
+            if (peer.pubKey == peerID)
                 return peer
         }
         return null

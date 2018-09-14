@@ -50,12 +50,12 @@ class GTXIntegrationTest : IntegrationTest() {
         configOverrides.setProperty("blockchain.1.configurationfactory", GTXBlockchainConfigurationFactory::class.qualifiedName)
         configOverrides.setProperty("blockchain.1.gtx.modules",
                 listOf(GTXTestModule::class.qualifiedName, StandardOpsGTXModule::class.qualifiedName))
-        val node = createDataLayer(0)
+        val (node, chainId) = createNode(0)
 
         fun enqueueTx(data: ByteArray): Transaction? {
             try {
-                val tx = node.blockchainConfiguration.getTransactionFactory().decodeTransaction(data)
-                node.txQueue.enqueue(tx)
+                val tx = node.getBlockchainInstance(chainId).blockchainConfiguration.getTransactionFactory().decodeTransaction(data)
+                node.getBlockchainInstance(chainId).getEngine().getTransactionQueue().enqueue(tx)
                 return tx
             } catch (e: Exception) {
                 println(e)
@@ -68,9 +68,9 @@ class GTXIntegrationTest : IntegrationTest() {
 
         fun makeSureBlockIsBuiltCorrectly() {
             currentBlockHeight += 1
-            buildBlockAndCommit(node.engine)
-            Assert.assertEquals(currentBlockHeight, getBestHeight(node))
-            val ridsAtHeight = getTxRidsAtHeight(node, currentBlockHeight)
+            buildBlockAndCommit(node.getBlockchainInstance(chainId).getEngine())
+            Assert.assertEquals(currentBlockHeight, getBestHeight(node, chainId))
+            val ridsAtHeight = getTxRidsAtHeight(node, chainId, currentBlockHeight)
             for (vtx in validTxs) {
                 val vtxRID = vtx.getRID()
                 Assert.assertTrue(ridsAtHeight.any { it.contentEquals(vtxRID) })
@@ -94,7 +94,7 @@ class GTXIntegrationTest : IntegrationTest() {
 
         makeSureBlockIsBuiltCorrectly()
 
-        val value = node.blockQueries.query(
+        val value = node.getBlockchainInstance(chainId).getEngine().getBlockQueries().query(
                 """{"type"="gtx_test_get_value", "txRID"="${validTx1.getRID().toHex()}"}""")
         Assert.assertEquals("\"true\"", value.get())
     }

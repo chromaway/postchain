@@ -2,83 +2,97 @@
 
 package net.postchain
 
-import net.postchain.base.BaseBlockchainContext
-import net.postchain.base.BaseBlockchainInfrastructure
-import net.postchain.base.BaseConfigurationDataStore
+import net.postchain.base.*
 import net.postchain.base.data.SQLDatabaseAccess
-import net.postchain.base.withReadConnection
 import net.postchain.core.*
 import net.postchain.ebft.EBFTSynchronizationInfrastructure
-import net.postchain.network.PeerConnectionManager
 import org.apache.commons.configuration2.Configuration
 
-
 class BaseBlockchainProcessManager(
-        val blockchainInfrastructure: BlockchainInfrastructure,
-        val synchronizationInfrastructure: SynchronizationInfrastructure,
-        val nodeConfig: Configuration
+        private val blockchainInfrastructure: BlockchainInfrastructure,
+        private val synchronizationInfrastructure: SynchronizationInfrastructure,
+        private val apiInfrastructure: ApiInfrastructure,
+        private val networkInfrastructure: NetworkInfrastructure,
+        nodeConfig: Configuration,
+        private val wipeDatabase: Boolean
 ) : BlockchainProcessManager {
 
-    val storage = baseStorage(nodeConfig, NODE_ID_TODO)
-    val dbAccess = SQLDatabaseAccess()
+    val storage = baseStorage(nodeConfig, NODE_ID_TODO, null)
+    private val dbAccess = SQLDatabaseAccess()
+    private val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
 
-    val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
-
-    private fun runBlockchain(chainId: Long) {
+    override fun startBlockchain(chainId: Long) {
         blockchainProcesses[chainId]?.shutdown()
 
-        withReadConnection(storage, chainId) {
-            ctx ->
-            val blockchainRID = dbAccess.getBlockchainRID(ctx)!!
-            val confData = BaseConfigurationDataStore.getConfigurationData(ctx, 0)
-            val configuration = blockchainInfrastructure.makeBlockchainConfiguration(
-                    confData, BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null)
-            )
-            val engine = blockchainInfrastructure.makeBlockchainEngine(configuration)
-            val restartHandler = { runBlockchain(chainId) }
+        checkDbInitialized(chainId)
+        withReadConnection(storage, chainId) { eContext ->
+            val blockchainRID = dbAccess.getBlockchainRID(eContext)!! // TODO: [et]: Fix Kotlin NPE
+            val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(
+                    BaseConfigurationDataStore.getConfigurationData(eContext, 0),
+                    BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null))
+
+            val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig, wipeDatabase)
+            val communicationManager = networkInfrastructure.buildCommunicationManager(blockchainConfig)
             blockchainProcesses[chainId] = synchronizationInfrastructure.makeBlockchainProcess(
-                    engine, restartHandler
-            )
+                    engine, communicationManager) { startBlockchain(chainId) }
+
+            apiInfrastructure.connectProcess(
+                    blockchainProcesses[chainId]!!, communicationManager)
+
             Unit
         }
     }
 
-    override fun addBlockchain(chainID: Long) {
-        runBlockchain(chainID)
+    override fun retrieveBlockchain(chainId: Long): BlockchainProcess? {
+        return blockchainProcesses[chainId]
     }
 
     override fun shutdown() {
         storage.close()
+        blockchainProcesses.forEach { _, process -> process.shutdown() }
+    }
+
+    private fun checkDbInitialized(chainId: Long) {
+        withWriteConnection(storage, chainId) { eContext ->
+            dbAccess.initialize(eContext, expectedDbVersion = 1)
+            true
+        }
     }
 }
 
-
-/**
- * A postchain node
- *
- * @property connManager instance of [PeerConnectionManager]
- * @property blockchainInstance instance of [EBFTBlockchainInstance]
- */
-class PostchainNode(nodeConfig: Configuration) {
+open class PostchainNode(nodeConfig: Configuration) {
 
     //lateinit var connManager: PeerConnectionManager<EbftMessage>
-    val processManager: BaseBlockchainProcessManager
-    val blockchainInfrastructure: BlockchainInfrastructure
-    val syncInfrastructure: SynchronizationInfrastructure
+    protected val processManager: BaseBlockchainProcessManager
+    protected val blockchainInfrastructure: BlockchainInfrastructure
+    protected val syncInfrastructure: SynchronizationInfrastructure
+    protected val apiInfrastructure: ApiInfrastructure
+    protected val networkInfrastructure: NetworkInfrastructure
 
     init {
         blockchainInfrastructure = BaseBlockchainInfrastructure(nodeConfig)
         syncInfrastructure = EBFTSynchronizationInfrastructure(nodeConfig)
-        processManager = BaseBlockchainProcessManager(blockchainInfrastructure, syncInfrastructure, nodeConfig)
+        apiInfrastructure = BaseApiInfrastructure(nodeConfig)
+        networkInfrastructure = BaseNetworkInfrastructure(nodeConfig)
+
+        processManager = BaseBlockchainProcessManager(
+                blockchainInfrastructure,
+                syncInfrastructure,
+                apiInfrastructure,
+                networkInfrastructure,
+                nodeConfig,
+                isWipeDatabase())
     }
 
-    fun stop() {
+    protected open fun isWipeDatabase(): Boolean = true
+
+    fun startBlockchain(chainID: Long) {
+        processManager.startBlockchain(chainID)
+    }
+
+    fun stopAllBlockchain() {
         //connManager.stop() // TODO
         processManager.shutdown()
-    }
-
-    fun start(chainID: Long) {
-        processManager.addBlockchain(chainID)
     }
 
     fun verifyConfiguration(ctx: EContext, nodeConfig: Configuration, blockchainRID: ByteArray) {

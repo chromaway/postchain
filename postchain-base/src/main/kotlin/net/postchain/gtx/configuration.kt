@@ -41,7 +41,7 @@ open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationDat
 }
 
 open class GTXBlockchainConfigurationFactory : BlockchainConfigurationFactory {
-    override fun makeBlockchainConfiguration(configurationData: Any, context: BlockchainContext): BlockchainConfiguration {
+    override fun makeBlockchainConfiguration(configurationData: Any, context: BlockchainContext?): BlockchainConfiguration {
         return GTXBlockchainConfiguration(configurationData as BaseBlockchainConfigurationData,
                 createGtxModule(configurationData.context.blockchainRID, configurationData.data))
     }

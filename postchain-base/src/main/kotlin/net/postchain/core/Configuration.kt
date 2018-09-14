@@ -26,5 +26,5 @@ interface ConfigurationDataStore {
 }
 
 interface BlockchainConfigurationFactory {
-    fun makeBlockchainConfiguration(configurationData: Any, context: BlockchainContext): BlockchainConfiguration
+    fun makeBlockchainConfiguration(configurationData: Any, /*TODO: [et]: Deprecated?*/context: BlockchainContext?): BlockchainConfiguration
 }

@@ -21,6 +21,7 @@ import org.apache.commons.configuration2.Configuration
  * @property connManager instance of [PeerConnectionManager]
  * @property blockchainInstance instance of [EBFTBlockchainInstance]
  */
+@Deprecated("Legacy")
 class LegacyTestNode {
 
     lateinit var connManager: PeerConnectionManager<EbftMessage>
@@ -52,14 +53,17 @@ class LegacyTestNode {
 
         connManager = makeConnManager(commConfiguration)
         val testNodeEngine = createDataLayer(config, chainId, nodeIndex)
+
+        /* Commented due to compilation errors
         blockchainInstance = EBFTBlockchainInstanceWorker(
                 testNodeEngine.engine,
-                config,
                 nodeIndex,
                 commConfiguration,
                 connManager,
                 {}
+
         )
+        */
     }
 
     /**

@@ -35,13 +35,16 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
         _restartHandler = restartHandler
     }
 
-
     override fun initializeDB() {
-        if (initialized) throw ProgrammerMistake("Engine is already initialized")
+        if (initialized) {
+            throw ProgrammerMistake("Engine is already initialized")
+        }
+
         withWriteConnection(storage, chainID) { ctx ->
             bc.initializeDB(ctx)
             true
         }
+
         // BlockQueries should be instantiated only after
         // database is initialized
         blockQueries = bc.makeBlockQueries(storage)
@@ -94,7 +97,14 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
         blockBuilder.commit(block.witness)
     }
 
-    fun parLoadUnfinishedBlock(block: BlockData): ManagedBlockBuilder {
+    override fun loadUnfinishedBlock(block: BlockData): ManagedBlockBuilder {
+        return if (useParallelDecoding)
+            parallelLoadUnfinishedBlock(block)
+        else
+            sequentialLoadUnfinishedBlock(block)
+    }
+
+    private fun parallelLoadUnfinishedBlock(block: BlockData): ManagedBlockBuilder {
         val tStart = System.nanoTime()
         val factory = bc.getTransactionFactory()
         val transactions = block.transactions.map { txData ->
@@ -109,9 +119,7 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
         blockBuilder.begin()
 
         val tBegin = System.nanoTime()
-        for (tx in transactions) {
-            blockBuilder.appendTransaction(tx.get())
-        }
+        transactions.forEach { blockBuilder.appendTransaction(it.get()) }
         val tEnd = System.nanoTime()
 
         blockBuilder.finalizeAndValidate(block.header)
@@ -129,16 +137,14 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
         return blockBuilder
     }
 
-    fun seqLoadUnfinishedBlock(block: BlockData): ManagedBlockBuilder {
+    private fun sequentialLoadUnfinishedBlock(block: BlockData): ManagedBlockBuilder {
         val tStart = System.nanoTime()
         val blockBuilder = makeBlockBuilder()
         val factory = bc.getTransactionFactory()
         blockBuilder.begin()
 
         val tBegin = System.nanoTime()
-        for (txData in block.transactions) {
-            blockBuilder.appendTransaction(factory.decodeTransaction(txData))
-        }
+        block.transactions.forEach { blockBuilder.appendTransaction(factory.decodeTransaction(it)) }
         val tEnd = System.nanoTime()
 
         blockBuilder.finalizeAndValidate(block.header)
@@ -154,13 +160,6 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
         }
 
         return blockBuilder
-    }
-
-    override fun loadUnfinishedBlock(block: BlockData): ManagedBlockBuilder {
-        return if (useParallelDecoding)
-            parLoadUnfinishedBlock(block)
-        else
-            seqLoadUnfinishedBlock(block)
     }
 
     override fun buildBlock(): ManagedBlockBuilder {

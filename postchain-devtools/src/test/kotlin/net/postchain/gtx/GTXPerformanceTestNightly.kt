@@ -5,11 +5,11 @@ package net.postchain.gtx
 import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import mu.KLogging
-import net.postchain.LegacyTestNode
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.configurations.GTXTestModule
 import net.postchain.test.EbftIntegrationTest
 import net.postchain.test.OnDemandBlockBuildingStrategy
+import net.postchain.test.PostchainTestNode
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,13 +17,17 @@ import kotlin.system.measureNanoTime
 
 @RunWith(JUnitParamsRunner::class)
 class GTXPerformanceTestNightly : EbftIntegrationTest() {
+
     companion object : KLogging()
 
-    fun strat(node: LegacyTestNode): OnDemandBlockBuildingStrategy {
-        return node.getModel().getEngine().getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
+    private fun strategy(node: PostchainTestNode): OnDemandBlockBuildingStrategy {
+        return node
+                .getBlockchainInstance(chainId)
+                .getEngine()
+                .getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
     }
 
-    fun makeTestTx(id: Long, value: String): ByteArray {
+    private fun makeTestTx(id: Long, value: String): ByteArray {
         val b = GTXDataBuilder(net.postchain.test.gtx.testBlockchainRID, arrayOf(pubKey(0)), net.postchain.test.gtx.myCS)
         b.addOperation("gtx_test", arrayOf(gtx(id), gtx(value)))
         b.finish()
@@ -112,18 +116,27 @@ class GTXPerformanceTestNightly : EbftIntegrationTest() {
         createEbftNodes(nodeCount)
 
         var txId = 0
-        val statusManager = ebftNodes[0].getModel().statusManager
+        val statusManager = ebftNodes[0].getBlockchainInstance(chainId).statusManager
         for (i in 0 until blockCount) {
             for (tx in 0 until txPerBlock) {
-                val txf = ebftNodes[statusManager.primaryIndex()].getModel().blockchainConfiguration.getTransactionFactory()
-                ebftNodes[statusManager.primaryIndex()].getModel().getEngine().getTransactionQueue().enqueue(
-                        txf.decodeTransaction(makeTestTx(1, (txId++).toString()))
-                )
+                val txFactory = ebftNodes[statusManager.primaryIndex()]
+                        .getBlockchainInstance(chainId)
+                        .blockchainConfiguration
+                        .getTransactionFactory()
+
+                val tx = makeTestTx(1, (txId++).toString())
+                ebftNodes[statusManager.primaryIndex()]
+                        .getBlockchainInstance(chainId)
+                        .getEngine()
+                        .getTransactionQueue()
+                        .enqueue(txFactory.decodeTransaction(tx))
             }
+
             val nanoDelta = measureNanoTime {
-                strat(ebftNodes[statusManager.primaryIndex()]).triggerBlock()
-                ebftNodes.forEach { strat(it).awaitCommitted(i) }
+                strategy(ebftNodes[statusManager.primaryIndex()]).triggerBlock()
+                ebftNodes.forEach { strategy(it).awaitCommitted(i) }
             }
+
             println("Time elapsed: ${nanoDelta / 1000000} ms")
         }
     }

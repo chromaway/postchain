@@ -11,7 +11,8 @@ import org.apache.commons.dbutils.handlers.*
 interface DatabaseAccess {
     class BlockInfo(val blockIid: Long, val blockHeader: ByteArray, val witness: ByteArray)
 
-    fun initialize(ctx: EContext, blockchainRID: ByteArray, expectedDbVersion: Int)
+    fun initialize(ctx: EContext, expectedDbVersion: Int)
+    fun checkBlockchainRID(ctx: EContext, blockchainRID: ByteArray)
 
     fun getBlockchainRID(ctx: EContext): ByteArray?
     fun insertBlock(ctx: EContext, height: Long): Long
@@ -194,10 +195,12 @@ class SQLDatabaseAccess : DatabaseAccess {
                 nullableByteArrayRes, ctx.chainID)
     }
 
-    override fun initialize(ctx: EContext, blockchainRID: ByteArray, expectedDbVersion: Int) {
-        // "CREATE TABLE IF NOT EXISTS" is not good enough for the meta table
-        // We need to know whether it exists or not in order to
-        // make desicions on upgrade
+    override fun initialize(ctx: EContext, expectedDbVersion: Int) {
+        /**
+         * "CREATE TABLE IF NOT EXISTS" is not good enough for the meta table
+         * We need to know whether it exists or not in order to
+         * make decisions on upgrade
+         */
         val checkExists = """
             SELECT 1
             FROM   pg_catalog.pg_class c
@@ -207,7 +210,6 @@ class SQLDatabaseAccess : DatabaseAccess {
                     AND    c.relname = 'meta'
                     AND    c.relkind = 'r'
         """
-
         val metaExists = queryRunner.query(ctx.conn, checkExists, ColumnListHandler<Int>())
         if (metaExists.size == 1) {
             // meta table already exists. Check the version
@@ -217,66 +219,81 @@ class SQLDatabaseAccess : DatabaseAccess {
                 throw UserMistake("Unexpected version '$version' in database. Expected '$expectedDbVersion'")
             }
 
-            // Check that the blockchainRID is present for block_id
-            val dbRid = queryRunner.query(ctx.conn, "SELECT blockchain_rid from blockchains where chain_id=?",
-                    nullableByteArrayRes, ctx.chainID)
-            if (dbRid == null) {
-                queryRunner.insert(ctx.conn, "INSERT INTO blockchains (chain_id, blockchain_rid) values (?, ?)",
-                        ScalarHandler<Unit>(), ctx.chainID, blockchainRID)
-            } else if (!dbRid.contentEquals(blockchainRID)) {
-                throw UserMistake("The blockchainRID in db for chainId ${ctx.chainID} " +
-                        "is ${dbRid.toHex()}, but the expected rid is ${blockchainRID.toHex()}")
-            }
-            return
+        } else {
+            // meta table does not exist! Assume database does not exist.
+            queryRunner.update(ctx.conn, """CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)""")
+            queryRunner.update(
+                    ctx.conn,
+                    "INSERT INTO meta (key, value) values ('version', ?)",
+                    expectedDbVersion)
+
+
+            // Don't use "CREATE TABLE IF NOT EXISTS" because if they do exist
+            // we must throw an error. If these tables exists but meta did not exist,
+            // there is some serious problem that needs manual work
+            queryRunner.update(
+                    ctx.conn,
+                    "CREATE TABLE blockchains " +
+                            "(chain_id BIGINT PRIMARY KEY, blockchain_rid BYTEA NOT NULL)")
+
+            queryRunner.update(ctx.conn,
+                    "CREATE TABLE blocks" +
+                            " (block_iid BIGSERIAL PRIMARY KEY," +
+                            "  block_height BIGINT NOT NULL, " +
+                            "  block_rid BYTEA," +
+                            "  chain_id BIGINT NOT NULL," +
+                            "  block_header_data BYTEA," +
+                            "  block_witness BYTEA," +
+                            "  timestamp BIGINT," +
+                            "  UNIQUE (chain_id, block_rid)," +
+                            "  UNIQUE (chain_id, block_height))")
+
+            queryRunner.update(ctx.conn, "CREATE TABLE transactions (" +
+                    "    tx_iid BIGSERIAL PRIMARY KEY, " +
+                    "    chain_id bigint NOT NULL," +
+                    "    tx_rid bytea NOT NULL," +
+                    "    tx_data bytea NOT NULL," +
+                    "    tx_hash bytea NOT NULL," +
+                    "    block_iid bigint NOT NULL REFERENCES blocks(block_iid)," +
+                    "    UNIQUE (chain_id, tx_rid))")
+
+            // Configurations
+            queryRunner.update(ctx.conn, "CREATE TABLE configurations (" +
+                    "configuration_iid BIGSERIAL PRIMARY KEY" +
+                    ", chain_id bigint NOT NULL" +
+                    ", height BIGINT NOT NULL" +
+                    ", configuration_data bytea NOT NULL" +
+                    ")")
+
+            queryRunner.update(ctx.conn, """CREATE INDEX transactions_block_iid_idx ON transactions(block_iid)""")
+            queryRunner.update(ctx.conn, """CREATE INDEX blocks_chain_id_timestamp ON blocks(chain_id, timestamp)""")
+            queryRunner.update(ctx.conn, """CREATE INDEX configurations_chain_id_to_height ON configurations(chain_id, height)""")
+
+        }
+    }
+
+    override fun checkBlockchainRID(ctx: EContext, blockchainRID: ByteArray) {
+        // Check that the blockchainRID is present for chain_id
+        val rid = queryRunner.query(
+                ctx.conn,
+                "SELECT blockchain_rid from blockchains where chain_id=?",
+                nullableByteArrayRes,
+                ctx.chainID)
+
+        if (rid == null) {
+            queryRunner.insert(
+                    ctx.conn,
+                    "INSERT INTO blockchains (chain_id, blockchain_rid) values (?, ?)",
+                    ScalarHandler<Unit>(),
+                    ctx.chainID,
+                    blockchainRID)
+
+        } else if (!rid.contentEquals(blockchainRID)) {
+            throw UserMistake("The blockchainRID in db for chainId ${ctx.chainID} " +
+                    "is ${rid.toHex()}, but the expected rid is ${blockchainRID.toHex()}")
         }
 
-        // meta table does not exist! Assume database does not exist.
 
-        queryRunner.update(ctx.conn, """
-            CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)
-            """)
-        queryRunner.update(ctx.conn, "INSERT INTO meta (key, value) values ('version', ?)", expectedDbVersion)
-
-        // Don't use "CREATE TABLE IF NOT EXISTS" because if they do exist
-        // we must throw an error. If these tables exists but meta did not exist,
-        // there is some serious problem that needs manual work
-        queryRunner.update(ctx.conn, "CREATE TABLE blockchains " +
-                "(chain_id BIGINT PRIMARY KEY, blockchain_rid BYTEA NOT NULL)")
-        queryRunner.insert(ctx.conn, "INSERT INTO blockchains (chain_id, blockchain_rid) values (?, ?)",
-                ScalarHandler<Unit>(), ctx.chainID, blockchainRID)
-
-        queryRunner.update(ctx.conn,
-                "CREATE TABLE blocks" +
-                        " (block_iid BIGSERIAL PRIMARY KEY," +
-                        "  block_height BIGINT NOT NULL, " +
-                        "  block_rid BYTEA," +
-                        "  chain_id BIGINT NOT NULL," +
-                        "  block_header_data BYTEA," +
-                        "  block_witness BYTEA," +
-                        "  timestamp BIGINT," +
-                        "  UNIQUE (chain_id, block_rid)," +
-                        "  UNIQUE (chain_id, block_height))")
-
-        queryRunner.update(ctx.conn, "CREATE TABLE transactions (" +
-                "    tx_iid BIGSERIAL PRIMARY KEY, " +
-                "    chain_id bigint NOT NULL," +
-                "    tx_rid bytea NOT NULL," +
-                "    tx_data bytea NOT NULL," +
-                "    tx_hash bytea NOT NULL," +
-                "    block_iid bigint NOT NULL REFERENCES blocks(block_iid)," +
-                "    UNIQUE (chain_id, tx_rid))")
-
-        // Configurations
-        queryRunner.update(ctx.conn, "CREATE TABLE configurations (" +
-                "configuration_iid BIGSERIAL PRIMARY KEY" +
-                ", chain_id bigint NOT NULL" +
-                ", height BIGINT NOT NULL" +
-                ", configuration_data bytea NOT NULL" +
-                ")")
-
-        queryRunner.update(ctx.conn, """CREATE INDEX transactions_block_iid_idx ON transactions(block_iid)""")
-        queryRunner.update(ctx.conn, """CREATE INDEX blocks_chain_id_timestamp ON blocks(chain_id, timestamp)""")
-        queryRunner.update(ctx.conn, """CREATE INDEX configurations_chain_id_to_height ON configurations(chain_id, height)""")
     }
 
     override fun findConfiguration(context: EContext, height: Long): Long {

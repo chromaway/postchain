@@ -28,14 +28,14 @@ class TestLauncher : IntegrationTest() {
                 "blockchain.1.gtx.modules",
                 listOf(StandardOpsGTXModule::class.qualifiedName))
 
-        val dataLayer = createDataLayer(0, configFile = configFile ?: DEFAULT_CONFIG_FILE)
+        val (node, chainId) = createNode(0)
         val testType = parseTest(xml)
 
         var blockNum = 0L
         val enqueuedTxsRids = mutableMapOf<Long, List<ByteArray>>()
 
         // Genesis block
-        buildBlockAndCommit(dataLayer)
+        buildBlockAndCommit(node, chainId)
         blockNum++
 
         // Blocks of test
@@ -51,23 +51,23 @@ class TestLauncher : IntegrationTest() {
 
                     val txContext = TransactionContext(blockchainRID?.hexStringToByteArray())
                     val gtxData = GTXMLTransactionParser.parseGTXMLTransaction(it, txContext)
-                    val tx = enqueueTx(dataLayer, gtxData.serialize(), blockNum)
+                    val tx = enqueueTx(node, chainId, gtxData.serialize(), blockNum)
                     enqueued.add(tx!!.getRID())
                 }
             }
             enqueuedTxsRids[blockNum] = enqueued
 
-            buildBlockAndCommit(dataLayer)
+            buildBlockAndCommit(node, chainId)
             blockNum++
         }
 
         // Assert height
-        res = res and (blockNum - 1 == getBestHeight(dataLayer))
+        res = res and (blockNum - 1 == getBestHeight(node, chainId))
 
         // Assert consumed txs
         res = res and enqueuedTxsRids.all { entry ->
             entry.value.toTypedArray().contentDeepEquals(
-                    getTxRidsAtHeight(dataLayer, entry.key))
+                    getTxRidsAtHeight(node, chainId, entry.key))
         }
 
         return res
@@ -80,4 +80,5 @@ class TestLauncher : IntegrationTest() {
 
         return jaxbElement.value as TestType
     }
+
 }

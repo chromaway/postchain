@@ -70,7 +70,7 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
             for (i in 0 until txCount) {
                 val tx = TestTransaction(currentId - i)
 
-                val body = given().port(ebftNodes[0].getModel().restApi!!.actualPort())
+                val body = given().port(ebftNodes[0].getRestApiHttpPort())
                         .get("/tx/$blockchainRID/${tx.getRID().toHex()}/confirmationProof")
                         .then()
                         .statusCode(200)
@@ -109,7 +109,9 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
                 }
 
                 // Assert Merkle Path
-                val header = ebftNodes[0].getModel().blockchainConfiguration
+                val header = ebftNodes[0]
+                        .getBlockchainInstance(chainId)
+                        .blockchainConfiguration
                         .decodeBlockHeader(blockHeader) as BaseBlockHeader
                 assertTrue(header.validateMerklePath(path, tx.getHash()))
             }
@@ -118,13 +120,13 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
 
     private fun awaitConfirmed(blockchainRID: String, tx: Transaction) {
         RestTools.awaitConfirmed(
-                ebftNodes[0].getModel().restApi!!.actualPort(),
+                ebftNodes[0].getRestApiHttpPort(),
                 blockchainRID,
                 tx.getRID().toHex())
     }
 
     private fun testStatusGet(path: String, expectedStatus: Int, extraChecks: (responseBody: String) -> Unit = {}) {
-        val response = given().port(ebftNodes[0].getModel().restApi!!.actualPort())
+        val response = given().port(ebftNodes[0].getRestApiHttpPort())
                 .get(path)
                 .then()
                 .statusCode(expectedStatus)
@@ -134,7 +136,7 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
     }
 
     private fun testStatusPost(toIndex: Int, path: String, body: String, expectedStatus: Int) {
-        given().port(ebftNodes[toIndex].getModel().restApi!!.actualPort())
+        given().port(ebftNodes[toIndex].getRestApiHttpPort())
                 .body(body)
                 .post(path)
                 .then()

@@ -29,8 +29,9 @@ class CommandRunNode : Command {
             nodeConfigFile = "config/config.$nodeIndex.properties"
         }
 
-        val node = PostchainNode(CommonsConfigurationFactory.readFromFile(nodeConfigFile))
+        val node = PostchainNode(
+                CommonsConfigurationFactory.readFromFile(nodeConfigFile))
 
-        for (cid in chainIDs) node.start(cid)
+        chainIDs.forEach(node::startBlockchain)
     }
 }

@@ -1,9 +1,6 @@
 package net.postchain.cli
 
 import com.beust.jcommander.Parameters
-import net.postchain.LegacyTestNode
-import org.apache.commons.lang3.builder.ToStringBuilder
-import org.apache.commons.lang3.builder.ToStringStyle
 
 /**
  * Not currently used
@@ -14,9 +11,10 @@ class CommandStopNode : Command {
     override fun key(): String = "stop-node"
 
     override fun execute() {
+        /* TODO: Uncomment at implementation
         println("stop-node will be executed with options: " +
                 "${ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE)}")
-
-        LegacyTestNode().stop()
+                */
+        println("stop-node command is not currently implemented")
     }
 }

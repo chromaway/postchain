@@ -2,29 +2,31 @@
 
 package net.postchain.test
 
-import net.postchain.LegacyTestNode
+import net.postchain.PostchainNode
 import org.junit.After
 
 open class EbftIntegrationTest : IntegrationTest() {
-    protected var ebftNodes: Array<LegacyTestNode> = arrayOf()
+
+    protected var chainId: Long = 0
+    protected var ebftNodes: Array<PostchainTestNode> = arrayOf()
 
     open fun createEbftNodes(count: Int) {
         ebftNodes = Array(count) { createEBFTNode(count, it) }
     }
 
-    private fun createEBFTNode(nodeCount: Int, myIndex: Int): LegacyTestNode {
-        configOverrides.setProperty("messaging.privkey", privKeyHex(myIndex))
+    private fun createEBFTNode(nodeCount: Int, nodeIndex: Int): PostchainTestNode {
+        configOverrides.setProperty("messaging.privkey", privKeyHex(nodeIndex))
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
-        val pn = LegacyTestNode()
-        pn.start(createConfig(myIndex, nodeCount, DEFAULT_CONFIG_FILE), myIndex)
-        return pn
+
+        val config = createConfig(nodeIndex, nodeCount, DEFAULT_CONFIG_FILE)
+        chainId = chainId(config) // TODO: [et]: Require invariance of $chainId for different configs
+        return PostchainTestNode(config)
+                .apply { startBlockchain(chainId) }
     }
 
     @After
     fun tearDownEbftNodes() {
-        ebftNodes.forEach {
-            it.stop()
-        }
+        ebftNodes.forEach(PostchainNode::stopAllBlockchain)
         ebftNodes = arrayOf()
     }
 }

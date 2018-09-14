@@ -4,13 +4,15 @@ import net.postchain.base.data.BaseTransactionQueue
 import net.postchain.baseStorage
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.*
+import net.postchain.ebft.CommManager
+import net.postchain.ebft.message.EbftMessage
 import net.postchain.gtx.decodeGTXValue
 import org.apache.commons.configuration2.Configuration
 
 class BaseBlockchainInfrastructure(val config: Configuration) : BlockchainInfrastructure {
 
     val cryptoSystem = SECP256K1CryptoSystem()
-    val blockSigner : Signer
+    val blockSigner: Signer
     val subjectID: ByteArray
 
     init {
@@ -25,34 +27,32 @@ class BaseBlockchainInfrastructure(val config: Configuration) : BlockchainInfras
     }
 
     override fun makeBlockchainConfiguration(rawConfigurationData: ByteArray, context: BlockchainContext): BlockchainConfiguration {
-
-        val actualContext: BlockchainContext
-        if (context.nodeRID == null) {
-            actualContext = BaseBlockchainContext(context.blockchainRID, context.nodeID, context.chainID, subjectID)
+        val actualContext = if (context.nodeRID == null) {
+            BaseBlockchainContext(context.blockchainRID, context.nodeID, context.chainID, subjectID)
         } else {
-            actualContext = context
+            context
         }
 
         val gtxData = decodeGTXValue(rawConfigurationData)
-        val confData = BaseBlockchainConfigurationData(gtxData, actualContext,
-                blockSigner
-        )
+        val confData = BaseBlockchainConfigurationData(gtxData, actualContext, blockSigner)
         val bcfClass = Class.forName(confData.data["configurationfactory"]!!.asString())
         val factory = (bcfClass.newInstance() as BlockchainConfigurationFactory)
 
         return factory.makeBlockchainConfiguration(confData, actualContext)
     }
 
-    override fun makeBlockchainEngine(bc: BlockchainConfiguration): BaseBlockchainEngine
-    {
-        val storage = baseStorage(config, -1) // TODO: nodeID
+    override fun makeBlockchainEngine(configuration: BlockchainConfiguration, wipeDatabase: Boolean): BaseBlockchainEngine {
+        val storage = baseStorage(config, -1, wipeDatabase) // TODO: nodeID
         val tq = BaseTransactionQueue(config.getInt("queuecapacity", 2500))
-        val engine = BaseBlockchainEngine(bc, storage, bc.chainID, tq)
+        val engine = BaseBlockchainEngine(configuration, storage, configuration.chainID, tq)
         engine.initializeDB()
         return engine
     }
 
-    override fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
+    override fun makeBlockchainProcess(
+            engine: BlockchainEngine,
+            communicationManager: CommManager<EbftMessage>,
+            restartHandler: RestartHandler): BlockchainProcess {
         TODO("Nope")
     }
 

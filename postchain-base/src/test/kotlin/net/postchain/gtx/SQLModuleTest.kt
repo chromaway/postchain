@@ -3,7 +3,6 @@ package net.postchain.gtx
 import net.postchain.base.withWriteConnection
 import net.postchain.baseStorage
 import org.apache.commons.configuration2.MapConfiguration
-import org.apache.commons.dbutils.QueryRunner
 import org.junit.Assert
 import org.junit.Test
 import java.nio.file.Paths
@@ -29,8 +28,7 @@ class SQLModuleTest {
                 "database.wipe" to "true"
         ))
 
-        val r = QueryRunner()
-        val storage = baseStorage(dataConf, 0)
+        val storage = baseStorage(dataConf, 0, null)
         withWriteConnection(storage, 1) {
             GTXSchemaManager.initializeDB(it)
             module.initializeDB(it)

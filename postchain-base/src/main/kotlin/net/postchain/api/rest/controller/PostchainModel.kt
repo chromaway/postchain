@@ -21,6 +21,7 @@ open class PostchainModel(
         private val transactionFactory: TransactionFactory,
         val blockQueries: BaseBlockQueries
 ) : Model {
+
     companion object : KLogging()
 
     override fun postTransaction(tx: ApiTx) {

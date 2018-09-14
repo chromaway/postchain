@@ -12,7 +12,7 @@ class BaseBlockchainConfigurationData(
         val data: GTXValue,
         partialContext: BlockchainContext,
         val blockSigner: Signer
-)  {
+) {
 
     val context: BlockchainContext
     val subjectID: ByteArray
@@ -34,12 +34,12 @@ class BaseBlockchainConfigurationData(
         } else {
             nodeID = partialContext.nodeID
         }
+
         context = BaseBlockchainContext(
                 partialContext.blockchainRID,
                 nodeID,
                 partialContext.chainID,
-                partialContext.nodeRID
-        )
+                partialContext.nodeRID)
     }
 
 
@@ -51,25 +51,25 @@ class BaseBlockchainConfigurationData(
         return data["blockstrategy"]?.get("name")?.asString() ?: ""
     }
 
-    fun getBlockBuildingStrategy() : GTXValue? {
+    fun getBlockBuildingStrategy(): GTXValue? {
         return data["blockstrategy"]
     }
 
     companion object {
-        fun readFromCommonsConfiguration(config: Configuration, chainID: Long, nodeID: Int): BaseBlockchainConfigurationData {
-            val gConfig = convertConfigToGTXValue(config)
+        fun readFromCommonsConfiguration(config: Configuration, chainId: Long, nodeID: Int): BaseBlockchainConfigurationData {
+            val gtxConfig = convertConfigToGTXValue(config.subset("blockchain.$chainId"))
             val cryptoSystem = SECP256K1CryptoSystem()
-            val privKey = gConfig["blocksigningprivkey"]!!.asByteArray()
+            val privKey = gtxConfig["blocksigningprivkey"]!!.asByteArray()
             val pubKey = secp256k1_derivePubKey(privKey)
             val signer = cryptoSystem.makeSigner(
-                pubKey, privKey // TODO: maybe take it from somewhere?
+                    pubKey, privKey // TODO: maybe take it from somewhere?
             )
             return BaseBlockchainConfigurationData(
-                    gConfig,
+                    gtxConfig,
                     BaseBlockchainContext(
-                            gConfig["blockchainRID"]!!.asByteArray(),
+                            gtxConfig["blockchainRID"]!!.asByteArray(),
                             nodeID,
-                            chainID,
+                            chainId,
                             pubKey
                     ),
                     signer)
@@ -86,8 +86,7 @@ class BaseBlockchainConfigurationData(
                 val ftProps = mutableListOf<Pair<String, GTXValue>>()
                 val assets = config.getStringArray("gtx.ft.assets")
 
-                ftProps.add("assets" to gtx(*assets.map {
-                    assetName ->
+                ftProps.add("assets" to gtx(*assets.map { assetName ->
                     val issuers = gtx(
                             *config.getStringArray("gtx.ft.asset.${assetName}.issuers").map(
                                     { gtx(it.hexStringToByteArray()) }
@@ -103,13 +102,11 @@ class BaseBlockchainConfigurationData(
 
             if (config.containsKey("gtx.sqlmodules"))
                 properties.add("sqlmodules" to gtx(*
-                        config.getStringArray("gtx.sqlmodules").map {gtx(it)}.toTypedArray()
+                config.getStringArray("gtx.sqlmodules").map { gtx(it) }.toTypedArray()
                 ))
 
             return gtx(*properties.toTypedArray())
         }
-
-
 
         private fun convertConfigToGTXValue(config: Configuration): GTXValue {
 
@@ -123,7 +120,7 @@ class BaseBlockchainConfigurationData(
                     "blockstrategy" to blockStrategy(config),
                     "blockchainRID" to gtx(config.getString("blockchainrid").hexStringToByteArray()),
                     "configurationfactory" to gtx(config.getString("configurationfactory")),
-                    "signers" to gtx(config.getStringArray("signers").map { gtx(it.hexStringToByteArray())}),
+                    "signers" to gtx(config.getStringArray("signers").map { gtx(it.hexStringToByteArray()) }),
                     "blocksigningprivkey" to gtx(config.getString("blocksigningprivkey").hexStringToByteArray())
             )
 

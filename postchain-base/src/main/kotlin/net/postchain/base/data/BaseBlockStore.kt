@@ -10,11 +10,9 @@ import net.postchain.core.*
  * are stored
  *
  * @property db Object used to access the DBMS
- * @property dbVersion version of the database
  */
 class BaseBlockStore : BlockStore {
     var db: DatabaseAccess = SQLDatabaseAccess()
-    private val dbVersion = 1
 
     /**
      * Get initial block data, i.e. data necessary for building the next block
@@ -119,6 +117,6 @@ class BaseBlockStore : BlockStore {
     }
 
     fun initialize(ctx: EContext, blockchainRID: ByteArray) {
-        db.initialize(ctx, blockchainRID, this.dbVersion)
+        db.checkBlockchainRID(ctx, blockchainRID)
     }
 }
