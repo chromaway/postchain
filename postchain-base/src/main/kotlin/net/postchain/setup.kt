@@ -26,6 +26,7 @@ fun getBlockchainConfiguration(config: Configuration, chainId: Long, nodeIndex: 
             BaseBlockchainContext(baseConfig.context.blockchainRID, nodeIndex, chainId, null))  // TODO
 }
 
+@Deprecated("Legacy")
 class TestNodeEngine(val engine: BlockchainEngine,
                      val txQueue: TransactionQueue,
                      val blockchainConfiguration: BlockchainConfiguration,

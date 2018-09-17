@@ -3,6 +3,7 @@
 package net.postchain.test
 
 import net.postchain.PostchainNode
+import net.postchain.test.KeyPairHelper.Companion.privKeyHex
 import org.junit.After
 
 open class EbftIntegrationTest : IntegrationTest() {

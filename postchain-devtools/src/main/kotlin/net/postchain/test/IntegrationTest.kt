@@ -5,14 +5,16 @@ package net.postchain.test
 import mu.KLogging
 import net.postchain.TestNodeEngine
 import net.postchain.base.*
-import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.common.hexStringToByteArray
-import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.createDataLayer
 import net.postchain.createTestNodeEngine
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.gtx
+import net.postchain.test.KeyPairHelper.Companion.privKey
+import net.postchain.test.KeyPairHelper.Companion.privKeyHex
+import net.postchain.test.KeyPairHelper.Companion.pubKey
+import net.postchain.test.KeyPairHelper.Companion.pubKeyHex
 import org.apache.commons.configuration2.CompositeConfiguration
 import org.apache.commons.configuration2.Configuration
 import org.apache.commons.configuration2.MapConfiguration
@@ -23,121 +25,37 @@ import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler
 import org.apache.commons.configuration2.io.ClasspathLocationStrategy
 import org.junit.After
 import org.junit.Assert.*
-import java.io.ByteArrayOutputStream
-import java.io.DataInputStream
-import java.io.DataOutputStream
 import java.io.File
 
 
 open class IntegrationTest {
 
+    @Deprecated("Legacy")
     protected val nodesLegacy = mutableListOf<TestNodeEngine>()
     protected val nodes = mutableListOf<PostchainTestNode>()
     val configOverrides = MapConfiguration(mutableMapOf<String, String>())
     val cryptoSystem = SECP256K1CryptoSystem()
     var gtxConfig: GTXValue? = null
 
+    // PeerInfos must be shared between all nodes because
+    // a listening node will update the PeerInfo port after
+    // ServerSocket is created.
+    private var peerInfos: Array<PeerInfo>? = null
+    private var expectedSuccessRids = mutableMapOf<Long, MutableList<ByteArray>>()
+
     companion object : KLogging() {
         const val DEFAULT_CONFIG_FILE = "config.properties"
     }
 
-    fun privKey(index: Int): ByteArray {
-        // private key index 0 is all zeroes except byte 16 which is 1
-        // private key index 12 is all 12:s except byte 16 which is 1
-        // reason for byte16=1 is that private key cannot be all zeroes
-        return ByteArray(32, { if (it == 16) 1.toByte() else index.toByte() })
+    @After
+    fun tearDown() {
+        nodes.forEach { it.stopAllBlockchain() }
+        nodes.clear()
+        logger.debug("Closed nodes")
+        peerInfos = null
+        expectedSuccessRids = mutableMapOf()
+        configOverrides.clear()
     }
-
-    fun privKeyHex(index: Int): String {
-        return privKey(index).toHex()
-    }
-
-    fun pubKey(index: Int): ByteArray {
-        return secp256k1_derivePubKey(privKey(index))
-    }
-
-    fun pubKeyHex(index: Int): String {
-        return pubKey(index).toHex()
-    }
-
-    open class TestBlockchainConfiguration(configData: BaseBlockchainConfigurationData) : BaseBlockchainConfiguration(configData) {
-        val transactionFactory = TestTransactionFactory()
-
-        override fun getTransactionFactory(): TransactionFactory {
-            return transactionFactory
-        }
-    }
-
-    class TestTransactionFactory : TransactionFactory {
-        val specialTxs = mutableMapOf<Int, Transaction>()
-
-        override fun decodeTransaction(data: ByteArray): Transaction {
-            val id = DataInputStream(data.inputStream()).readInt()
-            if (specialTxs.containsKey(DataInputStream(data.inputStream()).readInt())) {
-                return specialTxs[id]!!
-            }
-            val result = TestTransaction(id)
-            assertArrayEquals(result.getRawData(), data)
-            return result
-        }
-    }
-
-    open class TestTransaction(val id: Int, val good: Boolean = true, val correct: Boolean = true) : Transaction {
-        override fun isCorrect(): Boolean {
-            return correct
-        }
-
-        override fun apply(ctx: TxEContext): Boolean {
-            return good
-        }
-
-        override fun getRawData(): ByteArray {
-            return bytes(40)
-        }
-
-        private fun bytes(length: Int): ByteArray {
-            val byteStream = ByteArrayOutputStream(length)
-            val out = DataOutputStream(byteStream)
-            for (i in 0 until length / 4) {
-                out.writeInt(id)
-            }
-            out.flush()
-            return byteStream.toByteArray()
-        }
-
-        override fun getRID(): ByteArray {
-            return bytes(32)
-        }
-
-        override fun getHash(): ByteArray {
-            return getRID().reversed().toByteArray()
-        }
-    }
-
-    class UnexpectedExceptionTransaction(id: Int) : TestTransaction(id) {
-        override fun apply(ctx: TxEContext): Boolean {
-            throw RuntimeException("Expected exception")
-        }
-    }
-
-    inner class ErrorTransaction(id: Int, private val applyThrows: Boolean, private val isCorrectThrows: Boolean) : TestTransaction(id) {
-        override fun isCorrect(): Boolean {
-            if (isCorrectThrows) throw UserMistake("Thrown from isCorrect()")
-            return true
-        }
-
-        override fun apply(ctx: TxEContext): Boolean {
-            if (applyThrows) throw UserMistake("Thrown from apply()")
-            return true
-        }
-    }
-
-    // PeerInfos must be shared between all nodes because
-    // a listening node will update the PeerInfo port after
-    // ServerSocket is created.
-    var peerInfos: Array<PeerInfo>? = null
-
-    private var expectedSuccessRids = mutableMapOf<Long, MutableList<ByteArray>>()
 
     // TODO: [et]: Check out nullability for return value
     protected fun enqueueTx(node: PostchainTestNode, chainId: Long, data: ByteArray, expectedConfirmationHeight: Long): Transaction? {
@@ -167,16 +85,6 @@ open class IntegrationTest {
                 assertArrayEquals(expectedRidsAtHeight.toTypedArray(), txRidsAtHeight)
             }
         }
-    }
-
-    @After
-    fun tearDown() {
-        nodes.forEach { it.stopAllBlockchain() }
-        nodes.clear()
-        logger.debug("Closed nodes")
-        peerInfos = null
-        expectedSuccessRids = mutableMapOf()
-        configOverrides.clear()
     }
 
     protected fun createNode(nodeIndex: Int): Pair<PostchainTestNode, Long> =
@@ -340,13 +248,5 @@ open class IntegrationTest {
 
     protected fun chainId(config: Configuration): Long {
         return config.getLong("activechainids")
-    }
-}
-
-
-class TestBlockchainConfigurationFactory : BlockchainConfigurationFactory {
-
-    override fun makeBlockchainConfiguration(configData: Any, context: BlockchainContext?): BlockchainConfiguration {
-        return IntegrationTest.TestBlockchainConfiguration(configData as BaseBlockchainConfigurationData)
     }
 }

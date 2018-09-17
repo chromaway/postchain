@@ -7,6 +7,7 @@ import net.postchain.api.rest.model.ApiTx
 import net.postchain.common.toHex
 import net.postchain.test.EbftIntegrationTest
 import net.postchain.test.PostchainTestNode
+import net.postchain.test.testinfra.TestTransaction
 import org.junit.Assert
 import org.junit.Test
 

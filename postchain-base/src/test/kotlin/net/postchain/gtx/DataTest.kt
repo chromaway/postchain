@@ -3,8 +3,8 @@
 package net.postchain.gtx
 
 import net.postchain.base.SECP256K1CryptoSystem
-import net.postchain.common.hexStringToByteArray
 import net.postchain.base.secp256k1_derivePubKey
+import net.postchain.common.hexStringToByteArray
 import net.postchain.core.Signature
 import org.junit.Assert.*
 import org.junit.Test
@@ -13,7 +13,7 @@ import org.junit.Test
 // val testBlockchainRID = SECP256K1CryptoSystem().digest("Test blockchainRID".toByteArray())
 val testBlockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3".hexStringToByteArray()
 
-fun mustThrowError(msg: String, code: ()->Unit) {
+fun mustThrowError(msg: String, code: () -> Unit) {
     try {
         code()
         fail(msg)

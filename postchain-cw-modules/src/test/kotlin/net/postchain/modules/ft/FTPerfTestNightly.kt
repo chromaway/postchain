@@ -4,6 +4,8 @@ import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.base.secp256k1_derivePubKey
 import net.postchain.gtx.*
+import net.postchain.test.KeyPairHelper.Companion.privKey
+import net.postchain.test.KeyPairHelper.Companion.pubKey
 import net.postchain.test.modules.ft.FTIntegrationTest
 import org.junit.Assert
 import org.junit.Test

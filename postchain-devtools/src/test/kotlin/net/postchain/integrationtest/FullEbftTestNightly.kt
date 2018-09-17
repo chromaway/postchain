@@ -8,6 +8,7 @@ import mu.KLogging
 import net.postchain.test.EbftIntegrationTest
 import net.postchain.test.OnDemandBlockBuildingStrategy
 import net.postchain.test.PostchainTestNode
+import net.postchain.test.testinfra.TestTransaction
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test

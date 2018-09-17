@@ -10,6 +10,7 @@ import net.postchain.configurations.GTXTestModule
 import net.postchain.gtx.GTXBlockchainConfigurationFactory
 import net.postchain.modules.ft.BaseFTModuleFactory
 import net.postchain.test.IntegrationTest
+import net.postchain.test.KeyPairHelper.Companion.pubKeyHex
 import org.junit.Test
 
 /**
