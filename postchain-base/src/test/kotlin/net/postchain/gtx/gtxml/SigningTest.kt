@@ -2,8 +2,8 @@ package net.postchain.gtx.gtxml
 
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.toHex
-import net.postchain.gtx.privKey
-import net.postchain.gtx.pubKey
+import net.postchain.test.KeyPairHelper.privKey
+import net.postchain.test.KeyPairHelper.pubKey
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

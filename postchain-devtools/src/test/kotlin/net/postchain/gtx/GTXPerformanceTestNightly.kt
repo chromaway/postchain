@@ -8,9 +8,8 @@ import mu.KLogging
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.configurations.GTXTestModule
 import net.postchain.test.EbftIntegrationTest
-import net.postchain.test.KeyPairHelper
-import net.postchain.test.KeyPairHelper.Companion.privKey
-import net.postchain.test.KeyPairHelper.Companion.pubKey
+import net.postchain.test.KeyPairHelper.privKey
+import net.postchain.test.KeyPairHelper.pubKey
 import net.postchain.test.OnDemandBlockBuildingStrategy
 import net.postchain.test.PostchainTestNode
 import org.junit.Assert

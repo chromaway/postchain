@@ -8,8 +8,8 @@ import net.postchain.base.data.BaseTransactionFactory
 import net.postchain.core.BlockEContext
 import net.postchain.core.EContext
 import net.postchain.core.InitialBlockData
-import net.postchain.gtx.privKey
-import net.postchain.gtx.pubKey
+import net.postchain.test.KeyPairHelper.privKey
+import net.postchain.test.KeyPairHelper.pubKey
 import net.postchain.test.MockCryptoSystem
 import org.easymock.EasyMock.mock
 import org.junit.Test
@@ -20,8 +20,8 @@ class BaseBlockBuilderTest {
     var bbs = BaseBlockStore()
     val tf = BaseTransactionFactory()
     val ctx = EContext(mock(Connection::class.java), 2L, 0)
-    val bctx = BlockEContext(mock(Connection::class.java),2,0, 1,10)
-    val dummy = ByteArray(32, {0})
+    val bctx = BlockEContext(mock(Connection::class.java), 2, 0, 1, 10)
+    val dummy = ByteArray(32, { 0 })
     val subjects = arrayOf("test".toByteArray())
     val signer = cryptoSystem.makeSigner(pubKey(0), privKey(0))
     val bbb = BaseBlockBuilder(cryptoSystem, ctx, bbs, tf, subjects, signer)
@@ -56,23 +56,22 @@ class BaseBlockBuilderTest {
         assert(bbb.validateBlockHeader(header))
     }
 }
-    /*
-    interface BlockBuilder {
-    fun begin()
-    fun appendTransaction(tx: Transaction)
-    fun appendTransaction(txData: ByteArray)
-    fun finalize()
-    fun finalizeAndValidate(bh: BlockHeader)
-    fun getBlockData(): BlockData
-    fun getBlockWitnessBuilder(): BlockWitnessBuilder?;
-    fun commit(w: BlockWitness?)
+/*
+interface BlockBuilder {
+fun begin()
+fun appendTransaction(tx: Transaction)
+fun appendTransaction(txData: ByteArray)
+fun finalize()
+fun finalizeAndValidate(bh: BlockHeader)
+fun getBlockData(): BlockData
+fun getBlockWitnessBuilder(): BlockWitnessBuilder?;
+fun commit(w: BlockWitness?)
 }
 
-     */
+ */
 
 
-
-    //fun testBegin() {
+//fun testBegin() {
 //        val conn = mock<Connection> {}
 //        val chainID = 18
 //        val ctx = EContext(conn, chainID)
@@ -92,5 +91,5 @@ class BaseBlockBuilderTest {
 //
 //        SUT.commit()
 
-    //}
+//}
 //}

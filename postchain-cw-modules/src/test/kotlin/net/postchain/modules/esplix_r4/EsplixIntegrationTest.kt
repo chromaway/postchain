@@ -10,8 +10,8 @@ import net.postchain.modules.esplix_r4.BaseEsplixModuleFactory
 import net.postchain.modules.esplix_r4.computeChainID
 import net.postchain.modules.esplix_r4.computeMessageID
 import net.postchain.test.IntegrationTest
-import net.postchain.test.KeyPairHelper.Companion.privKey
-import net.postchain.test.KeyPairHelper.Companion.pubKey
+import net.postchain.test.KeyPairHelper.privKey
+import net.postchain.test.KeyPairHelper.pubKey
 import org.junit.Assert
 import org.junit.Test
 

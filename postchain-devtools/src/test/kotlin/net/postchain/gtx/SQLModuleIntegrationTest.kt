@@ -2,8 +2,8 @@ package net.postchain.gtx
 
 import net.postchain.core.UserMistake
 import net.postchain.test.IntegrationTest
-import net.postchain.test.KeyPairHelper.Companion.privKey
-import net.postchain.test.KeyPairHelper.Companion.pubKey
+import net.postchain.test.KeyPairHelper.privKey
+import net.postchain.test.KeyPairHelper.pubKey
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test

@@ -4,8 +4,8 @@ package net.postchain.test.base
 
 import net.postchain.core.*
 import net.postchain.test.IntegrationTest
-import net.postchain.test.KeyPairHelper.Companion.privKey
-import net.postchain.test.KeyPairHelper.Companion.pubKey
+import net.postchain.test.KeyPairHelper.privKey
+import net.postchain.test.KeyPairHelper.pubKey
 import net.postchain.test.PostchainTestNode
 import net.postchain.test.testinfra.ErrorTransaction
 import net.postchain.test.testinfra.TestBlockchainConfiguration

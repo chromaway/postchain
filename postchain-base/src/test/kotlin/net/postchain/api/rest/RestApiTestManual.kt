@@ -7,7 +7,12 @@ import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.RestTools
 import net.postchain.common.toHex
 import net.postchain.configurations.GTXTestModule
-import net.postchain.gtx.*
+import net.postchain.gtx.EMPTY_SIGNATURE
+import net.postchain.gtx.GTXDataBuilder
+import net.postchain.gtx.GTXTransactionFactory
+import net.postchain.gtx.gtx
+import net.postchain.test.KeyPairHelper.privKey
+import net.postchain.test.KeyPairHelper.pubKey
 import org.hamcrest.core.IsEqual.equalTo
 import java.util.*
 

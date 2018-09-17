@@ -11,10 +11,10 @@ import net.postchain.createDataLayer
 import net.postchain.createTestNodeEngine
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.gtx
-import net.postchain.test.KeyPairHelper.Companion.privKey
-import net.postchain.test.KeyPairHelper.Companion.privKeyHex
-import net.postchain.test.KeyPairHelper.Companion.pubKey
-import net.postchain.test.KeyPairHelper.Companion.pubKeyHex
+import net.postchain.test.KeyPairHelper.privKey
+import net.postchain.test.KeyPairHelper.privKeyHex
+import net.postchain.test.KeyPairHelper.pubKey
+import net.postchain.test.KeyPairHelper.pubKeyHex
 import org.apache.commons.configuration2.CompositeConfiguration
 import org.apache.commons.configuration2.Configuration
 import org.apache.commons.configuration2.MapConfiguration

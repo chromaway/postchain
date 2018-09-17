@@ -11,8 +11,8 @@ import net.postchain.gtx.gtx
 import net.postchain.modules.ft.AccountUtil
 import net.postchain.modules.ft.BasicAccount
 import net.postchain.test.IntegrationTest
-import net.postchain.test.KeyPairHelper.Companion.privKey
-import net.postchain.test.KeyPairHelper.Companion.pubKey
+import net.postchain.test.KeyPairHelper.privKey
+import net.postchain.test.KeyPairHelper.pubKey
 import net.postchain.test.PostchainTestNode
 
 val testBlockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3".hexStringToByteArray()
