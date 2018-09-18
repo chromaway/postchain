@@ -7,7 +7,7 @@ interface SynchronizationInfrastructure {
 interface BlockchainInfrastructure : SynchronizationInfrastructure {
     fun parseConfigurationString(rawData: String, format: String): ByteArray
     fun makeBlockchainConfiguration(rawConfigurationData: ByteArray, context: BlockchainContext): BlockchainConfiguration
-    fun makeBlockchainEngine(configuration: BlockchainConfiguration, wipeDatabase: Boolean): BlockchainEngine
+    fun makeBlockchainEngine(configuration: BlockchainConfiguration): BlockchainEngine
 }
 
 interface ApiInfrastructure {

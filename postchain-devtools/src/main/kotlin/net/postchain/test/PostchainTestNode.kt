@@ -47,8 +47,6 @@ class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
         }
     }
 
-    override fun isWipeDatabase(): Boolean = false
-
     fun getRestApiModel(chainId: Long): Model {
         val blockchainProcess = processManager.retrieveBlockchain(chainId)!!
         return ((blockchainInfrastructure as BaseBlockchainInfrastructure).apiInfrastructure as BaseApiInfrastructure)

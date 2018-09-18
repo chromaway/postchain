@@ -2,10 +2,8 @@
 
 package net.postchain.base
 
-import net.postchain.core.BlockBuilder
 import net.postchain.core.EContext
 import net.postchain.core.Signature
-import net.postchain.core.Transaction
 import java.util.*
 import java.util.concurrent.CountDownLatch
 
@@ -64,12 +62,12 @@ interface CryptoSystem {
 
 interface Storage {
     fun openReadConnection(chainID: Long): EContext
-    fun closeReadConnection(ectxt: EContext)
+    fun closeReadConnection(context: EContext)
 
     fun openWriteConnection(chainID: Long): EContext
-    fun closeWriteConnection(ectxt: EContext, commit: Boolean)
+    fun closeWriteConnection(context: EContext, commit: Boolean)
 
-    fun withSavepoint(ctxt: EContext, fn: () -> Unit): Exception?
+    fun withSavepoint(context: EContext, fn: () -> Unit): Exception?
 
     fun close()
 }

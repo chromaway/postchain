@@ -12,7 +12,7 @@ typealias DBCommandBody = (ctx: EContext, nodeConfig: Configuration) -> Unit
 
 fun runDBCommandBody(nodeConfigFile: String, chainId: Long, body: DBCommandBody) {
     val nodeConfiguration = CommonsConfigurationFactory.readFromFile(nodeConfigFile)
-    val storage = baseStorage(nodeConfiguration, -1, null /*Will be eliminate later*/)
+    val storage = baseStorage(nodeConfiguration, -1)
     withWriteConnection(storage, chainId) {
         body(it, nodeConfiguration)
         true

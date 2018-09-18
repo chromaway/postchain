@@ -24,11 +24,10 @@ class SQLModuleTest {
                 "database.url" to "jdbc:postgresql://localhost/postchain",
                 "database.username" to "postchain",
                 "database.password" to "postchain",
-                "database.schema" to "testschema",
-                "database.wipe" to "true"
+                "database.schema" to "testschema"
         ))
 
-        val storage = baseStorage(dataConf, 0, null)
+        val storage = baseStorage(dataConf, 0)
         withWriteConnection(storage, 1) {
             GTXSchemaManager.initializeDB(it)
             module.initializeDB(it)

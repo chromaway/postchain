@@ -2,71 +2,76 @@
 
 package net.postchain.base.data
 
+import mu.KLogging
 import net.postchain.base.Storage
 import net.postchain.core.EContext
 import net.postchain.core.ProgrammerMistake
-import mu.KLogging
-import org.apache.commons.dbcp2.BasicDataSource
 import javax.sql.DataSource
 
-class BaseStorage(private val writeDataSource: DataSource, private val readDataSource: DataSource, private val nodeId: Int) : Storage {
-    companion object: KLogging()
+class BaseStorage(
+        private val writeDataSource: DataSource,
+        private val readDataSource: DataSource,
+        private val nodeId: Int
+) : Storage {
 
-    private fun getConnection(chainID: Long, dataSource: DataSource): EContext {
-        val connection = dataSource.connection
-        return EContext(connection, chainID, nodeId)
-    }
+    companion object : KLogging()
 
     override fun openReadConnection(chainID: Long): EContext {
-        val eContext = getConnection(chainID, readDataSource)
-        if (!eContext.conn.isReadOnly) {
+        val context = getContext(chainID, readDataSource)
+        if (!context.conn.isReadOnly) {
             throw ProgrammerMistake("Connection is not read-only")
         }
-        return eContext
+        return context
     }
 
-    override fun closeReadConnection(ectxt: EContext) {
-        if (!ectxt.conn.isReadOnly) {
+    override fun closeReadConnection(context: EContext) {
+        if (!context.conn.isReadOnly) {
             throw ProgrammerMistake("trying to close a writable connection as a read-only connection")
         }
-        ectxt.conn.close()
+        context.conn.close()
     }
 
     override fun openWriteConnection(chainID: Long): EContext {
-        return getConnection(chainID, writeDataSource)
+        return getContext(chainID, writeDataSource)
     }
 
-    override fun closeWriteConnection(ectxt: EContext, commit: Boolean) {
-        val conn = ectxt.conn
-//        logger.debug("${ectxt.nodeID} BaseStorage.closeWriteConnection()")
-        if (conn.isReadOnly) {
-            throw ProgrammerMistake("trying to close a read-only connection as a writeable connection")
+    override fun closeWriteConnection(context: EContext, commit: Boolean) {
+        with(context.conn) {
+            //            logger.debug("${context.nodeID} BaseStorage.closeWriteConnection()")
+            when {
+                isReadOnly -> throw ProgrammerMistake(
+                        "trying to close a read-only connection as a writeable connection")
+                commit -> commit()
+                else -> rollback()
+            }
+
+            close()
         }
-        if (commit) conn.commit() else conn.rollback()
-        conn.close()
     }
 
-    override fun withSavepoint(ctxt: EContext, fn: () -> Unit): Exception? {
+    override fun withSavepoint(context: EContext, fn: () -> Unit): Exception? {
+        var exception: Exception? = null
+
         val savepointName = "appendTx${System.nanoTime()}"
-        val savepoint = ctxt.conn.setSavepoint(savepointName)
+        val savepoint = context.conn.setSavepoint(savepointName)
         try {
             fn()
-            ctxt.conn.releaseSavepoint(savepoint)
+            context.conn.releaseSavepoint(savepoint)
         } catch (e: Exception) {
             logger.debug("Exception in savepoint $savepointName", e)
-            ctxt.conn.rollback(savepoint)
-            return e
+            context.conn.rollback(savepoint)
+            exception = e
         }
-        return null
+
+        return exception
     }
 
     override fun close() {
-        if (readDataSource is AutoCloseable) {
-            readDataSource.close()
-        }
-        if (writeDataSource is AutoCloseable) {
-            writeDataSource.close()
-        }
+        (readDataSource as? AutoCloseable)?.close()
+        (writeDataSource as? AutoCloseable)?.close()
     }
+
+    private fun getContext(chainID: Long, dataSource: DataSource): EContext =
+            EContext(dataSource.connection, chainID, nodeId)
 }
 

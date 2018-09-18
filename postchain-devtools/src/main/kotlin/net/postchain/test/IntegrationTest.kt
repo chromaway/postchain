@@ -130,7 +130,6 @@ open class IntegrationTest {
         baseConfig.setProperty("blockchain.$chainId.signers", Array(nodeCount, { pubKeyHex(it) }).reduce({ acc, value -> "$acc,$value" }))
         // append nodeIndex to schema name
         baseConfig.setProperty("database.schema", baseConfig.getString("database.schema") + nodeIndex)
-        baseConfig.setProperty("database.wipe", true)
         baseConfig.setProperty("blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: newschool
         baseConfig.setProperty("blockchain.$chainId.blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: oldschool
         for (i in 0 until nodeCount) {

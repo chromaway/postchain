@@ -10,11 +10,10 @@ import org.apache.commons.configuration2.Configuration
 
 class BaseBlockchainProcessManager(
         private val blockchainInfrastructure: BlockchainInfrastructure,
-        nodeConfig: Configuration,
-        private val wipeDatabase: Boolean
+        nodeConfig: Configuration
 ) : BlockchainProcessManager {
 
-    val storage = baseStorage(nodeConfig, NODE_ID_TODO, null)
+    val storage = baseStorage(nodeConfig, NODE_ID_TODO)
     private val dbAccess = SQLDatabaseAccess()
     private val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
 
@@ -28,7 +27,7 @@ class BaseBlockchainProcessManager(
                     BaseConfigurationDataStore.getConfigurationData(eContext, 0),
                     BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null))
 
-            val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig, wipeDatabase)
+            val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig)
             blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(engine) {
                 startBlockchain(chainId)
             }
@@ -67,11 +66,8 @@ open class PostchainNode(nodeConfig: Configuration) {
 
         processManager = BaseBlockchainProcessManager(
                 blockchainInfrastructure,
-                nodeConfig,
-                isWipeDatabase())
+                nodeConfig)
     }
-
-    protected open fun isWipeDatabase(): Boolean = true
 
     fun startBlockchain(chainID: Long) {
         processManager.startBlockchain(chainID)

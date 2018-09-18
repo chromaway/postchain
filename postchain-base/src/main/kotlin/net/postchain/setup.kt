@@ -43,7 +43,7 @@ fun createDataLayer(config: Configuration, chainId: Long, nodeIndex: Int): TestN
     val blockchainSubset = config.subset("blockchain.$chainId")
     val blockchainConfiguration = getBlockchainConfiguration(blockchainSubset, chainId, nodeIndex)
 
-    val storage = baseStorage(config, nodeIndex, null)
+    val storage = baseStorage(config, nodeIndex)
 
     val txQueue = BaseTransactionQueue(blockchainSubset.getInt("queuecapacity", 2500))
 
@@ -58,11 +58,12 @@ fun createDataLayer(config: Configuration, chainId: Long, nodeIndex: Int): TestN
     return node
 }
 
+@Deprecated("Legacy")
 fun createTestNodeEngine(infrastructure: BaseBlockchainInfrastructure, config: GTXValue, bc: BlockchainContext): TestNodeEngine {
     val rawConfig = encodeGTXValue(config)
     val blockchainConfiguration = infrastructure.makeBlockchainConfiguration(rawConfig, bc)
 
-    val engine = infrastructure.makeBlockchainEngine(blockchainConfiguration, true)
+    val engine = infrastructure.makeBlockchainEngine(blockchainConfiguration)
 
     val node = TestNodeEngine(engine,
             engine.getTransactionQueue(),
@@ -71,17 +72,14 @@ fun createTestNodeEngine(infrastructure: BaseBlockchainInfrastructure, config: G
     return node
 }
 
-fun baseStorage(config: Configuration, nodeIndex: Int, wipeDatabase: Boolean?): BaseStorage {
+fun baseStorage(config: Configuration, nodeIndex: Int, wipeDatabase: Boolean = false): BaseStorage {
     val writeDataSource = createBasicDataSource(config)
     writeDataSource.maxWaitMillis = 0
     writeDataSource.defaultAutoCommit = false
     writeDataSource.maxTotal = 1
 
-    when {
-        wipeDatabase != null -> if (wipeDatabase) {
-            wipeDatabase(writeDataSource, config)
-        }
-        config.getBoolean("database.wipe", false) -> wipeDatabase(writeDataSource, config)
+    if (wipeDatabase) {
+        wipeDatabase(writeDataSource, config)
     }
 
     createSchemaIfNotExists(writeDataSource, config.getString("database.schema"))

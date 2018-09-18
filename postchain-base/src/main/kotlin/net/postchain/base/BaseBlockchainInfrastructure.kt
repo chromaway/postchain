@@ -43,8 +43,8 @@ class BaseBlockchainInfrastructure(
         return factory.makeBlockchainConfiguration(confData, actualContext)
     }
 
-    override fun makeBlockchainEngine(configuration: BlockchainConfiguration, wipeDatabase: Boolean): BaseBlockchainEngine {
-        val storage = baseStorage(config, -1, wipeDatabase) // TODO: nodeID
+    override fun makeBlockchainEngine(configuration: BlockchainConfiguration): BaseBlockchainEngine {
+        val storage = baseStorage(config, -1) // TODO: nodeID
         val tq = BaseTransactionQueue(config.getInt("queuecapacity", 2500))
         return BaseBlockchainEngine(configuration, storage, configuration.chainID, tq)
                 .apply { initializeDB() }
