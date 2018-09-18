@@ -2,15 +2,14 @@ package net.postchain.test
 
 import net.postchain.PostchainNode
 import net.postchain.api.rest.controller.Model
-import net.postchain.base.BaseApiInfrastructure
-import net.postchain.base.BaseBlockchainConfigurationData
-import net.postchain.base.BaseConfigurationDataStore
+import net.postchain.base.*
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.base.data.SQLDatabaseAccess
-import net.postchain.base.withWriteConnection
 import net.postchain.baseStorage
 import net.postchain.common.hexStringToByteArray
+import net.postchain.common.toHex
 import net.postchain.core.BlockchainConfigurationFactory
+import net.postchain.core.BlockchainProcess
 import net.postchain.core.NODE_ID_TODO
 import net.postchain.ebft.BlockchainInstanceModel
 import net.postchain.gtx.encodeGTXValue
@@ -52,12 +51,12 @@ class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
 
     fun getRestApiModel(chainId: Long): Model {
         val blockchainProcess = processManager.retrieveBlockchain(chainId)!!
-        return (apiInfrastructure as BaseApiInfrastructure)
-                .getApiModel(blockchainProcess)!!
+        return ((blockchainInfrastructure as BaseBlockchainInfrastructure).apiInfrastructure as BaseApiInfrastructure)
+                .restApi?.retrieveModel(blockchainRID(blockchainProcess))!!
     }
 
     fun getRestApiHttpPort(): Int {
-        return (apiInfrastructure as BaseApiInfrastructure)
+        return ((blockchainInfrastructure as BaseBlockchainInfrastructure).apiInfrastructure as BaseApiInfrastructure)
                 .restApi?.actualPort() ?: 0
     }
 
@@ -65,4 +64,8 @@ class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
         return processManager.retrieveBlockchain(chainId) as BlockchainInstanceModel
     }
 
+    private fun blockchainRID(process: BlockchainProcess): String {
+        return (process.getEngine().getConfiguration() as BaseBlockchainConfiguration) // TODO: [et]: Resolve type cast
+                .blockchainRID.toHex()
+    }
 }

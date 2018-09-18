@@ -4,12 +4,14 @@ import net.postchain.base.data.BaseTransactionQueue
 import net.postchain.baseStorage
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.*
-import net.postchain.ebft.CommManager
-import net.postchain.ebft.message.EbftMessage
 import net.postchain.gtx.decodeGTXValue
 import org.apache.commons.configuration2.Configuration
 
-class BaseBlockchainInfrastructure(val config: Configuration) : BlockchainInfrastructure {
+class BaseBlockchainInfrastructure(
+        val config: Configuration,
+        val synchronizationInfrastructure: SynchronizationInfrastructure,
+        val apiInfrastructure: ApiInfrastructure
+) : BlockchainInfrastructure {
 
     val cryptoSystem = SECP256K1CryptoSystem()
     val blockSigner: Signer
@@ -44,22 +46,12 @@ class BaseBlockchainInfrastructure(val config: Configuration) : BlockchainInfras
     override fun makeBlockchainEngine(configuration: BlockchainConfiguration, wipeDatabase: Boolean): BaseBlockchainEngine {
         val storage = baseStorage(config, -1, wipeDatabase) // TODO: nodeID
         val tq = BaseTransactionQueue(config.getInt("queuecapacity", 2500))
-        val engine = BaseBlockchainEngine(configuration, storage, configuration.chainID, tq)
-        engine.initializeDB()
-        return engine
+        return BaseBlockchainEngine(configuration, storage, configuration.chainID, tq)
+                .apply { initializeDB() }
     }
 
-    override fun makeBlockchainProcess(
-            engine: BlockchainEngine,
-            communicationManager: CommManager<EbftMessage>,
-            restartHandler: RestartHandler): BlockchainProcess {
-        TODO("Nope")
-    }
-
-}
-
-class BaseBlockchainInfrastructureFactory : InfrastructureFactory {
-    override fun makeBlockchainInfrastructure(config: Configuration): BlockchainInfrastructure {
-        return BaseBlockchainInfrastructure(config)
+    override fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
+        return synchronizationInfrastructure.makeBlockchainProcess(engine, restartHandler)
+                .also(apiInfrastructure::connectProcess)
     }
 }

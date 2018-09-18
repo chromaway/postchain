@@ -10,9 +10,6 @@ import org.apache.commons.configuration2.Configuration
 
 class BaseBlockchainProcessManager(
         private val blockchainInfrastructure: BlockchainInfrastructure,
-        private val synchronizationInfrastructure: SynchronizationInfrastructure,
-        private val apiInfrastructure: ApiInfrastructure,
-        private val networkInfrastructure: NetworkInfrastructure,
         nodeConfig: Configuration,
         private val wipeDatabase: Boolean
 ) : BlockchainProcessManager {
@@ -32,12 +29,9 @@ class BaseBlockchainProcessManager(
                     BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null))
 
             val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig, wipeDatabase)
-            val communicationManager = networkInfrastructure.buildCommunicationManager(blockchainConfig)
-            blockchainProcesses[chainId] = synchronizationInfrastructure.makeBlockchainProcess(
-                    engine, communicationManager) { startBlockchain(chainId) }
-
-            apiInfrastructure.connectProcess(
-                    blockchainProcesses[chainId]!!, communicationManager)
+            blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(engine) {
+                startBlockchain(chainId)
+            }
 
             Unit
         }
@@ -62,24 +56,17 @@ class BaseBlockchainProcessManager(
 
 open class PostchainNode(nodeConfig: Configuration) {
 
-    //lateinit var connManager: PeerConnectionManager<EbftMessage>
     protected val processManager: BaseBlockchainProcessManager
     protected val blockchainInfrastructure: BlockchainInfrastructure
-    protected val syncInfrastructure: SynchronizationInfrastructure
-    protected val apiInfrastructure: ApiInfrastructure
-    protected val networkInfrastructure: NetworkInfrastructure
 
     init {
-        blockchainInfrastructure = BaseBlockchainInfrastructure(nodeConfig)
-        syncInfrastructure = EBFTSynchronizationInfrastructure(nodeConfig)
-        apiInfrastructure = BaseApiInfrastructure(nodeConfig)
-        networkInfrastructure = BaseNetworkInfrastructure(nodeConfig)
+        blockchainInfrastructure = BaseBlockchainInfrastructure(
+                nodeConfig,
+                EBFTSynchronizationInfrastructure(nodeConfig),
+                BaseApiInfrastructure(nodeConfig))
 
         processManager = BaseBlockchainProcessManager(
                 blockchainInfrastructure,
-                syncInfrastructure,
-                apiInfrastructure,
-                networkInfrastructure,
                 nodeConfig,
                 isWipeDatabase())
     }
@@ -91,7 +78,6 @@ open class PostchainNode(nodeConfig: Configuration) {
     }
 
     fun stopAllBlockchain() {
-        //connManager.stop() // TODO
         processManager.shutdown()
     }
 

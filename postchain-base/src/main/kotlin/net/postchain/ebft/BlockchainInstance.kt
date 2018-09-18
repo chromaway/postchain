@@ -1,7 +1,6 @@
 package net.postchain.ebft
 
-import net.postchain.base.DynamicPortPeerInfo
-import net.postchain.base.PeerInfo
+import net.postchain.base.*
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.*
@@ -72,25 +71,37 @@ interface BlockchainInstanceModel : BlockchainProcess {
     val blockManager: BlockManager
     val statusManager: BaseStatusManager
     val syncManager: SyncManager
+    val networkAwareTxQueue: NetworkAwareTxQueue
 }
 
 class EBFTSynchronizationInfrastructure(val config: Configuration) : SynchronizationInfrastructure {
 
-    override fun makeBlockchainProcess(
-            engine: BlockchainEngine,
-            communicationManager: CommManager<EbftMessage>,
-            restartHandler: RestartHandler
-    ): BlockchainProcess {
-
+    override fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
-
         return EBFTBlockchainInstanceWorker(
                 engine,
                 blockchainConfig.configData.context.nodeID,
-                communicationManager,
+                buildCommunicationManager(blockchainConfig),
                 restartHandler
         )
     }
+
+    private fun buildCommunicationManager(blockchainConfig: BaseBlockchainConfiguration): CommManager<EbftMessage> {
+        val communicationConfig = BasePeerCommConfiguration(
+                createPeerInfos(config),
+                blockchainConfig.blockchainRID,
+                blockchainConfig.configData.context.nodeID,
+                SECP256K1CryptoSystem(),
+                privKey())
+
+        val connectionManager = makeConnManager(communicationConfig)
+        return makeCommManager(communicationConfig, connectionManager)
+    }
+
+    private fun privKey(): ByteArray =
+            config.getString("messaging.privkey").hexStringToByteArray()
+
+
 }
 
 /**
@@ -115,6 +126,7 @@ class EBFTBlockchainInstanceWorker(
     override val blockManager: BlockManager
     override val statusManager: BaseStatusManager
     override val syncManager: SyncManager
+    override val networkAwareTxQueue: NetworkAwareTxQueue
 
     init {
         blockchainConfiguration = engine.getConfiguration()
@@ -143,6 +155,11 @@ class EBFTBlockchainInstanceWorker(
                 communicationManager,
                 engine.getTransactionQueue(),
                 blockchainConfiguration)
+
+        networkAwareTxQueue = NetworkAwareTxQueue(
+                engine.getTransactionQueue(),
+                communicationManager,
+                NODE_ID_AUTO)
 
         statusManager.recomputeStatus()
         startUpdateLoop(syncManager)

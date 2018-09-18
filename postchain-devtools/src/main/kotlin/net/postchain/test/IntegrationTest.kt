@@ -4,11 +4,11 @@ package net.postchain.test
 
 import mu.KLogging
 import net.postchain.TestNodeEngine
-import net.postchain.base.*
-import net.postchain.common.hexStringToByteArray
+import net.postchain.base.DynamicPortPeerInfo
+import net.postchain.base.PeerInfo
+import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.core.*
 import net.postchain.createDataLayer
-import net.postchain.createTestNodeEngine
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.gtx
 import net.postchain.test.KeyPairHelper.privKey
@@ -166,6 +166,7 @@ open class IntegrationTest {
         return gtx(*Array(nodeCount) { gtx(pubKey(it)) })
     }
 
+    /*
     @Deprecated("Legacy")
     protected fun createDataLayerNG(nodeIndex: Int, nodeCount: Int = 1, configFile: String = DEFAULT_CONFIG_FILE): TestNodeEngine {
         val config = createConfig(nodeIndex, nodeCount, configFile)
@@ -183,6 +184,7 @@ open class IntegrationTest {
         nodesLegacy.add(dataLayer)
         return dataLayer
     }
+    */
 
     /*
         protected fun createBasePeerCommConfiguration(nodeCount: Int, myIndex: Int): BasePeerCommConfiguration {
