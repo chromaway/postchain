@@ -24,6 +24,11 @@ class BaseBlockchainInfrastructure(
         subjectID = pubKey
     }
 
+    override fun shutdown() {
+        synchronizationInfrastructure.shutdown()
+        apiInfrastructure.shutdown()
+    }
+
     override fun parseConfigurationString(rawData: String, format: String): ByteArray {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }

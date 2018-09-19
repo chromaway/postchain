@@ -1,9 +1,9 @@
 package net.postchain.test
 
+import mu.KLogging
 import net.postchain.base.BaseBlockchainConfigurationData
 import net.postchain.core.*
 import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.atomic.AtomicBoolean
 
 @Suppress("UNUSED_PARAMETER")
 class OnDemandBlockBuildingStrategy(
@@ -13,26 +13,31 @@ class OnDemandBlockBuildingStrategy(
         val txQueue: TransactionQueue
 ) : BlockBuildingStrategy {
 
-    val triggerBlock = AtomicBoolean(false)
+    companion object : KLogging()
+
+    @Volatile
+    var upToHeight : Long = -1
+
     val blocks = LinkedBlockingQueue<BlockData>()
+    @Volatile
     var committedHeight = -1
 
     override fun shouldBuildBlock(): Boolean {
-        return triggerBlock.getAndSet(false)
+        return upToHeight > committedHeight
     }
 
-    fun triggerBlock() {
-        triggerBlock.set(true)
+    fun buildBlocksUpTo(j: Long) {
+        upToHeight = j
     }
 
     override fun blockCommitted(blockData: BlockData) {
+        committedHeight++
         blocks.add(blockData)
     }
 
     fun awaitCommitted(blockHeight: Int) {
         while (committedHeight < blockHeight) {
             blocks.take()
-            committedHeight++
         }
     }
 

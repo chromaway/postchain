@@ -37,7 +37,7 @@ class BaseApiInfrastructure(val config: Configuration) : ApiInfrastructure {
     }
 
     override fun shutdown() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        restApi?.stop()
     }
 
     private fun blockchainRID(process: BlockchainProcess): String {

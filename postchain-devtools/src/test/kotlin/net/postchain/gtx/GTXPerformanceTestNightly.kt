@@ -135,7 +135,9 @@ class GTXPerformanceTestNightly : EbftIntegrationTest() {
             }
 
             val nanoDelta = measureNanoTime {
-                strategy(ebftNodes[statusManager.primaryIndex()]).triggerBlock()
+                for (j in 0 until nodeCount) {
+                    strategy(ebftNodes[j]).buildBlocksUpTo(i.toLong())
+                }
                 ebftNodes.forEach { strategy(it).awaitCommitted(i) }
             }
 

@@ -39,28 +39,36 @@ class FullEbftTestNightly : EbftIntegrationTest() {
     fun runXNodesWithYTxPerBlock(nodeCount: Int, blockCount: Int, txPerBlock: Int) {
         configOverrides.setProperty("blockchain.1.blockstrategy", OnDemandBlockBuildingStrategy::class.qualifiedName)
         createEbftNodes(nodeCount)
-
         var txId = 0
         var statusManager = ebftNodes[0].getBlockchainInstance().statusManager
         for (i in 0 until blockCount) {
             for (tx in 0 until txPerBlock) {
-                ebftNodes[statusManager.primaryIndex()]
-                        .getBlockchainInstance()
-                        .getEngine()
-                        .getTransactionQueue()
-                        .enqueue(TestTransaction(txId++))
+                val currentTxId = txId++
+                for (j in 0 until nodeCount) {
+                    ebftNodes[j]
+                            .getBlockchainInstance()
+                            .getEngine()
+                            .getTransactionQueue()
+                            .enqueue(TestTransaction(currentTxId))
+                }
             }
-            strategy(ebftNodes[statusManager.primaryIndex()]).triggerBlock()
+            logger.info { "Trigger block" }
+            for (j in 0 until nodeCount) {
+                strategy(ebftNodes[j]).buildBlocksUpTo(i.toLong())
+            }
+            logger.info { "Await committed" }
             ebftNodes.forEach { strategy(it).awaitCommitted(i) }
         }
 
         val queries = ebftNodes[0].getBlockchainInstance().getEngine().getBlockQueries()
         val referenceHeight = queries.getBestHeight().get()
+        logger.info { "${blockCount}, refHe: ${referenceHeight}"}
         ebftNodes.forEach { node ->
             val queries = node.getBlockchainInstance().getEngine().getBlockQueries()
             assertEquals(referenceHeight, queries.getBestHeight().get())
 
             for (height in 0..referenceHeight) {
+                logger.info { "Verifying height ${height}" }
                 val rids = queries.getBlockRids(height).get()
                 assertEquals(1, rids.size)
 

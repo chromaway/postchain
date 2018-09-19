@@ -5,6 +5,7 @@ import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.*
 import net.postchain.ebft.message.EbftMessage
+import net.postchain.network.PeerConnectionManager
 import org.apache.commons.configuration2.Configuration
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
@@ -76,6 +77,12 @@ interface BlockchainInstanceModel : BlockchainProcess {
 
 class EBFTSynchronizationInfrastructure(val config: Configuration) : SynchronizationInfrastructure {
 
+    val connManagers = mutableListOf<PeerConnectionManager<*>>()
+
+    override fun shutdown() {
+        connManagers.forEach({ it.shutdown() })
+    }
+
     override fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
         return EBFTBlockchainInstanceWorker(
@@ -95,6 +102,7 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
                 privKey())
 
         val connectionManager = makeConnManager(communicationConfig)
+        connManagers.add(connectionManager)
         return makeCommManager(communicationConfig, connectionManager)
     }
 

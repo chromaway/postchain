@@ -7,6 +7,7 @@ import net.postchain.base.DynamicPortPeerInfo
 import net.postchain.base.PeerInfo
 import net.postchain.common.toHex
 import net.postchain.core.ByteArrayKey
+import net.postchain.core.Shutdownable
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.net.ServerSocket
@@ -299,7 +300,7 @@ interface PacketConverter<PT> : IdentPacketConverter {
     fun encodePacket(packet: PT): ByteArray
 }
 
-class PeerConnectionManager<PT>(val myPeerInfo: PeerInfo, val packetConverter: PacketConverter<PT>) {
+class PeerConnectionManager<PT>(val myPeerInfo: PeerInfo, val packetConverter: PacketConverter<PT>): Shutdownable {
     val connections = mutableListOf<AbstractPeerConnection>()
     val peerConnections = synchronizedMap(mutableMapOf<ByteArrayKey, AbstractPeerConnection>()) // connection for peerID
     @Volatile private var keepGoing: Boolean = true
@@ -353,6 +354,10 @@ class PeerConnectionManager<PT>(val myPeerInfo: PeerInfo, val packetConverter: P
         connAcceptor.stop()
         for (c in connections) c.stop()
         encoderThread.interrupt()
+    }
+
+    override fun shutdown() {
+        stop()
     }
 
     fun registerBlockchain(blockchainRID: ByteArray, h: BlockchainDataHandler) {

@@ -38,8 +38,9 @@ class BaseBlockchainProcessManager(
     }
 
     override fun shutdown() {
-        storage.close()
         blockchainProcesses.forEach { _, process -> process.shutdown() }
+        storage.close()
+        blockchainInfrastructure.shutdown()
     }
 
     private fun checkDbInitialized(chainId: Long) {

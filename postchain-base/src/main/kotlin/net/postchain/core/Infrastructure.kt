@@ -1,6 +1,6 @@
 package net.postchain.core
 
-interface SynchronizationInfrastructure {
+interface SynchronizationInfrastructure: Shutdownable {
     fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess
 }
 
@@ -10,8 +10,7 @@ interface BlockchainInfrastructure : SynchronizationInfrastructure {
     fun makeBlockchainEngine(configuration: BlockchainConfiguration): BlockchainEngine
 }
 
-interface ApiInfrastructure {
+interface ApiInfrastructure: Shutdownable {
     fun connectProcess(process: BlockchainProcess)
     fun disconnectProcess(process: BlockchainProcess)
-    fun shutdown()
 }
