@@ -19,11 +19,11 @@ class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
 
     init {
         val height = blockQueries.getBestHeight().get()
-        if (height == -1L) {
-            lastBlockTime = System.currentTimeMillis()
+        lastBlockTime = if (height == -1L) {
+            System.currentTimeMillis()
         } else {
             val blockRID = blockQueries.getBlockRids(height).get()[0]
-            lastBlockTime = (blockQueries.getBlockHeader(blockRID).get() as BaseBlockHeader).timestamp
+            (blockQueries.getBlockHeader(blockRID).get() as BaseBlockHeader).timestamp
         }
     }
 

@@ -6,7 +6,9 @@ interface BlockHeader {
     val blockRID: ByteArray // it's not a part of header but derived from it
 }
 
-open class BlockData(val header: BlockHeader, val transactions: List<ByteArray>)
+open class BlockData(
+        val header: BlockHeader,
+        val transactions: List<ByteArray>)
 
 /**
  * Witness is a generalization over signatures.

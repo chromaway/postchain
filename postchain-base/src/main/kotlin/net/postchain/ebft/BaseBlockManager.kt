@@ -2,23 +2,29 @@
 
 package net.postchain.ebft
 
+import mu.KLogging
 import net.postchain.core.BlockBuildingStrategy
 import net.postchain.core.BlockData
 import net.postchain.core.BlockDataWithWitness
-import mu.KLogging
 import nl.komponents.kovenant.Promise
-import java.util.Arrays
+import java.util.*
 
-class BaseBlockManager(val blockDB: BlockDatabase, val statusManager: StatusManager,
-                       val blockStrategy: BlockBuildingStrategy)
-    : BlockManager {
-    @Volatile var processing = false
-    var intent : BlockIntent = DoNothingIntent
-    companion object: KLogging()
+class BaseBlockManager(
+        val blockDB: BlockDatabase,
+        val statusManager: StatusManager,
+        val blockStrategy: BlockBuildingStrategy
+) : BlockManager {
+
+    @Volatile
+    var processing = false
+    var intent: BlockIntent = DoNothingIntent
+
+    companion object : KLogging()
+
     override var currentBlock: BlockData? = null
 
     @Synchronized
-    protected fun<RT> runDBOp(op: () -> Promise<RT, Exception>, onSuccess: (RT)->Unit) {
+    protected fun <RT> runDBOp(op: () -> Promise<RT, Exception>, onSuccess: (RT) -> Unit) {
         if (!processing) {
             processing = true
             intent = DoNothingIntent
@@ -37,8 +43,7 @@ class BaseBlockManager(val blockDB: BlockDatabase, val statusManager: StatusMana
     override fun onReceivedUnfinishedBlock(block: BlockData) {
         val theIntent = intent
         if (theIntent is FetchUnfinishedBlockIntent
-                && Arrays.equals(theIntent.blockRID, block.header.blockRID))
-        {
+                && Arrays.equals(theIntent.blockRID, block.header.blockRID)) {
             runDBOp({
                 blockDB.loadUnfinishedBlock(block)
             }, { sig ->
@@ -52,8 +57,7 @@ class BaseBlockManager(val blockDB: BlockDatabase, val statusManager: StatusMana
     override fun onReceivedBlockAtHeight(block: BlockDataWithWitness, height: Long) {
         val theIntent = intent
         if (theIntent is FetchBlockAtHeightIntent
-             && theIntent.height == height)
-        {
+                && theIntent.height == height) {
             runDBOp({
                 blockDB.addBlock(block)
             }, {
@@ -95,8 +99,7 @@ class BaseBlockManager(val blockDB: BlockDatabase, val statusManager: StatusMana
                 }
                 runDBOp({
                     blockDB.buildBlock()
-                }, {
-                    blockAndSignature ->
+                }, { blockAndSignature ->
                     val block = blockAndSignature.first
                     val signature = blockAndSignature.second
                     if (statusManager.onBuiltBlock(block.header.blockRID, signature)) {

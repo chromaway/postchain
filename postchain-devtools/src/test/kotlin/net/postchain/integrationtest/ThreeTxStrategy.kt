@@ -5,9 +5,12 @@ import net.postchain.base.BaseBlockchainConfigurationData
 import net.postchain.core.*
 import java.util.concurrent.LinkedBlockingQueue
 
-class ThreeTxStrategy(val configData: BaseBlockchainConfigurationData,
-                      val blockchainConfiguration: BlockchainConfiguration,
-                      blockQueries: BlockQueries, private val txQueue: TransactionQueue) : BlockBuildingStrategy {
+class ThreeTxStrategy(
+        val configData: BaseBlockchainConfigurationData,
+        val blockchainConfiguration: BlockchainConfiguration,
+        blockQueries: BlockQueries,
+        private val txQueue: TransactionQueue
+) : BlockBuildingStrategy {
 
     companion object : KLogging()
 

@@ -22,6 +22,7 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
                                 private val tq: TransactionQueue,
                                 private val useParallelDecoding: Boolean = true
 ) : BlockchainEngine {
+
     companion object : KLogging()
 
     private lateinit var strategy: BlockBuildingStrategy

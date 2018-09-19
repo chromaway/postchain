@@ -138,9 +138,9 @@ open class IntegrationTest {
 
     fun createPeerInfos(nodeCount: Int): Array<PeerInfo> {
         if (peerInfos == null) {
-            val pubKeysToUse = Array<ByteArray>(nodeCount, { pubKey(it) })
-            peerInfos = Array<PeerInfo>(nodeCount, { DynamicPortPeerInfo("localhost", pubKeysToUse[it]) })
+            peerInfos = Array(nodeCount) { DynamicPortPeerInfo("localhost", pubKey(it)) }
         }
+
         return peerInfos!!
     }
 

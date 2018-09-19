@@ -19,33 +19,18 @@ class BaseBlockchainConfigurationData(
 
     init {
         subjectID = partialContext.nodeRID!!
-        val nodeID: Int
-        if (partialContext.nodeID == NODE_ID_AUTO) {
-            if (subjectID == null) {
-                nodeID = NODE_ID_READ_ONLY
-            } else {
-                val index = getSigners().indexOfFirst { it.contentEquals(subjectID) }
-                if (index == -1) {
-                    nodeID = NODE_ID_READ_ONLY
-                } else {
-                    nodeID = index
-                }
-            }
-        } else {
-            nodeID = partialContext.nodeID
-        }
 
         context = BaseBlockchainContext(
                 partialContext.blockchainRID,
-                nodeID,
+                resolveNodeID(partialContext),
                 partialContext.chainID,
                 partialContext.nodeRID)
     }
 
-
     fun getSigners(): List<ByteArray> {
         return data["signers"]!!.asArray().map { it.asByteArray() }
     }
+
 
     fun getBlockBuildingStrategyName(): String {
         return data["blockstrategy"]?.get("name")?.asString() ?: ""
@@ -61,9 +46,8 @@ class BaseBlockchainConfigurationData(
             val cryptoSystem = SECP256K1CryptoSystem()
             val privKey = gtxConfig["blocksigningprivkey"]!!.asByteArray()
             val pubKey = secp256k1_derivePubKey(privKey)
-            val signer = cryptoSystem.makeSigner(
-                    pubKey, privKey // TODO: maybe take it from somewhere?
-            )
+            val signer = cryptoSystem.makeSigner(pubKey, privKey) // TODO: maybe take it from somewhere?
+
             return BaseBlockchainConfigurationData(
                     gtxConfig,
                     BaseBlockchainContext(
@@ -129,6 +113,20 @@ class BaseBlockchainConfigurationData(
             }
 
             return gtx(*properties.toTypedArray())
+        }
+    }
+
+    private fun resolveNodeID(partialContext: BlockchainContext): Int {
+        return if (partialContext.nodeID == NODE_ID_AUTO) {
+            if (subjectID == null) {
+                NODE_ID_READ_ONLY
+            } else {
+                getSigners()
+                        .indexOfFirst { it.contentEquals(subjectID) }
+                        .let { i -> if (i == -1) NODE_ID_READ_ONLY else i }
+            }
+        } else {
+            partialContext.nodeID
         }
     }
 }
