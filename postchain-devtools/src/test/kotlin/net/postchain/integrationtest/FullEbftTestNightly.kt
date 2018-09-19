@@ -7,7 +7,7 @@ import junitparams.Parameters
 import mu.KLogging
 import net.postchain.test.EbftIntegrationTest
 import net.postchain.test.OnDemandBlockBuildingStrategy
-import net.postchain.test.PostchainTestNode
+import net.postchain.test.SingleChainTestNode
 import net.postchain.test.testinfra.TestTransaction
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -19,9 +19,9 @@ class FullEbftTestNightly : EbftIntegrationTest() {
 
     companion object : KLogging()
 
-    private fun strategy(node: PostchainTestNode): OnDemandBlockBuildingStrategy {
+    private fun strategy(node: SingleChainTestNode): OnDemandBlockBuildingStrategy {
         return node
-                .getBlockchainInstance(chainId)
+                .getBlockchainInstance()
                 .getEngine()
                 .getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
     }
@@ -41,11 +41,11 @@ class FullEbftTestNightly : EbftIntegrationTest() {
         createEbftNodes(nodeCount)
 
         var txId = 0
-        var statusManager = ebftNodes[0].getBlockchainInstance(chainId).statusManager
+        var statusManager = ebftNodes[0].getBlockchainInstance().statusManager
         for (i in 0 until blockCount) {
             for (tx in 0 until txPerBlock) {
                 ebftNodes[statusManager.primaryIndex()]
-                        .getBlockchainInstance(chainId)
+                        .getBlockchainInstance()
                         .getEngine()
                         .getTransactionQueue()
                         .enqueue(TestTransaction(txId++))
@@ -54,10 +54,10 @@ class FullEbftTestNightly : EbftIntegrationTest() {
             ebftNodes.forEach { strategy(it).awaitCommitted(i) }
         }
 
-        val queries = ebftNodes[0].getBlockchainInstance(chainId).getEngine().getBlockQueries()
+        val queries = ebftNodes[0].getBlockchainInstance().getEngine().getBlockQueries()
         val referenceHeight = queries.getBestHeight().get()
         ebftNodes.forEach { node ->
-            val queries = node.getBlockchainInstance(chainId).getEngine().getBlockQueries()
+            val queries = node.getBlockchainInstance().getEngine().getBlockQueries()
             assertEquals(referenceHeight, queries.getBestHeight().get())
 
             for (height in 0..referenceHeight) {

@@ -7,7 +7,8 @@ import net.postchain.core.*
 class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
                                 val blockchainConfiguration: BlockchainConfiguration,
                                 blockQueries: BlockQueries,
-                                private val txQueue: TransactionQueue): BlockBuildingStrategy {
+                                private val txQueue: TransactionQueue
+): BlockBuildingStrategy {
     private var lastBlockTime: Long
     private var lastTxTime = System.currentTimeMillis()
     private var lastTxSize = 0

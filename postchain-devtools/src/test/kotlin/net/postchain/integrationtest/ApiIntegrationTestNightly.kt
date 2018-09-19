@@ -111,7 +111,7 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
 
                 // Assert Merkle Path
                 val header = ebftNodes[0]
-                        .getBlockchainInstance(chainId)
+                        .getBlockchainInstance()
                         .blockchainConfiguration
                         .decodeBlockHeader(blockHeader) as BaseBlockHeader
                 assertTrue(header.validateMerklePath(path, tx.getHash()))

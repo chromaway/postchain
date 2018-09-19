@@ -21,15 +21,15 @@ class FTBasicIntegrationTest : FTIntegrationTest() {
         configOverrides.setProperty("blockchain.1.gtx.ft.asset.USD.issuers", issuerPubKeys[0].toHex())
         configOverrides.setProperty("blockchain.1.gtx.ft.openRegistration", true)
 
-        val (node, chainId) = createNode(0)
+        val node = createNode(0)
         val validTxs = mutableListOf<Transaction>()
         var currentBlockHeight = -1L
 
         fun makeSureBlockIsBuiltCorrectly() {
             currentBlockHeight += 1
-            buildBlockAndCommit(node, chainId)
-            Assert.assertEquals(currentBlockHeight, getBestHeight(node, chainId))
-            val ridsAtHeight = getTxRidsAtHeight(node, chainId, currentBlockHeight)
+            buildBlockAndCommit(node)
+            Assert.assertEquals(currentBlockHeight, getBestHeight(node))
+            val ridsAtHeight = getTxRidsAtHeight(node, currentBlockHeight)
             for (vtx in validTxs) {
                 val vtxRID = vtx.getRID()
                 Assert.assertTrue(ridsAtHeight.any { it.contentEquals(vtxRID) })
@@ -40,7 +40,6 @@ class FTBasicIntegrationTest : FTIntegrationTest() {
 
         validTxs.add(enqueueTx(
                 node,
-                chainId,
                 makeRegisterTx(arrayOf(aliceAccountDesc, bobAccountDesc), 0)
         )!!)
 
@@ -48,50 +47,45 @@ class FTBasicIntegrationTest : FTIntegrationTest() {
 
         validTxs.add(enqueueTx(
                 node,
-                chainId,
                 makeIssueTx(0, issuerID, aliceAccountID, "USD", 1000)
         )!!)
 
         // invalid issuance:
-        enqueueTx(node, chainId, makeIssueTx(0, issuerID, aliceAccountID, "XDX", 1000))
-        enqueueTx(node, chainId, makeIssueTx(0, issuerID, aliceAccountID, "USD", -1000))
-        enqueueTx(node, chainId, makeIssueTx(0, aliceAccountID, aliceAccountID, "USD", 1000))
-        enqueueTx(node, chainId, makeIssueTx(1, issuerID, aliceAccountID, "USD", 1000))
-        enqueueTx(node, chainId, makeIssueTx(0, issuerID, invalidAccountID, "USD", 1000))
+        enqueueTx(node, makeIssueTx(0, issuerID, aliceAccountID, "XDX", 1000))
+        enqueueTx(node, makeIssueTx(0, issuerID, aliceAccountID, "USD", -1000))
+        enqueueTx(node, makeIssueTx(0, aliceAccountID, aliceAccountID, "USD", 1000))
+        enqueueTx(node, makeIssueTx(1, issuerID, aliceAccountID, "USD", 1000))
+        enqueueTx(node, makeIssueTx(0, issuerID, invalidAccountID, "USD", 1000))
 
         makeSureBlockIsBuiltCorrectly()
 
         validTxs.add(enqueueTx(
                 node,
-                chainId,
                 makeTransferTx(1, aliceAccountID, "USD", 100, bobAccountID)
         )!!)
 
-        enqueueTx(node, chainId, makeTransferTx(1, aliceAccountID, "USD", 10000, bobAccountID))
-        enqueueTx(node, chainId, makeTransferTx(1, aliceAccountID, "USD", -100, bobAccountID))
-        enqueueTx(node, chainId, makeTransferTx(2, aliceAccountID, "USD", 100, bobAccountID))
+        enqueueTx(node, makeTransferTx(1, aliceAccountID, "USD", 10000, bobAccountID))
+        enqueueTx(node, makeTransferTx(1, aliceAccountID, "USD", -100, bobAccountID))
+        enqueueTx(node, makeTransferTx(2, aliceAccountID, "USD", 100, bobAccountID))
 
         makeSureBlockIsBuiltCorrectly()
 
         validTxs.add(enqueueTx(
                 node,
-                chainId,
                 makeTransferTx(1, aliceAccountID, "USD", 1, bobAccountID, "hi")
         )!!)
         validTxs.add(enqueueTx(
                 node,
-                chainId,
                 makeTransferTx(1, aliceAccountID, "USD", 1, bobAccountID, null, "there")
         )!!)
         validTxs.add(enqueueTx(
                 node,
-                chainId,
                 makeTransferTx(1, aliceAccountID, "USD", 1, bobAccountID, "hi", "there")
         )!!)
 
         makeSureBlockIsBuiltCorrectly()
 
-        val blockQueries = node.getBlockchainInstance(chainId).getEngine().getBlockQueries()
+        val blockQueries = node.getBlockchainInstance().getEngine().getBlockQueries()
         val balance = blockQueries.query(
                 """{"type"="ft_get_balance",
                     "account_id"="${aliceAccountID.toHex()}",

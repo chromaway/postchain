@@ -15,12 +15,15 @@ import net.postchain.ebft.BlockchainInstanceModel
 import net.postchain.gtx.encodeGTXValue
 import org.apache.commons.configuration2.Configuration
 
-class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
+class SingleChainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
+
+    private val chainId: Long
+    private val blockchainRID: ByteArray
 
     init {
         val storage = baseStorage(nodeConfig, NODE_ID_TODO, true)
-        val chainId = nodeConfig.getLong("activechainids")
-        val blockchainRID = nodeConfig
+        chainId = nodeConfig.getLong("activechainids")
+        blockchainRID = nodeConfig
                 .getString("blockchain.$chainId.blockchainrid")
                 .hexStringToByteArray()
 
@@ -47,7 +50,11 @@ class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
         }
     }
 
-    fun getRestApiModel(chainId: Long): Model {
+    fun startBlockchain() {
+        startBlockchain(chainId)
+    }
+
+    fun getRestApiModel(): Model {
         val blockchainProcess = processManager.retrieveBlockchain(chainId)!!
         return ((blockchainInfrastructure as BaseBlockchainInfrastructure).apiInfrastructure as BaseApiInfrastructure)
                 .restApi?.retrieveModel(blockchainRID(blockchainProcess))!!
@@ -58,7 +65,7 @@ class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
                 .restApi?.actualPort() ?: 0
     }
 
-    fun getBlockchainInstance(chainId: Long): BlockchainInstanceModel {
+    fun getBlockchainInstance(): BlockchainInstanceModel {
         return processManager.retrieveBlockchain(chainId) as BlockchainInstanceModel
     }
 

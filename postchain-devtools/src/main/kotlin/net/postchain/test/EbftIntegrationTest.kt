@@ -8,21 +8,19 @@ import org.junit.After
 
 open class EbftIntegrationTest : IntegrationTest() {
 
-    protected var chainId: Long = 0
-    protected var ebftNodes: Array<PostchainTestNode> = arrayOf()
+    protected var ebftNodes: Array<SingleChainTestNode> = arrayOf()
 
     open fun createEbftNodes(count: Int) {
         ebftNodes = Array(count) { createEBFTNode(count, it) }
     }
 
-    private fun createEBFTNode(nodeCount: Int, nodeIndex: Int): PostchainTestNode {
+    private fun createEBFTNode(nodeCount: Int, nodeIndex: Int): SingleChainTestNode {
         configOverrides.setProperty("messaging.privkey", privKeyHex(nodeIndex))
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
 
         val config = createConfig(nodeIndex, nodeCount, DEFAULT_CONFIG_FILE)
-        chainId = chainId(config) // TODO: [et]: Require invariance of $chainId for different configs
-        return PostchainTestNode(config)
-                .apply { startBlockchain(chainId) }
+        return SingleChainTestNode(config)
+                .apply { startBlockchain() }
     }
 
     @After

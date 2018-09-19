@@ -42,18 +42,18 @@ class SQLModuleIntegrationTest : IntegrationTest() {
         configOverrides.setProperty("blockchain.1.gtx.sqlmodules", listOf(sqlModulePath))
 
 //        val node = createDataLayerNG(0)
-        val (node, chainId) = createNode(0)
+        val node = createNode(0)
 
-        enqueueTx(node, chainId, makeTx(0, "k", "v"), 0)
-        buildBlockAndCommit(node, chainId)
-        enqueueTx(node, chainId, makeTx(0, "k", "v2"), 1)
-        enqueueTx(node, chainId, makeTx(0, "k2", "v2"), 1)
-        enqueueTx(node, chainId, makeTx(1, "k", "v"), -1)
-        buildBlockAndCommit(node, chainId)
+        enqueueTx(node, makeTx(0, "k", "v"), 0)
+        buildBlockAndCommit(node)
+        enqueueTx(node, makeTx(0, "k", "v2"), 1)
+        enqueueTx(node, makeTx(0, "k2", "v2"), 1)
+        enqueueTx(node, makeTx(1, "k", "v"), -1)
+        buildBlockAndCommit(node)
 
-        verifyBlockchainTransactions(node, chainId)
+        verifyBlockchainTransactions(node)
 
-        val blockQueries = node.getBlockchainInstance(chainId).getEngine().getBlockQueries()
+        val blockQueries = node.getBlockchainInstance().getEngine().getBlockQueries()
         assertFailsWith<UserMistake> {
             blockQueries.query("""{tdype: 'test_get_value'}""").get()
         }

@@ -11,7 +11,7 @@ import net.postchain.test.EbftIntegrationTest
 import net.postchain.test.KeyPairHelper.privKey
 import net.postchain.test.KeyPairHelper.pubKey
 import net.postchain.test.OnDemandBlockBuildingStrategy
-import net.postchain.test.PostchainTestNode
+import net.postchain.test.SingleChainTestNode
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,9 +22,9 @@ class GTXPerformanceTestNightly : EbftIntegrationTest() {
 
     companion object : KLogging()
 
-    private fun strategy(node: PostchainTestNode): OnDemandBlockBuildingStrategy {
+    private fun strategy(node: SingleChainTestNode): OnDemandBlockBuildingStrategy {
         return node
-                .getBlockchainInstance(chainId)
+                .getBlockchainInstance()
                 .getEngine()
                 .getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
     }
@@ -118,17 +118,17 @@ class GTXPerformanceTestNightly : EbftIntegrationTest() {
         createEbftNodes(nodeCount)
 
         var txId = 0
-        val statusManager = ebftNodes[0].getBlockchainInstance(chainId).statusManager
+        val statusManager = ebftNodes[0].getBlockchainInstance().statusManager
         for (i in 0 until blockCount) {
             for (tx in 0 until txPerBlock) {
                 val txFactory = ebftNodes[statusManager.primaryIndex()]
-                        .getBlockchainInstance(chainId)
+                        .getBlockchainInstance()
                         .blockchainConfiguration
                         .getTransactionFactory()
 
                 val tx = makeTestTx(1, (txId++).toString())
                 ebftNodes[statusManager.primaryIndex()]
-                        .getBlockchainInstance(chainId)
+                        .getBlockchainInstance()
                         .getEngine()
                         .getTransactionQueue()
                         .enqueue(txFactory.decodeTransaction(tx))

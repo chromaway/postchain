@@ -50,17 +50,17 @@ class EsplixIntegrationTest : IntegrationTest() {
 
         val creator = 0
         val user = 1
-        val (node, chainId) = createNode(0)
+        val node = createNode(0)
         var currentBlockHeight = -1L
 
         fun buildBlockAndCommitWithTx(data: ByteArray, fail: Boolean = false) {
             currentBlockHeight += 1
             try {
-                val tx = node.getBlockchainInstance(chainId).blockchainConfiguration.getTransactionFactory().decodeTransaction(data)
-                node.getBlockchainInstance(chainId).getEngine().getTransactionQueue().enqueue(tx)
-                buildBlockAndCommit(node.getBlockchainInstance(chainId).getEngine())
-                Assert.assertEquals(currentBlockHeight, getBestHeight(node, chainId))
-                val txSz = getTxRidsAtHeight(node, chainId, currentBlockHeight).size
+                val tx = node.getBlockchainInstance().blockchainConfiguration.getTransactionFactory().decodeTransaction(data)
+                node.getBlockchainInstance().getEngine().getTransactionQueue().enqueue(tx)
+                buildBlockAndCommit(node.getBlockchainInstance().getEngine())
+                Assert.assertEquals(currentBlockHeight, getBestHeight(node))
+                val txSz = getTxRidsAtHeight(node, currentBlockHeight).size
                 if (fail)
                     Assert.assertEquals(0, txSz)
                 else
@@ -113,13 +113,13 @@ class EsplixIntegrationTest : IntegrationTest() {
         )
         buildBlockAndCommitWithTx(postMessageTx4, true)
 
-        val msg1 = node.getBlockchainInstance(chainId).getEngine().getBlockQueries().query(
+        val msg1 = node.getBlockchainInstance().getEngine().getBlockQueries().query(
                 """{"type":"R4getMessages",
                     "chainID":"${chainID.toHex()}",
                     "maxHits":1
                    }""")
         println(msg1.get())
-        val msg2 = node.getBlockchainInstance(chainId).getEngine().getBlockQueries().query(
+        val msg2 = node.getBlockchainInstance().getEngine().getBlockQueries().query(
                 """{"type":"R4getMessages",
                     "chainID":"${chainID.toHex()}",
                     "sinceMessageID":"${messageID.toHex()}",

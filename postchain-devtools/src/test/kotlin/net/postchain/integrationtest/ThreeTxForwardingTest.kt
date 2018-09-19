@@ -6,16 +6,16 @@ import net.postchain.api.rest.controller.Model
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.common.toHex
 import net.postchain.test.EbftIntegrationTest
-import net.postchain.test.PostchainTestNode
+import net.postchain.test.SingleChainTestNode
 import net.postchain.test.testinfra.TestTransaction
 import org.junit.Assert
 import org.junit.Test
 
 class ThreeTxForwardingTest : EbftIntegrationTest() {
 
-    private fun strategy(node: PostchainTestNode): ThreeTxStrategy {
+    private fun strategy(node: SingleChainTestNode): ThreeTxStrategy {
         return node
-                .getBlockchainInstance(chainId)
+                .getBlockchainInstance()
                 .getEngine()
                 .getBlockBuildingStrategy() as ThreeTxStrategy
     }
@@ -25,7 +25,7 @@ class ThreeTxForwardingTest : EbftIntegrationTest() {
     }
 
     private fun apiModel(nodeIndex: Int): Model =
-            ebftNodes[nodeIndex].getRestApiModel(chainId)
+            ebftNodes[nodeIndex].getRestApiModel()
 
     @Test
     fun testTxNotForwardedIfPrimary() {
@@ -47,7 +47,7 @@ class ThreeTxForwardingTest : EbftIntegrationTest() {
         apiModel(2).postTransaction(tx(8))
         strategy(ebftNodes[2]).awaitCommitted(2)
 
-        val bockQueries = ebftNodes[2].getBlockchainInstance(chainId).getEngine().getBlockQueries()
+        val bockQueries = ebftNodes[2].getBlockchainInstance().getEngine().getBlockQueries()
         for (i in 0..2) {
             val blockData = bockQueries.getBlockAtHeight(i.toLong()).get()
             Assert.assertEquals(3, blockData.transactions.size)

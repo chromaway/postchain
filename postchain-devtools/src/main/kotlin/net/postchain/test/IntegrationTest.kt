@@ -32,7 +32,7 @@ open class IntegrationTest {
 
     @Deprecated("Legacy")
     protected val nodesLegacy = mutableListOf<TestNodeEngine>()
-    protected val nodes = mutableListOf<PostchainTestNode>()
+    protected val nodes = mutableListOf<SingleChainTestNode>()
     val configOverrides = MapConfiguration(mutableMapOf<String, String>())
     val cryptoSystem = SECP256K1CryptoSystem()
     var gtxConfig: GTXValue? = null
@@ -58,8 +58,8 @@ open class IntegrationTest {
     }
 
     // TODO: [et]: Check out nullability for return value
-    protected fun enqueueTx(node: PostchainTestNode, chainId: Long, data: ByteArray, expectedConfirmationHeight: Long): Transaction? {
-        val blockchain = node.getBlockchainInstance(chainId)
+    protected fun enqueueTx(node: SingleChainTestNode, data: ByteArray, expectedConfirmationHeight: Long): Transaction? {
+        val blockchain = node.getBlockchainInstance()
         val tx = blockchain.blockchainConfiguration.getTransactionFactory().decodeTransaction(data)
         blockchain.getEngine().getTransactionQueue().enqueue(tx)
 
@@ -71,14 +71,14 @@ open class IntegrationTest {
         return tx
     }
 
-    protected fun verifyBlockchainTransactions(node: PostchainTestNode, chainId: Long) {
+    protected fun verifyBlockchainTransactions(node: SingleChainTestNode) {
         val expectAtLeastHeight = expectedSuccessRids.keys.reduce { acc, l -> maxOf(l, acc) }
-        val bestHeight = getBestHeight(node, chainId)
+        val bestHeight = getBestHeight(node)
         assertTrue(bestHeight >= expectAtLeastHeight)
         for (height in 0..bestHeight) {
-            val txRidsAtHeight = getTxRidsAtHeight(node, chainId, height)
+            val txRidsAtHeight = getTxRidsAtHeight(node, height)
 
-            val expectedRidsAtHeight = expectedSuccessRids.get(height)
+            val expectedRidsAtHeight = expectedSuccessRids[height]
             if (expectedRidsAtHeight == null) {
                 assertArrayEquals(arrayOf(), txRidsAtHeight)
             } else {
@@ -87,27 +87,26 @@ open class IntegrationTest {
         }
     }
 
-    protected fun createNode(nodeIndex: Int): Pair<PostchainTestNode, Long> =
+    protected fun createNode(nodeIndex: Int): SingleChainTestNode =
             createSingleNode(nodeIndex, 1)
 
-    protected fun createNodes(count: Int): Array<Pair<PostchainTestNode, Long>> =
+    protected fun createNodes(count: Int): Array<SingleChainTestNode> =
             Array(count) { createSingleNode(it, count) }
 
-    private fun createSingleNode(nodeIndex: Int, totalNodesCount: Int): Pair<PostchainTestNode, Long> {
+    private fun createSingleNode(nodeIndex: Int, totalNodesCount: Int): SingleChainTestNode {
         val config = createConfig(nodeIndex, totalNodesCount, DEFAULT_CONFIG_FILE)
-        val chainId = chainId(config)
-        return PostchainTestNode(config).apply {
-            startBlockchain(chainId)
+        return SingleChainTestNode(config).apply {
+            startBlockchain()
             nodes.add(this)
-        } to chainId
+        }
     }
 
     @Deprecated("Legacy code")
-    protected fun createEngines(count: Int): Array<PostchainTestNode> {
+    protected fun createEngines(count: Int): Array<SingleChainTestNode> {
         return Array(count) {
             val config = createConfig(it, configFile = DEFAULT_CONFIG_FILE)
-            PostchainTestNode(config).apply {
-                startBlockchain(chainId(config))
+            SingleChainTestNode(config).apply {
+                startBlockchain()
                 nodes.add(this)
             }
         }
@@ -214,9 +213,9 @@ open class IntegrationTest {
         commitBlock(blockBuilder)
     }
 
-    protected fun buildBlockAndCommit(node: PostchainTestNode, chainId: Long) {
+    protected fun buildBlockAndCommit(node: SingleChainTestNode) {
         commitBlock(node
-                .getBlockchainInstance(chainId)
+                .getBlockchainInstance()
                 .getEngine()
                 .buildBlock())
     }
@@ -237,17 +236,14 @@ open class IntegrationTest {
         return witness
     }
 
-    protected fun getTxRidsAtHeight(node: PostchainTestNode, chainId: Long, height: Long): Array<ByteArray> {
-        val blockQueries = node.getBlockchainInstance(chainId).getEngine().getBlockQueries()
+    protected fun getTxRidsAtHeight(node: SingleChainTestNode, height: Long): Array<ByteArray> {
+        val blockQueries = node.getBlockchainInstance().getEngine().getBlockQueries()
         val list = blockQueries.getBlockRids(height).get()
         return blockQueries.getBlockTransactionRids(list[0]).get().toTypedArray()
     }
 
-    protected fun getBestHeight(node: PostchainTestNode, chainId: Long): Long {
-        return node.getBlockchainInstance(chainId).getEngine().getBlockQueries().getBestHeight().get()
+    protected fun getBestHeight(node: SingleChainTestNode): Long {
+        return node.getBlockchainInstance().getEngine().getBlockQueries().getBestHeight().get()
     }
 
-    protected fun chainId(config: Configuration): Long {
-        return config.getLong("activechainids")
-    }
 }
