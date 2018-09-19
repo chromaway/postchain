@@ -3,12 +3,10 @@
 package net.postchain.test
 
 import mu.KLogging
-import net.postchain.TestNodeEngine
 import net.postchain.base.DynamicPortPeerInfo
 import net.postchain.base.PeerInfo
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.core.*
-import net.postchain.createDataLayer
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.gtx
 import net.postchain.test.KeyPairHelper.privKey
@@ -30,8 +28,6 @@ import java.io.File
 
 open class IntegrationTest {
 
-    @Deprecated("Legacy")
-    protected val nodesLegacy = mutableListOf<TestNodeEngine>()
     protected val nodes = mutableListOf<SingleChainTestNode>()
     val configOverrides = MapConfiguration(mutableMapOf<String, String>())
     val cryptoSystem = SECP256K1CryptoSystem()
@@ -101,17 +97,6 @@ open class IntegrationTest {
         }
     }
 
-    @Deprecated("Legacy code")
-    protected fun createEngines(count: Int): Array<SingleChainTestNode> {
-        return Array(count) {
-            val config = createConfig(it, configFile = DEFAULT_CONFIG_FILE)
-            SingleChainTestNode(config).apply {
-                startBlockchain()
-                nodes.add(this)
-            }
-        }
-    }
-
     protected fun createConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
             : Configuration {
         val propertiesFile = File(configFile)
@@ -147,65 +132,16 @@ open class IntegrationTest {
         }
     }
 
-    // TODO: [et]: Remove legacy
-    @Deprecated("Legacy")
-    protected fun createDataLayer(nodeIndex: Int, nodeCount: Int = 1, configFile: String = DEFAULT_CONFIG_FILE): TestNodeEngine {
-        val config = createConfig(nodeIndex, nodeCount, configFile)
-        val chainId = config.getLong("activechainids")
-
-        val dataLayer = createDataLayer(config, chainId, nodeIndex)
-
-        // keep list of nodes to shutdown after test
-        nodesLegacy.add(dataLayer)
-        return dataLayer
-    }
-
     protected fun gtxConfigSigners(nodeCount: Int = 1): GTXValue {
         return gtx(*Array(nodeCount) { gtx(pubKey(it)) })
     }
 
-    /*
-    @Deprecated("Legacy")
-    protected fun createDataLayerNG(nodeIndex: Int, nodeCount: Int = 1, configFile: String = DEFAULT_CONFIG_FILE): TestNodeEngine {
-        val config = createConfig(nodeIndex, nodeCount, configFile)
-        val chainId = config.getLong("activechainids")
-
-        val infrastructure = BaseBlockchainInfrastructureFactory().makeBlockchainInfrastructure(config)
-
-        val blockchainRID = config.getString("blockchain.1.blockchainrid").hexStringToByteArray() // TODO
-
-        val dataLayer = createTestNodeEngine(infrastructure as BaseBlockchainInfrastructure,
-                gtxConfig!!, BaseBlockchainContext(blockchainRID, nodeIndex, chainId, null) // TODO
-        )
-
-        // keep list of nodes to shutdown after test
-        nodesLegacy.add(dataLayer)
-        return dataLayer
-    }
-    */
-
-    /*
-        protected fun createBasePeerCommConfiguration(nodeCount: Int, myIndex: Int): BasePeerCommConfiguration {
-            val peerInfos = createPeerInfos(nodeCount)
-            val privKey = privKey(myIndex)
-            return BasePeerCommConfiguration(peerInfos, myIndex, SECP256K1CryptoSystem(), privKey)
-        }
-    */
     fun createPeerInfos(nodeCount: Int): Array<PeerInfo> {
         if (peerInfos == null) {
             val pubKeysToUse = Array<ByteArray>(nodeCount, { pubKey(it) })
             peerInfos = Array<PeerInfo>(nodeCount, { DynamicPortPeerInfo("localhost", pubKeysToUse[it]) })
         }
         return peerInfos!!
-    }
-
-    /*
-        protected fun arrayOfBasePeerCommConfigurations(count: Int): Array<BasePeerCommConfiguration> {
-            return Array(count, { createBasePeerCommConfiguration(count, it) })
-        }
-    */
-    protected fun buildBlockAndCommit(node: TestNodeEngine) {
-        buildBlockAndCommit(node.engine)
     }
 
     protected fun buildBlockAndCommit(engine: BlockchainEngine) {

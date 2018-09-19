@@ -1,16 +1,12 @@
 package net.postchain.modules.perftest
 
-import net.postchain.TestNodeEngine
-import net.postchain.api.rest.controller.PostchainModel
-import net.postchain.api.rest.controller.RestApi
-import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.common.TimeLog
-import net.postchain.common.toHex
 import net.postchain.configurations.GTXTestModule
 import net.postchain.gtx.GTXBlockchainConfigurationFactory
 import net.postchain.modules.ft.BaseFTModuleFactory
 import net.postchain.test.IntegrationTest
 import net.postchain.test.KeyPairHelper.pubKeyHex
+import net.postchain.test.SingleChainTestNode
 import org.junit.Test
 
 /**
@@ -32,18 +28,15 @@ import org.junit.Test
  *
  */
 class SingleNodeManual : IntegrationTest() {
+
     val assetID = "TST"
 
     fun runSingleNode(name: String) {
         configOverrides.setProperty("blockchain.1.configurationfactory", GTXBlockchainConfigurationFactory::class.qualifiedName)
         configOverrides.setProperty("blockchain.1.basestrategy.maxblocktransactions", 1000)
         configOverrides.setProperty("blockchain.1.queuecapacity", 100000)
-        val node = createDataLayer(0)
-        val model = PostchainModel(node.txQueue, node.blockchainConfiguration.getTransactionFactory(), node.blockQueries)
-        val api = RestApi(8383, "")
-        api.attachModel(
-                (node.blockchainConfiguration as BaseBlockchainConfiguration).blockchainRID.toHex(),
-                model)
+
+        val node = createNode(0)
 
         // warm up
         val warmupDuration = 20000
@@ -79,14 +72,16 @@ class SingleNodeManual : IntegrationTest() {
         println("buildBlock tps: ${txCount * 1000 / TimeLog.getValue("BaseBlockchainEngine.buildBlock().buildBlock")}")
     }
 
-    private fun txCount(node: TestNodeEngine): Pair<Long, Int> {
-        val bestHeight = node.blockQueries.getBestHeight().get()
-        var txCount = 0
-        for (i in 0..bestHeight) {
-            val blockRid = node.blockQueries.getBlockRids(i.toLong()).get()[0]
-            txCount += node.blockQueries.getBlockTransactionRids(blockRid).get().size
+    private fun txCount(node: SingleChainTestNode): Pair<Long, Int> {
+        return node.getBlockchainInstance().getEngine().getBlockQueries().let { blockQueries ->
+            val bestHeight = blockQueries.getBestHeight().get()
+            var txCount = (0..bestHeight).fold(0) { count, height ->
+                val blockRid = blockQueries.getBlockRids(height).get()[0]
+                count + blockQueries.getBlockTransactionRids(blockRid).get().size
+            }
+
+            Pair(bestHeight, txCount)
         }
-        return Pair(bestHeight, txCount)
     }
 
     @Test
