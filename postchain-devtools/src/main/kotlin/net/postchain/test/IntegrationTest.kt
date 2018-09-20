@@ -111,7 +111,8 @@ open class IntegrationTest {
 
         baseConfig.listDelimiterHandler = DefaultListDelimiterHandler(',')
         val chainId = baseConfig.getLong("activechainids")
-        baseConfig.setProperty("blockchain.$chainId.signers", Array(nodeCount, { pubKeyHex(it) }).reduce({ acc, value -> "$acc,$value" }))
+        val signers = Array(nodeCount) { pubKeyHex(it) }.joinToString(",")
+        baseConfig.setProperty("blockchain.$chainId.signers", signers)
         // append nodeIndex to schema name
         baseConfig.setProperty("database.schema", baseConfig.getString("database.schema") + nodeIndex)
         baseConfig.setProperty("blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: newschool

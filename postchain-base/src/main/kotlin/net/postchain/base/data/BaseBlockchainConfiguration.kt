@@ -34,27 +34,30 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
                 configData.blockSigner)
     }
 
-    open fun createBlockBuilderInstance(cryptoSystem: CryptoSystem, ctx: EContext,
-                                        blockStore: BlockStore, transactionFactory: TransactionFactory,
-                                        signers: Array<ByteArray>, blockSigner: Signer): BlockBuilder {
-        return BaseBlockBuilder(cryptoSystem, ctx, blockStore,
-                getTransactionFactory(), signers, blockSigner)
+    open fun createBlockBuilderInstance(cryptoSystem: CryptoSystem,
+                                        ctx: EContext,
+                                        blockStore: BlockStore,
+                                        transactionFactory: TransactionFactory,
+                                        signers: Array<ByteArray>,
+                                        blockSigner: Signer
+    ): BlockBuilder {
+        return BaseBlockBuilder(
+                cryptoSystem, ctx, blockStore, getTransactionFactory(), signers, blockSigner)
     }
 
     override fun makeBlockQueries(storage: Storage): BlockQueries {
         return BaseBlockQueries(
-                this, storage, blockStore, chainID,
-                configData.subjectID)
+                this, storage, blockStore, chainID, configData.subjectID)
     }
 
     override fun initializeDB(ctx: EContext) {
         blockStore.initialize(ctx, blockchainRID)
     }
 
-    override fun getBlockBuildingStrategy(blockQueries: BlockQueries, transactionQueue: TransactionQueue): BlockBuildingStrategy {
+    override fun getBlockBuildingStrategy(blockQueries: BlockQueries, txQueue: TransactionQueue): BlockBuildingStrategy {
         val strategyClassName = configData.getBlockBuildingStrategyName()
         if (strategyClassName == "") {
-            return BaseBlockBuildingStrategy(configData, this, blockQueries, transactionQueue)
+            return BaseBlockBuildingStrategy(configData, this, blockQueries, txQueue)
         }
         val strategyClass = Class.forName(strategyClassName)
 
@@ -63,7 +66,8 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
                 BlockchainConfiguration::class.java,
                 BlockQueries::class.java,
                 TransactionQueue::class.java)
-        return ctor.newInstance(configData, this, blockQueries, transactionQueue) as BlockBuildingStrategy
+
+        return ctor.newInstance(configData, this, blockQueries, txQueue) as BlockBuildingStrategy
     }
 }
 

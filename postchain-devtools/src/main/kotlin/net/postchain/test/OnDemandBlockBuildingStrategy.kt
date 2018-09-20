@@ -16,18 +16,17 @@ class OnDemandBlockBuildingStrategy(
     companion object : KLogging()
 
     @Volatile
-    var upToHeight : Long = -1
-
-    val blocks = LinkedBlockingQueue<BlockData>()
+    var upToHeight: Long = -1
     @Volatile
     var committedHeight = -1
+    val blocks = LinkedBlockingQueue<BlockData>()
 
     override fun shouldBuildBlock(): Boolean {
         return upToHeight > committedHeight
     }
 
-    fun buildBlocksUpTo(j: Long) {
-        upToHeight = j
+    fun buildBlocksUpTo(height: Long) {
+        upToHeight = height
     }
 
     override fun blockCommitted(blockData: BlockData) {
@@ -35,8 +34,8 @@ class OnDemandBlockBuildingStrategy(
         blocks.add(blockData)
     }
 
-    fun awaitCommitted(blockHeight: Int) {
-        while (committedHeight < blockHeight) {
+    fun awaitCommitted(height: Int) {
+        while (committedHeight < height) {
             blocks.take()
         }
     }

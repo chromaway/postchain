@@ -45,7 +45,7 @@ class BaseBlockchainInfrastructure(
         val bcfClass = Class.forName(confData.data["configurationfactory"]!!.asString())
         val factory = (bcfClass.newInstance() as BlockchainConfigurationFactory)
 
-        return factory.makeBlockchainConfiguration(confData, actualContext)
+        return factory.makeBlockchainConfiguration(confData)
     }
 
     override fun makeBlockchainEngine(configuration: BlockchainConfiguration): BaseBlockchainEngine {

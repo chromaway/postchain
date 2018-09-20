@@ -40,7 +40,7 @@ class SingleChainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig)
         val factoryClass = Class.forName(configData.data["configurationfactory"]!!.asString())
         val factory = (factoryClass.newInstance() as BlockchainConfigurationFactory)
 
-        val blockchainConfiguration = factory.makeBlockchainConfiguration(configData, null)
+        val blockchainConfiguration = factory.makeBlockchainConfiguration(configData)
         val configAsByteArray = encodeGTXValue(
                 (blockchainConfiguration as BaseBlockchainConfiguration).configData.data)
 

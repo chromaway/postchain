@@ -16,7 +16,7 @@ interface BlockchainConfiguration {
     fun makeBlockBuilder(ctx: EContext): BlockBuilder
     fun makeBlockQueries(storage: Storage): BlockQueries
     fun initializeDB(ctx: EContext)
-    fun getBlockBuildingStrategy(blockQueries: BlockQueries, transactionQueue: TransactionQueue): BlockBuildingStrategy
+    fun getBlockBuildingStrategy(blockQueries: BlockQueries, txQueue: TransactionQueue): BlockBuildingStrategy
 }
 
 interface ConfigurationDataStore {
@@ -26,5 +26,5 @@ interface ConfigurationDataStore {
 }
 
 interface BlockchainConfigurationFactory {
-    fun makeBlockchainConfiguration(configurationData: Any, /*TODO: [et]: Deprecated?*/context: BlockchainContext?): BlockchainConfiguration
+    fun makeBlockchainConfiguration(configurationData: Any): BlockchainConfiguration
 }
