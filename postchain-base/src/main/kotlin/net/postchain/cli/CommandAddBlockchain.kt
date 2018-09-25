@@ -2,7 +2,6 @@ package net.postchain.cli
 
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
-import net.postchain.PostchainNode
 import net.postchain.base.BaseConfigurationDataStore
 import net.postchain.base.data.BaseBlockStore
 import net.postchain.common.hexStringToByteArray
@@ -15,20 +14,33 @@ import java.io.File
 @Parameters(commandDescription = "Adds blockchain")
 class CommandAddBlockchain : Command {
 
-    // TODO: Eliminate it later
-    @Parameter(names = ["-nc", "--node-config"], description = "Configuration file of blockchain (.properties file)")
+    // TODO: Eliminate it later or reduce to DbConfig only
+    @Parameter(
+            names = ["-nc", "--node-config"],
+            description = "Configuration file of blockchain (.properties file)")
     private var nodeConfigFile = ""
 
-    @Parameter(names = ["-i", "--infrastructure"], description = "The type of blockchain infrastructure.")
+    @Parameter(
+            names = ["-i", "--infrastructure"],
+            description = "The type of blockchain infrastructure.")
     private var infrastructureType = "base/ebft"
 
-    @Parameter(names = ["-cid", "--chain-id"], description = "Local number id of blockchain", required = true)
+    @Parameter(
+            names = ["-cid", "--chain-id"],
+            description = "Local number id of blockchain",
+            required = true)
     private var chainId = 0L
 
-    @Parameter(names = ["-rid", "--blockchainRID"], description = "Blockchain global ID", required = true)
+    @Parameter(
+            names = ["-rid", "--blockchainRID"],
+            description = "Blockchain global ID",
+            required = true)
     private var blockchainRID: String = ""
 
-    @Parameter(names = ["-bc", "--blockchain-config"], description = "Configuration file of blockchain (gtxml or binary)", required = true)
+    @Parameter(
+            names = ["-bc", "--blockchain-config"],
+            description = "Configuration file of blockchain (gtxml or binary)",
+            required = true)
     private var blockchainConfigFile = ""
 
     override fun key(): String = "add-blockchain"
@@ -44,8 +56,6 @@ class CommandAddBlockchain : Command {
         runDBCommandBody(nodeConfigFile, chainId) { ctx, nodeConfig ->
             BaseBlockStore().initialize(ctx, blockchainRID.hexStringToByteArray())
             BaseConfigurationDataStore.addConfigurationData(ctx, 0, encodedGtxValue)
-            PostchainNode(nodeConfig)
-                    .verifyConfiguration(ctx, nodeConfig, blockchainRID.hexStringToByteArray())
         }
     }
 }

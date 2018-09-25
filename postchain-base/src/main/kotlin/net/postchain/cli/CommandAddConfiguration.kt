@@ -12,20 +12,34 @@ import java.io.File
 @Parameters(commandDescription = "Adds configuration")
 class CommandAddConfiguration : Command {
 
-    // TODO: Eliminate it later
-    @Parameter(names = ["-nc", "--node-config"], description = "Configuration file of blockchain (.properties file)")
+    // TODO: Eliminate it later or reduce to DbConfig only
+    @Parameter(
+            names = ["-nc", "--node-config"],
+            description = "Configuration file of blockchain (.properties file)",
+            required = true)
     private var nodeConfigFile = ""
 
-    @Parameter(names = ["-i", "--infrastructure"], description = "The type of blockchain infrastructure.")
+    @Parameter(
+            names = ["-i", "--infrastructure"],
+            description = "The type of blockchain infrastructure. (Not currently used.)")
     private var infrastructureType = "base/ebft"
 
-    @Parameter(names = ["-cid", "--chain-id"], description = "Id of blockchain", required = true)
+    @Parameter(
+            names = ["-cid", "--chain-id"],
+            description = "Id of blockchain",
+            required = true)
     private var chainId = 0L
 
-    @Parameter(names = ["-h", "--height"], description = "Height of configuration", required = true)
+    @Parameter(
+            names = ["-h", "--height"],
+            description = "Height of configuration",
+            required = true)
     private var height = 0L
 
-    @Parameter(names = ["-bc", "--blockchain-config"], description = "Configuration file of blockchain (gtxml or binary)", required = true)
+    @Parameter(
+            names = ["-bc", "--blockchain-config"],
+            description = "Configuration file of blockchain (gtxml or binary)",
+            required = true)
     private var blockchainConfigFile = ""
 
     override fun key(): String = "add-configuration"
@@ -41,8 +55,7 @@ class CommandAddConfiguration : Command {
         var result = false
         runDBCommandBody(nodeConfigFile, chainId) {
             ctx, _ ->
-            result = BaseConfigurationDataStore
-                    .addConfigurationData(ctx, height, encodedGtxValue) > 0
+            result = BaseConfigurationDataStore.addConfigurationData(ctx, height, encodedGtxValue) > 0
         }
         println(reportMessage(result))
     }

@@ -1,7 +1,7 @@
 package net.postchain.base
 
+import net.postchain.StorageBuilder
 import net.postchain.base.data.SQLDatabaseAccess
-import net.postchain.baseStorage
 import net.postchain.core.*
 import org.apache.commons.configuration2.Configuration
 
@@ -10,14 +10,13 @@ class BaseBlockchainProcessManager(
         nodeConfig: Configuration
 ) : BlockchainProcessManager {
 
-    val storage = baseStorage(nodeConfig, NODE_ID_TODO)
+    val storage = StorageBuilder.buildStorage(nodeConfig, NODE_ID_TODO)
     private val dbAccess = SQLDatabaseAccess()
     private val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
 
     override fun startBlockchain(chainId: Long) {
         blockchainProcesses[chainId]?.shutdown()
 
-        checkDbInitialized(chainId)
         withReadConnection(storage, chainId) { eContext ->
             val blockchainRID = dbAccess.getBlockchainRID(eContext)!! // TODO: [et]: Fix Kotlin NPE
             val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(
@@ -41,12 +40,5 @@ class BaseBlockchainProcessManager(
         blockchainProcesses.forEach { _, process -> process.shutdown() }
         storage.close()
         blockchainInfrastructure.shutdown()
-    }
-
-    private fun checkDbInitialized(chainId: Long) {
-        withWriteConnection(storage, chainId) { eContext ->
-            dbAccess.initialize(eContext, expectedDbVersion = 1)
-            true
-        }
     }
 }

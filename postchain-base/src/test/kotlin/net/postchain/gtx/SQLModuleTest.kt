@@ -1,7 +1,7 @@
 package net.postchain.gtx
 
+import net.postchain.StorageBuilder
 import net.postchain.base.withWriteConnection
-import net.postchain.baseStorage
 import org.apache.commons.configuration2.MapConfiguration
 import org.junit.Assert
 import org.junit.Test
@@ -27,7 +27,7 @@ class SQLModuleTest {
                 "database.schema" to "testschema"
         ))
 
-        val storage = baseStorage(dataConf, 0)
+        val storage = StorageBuilder.buildStorage(dataConf, 0)
         withWriteConnection(storage, 1) {
             GTXSchemaManager.initializeDB(it)
             module.initializeDB(it)

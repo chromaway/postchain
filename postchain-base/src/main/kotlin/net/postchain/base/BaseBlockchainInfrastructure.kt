@@ -1,7 +1,7 @@
 package net.postchain.base
 
+import net.postchain.StorageBuilder
 import net.postchain.base.data.BaseTransactionQueue
-import net.postchain.baseStorage
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.*
 import net.postchain.gtx.decodeGTXValue
@@ -18,7 +18,8 @@ class BaseBlockchainInfrastructure(
     val subjectID: ByteArray
 
     init {
-        val privKey = config.getString("blocksigningprivkey").hexStringToByteArray()
+        val chainId = config.getLong("activechainids") // TODO: [et]: Extract fields names
+        val privKey = config.getString("blockchain.$chainId.blocksigningprivkey").hexStringToByteArray()
         val pubKey = secp256k1_derivePubKey(privKey)
         blockSigner = cryptoSystem.makeSigner(pubKey, privKey)
         subjectID = pubKey
@@ -49,7 +50,7 @@ class BaseBlockchainInfrastructure(
     }
 
     override fun makeBlockchainEngine(configuration: BlockchainConfiguration): BaseBlockchainEngine {
-        val storage = baseStorage(config, -1) // TODO: nodeID
+        val storage = StorageBuilder.buildStorage(config, -1) // TODO: nodeID
         val tq = BaseTransactionQueue(config.getInt("queuecapacity", 2500))
         return BaseBlockchainEngine(configuration, storage, configuration.chainID, tq)
                 .apply { initializeDB() }

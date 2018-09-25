@@ -7,11 +7,12 @@ import net.postchain.common.toHex
 import net.postchain.core.*
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.*
+import java.sql.Connection
 
 interface DatabaseAccess {
     class BlockInfo(val blockIid: Long, val blockHeader: ByteArray, val witness: ByteArray)
 
-    fun initialize(ctx: EContext, expectedDbVersion: Int)
+    fun initialize(connection: Connection, expectedDbVersion: Int)
     fun checkBlockchainRID(ctx: EContext, blockchainRID: ByteArray)
 
     fun getBlockchainRID(ctx: EContext): ByteArray?
@@ -37,7 +38,7 @@ interface DatabaseAccess {
 
     // Configurations
 
-    fun findConfiguration(context: EContext, height: Long): Long
+    fun findConfiguration(context: EContext, height: Long): ByteArray?
     fun getConfigurationData(context: EContext, height: Long): ByteArray
     fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long
 }
@@ -87,7 +88,6 @@ class SQLDatabaseAccess : DatabaseAccess {
         return queryRunner.query(ctx.conn, "SELECT block_height FROM blocks where chain_id = ? and block_rid = ?",
                 nullableLongRes, ctx.chainID, blockRID)
     }
-
 
     override fun getBlockRIDs(ctx: EContext, height: Long): List<ByteArray> {
         return queryRunner.query(ctx.conn,
@@ -195,7 +195,7 @@ class SQLDatabaseAccess : DatabaseAccess {
                 nullableByteArrayRes, ctx.chainID)
     }
 
-    override fun initialize(ctx: EContext, expectedDbVersion: Int) {
+    override fun initialize(connection: Connection, expectedDbVersion: Int) {
         /**
          * "CREATE TABLE IF NOT EXISTS" is not good enough for the meta table
          * We need to know whether it exists or not in order to
@@ -210,10 +210,10 @@ class SQLDatabaseAccess : DatabaseAccess {
                     AND    c.relname = 'meta'
                     AND    c.relkind = 'r'
         """
-        val metaExists = queryRunner.query(ctx.conn, checkExists, ColumnListHandler<Int>())
+        val metaExists = queryRunner.query(connection, checkExists, ColumnListHandler<Int>())
         if (metaExists.size == 1) {
             // meta table already exists. Check the version
-            val versionString = queryRunner.query(ctx.conn, "SELECT value FROM meta WHERE key='version'", ScalarHandler<String>())
+            val versionString = queryRunner.query(connection, "SELECT value FROM meta WHERE key='version'", ScalarHandler<String>())
             val version = versionString.toInt()
             if (version != expectedDbVersion) {
                 throw UserMistake("Unexpected version '$version' in database. Expected '$expectedDbVersion'")
@@ -221,9 +221,9 @@ class SQLDatabaseAccess : DatabaseAccess {
 
         } else {
             // meta table does not exist! Assume database does not exist.
-            queryRunner.update(ctx.conn, """CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)""")
+            queryRunner.update(connection, """CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)""")
             queryRunner.update(
-                    ctx.conn,
+                    connection,
                     "INSERT INTO meta (key, value) values ('version', ?)",
                     expectedDbVersion)
 
@@ -232,11 +232,11 @@ class SQLDatabaseAccess : DatabaseAccess {
             // we must throw an error. If these tables exists but meta did not exist,
             // there is some serious problem that needs manual work
             queryRunner.update(
-                    ctx.conn,
+                    connection,
                     "CREATE TABLE blockchains " +
                             "(chain_id BIGINT PRIMARY KEY, blockchain_rid BYTEA NOT NULL)")
 
-            queryRunner.update(ctx.conn,
+            queryRunner.update(connection,
                     "CREATE TABLE blocks" +
                             " (block_iid BIGSERIAL PRIMARY KEY," +
                             "  block_height BIGINT NOT NULL, " +
@@ -248,7 +248,7 @@ class SQLDatabaseAccess : DatabaseAccess {
                             "  UNIQUE (chain_id, block_rid)," +
                             "  UNIQUE (chain_id, block_height))")
 
-            queryRunner.update(ctx.conn, "CREATE TABLE transactions (" +
+            queryRunner.update(connection, "CREATE TABLE transactions (" +
                     "    tx_iid BIGSERIAL PRIMARY KEY, " +
                     "    chain_id bigint NOT NULL," +
                     "    tx_rid bytea NOT NULL," +
@@ -258,16 +258,16 @@ class SQLDatabaseAccess : DatabaseAccess {
                     "    UNIQUE (chain_id, tx_rid))")
 
             // Configurations
-            queryRunner.update(ctx.conn, "CREATE TABLE configurations (" +
+            queryRunner.update(connection, "CREATE TABLE configurations (" +
                     "configuration_iid BIGSERIAL PRIMARY KEY" +
                     ", chain_id bigint NOT NULL" +
                     ", height BIGINT NOT NULL" +
                     ", configuration_data bytea NOT NULL" +
                     ")")
 
-            queryRunner.update(ctx.conn, """CREATE INDEX transactions_block_iid_idx ON transactions(block_iid)""")
-            queryRunner.update(ctx.conn, """CREATE INDEX blocks_chain_id_timestamp ON blocks(chain_id, timestamp)""")
-            queryRunner.update(ctx.conn, """CREATE INDEX configurations_chain_id_to_height ON configurations(chain_id, height)""")
+            queryRunner.update(connection, """CREATE INDEX transactions_block_iid_idx ON transactions(block_iid)""")
+            queryRunner.update(connection, """CREATE INDEX blocks_chain_id_timestamp ON blocks(chain_id, timestamp)""")
+            queryRunner.update(connection, """CREATE INDEX configurations_chain_id_to_height ON configurations(chain_id, height)""")
 
         }
     }
@@ -292,15 +292,13 @@ class SQLDatabaseAccess : DatabaseAccess {
             throw UserMistake("The blockchainRID in db for chainId ${ctx.chainID} " +
                     "is ${rid.toHex()}, but the expected rid is ${blockchainRID.toHex()}")
         }
-
-
     }
 
-    override fun findConfiguration(context: EContext, height: Long): Long {
+    override fun findConfiguration(context: EContext, height: Long): ByteArray? {
         return queryRunner.query(context.conn,
                 "SELECT configuration_data FROM configurations WHERE chain_id = ? AND height <= ? " +
-                        "ORDER BY block_height DESC LIMIT 1",
-                longRes, context.chainID, height)
+                        "ORDER BY height DESC LIMIT 1",
+                nullableByteArrayRes, context.chainID, height)
     }
 
     override fun getConfigurationData(context: EContext, height: Long): ByteArray {

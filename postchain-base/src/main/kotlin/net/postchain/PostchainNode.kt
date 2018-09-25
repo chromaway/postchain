@@ -2,9 +2,10 @@
 
 package net.postchain
 
-import net.postchain.base.*
+import net.postchain.base.BaseApiInfrastructure
+import net.postchain.base.BaseBlockchainInfrastructure
+import net.postchain.base.BaseBlockchainProcessManager
 import net.postchain.core.BlockchainInfrastructure
-import net.postchain.core.EContext
 import net.postchain.ebft.EBFTSynchronizationInfrastructure
 import org.apache.commons.configuration2.Configuration
 
@@ -30,11 +31,5 @@ open class PostchainNode(nodeConfig: Configuration) {
 
     fun stopAllBlockchain() {
         processManager.shutdown()
-    }
-
-    fun verifyConfiguration(ctx: EContext, nodeConfig: Configuration, blockchainRID: ByteArray) {
-        val confData = BaseConfigurationDataStore.getConfigurationData(ctx, 0)
-        val configuration = blockchainInfrastructure.makeBlockchainConfiguration(
-                confData, BaseBlockchainContext(blockchainRID, ctx.nodeID, ctx.chainID, null))
     }
 }

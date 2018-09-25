@@ -9,8 +9,8 @@ import net.postchain.core.ProgrammerMistake
 import javax.sql.DataSource
 
 class BaseStorage(
-        private val writeDataSource: DataSource,
         private val readDataSource: DataSource,
+        private val writeDataSource: DataSource,
         private val nodeId: Int
 ) : Storage {
 

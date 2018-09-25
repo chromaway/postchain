@@ -1,11 +1,11 @@
 package net.postchain.test
 
 import net.postchain.PostchainNode
+import net.postchain.StorageBuilder
 import net.postchain.api.rest.controller.Model
 import net.postchain.base.*
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.base.data.SQLDatabaseAccess
-import net.postchain.baseStorage
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.BlockchainConfigurationFactory
@@ -21,15 +21,16 @@ class SingleChainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig)
     private val blockchainRID: ByteArray
 
     init {
-        val storage = baseStorage(nodeConfig, NODE_ID_TODO, true)
+        val storage = StorageBuilder.buildStorage(nodeConfig, NODE_ID_TODO, true)
         chainId = nodeConfig.getLong("activechainids")
         blockchainRID = nodeConfig
                 .getString("blockchain.$chainId.blockchainrid")
                 .hexStringToByteArray()
 
+        // TODO: [et]: Is it necessary here after StorageBuilder.buildStorage() redesign?
         withWriteConnection(storage, chainId) { eContext ->
             with(SQLDatabaseAccess()) {
-                initialize(eContext, expectedDbVersion = 1)
+                initialize(eContext.conn, expectedDbVersion = 1)
                 checkBlockchainRID(eContext, blockchainRID)
             }
             true

@@ -9,6 +9,7 @@ class Cli {
     private val commands: Map<String, Command> = listOf(
             CommandKeygen()
 
+            , CommandCheckBlockchain()
             , CommandAddBlockchain()
             , CommandAddConfiguration()
 
