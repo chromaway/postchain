@@ -16,7 +16,11 @@ fun main(args: Array<String>) {
             println(e.message)
             usage(e.jCommander.parsedCommand)
         } catch (e: Exception) {
-            println(e.message)
+            if (e.message != null) {
+                println(e.message)
+            } else {
+                e.printStackTrace()
+            }
         }
     }
 }
