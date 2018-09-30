@@ -12,6 +12,7 @@
         <module>postchain-base</module>
         <module>postchain-devtools</module>
         <module>postchain-cw-modules</module>
+        <module>postchain-docker</module>
     </modules>
     <packaging>pom</packaging>
 
