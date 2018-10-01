@@ -51,10 +51,10 @@ interface BlockBuilder {
     fun begin()
     fun appendTransaction(tx: Transaction)
     fun finalizeBlock()
-    fun finalizeAndValidate(bh: BlockHeader)
+    fun finalizeAndValidate(blockHeader: BlockHeader)
     fun getBlockData(): BlockData
     fun getBlockWitnessBuilder(): BlockWitnessBuilder?
-    fun commit(w: BlockWitness?)
+    fun commit(blockWitness: BlockWitness?)
 }
 
 /**

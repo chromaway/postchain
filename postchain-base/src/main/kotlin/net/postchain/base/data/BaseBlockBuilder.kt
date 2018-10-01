@@ -2,21 +2,9 @@
 
 package net.postchain.base.data
 
-import net.postchain.base.BaseBlockHeader
-import net.postchain.base.BaseBlockWitnessBuilder
-import net.postchain.base.CryptoSystem
-import net.postchain.base.Signer
-import net.postchain.base.computeMerkleRootHash
-import net.postchain.core.AbstractBlockBuilder
-import net.postchain.core.BlockHeader
-import net.postchain.core.BlockStore
-import net.postchain.core.BlockWitness
-import net.postchain.core.BlockWitnessBuilder
-import net.postchain.core.EContext
-import net.postchain.core.MultiSigBlockWitness
-import net.postchain.core.ProgrammerMistake
-import net.postchain.core.TransactionFactory
-import java.util.Arrays
+import net.postchain.base.*
+import net.postchain.core.*
+import java.util.*
 
 /**
  * BaseBlockBuilder is used to aid in building blocks, including construction and validation of block header and witness
@@ -30,7 +18,7 @@ import java.util.Arrays
  */
 open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, store: BlockStore,
                             txFactory: TransactionFactory, val subjects: Array<ByteArray>, val blockSigner: Signer)
-    : AbstractBlockBuilder(eContext, store, txFactory ) {
+    : AbstractBlockBuilder(eContext, store, txFactory) {
 
 
     /**
@@ -50,12 +38,12 @@ open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, 
      */
     override fun makeBlockHeader(): BlockHeader {
         var timestamp = System.currentTimeMillis()
-        if (timestamp <= iBlockData.timestamp) {
+        if (timestamp <= initialBlockData.timestamp) {
             // if our time is behind the timestamp of most recent block, do a minimal increment
-            timestamp = iBlockData.timestamp + 1
+            timestamp = initialBlockData.timestamp + 1
         }
 
-        return BaseBlockHeader.make(cryptoSystem, iBlockData, computeRootHash(), timestamp)
+        return BaseBlockHeader.make(cryptoSystem, initialBlockData, computeRootHash(), timestamp)
     }
 
     /**
@@ -65,16 +53,26 @@ open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, 
      * - check for correct root hash
      * - check that timestamp occurs after previous blocks timestamp
      *
-     * @param bh The block header to validate
+     * @param blockHeader The block header to validate
      */
-    override fun validateBlockHeader(bh: BlockHeader): Boolean {
-        val bbh = bh as BaseBlockHeader
-        if (!Arrays.equals(bbh.prevBlockRID, iBlockData.prevBlockRID)) return false
-        if (bbh.blockHeaderRec.height != iBlockData.height) return false
-        if (!Arrays.equals(bbh.blockHeaderRec.rootHash, computeRootHash())) return false
-        if (bctx.timestamp >= bbh.timestamp) return false
+    override fun validateBlockHeader(blockHeader: BlockHeader): ValidationResult {
+        val header = blockHeader as BaseBlockHeader
 
-        return true
+        return when {
+            !Arrays.equals(header.prevBlockRID, initialBlockData.prevBlockRID) ->
+                ValidationResult(false, "header.prevBlockRID != initialBlockData.prevBlockRID")
+
+            header.blockHeaderRec.height != initialBlockData.height ->
+                ValidationResult(false, "header.blockHeaderRec.height != initialBlockData.height")
+
+            !Arrays.equals(header.blockHeaderRec.rootHash, computeRootHash()) ->
+                ValidationResult(false, "header.blockHeaderRec.rootHash, computeRootHash()")
+
+            bctx.timestamp >= header.timestamp ->
+                ValidationResult(false, "bctx.timestamp >= header.timestamp")
+
+            else -> ValidationResult(true)
+        }
     }
 
     /**
@@ -83,15 +81,15 @@ open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, 
      *  - The signatures are valid with respect to the block being signed
      *  - The number of signatures exceeds the threshold necessary to deem the block itself valid
      *
-     *  @param w The witness to be validated
+     *  @param blockWitness The witness to be validated
      *  @throws ProgrammerMistake Invalid BlockWitness implementation
      */
-    override fun validateWitness(w: BlockWitness): Boolean {
-        if (!(w is MultiSigBlockWitness)) {
+    override fun validateWitness(blockWitness: BlockWitness): Boolean {
+        if (!(blockWitness is MultiSigBlockWitness)) {
             throw ProgrammerMistake("Invalid BlockWitness impelmentation.")
         }
         val witnessBuilder = BaseBlockWitnessBuilder(cryptoSystem, _blockData!!.header, subjects, getRequiredSigCount())
-        for (signature in w.getSignatures()) {
+        for (signature in blockWitness.getSignatures()) {
             witnessBuilder.applySignature(signature)
         }
         return witnessBuilder.isComplete()

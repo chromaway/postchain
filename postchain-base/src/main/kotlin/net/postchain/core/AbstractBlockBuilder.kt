@@ -15,9 +15,9 @@ import net.postchain.common.toHex
  * @property rawTransactions list of encoded transactions
  * @property transactions list of decoded transactions
  * @property _blockData complete set of data for the block including header and [rawTransactions]
- * @property iBlockData
+ * @property initialBlockData
  */
-abstract class AbstractBlockBuilder (
+abstract class AbstractBlockBuilder(
         val ectx: EContext,
         val store: BlockStore,
         val txFactory: TransactionFactory
@@ -25,23 +25,24 @@ abstract class AbstractBlockBuilder (
 
     // functions which need to be implemented in a concrete BlockBuilder:
     abstract fun makeBlockHeader(): BlockHeader
-    abstract fun validateBlockHeader(bh: BlockHeader): Boolean
-    abstract fun validateWitness(w: BlockWitness): Boolean
+
+    abstract fun validateBlockHeader(blockHeader: BlockHeader): ValidationResult
+    abstract fun validateWitness(blockWitness: BlockWitness): Boolean
     // fun getBlockWitnessBuilder(): BlockWitnessBuilder?;
 
     var finalized: Boolean = false
     val rawTransactions = mutableListOf<ByteArray>()
     val transactions = mutableListOf<Transaction>()
     lateinit var bctx: BlockEContext
-    lateinit var iBlockData: InitialBlockData
+    lateinit var initialBlockData: InitialBlockData
     var _blockData: BlockData? = null
 
     /**
      * Retrieve initial block data and set block context
      */
     override fun begin() {
-        iBlockData = store.beginBlock(ectx)
-        bctx = BlockEContext(ectx.conn, ectx.chainID, ectx.nodeID, iBlockData.blockIID, iBlockData.timestamp)
+        initialBlockData = store.beginBlock(ectx)
+        bctx = BlockEContext(ectx.conn, ectx.chainID, ectx.nodeID, initialBlockData.blockIID, initialBlockData.timestamp)
     }
 
     /**
@@ -94,16 +95,18 @@ abstract class AbstractBlockBuilder (
     /**
      * Apart from finalizing the block, validate the header
      *
-     * @param bh Block header to finalize and validate
+     * @param blockHeader Block header to finalize and validate
      * @throws UserMistake Happens if validation of the block header fails
      */
-    override fun finalizeAndValidate(bh: BlockHeader) {
-        if (validateBlockHeader(bh)) {
-            store.finalizeBlock(bctx, bh)
-            _blockData = BlockData(bh, rawTransactions)
-            finalized = true
-        } else {
-            throw UserMistake("Invalid block header")
+    override fun finalizeAndValidate(blockHeader: BlockHeader) {
+        validateBlockHeader(blockHeader).run {
+            if (result) {
+                store.finalizeBlock(bctx, blockHeader)
+                _blockData = BlockData(blockHeader, rawTransactions)
+                finalized = true
+            } else {
+                throw UserMistake("Invalid block header: $message")
+            }
         }
     }
 
@@ -112,20 +115,20 @@ abstract class AbstractBlockBuilder (
      *
      * @throws ProgrammerMistake When block is not finalized
      */
-    override  fun getBlockData(): BlockData {
+    override fun getBlockData(): BlockData {
         return _blockData ?: throw ProgrammerMistake("Block is not finalized yet")
     }
 
     /**
      * By commiting to the block we update the database to include the witness for that block
      *
-     * @param w The witness for the block
+     * @param blockWitness The witness for the block
      * @throws ProgrammerMistake If the witness is invalid
      */
-    override fun commit(w: BlockWitness?) {
-        if (w != null && !validateWitness(w)) {
+    override fun commit(blockWitness: BlockWitness?) {
+        if (blockWitness != null && !validateWitness(blockWitness)) {
             throw ProgrammerMistake("Invalid witness")
         }
-        store.commitBlock(bctx, w)
+        store.commitBlock(bctx, blockWitness)
     }
 }

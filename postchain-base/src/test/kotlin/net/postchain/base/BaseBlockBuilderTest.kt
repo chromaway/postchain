@@ -32,8 +32,8 @@ class BaseBlockBuilderTest {
         val blockData = InitialBlockData(2, 2, dummy, 1, timestamp)
         val header = BaseBlockHeader.make(cryptoSystem, blockData, dummy, timestamp)
         bbb.bctx = bctx
-        bbb.iBlockData = blockData
-        assert(!bbb.validateBlockHeader(header))
+        bbb.initialBlockData = blockData
+        assert(!bbb.validateBlockHeader(header).result)
     }
 
     @Test
@@ -42,8 +42,8 @@ class BaseBlockBuilderTest {
         val blockData = InitialBlockData(2, 2, dummy, 1, timestamp)
         val header = BaseBlockHeader.make(cryptoSystem, blockData, dummy, timestamp)
         bbb.bctx = bctx
-        bbb.iBlockData = blockData
-        assert(!bbb.validateBlockHeader(header))
+        bbb.initialBlockData = blockData
+        assert(!bbb.validateBlockHeader(header).result)
     }
 
     @Test
@@ -52,8 +52,8 @@ class BaseBlockBuilderTest {
         val blockData = InitialBlockData(2, 2, dummy, 1, timestamp)
         val header = BaseBlockHeader.make(cryptoSystem, blockData, dummy, timestamp)
         bbb.bctx = bctx
-        bbb.iBlockData = blockData
-        assert(bbb.validateBlockHeader(header))
+        bbb.initialBlockData = blockData
+        assert(bbb.validateBlockHeader(header).result)
     }
 }
 /*

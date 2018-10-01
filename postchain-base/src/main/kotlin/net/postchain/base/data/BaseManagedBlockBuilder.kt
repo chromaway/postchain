@@ -86,8 +86,8 @@ class BaseManagedBlockBuilder(
         runOp { bb.finalizeBlock() }
     }
 
-    override fun finalizeAndValidate(bh: BlockHeader) {
-        runOp { bb.finalizeAndValidate(bh) }
+    override fun finalizeAndValidate(blockHeader: BlockHeader) {
+        runOp { bb.finalizeAndValidate(blockHeader) }
     }
 
     override fun getBlockData(): BlockData {
@@ -99,8 +99,8 @@ class BaseManagedBlockBuilder(
         return bb.getBlockWitnessBuilder()
     }
 
-    override fun commit(w: BlockWitness?) {
-        runOp { bb.commit(w) }
+    override fun commit(blockWitness: BlockWitness?) {
+        runOp { bb.commit(blockWitness) }
         closed = true
         s.closeWriteConnection(ctxt, true)
         onCommit(bb)

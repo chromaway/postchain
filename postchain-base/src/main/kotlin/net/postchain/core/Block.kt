@@ -10,6 +10,10 @@ open class BlockData(
         val header: BlockHeader,
         val transactions: List<ByteArray>)
 
+data class ValidationResult(
+        val result: Boolean,
+        val message: String? = null)
+
 /**
  * Witness is a generalization over signatures.
  * Block-level witness is something which proves that block is valid and properly authorized.
@@ -26,4 +30,9 @@ interface MultiSigBlockWitness : BlockWitness {
     fun getSignatures(): Array<Signature>
 }
 
-class InitialBlockData(val blockIID: Long, val chainID: Long, val prevBlockRID: ByteArray, val height: Long, val timestamp: Long)
+class InitialBlockData(
+        val blockIID: Long,
+        val chainID: Long,
+        val prevBlockRID: ByteArray,
+        val height: Long,
+        val timestamp: Long)
