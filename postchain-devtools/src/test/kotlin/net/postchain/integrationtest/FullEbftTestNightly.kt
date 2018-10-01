@@ -4,6 +4,7 @@ package net.postchain.integrationtest
 
 import junitparams.JUnitParamsRunner
 import junitparams.Parameters
+import junitparams.naming.TestCaseName
 import mu.KLogging
 import net.postchain.test.EbftIntegrationTest
 import net.postchain.test.OnDemandBlockBuildingStrategy
@@ -28,17 +29,20 @@ class FullEbftTestNightly : EbftIntegrationTest() {
 
     @Test
     @Parameters(
-            "3, 1, 0", "3, 2, 0", "3, 10, 0"
-            , "3, 1, 10", "3, 2, 10", "3, 10, 10"
-            , "4, 1, 0", "4, 2, 0", "4, 10, 0"
-            , "4, 1, 10", "4, 2, 10", "4, 10, 10"
-            , "8, 1, 0", "8, 2, 0", "8, 10, 0"
-            , "8, 1, 10", "8, 2, 10", "8, 10, 10"
+            "3, 1, 0", "3, 2, 0", "3, 10, 0", "3, 1, 10", "3, 2, 10", "3, 10, 10"
+            , "4, 1, 0", "4, 2, 0", "4, 10, 0", "4, 1, 10", "4, 2, 10", "4, 10, 10"
+            , "8, 1, 0", "8, 2, 0", "8, 10, 0", "8, 1, 10", "8, 2, 10", "8, 10, 10"
 //            , "25, 100, 0"
     )
-    fun runXNodesWithYTxPerBlock(nodeCount: Int, blockCount: Int, txPerBlock: Int) {
+    @TestCaseName("[{index}] nodesCount: {0}, blockCount: {1}, txPerBlock: {2}")
+    fun runXNodesWithYTxPerBlock(nodesCount: Int, blockCount: Int, txPerBlock: Int) {
+        logger.info {
+            "runXNodesWithYTxPerBlock(): " +
+                    "nodesCount: $nodesCount, blockCount: $blockCount, txPerBlock: $txPerBlock"
+        }
+
         configOverrides.setProperty("blockchain.1.blockstrategy", OnDemandBlockBuildingStrategy::class.qualifiedName)
-        createEbftNodes(nodeCount)
+        createEbftNodes(nodesCount)
         var txId = 0
         ebftNodes[0].getBlockchainInstance().statusManager
         for (i in 0 until blockCount) {
