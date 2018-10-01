@@ -20,7 +20,7 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
                                 val storage: Storage,
                                 private val chainID: Long,
                                 private val tq: TransactionQueue,
-                                private val useParallelDecoding: Boolean = true
+                                private val useParallelDecoding: Boolean = false
 ) : BlockchainEngine {
 
     companion object : KLogging()
