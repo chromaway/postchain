@@ -1,43 +1,41 @@
+<!-- Copyright (c) 2017 ChromaWay Inc. See README for license information. --> 
+
 ## How to dockerize Postchain ##
 
-1. Build `chromaway/postgres` image
+1. Build `chromaway/postgres` image (see `./postchain-docker/src/main/postgres`)
 
-    1. Run `postgres` container with postchain's initdb script:  
-```docker run --name postgres -e POSTGRES_PASSWORD=postchain -p 5432:5432 -d postgres```
+    1. Build a new image based on `postgres` one with postchain's initdb script:  
+```docker build . -t chromaway/postgres:2.3.5-beta```
 
-    2. Create a new image from `postgres` container:  
-```docker commit -m="Postchain postgres image" postgres chromaway/postgres:2.3.5-beta```
-
-    3. Push `chromaway/postgres` repository to DockerHub registry:  
+    1. Push `chromaway/postgres` image to DockerHub registry:  
 ```docker push chromaway/postgres:2.3.5-beta```
 
 
-2. Build `chromaway/postchain` image
+1. Build `chromaway/postchain` image (see `./postchain-docker/src/main/postchain`)
 
-    1. Build `postchain` image:  
-```docker build . -t postchain:2.3.5-beta```
+    1. Build a new `postchain` image:  
+```docker build . -t chromaway/postchain:2.3.5-beta```
 
-    2. Create a new image `chromaway/postchain` (a copy of `postchain` one):  
-```docker commit -m="Postchain image" postchain chromaway/postchain:2.3.5-beta```
-
-    3. Push `chromaway/postchain` repository to DockerHub registry:  
+    1. Push `chromaway/postchain` image to DockerHub registry:  
 ```docker push chromaway/postchain:2.3.5-beta```
 
 
-3. Orchestrate with `docker-compose`
+1. Orchestrate with `docker-compose` (see `./postchain-docker/src/main/docker-compose`)
+
+    1. See env variables in `docker-compose.yml` and configs at `./postchain-docker/src/main/docker-compose/postchain_config`
 
     1. Builds, (re)creates, starts, and attaches to containers:  
 ```docker-compose up```
 
-    2. Stop services:  
-```Ctrl+C```
-```docker-compose stop```
+    1. Stop services:  
+```Ctrl+C``` or ```docker-compose stop```
 
-    3. Start services:  
+    1. Start services:  
 ```docker-compose start```
 
-    4. Stop and remove containers, networks, volumes, and images created by 'up':  
+    1. Stop and remove containers, networks, volumes, and images created by 'up':  
 ```docker-compose down```
 
-    5. Displays log output from services:  
+    1. Displays log output from services:  
 ```docker-compose logs -f```
+

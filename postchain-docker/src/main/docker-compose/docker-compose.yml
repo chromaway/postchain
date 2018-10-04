@@ -1,3 +1,5 @@
+# Copyright (c) 2017 ChromaWay Inc. See README for license information.
+
 version: '3.1'
 
 services:
@@ -15,9 +17,16 @@ services:
   postchain:
     image: chromaway/postchain:2.3.5-beta
     restart: always
+    ports:
+      - 7740:7740
+    volumes:
+      - ./postchain_config:/external_config
+    environment:
+      - ENV_NODE_CONFIG=./external_config/config.0.properties
+      - ENV_BLOCKCHAIN_CONFIG=./external_config/configuration_78967baa.xml
     depends_on:
       - postgres
 
 volumes:
   pgdata:
-
+  postchain_config:

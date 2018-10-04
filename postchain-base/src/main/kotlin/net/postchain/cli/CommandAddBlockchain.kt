@@ -32,7 +32,7 @@ class CommandAddBlockchain : Command {
     private var chainId = 0L
 
     @Parameter(
-            names = ["-rid", "--blockchainRID"],
+            names = ["-brid", "--blockchain-rid"],
             description = "Blockchain global ID",
             required = true)
     private var blockchainRID: String = ""

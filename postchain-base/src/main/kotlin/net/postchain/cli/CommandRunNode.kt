@@ -21,7 +21,7 @@ class CommandRunNode : Command {
     private var nodeIndex = 0
 
     @Parameter(
-            names = ["-c", "--chain-ids"],
+            names = ["-cid", "--chain-ids"],
             required = true)
     private var chainIDs = listOf<Long>()
 
