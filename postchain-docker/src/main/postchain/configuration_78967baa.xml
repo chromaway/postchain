@@ -30,6 +30,12 @@
             <entry key="modules">
                 <array>
                     <string>net.postchain.configurations.GTXTestModule</string>
+                    <string>net.postchain.gtx.SQLGTXModuleFactory</string>
+                </array>
+            </entry>
+            <entry key="sqlmodules">
+                <array>
+                    <string>sqlmodule1.sql</string>
                 </array>
             </entry>
         </dict>

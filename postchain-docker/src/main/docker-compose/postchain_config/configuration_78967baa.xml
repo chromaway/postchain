@@ -30,6 +30,13 @@
             <entry key="modules">
                 <array>
                     <string>net.postchain.configurations.GTXTestModule</string>
+                    <string>net.postchain.gtx.SQLGTXModuleFactory</string>
+                </array>
+            </entry>
+            <entry key="sqlmodules">
+                <!-- See 'docker-compose.yml' where './external_config' is defined -->
+                <array>
+                    <string>./external_config/sqlmodule1.sql</string>
                 </array>
             </entry>
         </dict>

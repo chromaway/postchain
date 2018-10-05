@@ -53,7 +53,7 @@ class CommandAddBlockchain : Command {
                 File(blockchainConfigFile).readText())
         val encodedGtxValue = encodeGTXValue(gtxValue)
 
-        runDBCommandBody(nodeConfigFile, chainId) { ctx, nodeConfig ->
+        runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
             BaseBlockStore().initialize(ctx, blockchainRID.hexStringToByteArray())
             BaseConfigurationDataStore.addConfigurationData(ctx, 0, encodedGtxValue)
         }
