@@ -39,7 +39,7 @@ interface DatabaseAccess {
     // Configurations
 
     fun findConfiguration(context: EContext, height: Long): ByteArray?
-    fun getConfigurationData(context: EContext, height: Long): ByteArray
+    fun getConfigurationData(context: EContext, height: Long): ByteArray?
     fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long
 }
 
@@ -259,10 +259,10 @@ class SQLDatabaseAccess : DatabaseAccess {
 
             // Configurations
             queryRunner.update(connection, "CREATE TABLE configurations (" +
-                    "configuration_iid BIGSERIAL PRIMARY KEY" +
-                    ", chain_id bigint NOT NULL" +
+                    " chain_id bigint NOT NULL" +
                     ", height BIGINT NOT NULL" +
                     ", configuration_data bytea NOT NULL" +
+                    ", PRIMARY KEY (chain_id, height)" +
                     ")")
 
             queryRunner.update(connection, """CREATE INDEX transactions_block_iid_idx ON transactions(block_iid)""")
@@ -301,15 +301,16 @@ class SQLDatabaseAccess : DatabaseAccess {
                 nullableByteArrayRes, context.chainID, height)
     }
 
-    override fun getConfigurationData(context: EContext, height: Long): ByteArray {
+    override fun getConfigurationData(context: EContext, height: Long): ByteArray? {
         return queryRunner.query(context.conn,
                 "SELECT configuration_data FROM configurations WHERE chain_id = ? AND height = ?",
-                byteArrayRes, context.chainID, height)
+                nullableByteArrayRes, context.chainID, height)
     }
 
     override fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long {
         return queryRunner.insert(context.conn,
-                "INSERT INTO configurations (chain_id, height, configuration_data) VALUES (?, ?, ?)",
-                longRes, context.chainID, height, data)
+                "INSERT INTO configurations (chain_id, height, configuration_data) VALUES (?, ?, ?) " +
+                        "ON CONFLICT (chain_id, height) DO UPDATE SET configuration_data = ?",
+                longRes, context.chainID, height, data, data)
     }
 }

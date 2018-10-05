@@ -42,6 +42,12 @@ class CommandAddConfiguration : Command {
             required = true)
     private var blockchainConfigFile = ""
 
+    @Parameter(
+            names = ["-f", "--force"],
+            description = "Force the addition of blockchain configuration " +
+                    "which already exists of specified chain-id at height")
+    private var force = false
+
     override fun key(): String = "add-configuration"
 
     override fun execute() {
@@ -54,7 +60,12 @@ class CommandAddConfiguration : Command {
 
         var result = false
         runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
-            result = BaseConfigurationDataStore.addConfigurationData(ctx, height, encodedGtxValue) > 0
+            if (force || BaseConfigurationDataStore.getConfigurationData(ctx, height) == null) {
+                result = BaseConfigurationDataStore.addConfigurationData(ctx, height, encodedGtxValue) > 0
+            } else {
+                println("Blockchain configuration of chainId $chainId at height $height " +
+                        "already exists. Use -f flag to force addition.")
+            }
         }
         println(reportMessage(result))
     }

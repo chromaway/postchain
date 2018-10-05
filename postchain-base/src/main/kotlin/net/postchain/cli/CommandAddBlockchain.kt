@@ -4,6 +4,7 @@ import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
 import net.postchain.base.BaseConfigurationDataStore
 import net.postchain.base.data.BaseBlockStore
+import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.common.hexStringToByteArray
 import net.postchain.gtx.encodeGTXValue
 import net.postchain.gtx.gtxml.GTXMLValueParser
@@ -43,6 +44,11 @@ class CommandAddBlockchain : Command {
             required = true)
     private var blockchainConfigFile = ""
 
+    @Parameter(
+            names = ["-f", "--force"],
+            description = "Force the addition of already existed blockchain-rid (by chain-id)")
+    private var force = false
+
     override fun key(): String = "add-blockchain"
 
     override fun execute() {
@@ -54,8 +60,12 @@ class CommandAddBlockchain : Command {
         val encodedGtxValue = encodeGTXValue(gtxValue)
 
         runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
-            BaseBlockStore().initialize(ctx, blockchainRID.hexStringToByteArray())
-            BaseConfigurationDataStore.addConfigurationData(ctx, 0, encodedGtxValue)
+            if (force || SQLDatabaseAccess().getBlockchainRID(ctx) == null) {
+                BaseBlockStore().initialize(ctx, blockchainRID.hexStringToByteArray())
+                BaseConfigurationDataStore.addConfigurationData(ctx, 0, encodedGtxValue)
+            } else {
+                println("Blockchain with chainId $chainId already exists. Use -f flag to force addition.")
+            }
         }
     }
 }

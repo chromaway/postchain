@@ -13,7 +13,7 @@ object BaseConfigurationDataStore : ConfigurationDataStore {
         return db.findConfiguration(context, height)
     }
 
-    override fun getConfigurationData(context: EContext, height: Long): ByteArray {
+    override fun getConfigurationData(context: EContext, height: Long): ByteArray? {
         return db.getConfigurationData(context, height)
     }
 

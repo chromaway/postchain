@@ -19,13 +19,20 @@ class BaseBlockchainProcessManager(
 
         withReadConnection(storage, chainId) { eContext ->
             val blockchainRID = dbAccess.getBlockchainRID(eContext)!! // TODO: [et]: Fix Kotlin NPE
-            val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(
-                    BaseConfigurationDataStore.getConfigurationData(eContext, 0),
-                    BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null))
 
-            val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig)
-            blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(engine) {
-                startBlockchain(chainId)
+            // TODO: [et]: Starting with 0-height config
+            val configurationData = BaseConfigurationDataStore.getConfigurationData(eContext, 0)
+            if (configurationData != null) {
+                val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(
+                        configurationData,
+                        BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null))
+
+                val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig)
+                blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(engine) {
+                    startBlockchain(chainId)
+                }
+            } else {
+                println("Can't start blockchain due to configuration is absent")
             }
 
             Unit
