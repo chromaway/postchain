@@ -1,7 +1,7 @@
 #!/bin/sh
 # Copyright (c) 2017 ChromaWay Inc. See README for license information.
 
-POSTCHAIN=/opt/chromaway/postchain-2.3.5-SNAPSHOT.jar
+POSTCHAIN=/opt/chromaway/postchain-2.4.0-SNAPSHOT.jar
 NODE_CONFIG=${ENV_NODE_CONFIG:-config/config.0.properties}
 BLOCKCHAIN_CONFIG=${ENV_BLOCKCHAIN_CONFIG:-./opt/chromaway/configuration_78967baa.xml}
 BLOCKCHAIN_RID=${ENV_BLOCKCHAIN_RID:-78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3}
