@@ -53,8 +53,7 @@ class CommandAddConfiguration : Command {
         val encodedGtxValue = encodeGTXValue(gtxValue)
 
         var result = false
-        runDBCommandBody(nodeConfigFile, chainId) {
-            ctx, _ ->
+        runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
             result = BaseConfigurationDataStore.addConfigurationData(ctx, height, encodedGtxValue) > 0
         }
         println(reportMessage(result))
