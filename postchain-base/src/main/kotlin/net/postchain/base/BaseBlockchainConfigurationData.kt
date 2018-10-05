@@ -41,7 +41,9 @@ class BaseBlockchainConfigurationData(
     }
 
     companion object {
-        fun readFromCommonsConfiguration(config: Configuration, chainId: Long, nodeID: Int): BaseBlockchainConfigurationData {
+        fun readFromCommonsConfiguration(config: Configuration, chainId: Long, blockchainRID: ByteArray, nodeID: Int):
+                BaseBlockchainConfigurationData {
+
             val gtxConfig = convertConfigToGTXValue(config.subset("blockchain.$chainId"))
             val cryptoSystem = SECP256K1CryptoSystem()
             val privKey = gtxConfig["blocksigningprivkey"]!!.asByteArray()
@@ -50,12 +52,7 @@ class BaseBlockchainConfigurationData(
 
             return BaseBlockchainConfigurationData(
                     gtxConfig,
-                    BaseBlockchainContext(
-                            gtxConfig["blockchainRID"]!!.asByteArray(),
-                            nodeID,
-                            chainId,
-                            pubKey
-                    ),
+                    BaseBlockchainContext(blockchainRID, nodeID, chainId, pubKey),
                     signer)
         }
 
@@ -102,7 +99,6 @@ class BaseBlockchainConfigurationData(
 
             val properties = mutableListOf(
                     "blockstrategy" to blockStrategy(config),
-                    "blockchainRID" to gtx(config.getString("blockchainrid").hexStringToByteArray()),
                     "configurationfactory" to gtx(config.getString("configurationfactory")),
                     "signers" to gtx(config.getStringArray("signers").map { gtx(it.hexStringToByteArray()) }),
                     "blocksigningprivkey" to gtx(config.getString("blocksigningprivkey").hexStringToByteArray())

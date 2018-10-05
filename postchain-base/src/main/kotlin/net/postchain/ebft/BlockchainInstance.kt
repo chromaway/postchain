@@ -77,10 +77,10 @@ interface BlockchainInstanceModel : BlockchainProcess {
 
 class EBFTSynchronizationInfrastructure(val config: Configuration) : SynchronizationInfrastructure {
 
-    val connManagers = mutableListOf<PeerConnectionManager<*>>()
+    private val connManagers = mutableListOf<PeerConnectionManager<*>>()
 
     override fun shutdown() {
-        connManagers.forEach({ it.shutdown() })
+        connManagers.forEach { it.shutdown() }
     }
 
     override fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
@@ -108,8 +108,6 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
 
     private fun privKey(): ByteArray =
             config.getString("messaging.privkey").hexStringToByteArray()
-
-
 }
 
 /**

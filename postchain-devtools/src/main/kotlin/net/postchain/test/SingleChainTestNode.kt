@@ -24,7 +24,7 @@ class SingleChainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig)
         val storage = StorageBuilder.buildStorage(nodeConfig, NODE_ID_TODO, true)
         chainId = nodeConfig.getLong("activechainids")
         blockchainRID = nodeConfig
-                .getString("blockchain.$chainId.blockchainrid")
+                .getString("test.blockchain.$chainId.blockchainrid")
                 .hexStringToByteArray()
 
         // TODO: [et]: Is it necessary here after StorageBuilder.buildStorage() redesign?
@@ -37,7 +37,7 @@ class SingleChainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig)
         }
 
         val configData = BaseBlockchainConfigurationData.readFromCommonsConfiguration(
-                nodeConfig, chainId, NODE_ID_TODO)
+                nodeConfig, chainId, blockchainRID, NODE_ID_TODO)
         val factoryClass = Class.forName(configData.data["configurationfactory"]!!.asString())
         val factory = (factoryClass.newInstance() as BlockchainConfigurationFactory)
 

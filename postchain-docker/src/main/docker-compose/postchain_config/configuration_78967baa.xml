@@ -8,9 +8,6 @@
             </entry>
         </dict>
     </entry>
-    <entry key="blockchainRID">
-        <bytea>78967BAA4768CBCEF11C508326FFB13A956689FCB6DC3BA17F4B895CBB1577A3</bytea>
-    </entry>
     <entry key="configurationfactory">
         <string>net.postchain.gtx.GTXBlockchainConfigurationFactory</string>
     </entry>
