@@ -9,7 +9,7 @@ import java.util.*
 
 class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long)
     : StatusManager {
-    override val nodeStatuses = Array(nodeCount, { NodeStatus() })
+    override val nodeStatuses = Array(nodeCount) { NodeStatus() }
     override val commitSignatures: Array<Signature?> = arrayOfNulls(nodeCount)
     override val myStatus: NodeStatus
     var intent: BlockIntent = DoNothingIntent

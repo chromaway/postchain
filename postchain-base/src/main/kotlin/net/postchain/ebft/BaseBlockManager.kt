@@ -29,10 +29,10 @@ class BaseBlockManager(
             processing = true
             intent = DoNothingIntent
             val promise = op()
-            promise.success({ res ->
+            promise.success { res ->
                 onSuccess(res)
                 processing = false
-            })
+            }
             promise.fail { err ->
                 processing = false
                 logger.debug("Error in runDBOp()", err)

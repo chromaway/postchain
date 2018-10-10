@@ -136,8 +136,8 @@ class EBFTBlockchainInstanceWorker(
 
     init {
         blockchainConfiguration = engine.getConfiguration()
-        val blockQueries = engine.getBlockQueries()
 
+        val blockQueries = engine.getBlockQueries()
         val bestHeight = blockQueries.getBestHeight().get()
         statusManager = BaseStatusManager(
                 communicationManager.peers.size,

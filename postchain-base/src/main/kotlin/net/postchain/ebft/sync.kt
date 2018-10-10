@@ -260,11 +260,8 @@ class SyncManager(
         val height = statusManager.myStatus.height
         val nodeIndex = selectRandomNode {
             it.height == height && (it.blockRID?.contentEquals(blockRID) ?: false)
-        }
-        if (nodeIndex == null) {
-            return
-        }
-        logger.debug("Fetching unfinished block with RID ${blockRID.toHex()}from node ${nodeIndex} ")
+        } ?: return
+        logger.debug("Fetching unfinished block with RID ${blockRID.toHex()} from node $nodeIndex ")
         commManager.sendPacket(GetUnfinishedBlock(blockRID), setOf(nodeIndex))
     }
 

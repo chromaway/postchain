@@ -11,10 +11,10 @@ open class EbftIntegrationTest : IntegrationTest() {
     protected var ebftNodes: Array<SingleChainTestNode> = arrayOf()
 
     open fun createEbftNodes(count: Int) {
-        ebftNodes = Array(count) { createEBFTNode(count, it) }
+        ebftNodes = Array(count) { createEBFTNode(it, count) }
     }
 
-    private fun createEBFTNode(nodeCount: Int, nodeIndex: Int): SingleChainTestNode {
+    private fun createEBFTNode(nodeIndex: Int, nodeCount: Int): SingleChainTestNode {
         configOverrides.setProperty("messaging.privkey", privKeyHex(nodeIndex))
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
 

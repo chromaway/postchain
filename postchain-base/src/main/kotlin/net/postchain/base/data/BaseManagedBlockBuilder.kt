@@ -51,7 +51,7 @@ class BaseManagedBlockBuilder(
     }
 
     override fun begin() {
-        runOp({ bb.begin() })
+        runOp { bb.begin() }
     }
 
     override fun appendTransaction(tx: Transaction) {
