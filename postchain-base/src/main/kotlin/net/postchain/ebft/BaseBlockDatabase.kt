@@ -30,13 +30,15 @@ class BaseBlockDatabase(private val engine: BlockchainEngine, private val blockQ
     fun stop() {
         logger.debug("BaseBlockDatabase $nodeIndex stopping")
         executor.shutdownNow()
+        executor.awaitTermination(1000, TimeUnit.MILLISECONDS) // TODO: [et]: 1000 ms
         maybeRollback()
     }
 
     private fun <RT> runOp(name: String, op: () -> RT): Promise<RT, Exception> {
-        val deferred = deferred<RT, Exception>()
         logger.trace("BaseBlockDatabase $nodeIndex putting a job")
-        executor.execute({
+
+        val deferred = deferred<RT, Exception>()
+        executor.execute {
             try {
                 logger.debug("Starting job $name")
                 val res = op()
@@ -46,7 +48,8 @@ class BaseBlockDatabase(private val engine: BlockchainEngine, private val blockQ
                 logger.debug("Failed job $name", e)
                 deferred.reject(e)
             }
-        })
+        }
+
         return deferred.promise
     }
 

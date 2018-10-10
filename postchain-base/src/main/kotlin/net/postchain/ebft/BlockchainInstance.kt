@@ -7,7 +7,6 @@ import net.postchain.core.*
 import net.postchain.ebft.message.EbftMessage
 import net.postchain.network.PeerConnectionManager
 import org.apache.commons.configuration2.Configuration
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
 /**
@@ -114,10 +113,9 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
  * A blockchain instance worker
  *
  * @property updateLoop the main thread
- * @property stopMe boolean, which when set, will stop the thread [updateLoop]
  * @property peerInfos information relating to our peers
  */
-class EBFTBlockchainInstanceWorker(
+open class EBFTBlockchainInstanceWorker(
         private val engine: BlockchainEngine,
         nodeIndex: Int,
         communicationManager: CommManager<EbftMessage>,
@@ -125,8 +123,6 @@ class EBFTBlockchainInstanceWorker(
 ) : BlockchainInstanceModel {
 
     private lateinit var updateLoop: Thread
-    private val stopMe = AtomicBoolean(false)
-
     override val blockchainConfiguration: BlockchainConfiguration
     override val blockDatabase: BaseBlockDatabase
     override val blockManager: BlockManager
@@ -176,16 +172,13 @@ class EBFTBlockchainInstanceWorker(
     }
 
     /**
-     * Create and run the [updateLoop] thread until [stopMe] is set.
+     * Create and run the [updateLoop] thread
      *
      * @param syncManager the syncronization manager
      */
-    protected fun startUpdateLoop(syncManager: SyncManager) {
+    private fun startUpdateLoop(syncManager: SyncManager) {
         updateLoop = thread(name = "updateLoop") {
-            while (true) {
-                if (stopMe.get()) {
-                    break
-                }
+            while (!Thread.interrupted()) {
                 syncManager.update()
                 Thread.sleep(50)
             }
@@ -196,14 +189,9 @@ class EBFTBlockchainInstanceWorker(
      * Stop the postchain node
      */
     override fun shutdown() {
-        // Ordering is important.
-        // 1. Stop accepting API calls
-        stopMe.set(true)
-        // 2. Close the engine so that new blocks cant be started
+        updateLoop.interrupt()
+        updateLoop.join()
         engine.shutdown()
-        // 3. Close the listening port and all TCP connections
-        // connManager.stop() // TODO
-        // 4. Stop any in-progress blocks
         blockDatabase.stop()
     }
 }
