@@ -11,7 +11,9 @@ import java.io.StringReader
 import javax.xml.bind.JAXBContext
 import javax.xml.bind.JAXBElement
 
-
+/**
+ * TODO: [et]: Maybe redesign this implementation based on [IntegrationTest] currently
+ */
 class TestLauncher : IntegrationTest() {
 
     companion object : KLogging()
@@ -69,6 +71,9 @@ class TestLauncher : IntegrationTest() {
             entry.value.toTypedArray().contentDeepEquals(
                     getTxRidsAtHeight(node, entry.key))
         }
+
+        // Clearing
+        tearDown()
 
         return res
     }
