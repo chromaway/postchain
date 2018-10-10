@@ -2,6 +2,7 @@ image: maven:3.5-ibmjava-8
 pipelines:
   default:
     - step:
+        max-time: 30
         caches:
           - maven
         script:
