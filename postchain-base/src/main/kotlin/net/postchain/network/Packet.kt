@@ -3,11 +3,11 @@ package net.postchain.network
 import net.postchain.base.PeerID
 import net.postchain.core.ByteArrayKey
 
-interface PacketConverter<PT> : IdentPacketConverter {
-    fun decodePacket(pubKey: ByteArray, bytes: ByteArray): PT
-    fun encodePacket(packet: PT): ByteArray
+interface PacketConverter<PacketType> : IdentPacketConverter {
+    fun decodePacket(pubKey: ByteArray, bytes: ByteArray): PacketType
+    fun encodePacket(packet: PacketType): ByteArray
 }
 
-data class OutboundPacket<PT>(val packet: PT, val recipients: List<ByteArrayKey>)
+data class OutboundPacket<PacketType>(val packet: PacketType, val recipients: List<ByteArrayKey>)
 
 data class IdentPacketInfo(val peerID: PeerID, val blockchainRID: ByteArray)

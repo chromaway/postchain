@@ -7,6 +7,7 @@ import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.ebft.message.*
 import net.postchain.ebft.message.Transaction
+import net.postchain.network.CommManager
 import java.util.*
 
 fun decodeBlockDataWithWitness(block: CompleteBlock, bc: BlockchainConfiguration)

@@ -13,11 +13,11 @@ class BasePeerCommConfiguration(override val peerInfo: Array<PeerInfo>,
         return peerInfo.find { it.pubKey.contentEquals(peerID) }
     }
 
-    override fun getSigner(): Signer {
+    override fun signer(): Signer {
         return cryptoSystem.makeSigner(peerInfo[myIndex].pubKey, privKey)
     }
 
-    override fun getVerifier(): Verifier {
+    override fun verifier(): Verifier {
         return cryptoSystem.makeVerifier()
     }
 }

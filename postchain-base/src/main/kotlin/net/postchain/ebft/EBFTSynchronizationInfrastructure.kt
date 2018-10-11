@@ -10,6 +10,7 @@ import net.postchain.core.BlockchainProcess
 import net.postchain.core.RestartHandler
 import net.postchain.core.SynchronizationInfrastructure
 import net.postchain.ebft.message.EbftMessage
+import net.postchain.network.CommManager
 import net.postchain.network.PeerConnectionManager
 import org.apache.commons.configuration2.Configuration
 
@@ -38,9 +39,9 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
                 SECP256K1CryptoSystem(),
                 privKey())
 
-        val connectionManager = makeConnManager(communicationConfig)
+        val connectionManager = EbftPeerManagerFactory.createConnectionManager(communicationConfig)
         connManagers.add(connectionManager)
-        return makeCommManager(communicationConfig, connectionManager)
+        return CommManager(communicationConfig, connectionManager)
     }
 
     private fun privKey(): ByteArray =

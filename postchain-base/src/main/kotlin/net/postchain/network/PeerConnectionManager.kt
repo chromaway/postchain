@@ -9,16 +9,21 @@ import java.util.*
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.concurrent.thread
 
-class PeerConnectionManager<PT>(val myPeerInfo: PeerInfo, val packetConverter: PacketConverter<PT>): Shutdownable {
+class PeerConnectionManager<PacketType>(
+        myPeerInfo: PeerInfo,
+        val packetConverter: PacketConverter<PacketType>
+) : Shutdownable {
+
     val connections = mutableListOf<AbstractPeerConnection>()
     val peerConnections = Collections.synchronizedMap(mutableMapOf<ByteArrayKey, AbstractPeerConnection>()) // connection for peerID
-    @Volatile private var keepGoing: Boolean = true
+    @Volatile
+    private var keepGoing: Boolean = true
     private val encoderThread: Thread
     private val connAcceptor: PeerConnectionAcceptor
 
     private val blockchains = mutableMapOf<ByteArrayKey, BlockchainDataHandler>()
 
-    val outboundPackets = LinkedBlockingQueue<OutboundPacket<PT>>(MAX_QUEUED_PACKETS)
+    val outboundPackets = LinkedBlockingQueue<OutboundPacket<PacketType>>(MAX_QUEUED_PACKETS)
 
     companion object : KLogging()
 
@@ -43,7 +48,7 @@ class PeerConnectionManager<PT>(val myPeerInfo: PeerInfo, val packetConverter: P
         }
     }
 
-    fun sendPacket(packet: OutboundPacket<PT>) {
+    fun sendPacket(packet: OutboundPacket<PacketType>) {
         outboundPackets.add(packet)
     }
 
@@ -76,8 +81,7 @@ class PeerConnectionManager<PT>(val myPeerInfo: PeerInfo, val packetConverter: P
     init {
         encoderThread = thread(name = "encoderLoop") { encoderLoop() }
 
-        val registerConn = {
-            info: IdentPacketInfo, conn: PeerConnection ->
+        val registerConn = { info: IdentPacketInfo, conn: PeerConnection ->
 
             val bh = blockchains[ByteArrayKey(info.blockchainRID)]
             if (bh != null) {
