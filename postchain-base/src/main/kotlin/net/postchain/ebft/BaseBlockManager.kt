@@ -9,6 +9,9 @@ import net.postchain.core.BlockDataWithWitness
 import nl.komponents.kovenant.Promise
 import java.util.*
 
+/**
+ * Manages intents and acts as a wrapper for [blockDatabase] and [statusManager]
+ */
 class BaseBlockManager(
         val blockDB: BlockDatabase,
         val statusManager: StatusManager,

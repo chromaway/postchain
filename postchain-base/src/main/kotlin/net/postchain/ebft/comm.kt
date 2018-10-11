@@ -12,6 +12,9 @@ import net.postchain.ebft.message.Identification
 import net.postchain.ebft.message.SignedMessage
 import net.postchain.network.*
 
+/**
+ * Peer communication manager
+ */
 class CommManager<PT>(val myIndex: Int,
                       val blockchainRID: ByteArray,
                       val peers: Array<PeerInfo>,

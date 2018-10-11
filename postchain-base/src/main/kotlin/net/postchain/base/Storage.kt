@@ -2,6 +2,9 @@ package net.postchain.base
 
 import net.postchain.core.EContext
 
+/**
+ * Handles back-end database connection and storage
+ */
 interface Storage {
     fun openReadConnection(chainID: Long): EContext
     fun closeReadConnection(context: EContext)

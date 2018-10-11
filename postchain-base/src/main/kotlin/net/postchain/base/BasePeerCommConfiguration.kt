@@ -10,11 +10,7 @@ class BasePeerCommConfiguration(override val peerInfo: Array<PeerInfo>,
 ) : PeerCommConfiguration {
 
     override fun resolvePeer(peerID: ByteArray): PeerInfo? {
-        for (peer in peerInfo) {
-            if (peer.pubKey == peerID)
-                return peer
-        }
-        return null
+        return peerInfo.find { it.pubKey.contentEquals(peerID) }
     }
 
     override fun getSigner(): Signer {

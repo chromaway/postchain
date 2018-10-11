@@ -34,6 +34,9 @@ interface BlockStore {
     fun getConfirmationProofMaterial(ctx: EContext, txRID: ByteArray): Any
 }
 
+/**
+ * A collection of methods for various blockchain related queries
+ */
 interface BlockQueries {
     fun getBlockSignature(blockRID: ByteArray): Promise<Signature, Exception>
     fun getBestHeight(): Promise<Long, Exception>
@@ -65,6 +68,9 @@ interface ManagedBlockBuilder : BlockBuilder {
     fun rollback()
 }
 
+/**
+ * Strategy configurations for how to create new blocks
+ */
 interface BlockBuildingStrategy {
     fun shouldBuildBlock(): Boolean
     fun blockCommitted(blockData: BlockData)

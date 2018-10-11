@@ -7,6 +7,9 @@ import net.postchain.common.toHex
 import net.postchain.core.Signature
 import java.util.*
 
+/**
+ * StatusManager manages the status of the consensus protocol
+ */
 class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long)
     : StatusManager {
     override val nodeStatuses = Array(nodeCount) { NodeStatus() }

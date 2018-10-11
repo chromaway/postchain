@@ -15,6 +15,9 @@ import java.util.concurrent.TimeUnit
 
 typealias Operation = () -> Unit
 
+/**
+ * A wrapper class for the [engine] and [blockQueries], starting new threads when running
+ */
 class BaseBlockDatabase(private val engine: BlockchainEngine, private val blockQueries: BlockQueries, val nodeIndex: Int) : BlockDatabase {
     private val executor = ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS,
             SynchronousQueue<Runnable>(), ThreadFactory {

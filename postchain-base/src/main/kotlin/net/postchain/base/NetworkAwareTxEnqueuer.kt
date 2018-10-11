@@ -8,6 +8,9 @@ import net.postchain.core.TransactionQueue
 import net.postchain.ebft.CommManager
 import net.postchain.ebft.message.EbftMessage
 
+/**
+ * Transaction queue for transactions added locally via the REST API
+ */
 class NetworkAwareTxQueue(
         private val queue: TransactionQueue,
         private val network: CommManager<EbftMessage>,

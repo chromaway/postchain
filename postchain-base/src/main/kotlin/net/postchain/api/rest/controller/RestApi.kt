@@ -19,6 +19,9 @@ import net.postchain.core.UserMistake
 import spark.Request
 import spark.Service
 
+/**
+ * Contains information on the rest API, such as network parameters and available queries
+ */
 class RestApi(private val listenPort: Int, private val basePath: String) : Modellable {
 
     companion object : KLogging()

@@ -21,6 +21,9 @@ class ComparableTransaction(val tx: Transaction) {
 
 val MAX_REJECTED = 1000
 
+/**
+ * Transaction queue for transactions received from peers
+ */
 class BaseTransactionQueue(queueCapacity: Int = 2500) : TransactionQueue {
 
     companion object : KLogging()

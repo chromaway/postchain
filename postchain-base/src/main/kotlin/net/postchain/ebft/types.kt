@@ -109,6 +109,9 @@ interface BlockManager {
     fun getBlockIntent(): BlockIntent
 }
 
+/**
+ * Manages the status of the consensus protocol
+ */
 interface StatusManager {
     val nodeStatuses: Array<NodeStatus>
     val commitSignatures: Array<Signature?>
