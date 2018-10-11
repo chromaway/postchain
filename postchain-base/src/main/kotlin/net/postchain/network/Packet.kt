@@ -1,5 +1,6 @@
 package net.postchain.network
 
+import net.postchain.base.PeerID
 import net.postchain.core.ByteArrayKey
 
 interface PacketConverter<PT> : IdentPacketConverter {
@@ -8,7 +9,5 @@ interface PacketConverter<PT> : IdentPacketConverter {
 }
 
 data class OutboundPacket<PT>(val packet: PT, val recipients: List<ByteArrayKey>)
-
-typealias PeerID = ByteArray
 
 data class IdentPacketInfo(val peerID: PeerID, val blockchainRID: ByteArray)
