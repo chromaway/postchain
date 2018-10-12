@@ -10,10 +10,16 @@ typealias XPacketHandler = (data: ByteArray, peerID: XPeerID) -> Unit
 typealias LazyPacket = () -> ByteArray
 
 /* TODO: merge with PeerCommConfiguration */
-class XChainPeerConfiguration(
+class XChainPeerConfiguration (
         val chainID: Long,
         val commConfiguration: PeerCommConfiguration,
-        val packetHandler: XPacketHandler
+        val packetHandler: XPacketHandler,
+        /* this implies that conn manager handles authentication in
+        a particular way and puts the burden of authentication into higher
+        level protocols. this is not good, and in future we will make
+        conn manager fully responsible for authentication process
+        */
+        val identPacketConverter: IdentPacketConverter
 )
 
 interface XConnectionManager: Shutdownable {
