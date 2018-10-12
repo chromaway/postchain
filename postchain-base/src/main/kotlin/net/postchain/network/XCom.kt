@@ -3,6 +3,7 @@ package net.postchain.network
 import mu.KLogging
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.core.NODE_ID_READ_ONLY
+import net.postchain.core.Shutdownable
 import net.postchain.core.byteArrayKeyOf
 
 /* A L I E N S */
@@ -13,7 +14,7 @@ class XCom<PacketType>(
         val chainID: Long,
         val packetConverter: PacketConverter<PacketType>
         )
-    : CommunicationManager<PacketType> {
+    : CommunicationManager<PacketType>, Shutdownable {
 
     companion object : KLogging()
 
@@ -46,6 +47,9 @@ class XCom<PacketType>(
         )
     }
 
+    override fun shutdown() {
+        xConn.disconnectChain(chainID)
+    }
 
     @Synchronized
     override fun getPackets(): MutableList<Pair<Int, PacketType>> {
