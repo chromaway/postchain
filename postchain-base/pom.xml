@@ -24,11 +24,10 @@
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
         <asnrt.version>3.14.15</asnrt.version>
         <spark-core.version>2.6.0</spark-core.version>
-        <easymock.version>3.4</easymock.version>
+        <easymock.version>3.6</easymock.version>
 
         <executable-classifier>jar-with-dependencies</executable-classifier>
         <dist-classifier>dist</dist-classifier>
-        <easymock.version>3.4</easymock.version>
         <assertk.version>0.10</assertk.version>
 
     </properties>

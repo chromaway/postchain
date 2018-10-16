@@ -9,23 +9,47 @@ import java.util.*
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.concurrent.thread
 
+interface PeerConnectionManagerInterface<PacketType> {
+    fun sendPacket(packet: OutboundPacket<PacketType>)
+    fun connectPeer(peer: PeerInfo, packetConverter: IdentPacketConverter, packetHandler: (ByteArray) -> Unit): AbstractPeerConnection
+    fun registerBlockchain(blockchainRID: ByteArray, handler: BlockchainDataHandler)
+}
+
 class PeerConnectionManager<PacketType>(
         myPeerInfo: PeerInfo,
         val packetConverter: PacketConverter<PacketType>
-) : Shutdownable {
+) : PeerConnectionManagerInterface<PacketType>, Shutdownable {
 
-    val connections = mutableListOf<AbstractPeerConnection>()
+    val connections = mutableListOf<AbstractPeerConnection>() // TODO: Remove it and use `peerConnections`
     val peerConnections = Collections.synchronizedMap(mutableMapOf<ByteArrayKey, AbstractPeerConnection>()) // connection for peerID
     @Volatile
     private var keepGoing: Boolean = true
     private val encoderThread: Thread
     private val connAcceptor: PeerConnectionAcceptor
-
     private val blockchains = mutableMapOf<ByteArrayKey, BlockchainDataHandler>()
-
     val outboundPackets = LinkedBlockingQueue<OutboundPacket<PacketType>>(MAX_QUEUED_PACKETS)
 
     companion object : KLogging()
+
+    init {
+        encoderThread = thread(name = "encoderLoop") { encoderLoop() }
+
+        val registerConn = { info: IdentPacketInfo, conn: PeerConnection ->
+            val bh = blockchains[ByteArrayKey(info.blockchainRID)]
+            if (bh != null) {
+                connections.add(conn)
+                peerConnections[ByteArrayKey(info.peerID)] = conn
+                logger.info("Registering incoming connection ")
+                bh.getPacketHandler(info.peerID)
+            } else {
+                logger.warn("Got packet with unknown blockchainRID:${info.blockchainRID.toHex()}, skipping")
+                throw Error("Blockchain not found")
+            }
+        }
+
+        connAcceptor = PeerConnectionAcceptor(
+                myPeerInfo, packetConverter, registerConn)
+    }
 
     private fun encoderLoop() {
         while (keepGoing) {
@@ -48,56 +72,32 @@ class PeerConnectionManager<PacketType>(
         }
     }
 
-    fun sendPacket(packet: OutboundPacket<PacketType>) {
+    override fun sendPacket(packet: OutboundPacket<PacketType>) {
         outboundPackets.add(packet)
     }
 
-    fun connectPeer(peer: PeerInfo, packetConverter: IdentPacketConverter, packetHandler: (ByteArray) -> Unit): AbstractPeerConnection {
-        val conn = ActivePeerConnection(peer,
-                packetConverter,
-                packetHandler
-        )
-        conn.start()
-        connections.add(conn)
-        peerConnections[ByteArrayKey(peer.pubKey)] = conn
-        return conn
+    override fun connectPeer(
+            peer: PeerInfo,
+            packetConverter: IdentPacketConverter,
+            packetHandler: (ByteArray) -> Unit
+    ): AbstractPeerConnection {
+
+        return ActivePeerConnection(peer, packetConverter, packetHandler)
+                .apply { start() }
+                .also {
+                    connections.add(it)
+                    peerConnections[ByteArrayKey(peer.pubKey)] = it
+                }
     }
 
-    fun stop() {
-        keepGoing = false
-        connAcceptor.stop()
-        for (c in connections) c.stop()
-        encoderThread.interrupt()
+    override fun registerBlockchain(blockchainRID: ByteArray, handler: BlockchainDataHandler) {
+        blockchains[ByteArrayKey(blockchainRID)] = handler
     }
 
     override fun shutdown() {
-        stop()
-    }
-
-    fun registerBlockchain(blockchainRID: ByteArray, h: BlockchainDataHandler) {
-        blockchains[ByteArrayKey(blockchainRID)] = h
-    }
-
-    init {
-        encoderThread = thread(name = "encoderLoop") { encoderLoop() }
-
-        val registerConn = { info: IdentPacketInfo, conn: PeerConnection ->
-
-            val bh = blockchains[ByteArrayKey(info.blockchainRID)]
-            if (bh != null) {
-                connections.add(conn)
-                peerConnections[ByteArrayKey(info.peerID)] = conn
-                logger.info("Registering incoming connection ")
-                bh.getPacketHandler(info.peerID)
-            } else {
-                logger.warn("Got packet with unknown blockchainRID:${info.blockchainRID.toHex()}, skipping")
-                throw Error("Blockchain not found")
-            }
-        }
-
-        connAcceptor = PeerConnectionAcceptor(
-                myPeerInfo,
-                packetConverter, registerConn
-        )
+        keepGoing = false
+        connAcceptor.stop()
+        connections.forEach { it.stop() }
+        encoderThread.interrupt()
     }
 }

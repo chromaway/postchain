@@ -117,7 +117,7 @@ class Identification(val yourPubKey: ByteArray, val blockchainRID: ByteArray, va
     override fun getBackingInstance(): net.postchain.ebft.messages.Message {
         val result = net.postchain.ebft.messages.Identification()
         result.yourPubKey = yourPubKey
-        result.blockchainRID = blockchainRID;
+        result.blockchainRID = blockchainRID
         result.timestamp = timestamp
         return net.postchain.ebft.messages.Message.identification(result)
     }
@@ -149,7 +149,7 @@ class UnfinishedBlock(val header: ByteArray, val transactions: List<ByteArray>) 
 class Transaction(val data: ByteArray) : EbftMessage() {
     override fun getBackingInstance(): net.postchain.ebft.messages.Message {
         val result = net.postchain.ebft.messages.Transaction()
-        result.data = data;
+        result.data = data
         return net.postchain.ebft.messages.Message.transaction(result)
     }
 }

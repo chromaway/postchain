@@ -29,6 +29,7 @@ class EbftPacketConverter(val config: PeerCommConfiguration) : PacketConverter<E
         if (!config.peerInfo[config.myIndex].pubKey.contentEquals(message.yourPubKey)) {
             throw UserMistake("'yourPubKey' ${message.yourPubKey.toHex()} of Identification is not mine")
         }
+
         return IdentPacketInfo(signedMessage.pubKey, message.blockchainRID)
     }
 
