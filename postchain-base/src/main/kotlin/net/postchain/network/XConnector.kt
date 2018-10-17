@@ -21,14 +21,14 @@ interface XConnectorEvents {
 }
 
 interface XConnector {
-    fun connectPeer(descriptor: XPeerConnectionDescriptor)
+    fun connectPeer(descriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo)
 }
 
 class ActualXConnector(
         val myPeerInfo: PeerInfo,
         val identPacketConverter: IdentPacketConverter
 ): XConnector {
-    override fun connectPeer(descriptor: XPeerConnectionDescriptor) {
+    override fun connectPeer(descriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }
