@@ -3,7 +3,7 @@
 package net.postchain.test.ebft
 
 /*
-class CommManagerTest : IntegrationTest() {
+class CommunicationManagerTest : IntegrationTest() {
     companion object : KLogging()
 //
 //    @Rule @JvmField
