@@ -59,8 +59,8 @@ class ConnectionManagerTest {
         connectionManager2.registerBlockchain(blockchainRid, BlockchainDataReceiver(packets2))
 
         // Connecting
-        connectionManager1.connectPeer(peerInfo2, packetConverter1) { println("@1" + it.toString()) }
-        connectionManager2.connectPeer(peerInfo1, packetConverter2) { println("@2" + it.toString()) }
+        connectionManager1.connectPeer(peerInfo2) { println("@1" + it.toString()) }
+        connectionManager2.connectPeer(peerInfo1) { println("@2" + it.toString()) }
 
         // Sending packets
         connectionManager1.sendPacket(

@@ -6,9 +6,9 @@ import java.net.Socket
 import kotlin.concurrent.thread
 
 class PassivePeerConnection(
-        val packetConverter: IdentPacketConverter,
+        private val packetConverter: IdentPacketConverter,
         inSocket: Socket,
-        val registerConn: (info: IdentPacketInfo, PeerConnection) -> (ByteArray) -> Unit
+        val registerConnection: (info: IdentPacketInfo, PeerConnection) -> (ByteArray) -> Unit
 ) : PeerConnection() {
 
     lateinit var packetHandler: (ByteArray) -> Unit
@@ -41,7 +41,7 @@ class PassivePeerConnection(
 
             val info = packetConverter.parseIdentPacket(readOnePacket(stream))
             Thread.currentThread().name = "PassiveReadLoop-PeerId"
-            packetHandler = registerConn(info, this)
+            packetHandler = registerConnection(info, this)
 
             thread(name = "PassiveWriteLoop-PeerId") { writeLoop(socket1) }
 
