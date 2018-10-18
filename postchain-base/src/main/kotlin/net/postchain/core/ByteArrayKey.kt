@@ -4,7 +4,7 @@ package net.postchain.core
 
 import net.postchain.common.toHex
 
-class ByteArrayKey(private val byteArray: ByteArray) {
+class ByteArrayKey(val byteArray: ByteArray) {
 
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
