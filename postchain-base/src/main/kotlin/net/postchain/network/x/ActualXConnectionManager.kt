@@ -1,10 +1,11 @@
-package net.postchain.network
+package net.postchain.network.x
 
 import mu.KLogging
 import net.postchain.base.PeerInfo
 import net.postchain.core.ByteArrayKey
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.byteArrayKeyOf
+import net.postchain.network.IdentPacketConverter
 
 class ActualXConnectionManager(
         connectorFactory: XConnectorFactory,

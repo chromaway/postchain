@@ -1,7 +1,8 @@
-package net.postchain.network
+package net.postchain.network.x
 
 import net.postchain.base.PeerInfo
 import net.postchain.core.ByteArrayKey
+import net.postchain.network.IdentPacketConverter
 
 interface  XPeerConnection {
     fun close()
@@ -10,8 +11,8 @@ interface  XPeerConnection {
 }
 
 class XPeerConnectionDescriptor(
-    val peerID: XPeerID,
-    val blockchainRID: ByteArrayKey
+        val peerID: XPeerID,
+        val blockchainRID: ByteArrayKey
 )
 
 interface XConnectorEvents {

@@ -1,10 +1,12 @@
-package net.postchain.network
+package net.postchain.network.x
 
 import mu.KLogging
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.core.NODE_ID_READ_ONLY
 import net.postchain.core.Shutdownable
 import net.postchain.core.byteArrayKeyOf
+import net.postchain.network.CommunicationManager
+import net.postchain.network.PacketConverter
 
 /* A L I E N S */
 

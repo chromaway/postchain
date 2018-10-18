@@ -1,8 +1,9 @@
-package net.postchain.network
+package net.postchain.network.x
 
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.core.ByteArrayKey
 import net.postchain.core.Shutdownable
+import net.postchain.network.IdentPacketConverter
 
 typealias XPeerID = ByteArrayKey
 typealias XPacketHandler = (data: ByteArray, peerID: XPeerID) -> Unit
