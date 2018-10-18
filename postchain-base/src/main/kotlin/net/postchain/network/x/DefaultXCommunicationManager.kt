@@ -10,13 +10,12 @@ import net.postchain.network.PacketConverter
 
 /* A L I E N S */
 
-class XCom<PacketType>(
+class DefaultXCommunicationManager<PacketType>(
         val xConn: XConnectionManager,
         val config: PeerCommConfiguration,
         val chainID: Long,
         val packetConverter: PacketConverter<PacketType>
-        )
-    : CommunicationManager<PacketType>, Shutdownable {
+) : CommunicationManager<PacketType>, Shutdownable {
 
     companion object : KLogging()
 
