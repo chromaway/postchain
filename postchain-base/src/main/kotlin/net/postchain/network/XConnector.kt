@@ -24,9 +24,16 @@ interface XConnector {
     fun connectPeer(descriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo)
 }
 
+interface XConnectorFactory {
+    fun createConnector(myPeerInfo: PeerInfo,
+                        eventReceiver: XConnectorEvents,
+                        identPacketConverter: IdentPacketConverter): XConnector
+}
+
 class ActualXConnector(
         val myPeerInfo: PeerInfo,
-        val identPacketConverter: IdentPacketConverter
+        val identPacketConverter: IdentPacketConverter,
+        val eventReceiver: XConnectorEvents
 ): XConnector {
     override fun connectPeer(descriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.

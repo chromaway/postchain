@@ -1,14 +1,22 @@
 package net.postchain.network
 
 import mu.KLogging
+import net.postchain.base.PeerInfo
 import net.postchain.core.ByteArrayKey
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.byteArrayKeyOf
 
 class ActualXConnectionManager(
-        val connector: XConnector
+        connectorFactory: XConnectorFactory,
+        myPeerInfo: PeerInfo,
+        identPacketConverter: IdentPacketConverter
 ) : XConnectionManager, XConnectorEvents
 {
+
+    private val connector = connectorFactory.createConnector(
+        myPeerInfo, this, identPacketConverter
+    )
+
     companion object : KLogging()
 
     private class Chain(
