@@ -11,7 +11,7 @@ import net.postchain.network.PacketConverter
 /* A L I E N S */
 
 class DefaultXCommunicationManager<PacketType>(
-        val xConn: XConnectionManager,
+        val connectionManager: XConnectionManager,
         val config: PeerCommConfiguration,
         val chainID: Long,
         val packetConverter: PacketConverter<PacketType>
@@ -29,11 +29,11 @@ class DefaultXCommunicationManager<PacketType>(
                 },
                 packetConverter)
 
-        xConn.connectChain(peerconf, true)
+        connectionManager.connectChain(peerconf, true)
     }
 
     override fun broadcastPacket(packet: PacketType) {
-        xConn.broadcastPacket(
+        connectionManager.broadcastPacket(
                 { packetConverter.encodePacket(packet) },
                 chainID
         )
@@ -42,14 +42,14 @@ class DefaultXCommunicationManager<PacketType>(
     override fun sendPacket(packet: PacketType, recipients: Set<Int>) {
         assert(recipients.size == 1)
         val peerIdx = recipients.take(0)[0]
-        xConn.sendPacket(
+        connectionManager.sendPacket(
                 { packetConverter.encodePacket(packet) },
                 chainID, config.peerInfo[peerIdx].pubKey.byteArrayKeyOf()
         )
     }
 
     override fun shutdown() {
-        xConn.disconnectChain(chainID)
+        connectionManager.disconnectChain(chainID)
     }
 
     @Synchronized

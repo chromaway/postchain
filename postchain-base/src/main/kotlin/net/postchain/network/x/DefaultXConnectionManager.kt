@@ -14,8 +14,7 @@ class DefaultXConnectionManager(
 ) : XConnectionManager, XConnectorEvents {
 
     private val connector = connectorFactory.createConnector(
-            myPeerInfo, this, identPacketConverter
-    )
+            myPeerInfo, identPacketConverter, this)
 
     companion object : KLogging()
 

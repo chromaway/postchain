@@ -22,6 +22,6 @@ interface XConnector {
 
 interface XConnectorFactory {
     fun createConnector(myPeerInfo: PeerInfo,
-                        eventReceiver: XConnectorEvents,
-                        identPacketConverter: IdentPacketConverter): XConnector
+                        identPacketConverter: IdentPacketConverter,
+                        eventReceiver: XConnectorEvents): XConnector
 }
