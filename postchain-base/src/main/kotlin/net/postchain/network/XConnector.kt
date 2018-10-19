@@ -5,7 +5,6 @@ import net.postchain.core.ByteArrayKey
 
 interface  XPeerConnection {
     fun close()
-    fun accept(handler: XPacketHandler)
     fun sendPacket(packet: LazyPacket)
 }
 
@@ -16,7 +15,7 @@ class XPeerConnectionDescriptor(
 
 interface XConnectorEvents {
     fun onPeerConnected(descriptor: XPeerConnectionDescriptor,
-                        connection: XPeerConnection)
+                        connection: XPeerConnection): XPacketHandler?
     fun onPeerDisconnected(descriptor: XPeerConnectionDescriptor)
 }
 
