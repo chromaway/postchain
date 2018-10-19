@@ -50,7 +50,7 @@ abstract class PeerConnection : AbstractPeerConnection {
         try {
             while (keepGoing) {
                 val bytes = readOnePacket(dataStream)
-                if (bytes.size == 0) {
+                if (bytes.isEmpty()) {
                     // This is a special packet sent when other side is closing
                     // ignore
                     continue

@@ -1,21 +1,20 @@
-package net.postchain.network
+package net.postchain.network.x
 
 import mu.KLogging
 import net.postchain.base.PeerInfo
 import net.postchain.core.ByteArrayKey
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.byteArrayKeyOf
+import net.postchain.network.IdentPacketConverter
 
-class ActualXConnectionManager(
+class DefaultXConnectionManager(
         connectorFactory: XConnectorFactory,
         myPeerInfo: PeerInfo,
         identPacketConverter: IdentPacketConverter
-) : XConnectionManager, XConnectorEvents
-{
+) : XConnectionManager, XConnectorEvents {
 
     private val connector = connectorFactory.createConnector(
-        myPeerInfo, this, identPacketConverter
-    )
+            myPeerInfo, identPacketConverter, this)
 
     companion object : KLogging()
 
@@ -115,8 +114,8 @@ class ActualXConnectionManager(
     override fun disconnectChain(chainID: Long) {
         val chain = chains[chainID]
         if (chain != null) {
-            chain.connections.forEach {
-                peerID, conn -> conn.close()
+            chain.connections.forEach { peerID, conn ->
+                conn.close()
             }
             chain.connections.clear()
         }
@@ -143,8 +142,7 @@ class ActualXConnectionManager(
     @Synchronized
     override fun shutdown() {
         isShutDown = true
-        chains.forEach {
-            _, chain ->
+        chains.forEach { _, chain ->
             chain.connections.forEach { _, conn -> conn.close() }
         }
         chains.clear()
@@ -162,8 +160,8 @@ class ActualXConnectionManager(
         // TODO: lazypacket might be computed multiple times
         val chain = chains[chainID]
         if (chain == null) throw ProgrammerMistake("Chain ID not found")
-        chain.connections.forEach {
-            _, conn -> conn.sendPacket(data)
+        chain.connections.forEach { _, conn ->
+            conn.sendPacket(data)
         }
     }
 

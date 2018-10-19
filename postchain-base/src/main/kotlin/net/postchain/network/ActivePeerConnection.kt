@@ -13,7 +13,7 @@ class ActivePeerConnection(
         val packetHandler: (ByteArray) -> Unit
 ) : PeerConnection() {
 
-    val connAvail = CyclicBarrier(2)
+    private val awaitConnection = CyclicBarrier(2)
 
     override fun handlePacket(pkt: ByteArray) {
         packetHandler(pkt)
@@ -26,7 +26,7 @@ class ActivePeerConnection(
                 socket = Socket(peer.host, peer.port)
                 // writer loop sets up a serverSocket then waits for read loop to sync
                 // if exception is thrown when connecting, read loop will just wait for the next cycle
-                connAvail.await()
+                awaitConnection.await()
                 val socket1 = socket ?: throw Exception("No connection")
                 val stream = DataOutputStream(socket1.getOutputStream())
                 writeOnePacket(stream, packetConverter.makeIdentPacket(peer.pubKey)) // write Ident packet
@@ -45,7 +45,7 @@ class ActivePeerConnection(
     private fun readLoop() {
         while (keepGoing) {
             try {
-                connAvail.await()
+                awaitConnection.await()
                 val socket1 = socket ?: throw Exception("No connection")
                 val err = readPacketsWhilePossible(DataInputStream(socket1.getInputStream()))
                 if (err != null) {

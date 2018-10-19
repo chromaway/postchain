@@ -1,20 +1,21 @@
-package net.postchain.network
+package net.postchain.network.x
 
 import mu.KLogging
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.core.NODE_ID_READ_ONLY
 import net.postchain.core.Shutdownable
 import net.postchain.core.byteArrayKeyOf
+import net.postchain.network.CommunicationManager
+import net.postchain.network.PacketConverter
 
 /* A L I E N S */
 
-class XCom<PacketType>(
-        val xConn: XConnectionManager,
+class DefaultXCommunicationManager<PacketType>(
+        val connectionManager: XConnectionManager,
         val config: PeerCommConfiguration,
         val chainID: Long,
         val packetConverter: PacketConverter<PacketType>
-        )
-    : CommunicationManager<PacketType>, Shutdownable {
+) : CommunicationManager<PacketType>, Shutdownable {
 
     companion object : KLogging()
 
@@ -28,11 +29,11 @@ class XCom<PacketType>(
                 },
                 packetConverter)
 
-        xConn.connectChain(peerconf, true)
+        connectionManager.connectChain(peerconf, true)
     }
 
     override fun broadcastPacket(packet: PacketType) {
-        xConn.broadcastPacket(
+        connectionManager.broadcastPacket(
                 { packetConverter.encodePacket(packet) },
                 chainID
         )
@@ -41,14 +42,14 @@ class XCom<PacketType>(
     override fun sendPacket(packet: PacketType, recipients: Set<Int>) {
         assert(recipients.size == 1)
         val peerIdx = recipients.take(0)[0]
-        xConn.sendPacket(
+        connectionManager.sendPacket(
                 { packetConverter.encodePacket(packet) },
                 chainID, config.peerInfo[peerIdx].pubKey.byteArrayKeyOf()
         )
     }
 
     override fun shutdown() {
-        xConn.disconnectChain(chainID)
+        connectionManager.disconnectChain(chainID)
     }
 
     @Synchronized

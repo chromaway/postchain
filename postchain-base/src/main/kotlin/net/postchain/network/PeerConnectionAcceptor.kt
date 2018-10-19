@@ -8,10 +8,10 @@ import kotlin.concurrent.thread
 
 class PeerConnectionAcceptor(
         peer: PeerInfo,
-        val identPacketConverter: IdentPacketConverter,
-        val registerConn: (IdentPacketInfo, PeerConnection) -> (ByteArray) -> Unit
+        private val identPacketConverter: IdentPacketConverter,
+        private val registerConnection: (IdentPacketInfo, PeerConnection) -> (ByteArray) -> Unit
 ) {
-    val serverSocket: ServerSocket
+    private val serverSocket: ServerSocket
     @Volatile
     var keepGoing = true
 
@@ -36,7 +36,7 @@ class PeerConnectionAcceptor(
                 PassivePeerConnection(
                         identPacketConverter,
                         socket,
-                        registerConn
+                        registerConnection
                 )
             }
         } catch (e: Exception) {
