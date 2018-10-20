@@ -9,10 +9,12 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 import net.postchain.base.PeerInfo
+import net.postchain.core.ByteArrayKey
 import net.postchain.network.IdentPacketConverter
 import net.postchain.network.MAX_PAYLOAD_SIZE
 import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPeerConnection
+import net.postchain.network.x.XPeerConnectionDescriptor
 import java.lang.Exception
 import java.net.InetSocketAddress
 
@@ -23,7 +25,9 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
                                  private val identPacketConverter: IdentPacketConverter,
                                  private val eventReceiver: XConnectorEvents): NettyIO(), XPeerConnection {
 
+    private val outerThis = this
 
+    private var connectionDescriptor: XPeerConnectionDescriptor? = null
 
     override fun startSocket() {
         try {
@@ -36,7 +40,7 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
                 override fun initChannel(socketChannel: SocketChannel) {
                     socketChannel.pipeline()
                             .addLast(LengthFieldBasedFrameDecoder(MAX_PAYLOAD_SIZE, 0, packetSizeLength, 0, 0))
-                            .addLast(ServerHandler(that))
+                            .addLast(ServerHandler())
                 }
             })
             val channelFuture = serverBootstrap.bind().sync()
@@ -47,7 +51,7 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
 
     }
 
-    inner class ServerHandler(val peerConnection: XPeerConnection): ChannelInboundHandlerAdapter() {
+    inner class ServerHandler: ChannelInboundHandlerAdapter() {
 
         @Volatile
         private var identified = false
@@ -55,11 +59,9 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
             if(!identified) {
                 synchronized(identified) {
                     if (!identified) {
-                        val info = identPacketConverter.parseIdentPacket(readOnePacket(msg))
-                      //  eventReceiver.onPeerConnected()
-                        //     peerConnection.connectPeer()
-                        //packetHandler = registerConn(info, peerConnection)
-                         ctx = context
+                        ctx = context
+                        connectionDescriptor = getConnectionDescriptor(msg)
+                        eventReceiver.onPeerConnected(connectionDescriptor!!, outerThis)
                         identified = true
                     } else {
                         readAndHandleInput(msg)
@@ -69,14 +71,21 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
                 readAndHandleInput(msg)
             }
         }
+
+        private fun getConnectionDescriptor(msg: Any): XPeerConnectionDescriptor {
+            val info = identPacketConverter.parseIdentPacket(readOnePacket(msg))
+            return XPeerConnectionDescriptor(ByteArrayKey(info.peerID), ByteArrayKey(info.blockchainRID))
+        }
+
         private fun readAndHandleInput(msg: Any) {
             val bytes = readOnePacket(msg)
-            //     handlePacket(bytes)
+            handler!!.invoke(bytes, connectionDescriptor!!.peerID)
         }
         override fun channelReadComplete(ctx: ChannelHandlerContext) {
             ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
         }
         override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
+            eventReceiver.onPeerDisconnected(connectionDescriptor!!)
             close()
         }
     }

@@ -16,16 +16,16 @@ abstract class NettyIO {
 
     companion object : KLogging()
 
-    init {
-        Thread({startSocket()}).start()
-    }
-
     protected var handler: XPacketHandler? = null
 
     protected val packetSizeLength = 4
     protected var ctx: ChannelHandlerContext? = null
 
     protected val group = NioEventLoopGroup()
+
+    init {
+        Thread({startSocket()}).start()
+    }
 
     protected fun readOnePacket(msg: Any): ByteArray {
         val inBuffer = msg as ByteBuf

@@ -9,6 +9,7 @@ import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 import net.postchain.base.PeerInfo
 import net.postchain.network.*
+import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPeerConnection
 import net.postchain.network.x.XPeerConnectionDescriptor
 import java.net.InetSocketAddress
@@ -16,7 +17,10 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
                                 private val descriptor: XPeerConnectionDescriptor,
-                                private val identPacketConverter: IdentPacketConverter): NettyIO(), XPeerConnection {
+                                private val identPacketConverter: IdentPacketConverter,
+                                private val eventReceiver: XConnectorEvents): NettyIO(), XPeerConnection {
+
+    private val outerThis = this
 
     private val outboundPackets = ConcurrentLinkedQueue<ByteArray>()
 
@@ -43,12 +47,14 @@ class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
     inner class ClientHandler : SimpleChannelInboundHandler<Any>() {
 
         override fun channelActive(channelHandlerContext: ChannelHandlerContext) {
-            val identPacket = identPacketConverter.makeIdentPacket(myPeerInfo.pubKey)
             ctx = channelHandlerContext
+            val identPacket = identPacketConverter.makeIdentPacket(myPeerInfo.pubKey)
+            eventReceiver.onPeerConnected(descriptor, outerThis)
             sendPacket({ identPacket })
         }
 
         override fun exceptionCaught(channelHandlerContext: ChannelHandlerContext, cause: Throwable) {
+            eventReceiver.onPeerDisconnected(descriptor)
             close()
         }
 
