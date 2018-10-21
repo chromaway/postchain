@@ -71,16 +71,16 @@ class DefaultXConnectionManager(
     }
 
     @Synchronized
-    override fun onPeerConnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection) {
+    override fun onPeerConnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection): XPacketHandler? {
         val chainID = chainIDforBlockchainRID[descriptor.blockchainRID]
         val chain = if (chainID != null) chains[chainID] else null
         if (chain == null) {
             logger.warn("Chain not found")
             connection.close()
-            return
+            return null
         }
 
-        // TODO: test if needed
+        // TODO: test if connection is wanted
 
         val oldConnection = chain.connections[descriptor.peerID]
         if (oldConnection != null) {
@@ -88,7 +88,7 @@ class DefaultXConnectionManager(
         }
 
         chain.connections[descriptor.peerID] = connection
-        connection.accept(chain.peerConfig.packetHandler)
+        return chain.peerConfig.packetHandler
     }
 
     @Synchronized
