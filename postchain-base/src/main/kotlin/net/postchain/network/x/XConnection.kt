@@ -11,7 +11,7 @@ interface XPeerConnection {
 
 interface XConnectorEvents {
     fun onPeerConnected(descriptor: XPeerConnectionDescriptor,
-                        connection: XPeerConnection)
+                        connection: XPeerConnection): XPacketHandler?
 
     fun onPeerDisconnected(descriptor: XPeerConnectionDescriptor)
 }

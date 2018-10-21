@@ -46,11 +46,21 @@ class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
 
     inner class ClientHandler : SimpleChannelInboundHandler<Any>() {
 
+        @Volatile
+        private var identified = false
         override fun channelActive(channelHandlerContext: ChannelHandlerContext) {
-            ctx = channelHandlerContext
-            val identPacket = identPacketConverter.makeIdentPacket(myPeerInfo.pubKey)
-            eventReceiver.onPeerConnected(descriptor, outerThis)
-            sendPacket({ identPacket })
+            if(!identified) {
+                synchronized(identified) {
+                    if(!identified) {
+                        ctx = channelHandlerContext
+                        val identPacket = identPacketConverter.makeIdentPacket(myPeerInfo.pubKey)
+                        handler = eventReceiver.onPeerConnected(descriptor, outerThis)
+                        sendPacket({ identPacket })
+                    }
+                }
+            } else {
+
+            }
         }
 
         override fun exceptionCaught(channelHandlerContext: ChannelHandlerContext, cause: Throwable) {

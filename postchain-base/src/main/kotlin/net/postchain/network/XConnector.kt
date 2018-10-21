@@ -2,6 +2,9 @@ package net.postchain.network
 
 import net.postchain.base.PeerInfo
 import net.postchain.core.ByteArrayKey
+import net.postchain.network.x.LazyPacket
+import net.postchain.network.x.XPacketHandler
+import net.postchain.network.x.XPeerID
 
 interface  XPeerConnection {
     fun close()

@@ -61,7 +61,7 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
                     if (!identified) {
                         ctx = context
                         connectionDescriptor = getConnectionDescriptor(msg)
-                        eventReceiver.onPeerConnected(connectionDescriptor!!, outerThis)
+                        handler = eventReceiver.onPeerConnected(connectionDescriptor!!, outerThis)
                         identified = true
                     } else {
                         readAndHandleInput(msg)
