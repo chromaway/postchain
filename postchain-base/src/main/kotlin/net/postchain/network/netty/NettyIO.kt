@@ -12,6 +12,9 @@ import java.nio.ByteBuffer
 /**
  * ruslan.klymenko@zorallabs.com 19.10.18
  */
+object NettyGroupHolder {
+    val group = NioEventLoopGroup()
+}
 abstract class NettyIO {
 
     companion object : KLogging()
@@ -21,7 +24,8 @@ abstract class NettyIO {
     protected val packetSizeLength = 4
     protected var ctx: ChannelHandlerContext? = null
 
-    protected val group = NioEventLoopGroup()
+    protected val group = NettyGroupHolder.group
+
 
     init {
         Thread({startSocket()}).start()

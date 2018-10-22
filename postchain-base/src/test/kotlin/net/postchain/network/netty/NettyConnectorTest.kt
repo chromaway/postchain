@@ -6,10 +6,12 @@ import net.postchain.core.ByteArrayKey
 import net.postchain.network.IdentPacketConverter
 import net.postchain.network.IdentPacketInfo
 import net.postchain.network.x.*
+import org.awaitility.Awaitility
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import java.lang.RuntimeException
+import java.util.concurrent.TimeUnit
 
 class NettyConnectorTest {
 
@@ -74,7 +76,7 @@ class NettyConnectorTest {
 
     }
 
-    @Test(timeout = 10000)
+    @Test
     fun testNettyConnector() {
         val identPacketConverter = IdentPacketConverterImpl()
 
@@ -94,13 +96,20 @@ class NettyConnectorTest {
         connector2.connectPeer(xPeerConnectionDescriptor, peerInfo)
 
         Thread.sleep(1_000)
-
         connections!!.forEach {
             it.sendPacket { message.toByteArray() }
         }
-        while(!serverReceivedMessages.contains(message) && !clientReceivedMessages.contains(message)){}
-        Assert.assertTrue(serverReceivedErrors.isEmpty())
-        Assert.assertTrue(clientReceivedErrors.isEmpty())
+        Awaitility.await()
+                  .atMost(10, TimeUnit.SECONDS)
+                  .untilAsserted {
+                      Assert.assertTrue(serverReceivedMessages.contains(message))
+                      Assert.assertTrue(clientReceivedMessages.contains(message))
+
+                      Assert.assertTrue(serverReceivedErrors.isEmpty())
+                      Assert.assertTrue(clientReceivedErrors.isEmpty())
+                  }
+
+
     }
 
     @Test
@@ -120,7 +129,11 @@ class NettyConnectorTest {
 
         connector.connectPeer(xPeerConnectionDescriptor, peerInfo)
 
-        Thread.sleep(2_000)
-        Assert.assertTrue(serverReceivedErrors.contains(String(peerId.byteArray)))
+        Awaitility.await()
+                .atMost(2, TimeUnit.SECONDS)
+                .untilAsserted {
+                    Assert.assertTrue(serverReceivedErrors.contains(String(peerId.byteArray)))
+                }
+
     }
 }

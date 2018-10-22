@@ -13,7 +13,6 @@ import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPeerConnection
 import net.postchain.network.x.XPeerConnectionDescriptor
 import java.net.InetSocketAddress
-import java.util.concurrent.ConcurrentLinkedQueue
 
 class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
                                 private val descriptor: XPeerConnectionDescriptor,
@@ -21,8 +20,6 @@ class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
                                 private val eventReceiver: XConnectorEvents): NettyIO(), XPeerConnection {
 
     private val outerThis = this
-
-    private val outboundPackets = ConcurrentLinkedQueue<ByteArray>()
 
     override fun startSocket() {
         try {
@@ -46,21 +43,11 @@ class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
 
     inner class ClientHandler : SimpleChannelInboundHandler<Any>() {
 
-        @Volatile
-        private var identified = false
         override fun channelActive(channelHandlerContext: ChannelHandlerContext) {
-            if(!identified) {
-                synchronized(identified) {
-                    if(!identified) {
-                        ctx = channelHandlerContext
-                        val identPacket = identPacketConverter.makeIdentPacket(myPeerInfo.pubKey)
-                        handler = eventReceiver.onPeerConnected(descriptor, outerThis)
-                        sendPacket({ identPacket })
-                    }
-                }
-            } else {
-
-            }
+            ctx = channelHandlerContext
+            val identPacket = identPacketConverter.makeIdentPacket(myPeerInfo.pubKey)
+            handler = eventReceiver.onPeerConnected(descriptor, outerThis)
+            sendPacket({ identPacket })
         }
 
         override fun exceptionCaught(channelHandlerContext: ChannelHandlerContext, cause: Throwable) {
@@ -69,14 +56,11 @@ class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
         }
 
         override fun channelRead0(channelHandlerContext: ChannelHandlerContext, o: Any) {
-            val bytes = readOnePacket(o)
-            if (handler == null) {
-                outboundPackets.add(bytes)
-            } else {
-                while (outboundPackets.isNotEmpty()) {
-                    handler!!.invoke(outboundPackets.poll(), descriptor.peerID)
-                }
+            if(handler != null) {
+                val bytes = readOnePacket(o)
                 handler!!.invoke(bytes, descriptor.peerID)
+            } else {
+                logger.error("${this::class.java.name}, handler is null")
             }
         }
     }

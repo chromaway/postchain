@@ -78,8 +78,12 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
         }
 
         private fun readAndHandleInput(msg: Any) {
-            val bytes = readOnePacket(msg)
-            handler!!.invoke(bytes, connectionDescriptor!!.peerID)
+            if(handler != null) {
+                val bytes = readOnePacket(msg)
+                handler!!.invoke(bytes, connectionDescriptor!!.peerID)
+            } else {
+                logger.error("${this::class.java.name}, handler is null")
+            }
         }
         override fun channelReadComplete(ctx: ChannelHandlerContext) {
             ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
