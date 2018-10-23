@@ -1,5 +1,6 @@
 package net.postchain.base
 
+import net.postchain.core.ByteArrayKey
 import java.util.concurrent.CountDownLatch
 
 typealias PeerID = ByteArray
@@ -22,3 +23,9 @@ class DynamicPortPeerInfo(host: String, pubKey: ByteArray) : PeerInfo(host, 0, p
         latch.countDown()
     }
 }
+
+/**
+ * Returns [XPeerID] for given [PeerInfo.pubKey] object
+ */
+fun PeerInfo.peerId() = ByteArrayKey(this.pubKey)
+

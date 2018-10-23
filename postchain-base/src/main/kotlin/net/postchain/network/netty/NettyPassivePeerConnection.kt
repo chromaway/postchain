@@ -15,7 +15,6 @@ import net.postchain.network.MAX_PAYLOAD_SIZE
 import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPeerConnection
 import net.postchain.network.x.XPeerConnectionDescriptor
-import java.lang.Exception
 import java.net.InetSocketAddress
 
 /**
@@ -23,7 +22,7 @@ import java.net.InetSocketAddress
  */
 class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
                                  private val identPacketConverter: IdentPacketConverter,
-                                 private val eventReceiver: XConnectorEvents): NettyIO(), XPeerConnection {
+                                 private val eventReceiver: XConnectorEvents) : NettyIO(), XPeerConnection {
 
     private val outerThis = this
 
@@ -35,7 +34,6 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
             serverBootstrap.group(group)
             serverBootstrap.channel(NioServerSocketChannel::class.java)
             serverBootstrap.localAddress(InetSocketAddress(peerInfo.host, peerInfo.port))
-            val that = this
             serverBootstrap.childHandler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(socketChannel: SocketChannel) {
                     socketChannel.pipeline()
@@ -51,12 +49,13 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
 
     }
 
-    inner class ServerHandler: ChannelInboundHandlerAdapter() {
+    inner class ServerHandler : ChannelInboundHandlerAdapter() {
 
         @Volatile
         private var identified = false
+
         override fun channelRead(context: ChannelHandlerContext, msg: Any) {
-            if(!identified) {
+            if (!identified) {
                 synchronized(identified) {
                     if (!identified) {
                         ctx = context
@@ -81,9 +80,11 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
             val bytes = readOnePacket(msg)
             handler!!.invoke(bytes, connectionDescriptor!!.peerID)
         }
+
         override fun channelReadComplete(ctx: ChannelHandlerContext) {
             ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
         }
+
         override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
             eventReceiver.onPeerDisconnected(connectionDescriptor!!)
             close()

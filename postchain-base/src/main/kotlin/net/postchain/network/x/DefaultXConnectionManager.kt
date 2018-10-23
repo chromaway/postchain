@@ -25,9 +25,18 @@ class DefaultXConnectionManager(
         val connections = mutableMapOf<XPeerID, XPeerConnection>()
     }
 
-    private val chains: MutableMap<Long, Chain> = mutableMapOf<Long, Chain>()
+    private val chains: MutableMap<Long, Chain> = mutableMapOf()
     private val chainIDforBlockchainRID = mutableMapOf<ByteArrayKey, Long>()
     private var isShutDown = false
+
+    @Synchronized
+    override fun shutdown() {
+        isShutDown = true
+        chains.forEach { _, chain ->
+            chain.connections.forEach { _, conn -> conn.close() }
+        }
+        chains.clear()
+    }
 
     @Synchronized
     override fun connectChain(peerConfig: XChainPeerConfiguration, autoConnectAll: Boolean) {
@@ -71,6 +80,62 @@ class DefaultXConnectionManager(
     }
 
     @Synchronized
+    override fun isPeerConnected(chainID: Long, peerID: XPeerID): Boolean {
+        val chain = chains[chainID]
+        if (chain == null) throw ProgrammerMistake("Chain ID not found")
+        return peerID in chain.connections
+    }
+
+    @Synchronized
+    override fun getConnectedPeers(chainID: Long): List<XPeerID> {
+        val chain = chains[chainID]
+        if (chain == null) throw ProgrammerMistake("Chain ID not found")
+        return chain.connections.keys.toList()
+    }
+
+    @Synchronized
+    override fun sendPacket(data: LazyPacket, chainID: Long, peerID: XPeerID) {
+        val chain = chains[chainID]
+        if (chain == null) throw ProgrammerMistake("Chain ID not found")
+        val conn = chain.connections[peerID]
+        if (conn != null) {
+            conn.sendPacket(data)
+        }
+    }
+
+    @Synchronized
+    override fun broadcastPacket(data: LazyPacket, chainID: Long) {
+        // TODO: lazypacket might be computed multiple times
+        val chain = chains[chainID]
+        if (chain == null) throw ProgrammerMistake("Chain ID not found")
+        chain.connections.forEach { _, conn ->
+            conn.sendPacket(data)
+        }
+    }
+
+    @Synchronized
+    override fun disconnectChainPeer(chainID: Long, peerID: XPeerID) {
+        val chain = chains[chainID]
+        if (chain == null) throw ProgrammerMistake("Chain ID not found")
+        val conn = chain.connections[peerID]
+        if (conn != null) {
+            conn.close()
+            chain.connections.remove(peerID)
+        }
+    }
+
+    @Synchronized
+    override fun disconnectChain(chainID: Long) {
+        val chain = chains[chainID]
+        if (chain != null) {
+            chain.connections.forEach { peerID, conn ->
+                conn.close()
+            }
+            chain.connections.clear()
+        }
+    }
+
+    @Synchronized
     override fun onPeerConnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection): XPacketHandler? {
         val chainID = chainIDforBlockchainRID[descriptor.blockchainRID]
         val chain = if (chainID != null) chains[chainID] else null
@@ -109,70 +174,4 @@ class DefaultXConnectionManager(
             connectorConnectPeer(chain.peerConfig, descriptor.peerID)
         }
     }
-
-    @Synchronized
-    override fun disconnectChain(chainID: Long) {
-        val chain = chains[chainID]
-        if (chain != null) {
-            chain.connections.forEach { peerID, conn ->
-                conn.close()
-            }
-            chain.connections.clear()
-        }
-    }
-
-    @Synchronized
-    override fun disconnectChainPeer(chainID: Long, peerID: XPeerID) {
-        val chain = chains[chainID]
-        if (chain == null) throw ProgrammerMistake("Chain ID not found")
-        val conn = chain.connections[peerID]
-        if (conn != null) {
-            conn.close()
-            chain.connections.remove(peerID)
-        }
-    }
-
-    @Synchronized
-    override fun isPeerConnected(chainID: Long, peerID: XPeerID): Boolean {
-        val chain = chains[chainID]
-        if (chain == null) throw ProgrammerMistake("Chain ID not found")
-        return peerID in chain.connections
-    }
-
-    @Synchronized
-    override fun shutdown() {
-        isShutDown = true
-        chains.forEach { _, chain ->
-            chain.connections.forEach { _, conn -> conn.close() }
-        }
-        chains.clear()
-    }
-
-    @Synchronized
-    override fun getConnectedPeers(chainID: Long): List<XPeerID> {
-        val chain = chains[chainID]
-        if (chain == null) throw ProgrammerMistake("Chain ID not found")
-        return chain.connections.keys.toList()
-    }
-
-    @Synchronized
-    override fun broadcastPacket(data: LazyPacket, chainID: Long) {
-        // TODO: lazypacket might be computed multiple times
-        val chain = chains[chainID]
-        if (chain == null) throw ProgrammerMistake("Chain ID not found")
-        chain.connections.forEach { _, conn ->
-            conn.sendPacket(data)
-        }
-    }
-
-    @Synchronized
-    override fun sendPacket(data: LazyPacket, chainID: Long, peerID: XPeerID) {
-        val chain = chains[chainID]
-        if (chain == null) throw ProgrammerMistake("Chain ID not found")
-        val conn = chain.connections[peerID]
-        if (conn != null) {
-            conn.sendPacket(data)
-        }
-    }
-
 }

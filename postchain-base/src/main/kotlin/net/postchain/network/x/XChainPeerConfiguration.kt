@@ -4,7 +4,7 @@ import net.postchain.base.PeerCommConfiguration
 import net.postchain.network.IdentPacketConverter
 
 /* TODO: merge with PeerCommConfiguration */
-class XChainPeerConfiguration(
+open class XChainPeerConfiguration(
         val chainID: Long,
         val commConfiguration: PeerCommConfiguration,
         val packetHandler: XPacketHandler,

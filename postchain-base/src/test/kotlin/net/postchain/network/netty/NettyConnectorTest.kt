@@ -9,14 +9,11 @@ import net.postchain.network.x.*
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
-import java.lang.RuntimeException
 
 class NettyConnectorTest {
 
     private val key = "key"
-
     private val message = "msg"
-
     var connections: MutableList<XPeerConnection>? = null
 
     @Before
@@ -25,11 +22,10 @@ class NettyConnectorTest {
     }
 
     inner class ServerConnectorEventsImpl(private val receivedMessages: MutableList<String>,
-                                          private val receivedErrors: MutableList<String>): XConnectorEvents {
+                                          private val receivedErrors: MutableList<String>) : XConnectorEvents {
         override fun onPeerConnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection): XPacketHandler? {
             connections!!.add(connection)
-            return {
-                data: ByteArray, peerID: XPeerID ->
+            return { data: ByteArray, peerID: XPeerID ->
                 receivedMessages.add(String(data))
             }
         }
@@ -40,11 +36,10 @@ class NettyConnectorTest {
     }
 
     inner class ClientConnectorEventsImpl(private val receivedMessages: MutableList<String>,
-                                          private val receivedErrors: MutableList<String>): XConnectorEvents {
+                                          private val receivedErrors: MutableList<String>) : XConnectorEvents {
         override fun onPeerConnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection): XPacketHandler? {
             connections!!.add(connection)
-            return {
-                data: ByteArray, peerID: XPeerID ->
+            return { data: ByteArray, peerID: XPeerID ->
                 receivedMessages.add(String(data))
             }
         }
@@ -55,7 +50,7 @@ class NettyConnectorTest {
     }
 
     inner class ServerConnectorEventsImplException(private val receivedMessages: MutableList<String>,
-                                          private val receivedErrors: MutableList<String>): XConnectorEvents {
+                                                   private val receivedErrors: MutableList<String>) : XConnectorEvents {
         override fun onPeerConnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection): XPacketHandler? {
             throw RuntimeException()
         }
@@ -65,13 +60,12 @@ class NettyConnectorTest {
         }
     }
 
-    inner class IdentPacketConverterImpl: IdentPacketConverter {
+    inner class IdentPacketConverterImpl : IdentPacketConverter {
         override fun makeIdentPacket(forPeer: PeerID) = forPeer
 
-        override fun parseIdentPacket(bytes: ByteArray): IdentPacketInfo  {
+        override fun parseIdentPacket(bytes: ByteArray): IdentPacketInfo {
             return IdentPacketInfo(bytes, bytes)
         }
-
     }
 
     @Test(timeout = 10000)
@@ -80,25 +74,33 @@ class NettyConnectorTest {
 
         val serverReceivedMessages = mutableListOf<String>()
         val serverReceivedErrors = mutableListOf<String>()
-        val peerInfo = PeerInfo("localhost", 8080, key.toByteArray())
-        val connector = NettyConnector(peerInfo, ServerConnectorEventsImpl(serverReceivedMessages, serverReceivedErrors), identPacketConverter)
-
+        val peerInfo1 = PeerInfo("localhost", 8080, key.toByteArray())
+        val connector1 = NettyConnector(
+                peerInfo1,
+                ServerConnectorEventsImpl(serverReceivedMessages, serverReceivedErrors),
+                identPacketConverter)
 
         val clientReceivedMessages = mutableListOf<String>()
         val clientReceivedErrors = mutableListOf<String>()
         val peerInfo2 = PeerInfo("localhost", 8081, key.toByteArray())
-        val connector2 = NettyConnector(peerInfo2, ClientConnectorEventsImpl(clientReceivedMessages, clientReceivedErrors), identPacketConverter)
+        val connector2 = NettyConnector(
+                peerInfo2,
+                ClientConnectorEventsImpl(clientReceivedMessages, clientReceivedErrors),
+                identPacketConverter)
 
-        val xPeerConnectionDescriptor = XPeerConnectionDescriptor(ByteArrayKey("peerId2".toByteArray()), ByteArrayKey("blockchainId2".toByteArray()))
+        val xPeerConnectionDescriptor = XPeerConnectionDescriptor(
+                ByteArrayKey("peerId2".toByteArray()),
+                ByteArrayKey("blockchainId2".toByteArray()))
 
-        connector2.connectPeer(xPeerConnectionDescriptor, peerInfo)
+        connector2.connectPeer(xPeerConnectionDescriptor, peerInfo1)
 
         Thread.sleep(1_000)
 
         connections!!.forEach {
             it.sendPacket { message.toByteArray() }
         }
-        while(!serverReceivedMessages.contains(message) && !clientReceivedMessages.contains(message)){}
+        while (!serverReceivedMessages.contains(message) && !clientReceivedMessages.contains(message)) {
+        }
         Assert.assertTrue(serverReceivedErrors.isEmpty())
         Assert.assertTrue(clientReceivedErrors.isEmpty())
     }
