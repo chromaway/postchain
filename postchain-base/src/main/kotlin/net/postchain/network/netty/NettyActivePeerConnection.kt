@@ -3,10 +3,10 @@ package net.postchain.network.netty
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInitializer
+import io.netty.channel.EventLoopGroup
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 import net.postchain.base.PeerInfo
 import net.postchain.network.*
 import net.postchain.network.x.XConnectorEvents
@@ -17,7 +17,8 @@ import java.net.InetSocketAddress
 class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
                                 private val descriptor: XPeerConnectionDescriptor,
                                 private val identPacketConverter: IdentPacketConverter,
-                                private val eventReceiver: XConnectorEvents): NettyIO(), XPeerConnection {
+                                private val eventReceiver: XConnectorEvents,
+                                eventLoopGroup: EventLoopGroup): NettyIO(eventLoopGroup), XPeerConnection {
 
     private val outerThis = this
 
@@ -30,7 +31,7 @@ class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
             clientBootstrap.handler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(socketChannel: SocketChannel) {
                     socketChannel.pipeline()
-                            .addLast(LengthFieldBasedFrameDecoder(MAX_PAYLOAD_SIZE, 0, packetSizeLength, 0, 0))
+                            .addLast(frameDecoder)
                             .addLast(ClientHandler())
                 }
             })

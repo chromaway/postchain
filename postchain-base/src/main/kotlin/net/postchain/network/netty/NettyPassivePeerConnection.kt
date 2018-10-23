@@ -5,13 +5,12 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.ChannelInitializer
+import io.netty.channel.EventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 import net.postchain.base.PeerInfo
 import net.postchain.core.ByteArrayKey
 import net.postchain.network.IdentPacketConverter
-import net.postchain.network.MAX_PAYLOAD_SIZE
 import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPeerConnection
 import net.postchain.network.x.XPeerConnectionDescriptor
@@ -23,7 +22,8 @@ import java.net.InetSocketAddress
  */
 class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
                                  private val identPacketConverter: IdentPacketConverter,
-                                 private val eventReceiver: XConnectorEvents): NettyIO(), XPeerConnection {
+                                 private val eventReceiver: XConnectorEvents,
+                                 eventLoopGroup: EventLoopGroup): NettyIO(eventLoopGroup), XPeerConnection {
 
     private val outerThis = this
 
@@ -39,7 +39,7 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
             serverBootstrap.childHandler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(socketChannel: SocketChannel) {
                     socketChannel.pipeline()
-                            .addLast(LengthFieldBasedFrameDecoder(MAX_PAYLOAD_SIZE, 0, packetSizeLength, 0, 0))
+                            .addLast(frameDecoder)
                             .addLast(ServerHandler())
                 }
             })
@@ -48,7 +48,6 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
         } catch (e: Exception) {
             logger.error(e.toString())
         }
-
     }
 
     inner class ServerHandler: ChannelInboundHandlerAdapter() {

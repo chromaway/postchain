@@ -3,8 +3,11 @@ package net.postchain.network.netty
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.EventLoopGroup
 import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 import mu.KLogging
+import net.postchain.network.MAX_PAYLOAD_SIZE
 import net.postchain.network.x.LazyPacket
 import net.postchain.network.x.XPacketHandler
 import java.nio.ByteBuffer
@@ -12,20 +15,17 @@ import java.nio.ByteBuffer
 /**
  * ruslan.klymenko@zorallabs.com 19.10.18
  */
-object NettyGroupHolder {
-    val group = NioEventLoopGroup()
-}
-abstract class NettyIO {
+abstract class NettyIO(protected val group: EventLoopGroup) {
 
     companion object : KLogging()
 
+    protected val packetSizeLength = 4
+    protected val frameDecoder = LengthFieldBasedFrameDecoder(MAX_PAYLOAD_SIZE, 0, packetSizeLength, 0, packetSizeLength)
+
+
     protected var handler: XPacketHandler? = null
 
-    protected val packetSizeLength = 4
     protected var ctx: ChannelHandlerContext? = null
-
-    protected val group = NettyGroupHolder.group
-
 
     init {
         Thread({startSocket()}).start()
@@ -33,10 +33,7 @@ abstract class NettyIO {
 
     protected fun readOnePacket(msg: Any): ByteArray {
         val inBuffer = msg as ByteBuf
-        val packetSizeHolder = ByteArray(packetSizeLength)
-        inBuffer.readBytes(packetSizeHolder)
-        val packetSize = ByteBuffer.wrap(packetSizeHolder).getInt()
-        val bytes = ByteArray(packetSize)
+        val bytes = ByteArray(inBuffer.readableBytes())
         inBuffer.readBytes(bytes)
         return bytes
     }
