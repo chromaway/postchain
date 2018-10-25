@@ -11,6 +11,7 @@ import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import java.lang.RuntimeException
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 class NettyConnectorTest {
@@ -240,8 +241,8 @@ class NettyConnectorTest {
         val connector = NettyConnector(peerInfo, ServerConnectorEventsImpl(serverReceivedMessages, serverReceivedErrors), identPacketConverter)
 
 
-        val clientReceivedMessages = mutableListOf<String>()
-        val clientReceivedErrors = mutableListOf<String>()
+        val clientReceivedMessages = Collections.synchronizedList(mutableListOf<String>())
+        val clientReceivedErrors = Collections.synchronizedList(mutableListOf<String>())
         val peerInfo2 = PeerInfo("localhost", 8081, key.toByteArray())
         val connector2 = NettyConnector(peerInfo2, ClientConnectorEventsImpl(clientReceivedMessages, clientReceivedErrors), identPacketConverter)
 
@@ -250,14 +251,15 @@ class NettyConnectorTest {
         connector2.connectPeer(xPeerConnectionDescriptor, peerInfo)
 
         Thread.sleep(2_000)
-        val expectedServerReceivedMessages = mutableListOf<String>()
-        val expectedClientReceivedMessages = mutableListOf<String>()
-        (1 .. 1_000).forEach {
+
+        val requestAmount = 1_000
+        //todo: ERROR ResourceLeakDetector - LEAK: ByteBuf.release() was not called before it's garbage-collected.
+        val expectedServerReceivedMessages = (1 .. requestAmount).map { message }
+        val expectedClientReceivedMessages = (1 .. requestAmount).map { message }
+        (1 .. requestAmount).forEach {
             connections!!.forEach {
                 it.sendPacket { message.toByteArray() }
             }
-            expectedServerReceivedMessages.add(message)
-            expectedClientReceivedMessages.add(message)
         }
 
         Awaitility.await()
