@@ -35,10 +35,10 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
             serverBootstrap.group(group)
             serverBootstrap.channel(NioServerSocketChannel::class.java)
             serverBootstrap.localAddress(InetSocketAddress(peerInfo.host, peerInfo.port))
-            val that = this
             serverBootstrap.childHandler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(socketChannel: SocketChannel) {
                     socketChannel.pipeline()
+                            .addLast(NettyIO.framePrepender)
                             .addLast(frameDecoder)
                             .addLast(ServerHandler())
                 }
@@ -85,7 +85,7 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
             }
         }
         override fun channelReadComplete(ctx: ChannelHandlerContext) {
-            ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
+            ctx.writeAndFlush(Unpooled.EMPTY_BUFFER, ctx.voidPromise())
         }
         override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
             eventReceiver.onPeerDisconnected(connectionDescriptor!!)

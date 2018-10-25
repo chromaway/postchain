@@ -1,6 +1,7 @@
 package net.postchain.network.x
 
 import net.postchain.base.PeerInfo
+import net.postchain.core.Shutdownable
 import net.postchain.network.IdentPacketConverter
 
 interface XPeerConnection {
@@ -16,7 +17,7 @@ interface XConnectorEvents {
     fun onPeerDisconnected(descriptor: XPeerConnectionDescriptor)
 }
 
-interface XConnector {
+interface XConnector: Shutdownable {
     fun connectPeer(descriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo)
 }
 

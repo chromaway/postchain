@@ -111,6 +111,41 @@ class NettyConnectorTest {
 
         connector2.connectPeer(xPeerConnectionDescriptor, peerInfo)
 
+        Thread.sleep(2_000)
+        connections!!.forEach {
+            it.sendPacket { message.toByteArray() }
+        }
+
+        Awaitility.await()
+                .atMost(10, TimeUnit.SECONDS)
+                .untilAsserted {
+                    Assert.assertEquals(listOf(message), serverReceivedMessages)
+                    Assert.assertEquals(listOf(message), clientReceivedMessages)
+
+                    Assert.assertTrue(serverReceivedErrors.isEmpty())
+                    Assert.assertTrue(clientReceivedErrors.isEmpty())
+                }
+    }
+
+    @Test
+    fun testNettyConnectorMultiplePositive() {
+        val identPacketConverter = IdentPacketConverterImpl()
+
+        val serverReceivedMessages = mutableListOf<String>()
+        val serverReceivedErrors = mutableListOf<String>()
+        val peerInfo = PeerInfo("localhost", 8080, key.toByteArray())
+        val connector = NettyConnector(peerInfo, ServerConnectorEventsImpl(serverReceivedMessages, serverReceivedErrors), identPacketConverter)
+
+
+        val clientReceivedMessages = mutableListOf<String>()
+        val clientReceivedErrors = mutableListOf<String>()
+        val peerInfo2 = PeerInfo("localhost", 8081, key.toByteArray())
+        val connector2 = NettyConnector(peerInfo2, ClientConnectorEventsImpl(clientReceivedMessages, clientReceivedErrors), identPacketConverter)
+
+        val xPeerConnectionDescriptor = XPeerConnectionDescriptor(ByteArrayKey("peerId2".toByteArray()), ByteArrayKey("blockchainId2".toByteArray()))
+
+        connector2.connectPeer(xPeerConnectionDescriptor, peerInfo)
+
         val client2ReceivedMessages = mutableListOf<String>()
         val client2ReceivedErrors = mutableListOf<String>()
         val peerInfo3 = PeerInfo("localhost", 8082, key.toByteArray())
@@ -191,6 +226,48 @@ class NettyConnectorTest {
                 .atMost(2, TimeUnit.SECONDS)
                 .untilAsserted {
                     Assert.assertTrue(serverReceivedErrors.contains(String(peerId.byteArray)))
+                }
+    }
+
+
+    @Test
+    fun testNettyPerformance() {
+        val identPacketConverter = IdentPacketConverterImpl()
+
+        val serverReceivedMessages = mutableListOf<String>()
+        val serverReceivedErrors = mutableListOf<String>()
+        val peerInfo = PeerInfo("localhost", 8080, key.toByteArray())
+        val connector = NettyConnector(peerInfo, ServerConnectorEventsImpl(serverReceivedMessages, serverReceivedErrors), identPacketConverter)
+
+
+        val clientReceivedMessages = mutableListOf<String>()
+        val clientReceivedErrors = mutableListOf<String>()
+        val peerInfo2 = PeerInfo("localhost", 8081, key.toByteArray())
+        val connector2 = NettyConnector(peerInfo2, ClientConnectorEventsImpl(clientReceivedMessages, clientReceivedErrors), identPacketConverter)
+
+        val xPeerConnectionDescriptor = XPeerConnectionDescriptor(ByteArrayKey("peerId2".toByteArray()), ByteArrayKey("blockchainId2".toByteArray()))
+
+        connector2.connectPeer(xPeerConnectionDescriptor, peerInfo)
+
+        Thread.sleep(2_000)
+        val expectedServerReceivedMessages = mutableListOf<String>()
+        val expectedClientReceivedMessages = mutableListOf<String>()
+        (1 .. 1_000).forEach {
+            connections!!.forEach {
+                it.sendPacket { message.toByteArray() }
+            }
+            expectedServerReceivedMessages.add(message)
+            expectedClientReceivedMessages.add(message)
+        }
+
+        Awaitility.await()
+                .atMost(10, TimeUnit.SECONDS)
+                .untilAsserted {
+                    Assert.assertEquals(expectedServerReceivedMessages, serverReceivedMessages)
+                    Assert.assertEquals(expectedClientReceivedMessages, clientReceivedMessages)
+
+                    Assert.assertTrue(serverReceivedErrors.isEmpty())
+                    Assert.assertTrue(clientReceivedErrors.isEmpty())
                 }
     }
 }

@@ -1,12 +1,14 @@
 package net.postchain.network.netty
 
 import io.netty.bootstrap.Bootstrap
+import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
+import io.netty.handler.codec.LengthFieldPrepender
 import net.postchain.base.PeerInfo
 import net.postchain.network.*
 import net.postchain.network.x.XConnectorEvents
@@ -31,6 +33,7 @@ class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
             clientBootstrap.handler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(socketChannel: SocketChannel) {
                     socketChannel.pipeline()
+                            .addLast(NettyIO.framePrepender)
                             .addLast(frameDecoder)
                             .addLast(ClientHandler())
                 }
@@ -59,7 +62,9 @@ class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
         override fun channelRead0(channelHandlerContext: ChannelHandlerContext, o: Any) {
             if(handler != null) {
                 val bytes = readOnePacket(o)
-                handler!!.invoke(bytes, descriptor.peerID)
+                if(bytes.isNotEmpty()) {
+                    handler!!.invoke(bytes, descriptor.peerID)
+                }
             } else {
                 logger.error("${this::class.java.name}, handler is null")
             }

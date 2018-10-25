@@ -21,5 +21,9 @@ class NettyConnector(private val myPeerInfo: PeerInfo,
         NettyActivePeerConnection(peerInfo, descriptor, identPacketConverter, eventReceiver, group)
     }
 
+    override fun shutdown() {
+        group.shutdownGracefully().sync()
+    }
+
 
 }
