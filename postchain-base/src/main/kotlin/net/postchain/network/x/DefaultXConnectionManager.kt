@@ -125,10 +125,11 @@ class DefaultXConnectionManager(
     override fun disconnectChain(chainID: Long) {
         val chain = chains[chainID]
         if (chain != null) {
-            chain.connections.forEach { peerID, conn ->
+            chain.connections.forEach { _, conn ->
                 conn.close()
             }
             chain.connections.clear()
+            chains.remove(chainID)
         }
     }
 
