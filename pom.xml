@@ -170,10 +170,10 @@
                         <version>2.22.0</version>
                         <configuration>
                             <includes>
-                                <!--<include>**/*Test.java</include>-->
-                                <!--<include>**/*Nightly.java</include>-->
+                                <include>**/*Test.java</include>
+                                <include>**/*Nightly.java</include>
 
-                                <include>**/DefaultXConnectionManagerTest.java</include>
+                                <!--<include>**/DefaultXConnectionManagerTest.java</include>-->
                             </includes>
                         </configuration>
                     </plugin>
