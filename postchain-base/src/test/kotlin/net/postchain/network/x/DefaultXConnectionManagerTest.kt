@@ -304,17 +304,53 @@ class DefaultXConnectionManagerTest {
             val internalChains = FieldUtils.readField(this, "chains", true) as Map<*, *>
             assertTrue { internalChains.isEmpty() }
         }
-
     }
-
-
-    ////////////////////////////////////////////////////////////////////////////////
-
 
     @Test(expected = ProgrammerMistake::class)
     fun sendPacket_will_result_in_exception_if_chain_is_not_connected() {
         DefaultXConnectionManager(defaultConnectorFactory, peerInfo1, packetConverter1)
                 .sendPacket({ byteArrayOf() }, 1, peerInfo2.peerId())
+    }
+
+    @Test
+    fun sendPacket_sends_packet_to_receiver_via_connection_successfully() {
+        // Given
+        val connector: XConnector = mock {
+            on { connectPeer(any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
+        }
+        val connectorFactory: XConnectorFactory = mock {
+            on { createConnector(any(), any(), any()) } doReturn connector
+        }
+        val communicationConfig: PeerCommConfiguration = mock {
+            on { blockchainRID } doReturn blockchainRid
+            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+            on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
+            on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
+        }
+        val chainPeerConfig: XChainPeerConfiguration = mock {
+            on { chainID } doReturn 1L
+            on { commConfiguration } doReturn communicationConfig
+        }
+        val connection1: XPeerConnection = mock()
+        val connection2: XPeerConnection = mock()
+
+        // When
+        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1).apply {
+            connectChain(chainPeerConfig, true) // With autoConnect
+
+            // Emulates call of onPeerConnected() by XConnector
+            onPeerConnected(peerConnectionDescriptor1, connection1)
+            onPeerConnected(peerConnectionDescriptor2, connection2)
+
+            sendPacket({ byteArrayOf(0x04, 0x02) }, 1L, peerInfo2.peerId())
+        }
+
+        // Then / verify and assert
+        verify(connection1, times(0)).sendPacket(any())
+        argumentCaptor<LazyPacket>().apply {
+            verify(connection2, times(1)).sendPacket(capture())
+            assert(firstValue()).isСontentEqualTo(byteArrayOf(0x04, 0x02))
+        }
     }
 
     @Test(expected = ProgrammerMistake::class)
@@ -323,5 +359,48 @@ class DefaultXConnectionManagerTest {
                 .broadcastPacket({ byteArrayOf() }, 1)
     }
 
+    @Test
+    fun broadcastPacket_sends_packet_to_all_receivers_successfully() {
+        // Given
+        val connector: XConnector = mock {
+            on { connectPeer(any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
+        }
+        val connectorFactory: XConnectorFactory = mock {
+            on { createConnector(any(), any(), any()) } doReturn connector
+        }
+        val communicationConfig: PeerCommConfiguration = mock {
+            on { blockchainRID } doReturn blockchainRid
+            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+            on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
+            on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
+        }
+        val chainPeerConfig: XChainPeerConfiguration = mock {
+            on { chainID } doReturn 1L
+            on { commConfiguration } doReturn communicationConfig
+        }
+        val connection1: XPeerConnection = mock()
+        val connection2: XPeerConnection = mock()
+
+        // When
+        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1).apply {
+            connectChain(chainPeerConfig, true) // With autoConnect
+
+            // Emulates call of onPeerConnected() by XConnector
+            onPeerConnected(peerConnectionDescriptor1, connection1)
+            onPeerConnected(peerConnectionDescriptor2, connection2)
+
+            broadcastPacket({ byteArrayOf(0x04, 0x02) }, 1L)
+        }
+
+        // Then / verify and assert
+        argumentCaptor<LazyPacket>().apply {
+            verify(connection1, times(1)).sendPacket(capture())
+            assert(firstValue()).isСontentEqualTo(byteArrayOf(0x04, 0x02))
+        }
+        argumentCaptor<LazyPacket>().apply {
+            verify(connection2, times(1)).sendPacket(capture())
+            assert(firstValue()).isСontentEqualTo(byteArrayOf(0x04, 0x02))
+        }
+    }
 
 }

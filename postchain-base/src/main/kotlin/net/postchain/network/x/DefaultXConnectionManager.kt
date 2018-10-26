@@ -96,10 +96,7 @@ class DefaultXConnectionManager(
     @Synchronized
     override fun sendPacket(data: LazyPacket, chainID: Long, peerID: XPeerID) {
         val chain = chains[chainID] ?: throw ProgrammerMistake("Chain ID not found: $chainID")
-        val conn = chain.connections[peerID]
-        if (conn != null) {
-            conn.sendPacket(data)
-        }
+        chain.connections[peerID]?.sendPacket(data)
     }
 
     @Synchronized
