@@ -116,7 +116,6 @@ class NettyConnectorTest {
         connections!!.forEach {
             it.sendPacket { message.toByteArray() }
         }
-
         Awaitility.await()
                 .atMost(10, TimeUnit.SECONDS)
                 .untilAsserted {
@@ -126,6 +125,8 @@ class NettyConnectorTest {
                     Assert.assertTrue(serverReceivedErrors.isEmpty())
                     Assert.assertTrue(clientReceivedErrors.isEmpty())
                 }
+        connector.shutdown()
+        connector2.shutdown()
     }
 
     @Test
@@ -171,6 +172,9 @@ class NettyConnectorTest {
                       Assert.assertTrue(serverReceivedErrors.isEmpty())
                       Assert.assertTrue(clientReceivedErrors.isEmpty())
                   }
+        connector.shutdown()
+        connector2.shutdown()
+        connector3.shutdown()
     }
 
     @Test
@@ -204,6 +208,8 @@ class NettyConnectorTest {
                     Assert.assertTrue(serverReceivedErrors.isEmpty())
                     Assert.assertTrue(clientReceivedErrors.isEmpty())
                 }
+        connector.shutdown()
+        connector2.shutdown()
     }
 
     @Test
@@ -228,6 +234,7 @@ class NettyConnectorTest {
                 .untilAsserted {
                     Assert.assertTrue(serverReceivedErrors.contains(String(peerId.byteArray)))
                 }
+        connector.shutdown()
     }
 
 
@@ -241,8 +248,8 @@ class NettyConnectorTest {
         val connector = NettyConnector(peerInfo, ServerConnectorEventsImpl(serverReceivedMessages, serverReceivedErrors), identPacketConverter)
 
 
-        val clientReceivedMessages = Collections.synchronizedList(mutableListOf<String>())
-        val clientReceivedErrors = Collections.synchronizedList(mutableListOf<String>())
+        val clientReceivedMessages = mutableListOf<String>()
+        val clientReceivedErrors = mutableListOf<String>()
         val peerInfo2 = PeerInfo("localhost", 8081, key.toByteArray())
         val connector2 = NettyConnector(peerInfo2, ClientConnectorEventsImpl(clientReceivedMessages, clientReceivedErrors), identPacketConverter)
 
@@ -261,7 +268,6 @@ class NettyConnectorTest {
                 it.sendPacket { message.toByteArray() }
             }
         }
-
         Awaitility.await()
                 .atMost(10, TimeUnit.SECONDS)
                 .untilAsserted {
@@ -271,5 +277,7 @@ class NettyConnectorTest {
                     Assert.assertTrue(serverReceivedErrors.isEmpty())
                     Assert.assertTrue(clientReceivedErrors.isEmpty())
                 }
+        connector.shutdown()
+        connector2.shutdown()
     }
 }

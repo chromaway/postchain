@@ -8,9 +8,11 @@ import io.netty.channel.ChannelInitializer
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 import net.postchain.base.PeerInfo
 import net.postchain.core.ByteArrayKey
 import net.postchain.network.IdentPacketConverter
+import net.postchain.network.MAX_PAYLOAD_SIZE
 import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPeerConnection
 import net.postchain.network.x.XPeerConnectionDescriptor
@@ -39,7 +41,7 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
                 override fun initChannel(socketChannel: SocketChannel) {
                     socketChannel.pipeline()
                             .addLast(NettyIO.framePrepender)
-                            .addLast(frameDecoder)
+                            .addLast(LengthFieldBasedFrameDecoder(MAX_PAYLOAD_SIZE, 0, packetSizeLength, 0, packetSizeLength))
                             .addLast(ServerHandler())
                 }
             })

@@ -21,9 +21,6 @@ abstract class NettyIO(protected val group: EventLoopGroup) {
         val framePrepender = LengthFieldPrepender(packetSizeLength)
     }
 
-    protected val frameDecoder = LengthFieldBasedFrameDecoder(MAX_PAYLOAD_SIZE, 0, packetSizeLength, 0, packetSizeLength)
-
-
     protected var handler: XPacketHandler? = null
 
     protected var ctx: ChannelHandlerContext? = null
@@ -32,14 +29,14 @@ abstract class NettyIO(protected val group: EventLoopGroup) {
         Thread({startSocket()}).start()
     }
 
-    open protected fun readOnePacket(msg: Any): ByteArray {
+    protected fun readOnePacket(msg: Any): ByteArray {
         val inBuffer = msg as ByteBuf
         val bytes = ByteArray(inBuffer.readableBytes())
         inBuffer.readBytes(bytes)
         return bytes
     }
 
-    open fun sendPacket(packet: LazyPacket) {
+    fun sendPacket(packet: LazyPacket) {
         if(ctx != null) {
             val message = packet.invoke()
             ctx!!.writeAndFlush(Unpooled.wrappedBuffer(message), ctx!!.voidPromise())

@@ -1,13 +1,13 @@
 package net.postchain.network.netty
 
 import io.netty.bootstrap.Bootstrap
-import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 import io.netty.handler.codec.LengthFieldPrepender
 import net.postchain.base.PeerInfo
 import net.postchain.network.*
@@ -34,7 +34,7 @@ class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
                 override fun initChannel(socketChannel: SocketChannel) {
                     socketChannel.pipeline()
                             .addLast(NettyIO.framePrepender)
-                            .addLast(frameDecoder)
+                            .addLast(LengthFieldBasedFrameDecoder(MAX_PAYLOAD_SIZE, 0, packetSizeLength, 0, packetSizeLength))
                             .addLast(ClientHandler())
                 }
             })
