@@ -69,6 +69,11 @@
             <version>${spongycastle.core.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.madgag.spongycastle</groupId>
+            <artifactId>prov</artifactId>
+            <version>${spongycastle.core.version}</version>
+        </dependency>
+        <dependency>
             <groupId>asnrt</groupId>
             <artifactId>asnrt</artifactId>
             <version>${asnrt.version}</version>
