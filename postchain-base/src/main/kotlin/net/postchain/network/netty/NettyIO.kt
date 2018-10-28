@@ -4,10 +4,8 @@ import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.EventLoopGroup
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 import io.netty.handler.codec.LengthFieldPrepender
 import mu.KLogging
-import net.postchain.network.MAX_PAYLOAD_SIZE
 import net.postchain.network.netty.bc.SymmetricEncryptorUtil
 import net.postchain.network.x.LazyPacket
 import net.postchain.network.x.XPacketHandler
@@ -20,11 +18,14 @@ abstract class NettyIO(protected val group: EventLoopGroup) {
     companion object : KLogging() {
         val packetSizeLength = 4
         val framePrepender = LengthFieldPrepender(packetSizeLength)
+        val keySizeBytes = 32
     }
 
     protected var handler: XPacketHandler? = null
 
     protected var ctx: ChannelHandlerContext? = null
+
+    protected var sessionKey: String? = null
 
     init {
         Thread({startSocket()}).start()
@@ -36,13 +37,26 @@ abstract class NettyIO(protected val group: EventLoopGroup) {
         inBuffer.readBytes(bytes)
 
         return if(bytes.isEmpty()) bytes
-               else SymmetricEncryptorUtil.decrypt(bytes, "passphrase", "salt")
+               else SymmetricEncryptorUtil.decrypt(bytes, sessionKey!!, "salt")
+    }
+
+    protected fun readIdentPacket(msg: Any): ByteArray {
+        val inBuffer = msg as ByteBuf
+        val bytes = ByteArray(inBuffer.readableBytes())
+        inBuffer.readBytes(bytes)
+        return bytes
     }
 
     fun sendPacket(packet: LazyPacket) {
         if(ctx != null) {
-            val message = SymmetricEncryptorUtil.encrypt(packet.invoke(), "passphrase", "salt")
+            val message = SymmetricEncryptorUtil.encrypt(packet.invoke(), sessionKey!!, "salt")
             ctx!!.writeAndFlush(Unpooled.wrappedBuffer(message), ctx!!.voidPromise())
+        }
+    }
+
+    fun sendIdentPacket(packet: LazyPacket) {
+        if(ctx != null) {
+            ctx!!.writeAndFlush(Unpooled.wrappedBuffer(packet.invoke()), ctx!!.voidPromise())
         }
     }
 

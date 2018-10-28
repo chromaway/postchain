@@ -5,6 +5,7 @@ import net.postchain.base.PeerInfo
 import net.postchain.core.ByteArrayKey
 import net.postchain.network.IdentPacketConverter
 import net.postchain.network.IdentPacketInfo
+import net.postchain.network.netty.bc.SymmetricEncryptorUtil
 import net.postchain.network.x.*
 import org.awaitility.Awaitility
 import org.junit.Assert
@@ -85,10 +86,12 @@ class NettyConnectorTest {
     }
 
     inner class IdentPacketConverterImpl: IdentPacketConverter {
-        override fun makeIdentPacket(forPeer: PeerID) = forPeer
+        override fun makeIdentPacket(forPeer: PeerID): ByteArray {
+            return SymmetricEncryptorUtil.generatePassphrase(NettyIO.keySizeBytes) + forPeer
+        }
 
         override fun parseIdentPacket(bytes: ByteArray): IdentPacketInfo  {
-            return IdentPacketInfo(bytes, bytes)
+            return IdentPacketInfo(bytes, bytes, bytes.sliceArray(0 .. NettyIO.keySizeBytes))
         }
 
     }
@@ -191,8 +194,6 @@ class NettyConnectorTest {
         val clientReceivedErrors = mutableListOf<String>()
         val peerInfo2 = PeerInfo("localhost", 8084, key.toByteArray())
         val connector2 = NettyConnector(peerInfo2, ClientConnectorEventsImpl(clientReceivedMessages, clientReceivedErrors), identPacketConverter)
-
-        val xPeerConnectionDescriptor = XPeerConnectionDescriptor(ByteArrayKey("peerId2".toByteArray()), ByteArrayKey("blockchainId2".toByteArray()))
 
 
         Thread.sleep(2_000)

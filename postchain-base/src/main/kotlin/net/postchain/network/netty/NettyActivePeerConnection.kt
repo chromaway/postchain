@@ -8,7 +8,6 @@ import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder
-import io.netty.handler.codec.LengthFieldPrepender
 import net.postchain.base.PeerInfo
 import net.postchain.network.*
 import net.postchain.network.x.XConnectorEvents
@@ -50,8 +49,9 @@ class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
         override fun channelActive(channelHandlerContext: ChannelHandlerContext) {
             ctx = channelHandlerContext
             val identPacket = identPacketConverter.makeIdentPacket(myPeerInfo.pubKey)
+            sessionKey = String(identPacket.sliceArray(0 .. NettyIO.keySizeBytes))
             handler = eventReceiver.onPeerConnected(descriptor, outerThis)
-            sendPacket({ identPacket })
+            sendIdentPacket({ identPacket })
         }
 
         override fun exceptionCaught(channelHandlerContext: ChannelHandlerContext, cause: Throwable) {

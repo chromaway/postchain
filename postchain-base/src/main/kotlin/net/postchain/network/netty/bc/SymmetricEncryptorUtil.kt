@@ -9,6 +9,10 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
 import java.security.Security
 import java.util.*
+import org.apache.commons.lang3.RandomUtils.nextBytes
+import java.util.Random
+import java.util.concurrent.ThreadLocalRandom
+
 
 object SymmetricEncryptorUtil {
     private val algorithm = "AES/GCM/NoPadding"
@@ -36,6 +40,13 @@ object SymmetricEncryptorUtil {
                 random)
         return cipher.doFinal(Arrays.copyOfRange(encrypted, 12,
                 encrypted.size))
+    }
+
+    fun generatePassphrase(size: Int): ByteArray {
+        val random = ThreadLocalRandom.current()
+        val randomBytes = ByteArray(size)
+        random.nextBytes(randomBytes)
+        return randomBytes
     }
 
     private fun generateKey(passphrase: String, salt: String): SecretKey {

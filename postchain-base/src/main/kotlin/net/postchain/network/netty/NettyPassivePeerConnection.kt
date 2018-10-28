@@ -74,8 +74,9 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
         }
 
         private fun getConnectionDescriptor(msg: Any): XPeerConnectionDescriptor {
-            val info = identPacketConverter.parseIdentPacket(readOnePacket(msg))
-            return XPeerConnectionDescriptor(ByteArrayKey(info.peerID), ByteArrayKey(info.blockchainRID))
+            val info = identPacketConverter.parseIdentPacket(readIdentPacket(msg))
+            sessionKey = String(info.sessionKey!!)
+            return XPeerConnectionDescriptor(ByteArrayKey(info.peerID), ByteArrayKey(info.blockchainRID), info.sessionKey!!)
         }
 
         private fun readAndHandleInput(msg: Any) {
