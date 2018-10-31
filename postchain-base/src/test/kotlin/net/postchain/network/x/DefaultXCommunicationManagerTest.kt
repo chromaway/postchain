@@ -126,4 +126,18 @@ class DefaultXCommunicationManagerTest {
         // Then
         verify(connectionManager).broadcastPacket(any(), eq(1L))
     }
+
+    @Test
+    fun shutdown_successfully_disconnects_chain() {
+        // Given
+        val connectionManager: XConnectionManager = mock()
+
+        // When
+        DefaultXCommunicationManager(connectionManager, mock(), 1L, mock<PacketConverter<Int>>()).apply {
+            shutdown()
+        }
+
+        // Then
+        verify(connectionManager).disconnectChain(eq(1L))
+    }
 }
