@@ -8,8 +8,8 @@ import net.postchain.core.ProgrammerMistake
 
 interface CommunicationManager<PacketType> {
     fun getPackets(): MutableList<Pair<Int, PacketType>>
-    fun broadcastPacket(packet: PacketType)
     fun sendPacket(packet: PacketType, recipients: Set<Int>)
+    fun broadcastPacket(packet: PacketType)
 }
 
 /**
