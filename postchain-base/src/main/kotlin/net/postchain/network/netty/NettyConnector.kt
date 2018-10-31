@@ -1,5 +1,6 @@
 package net.postchain.network.netty
 
+import io.netty.channel.nio.NioEventLoopGroup
 import net.postchain.base.PeerInfo
 import net.postchain.network.IdentPacketConverter
 import net.postchain.network.x.XConnector
@@ -10,12 +11,17 @@ class NettyConnector(private val myPeerInfo: PeerInfo,
                      private val eventReceiver: XConnectorEvents,
                      private val identPacketConverter: IdentPacketConverter) : XConnector {
 
+    val group = NioEventLoopGroup()
     init {
-        NettyPassivePeerConnection(myPeerInfo, identPacketConverter, eventReceiver)
+        NettyPassivePeerConnection(myPeerInfo, identPacketConverter, eventReceiver, group)
     }
 
     override fun connectPeer(descriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo) {
-        NettyActivePeerConnection(peerInfo, descriptor, identPacketConverter, eventReceiver)
+        NettyActivePeerConnection(peerInfo, descriptor, identPacketConverter, eventReceiver, group)
+    }
+
+    override fun shutdown() {
+        group.shutdownGracefully().sync()
     }
 
 }
