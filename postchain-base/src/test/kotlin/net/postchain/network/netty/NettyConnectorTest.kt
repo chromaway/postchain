@@ -5,14 +5,12 @@ import net.postchain.base.PeerInfo
 import net.postchain.core.ByteArrayKey
 import net.postchain.network.IdentPacketConverter
 import net.postchain.network.IdentPacketInfo
-import net.postchain.network.netty.bc.SymmetricEncryptorUtil
 import net.postchain.network.x.*
 import org.awaitility.Awaitility
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import java.lang.RuntimeException
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 class NettyConnectorTest {
@@ -87,11 +85,11 @@ class NettyConnectorTest {
 
     inner class IdentPacketConverterImpl: IdentPacketConverter {
         override fun makeIdentPacket(forPeer: PeerID): ByteArray {
-            return SymmetricEncryptorUtil.generatePassphrase(NettyIO.keySizeBytes) + forPeer
+            return forPeer
         }
 
         override fun parseIdentPacket(bytes: ByteArray): IdentPacketInfo  {
-            return IdentPacketInfo(bytes, bytes, bytes.sliceArray(0 .. NettyIO.keySizeBytes))
+            return IdentPacketInfo(bytes, bytes, bytes)
         }
 
     }

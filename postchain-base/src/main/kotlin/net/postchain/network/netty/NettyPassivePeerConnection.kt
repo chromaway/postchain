@@ -63,6 +63,7 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
                         ctx = context
                         connectionDescriptor = getConnectionDescriptor(msg)
                         handler = eventReceiver.onPeerConnected(connectionDescriptor!!, outerThis)
+                        sendIdentPacket { sessionKeyHolder.getPublicKey() }
                         identified = true
                     } else {
                         readAndHandleInput(msg)
@@ -75,7 +76,7 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
 
         private fun getConnectionDescriptor(msg: Any): XPeerConnectionDescriptor {
             val info = identPacketConverter.parseIdentPacket(readIdentPacket(msg))
-            sessionKey = String(info.sessionKey!!)
+            sessionKeyHolder.initSessionKey(info.sessionKey!!)
             return XPeerConnectionDescriptor(ByteArrayKey(info.peerID), ByteArrayKey(info.blockchainRID), info.sessionKey!!)
         }
 

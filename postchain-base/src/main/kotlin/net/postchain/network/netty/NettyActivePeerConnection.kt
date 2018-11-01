@@ -48,10 +48,11 @@ class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
 
         override fun channelActive(channelHandlerContext: ChannelHandlerContext) {
             ctx = channelHandlerContext
-            val identPacket = identPacketConverter.makeIdentPacket(myPeerInfo.pubKey)
-            sessionKey = String(identPacket.sliceArray(0 .. NettyIO.keySizeBytes))
+            val identPacket = identPacketConverter.makeIdentPacket(sessionKeyHolder.getPublicKey())
+            //sessionKeyHolder.initSessionKey() = String(identPacket.sliceArray(0 .. NettyIO.keySizeBytes))
             handler = eventReceiver.onPeerConnected(descriptor, outerThis)
             sendIdentPacket({ identPacket })
+
         }
 
         override fun exceptionCaught(channelHandlerContext: ChannelHandlerContext, cause: Throwable) {
@@ -59,7 +60,24 @@ class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
             close()
         }
 
+        @Volatile
+        private var identified = false
         override fun channelRead0(channelHandlerContext: ChannelHandlerContext, o: Any) {
+            if(!identified) {
+                synchronized(identified) {
+                    if (!identified) {
+                        sessionKeyHolder.initSessionKey(readIdentPacket(o))
+                        identified = true
+                    } else {
+                        handleInput(o)
+                    }
+                }
+            } else {
+                handleInput(o)
+            }
+
+        }
+        private fun handleInput(o: Any) {
             if(handler != null) {
                 val bytes = readOnePacket(o)
                 if(bytes.isNotEmpty()) {

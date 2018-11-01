@@ -6,6 +6,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.EventLoopGroup
 import io.netty.handler.codec.LengthFieldPrepender
 import mu.KLogging
+import net.postchain.network.netty.bc.SessionKeyHolder
 import net.postchain.network.netty.bc.SymmetricEncryptorUtil
 import net.postchain.network.x.LazyPacket
 import net.postchain.network.x.XPacketHandler
@@ -25,7 +26,8 @@ abstract class NettyIO(protected val group: EventLoopGroup) {
 
     protected var ctx: ChannelHandlerContext? = null
 
-    protected var sessionKey: String? = null
+    protected var sessionKeyHolder = SessionKeyHolder(keySizeBytes)
+    protected var messagesSent = 0L
 
     init {
         Thread({startSocket()}).start()
@@ -37,7 +39,7 @@ abstract class NettyIO(protected val group: EventLoopGroup) {
         inBuffer.readBytes(bytes)
 
         return if(bytes.isEmpty()) bytes
-               else SymmetricEncryptorUtil.decrypt(bytes, sessionKey!!, "salt")
+               else SymmetricEncryptorUtil.decrypt(bytes, sessionKeyHolder.getSessionKey()!!)!!.byteArray
     }
 
     protected fun readIdentPacket(msg: Any): ByteArray {
@@ -49,7 +51,7 @@ abstract class NettyIO(protected val group: EventLoopGroup) {
 
     fun sendPacket(packet: LazyPacket) {
         if(ctx != null) {
-            val message = SymmetricEncryptorUtil.encrypt(packet.invoke(), sessionKey!!, "salt")
+            val message = SymmetricEncryptorUtil.encrypt(packet.invoke(), sessionKeyHolder.getSessionKey()!!, ++messagesSent)
             ctx!!.writeAndFlush(Unpooled.wrappedBuffer(message), ctx!!.voidPromise())
         }
     }
@@ -70,3 +72,4 @@ abstract class NettyIO(protected val group: EventLoopGroup) {
         this.handler = handler
     }
 }
+class DecodedMessageHolder(val byteArray: ByteArray, val serial: Long)
