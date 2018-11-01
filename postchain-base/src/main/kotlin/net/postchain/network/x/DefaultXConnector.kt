@@ -13,7 +13,7 @@ class DefaultXConnector(
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun connectPeer(descriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo) {
+    override fun connectPeer(descriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo, eventReceiver: XConnectorEvents?) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

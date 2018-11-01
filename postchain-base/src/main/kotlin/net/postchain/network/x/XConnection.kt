@@ -1,5 +1,6 @@
 package net.postchain.network.x
 
+import net.postchain.base.CryptoSystem
 import net.postchain.base.PeerInfo
 import net.postchain.core.Shutdownable
 import net.postchain.network.IdentPacketConverter
@@ -18,11 +19,12 @@ interface XConnectorEvents {
 }
 
 interface XConnector: Shutdownable {
-    fun connectPeer(descriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo)
+    fun connectPeer(descriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo, eventReceiver: XConnectorEvents?)
 }
 
 interface XConnectorFactory {
     fun createConnector(myPeerInfo: PeerInfo,
                         identPacketConverter: IdentPacketConverter,
-                        eventReceiver: XConnectorEvents): XConnector
+                        eventReceiver: XConnectorEvents,
+                        cryptoSystem: CryptoSystem): XConnector
 }

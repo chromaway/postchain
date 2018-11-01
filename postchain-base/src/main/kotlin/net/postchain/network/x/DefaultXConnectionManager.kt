@@ -1,6 +1,7 @@
 package net.postchain.network.x
 
 import mu.KLogging
+import net.postchain.base.CryptoSystem
 import net.postchain.base.PeerInfo
 import net.postchain.core.ByteArrayKey
 import net.postchain.core.ProgrammerMistake
@@ -10,11 +11,12 @@ import net.postchain.network.IdentPacketConverter
 class DefaultXConnectionManager(
         connectorFactory: XConnectorFactory,
         myPeerInfo: PeerInfo,
-        identPacketConverter: IdentPacketConverter
+        identPacketConverter: IdentPacketConverter,
+        cryptoSystem: CryptoSystem
 ) : XConnectionManager, XConnectorEvents {
 
     private val connector = connectorFactory.createConnector(
-            myPeerInfo, identPacketConverter, this)
+            myPeerInfo, identPacketConverter, this, cryptoSystem)
 
     companion object : KLogging()
 
@@ -58,7 +60,10 @@ class DefaultXConnectionManager(
                         peerID,
                         peerConfig.commConfiguration.blockchainRID.byteArrayKeyOf()
                 ),
-                peerInfo)
+                peerInfo,
+                //todo
+                 null
+        )
     }
 
     @Synchronized

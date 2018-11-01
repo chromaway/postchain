@@ -9,9 +9,12 @@ import io.netty.channel.EventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder
+import net.postchain.base.CryptoSystem
 import net.postchain.base.PeerInfo
+import net.postchain.base.secp256k1_ecdh
 import net.postchain.core.ByteArrayKey
 import net.postchain.network.IdentPacketConverter
+import net.postchain.network.IdentPacketInfo
 import net.postchain.network.MAX_PAYLOAD_SIZE
 import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPeerConnection
@@ -25,7 +28,8 @@ import java.net.InetSocketAddress
 class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
                                  private val identPacketConverter: IdentPacketConverter,
                                  private val eventReceiver: XConnectorEvents,
-                                 eventLoopGroup: EventLoopGroup): NettyIO(eventLoopGroup), XPeerConnection {
+                                 eventLoopGroup: EventLoopGroup,
+                                 cryptoSystem: CryptoSystem): NettyIO(eventLoopGroup, cryptoSystem), XPeerConnection {
 
     private val outerThis = this
 
@@ -55,16 +59,16 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
     inner class ServerHandler: ChannelInboundHandlerAdapter() {
 
         @Volatile
-        private var identified = false
+        private var receivedActiveConnectionDescriptor = false
         override fun channelRead(context: ChannelHandlerContext, msg: Any) {
-            if(!identified) {
-                synchronized(identified) {
-                    if (!identified) {
+            if(!receivedActiveConnectionDescriptor) {
+                synchronized(receivedActiveConnectionDescriptor) {
+                    if (!receivedActiveConnectionDescriptor) {
                         ctx = context
                         connectionDescriptor = getConnectionDescriptor(msg)
-                        handler = eventReceiver.onPeerConnected(connectionDescriptor!!, outerThis)
-                        sendIdentPacket { sessionKeyHolder.getPublicKey() }
-                        identified = true
+                        accept(eventReceiver.onPeerConnected(connectionDescriptor!!, outerThis)!!)
+                        sendIdentPacket { peerInfo.pubKey }
+                        receivedActiveConnectionDescriptor = true
                     } else {
                         readAndHandleInput(msg)
                     }
@@ -75,14 +79,21 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
         }
 
         private fun getConnectionDescriptor(msg: Any): XPeerConnectionDescriptor {
-            val info = identPacketConverter.parseIdentPacket(readIdentPacket(msg))
-            sessionKeyHolder.initSessionKey(info.sessionKey!!)
+            val info = identPacketConverter.parseIdentPacket(readPacket(msg))
+            generateSessionKey(info)
             return XPeerConnectionDescriptor(ByteArrayKey(info.peerID), ByteArrayKey(info.blockchainRID), info.sessionKey!!)
+        }
+
+        private fun generateSessionKey(info: IdentPacketInfo) {
+            val ecdh1 = secp256k1_ecdh(peerInfo.privateKey!!, info!!.sessionKey!!)
+            val ecdh2 = secp256k1_ecdh(peerInfo.privateKey!!, info.ephemeralPubKey!!)
+            val digest = cryptoSystem.digest(ecdh1 + ecdh2)
+            sessionKey = digest
         }
 
         private fun readAndHandleInput(msg: Any) {
             if(handler != null) {
-                val bytes = readOnePacket(msg)
+                val bytes = readEncryptedPacket(msg)
                 handler!!.invoke(bytes, connectionDescriptor!!.peerID)
             } else {
                 logger.error("${this::class.java.name}, handler is null")
