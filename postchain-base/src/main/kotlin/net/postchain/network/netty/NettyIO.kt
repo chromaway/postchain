@@ -7,10 +7,10 @@ import io.netty.channel.EventLoopGroup
 import io.netty.handler.codec.LengthFieldPrepender
 import mu.KLogging
 import net.postchain.base.CryptoSystem
-import net.postchain.base.PeerInfo
 import net.postchain.network.netty.bc.SymmetricEncryptorUtil
 import net.postchain.network.x.LazyPacket
 import net.postchain.network.x.XPacketHandler
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * ruslan.klymenko@zorallabs.com 19.10.18
@@ -32,6 +32,8 @@ abstract class NettyIO(protected val group: EventLoopGroup,
     protected lateinit var ctx: ChannelHandlerContext
 
     protected lateinit var sessionKey: ByteArray
+
+    protected val keyTable = ConcurrentHashMap<String, ByteArray>()
 
     init {
         Thread({startSocket()}).start()

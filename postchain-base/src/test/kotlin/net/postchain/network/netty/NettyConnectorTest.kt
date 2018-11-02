@@ -1,14 +1,12 @@
 package net.postchain.network.netty
 
-import net.postchain.base.PeerID
-import net.postchain.base.PeerInfo
-import net.postchain.base.SECP256K1CryptoSystem
-import net.postchain.base.secp256k1_derivePubKey
+import net.postchain.base.*
 import net.postchain.core.ByteArrayKey
 import net.postchain.network.IdentPacketConverter
 import net.postchain.network.IdentPacketInfo
 import net.postchain.network.x.*
 import org.awaitility.Awaitility
+import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -32,6 +30,11 @@ class NettyConnectorTest {
     @Before
     fun setUp() {
         connections = mutableListOf()
+    }
+
+    @After
+    fun shutdown() {
+        connections!!.forEach { it.close() }
     }
 
     inner class ConnectorEventsImpl(private val receivedMessages: MutableList<String>,
@@ -78,13 +81,13 @@ class NettyConnectorTest {
 
         val serverReceivedMessages = mutableListOf<String>()
         val serverReceivedErrors = mutableListOf<String>()
-        val peerInfo = PeerInfo("localhost", 8081, publicKey, privateKey)
+        val peerInfo = PeerInfo("localhost", 9081, publicKey, privateKey)
         val connector = NettyConnector(peerInfo, ConnectorEventsImpl(serverReceivedMessages, serverReceivedErrors), identPacketConverter, cryptoSystem)
 
 
         val clientReceivedMessages = mutableListOf<String>()
         val clientReceivedErrors = mutableListOf<String>()
-        val peerInfo2 = PeerInfo("localhost", 8082, publicKey2, privateKey2)
+        val peerInfo2 = PeerInfo("localhost", 9082, publicKey2, privateKey2)
         val connector2 = NettyConnector(peerInfo2, ConnectorEventsImpl(clientReceivedMessages, clientReceivedErrors), identPacketConverter, cryptoSystem)
 
         val xPeerConnectionDescriptor = XPeerConnectionDescriptor(ByteArrayKey("peerId2".toByteArray()), ByteArrayKey("blockchainId2".toByteArray()))
@@ -115,13 +118,13 @@ class NettyConnectorTest {
 
         val serverReceivedMessages = mutableListOf<String>()
         val serverReceivedErrors = mutableListOf<String>()
-        val peerInfo = PeerInfo("localhost", 8081, publicKey, "wrongKey".toByteArray())
+        val peerInfo = PeerInfo("localhost", 9083, publicKey, "wrongKey".toByteArray())
         val connector = NettyConnector(peerInfo, ConnectorEventsImpl(serverReceivedMessages, serverReceivedErrors), identPacketConverter, cryptoSystem)
 
 
         val clientReceivedMessages = mutableListOf<String>()
         val clientReceivedErrors = mutableListOf<String>()
-        val peerInfo2 = PeerInfo("localhost", 8082, publicKey2, privateKey2)
+        val peerInfo2 = PeerInfo("localhost", 9084, publicKey2, privateKey2)
         val connector2 = NettyConnector(peerInfo2, ConnectorEventsImpl(clientReceivedMessages, clientReceivedErrors), identPacketConverter, cryptoSystem)
 
         val xPeerConnectionDescriptor = XPeerConnectionDescriptor(ByteArrayKey("peerId2".toByteArray()), ByteArrayKey("blockchainId2".toByteArray()))
@@ -142,20 +145,19 @@ class NettyConnectorTest {
         connector2.shutdown()
     }
 
-    // todo: fix, multiple encrypted sessions for passive connection
-   // @Test
+    @Test
     fun testNettyConnectorMultiplePositive() {
         val identPacketConverter = IdentPacketConverterImpl()
 
         val peer1ReceivedMessages = mutableListOf<String>()
         val peer1ReceivedErrors = mutableListOf<String>()
-        val peerInfo = PeerInfo("localhost", 8081, publicKey, privateKey)
+        val peerInfo = PeerInfo("localhost", 9085, publicKey, privateKey)
         val connector = NettyConnector(peerInfo, ConnectorEventsImpl(peer1ReceivedMessages, peer1ReceivedErrors), identPacketConverter, cryptoSystem)
 
 
         val peer2ReceivedMessages = mutableListOf<String>()
         val peer2ReceivedErrors = mutableListOf<String>()
-        val peerInfo2 = PeerInfo("localhost", 8082, publicKey, privateKey)
+        val peerInfo2 = PeerInfo("localhost", 9086, publicKey2, privateKey2)
         val connector2 = NettyConnector(peerInfo2, ConnectorEventsImpl(peer2ReceivedMessages, peer2ReceivedErrors), identPacketConverter, cryptoSystem)
 
         val xPeerConnectionDescriptor = XPeerConnectionDescriptor(ByteArrayKey("peerId2".toByteArray()), ByteArrayKey("blockchainId2".toByteArray()))
@@ -164,14 +166,14 @@ class NettyConnectorTest {
 
         val peer3ReceivedMessages = mutableListOf<String>()
         val peer3ReceivedErrors = mutableListOf<String>()
-        val peerInfo3 = PeerInfo("localhost", 8083, publicKey, privateKey)
+        val peerInfo3 = PeerInfo("localhost", 9087, publicKey, privateKey)
         val connector3 = NettyConnector(peerInfo3, ConnectorEventsImpl(peer3ReceivedMessages, peer3ReceivedErrors), identPacketConverter, cryptoSystem)
 
         val xPeer2ConnectionDescriptor = XPeerConnectionDescriptor(ByteArrayKey("peerId3".toByteArray()), ByteArrayKey("blockchainId3".toByteArray()))
 
         connector3.connectPeer(xPeer2ConnectionDescriptor, peerInfo)
 
-        Thread.sleep(8_000)
+        Thread.sleep(4_000)
         connections!!.forEach {
             it.sendPacket { message.toByteArray() }
         }
@@ -197,13 +199,13 @@ class NettyConnectorTest {
 
         val serverReceivedMessages = mutableListOf<String>()
         val serverReceivedErrors = mutableListOf<String>()
-        val peerInfo = PeerInfo("localhost", 8083, publicKey, privateKey)
+        val peerInfo = PeerInfo("localhost", 9088, publicKey, privateKey)
         val connector = NettyConnector(peerInfo, ConnectorEventsImpl(serverReceivedMessages, serverReceivedErrors), identPacketConverter,cryptoSystem)
 
 
         val clientReceivedMessages = mutableListOf<String>()
         val clientReceivedErrors = mutableListOf<String>()
-        val peerInfo2 = PeerInfo("localhost", 8084, publicKey, privateKey)
+        val peerInfo2 = PeerInfo("localhost", 9089, publicKey, privateKey)
         val connector2 = NettyConnector(peerInfo2, ConnectorEventsImpl(clientReceivedMessages, clientReceivedErrors), identPacketConverter, cryptoSystem)
 
 
@@ -226,7 +228,7 @@ class NettyConnectorTest {
 
     @Test
     fun testNettyConnectorException() {
-        val peerInfo = PeerInfo("localhost", 8089, publicKey, privateKey)
+        val peerInfo = PeerInfo("localhost", 9090, publicKey, privateKey)
 
         val serverReceivedMessages = mutableListOf<String>()
         val serverReceivedErrors = mutableListOf<String>()
@@ -241,7 +243,7 @@ class NettyConnectorTest {
 
         connector.connectPeer(xPeerConnectionDescriptor, peerInfo)
         Awaitility.await()
-                .atMost(2, TimeUnit.SECONDS)
+                .atMost(10, TimeUnit.SECONDS)
                 .untilAsserted {
                     Assert.assertTrue(serverReceivedErrors.size == 1)
                 }
@@ -255,13 +257,13 @@ class NettyConnectorTest {
 
         val serverReceivedMessages = mutableListOf<String>()
         val serverReceivedErrors = mutableListOf<String>()
-        val peerInfo = PeerInfo("localhost", 8081, publicKey, privateKey)
+        val peerInfo = PeerInfo("localhost", 9091, publicKey, privateKey)
         val connector = NettyConnector(peerInfo, ConnectorEventsImpl(serverReceivedMessages, serverReceivedErrors), identPacketConverter, cryptoSystem)
 
 
         val clientReceivedMessages = mutableListOf<String>()
         val clientReceivedErrors = mutableListOf<String>()
-        val peerInfo2 = PeerInfo("localhost", 8082, publicKey, privateKey)
+        val peerInfo2 = PeerInfo("localhost", 9092, publicKey, privateKey)
         val connector2 = NettyConnector(peerInfo2, ConnectorEventsImpl(clientReceivedMessages, clientReceivedErrors), identPacketConverter, cryptoSystem)
 
         val xPeerConnectionDescriptor = XPeerConnectionDescriptor(ByteArrayKey("peerId2".toByteArray()), ByteArrayKey("blockchainId2".toByteArray()))
