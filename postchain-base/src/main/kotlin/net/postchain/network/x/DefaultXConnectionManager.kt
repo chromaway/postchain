@@ -53,7 +53,7 @@ class DefaultXConnectionManager(
                 peerConfig.chainID
 
         if (autoConnectAll) {
-            peerConfig.commConfiguration.peerInfo.forEach {
+            peerConfig.commConfiguration.othersPeerInfo().forEach {
                 connectorConnectPeer(peerConfig, it.pubKey.byteArrayKeyOf())
             }
         }

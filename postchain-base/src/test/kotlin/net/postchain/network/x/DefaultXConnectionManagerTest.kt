@@ -64,7 +64,7 @@ class DefaultXConnectionManagerTest {
         verify(chainPeerConfig, times(3)).chainID
         verify(chainPeerConfig).commConfiguration
         verify(communicationConfig).blockchainRID
-        verify(communicationConfig, never()).peerInfo
+        verify(communicationConfig, never()).othersPeerInfo()
     }
 
     @Test
@@ -87,7 +87,7 @@ class DefaultXConnectionManagerTest {
         verify(chainPeerConfig, times(3)).chainID
         verify(chainPeerConfig, times(2)).commConfiguration
         verify(communicationConfig).blockchainRID
-        verify(communicationConfig).peerInfo
+        verify(communicationConfig).othersPeerInfo()
     }
 
     @Test
@@ -103,8 +103,8 @@ class DefaultXConnectionManagerTest {
         }
         val communicationConfig: PeerCommConfiguration = mock {
             on { blockchainRID } doReturn blockchainRid
-            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
-            on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
+            on { myIndex } doReturn 0
+            on { othersPeerInfo() } doReturn listOf(/*peerInfo1, */peerInfo2)
             on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {
@@ -118,9 +118,9 @@ class DefaultXConnectionManagerTest {
 
         // Then
         verify(chainPeerConfig, times(3)).chainID
-        verify(chainPeerConfig, times(1 + 1 + 2 * 2)).commConfiguration
-        verify(communicationConfig, times(1 + 2 * 1)).blockchainRID
-        verify(communicationConfig).peerInfo
+        verify(chainPeerConfig, times(1 + 1 + 1 * 2)).commConfiguration
+        verify(communicationConfig, times(1 + 1 * 1)).blockchainRID
+        verify(communicationConfig).othersPeerInfo()
     }
 
     @Test(expected = ProgrammerMistake::class)
@@ -158,8 +158,8 @@ class DefaultXConnectionManagerTest {
         }
         val communicationConfig: PeerCommConfiguration = mock {
             on { blockchainRID } doReturn blockchainRid
-            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
-            on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
+            on { myIndex } doReturn 0
+            on { othersPeerInfo() } doReturn listOf(/*peerInfo1, */peerInfo2)
             on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {
@@ -170,7 +170,7 @@ class DefaultXConnectionManagerTest {
         // When
         DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1).apply {
             connectChain(chainPeerConfig, false) // Without connecting to peers
-            connectChainPeer(1, peerInfo1.peerId())
+            connectChainPeer(1, peerInfo2.peerId())
         }
 
         // Then
@@ -190,8 +190,8 @@ class DefaultXConnectionManagerTest {
         }
         val communicationConfig: PeerCommConfiguration = mock {
             on { blockchainRID } doReturn blockchainRid
-            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
-            on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
+            on { myIndex } doReturn 0
+            on { othersPeerInfo() } doReturn listOf(/*peerInfo1, */peerInfo2)
             on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {
@@ -211,9 +211,9 @@ class DefaultXConnectionManagerTest {
 
         // Then
         verify(chainPeerConfig, times(3)).chainID
-        verify(chainPeerConfig, times(1 + 1 + 2 * 2)).commConfiguration
-        verify(communicationConfig, times(1 + 2 * 1)).blockchainRID
-        verify(communicationConfig).peerInfo
+        verify(chainPeerConfig, times(1 + 1 + 1 * 2)).commConfiguration
+        verify(communicationConfig, times(1 + 1 * 1)).blockchainRID
+        verify(communicationConfig).othersPeerInfo()
     }
 
     @Test(expected = ProgrammerMistake::class)
@@ -251,8 +251,8 @@ class DefaultXConnectionManagerTest {
         }
         val communicationConfig: PeerCommConfiguration = mock {
             on { blockchainRID } doReturn blockchainRid
-            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
-            on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
+            on { myIndex } doReturn 0
+            on { othersPeerInfo() } doReturn listOf(/*peerInfo1, */peerInfo2)
             on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {
@@ -323,8 +323,8 @@ class DefaultXConnectionManagerTest {
         }
         val communicationConfig: PeerCommConfiguration = mock {
             on { blockchainRID } doReturn blockchainRid
-            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
-            on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
+            on { myIndex } doReturn 0
+            on { othersPeerInfo() } doReturn listOf(/*peerInfo1, */peerInfo2)
             on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {
@@ -370,8 +370,8 @@ class DefaultXConnectionManagerTest {
         }
         val communicationConfig: PeerCommConfiguration = mock {
             on { blockchainRID } doReturn blockchainRid
-            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
-            on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
+            on { myIndex } doReturn 0
+            on { othersPeerInfo() } doReturn listOf(/*peerInfo1, */peerInfo2)
             on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {

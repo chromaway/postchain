@@ -7,6 +7,7 @@ import net.postchain.core.NODE_ID_AUTO
 import net.postchain.core.RestartHandler
 import net.postchain.ebft.message.EbftMessage
 import net.postchain.network.CommManager
+import net.postchain.network.CommunicationManager
 import kotlin.concurrent.thread
 
 /**
@@ -36,7 +37,7 @@ open class EBFTBlockchainInstanceWorker(
         val blockQueries = engine.getBlockQueries()
         val bestHeight = blockQueries.getBestHeight().get()
         statusManager = BaseStatusManager(
-                communicationManager.peers.size,
+                communicationManager.peers().size,
                 nodeIndex,
                 bestHeight + 1)
 

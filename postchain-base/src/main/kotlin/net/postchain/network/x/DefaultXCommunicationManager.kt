@@ -2,6 +2,7 @@ package net.postchain.network.x
 
 import mu.KLogging
 import net.postchain.base.PeerCommConfiguration
+import net.postchain.base.PeerInfo
 import net.postchain.core.NODE_ID_READ_ONLY
 import net.postchain.core.Shutdownable
 import net.postchain.core.byteArrayKeyOf
@@ -28,6 +29,8 @@ class DefaultXCommunicationManager<PacketType>(
 
         connectionManager.connectChain(peerConfig, true)
     }
+
+    override fun peers(): Array<PeerInfo> = config.peerInfo
 
     @Synchronized
     override fun getPackets(): MutableList<Pair<Int, PacketType>> {
@@ -60,9 +63,8 @@ class DefaultXCommunicationManager<PacketType>(
         // use of parallel processing in different threads
         val decodedPacket = packetConverter.decodePacket(peerID.byteArray, packet)
         synchronized(this) {
-            inboundPackets.add(Pair(
-                    getPeerIndex(peerID),
-                    decodedPacket))
+            inboundPackets.add(
+                    getPeerIndex(peerID) to decodedPacket)
         }
     }
 

@@ -20,4 +20,9 @@ class BasePeerCommConfiguration(override val peerInfo: Array<PeerInfo>,
     override fun verifier(): Verifier {
         return cryptoSystem.makeVerifier()
     }
+
+    override fun othersPeerInfo(): List<PeerInfo> {
+        return peerInfo
+                .filterIndexed { index, _ -> index != myIndex }
+    }
 }
