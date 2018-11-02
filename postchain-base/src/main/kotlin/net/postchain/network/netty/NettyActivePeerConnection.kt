@@ -15,8 +15,7 @@ import net.postchain.network.x.XPeerConnection
 import net.postchain.network.x.XPeerConnectionDescriptor
 import java.net.InetSocketAddress
 
-class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
-                                private val passivePeerInfo: PeerInfo,
+class NettyActivePeerConnection(private val peerInfo: PeerInfo,
                                 private val descriptor: XPeerConnectionDescriptor,
                                 private val identPacketConverter: IdentPacketConverter,
                                 private val eventReceiver: XConnectorEvents,
@@ -33,7 +32,7 @@ class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
             val clientBootstrap = Bootstrap()
             clientBootstrap.group(group)
             clientBootstrap.channel(NioSocketChannel::class.java)
-            clientBootstrap.remoteAddress(InetSocketAddress(passivePeerInfo.host, passivePeerInfo.port))
+            clientBootstrap.remoteAddress(InetSocketAddress(peerInfo.host, peerInfo.port))
             clientBootstrap.handler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(socketChannel: SocketChannel) {
                     socketChannel.pipeline()
@@ -53,10 +52,9 @@ class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
 
         override fun channelActive(channelHandlerContext: ChannelHandlerContext) {
             ctx = channelHandlerContext
-            val identPacket = identPacketConverter.makeIdentPacket(myPeerInfo.pubKey + ephemeralPubKey)
+            val identPacket = identPacketConverter.makeIdentPacket(ephemeralPubKey)
             accept(eventReceiver.onPeerConnected(descriptor, outerThis)!!)
             sendIdentPacket({ identPacket })
-
         }
 
         override fun exceptionCaught(channelHandlerContext: ChannelHandlerContext, cause: Throwable) {
@@ -84,7 +82,7 @@ class NettyActivePeerConnection(private val myPeerInfo: PeerInfo,
         }
 
         private fun generateSessionKey(remotePubKey: ByteArray) {
-            val ecdh1 = secp256k1_ecdh(myPeerInfo.privateKey!!, remotePubKey)
+            val ecdh1 = secp256k1_ecdh(peerInfo.privateKey!!, remotePubKey)
             val ecdh2 = secp256k1_ecdh(ephemeralKey, remotePubKey)
             val digest = cryptoSystem.digest(ecdh1 + ecdh2)
             sessionKey = digest

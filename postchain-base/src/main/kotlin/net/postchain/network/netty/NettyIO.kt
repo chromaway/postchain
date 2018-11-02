@@ -7,6 +7,7 @@ import io.netty.channel.EventLoopGroup
 import io.netty.handler.codec.LengthFieldPrepender
 import mu.KLogging
 import net.postchain.base.CryptoSystem
+import net.postchain.base.PeerInfo
 import net.postchain.network.netty.bc.SymmetricEncryptorUtil
 import net.postchain.network.x.LazyPacket
 import net.postchain.network.x.XPacketHandler

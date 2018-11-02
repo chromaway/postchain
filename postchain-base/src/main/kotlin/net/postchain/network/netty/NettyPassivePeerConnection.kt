@@ -85,8 +85,8 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
         }
 
         private fun generateSessionKey(info: IdentPacketInfo) {
-            val ecdh1 = secp256k1_ecdh(peerInfo.privateKey!!, info!!.sessionKey!!)
-            val ecdh2 = secp256k1_ecdh(peerInfo.privateKey!!, info.ephemeralPubKey!!)
+            val ecdh1 = secp256k1_ecdh(peerInfo.privateKey!!, peerInfo!!.pubKey!!)
+            val ecdh2 = secp256k1_ecdh(peerInfo.privateKey!!, info.sessionKey!!)
             val digest = cryptoSystem.digest(ecdh1 + ecdh2)
             sessionKey = digest
         }

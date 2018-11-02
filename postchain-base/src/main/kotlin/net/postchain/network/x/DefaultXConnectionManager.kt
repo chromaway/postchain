@@ -60,9 +60,7 @@ class DefaultXConnectionManager(
                         peerID,
                         peerConfig.commConfiguration.blockchainRID.byteArrayKeyOf()
                 ),
-                peerInfo,
-                //todo
-                 null
+                peerInfo
         )
     }
 

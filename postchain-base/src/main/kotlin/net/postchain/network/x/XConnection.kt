@@ -19,7 +19,7 @@ interface XConnectorEvents {
 }
 
 interface XConnector: Shutdownable {
-    fun connectPeer(descriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo, eventReceiver: XConnectorEvents?)
+    fun connectPeer(descriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo)
 }
 
 interface XConnectorFactory {

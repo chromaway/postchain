@@ -19,8 +19,8 @@ class NettyConnector(private val myPeerInfo: PeerInfo,
     }
 
 
-    override fun connectPeer(descriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo, eventReceiver: XConnectorEvents?) {
-        NettyActivePeerConnection(peerInfo, myPeerInfo, descriptor, identPacketConverter, eventReceiver!!, group, cryptoSystem)
+    override fun connectPeer(descriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo) {
+        NettyActivePeerConnection(peerInfo, descriptor, identPacketConverter, eventReceiver!!, group, cryptoSystem)
     }
 
     override fun shutdown() {
