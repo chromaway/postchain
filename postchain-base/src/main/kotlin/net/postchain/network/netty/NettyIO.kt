@@ -7,10 +7,11 @@ import io.netty.channel.EventLoopGroup
 import io.netty.handler.codec.LengthFieldPrepender
 import mu.KLogging
 import net.postchain.base.CryptoSystem
+import net.postchain.network.IdentPacketInfo
 import net.postchain.network.netty.bc.SymmetricEncryptorUtil
 import net.postchain.network.x.LazyPacket
 import net.postchain.network.x.XPacketHandler
-import java.util.concurrent.ConcurrentHashMap
+import net.postchain.network.x.XPeerConnectionDescriptor
 
 /**
  * ruslan.klymenko@zorallabs.com 19.10.18
@@ -22,57 +23,46 @@ abstract class NettyIO(protected val group: EventLoopGroup,
         val packetSizeLength = 4
         val framePrepender = LengthFieldPrepender(packetSizeLength)
         val keySizeBytes = 32
+        val identPacketDelimiter = "\\n".toByteArray()
+
+        fun readPacket(msg: Any): ByteArray {
+            val inBuffer = msg as ByteBuf
+            val bytes = ByteArray(inBuffer.readableBytes())
+            inBuffer.readBytes(bytes)
+            return bytes
+        }
+
+        fun parseIdentPacket(bytes: ByteArray): IdentPacketInfo {
+            var lastStart = 0
+            val result = mutableListOf<ByteArray>()
+            bytes.forEachIndexed { indx, it ->
+                if (indx != 0) {
+                    if (bytes[indx - 1] == NettyIO.identPacketDelimiter[0] && it == NettyIO.identPacketDelimiter[1]) {
+                        if (indx - 2 >= 0)
+                            result.add(bytes.sliceArray(lastStart..indx - 2))
+                        lastStart = indx + 1
+                    }
+                }
+            }
+            if (lastStart < bytes.size - 1) {
+                result.add(bytes.sliceArray(lastStart..bytes.size - 1))
+            }
+            return IdentPacketInfo(result[0], result[1], result[2])
+        }
     }
-
-    var messagesSent = 0L
-    protected set
-
-    protected lateinit var handler: XPacketHandler
-
-    protected lateinit var ctx: ChannelHandlerContext
-
-    protected lateinit var sessionKey: ByteArray
-
-    protected val keyTable = ConcurrentHashMap<String, ByteArray>()
 
     init {
         Thread({startSocket()}).start()
     }
 
-    protected fun readEncryptedPacket(msg: Any): ByteArray {
-        val bytes = readPacket(msg)
-        return if(bytes.isEmpty()) bytes
-               else SymmetricEncryptorUtil.decrypt(bytes, sessionKey!!)!!.byteArray
-    }
+    protected fun createIdentPacketBytes(descriptor: XPeerConnectionDescriptor, ephemeralPubKey: ByteArray) =
+            descriptor.peerID.byteArray +
+                    identPacketDelimiter +
+                    descriptor.blockchainRID.byteArray +
+                    identPacketDelimiter +
+                    ephemeralPubKey!!
 
-    protected fun readPacket(msg: Any): ByteArray {
-        val inBuffer = msg as ByteBuf
-        val bytes = ByteArray(inBuffer.readableBytes())
-        inBuffer.readBytes(bytes)
-        return bytes
-    }
-
-    fun sendPacket(packet: LazyPacket) {
-        if(ctx != null) {
-            val message = SymmetricEncryptorUtil.encrypt(packet.invoke(), sessionKey!!, ++messagesSent)
-            ctx!!.writeAndFlush(Unpooled.wrappedBuffer(message), ctx!!.voidPromise())
-        }
-    }
-
-    fun sendIdentPacket(packet: LazyPacket) {
-        if(ctx != null) {
-            ctx!!.writeAndFlush(Unpooled.wrappedBuffer(packet.invoke()), ctx!!.voidPromise())
-        }
-    }
-
-    fun close() {
-        ctx?.close()
-    }
 
     abstract fun startSocket()
-
-    fun accept(handler: XPacketHandler) {
-        this.handler = handler
-    }
 }
 class DecodedMessageHolder(val byteArray: ByteArray, val serial: Long)

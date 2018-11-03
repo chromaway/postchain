@@ -32,11 +32,6 @@ class NettyConnectorTest {
         connections = mutableListOf()
     }
 
-    @After
-    fun shutdown() {
-        connections!!.forEach { it.close() }
-    }
-
     inner class ConnectorEventsImpl(private val receivedMessages: MutableList<String>,
                                           private val receivedErrors: MutableList<String>): XConnectorEvents {
         override fun onPeerConnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection): XPacketHandler? {
@@ -68,9 +63,7 @@ class NettyConnectorTest {
             return forPeer
         }
 
-        override fun parseIdentPacket(bytes: ByteArray): IdentPacketInfo  {
-            return IdentPacketInfo(bytes, bytes, bytes)
-        }
+        override fun parseIdentPacket(bytes: ByteArray) = NettyIO.parseIdentPacket(bytes)
 
     }
 
@@ -98,7 +91,6 @@ class NettyConnectorTest {
         connections!!.forEach {
             it.sendPacket { message.toByteArray() }
         }
-        Thread.sleep(2000)
         Awaitility.await()
                 .atMost(10, TimeUnit.SECONDS)
                 .untilAsserted {
@@ -135,11 +127,10 @@ class NettyConnectorTest {
         connections!!.forEach {
             it.sendPacket { message.toByteArray() }
         }
-
         Awaitility.await()
                 .atMost(10, TimeUnit.SECONDS)
                 .untilAsserted {
-                    Assert.assertTrue(clientReceivedErrors.size == 1)
+                    Assert.assertTrue(serverReceivedErrors.size == 1)
                 }
         connector.shutdown()
         connector2.shutdown()
