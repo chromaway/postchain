@@ -1,14 +1,12 @@
 package net.postchain.network.netty
 
 import io.netty.bootstrap.ServerBootstrap
-import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.socket.SocketChannel
-import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 import net.postchain.base.CryptoSystem
 import net.postchain.base.DynamicPortPeerInfo
@@ -23,6 +21,7 @@ import net.postchain.network.x.*
 import java.lang.Exception
 import java.net.InetSocketAddress
 import io.netty.channel.socket.*
+import io.netty.util.ReferenceCountUtil
 
 /**
  * ruslan.klymenko@zorallabs.com 19.10.18
@@ -105,6 +104,7 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
             } else {
                 readAndHandleInput(msg)
             }
+            ReferenceCountUtil.release(msg)
         }
 
         private fun getConnectionDescriptor(msg: Any): XPeerConnectionDescriptor {

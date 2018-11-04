@@ -3,10 +3,8 @@ package net.postchain.network.netty
 import net.postchain.base.*
 import net.postchain.core.ByteArrayKey
 import net.postchain.network.IdentPacketConverter
-import net.postchain.network.IdentPacketInfo
 import net.postchain.network.x.*
 import org.awaitility.Awaitility
-import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -263,10 +261,9 @@ class NettyConnectorTest {
 
         Thread.sleep(2_000)
 
-        val requestAmount = 1_000
-        //todo: ERROR ResourceLeakDetector - LEAK: ByteBuf.release() was not called before it's garbage-collected.
+        val requestAmount = 100_000
         val expectedServerReceivedMessages = (1 .. requestAmount).map { message }
-        val expectedClientReceivedMessages = (1 .. requestAmount).map { message }
+        val expectedClientReceivedMessages = expectedServerReceivedMessages
         (1 .. requestAmount).forEach {
             connections!!.forEach {
                 it.sendPacket { message.toByteArray() }

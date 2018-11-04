@@ -1,16 +1,11 @@
 package net.postchain.network.netty
 
 import io.netty.buffer.ByteBuf
-import io.netty.buffer.Unpooled
-import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.EventLoopGroup
 import io.netty.handler.codec.LengthFieldPrepender
 import mu.KLogging
 import net.postchain.base.CryptoSystem
 import net.postchain.network.IdentPacketInfo
-import net.postchain.network.netty.bc.SymmetricEncryptorUtil
-import net.postchain.network.x.LazyPacket
-import net.postchain.network.x.XPacketHandler
 import net.postchain.network.x.XPeerConnectionDescriptor
 
 /**
@@ -49,19 +44,18 @@ abstract class NettyIO(protected val group: EventLoopGroup,
             }
             return IdentPacketInfo(result[0], result[1], result[2])
         }
+
+        fun createIdentPacketBytes(descriptor: XPeerConnectionDescriptor, ephemeralPubKey: ByteArray) =
+                descriptor.peerID.byteArray +
+                        identPacketDelimiter +
+                        descriptor.blockchainRID.byteArray +
+                        identPacketDelimiter +
+                        ephemeralPubKey!!
     }
 
     init {
         Thread({startSocket()}).start()
     }
-
-    protected fun createIdentPacketBytes(descriptor: XPeerConnectionDescriptor, ephemeralPubKey: ByteArray) =
-            descriptor.peerID.byteArray +
-                    identPacketDelimiter +
-                    descriptor.blockchainRID.byteArray +
-                    identPacketDelimiter +
-                    ephemeralPubKey!!
-
 
     abstract fun startSocket()
 }

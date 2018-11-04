@@ -21,28 +21,32 @@ class NettyConnector(private val myPeerInfo: PeerInfo,
                      private val identPacketConverter: IdentPacketConverter,
                      private val cryptoSystem: CryptoSystem): XConnector {
 
-    val group: EventLoopGroup
+    val serverEventLoopGroup: EventLoopGroup
+    val clientEventLoopGroup: EventLoopGroup
     val serverChannel: Class<ServerSocketChannel>
     val clientChannel: Class<SocketChannel>
     init {
         if(System.getProperty("os.name").toLowerCase().contains("linux")) {
-            group = EpollEventLoopGroup()
+            serverEventLoopGroup = EpollEventLoopGroup()
+            clientEventLoopGroup = EpollEventLoopGroup()
             serverChannel = EpollServerSocketChannel::class.java as Class<ServerSocketChannel>
             clientChannel = EpollSocketChannel::class.java as Class<SocketChannel>
         } else {
-            group = NioEventLoopGroup()
+            serverEventLoopGroup = NioEventLoopGroup()
+            clientEventLoopGroup = NioEventLoopGroup()
             serverChannel = NioServerSocketChannel::class.java as Class<ServerSocketChannel>
             clientChannel = NioSocketChannel::class.java as Class<SocketChannel>
         }
-        NettyPassivePeerConnection(myPeerInfo, identPacketConverter, eventReceiver, serverChannel, group, cryptoSystem)
+        NettyPassivePeerConnection(myPeerInfo, identPacketConverter, eventReceiver, serverChannel, serverEventLoopGroup, cryptoSystem)
     }
 
     override fun connectPeer(descriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo) {
-        NettyActivePeerConnection(peerInfo, descriptor, identPacketConverter, eventReceiver, clientChannel, group, cryptoSystem)
+        NettyActivePeerConnection(peerInfo, descriptor, identPacketConverter, eventReceiver, clientChannel, clientEventLoopGroup, cryptoSystem)
     }
 
     override fun shutdown() {
-        group.shutdownGracefully().sync()
+        serverEventLoopGroup.shutdownGracefully().sync()
+        clientEventLoopGroup.shutdownGracefully().sync()
     }
 
 
