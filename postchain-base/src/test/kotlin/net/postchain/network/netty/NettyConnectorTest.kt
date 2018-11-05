@@ -23,7 +23,7 @@ class NettyConnectorTest {
 
     private val message = "msg"
 
-    var connections: MutableList<XPeerConnection>? = null
+    lateinit var connections: MutableList<XPeerConnection>
 
     @Before
     fun setUp() {
@@ -33,10 +33,15 @@ class NettyConnectorTest {
     inner class ConnectorEventsImpl(private val receivedMessages: MutableList<String>,
                                           private val receivedErrors: MutableList<String>): XConnectorEvents {
         override fun onPeerConnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection): XPacketHandler? {
-            connections!!.add(connection)
+            synchronized(connections) {
+                connections.add(connection)
+            }
             return {
                 data: ByteArray, peerID: XPeerID ->
-                receivedMessages.add(String(data))
+                synchronized(receivedMessages) {
+                    receivedMessages.add(String(data))
+                }
+
             }
         }
 
@@ -86,7 +91,7 @@ class NettyConnectorTest {
         connector2.connectPeer(xPeerConnectionDescriptor, peerInfo)
 
         Thread.sleep(2_000)
-        connections!!.forEach {
+        connections.forEach {
             it.sendPacket { message.toByteArray() }
         }
         Awaitility.await()
@@ -122,7 +127,7 @@ class NettyConnectorTest {
         connector2.connectPeer(xPeerConnectionDescriptor, peerInfo)
 
         Thread.sleep(2_000)
-        connections!!.forEach {
+        connections.forEach {
             it.sendPacket { message.toByteArray() }
         }
         Awaitility.await()
@@ -161,21 +166,38 @@ class NettyConnectorTest {
         val xPeer2ConnectionDescriptor = XPeerConnectionDescriptor(ByteArrayKey("peerId3".toByteArray()), ByteArrayKey("blockchainId3".toByteArray()))
 
         connector3.connectPeer(xPeer2ConnectionDescriptor, peerInfo)
+        connector3.connectPeer(xPeer2ConnectionDescriptor, peerInfo2)
 
-        Thread.sleep(4_000)
-        connections!!.forEach {
+
+        val peer4ReceivedMessages = mutableListOf<String>()
+        val peer4ReceivedErrors = mutableListOf<String>()
+        val peerInfo4 = PeerInfo("localhost", 9088, publicKey, privateKey)
+        val connector4 = NettyConnector(peerInfo4, ConnectorEventsImpl(peer4ReceivedMessages, peer4ReceivedErrors), identPacketConverter, cryptoSystem)
+
+        val xPeer3ConnectionDescriptor = XPeerConnectionDescriptor(ByteArrayKey("peerId4".toByteArray()), ByteArrayKey("blockchainId4".toByteArray()))
+
+        connector4.connectPeer(xPeer3ConnectionDescriptor, peerInfo)
+        connector4.connectPeer(xPeer3ConnectionDescriptor, peerInfo2)
+        connector4.connectPeer(xPeer3ConnectionDescriptor, peerInfo3)
+
+        Thread.sleep(2_000)
+
+        connections.forEach {
             it.sendPacket { message.toByteArray() }
         }
+        Thread.sleep(3_000)
         Awaitility.await()
                   .atMost(10, TimeUnit.SECONDS)
                   .untilAsserted {
-                      Assert.assertEquals(listOf(message, message), peer1ReceivedMessages)
-                      Assert.assertEquals(listOf(message), peer2ReceivedMessages)
-                      Assert.assertEquals(listOf(message), peer3ReceivedMessages)
+                      Assert.assertEquals(listOf(message, message, message), peer1ReceivedMessages)
+                      Assert.assertEquals(listOf(message, message, message), peer2ReceivedMessages)
+                      Assert.assertEquals(listOf(message, message, message), peer3ReceivedMessages)
+                      Assert.assertEquals(listOf(message, message, message), peer4ReceivedMessages)
 
                       Assert.assertTrue(peer1ReceivedErrors.isEmpty())
                       Assert.assertTrue(peer2ReceivedErrors.isEmpty())
                       Assert.assertTrue(peer3ReceivedErrors.isEmpty())
+                      Assert.assertTrue(peer4ReceivedErrors.isEmpty())
                   }
         connector.shutdown()
         connector2.shutdown()
@@ -199,7 +221,7 @@ class NettyConnectorTest {
 
 
         Thread.sleep(2_000)
-        connections!!.forEach {
+        connections.forEach {
             it.sendPacket { message.toByteArray() }
         }
         Awaitility.await()
@@ -265,7 +287,7 @@ class NettyConnectorTest {
         val expectedServerReceivedMessages = (1 .. requestAmount).map { message }
         val expectedClientReceivedMessages = expectedServerReceivedMessages
         (1 .. requestAmount).forEach {
-            connections!!.forEach {
+            connections.forEach {
                 it.sendPacket { message.toByteArray() }
             }
         }
