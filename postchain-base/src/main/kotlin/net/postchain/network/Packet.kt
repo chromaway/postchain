@@ -10,4 +10,5 @@ interface PacketConverter<PacketType> : IdentPacketConverter {
 
 data class OutboundPacket<PacketType>(val packet: PacketType, val recipients: List<ByteArrayKey>)
 
-data class IdentPacketInfo(val peerID: PeerID, val blockchainRID: ByteArray)
+data class IdentPacketInfo(val peerID: PeerID, val blockchainRID: ByteArray,
+                           val sessionKey: ByteArray? = null, val ephemeralPubKey: ByteArray? = null)

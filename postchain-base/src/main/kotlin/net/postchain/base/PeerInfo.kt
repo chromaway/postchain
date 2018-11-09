@@ -5,9 +5,9 @@ import java.util.concurrent.CountDownLatch
 
 typealias PeerID = ByteArray
 
-open class PeerInfo(val host: String, open val port: Int, val pubKey: ByteArray)
+open class PeerInfo(val host: String, open val port: Int, val pubKey: ByteArray, val privateKey: ByteArray? = null)
 
-class DynamicPortPeerInfo(host: String, pubKey: ByteArray) : PeerInfo(host, 0, pubKey) {
+class DynamicPortPeerInfo(host: String, pubKey: ByteArray, privateKey: ByteArray? = null) : PeerInfo(host, 0, pubKey, privateKey) {
 
     private val latch = CountDownLatch(1)
     private var assignedPortNumber = 0

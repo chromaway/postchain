@@ -30,7 +30,7 @@ class EbftPacketConverter(val config: PeerCommConfiguration) : PacketConverter<E
             throw UserMistake("'yourPubKey' ${message.yourPubKey.toHex()} of Identification is not mine")
         }
 
-        return IdentPacketInfo(signedMessage.pubKey, message.blockchainRID)
+        return IdentPacketInfo(signedMessage.pubKey, message.blockchainRID, null)
     }
 
     override fun decodePacket(pubKey: ByteArray, bytes: ByteArray): EbftMessage {

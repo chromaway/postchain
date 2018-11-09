@@ -53,7 +53,8 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
         val connectionManager = DefaultXConnectionManager(
                 NettyConnectorFactory(),
                 communicationConfig.peerInfo[communicationConfig.myIndex],
-                packetConverter
+                packetConverter,
+                SECP256K1CryptoSystem()
         ).also { connectionManagers.add(it) }
 
         return DefaultXCommunicationManager(
