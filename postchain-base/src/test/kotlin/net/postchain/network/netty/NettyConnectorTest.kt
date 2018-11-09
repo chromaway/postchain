@@ -78,13 +78,13 @@ class NettyConnectorTest {
         val serverReceivedMessages = mutableListOf<String>()
         val serverReceivedErrors = mutableListOf<String>()
         val peerInfo = PeerInfo("localhost", 9081, publicKey, privateKey)
-        val connector = NettyConnector(peerInfo, ConnectorEventsImpl(serverReceivedMessages, serverReceivedErrors), identPacketConverter, cryptoSystem)
+        val connector = NettyConnector(peerInfo, ConnectorEventsImpl(serverReceivedMessages, serverReceivedErrors), identPacketConverter, cryptoSystem, false)
 
 
         val clientReceivedMessages = mutableListOf<String>()
         val clientReceivedErrors = mutableListOf<String>()
         val peerInfo2 = PeerInfo("localhost", 9082, publicKey2, privateKey2)
-        val connector2 = NettyConnector(peerInfo2, ConnectorEventsImpl(clientReceivedMessages, clientReceivedErrors), identPacketConverter, cryptoSystem)
+        val connector2 = NettyConnector(peerInfo2, ConnectorEventsImpl(clientReceivedMessages, clientReceivedErrors), identPacketConverter, cryptoSystem, false)
 
         val xPeerConnectionDescriptor = XPeerConnectionDescriptor(ByteArrayKey("peerId2".toByteArray()), ByteArrayKey("blockchainId2".toByteArray()))
 

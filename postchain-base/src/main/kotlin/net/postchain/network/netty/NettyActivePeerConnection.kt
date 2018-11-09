@@ -7,7 +7,6 @@ import io.netty.channel.ChannelInitializer
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.channel.socket.SocketChannel
-import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 import net.postchain.base.*
 import net.postchain.network.*
@@ -24,7 +23,8 @@ class NettyActivePeerConnection(private val peerInfo: PeerInfo,
                                 private val eventReceiver: XConnectorEvents,
                                 private val channelClass: Class<SocketChannel>,
                                 eventLoopGroup: EventLoopGroup,
-                                cryptoSystem: CryptoSystem): NettyIO(eventLoopGroup, cryptoSystem) {
+                                cryptoSystem: CryptoSystem,
+                                private val enabledEncryption: Boolean): NettyIO(eventLoopGroup, cryptoSystem) {
 
     override fun startSocket() {
         try {
@@ -66,7 +66,8 @@ class NettyActivePeerConnection(private val peerInfo: PeerInfo,
 
         override fun sendPacket(packet: LazyPacket) {
             if(ctx != null) {
-                val message = SymmetricEncryptorUtil.encrypt(packet.invoke(), sessionKey!!, ++messagesSent)
+                val message = if(enabledEncryption) SymmetricEncryptorUtil.encrypt(packet.invoke(), sessionKey, ++messagesSent)
+                                    else packet.invoke()
                 ctx!!.writeAndFlush(Unpooled.wrappedBuffer(message), ctx!!.voidPromise())
             }
         }
@@ -121,7 +122,8 @@ class NettyActivePeerConnection(private val peerInfo: PeerInfo,
         fun readEncryptedPacket(msg: Any): ByteArray {
             val bytes = readPacket(msg)
             return if(bytes.isEmpty()) bytes
-            else SymmetricEncryptorUtil.decrypt(bytes, sessionKey!!)!!.byteArray
+            else if(enabledEncryption) SymmetricEncryptorUtil.decrypt(bytes, sessionKey)!!.byteArray
+                 else bytes
         }
 
         private fun handleInput(o: Any) {

@@ -31,7 +31,8 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
                                  private val eventReceiver: XConnectorEvents,
                                  private val channelClass: Class<ServerSocketChannel>,
                                  eventLoopGroup: EventLoopGroup,
-                                 cryptoSystem: CryptoSystem): NettyIO(eventLoopGroup, cryptoSystem) {
+                                 cryptoSystem: CryptoSystem,
+                                 private val enabledEncryption: Boolean): NettyIO(eventLoopGroup, cryptoSystem) {
 
     override fun startSocket() {
         try {
@@ -68,7 +69,8 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
 
         override fun sendPacket(packet: LazyPacket) {
             if(ctx != null) {
-                val message = SymmetricEncryptorUtil.encrypt(packet.invoke(), sessionKey, ++messagesSent)
+                val message = if(enabledEncryption) SymmetricEncryptorUtil.encrypt(packet.invoke(), sessionKey, ++messagesSent)
+                                        else packet.invoke()
                 ctx!!.writeAndFlush(Unpooled.wrappedBuffer(message), ctx!!.voidPromise())
             }
         }
@@ -108,7 +110,8 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
         }
 
         private fun getConnectionDescriptor(msg: Any): XPeerConnectionDescriptor {
-            val info = identPacketConverter.parseIdentPacket(readPacket(msg))
+            val packet = readPacket(msg)
+            val info = identPacketConverter.parseIdentPacket(packet)
             generateSessionKey(info)
             return XPeerConnectionDescriptor(ByteArrayKey(info.peerID), ByteArrayKey(info.blockchainRID), info.sessionKey!!)
         }
@@ -124,7 +127,8 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
         fun readEncryptedPacket(msg: Any): ByteArray {
             val bytes = readPacket(msg)
             return if(bytes.isEmpty()) bytes
-            else SymmetricEncryptorUtil.decrypt(bytes, sessionKey!!)!!.byteArray
+            else if(enabledEncryption) SymmetricEncryptorUtil.decrypt(bytes, sessionKey!!)!!.byteArray
+                 else bytes
         }
 
         private fun readAndHandleInput(msg: Any) {

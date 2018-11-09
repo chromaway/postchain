@@ -7,9 +7,10 @@ import net.postchain.core.ByteArrayKey
 import net.postchain.core.ProgrammerMistake
 
 interface CommunicationManager<PacketType> {
+    fun peers(): Array<PeerInfo>
     fun getPackets(): MutableList<Pair<Int, PacketType>>
-    fun broadcastPacket(packet: PacketType)
     fun sendPacket(packet: PacketType, recipients: Set<Int>)
+    fun broadcastPacket(packet: PacketType)
 }
 
 /**
@@ -37,6 +38,8 @@ class CommManager<PacketType>(val config: PeerCommConfiguration,
             }
         }
     }
+
+    override fun peers(): Array<PeerInfo> = peers
 
     @Synchronized
     override fun getPackets(): MutableList<Pair<Int, PacketType>> {
