@@ -1,6 +1,9 @@
 package net.postchain.network.x
 
-import com.nhaarman.mockitokotlin2.*
+import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.doReturn
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.verify
 import net.postchain.base.PeerInfo
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.base.secp256k1_derivePubKey
@@ -10,15 +13,13 @@ import net.postchain.network.netty.NettyConnectorFactory
 import net.postchain.network.netty.NettyIO
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration.FIVE_SECONDS
-import org.awaitility.Duration.TWO_SECONDS
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
-import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.TimeUnit
 
-class DefaultXCommunicationManagerIT {
+class DefaultXCommunicationManager2IT {
 
     private val blockchainRid = byteArrayOf(0x01)
 
@@ -107,8 +108,8 @@ class DefaultXCommunicationManagerIT {
 
         // Then
         // - peer1
-       // verify(packetConverter1).makeIdentPacket(any())
-      //  verify(packetConverter1).parseIdentPacket(any())
+        // verify(packetConverter1).makeIdentPacket(any())
+        //  verify(packetConverter1).parseIdentPacket(any())
 
         verify(packetConverter1).encodePacket(2)
 //        verify(packetConverter1).encodePacket(22)
