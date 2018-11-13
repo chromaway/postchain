@@ -1,9 +1,10 @@
 package net.postchain.test
 
 import org.junit.Assert.assertEquals
+import org.junit.Ignore
 import org.junit.Test
 
-
+@Ignore
 class TestLauncherTest {
 
     private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"

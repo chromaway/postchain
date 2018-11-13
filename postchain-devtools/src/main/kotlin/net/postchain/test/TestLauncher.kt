@@ -3,10 +3,15 @@ package net.postchain.test
 import mu.KLogging
 import net.postchain.base.gtxml.TestType
 import net.postchain.common.hexStringToByteArray
+import net.postchain.config.CommonsConfigurationFactory
+import net.postchain.core.byteArrayKeyOf
 import net.postchain.gtx.GTXBlockchainConfigurationFactory
 import net.postchain.gtx.StandardOpsGTXModule
+import net.postchain.gtx.gtx
 import net.postchain.gtx.gtxml.GTXMLTransactionParser
 import net.postchain.gtx.gtxml.TransactionContext
+import net.postchain.test.KeyPairHelper.privKey
+import net.postchain.test.KeyPairHelper.pubKey
 import java.io.StringReader
 import javax.xml.bind.JAXBContext
 import javax.xml.bind.JAXBElement
@@ -20,17 +25,19 @@ class TestLauncher : IntegrationTest() {
 
     private val jaxbContext = JAXBContext.newInstance("net.postchain.base.gtxml")
 
+    fun createTestNode(configFile: String):SingleChainTestNode {
+        val config = CommonsConfigurationFactory.readFromFile(configFile)
+        return SingleChainTestNode(config).apply {
+            startBlockchain()
+            nodes.add(this)
+        }
+    }
+
+
     fun runXMLGTXTests(xml: String, blockchainRID: String?, configFile: String? = null): Boolean {
         var res = true
 
-        configOverrides.setProperty(
-                "blockchain.1.configurationfactory",
-                GTXBlockchainConfigurationFactory::class.qualifiedName)
-        configOverrides.setProperty(
-                "blockchain.1.gtx.modules",
-                listOf(StandardOpsGTXModule::class.qualifiedName))
-
-        val node = createNode(0)
+        val node = createTestNode(configFile!!)
         val testType = parseTest(xml)
 
         var blockNum = 0L
@@ -39,6 +46,26 @@ class TestLauncher : IntegrationTest() {
         // Genesis block
         buildBlockAndCommit(node)
         blockNum++
+
+        val user1pub = pubKey(0)
+        val user1priv = privKey(0)
+        val user2pub = pubKey(1)
+        val user2priv = privKey(1)
+
+        val txContext = TransactionContext(
+                blockchainRID?.hexStringToByteArray(),
+                mapOf(
+                        "user1pub" to gtx(user1pub),
+                        "user2pub" to gtx(user2pub),
+                        "Alice" to gtx(user1pub),
+                        "Bob" to gtx(user2pub)
+                ),
+                true,
+                mapOf(
+                        user1pub.byteArrayKeyOf() to cryptoSystem.makeSigner(user1pub, user1priv),
+                        user2pub.byteArrayKeyOf() to cryptoSystem.makeSigner(user2pub, user2priv)
+                )
+        )
 
         // Blocks of test
         testType.block.forEach {
@@ -51,7 +78,6 @@ class TestLauncher : IntegrationTest() {
                 } else {
                     logger.info("Transaction will be processed")
 
-                    val txContext = TransactionContext(blockchainRID?.hexStringToByteArray())
                     val gtxData = GTXMLTransactionParser.parseGTXMLTransaction(it, txContext)
                     val tx = enqueueTx(node, gtxData.serialize(), blockNum)
                     enqueued.add(tx!!.getRID())

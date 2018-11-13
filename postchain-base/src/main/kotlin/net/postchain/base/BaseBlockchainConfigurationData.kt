@@ -86,6 +86,9 @@ class BaseBlockchainConfigurationData(
                 config.getStringArray("gtx.sqlmodules").map { gtx(it) }.toTypedArray()
                 ))
 
+            if (config.containsKey("gtx.rellSrcModule"))
+                properties.add("rellSrcModule" to gtx(config.getString("gtx.rellSrcModule")))
+
             return gtx(*properties.toTypedArray())
         }
 
