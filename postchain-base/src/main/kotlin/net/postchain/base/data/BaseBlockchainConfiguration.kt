@@ -28,8 +28,11 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
 
     override fun makeBlockBuilder(ctx: EContext): BlockBuilder {
         val signerPubKeys = configData.getSigners()
-        return createBlockBuilderInstance(cryptoSystem,
-                ctx, blockStore, getTransactionFactory(),
+        return createBlockBuilderInstance(
+                cryptoSystem,
+                ctx,
+                blockStore,
+                getTransactionFactory(),
                 signerPubKeys.toTypedArray(),
                 configData.blockSigner)
     }

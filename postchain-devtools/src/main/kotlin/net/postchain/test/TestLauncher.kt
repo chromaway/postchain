@@ -5,8 +5,6 @@ import net.postchain.base.gtxml.TestType
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.CommonsConfigurationFactory
 import net.postchain.core.byteArrayKeyOf
-import net.postchain.gtx.GTXBlockchainConfigurationFactory
-import net.postchain.gtx.StandardOpsGTXModule
 import net.postchain.gtx.gtx
 import net.postchain.gtx.gtxml.GTXMLTransactionParser
 import net.postchain.gtx.gtxml.TransactionContext
@@ -25,7 +23,7 @@ class TestLauncher : IntegrationTest() {
 
     private val jaxbContext = JAXBContext.newInstance("net.postchain.base.gtxml")
 
-    fun createTestNode(configFile: String):SingleChainTestNode {
+    fun createTestNode(configFile: String): SingleChainTestNode {
         val config = CommonsConfigurationFactory.readFromFile(configFile)
         return SingleChainTestNode(config).apply {
             startBlockchain()

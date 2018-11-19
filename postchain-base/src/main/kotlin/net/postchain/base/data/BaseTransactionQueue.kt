@@ -62,7 +62,7 @@ class BaseTransactionQueue(queueCapacity: Int = 2500) : TransactionQueue {
 
         val comparableTx = ComparableTransaction(tx)
         try {
-            if (tx.isCorrect())
+            if (tx.isCorrect()) {
                 synchronized(this) {
                     if (queueSet.contains(rid)) {
                         logger.debug("Skipping ${rid} second test")
@@ -76,7 +76,8 @@ class BaseTransactionQueue(queueCapacity: Int = 2500) : TransactionQueue {
                         logger.debug("Skipping tx ${rid}, overloaded. Queue contains ${queue.size} elements")
                         return false
                     }
-                } else {
+                }
+            } else {
                 logger.debug("Tx ${rid} didn't pass the check")
                 rejectTransaction(tx, null)
             }
