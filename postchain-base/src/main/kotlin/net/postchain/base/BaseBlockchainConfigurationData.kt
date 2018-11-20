@@ -81,13 +81,15 @@ class BaseBlockchainConfigurationData(
                 properties.add("ft" to gtx(*ftProps.toTypedArray()))
             }
 
-            if (config.containsKey("gtx.sqlmodules"))
+            if (config.containsKey("gtx.sqlmodules")) {
                 properties.add("sqlmodules" to gtx(*
                 config.getStringArray("gtx.sqlmodules").map { gtx(it) }.toTypedArray()
                 ))
+            }
 
-            if (config.containsKey("gtx.rellSrcModule"))
+            if (config.containsKey("gtx.rellSrcModule")) {
                 properties.add("rellSrcModule" to gtx(config.getString("gtx.rellSrcModule")))
+            }
 
             return gtx(*properties.toTypedArray())
         }

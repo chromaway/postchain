@@ -14,8 +14,8 @@ class BaseApiInfrastructure(val config: Configuration) : ApiInfrastructure {
     val restApi: RestApi?
 
     init {
-        val port = config.getInt("api.port", 7740)
         val basePath = config.getString("api.basepath", "")
+        val port = config.getInt("api.port", 7740)
         restApi = if (port != -1) RestApi(port, basePath) else null
     }
 

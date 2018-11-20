@@ -25,12 +25,18 @@ class TestLauncher : IntegrationTest() {
 
     fun createTestNode(configFile: String): SingleChainTestNode {
         val config = CommonsConfigurationFactory.readFromFile(configFile)
+        // TODO: Fix this hack
+        config.setProperty("api.port", -1) // FYI: Disabling Rest API in test mode
+        config.setProperty("node.0.id", config.getProperty("test.node.0.id"))
+        config.setProperty("node.0.host", config.getProperty("test.node.0.host"))
+        config.setProperty("node.0.port", config.getProperty("test.node.0.port"))
+        config.setProperty("node.0.pubkey", config.getProperty("test.node.0.pubkey"))
+
         return SingleChainTestNode(config).apply {
             startBlockchain()
             nodes.add(this)
         }
     }
-
 
     fun runXMLGTXTests(xml: String, blockchainRID: String?, configFile: String? = null): Boolean {
         var res = true
