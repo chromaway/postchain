@@ -98,6 +98,7 @@
         <dependency>
             <groupId>io.github.microutils</groupId>
             <artifactId>kotlin-logging</artifactId>
+            <version>1.6.20</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

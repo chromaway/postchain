@@ -3,9 +3,13 @@ package net.postchain
 import com.beust.jcommander.MissingCommandException
 import com.beust.jcommander.ParameterException
 import net.postchain.cli.Cli
+import java.io.File
+import java.lang.management.ManagementFactory
 
 
 fun main(args: Array<String>) {
+    dumpPid()
+
     with(Cli()) {
         try {
             parse(args)
@@ -23,4 +27,10 @@ fun main(args: Array<String>) {
             }
         }
     }
+}
+
+fun dumpPid() {
+    val processName = ManagementFactory.getRuntimeMXBean().name
+    val pid = processName.split("@")[0]
+    File("postchain.pid").writeText(pid)
 }

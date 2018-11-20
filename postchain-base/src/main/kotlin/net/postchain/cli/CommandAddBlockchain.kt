@@ -63,6 +63,7 @@ class CommandAddBlockchain : Command {
             if (force || SQLDatabaseAccess().getBlockchainRID(ctx) == null) {
                 BaseBlockStore().initialize(ctx, blockchainRID.hexStringToByteArray())
                 BaseConfigurationDataStore.addConfigurationData(ctx, 0, encodedGtxValue)
+                println("Configuration has been added successfully")
             } else {
                 println("Blockchain with chainId $chainId already exists. Use -f flag to force addition.")
             }
