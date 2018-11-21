@@ -22,7 +22,7 @@
             <configuration>
               <transformers>
                 <transformer>
-                  <mainClass>net.postchain.test.AppKt</mainClass>
+                  <mainClass>net.postchain.devtools.AppKt</mainClass>
                 </transformer>
               </transformers>
             </configuration>

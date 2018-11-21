@@ -1,9 +1,9 @@
 package net.postchain.gtx
 
 import net.postchain.core.UserMistake
-import net.postchain.test.IntegrationTest
-import net.postchain.test.KeyPairHelper.privKey
-import net.postchain.test.KeyPairHelper.pubKey
+import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.KeyPairHelper.privKey
+import net.postchain.devtools.KeyPairHelper.pubKey
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -15,10 +15,10 @@ class SQLModuleIntegrationTest : IntegrationTest() {
 
     private fun makeTx(ownerIdx: Int, key: String, value: String): ByteArray {
         val owner = pubKey(ownerIdx)
-        return GTXDataBuilder(net.postchain.test.gtx.testBlockchainRID, arrayOf(owner), net.postchain.test.gtx.myCS).run {
+        return GTXDataBuilder(net.postchain.devtools.gtx.testBlockchainRID, arrayOf(owner), net.postchain.devtools.gtx.myCS).run {
             addOperation("test_set_value", arrayOf(gtx(key), gtx(value), gtx(owner)))
             finish()
-            sign(net.postchain.test.gtx.myCS.makeSigner(owner, privKey(ownerIdx)))
+            sign(net.postchain.devtools.gtx.myCS.makeSigner(owner, privKey(ownerIdx)))
             serialize()
         }
     }

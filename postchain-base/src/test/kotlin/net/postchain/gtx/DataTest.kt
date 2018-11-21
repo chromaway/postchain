@@ -5,8 +5,8 @@ package net.postchain.gtx
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.Signature
-import net.postchain.test.KeyPairHelper.privKey
-import net.postchain.test.KeyPairHelper.pubKey
+import net.postchain.devtools.KeyPairHelper.privKey
+import net.postchain.devtools.KeyPairHelper.pubKey
 import org.junit.Assert.*
 import org.junit.Test
 

@@ -5,7 +5,7 @@ import net.postchain.base.BasePeerCommConfiguration
 import net.postchain.base.PeerInfo
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.network.PacketConverter
-import net.postchain.test.KeyPairHelper
+import net.postchain.devtools.KeyPairHelper
 
 class IntegrationTestContext(
         connectorFactory: XConnectorFactory,

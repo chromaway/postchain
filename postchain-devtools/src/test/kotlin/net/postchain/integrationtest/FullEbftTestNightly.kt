@@ -6,10 +6,10 @@ import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import junitparams.naming.TestCaseName
 import mu.KLogging
-import net.postchain.test.EbftIntegrationTest
-import net.postchain.test.OnDemandBlockBuildingStrategy
-import net.postchain.test.SingleChainTestNode
-import net.postchain.test.testinfra.TestTransaction
+import net.postchain.devtools.EbftIntegrationTest
+import net.postchain.devtools.OnDemandBlockBuildingStrategy
+import net.postchain.devtools.SingleChainTestNode
+import net.postchain.devtools.testinfra.TestTransaction
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test

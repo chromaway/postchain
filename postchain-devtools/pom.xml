@@ -109,7 +109,7 @@
                         <configuration>
                             <archive>
                                 <manifest>
-                                    <mainClass>net.postchain.test.AppKt</mainClass>
+                                    <mainClass>net.postchain.devtools.AppKt</mainClass>
                                 </manifest>
                             </archive>
                             <descriptorRefs>

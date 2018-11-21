@@ -1,12 +1,11 @@
 package net.postchain.modules.perftest
 
-import io.restassured.RestAssured
 import io.restassured.RestAssured.*
 import net.postchain.common.toHex
 import net.postchain.gtx.GTXDataBuilder
 import net.postchain.gtx.gtx
 import net.postchain.modules.ft.testBlockchainRID
-import net.postchain.test.modules.ft.FTIntegrationTest
+import net.postchain.devtools.modules.ft.FTIntegrationTest
 import org.junit.Test
 import java.util.*
 

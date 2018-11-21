@@ -13,8 +13,8 @@ import net.postchain.common.toHex
 import net.postchain.core.Signature
 import net.postchain.core.Transaction
 import net.postchain.integrationtest.JsonTools.jsonAsMap
-import net.postchain.test.EbftIntegrationTest
-import net.postchain.test.testinfra.TestTransaction
+import net.postchain.devtools.EbftIntegrationTest
+import net.postchain.devtools.testinfra.TestTransaction
 import org.junit.Assert.*
 import org.junit.Test
 

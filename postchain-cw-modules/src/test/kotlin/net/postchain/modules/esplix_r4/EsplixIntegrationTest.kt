@@ -1,4 +1,4 @@
-package net.postchain.test.modules.esplix
+package net.postchain.devtools.modules.esplix
 
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
@@ -9,9 +9,9 @@ import net.postchain.gtx.gtx
 import net.postchain.modules.esplix_r4.BaseEsplixModuleFactory
 import net.postchain.modules.esplix_r4.computeChainID
 import net.postchain.modules.esplix_r4.computeMessageID
-import net.postchain.test.IntegrationTest
-import net.postchain.test.KeyPairHelper.privKey
-import net.postchain.test.KeyPairHelper.pubKey
+import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.KeyPairHelper.privKey
+import net.postchain.devtools.KeyPairHelper.pubKey
 import org.junit.Assert
 import org.junit.Test
 

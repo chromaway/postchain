@@ -4,9 +4,9 @@ import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.gtx.GTXTransaction
 import net.postchain.gtx.GTXTransactionFactory
-import net.postchain.test.KeyPairHelper.privKey
-import net.postchain.test.KeyPairHelper.pubKey
-import net.postchain.test.modules.ft.FTIntegrationTest
+import net.postchain.devtools.KeyPairHelper.privKey
+import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.devtools.modules.ft.FTIntegrationTest
 import org.junit.Assert
 import org.junit.Test
 import kotlin.system.measureNanoTime
