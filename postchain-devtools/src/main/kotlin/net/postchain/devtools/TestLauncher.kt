@@ -5,11 +5,11 @@ import net.postchain.base.gtxml.TestType
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.CommonsConfigurationFactory
 import net.postchain.core.byteArrayKeyOf
+import net.postchain.devtools.KeyPairHelper.privKey
+import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.gtx.gtx
 import net.postchain.gtx.gtxml.GTXMLTransactionParser
 import net.postchain.gtx.gtxml.TransactionContext
-import net.postchain.devtools.KeyPairHelper.privKey
-import net.postchain.devtools.KeyPairHelper.pubKey
 import java.io.StringReader
 import javax.xml.bind.JAXBContext
 import javax.xml.bind.JAXBElement
@@ -31,6 +31,7 @@ class TestLauncher : IntegrationTest() {
         config.setProperty("node.0.host", config.getProperty("test.node.0.host"))
         config.setProperty("node.0.port", config.getProperty("test.node.0.port"))
         config.setProperty("node.0.pubkey", config.getProperty("test.node.0.pubkey"))
+        config.setProperty("database.schema", config.getProperty("test.database.schema"))
 
         return SingleChainTestNode(config).apply {
             startBlockchain()
