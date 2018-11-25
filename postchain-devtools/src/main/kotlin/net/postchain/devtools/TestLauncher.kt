@@ -11,6 +11,7 @@ import net.postchain.gtx.gtx
 import net.postchain.gtx.gtxml.GTXMLTransactionParser
 import net.postchain.gtx.gtxml.TransactionContext
 import java.io.StringReader
+import javax.management.modelmbean.XMLParseException
 import javax.xml.bind.JAXBContext
 import javax.xml.bind.JAXBElement
 
@@ -22,6 +23,16 @@ class TestLauncher : IntegrationTest() {
     companion object : KLogging()
 
     private val jaxbContext = JAXBContext.newInstance("net.postchain.base.gtxml")
+
+    class TransactionFailure (val blockHeight: Long, val txIdx: Long,
+                              val exception: Exception?)
+
+    class TestOutput(
+            val passed: Boolean,
+            val malformedXML: Boolean,
+            val initializationError: Exception?,
+            val transactionFailures: List<TransactionFailure>
+    )
 
     fun createTestNode(configFile: String): SingleChainTestNode {
         val config = CommonsConfigurationFactory.readFromFile(configFile)
@@ -39,11 +50,24 @@ class TestLauncher : IntegrationTest() {
         }
     }
 
-    fun runXMLGTXTests(xml: String, blockchainRID: String?, configFile: String? = null): Boolean {
-        var res = true
-
-        val node = createTestNode(configFile!!)
-        val testType = parseTest(xml)
+    fun runXMLGTXTests(xml: String,
+                       blockchainRID: String?,
+                       configFile: String? = null,
+                       testOutputFileName: String? = null
+    ): TestOutput {
+        var passed = true
+        val node: SingleChainTestNode
+        val testType: TestType
+        try {
+            node = createTestNode(configFile!!)
+        } catch (e: Exception) {
+            return TestOutput(false, false, e, listOf())
+        }
+        try {
+            testType = parseTest(xml)
+        } catch (e: XMLParseException) {
+            return TestOutput(false, true, e, listOf())
+        }
 
         var blockNum = 0L
         val enqueuedTxsRids = mutableMapOf<Long, List<ByteArray>>()
@@ -56,19 +80,24 @@ class TestLauncher : IntegrationTest() {
         val user1priv = privKey(0)
         val user2pub = pubKey(1)
         val user2priv = privKey(1)
+        val user3pub = pubKey(2)
+        val user3priv = privKey(2)
 
         val txContext = TransactionContext(
                 blockchainRID?.hexStringToByteArray(),
                 mapOf(
                         "user1pub" to gtx(user1pub),
                         "user2pub" to gtx(user2pub),
+                        "user3pub" to gtx(user3pub),
                         "Alice" to gtx(user1pub),
-                        "Bob" to gtx(user2pub)
+                        "Bob" to gtx(user2pub),
+                        "Claire" to gtx(user3pub)
                 ),
                 true,
                 mapOf(
                         user1pub.byteArrayKeyOf() to cryptoSystem.makeSigner(user1pub, user1priv),
-                        user2pub.byteArrayKeyOf() to cryptoSystem.makeSigner(user2pub, user2priv)
+                        user2pub.byteArrayKeyOf() to cryptoSystem.makeSigner(user2pub, user2priv),
+                        user3pub.byteArrayKeyOf() to cryptoSystem.makeSigner(user3pub, user3priv)
                 )
         )
 
@@ -95,10 +124,10 @@ class TestLauncher : IntegrationTest() {
         }
 
         // Assert height
-        res = res and (blockNum - 1 == getBestHeight(node))
+        passed = passed and (blockNum - 1 == getBestHeight(node))
 
         // Assert consumed txs
-        res = res and enqueuedTxsRids.all { entry ->
+        passed = passed and enqueuedTxsRids.all { entry ->
             entry.value.toTypedArray().contentDeepEquals(
                     getTxRidsAtHeight(node, entry.key))
         }
@@ -106,7 +135,7 @@ class TestLauncher : IntegrationTest() {
         // Clearing
         tearDown()
 
-        return res
+        return passed
     }
 
     private fun parseTest(xml: String): TestType {
