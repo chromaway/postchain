@@ -20,11 +20,12 @@ fun main(args: Array<String>) {
             println(e.message)
             usage(e.jCommander.parsedCommand)
         } catch (e: Exception) {
-            if (e.message != null) {
-                println(e.message)
+            if (!e.toString().isNullOrEmpty()) {
+                println(e.toString())
             } else {
                 e.printStackTrace()
             }
+            System.exit(-1)
         }
     }
 }
