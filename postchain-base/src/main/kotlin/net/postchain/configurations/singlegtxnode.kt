@@ -2,21 +2,11 @@
 
 package net.postchain.configurations
 
-import net.postchain.base.CryptoSystem
-import net.postchain.base.Signer
-import net.postchain.base.data.BaseBlockBuilder
 import net.postchain.core.*
 import net.postchain.gtx.*
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.ScalarHandler
 
-
-private class SingleNodeBlockBuilder(cryptoSystem: CryptoSystem, eContext: EContext,
-                                     store: BlockStore, txFactory: TransactionFactory,
-                                     subjects: Array<ByteArray>, blockSigner: Signer)
-    : BaseBlockBuilder(cryptoSystem, eContext, store, txFactory, subjects, blockSigner) {
-    override fun getRequiredSigCount(): Int {return 1}
-}
 
 
 private val r = QueryRunner()
