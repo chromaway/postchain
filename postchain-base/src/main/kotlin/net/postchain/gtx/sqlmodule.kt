@@ -1,11 +1,6 @@
 package net.postchain.gtx
 
-import net.postchain.core.EContext
-import net.postchain.core.ProgrammerMistake
-import net.postchain.core.Transactor
-import net.postchain.core.TxEContext
-import net.postchain.core.UserMistake
-import org.apache.commons.configuration2.Configuration
+import net.postchain.core.*
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.MapListHandler
 import org.apache.commons.dbutils.handlers.ScalarHandler
@@ -223,16 +218,17 @@ class SQLGTXModule(private val moduleFiles: Array<String>): GTXModule
     override fun initializeDB(ctx: EContext) {
         GTXSchemaManager.autoUpdateSQLSchema(ctx, 0, javaClass, "sqlgtx.sql")
         for (fileName in moduleFiles) {
-            val moduleName = "SQLM_" + fileName
-            val version = GTXSchemaManager.getModuleVersion(ctx, moduleName)
-            if (version == null) {
+            val moduleName = "SQLM_$fileName"
+            if (GTXSchemaManager.getModuleVersion(ctx, moduleName) == null) {
                 try {
+
                     val sql = String(Files.readAllBytes(Paths.get(fileName)), StandardCharsets.UTF_8)
                     ctx.conn.createStatement().use {
                         it.execute(sql)
                     }
                     GTXSchemaManager.setModuleVersion(ctx, moduleName, 0)
                 } catch (e: Exception) {
+                    e.printStackTrace()
                     throw UserMistake("Failed to load SQL GTX module ${fileName}", e)
                 }
             }
@@ -243,7 +239,7 @@ class SQLGTXModule(private val moduleFiles: Array<String>): GTXModule
 }
 
 class SQLGTXModuleFactory: GTXModuleFactory {
-    override fun makeModule(config: Configuration): GTXModule {
-        return SQLGTXModule(config.getStringArray("gtx.sqlmodules"))
+    override fun makeModule(data: GTXValue, blockchainRID: ByteArray): GTXModule {
+        return SQLGTXModule(data["gtx"]!!["sqlmodules"]?.asArray()?.map { it.asString() }!!.toTypedArray())
     }
 }

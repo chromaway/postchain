@@ -2,18 +2,22 @@
 
 package net.postchain.ebft
 
-import net.postchain.core.Signature
 import mu.KLogging
 import net.postchain.common.toHex
+import net.postchain.core.Signature
 import java.util.*
 
+/**
+ * StatusManager manages the status of the consensus protocol
+ */
 class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long)
     : StatusManager {
-    override val nodeStatuses = Array(nodeCount, {NodeStatus()})
+    override val nodeStatuses = Array(nodeCount) { NodeStatus() }
     override val commitSignatures: Array<Signature?> = arrayOfNulls(nodeCount)
     override val myStatus: NodeStatus
     var intent: BlockIntent = DoNothingIntent
     val quorum2f = (nodeCount / 3) * 2
+
     companion object : KLogging()
 
     init {
@@ -33,7 +37,7 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
      * @param blockRID latest block
      * @return the number of nodes at the same state as the local node
      */
-    private fun countNodes (state: NodeState, height: Long, blockRID: ByteArray?): Int {
+    private fun countNodes(state: NodeState, height: Long, blockRID: ByteArray?): Int {
         var count: Int = 0
         for (ns in nodeStatuses) {
             if (ns.height == height && ns.state == state) {
@@ -72,7 +76,7 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
      * Advance height in [myStatus] as a response to committing a new block.
      */
     private fun advanceHeight() {
-        with (myStatus) {
+        with(myStatus) {
             height += 1
             serial += 1
             blockRID = null
@@ -88,7 +92,7 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
     /**
      * Set all commit signatures to null
      */
-    private fun resetCommitSignatures () {
+    private fun resetCommitSignatures() {
         for (i in commitSignatures.indices)
             commitSignatures[i] = null
     }
@@ -191,8 +195,7 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
             }
             acceptBlock(blockRID, mySignature)
             return true
-        }
-        else {
+        } else {
             logger.warn("Received built block while not requesting it.")
             return false
         }
@@ -208,8 +211,7 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
     @Synchronized
     override fun onCommitSignature(nodeIndex: Int, blockRID: ByteArray, signature: Signature) {
         if (myStatus.state == NodeState.Prepared
-                && Arrays.equals(blockRID, myStatus.blockRID))
-        {
+                && Arrays.equals(blockRID, myStatus.blockRID)) {
             this.commitSignatures[nodeIndex] = signature
             recomputeStatus()
         } else {
@@ -251,7 +253,7 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
     }
 
     /**
-     * Recompute status until no more updates occurr.
+     * Recompute status until no more updates occur.
      */
     fun recomputeStatus() {
         for (i in 0..1000) {
@@ -265,7 +267,7 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
      *
      * @return true if status is updated
      */
-    fun recomputeStatus1 (): Boolean {
+    fun recomputeStatus1(): Boolean {
 
         /**
          * Used to reset our block status when we are in HaveBlock state
@@ -370,8 +372,7 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
                                 ((nodeStatus.height == myStatus.height)
                                         && (nodeStatus.state === NodeState.Prepared)
                                         && nodeStatus.blockRID != null
-                                        && Arrays.equals(nodeStatus.blockRID, myStatus.blockRID)))
-                        {
+                                        && Arrays.equals(nodeStatus.blockRID, myStatus.blockRID))) {
                             unfetchedNodes.add(i)
                         }
                     }
@@ -404,7 +405,7 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
                 if (primaryBlockRID != null) {
                     val _intent = intent
                     if (!(_intent is FetchUnfinishedBlockIntent &&
-                            Arrays.equals(_intent.blockRID, myStatus.blockRID))) {
+                                    Arrays.equals(_intent.blockRID, myStatus.blockRID))) {
                         intent = FetchUnfinishedBlockIntent(primaryBlockRID)
                         return true
                     }

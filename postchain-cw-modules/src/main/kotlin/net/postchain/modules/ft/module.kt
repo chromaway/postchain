@@ -3,11 +3,7 @@
 package net.postchain.modules.ft
 
 import net.postchain.core.EContext
-import net.postchain.gtx.GTXModule
-import net.postchain.gtx.GTXModuleFactory
-import net.postchain.gtx.GTXSchemaManager
-import net.postchain.gtx.SimpleGTXModule
-import org.apache.commons.configuration2.Configuration
+import net.postchain.gtx.*
 
 /**
  * FT Module including valid operations and queries
@@ -52,7 +48,7 @@ class BaseFTModuleFactory : GTXModuleFactory {
      * @param config base configuration for the FT module
      * @return an instance of the module
      */
-    override fun makeModule(config: Configuration): GTXModule {
-        return FTModule(makeBaseFTConfig(config))
+    override fun makeModule(config: GTXValue, blockchainRID: ByteArray): GTXModule{
+        return FTModule(makeBaseFTConfig(config, blockchainRID))
     }
 }

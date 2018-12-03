@@ -2,31 +2,40 @@
 
 package net.postchain.ebft
 
+import mu.KLogging
 import net.postchain.core.BlockBuildingStrategy
 import net.postchain.core.BlockData
 import net.postchain.core.BlockDataWithWitness
-import mu.KLogging
 import nl.komponents.kovenant.Promise
-import java.util.Arrays
+import java.util.*
 
-class BaseBlockManager(val blockDB: BlockDatabase, val statusManager: StatusManager,
-                       val blockStrategy: BlockBuildingStrategy)
-    : BlockManager {
-    @Volatile var processing = false
-    var intent : BlockIntent = DoNothingIntent
-    companion object: KLogging()
+/**
+ * Manages intents and acts as a wrapper for [blockDatabase] and [statusManager]
+ */
+class BaseBlockManager(
+        val blockDB: BlockDatabase,
+        val statusManager: StatusManager,
+        val blockStrategy: BlockBuildingStrategy
+) : BlockManager {
+
+    @Volatile
+    var processing = false
+    var intent: BlockIntent = DoNothingIntent
+
+    companion object : KLogging()
+
     override var currentBlock: BlockData? = null
 
     @Synchronized
-    protected fun<RT> runDBOp(op: () -> Promise<RT, Exception>, onSuccess: (RT)->Unit) {
+    protected fun <RT> runDBOp(op: () -> Promise<RT, Exception>, onSuccess: (RT) -> Unit) {
         if (!processing) {
             processing = true
             intent = DoNothingIntent
             val promise = op()
-            promise.success({ res ->
+            promise.success { res ->
                 onSuccess(res)
                 processing = false
-            })
+            }
             promise.fail { err ->
                 processing = false
                 logger.debug("Error in runDBOp()", err)
@@ -37,8 +46,7 @@ class BaseBlockManager(val blockDB: BlockDatabase, val statusManager: StatusMana
     override fun onReceivedUnfinishedBlock(block: BlockData) {
         val theIntent = intent
         if (theIntent is FetchUnfinishedBlockIntent
-                && Arrays.equals(theIntent.blockRID, block.header.blockRID))
-        {
+                && Arrays.equals(theIntent.blockRID, block.header.blockRID)) {
             runDBOp({
                 blockDB.loadUnfinishedBlock(block)
             }, { sig ->
@@ -52,12 +60,10 @@ class BaseBlockManager(val blockDB: BlockDatabase, val statusManager: StatusMana
     override fun onReceivedBlockAtHeight(block: BlockDataWithWitness, height: Long) {
         val theIntent = intent
         if (theIntent is FetchBlockAtHeightIntent
-             && theIntent.height == height)
-        {
+                && theIntent.height == height) {
             runDBOp({
                 blockDB.addBlock(block)
             }, {
-                blockStrategy.blockCommitted(block)
                 if (statusManager.onHeightAdvance(height + 1)) {
                     currentBlock = null
                 }
@@ -80,7 +86,6 @@ class BaseBlockManager(val blockDB: BlockDatabase, val statusManager: StatusMana
                     blockDB.commitBlock(statusManager.commitSignatures)
                 }, {
                     statusManager.onCommittedBlock(currentBlock!!.header.blockRID)
-                    blockStrategy.blockCommitted(currentBlock!!)
                     currentBlock = null
                 })
             }
@@ -97,8 +102,7 @@ class BaseBlockManager(val blockDB: BlockDatabase, val statusManager: StatusMana
                 }
                 runDBOp({
                     blockDB.buildBlock()
-                }, {
-                    blockAndSignature ->
+                }, { blockAndSignature ->
                     val block = blockAndSignature.first
                     val signature = blockAndSignature.second
                     if (statusManager.onBuiltBlock(block.header.blockRID, signature)) {

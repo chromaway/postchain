@@ -2,14 +2,27 @@
 
 package net.postchain.base
 
-class BasePeerCommConfiguration(override val peerInfo: Array<PeerInfo>, override val myIndex: Int,
-                                private val cryptoSystem: CryptoSystem, private val privKey: ByteArray) : PeerCommConfiguration {
+class BasePeerCommConfiguration(override val peerInfo: Array<PeerInfo>,
+                                override val blockchainRID: ByteArray,
+                                override val myIndex: Int,
+                                private val cryptoSystem: CryptoSystem,
+                                private val privKey: ByteArray
+) : PeerCommConfiguration {
 
-    override fun getSigner(): Signer {
+    override fun resolvePeer(peerID: ByteArray): PeerInfo? {
+        return peerInfo.find { it.pubKey.contentEquals(peerID) }
+    }
+
+    override fun signer(): Signer {
         return cryptoSystem.makeSigner(peerInfo[myIndex].pubKey, privKey)
     }
 
-    override fun getVerifier(): Verifier {
+    override fun verifier(): Verifier {
         return cryptoSystem.makeVerifier()
+    }
+
+    override fun othersPeerInfo(): List<PeerInfo> {
+        return peerInfo
+                .filterIndexed { index, _ -> index != myIndex }
     }
 }

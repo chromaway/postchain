@@ -3,6 +3,8 @@
 package net.postchain.gtx
 
 import net.postchain.base.SECP256K1CryptoSystem
+import net.postchain.devtools.KeyPairHelper.privKey
+import net.postchain.devtools.KeyPairHelper.pubKey
 import org.junit.Assert.assertTrue
 import org.junit.Test
 

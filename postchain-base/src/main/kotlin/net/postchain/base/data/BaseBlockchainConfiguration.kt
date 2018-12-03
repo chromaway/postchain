@@ -2,38 +2,17 @@
 
 package net.postchain.base.data
 
-import net.postchain.base.BaseBlockBuildingStrategy
-import net.postchain.base.BaseBlockHeader
-import net.postchain.base.BaseBlockQueries
-import net.postchain.base.BaseBlockWitness
-import net.postchain.base.CryptoSystem
-import net.postchain.base.SECP256K1CryptoSystem
-import net.postchain.base.Signer
-import net.postchain.base.Storage
-import net.postchain.common.hexStringToByteArray
-import net.postchain.base.secp256k1_derivePubKey
+import net.postchain.base.*
 import net.postchain.core.*
-import org.apache.commons.configuration2.Configuration
 
-open class BaseBlockchainConfiguration(final override val chainID: Long,
-                                       val config: Configuration) :
-        BlockchainConfiguration {
+open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurationData)
+    : BlockchainConfiguration {
+
     override val traits = setOf<String>()
     val cryptoSystem = SECP256K1CryptoSystem()
     val blockStore = BaseBlockStore()
-    val blockchainRID: ByteArray
-
-    init {
-        val blockchainRidHex = config.getString("blockchainrid")
-        if (blockchainRidHex == null) {
-            throw UserMistake("Missing property blockchain.$chainID.blochchainrid")
-        }
-        if (!blockchainRidHex.matches(Regex("[0-9a-f]{64}"))) {
-            throw UserMistake("Invalid property blockchain.$chainID.blochchainrid expected 64 " +
-                    "lower case hex digits. Got $blockchainRidHex")
-        }
-        blockchainRID = blockchainRidHex.hexStringToByteArray()
-    }
+    override val chainID = configData.context.chainID
+    val blockchainRID = configData.context.blockchainRID
 
     override fun decodeBlockHeader(rawBlockHeader: ByteArray): BlockHeader {
         return BaseBlockHeader(rawBlockHeader, cryptoSystem)
@@ -48,43 +27,50 @@ open class BaseBlockchainConfiguration(final override val chainID: Long,
     }
 
     override fun makeBlockBuilder(ctx: EContext): BlockBuilder {
-        val signersStrings = config.getStringArray("signers")
-        val signerPubKeys = signersStrings.map { hexString -> hexString.hexStringToByteArray() }
-
-        val blockSigningPrivateKey = config.getString("blocksigningprivkey").hexStringToByteArray()
-        val blockSigningPublicKey = secp256k1_derivePubKey(blockSigningPrivateKey)
-        val blockSigner = cryptoSystem.makeSigner(blockSigningPublicKey, blockSigningPrivateKey)
-
-        return createBlockBuilderInstance(cryptoSystem, ctx, blockStore, getTransactionFactory(),
-                signerPubKeys.toTypedArray(), blockSigner)
+        val signerPubKeys = configData.getSigners()
+        return createBlockBuilderInstance(
+                cryptoSystem,
+                ctx,
+                blockStore,
+                getTransactionFactory(),
+                signerPubKeys.toTypedArray(),
+                configData.blockSigner)
     }
 
-    open fun createBlockBuilderInstance(cryptoSystem: CryptoSystem, ctx: EContext,
-                                        blockStore: BlockStore, transactionFactory: TransactionFactory,
-                                        signers: Array<ByteArray>, blockSigner: Signer): BlockBuilder {
-        return BaseBlockBuilder(cryptoSystem, ctx, blockStore,
-                getTransactionFactory(), signers, blockSigner)
+    open fun createBlockBuilderInstance(cryptoSystem: CryptoSystem,
+                                        ctx: EContext,
+                                        blockStore: BlockStore,
+                                        transactionFactory: TransactionFactory,
+                                        signers: Array<ByteArray>,
+                                        blockSigner: Signer
+    ): BlockBuilder {
+        return BaseBlockBuilder(
+                cryptoSystem, ctx, blockStore, getTransactionFactory(), signers, blockSigner)
     }
 
     override fun makeBlockQueries(storage: Storage): BlockQueries {
-        val blockSigningPrivateKey = config.getString("blocksigningprivkey").hexStringToByteArray()
-        val blockSigningPublicKey = secp256k1_derivePubKey(blockSigningPrivateKey)
-        return BaseBlockQueries(this, storage, blockStore, chainID, blockSigningPublicKey)
+        return BaseBlockQueries(
+                this, storage, blockStore, chainID, configData.subjectID)
     }
 
     override fun initializeDB(ctx: EContext) {
         blockStore.initialize(ctx, blockchainRID)
     }
 
-    override fun getBlockBuildingStrategy(blockQueries: BlockQueries, transactionQueue: TransactionQueue): BlockBuildingStrategy {
-        val strategyClassName = config.getString("blockstrategy", "")
+    override fun getBlockBuildingStrategy(blockQueries: BlockQueries, txQueue: TransactionQueue): BlockBuildingStrategy {
+        val strategyClassName = configData.getBlockBuildingStrategyName()
         if (strategyClassName == "") {
-            return BaseBlockBuildingStrategy(config, this, blockQueries, transactionQueue)
+            return BaseBlockBuildingStrategy(configData, this, blockQueries, txQueue)
         }
         val strategyClass = Class.forName(strategyClassName)
-        val ctor = strategyClass.getConstructor(Configuration::class.java,
-                BlockchainConfiguration::class.java, BlockQueries::class.java, TransactionQueue::class.java)
-        return ctor.newInstance(config, this, blockQueries, transactionQueue) as BlockBuildingStrategy
+
+        val ctor = strategyClass.getConstructor(
+                BaseBlockchainConfigurationData::class.java,
+                BlockchainConfiguration::class.java,
+                BlockQueries::class.java,
+                TransactionQueue::class.java)
+
+        return ctor.newInstance(configData, this, blockQueries, txQueue) as BlockBuildingStrategy
     }
 }
 

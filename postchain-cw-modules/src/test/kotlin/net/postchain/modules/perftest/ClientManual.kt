@@ -1,13 +1,13 @@
 package net.postchain.modules.perftest
 
-import net.postchain.common.RestTools
+import io.restassured.RestAssured.*
 import net.postchain.common.toHex
 import net.postchain.gtx.GTXDataBuilder
 import net.postchain.gtx.gtx
 import net.postchain.modules.ft.testBlockchainRID
-import net.postchain.test.modules.ft.FTIntegrationTest
+import net.postchain.devtools.modules.ft.FTIntegrationTest
 import org.junit.Test
-import java.util.LinkedList
+import java.util.*
 
 /**
  * The test methods of this class should be started before the node starts, so that the
@@ -17,12 +17,12 @@ import java.util.LinkedList
  * start the node
  */
 class ClientManual : FTIntegrationTest() {
-    val assetID = "TST"
-
-    val restTools = RestTools()
+    private val assetID = "TST"
 
     fun postTx(bytes: ByteArray) {
-        restTools.post(8383, "/tx", "{tx: ${bytes.toHex()}}")
+        given().port(8383)
+                .body("{tx: ${bytes.toHex()}}")
+                .post("/tx")
     }
 
     fun makeTestTx(id: Long, value: String): ByteArray {

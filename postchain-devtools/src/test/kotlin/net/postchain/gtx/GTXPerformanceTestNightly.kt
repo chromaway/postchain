@@ -5,11 +5,13 @@ package net.postchain.gtx
 import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import mu.KLogging
-import net.postchain.PostchainNode
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.configurations.GTXTestModule
-import net.postchain.test.EbftIntegrationTest
-import net.postchain.test.OnDemandBlockBuildingStrategy
+import net.postchain.devtools.EbftIntegrationTest
+import net.postchain.devtools.KeyPairHelper.privKey
+import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.devtools.OnDemandBlockBuildingStrategy
+import net.postchain.devtools.SingleChainTestNode
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,17 +19,21 @@ import kotlin.system.measureNanoTime
 
 @RunWith(JUnitParamsRunner::class)
 class GTXPerformanceTestNightly : EbftIntegrationTest() {
+
     companion object : KLogging()
 
-    fun strat(node: PostchainNode): OnDemandBlockBuildingStrategy {
-        return node.blockStrategy as OnDemandBlockBuildingStrategy
+    private fun strategy(node: SingleChainTestNode): OnDemandBlockBuildingStrategy {
+        return node
+                .getBlockchainInstance()
+                .getEngine()
+                .getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
     }
 
-    fun makeTestTx(id: Long, value: String): ByteArray {
-        val b = GTXDataBuilder(net.postchain.test.gtx.testBlockchainRID, arrayOf(pubKey(0)), net.postchain.test.gtx.myCS)
+    private fun makeTestTx(id: Long, value: String): ByteArray {
+        val b = GTXDataBuilder(net.postchain.devtools.gtx.testBlockchainRID, arrayOf(pubKey(0)), net.postchain.devtools.gtx.myCS)
         b.addOperation("gtx_test", arrayOf(gtx(id), gtx(value)))
         b.finish()
-        b.sign(net.postchain.test.gtx.myCS.makeSigner(pubKey(0), privKey(0)))
+        b.sign(net.postchain.devtools.gtx.myCS.makeSigner(pubKey(0), privKey(0)))
         return b.serialize()
     }
 
@@ -112,18 +118,27 @@ class GTXPerformanceTestNightly : EbftIntegrationTest() {
         createEbftNodes(nodeCount)
 
         var txId = 0
-        val statusManager = ebftNodes[0].statusManager
+        val statusManager = ebftNodes[0].getBlockchainInstance().statusManager
         for (i in 0 until blockCount) {
             for (tx in 0 until txPerBlock) {
-                val txf = ebftNodes[statusManager.primaryIndex()].blockchainConfiguration.getTransactionFactory()
-                ebftNodes[statusManager.primaryIndex()].txQueue.enqueue(
-                        txf.decodeTransaction(makeTestTx(1, (txId++).toString()))
-                )
+                val txFactory = ebftNodes[statusManager.primaryIndex()]
+                        .getBlockchainInstance()
+                        .blockchainConfiguration
+                        .getTransactionFactory()
+
+                val tx = makeTestTx(1, (txId++).toString())
+                ebftNodes[statusManager.primaryIndex()]
+                        .getBlockchainInstance()
+                        .getEngine()
+                        .getTransactionQueue()
+                        .enqueue(txFactory.decodeTransaction(tx))
             }
+
             val nanoDelta = measureNanoTime {
-                strat(ebftNodes[statusManager.primaryIndex()]).triggerBlock()
-                ebftNodes.forEach { strat(it).awaitCommitted(i) }
+                ebftNodes.forEach { strategy(it).buildBlocksUpTo(i.toLong()) }
+                ebftNodes.forEach { strategy(it).awaitCommitted(i) }
             }
+
             println("Time elapsed: ${nanoDelta / 1000000} ms")
         }
     }

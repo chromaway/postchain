@@ -1,4 +1,4 @@
-package net.postchain.test.modules.esplix
+package net.postchain.devtools.modules.esplix
 
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
@@ -9,7 +9,9 @@ import net.postchain.gtx.gtx
 import net.postchain.modules.esplix_r4.BaseEsplixModuleFactory
 import net.postchain.modules.esplix_r4.computeChainID
 import net.postchain.modules.esplix_r4.computeMessageID
-import net.postchain.test.IntegrationTest
+import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.KeyPairHelper.privKey
+import net.postchain.devtools.KeyPairHelper.pubKey
 import org.junit.Assert
 import org.junit.Test
 
@@ -20,7 +22,7 @@ class EsplixIntegrationTest : IntegrationTest() {
 
     fun makeCreateChainTx(creator: Int, nonce: ByteArray, payload: ByteArray): ByteArray {
         val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(creator)), myCS)
-        b.addOperation("R4createChain",arrayOf(
+        b.addOperation("R4createChain", arrayOf(
                 gtx(nonce),
                 gtx(payload)))
         b.finish()
@@ -31,7 +33,7 @@ class EsplixIntegrationTest : IntegrationTest() {
 
     fun makePostMessage(poster: Int, prevID: ByteArray, payload: ByteArray): ByteArray {
         val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(poster)), myCS)
-        b.addOperation("R4postMessage",arrayOf(
+        b.addOperation("R4postMessage", arrayOf(
                 gtx(prevID),
                 gtx(payload)))
         b.finish()
@@ -48,16 +50,16 @@ class EsplixIntegrationTest : IntegrationTest() {
 
         val creator = 0
         val user = 1
-        val node = createDataLayer(0)
+        val node = createNode(0)
         var currentBlockHeight = -1L
 
         fun buildBlockAndCommitWithTx(data: ByteArray, fail: Boolean = false) {
             currentBlockHeight += 1
             try {
-                val tx = node.blockchainConfiguration.getTransactionFactory().decodeTransaction(data)
-                node.txQueue.enqueue(tx)
-                buildBlockAndCommit(node.engine)
-                Assert.assertEquals(currentBlockHeight,getBestHeight(node))
+                val tx = node.getBlockchainInstance().blockchainConfiguration.getTransactionFactory().decodeTransaction(data)
+                node.getBlockchainInstance().getEngine().getTransactionQueue().enqueue(tx)
+                buildBlockAndCommit(node.getBlockchainInstance().getEngine())
+                Assert.assertEquals(currentBlockHeight, getBestHeight(node))
                 val txSz = getTxRidsAtHeight(node, currentBlockHeight).size
                 if (fail)
                     Assert.assertEquals(0, txSz)
@@ -68,7 +70,7 @@ class EsplixIntegrationTest : IntegrationTest() {
             }
         }
 
-        val payload = ByteArray(50,{1})
+        val payload = ByteArray(50) { 1 }
         val nonce = cryptoSystem.getRandomBytes(32)
 
         val createChainTx = makeCreateChainTx(
@@ -106,18 +108,18 @@ class EsplixIntegrationTest : IntegrationTest() {
         //Deliberately try to post a message that has the incorrect prevID
         val postMessageTx4 = makePostMessage(
                 creator,
-                ByteArray(32,{0}),
+                ByteArray(32) { 0 },
                 payload
         )
         buildBlockAndCommitWithTx(postMessageTx4, true)
 
-        val msg1 = node.blockQueries.query(
+        val msg1 = node.getBlockchainInstance().getEngine().getBlockQueries().query(
                 """{"type":"R4getMessages",
                     "chainID":"${chainID.toHex()}",
                     "maxHits":1
                    }""")
         println(msg1.get())
-        val msg2 = node.blockQueries.query(
+        val msg2 = node.getBlockchainInstance().getEngine().getBlockQueries().query(
                 """{"type":"R4getMessages",
                     "chainID":"${chainID.toHex()}",
                     "sinceMessageID":"${messageID.toHex()}",

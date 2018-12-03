@@ -3,18 +3,25 @@
 package net.postchain.base
 
 import net.postchain.core.ProgrammerMistake
+import java.util.*
 
 val internalNodePrefix = byteArrayOf(0)
 val leafPrefix = byteArrayOf(1)
 val nonExistingNodePrefix = byteArrayOf(2)
 val nonExistingNodeHash = ByteArray(32)
 
+enum class Side { LEFT, RIGHT }
+
+class MerklePathItem(val side: Side, val hash: ByteArray)
+
+typealias MerklePath = ArrayList<MerklePathItem>
+
 fun log2ceil(value: Int): Int {
-    return Math.ceil(Math.log10(value.toDouble())/Math.log10(2.toDouble())).toInt()
+    return Math.ceil(Math.log10(value.toDouble()) / Math.log10(2.toDouble())).toInt()
 }
 
 fun computeMerkleRootHash(cryptoSystem: CryptoSystem, hashes: Array<ByteArray>, depth: Int = 0,
-                        leafDepth: Int = log2ceil(hashes.size)): ByteArray {
+                          leafDepth: Int = log2ceil(hashes.size)): ByteArray {
     if (hashes.size == 0) {
         return ByteArray(32) // Just zeros
     }
@@ -24,13 +31,13 @@ fun computeMerkleRootHash(cryptoSystem: CryptoSystem, hashes: Array<ByteArray>, 
     }
 
     val maxLeavesPerChild = Math.pow(2.toDouble(), leafDepth.toDouble() - depth - 1).toInt()
-    val prefix =  if (depth == leafDepth - 1) leafPrefix else internalNodePrefix
+    val prefix = if (depth == leafDepth - 1) leafPrefix else internalNodePrefix
     if (hashes.size <= maxLeavesPerChild) {
         val left = computeMerkleRootHash(cryptoSystem, hashes, depth + 1, leafDepth)
         return cryptoSystem.digest(prefix + left + nonExistingNodeHash)
     }
 
-    val left = computeMerkleRootHash(cryptoSystem, hashes.sliceArray(IntRange(0, maxLeavesPerChild-1)), depth + 1, leafDepth)
+    val left = computeMerkleRootHash(cryptoSystem, hashes.sliceArray(IntRange(0, maxLeavesPerChild - 1)), depth + 1, leafDepth)
     val right = computeMerkleRootHash(cryptoSystem, hashes.sliceArray(IntRange(maxLeavesPerChild, hashes.lastIndex)), depth + 1, leafDepth)
     return cryptoSystem.digest(prefix + left + prefix + right)
 }
@@ -78,7 +85,7 @@ fun merklePath(cryptoSystem: CryptoSystem, hashes: Array<ByteArray>, target: Byt
         throw ProgrammerMistake("Target is not in list of hashes")
     }
 
-    val leafDepth =  log2ceil(hashes.size)
+    val leafDepth = log2ceil(hashes.size)
     val path = internalMerklePath(cryptoSystem, hashes, index, 0, leafDepth)
     return path
 }

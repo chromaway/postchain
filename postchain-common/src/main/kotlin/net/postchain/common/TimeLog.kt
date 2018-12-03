@@ -9,7 +9,7 @@ class TimeLog {
 
     companion object {
         private val timers = ConcurrentHashMap<String, Timer>()
-        private var enabled = false;
+        private var enabled = false
         private val nonce = AtomicInteger()
 
         fun enable(enabled: Boolean) {
@@ -18,7 +18,7 @@ class TimeLog {
 
         fun startSum(name: String): Int {
             if (!enabled) return -1
-            val timer = timers.getOrPut(name, {SumTimer()})
+            val timer = timers.getOrPut(name) {SumTimer()}
             timer.start(-1)
             return -1
         }
@@ -35,7 +35,7 @@ class TimeLog {
         fun end(name: String, nonce: Int = -1) {
             if (!enabled) return
             // Warning: Not thread safe
-            timers.get(name)!!.end(nonce)
+            timers[name]!!.end(nonce)
         }
 
         fun getValue(name: String, nano: Boolean = false): Long {
@@ -76,7 +76,7 @@ private class SumTimer: Timer {
         if (current.containsKey(nonce)) {
             throw RuntimeException("Starting an already started timer. Nonce=$nonce")
         }
-        current.put(nonce, System.nanoTime())
+        current[nonce] = System.nanoTime()
     }
 
     override fun end(nonce: Int) {
@@ -84,7 +84,7 @@ private class SumTimer: Timer {
             throw RuntimeException("Stopping a non-running timer. Nonce=$nonce")
         }
         // Warning lastValue only works for non-concurrent usage of this timer.
-        lastValue = System.nanoTime() - current.get(nonce)!!
+        lastValue = System.nanoTime() - current[nonce]!!
         sum.addAndGet(lastValue)
         entryCount.incrementAndGet()
         current.remove(nonce)

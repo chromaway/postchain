@@ -4,18 +4,15 @@ package net.postchain.base.data
 
 import net.postchain.base.ConfirmationProofMaterial
 import net.postchain.core.*
-import java.util.stream.Stream
 
 /**
  * Provides database access to the location where the blockchain with related metadata and transactions
  * are stored
  *
  * @property db Object used to access the DBMS
- * @property dbVersion version of the database
  */
 class BaseBlockStore : BlockStore {
     var db: DatabaseAccess = SQLDatabaseAccess()
-    private val dbVersion = 1
 
     /**
      * Get initial block data, i.e. data necessary for building the next block
@@ -29,25 +26,19 @@ class BaseBlockStore : BlockStore {
         }
         val prevHeight = getLastBlockHeight(ctx)
         val prevTimestamp = getLastBlockTimestamp(ctx)
-        val prevBlockRID: ByteArray?
-        if (prevHeight == -1L) {
-            // get the blockchainRId from db
-            val blockchainRID = db.getBlockchainRID(ctx)
-            if (blockchainRID == null) {
-                throw UserMistake("Blockchain RID not found for chainId ${ctx.chainID}")
-            }
-            prevBlockRID = blockchainRID
+        val prevBlockRID = if (prevHeight == -1L) {
+            db.getBlockchainRID(ctx)
+                    ?: throw UserMistake("Blockchain RID not found for chainId ${ctx.chainID}")
         } else {
             val prevBlockRIDs = getBlockRIDs(ctx, prevHeight)
             if (prevBlockRIDs.isEmpty()) {
                 throw ProgrammerMistake("Previous block had no RID. Check your block writing code!")
             }
-            prevBlockRID = prevBlockRIDs[0]
+            prevBlockRIDs[0]
         }
 
         val blockIid = db.insertBlock(ctx, prevHeight + 1)
-        val blockData = InitialBlockData(blockIid, ctx.chainID, prevBlockRID, prevHeight + 1, prevTimestamp)
-        return blockData
+        return InitialBlockData(blockIid, ctx.chainID, prevBlockRID, prevHeight + 1, prevTimestamp)
     }
 
     override fun addTransaction(bctx: BlockEContext, tx: Transaction): TxEContext {
@@ -111,8 +102,8 @@ class BaseBlockStore : BlockStore {
         )
     }
 
-    override fun getTxBytes(ctx: EContext, rid: ByteArray): ByteArray? {
-        return db.getTxBytes(ctx, rid)
+    override fun getTxBytes(ctx: EContext, txRID: ByteArray): ByteArray? {
+        return db.getTxBytes(ctx, txRID)
     }
 
     override fun isTransactionConfirmed(ctx: EContext, txRID: ByteArray): Boolean {
@@ -120,6 +111,6 @@ class BaseBlockStore : BlockStore {
     }
 
     fun initialize(ctx: EContext, blockchainRID: ByteArray) {
-        db.initialize(ctx, blockchainRID, this.dbVersion)
+        db.checkBlockchainRID(ctx, blockchainRID)
     }
 }

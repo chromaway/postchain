@@ -3,16 +3,14 @@
 package net.postchain.gtx
 
 import net.postchain.base.BaseBlockQueries
+import net.postchain.base.BaseBlockchainConfigurationData
 import net.postchain.base.Storage
 import net.postchain.base.data.BaseBlockchainConfiguration
-import net.postchain.common.hexStringToByteArray
-import net.postchain.base.secp256k1_derivePubKey
 import net.postchain.core.*
 import nl.komponents.kovenant.Promise
-import org.apache.commons.configuration2.Configuration
 
-open class GTXBlockchainConfiguration(chainID: Long, config: Configuration, val module: GTXModule)
-    : BaseBlockchainConfiguration(chainID, config) {
+open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationData, val module: GTXModule)
+    : BaseBlockchainConfiguration(configData) {
     val txFactory = GTXTransactionFactory(blockchainRID, module, cryptoSystem)
 
     override fun getTransactionFactory(): TransactionFactory {
@@ -26,11 +24,8 @@ open class GTXBlockchainConfiguration(chainID: Long, config: Configuration, val 
     }
 
     override fun makeBlockQueries(storage: Storage): BlockQueries {
-        val blockSigningPrivateKey = config.getString("blocksigningprivkey").hexStringToByteArray()
-        val blockSigningPublicKey = secp256k1_derivePubKey(blockSigningPrivateKey)
-
         return object : BaseBlockQueries(this@GTXBlockchainConfiguration, storage, blockStore,
-                chainID, blockSigningPublicKey) {
+                chainID, configData.subjectID) {
             private val gson = make_gtx_gson()
 
             override fun query(query: String): Promise<String, Exception> {
@@ -45,15 +40,16 @@ open class GTXBlockchainConfiguration(chainID: Long, config: Configuration, val 
     }
 }
 
-open class GTXBlockchainConfigurationFactory() : BlockchainConfigurationFactory {
-    override fun makeBlockchainConfiguration(chainID: Long, config: Configuration): BlockchainConfiguration {
-        return GTXBlockchainConfiguration(chainID, config, createGtxModule(config))
+open class GTXBlockchainConfigurationFactory : BlockchainConfigurationFactory {
+    override fun makeBlockchainConfiguration(configurationData: Any): BlockchainConfiguration {
+        return GTXBlockchainConfiguration(configurationData as BaseBlockchainConfigurationData,
+                createGtxModule(configurationData.context.blockchainRID, configurationData.data))
     }
 
-    open fun createGtxModule(config: Configuration): GTXModule {
-        val gtxConfig = config.subset("gtx")
-        val list = gtxConfig.getStringArray("modules")
-        if (list == null || list.isEmpty()) {
+    open fun createGtxModule(blockchainRID: ByteArray, data: GTXValue): GTXModule {
+        val gtxConfig = data["gtx"]!!
+        val list = gtxConfig["modules"]!!.asArray().map { it.asString() }
+        if (list.isEmpty()) {
             throw UserMistake("Missing GTX module in config. expected property 'blockchain.<chainId>.gtx.modules'")
         }
 
@@ -63,7 +59,7 @@ open class GTXBlockchainConfigurationFactory() : BlockchainConfigurationFactory 
             if (instance is GTXModule) {
                 return instance
             } else if (instance is GTXModuleFactory) {
-                return instance.makeModule(config)
+                return instance.makeModule(data, blockchainRID) //TODO
             } else throw UserMistake("Module class not recognized")
         }
 
@@ -71,7 +67,7 @@ open class GTXBlockchainConfigurationFactory() : BlockchainConfigurationFactory 
             makeModule(list[0])
         } else {
             val moduleList = list.map(::makeModule)
-            val allowOverrides = gtxConfig.getBoolean("allowoverrides", false)
+            val allowOverrides = (gtxConfig["allowoverrides"]?.asInteger() ?: 0L) == 0L
             CompositeGTXModule(moduleList.toTypedArray(), allowOverrides)
         }
     }

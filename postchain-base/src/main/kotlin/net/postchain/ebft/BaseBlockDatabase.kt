@@ -2,14 +2,10 @@
 
 package net.postchain.ebft
 
-import net.postchain.base.ManagedBlockBuilder
+import net.postchain.core.ManagedBlockBuilder
 import net.postchain.common.toHex
-import net.postchain.core.BlockData
-import net.postchain.core.BlockDataWithWitness
-import net.postchain.core.BlockQueries
-import net.postchain.core.MultiSigBlockWitnessBuilder
-import net.postchain.core.Signature
 import mu.KLogging
+import net.postchain.core.*
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
 import java.util.concurrent.SynchronousQueue
@@ -19,6 +15,9 @@ import java.util.concurrent.TimeUnit
 
 typealias Operation = () -> Unit
 
+/**
+ * A wrapper class for the [engine] and [blockQueries], starting new threads when running
+ */
 class BaseBlockDatabase(private val engine: BlockchainEngine, private val blockQueries: BlockQueries, val nodeIndex: Int) : BlockDatabase {
     private val executor = ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS,
             SynchronousQueue<Runnable>(), ThreadFactory {
@@ -34,13 +33,15 @@ class BaseBlockDatabase(private val engine: BlockchainEngine, private val blockQ
     fun stop() {
         logger.debug("BaseBlockDatabase $nodeIndex stopping")
         executor.shutdownNow()
+        executor.awaitTermination(1000, TimeUnit.MILLISECONDS) // TODO: [et]: 1000 ms
         maybeRollback()
     }
 
     private fun <RT> runOp(name: String, op: () -> RT): Promise<RT, Exception> {
-        val deferred = deferred<RT, Exception>()
         logger.trace("BaseBlockDatabase $nodeIndex putting a job")
-        executor.execute({
+
+        val deferred = deferred<RT, Exception>()
+        executor.execute {
             try {
                 logger.debug("Starting job $name")
                 val res = op()
@@ -50,7 +51,8 @@ class BaseBlockDatabase(private val engine: BlockchainEngine, private val blockQ
                 logger.debug("Failed job $name", e)
                 deferred.reject(e)
             }
-        })
+        }
+
         return deferred.promise
     }
 

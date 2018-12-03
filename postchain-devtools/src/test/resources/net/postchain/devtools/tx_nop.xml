@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<test>
+    <block>
+        <transaction blockchainRID="78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
+                     failure="false">
+            <signers>
+                <!-- pubKey(0) -->
+                <bytea>03A301697BDFCD704313BA48E51D567543F2A182031EFD6915DDC07BBCC4E16070</bytea>
+            </signers>
+            <operations>
+                <operation name="nop">
+                </operation>
+            </operations>
+            <signatures>
+                <bytea>979AFA82B8A5B25CBE7BE7565A370B5934F42F30622E7AF597E54BA6EDD301AAEC0A29EB6B1F1A8072166D1B2FEEC7126E62EBB4907D3B5AAB56F89FB1D6B9AC</bytea>
+            </signatures>
+        </transaction>
+
+    </block>
+</test>
+

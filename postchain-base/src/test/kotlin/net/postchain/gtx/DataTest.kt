@@ -4,8 +4,9 @@ package net.postchain.gtx
 
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
-import net.postchain.base.secp256k1_derivePubKey
 import net.postchain.core.Signature
+import net.postchain.devtools.KeyPairHelper.privKey
+import net.postchain.devtools.KeyPairHelper.pubKey
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -13,7 +14,7 @@ import org.junit.Test
 // val testBlockchainRID = SECP256K1CryptoSystem().digest("Test blockchainRID".toByteArray())
 val testBlockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3".hexStringToByteArray()
 
-fun mustThrowError(msg: String, code: ()->Unit) {
+fun mustThrowError(msg: String, code: () -> Unit) {
     try {
         code()
         fail(msg)
@@ -21,22 +22,11 @@ fun mustThrowError(msg: String, code: ()->Unit) {
     }
 }
 
-fun privKey(index: Int): ByteArray {
-    // private key index 0 is all zeroes except byte 16 which is 1
-    // private key index 12 is all 12:s except byte 16 which is 1
-    // reason for byte16=1 is that private key cannot be all zeroes
-    return ByteArray(32, { if (it == 16) 1.toByte() else index.toByte() })
-}
-
-fun pubKey(index: Int): ByteArray {
-    return secp256k1_derivePubKey(privKey(index))
-}
-
 class GTXDataTest {
 
     @Test
     fun testGTXData() {
-        val signerPub = (0..3).map(::pubKey).toTypedArray()
+        val signerPub = (0..3).map(::pubKey)
         val signerPriv = (0..3).map(::privKey)
         val crypto = SECP256K1CryptoSystem()
 

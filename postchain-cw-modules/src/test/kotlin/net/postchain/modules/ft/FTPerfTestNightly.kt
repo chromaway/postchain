@@ -2,9 +2,11 @@ package net.postchain.modules.ft
 
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
-import net.postchain.base.secp256k1_derivePubKey
-import net.postchain.gtx.*
-import net.postchain.test.modules.ft.FTIntegrationTest
+import net.postchain.gtx.GTXTransaction
+import net.postchain.gtx.GTXTransactionFactory
+import net.postchain.devtools.KeyPairHelper.privKey
+import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.devtools.modules.ft.FTIntegrationTest
 import org.junit.Assert
 import org.junit.Test
 import kotlin.system.measureNanoTime
@@ -22,7 +24,7 @@ class FTPerfTestNightly : FTIntegrationTest() {
                 BasicAccount.makeDescriptor(testBlockchainRID, senderPub)
         )
         val receiverID = accUtil.makeAccountID(
-            BasicAccount.makeDescriptor(testBlockchainRID, pubKey(1))
+                BasicAccount.makeDescriptor(testBlockchainRID, pubKey(1))
         )
         return (0..999).map {
             makeTransferTx(
@@ -80,7 +82,6 @@ class FTPerfTestNightly : FTIntegrationTest() {
         Assert.assertTrue(total == 1000)
         println("Time elapsed: ${nanoDelta / 1000000} ms")
     }
-
 
 
 }

@@ -5,7 +5,6 @@ package net.postchain.gtx
 import net.postchain.core.EContext
 import net.postchain.core.Transactor
 import net.postchain.core.UserMistake
-import org.apache.commons.configuration2.Configuration
 
 interface GTXModule {
     fun makeTransactor(opData: ExtOpData): Transactor
@@ -16,7 +15,7 @@ interface GTXModule {
 }
 
 interface GTXModuleFactory {
-    fun makeModule(config: Configuration): GTXModule
+    fun makeModule(config: GTXValue, blockchainRID: ByteArray): GTXModule
 }
 
 abstract class SimpleGTXModule<ConfT>(

@@ -3,7 +3,7 @@
 package net.postchain.base.data
 
 import mu.KLogging
-import net.postchain.base.ManagedBlockBuilder
+import net.postchain.core.ManagedBlockBuilder
 import net.postchain.base.Storage
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
@@ -51,7 +51,7 @@ class BaseManagedBlockBuilder(
     }
 
     override fun begin() {
-        runOp({ bb.begin() })
+        runOp { bb.begin() }
     }
 
     override fun appendTransaction(tx: Transaction) {
@@ -86,8 +86,8 @@ class BaseManagedBlockBuilder(
         runOp { bb.finalizeBlock() }
     }
 
-    override fun finalizeAndValidate(bh: BlockHeader) {
-        runOp { bb.finalizeAndValidate(bh) }
+    override fun finalizeAndValidate(blockHeader: BlockHeader) {
+        runOp { bb.finalizeAndValidate(blockHeader) }
     }
 
     override fun getBlockData(): BlockData {
@@ -99,8 +99,8 @@ class BaseManagedBlockBuilder(
         return bb.getBlockWitnessBuilder()
     }
 
-    override fun commit(w: BlockWitness?) {
-        runOp { bb.commit(w) }
+    override fun commit(blockWitness: BlockWitness?) {
+        runOp { bb.commit(blockWitness) }
         closed = true
         s.closeWriteConnection(ctxt, true)
         onCommit(bb)

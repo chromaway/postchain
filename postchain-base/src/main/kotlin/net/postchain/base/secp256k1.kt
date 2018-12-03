@@ -113,6 +113,13 @@ fun secp256k1_derivePubKey(privKey: ByteArray): ByteArray {
     return q.getEncoded(true)
 }
 
+fun secp256k1_ecdh(privKey: ByteArray, pubKey: ByteArray): ByteArray {
+    val d = BigInteger(1, privKey)
+    val Q = CURVE.curve.decodePoint(pubKey)
+    val digest = MessageDigest.getInstance("SHA-256")
+    return digest.digest(Q.multiply(d).normalize().getEncoded(true))
+}
+
 /**
  * A collection of cryptographic functions based on the elliptic curve secp256k1
  */

@@ -2,9 +2,9 @@
 
 package net.postchain.base
 
-import net.postchain.core.*
 import mu.KLogging
 import net.postchain.common.toHex
+import net.postchain.core.*
 import java.nio.ByteBuffer
 
 /**
@@ -28,10 +28,11 @@ class BaseBlockWitness(val _rawData: ByteArray, val _signatures: Array<Signature
         /**
          * Create BlockWitness given the deserialized signatures
          */
-        @JvmStatic val fromBytes = {rawWitness: ByteArray ->
+        @JvmStatic
+        val fromBytes = { rawWitness: ByteArray ->
             val buffer = ByteBuffer.wrap(rawWitness)
             val sigCount = buffer.int
-            val signatures = Array<Signature>(sigCount, {
+            val signatures = Array<Signature>(sigCount) {
                 val subjectIdSize = buffer.int
                 val subjectId = ByteArray(subjectIdSize)
                 buffer.get(subjectId)
@@ -39,14 +40,15 @@ class BaseBlockWitness(val _rawData: ByteArray, val _signatures: Array<Signature
                 val signature = ByteArray(signatureSize)
                 buffer.get(signature)
                 Signature(subjectId, signature)
-            })
+            }
             BaseBlockWitness(rawWitness, signatures)
         }
 
         /**
          * Create BlockWitness given the serialized signatures
          */
-        @JvmStatic val fromSignatures = {signatures: Array<Signature> ->
+        @JvmStatic
+        val fromSignatures = { signatures: Array<Signature> ->
             var size = 4 // space for sig count
             signatures.forEach { size += 8 + it.subjectID.size + it.data.size }
             val bytes = ByteBuffer.allocate(size)
@@ -78,7 +80,8 @@ class BaseBlockWitnessBuilder(val cryptoSystem: CryptoSystem, val blockHeader: B
      * Signatures from [subjects] that have signed the [blockHeader]
      */
     val signatures = mutableListOf<Signature>()
-    companion object: KLogging()
+
+    companion object : KLogging()
 
     /**
      * Check if we have enough [signatures] for witness to be valid
@@ -110,12 +113,12 @@ class BaseBlockWitnessBuilder(val cryptoSystem: CryptoSystem, val blockHeader: B
      * @throws UserMistake If subject attempts to add more than one signature
      */
     override fun applySignature(s: Signature) {
-        if (!subjects.any( { s.subjectID.contentEquals(it) } )) {
+        if (!subjects.any({ s.subjectID.contentEquals(it) })) {
             throw UserMistake("Unexpected subject ${s.subjectID.toHex()} of signature")
         }
 
         // Do not add two signatures from the same subject!
-        if (signatures.any({it.subjectID.contentEquals(s.subjectID)})) {
+        if (signatures.any({ it.subjectID.contentEquals(s.subjectID) })) {
             return
         }
 //        logger.debug("BlockHeader: ${blockHeader.rawData.toHex()}")

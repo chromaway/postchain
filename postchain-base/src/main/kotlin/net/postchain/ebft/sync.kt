@@ -7,6 +7,7 @@ import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.ebft.message.*
 import net.postchain.ebft.message.Transaction
+import net.postchain.network.CommunicationManager
 import java.util.*
 
 fun decodeBlockDataWithWitness(block: CompleteBlock, bc: BlockchainConfiguration)
@@ -53,7 +54,11 @@ class RevoltTracker(private val revoltTimeout: Int, private val statusManager: S
 }
 
 
-private class StatusSender(private val maxStatusInterval: Int, private val statusManager: StatusManager, private val commManager: CommManager<EbftMessage>) {
+private class StatusSender(
+        private val maxStatusInterval: Int,
+        private val statusManager: StatusManager,
+        private val communicationManager: CommunicationManager<EbftMessage>
+) {
     var lastSerial: Long = -1
     var lastSentTime: Long = Date(0L).time
 
@@ -68,7 +73,7 @@ private class StatusSender(private val maxStatusInterval: Int, private val statu
             this.lastSerial = myStatus.serial
             val statusMessage = Status(myStatus.blockRID, myStatus.height, myStatus.revolting,
                     myStatus.round, myStatus.serial, myStatus.state.ordinal)
-            commManager.broadcastPacket(statusMessage)
+            communicationManager.broadcastPacket(statusMessage)
         }
     }
 }
@@ -82,15 +87,15 @@ class SyncManager(
         val statusManager: StatusManager,
         val blockManager: BlockManager,
         val blockDatabase: BlockDatabase,
-        val commManager: CommManager<EbftMessage>,
+        val communicationManager: CommunicationManager<EbftMessage>,
         private val txQueue: TransactionQueue,
         val blockchainConfiguration: BlockchainConfiguration
 ) {
     private val revoltTracker = RevoltTracker(10000, statusManager)
-    private val statusSender = StatusSender(1000, statusManager, commManager)
+    private val statusSender = StatusSender(1000, statusManager, communicationManager)
     private val defaultTimeout = 1000
     private var currentTimeout = defaultTimeout
-    private var processingIntent : BlockIntent = DoNothingIntent
+    private var processingIntent: BlockIntent = DoNothingIntent
     private var processingIntentDeadline = 0L
     private var lastStatusLogged = Date().time
 
@@ -100,9 +105,10 @@ class SyncManager(
      * Handle incoming messages
      */
     fun dispatchMessages() {
-        for (packet in commManager.getPackets()) {
+        for (packet in communicationManager.getPackets()) {
             val nodeIndex = packet.first
             val message = packet.second
+            logger.debug { "Received message type ${message.getBackingInstance().choiceID} from ${nodeIndex}" }
             try {
                 when (message) {
                     is Status -> {
@@ -121,7 +127,7 @@ class SyncManager(
                         } else if (!smBlockRID.contentEquals(message.blockRID)) {
                             logger.info("Receive signature for a different block")
                         } else if (this.blockDatabase.verifyBlockSignature(signature)) {
-                                this.statusManager.onCommitSignature(nodeIndex, message.blockRID, signature)
+                            this.statusManager.onCommitSignature(nodeIndex, message.blockRID, signature)
                         }
                     }
                     is CompleteBlock -> {
@@ -171,14 +177,14 @@ class SyncManager(
             assert(statusManager.myStatus.blockRID!!.contentEquals(currentBlock.header.blockRID))
             val signature = statusManager.getCommitSignature()
             if (signature != null) {
-                commManager.sendPacket(BlockSignature(blockRID, signature), setOf(nodeIndex))
+                communicationManager.sendPacket(BlockSignature(blockRID, signature), setOf(nodeIndex))
             }
             return
         }
         val blockSignature = blockDatabase.getBlockSignature(blockRID)
         blockSignature success {
             val packet = BlockSignature(blockRID, it)
-            commManager.sendPacket(packet, setOf(nodeIndex))
+            communicationManager.sendPacket(packet, setOf(nodeIndex))
         } fail {
             logger.debug("Error sending BlockSignature", it)
         }
@@ -195,7 +201,7 @@ class SyncManager(
         blockAtHeight success {
             val packet = CompleteBlock(it.header.rawData, it.transactions.toList(),
                     height, it.witness!!.getRawData())
-            commManager.sendPacket(packet, setOf(nodeIndex))
+            communicationManager.sendPacket(packet, setOf(nodeIndex))
         } fail { logger.debug("Error sending CompleteBlock", it) }
     }
 
@@ -207,7 +213,7 @@ class SyncManager(
     private fun sendUnfinishedBlock(nodeIndex: Int) {
         val currentBlock = blockManager.currentBlock
         if (currentBlock != null) {
-            commManager.sendPacket(UnfinishedBlock(currentBlock.header.rawData, currentBlock.transactions.toList()), setOf(nodeIndex))
+            communicationManager.sendPacket(UnfinishedBlock(currentBlock.header.rawData, currentBlock.transactions.toList()), setOf(nodeIndex))
         }
     }
 
@@ -235,7 +241,7 @@ class SyncManager(
     private fun fetchBlockAtHeight(height: Long) {
         val nodeIndex = selectRandomNode { it.height > height } ?: return
         logger.debug("Fetching block at height ${height} from node ${nodeIndex}")
-        commManager.sendPacket(GetBlockAtHeight(height), setOf(nodeIndex))
+        communicationManager.sendPacket(GetBlockAtHeight(height), setOf(nodeIndex))
     }
 
     /**
@@ -247,7 +253,7 @@ class SyncManager(
     private fun fetchCommitSignatures(blockRID: ByteArray, nodes: Array<Int>) {
         val message = GetBlockSignature(blockRID)
         logger.debug("Fetching commit signature for block with RID ${blockRID.toHex()} from nodes ${Arrays.toString(nodes)}")
-        commManager.sendPacket(message, nodes.toSet())
+        communicationManager.sendPacket(message, nodes.toSet())
     }
 
     /**
@@ -259,12 +265,9 @@ class SyncManager(
         val height = statusManager.myStatus.height
         val nodeIndex = selectRandomNode {
             it.height == height && (it.blockRID?.contentEquals(blockRID) ?: false)
-        }
-        if (nodeIndex == null) {
-            return
-        }
-        logger.debug("Fetching unfinished block with RID ${blockRID.toHex()}from node ${nodeIndex} ")
-        commManager.sendPacket(GetUnfinishedBlock(blockRID), setOf(nodeIndex))
+        } ?: return
+        logger.debug("Fetching unfinished block with RID ${blockRID.toHex()} from node $nodeIndex ")
+        communicationManager.sendPacket(GetUnfinishedBlock(blockRID), setOf(nodeIndex))
     }
 
     /**
@@ -302,8 +305,8 @@ class SyncManager(
             val haveSignature = statusManager.commitSignatures[idx] != null
             logger.info {
                 "Node ${idx} he:${ns.height} ro:${ns.round} st:${ns.state}" +
-                " ${if (ns.revolting) "R" else ""} blockRID=${if (blockRID == null) "null" else blockRID.toHex()}" +
-                " havesig:${haveSignature}"
+                        " ${if (ns.revolting) "R" else ""} blockRID=${if (blockRID == null) "null" else blockRID.toHex()}" +
+                        " havesig:${haveSignature}"
             }
         }
     }
@@ -316,7 +319,7 @@ class SyncManager(
         // Process all messages from peers, one at a time. Some
         // messages may trigger asynchronous code which will
         // send replies at a later time, others will send replies
-        // immeiately
+        // immediately
         dispatchMessages()
 
         // An intent is something that we want to do with our current block.
