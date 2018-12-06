@@ -9,6 +9,11 @@ class DefaultXConnector(
         val identPacketConverter: IdentPacketConverter,
         val eventReceiver: XConnectorEvents
 ) : XConnector, Shutdownable {
+
+    override fun init(peerInfo: PeerInfo) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     override fun shutdown() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }

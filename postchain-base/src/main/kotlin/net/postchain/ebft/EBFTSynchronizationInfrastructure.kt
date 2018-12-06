@@ -13,7 +13,7 @@ import net.postchain.ebft.message.EbftMessage
 import net.postchain.network.CommManager
 import net.postchain.network.CommunicationManager
 import net.postchain.network.PeerConnectionManager
-import net.postchain.network.netty.NettyConnectorFactory
+import net.postchain.network.netty2.NettyConnectorFactory
 import net.postchain.network.x.DefaultXCommunicationManager
 import net.postchain.network.x.DefaultXConnectionManager
 import net.postchain.network.x.XConnectionManager

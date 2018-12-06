@@ -3,6 +3,7 @@ package net.postchain.base
 import net.postchain.core.ByteArrayKey
 import java.util.concurrent.CountDownLatch
 
+// TODO: Will be replaced by XPeerId
 typealias PeerID = ByteArray
 
 open class PeerInfo(val host: String, open val port: Int, val pubKey: ByteArray, val privateKey: ByteArray? = null)

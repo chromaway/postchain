@@ -7,17 +7,17 @@ import net.postchain.common.toHex
 import net.postchain.core.ByteArrayKey
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.byteArrayKeyOf
-import net.postchain.network.IdentPacketConverter
+import net.postchain.network.PacketConverter
 
-class DefaultXConnectionManager(
-        connectorFactory: XConnectorFactory,
+class DefaultXConnectionManager<PC : PacketConverter<*>>(
+        connectorFactory: XConnectorFactory<PC>,
         myPeerInfo: PeerInfo,
-        identPacketConverter: IdentPacketConverter,
+        packetConverter: PC,
         cryptoSystem: CryptoSystem
 ) : XConnectionManager, XConnectorEvents {
 
     private val connector = connectorFactory.createConnector(
-            myPeerInfo, identPacketConverter, this, cryptoSystem)
+            myPeerInfo, packetConverter, this, cryptoSystem)
 
     companion object : KLogging()
 
@@ -63,17 +63,15 @@ class DefaultXConnectionManager(
         if (!ok) throw ProgrammerMistake("Error: multiple connections to for one chain")
     }
 
-    private fun connectorConnectPeer(peerConfig: XChainPeerConfiguration, peerID: XPeerID) {
-        val peerInfo = peerConfig.commConfiguration.resolvePeer(peerID.byteArray)
-                ?: throw ProgrammerMistake("Peer ID not found: ${peerID.byteArray.toHex()}")
+    private fun connectorConnectPeer(peerConfig: XChainPeerConfiguration, peerId: XPeerID) {
+        val peerConnectionDescriptor = XPeerConnectionDescriptor(
+                peerId,
+                peerConfig.commConfiguration.blockchainRID.byteArrayKeyOf())
 
-        connector.connectPeer(
-                XPeerConnectionDescriptor(
-                        peerID,
-                        peerConfig.commConfiguration.blockchainRID.byteArrayKeyOf()
-                ),
-                peerInfo
-        )
+        val peerInfo = peerConfig.commConfiguration.resolvePeer(peerId.byteArray)
+                ?: throw ProgrammerMistake("Peer ID not found: ${peerId.byteArray.toHex()}")
+
+        connector.connectPeer(peerConnectionDescriptor, peerInfo)
     }
 
     @Synchronized
@@ -145,8 +143,8 @@ class DefaultXConnectionManager(
 
         // TODO: test if connection is wanted
 
-        chain.connections[descriptor.peerID]?.close()
-        chain.connections[descriptor.peerID] = connection
+        chain.connections[descriptor.peerId]?.close()
+        chain.connections[descriptor.peerId] = connection
         return chain.peerConfig.packetHandler
     }
 
@@ -158,14 +156,14 @@ class DefaultXConnectionManager(
             logger.warn("Chain not found")
             return
         }
-        val oldConnection = chain.connections[descriptor.peerID]
+        val oldConnection = chain.connections[descriptor.peerId]
         if (oldConnection != null) {
             oldConnection.close()
-            chain.connections.remove(descriptor.peerID)
+            chain.connections.remove(descriptor.peerId)
         }
 
-        if (chain.connectAll || (descriptor.peerID in chain.neededConnections)) {
-            connectorConnectPeer(chain.peerConfig, descriptor.peerID)
+        if (chain.connectAll || (descriptor.peerId in chain.neededConnections)) {
+            connectorConnectPeer(chain.peerConfig, descriptor.peerId)
         }
     }
 }

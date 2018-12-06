@@ -2,13 +2,13 @@ package net.postchain.network.x
 
 import net.postchain.base.CryptoSystem
 import net.postchain.base.PeerInfo
-import net.postchain.ebft.EbftPacketConverter
+import net.postchain.network.PacketConverter
 
-class DefaultXConnectorFactory : XConnectorFactory<EbftPacketConverter> {
+class IntConnectorFactory : XConnectorFactory<PacketConverter<Int>> {
 
     override fun createConnector(
             myPeerInfo: PeerInfo,
-            packetConverter: EbftPacketConverter,
+            packetConverter: PacketConverter<Int>,
             eventReceiver: XConnectorEvents,
             cryptoSystem: CryptoSystem?): XConnector {
 

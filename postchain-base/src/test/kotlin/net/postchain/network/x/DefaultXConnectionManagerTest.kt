@@ -2,7 +2,7 @@ package net.postchain.network.x
 
 import assertk.assert
 import assertk.assertions.isEmpty
-import assertk.isСontentEqualTo
+import assertk.isContentEqualTo
 import com.nhaarman.mockitokotlin2.*
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerInfo
@@ -20,7 +20,7 @@ import kotlin.test.assertTrue
 class DefaultXConnectionManagerTest {
 
     private val blockchainRid = byteArrayOf(0x01)
-    private val defaultConnectorFactory = DefaultXConnectorFactory()
+    private val defaultConnectorFactory = IntConnectorFactory()
 
     private val cryptoSystem = SECP256K1CryptoSystem()
 
@@ -101,7 +101,7 @@ class DefaultXConnectionManagerTest {
         val connector: XConnector = mock {
             on { connectPeer(any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
         }
-        val connectorFactory: XConnectorFactory = mock {
+        val connectorFactory: XConnectorFactory<PacketConverter<Int>> = mock {
             on { createConnector(any(), any(), any(), any()) } doReturn connector
         }
         val communicationConfig: PeerCommConfiguration = mock {
@@ -156,7 +156,7 @@ class DefaultXConnectionManagerTest {
         val connector: XConnector = mock {
             on { connectPeer(any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
         }
-        val connectorFactory: XConnectorFactory = mock {
+        val connectorFactory: XConnectorFactory<PacketConverter<Int>> = mock {
             on { createConnector(any(), any(), any(), any()) } doReturn connector
         }
         val communicationConfig: PeerCommConfiguration = mock {
@@ -188,7 +188,7 @@ class DefaultXConnectionManagerTest {
         val connector: XConnector = mock {
             on { connectPeer(any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
         }
-        val connectorFactory: XConnectorFactory = mock {
+        val connectorFactory: XConnectorFactory<PacketConverter<Int>> = mock {
             on { createConnector(any(), any(), any(), any()) } doReturn connector
         }
         val communicationConfig: PeerCommConfiguration = mock {
@@ -249,7 +249,7 @@ class DefaultXConnectionManagerTest {
         val connector: XConnector = mock {
             on { connectPeer(any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
         }
-        val connectorFactory: XConnectorFactory = mock {
+        val connectorFactory: XConnectorFactory<PacketConverter<Int>> = mock {
             on { createConnector(any(), any(), any(), any()) } doReturn connector
         }
         val communicationConfig: PeerCommConfiguration = mock {
@@ -285,7 +285,7 @@ class DefaultXConnectionManagerTest {
             assertTrue { isPeerConnected(1L, peerInfo2.peerId()) }
             assertFalse { isPeerConnected(1L, unknownPeerInfo.peerId()) }
             // - getConnectedPeers
-            assert(getConnectedPeers(1L).toTypedArray()).isСontentEqualTo(
+            assert(getConnectedPeers(1L).toTypedArray()).isContentEqualTo(
                     arrayOf(peerInfo1.peerId(), peerInfo2.peerId()))
 
 
@@ -297,7 +297,7 @@ class DefaultXConnectionManagerTest {
             assertTrue { isPeerConnected(1L, peerInfo2.peerId()) }
             assertFalse { isPeerConnected(1L, unknownPeerInfo.peerId()) }
             // - getConnectedPeers
-            assert(getConnectedPeers(1L).toTypedArray()).isСontentEqualTo(
+            assert(getConnectedPeers(1L).toTypedArray()).isContentEqualTo(
                     arrayOf(peerInfo2.peerId()))
 
 
@@ -321,7 +321,7 @@ class DefaultXConnectionManagerTest {
         val connector: XConnector = mock {
             on { connectPeer(any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
         }
-        val connectorFactory: XConnectorFactory = mock {
+        val connectorFactory: XConnectorFactory<PacketConverter<Int>> = mock {
             on { createConnector(any(), any(), any(), any()) } doReturn connector
         }
         val communicationConfig: PeerCommConfiguration = mock {
@@ -352,7 +352,7 @@ class DefaultXConnectionManagerTest {
         verify(connection1, times(0)).sendPacket(any())
         argumentCaptor<LazyPacket>().apply {
             verify(connection2, times(1)).sendPacket(capture())
-            assert(firstValue()).isСontentEqualTo(byteArrayOf(0x04, 0x02))
+            assert(firstValue()).isContentEqualTo(byteArrayOf(0x04, 0x02))
         }
     }
 
@@ -368,7 +368,7 @@ class DefaultXConnectionManagerTest {
         val connector: XConnector = mock {
             on { connectPeer(any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
         }
-        val connectorFactory: XConnectorFactory = mock {
+        val connectorFactory: XConnectorFactory<PacketConverter<Int>> = mock {
             on { createConnector(any(), any(), any(), any()) } doReturn connector
         }
         val communicationConfig: PeerCommConfiguration = mock {
@@ -398,11 +398,11 @@ class DefaultXConnectionManagerTest {
         // Then / verify and assert
         argumentCaptor<LazyPacket>().apply {
             verify(connection1, times(1)).sendPacket(capture())
-            assert(firstValue()).isСontentEqualTo(byteArrayOf(0x04, 0x02))
+            assert(firstValue()).isContentEqualTo(byteArrayOf(0x04, 0x02))
         }
         argumentCaptor<LazyPacket>().apply {
             verify(connection2, times(1)).sendPacket(capture())
-            assert(firstValue()).isСontentEqualTo(byteArrayOf(0x04, 0x02))
+            assert(firstValue()).isContentEqualTo(byteArrayOf(0x04, 0x02))
         }
     }
 
