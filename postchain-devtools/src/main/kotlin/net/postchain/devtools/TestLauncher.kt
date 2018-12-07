@@ -1,5 +1,6 @@
 package net.postchain.devtools
 
+import com.google.gson.GsonBuilder
 import mu.KLogging
 import net.postchain.base.gtxml.TestType
 import net.postchain.common.hexStringToByteArray
@@ -11,7 +12,6 @@ import net.postchain.gtx.gtx
 import net.postchain.gtx.gtxml.GTXMLTransactionParser
 import net.postchain.gtx.gtxml.TransactionContext
 import java.io.StringReader
-import javax.management.modelmbean.XMLParseException
 import javax.xml.bind.JAXBContext
 import javax.xml.bind.JAXBElement
 
@@ -32,7 +32,12 @@ class TestLauncher : IntegrationTest() {
             val malformedXML: Boolean,
             val initializationError: Exception?,
             val transactionFailures: List<TransactionFailure>
-    )
+    ) {
+        fun toJSON(): String {
+            val gson = GsonBuilder().create()!!
+            return gson.toJson(this)
+        }
+    }
 
     fun createTestNode(configFile: String): SingleChainTestNode {
         val config = CommonsConfigurationFactory.readFromFile(configFile)
@@ -50,12 +55,27 @@ class TestLauncher : IntegrationTest() {
         }
     }
 
+    data class EnqueuedTx (
+            val txIdx: Long,
+            val txRID: ByteArray,
+            val isFailure: Boolean
+    )
+
     fun runXMLGTXTests(xml: String,
                        blockchainRID: String?,
-                       configFile: String? = null,
-                       testOutputFileName: String? = null
+                       configFile: String? = null
     ): TestOutput {
-        var passed = true
+        try {
+            return _runXMLGTXTests(xml, blockchainRID, configFile)
+        } finally {
+            tearDown()
+        }
+    }
+
+    private fun _runXMLGTXTests(xml: String,
+                       blockchainRID: String?,
+                       configFile: String? = null
+    ): TestOutput {
         val node: SingleChainTestNode
         val testType: TestType
         try {
@@ -65,19 +85,15 @@ class TestLauncher : IntegrationTest() {
         }
         try {
             testType = parseTest(xml)
-        } catch (e: XMLParseException) {
+        } catch (e: Exception) {
             return TestOutput(false, true, e, listOf())
         }
 
-        var blockNum = 0L
-        val enqueuedTxsRids = mutableMapOf<Long, List<ByteArray>>()
+        val enqueuedTxs = mutableMapOf<Long, List<EnqueuedTx>>()
 
         // Genesis block
         buildBlockAndCommit(node)
-        blockNum++
 
-        val user1pub = pubKey(0)
-        val user1priv = privKey(0)
         val user2pub = pubKey(1)
         val user2priv = privKey(1)
         val user3pub = pubKey(2)
@@ -86,56 +102,81 @@ class TestLauncher : IntegrationTest() {
         val txContext = TransactionContext(
                 blockchainRID?.hexStringToByteArray(),
                 mapOf(
-                        "user1pub" to gtx(user1pub),
+                        "user1pub" to gtx(pubKey(0)),
                         "user2pub" to gtx(user2pub),
                         "user3pub" to gtx(user3pub),
-                        "Alice" to gtx(user1pub),
+                        "Alice" to gtx(pubKey(0)),
                         "Bob" to gtx(user2pub),
                         "Claire" to gtx(user3pub)
                 ),
                 true,
                 mapOf(
-                        user1pub.byteArrayKeyOf() to cryptoSystem.makeSigner(user1pub, user1priv),
+                        pubKey(0).byteArrayKeyOf() to cryptoSystem.makeSigner(pubKey(0), privKey(0)),
                         user2pub.byteArrayKeyOf() to cryptoSystem.makeSigner(user2pub, user2priv),
                         user3pub.byteArrayKeyOf() to cryptoSystem.makeSigner(user3pub, user3priv)
                 )
         )
 
-        // Blocks of test
-        testType.block.forEach {
+        for ((blockIdx, block) in testType.block.withIndex()) {
             logger.info("Block will be processed")
+            val blockNum = blockIdx.toLong() + 1
 
-            val enqueued = mutableListOf<ByteArray>()
-            it.transaction.forEach {
-                if (it.isFailure) {
-                    logger.info("Transaction will not be processed due to it marked as 'failure'")
-                } else {
-                    logger.info("Transaction will be processed")
-
-                    val gtxData = GTXMLTransactionParser.parseGTXMLTransaction(it, txContext)
+            val enqueued = mutableListOf<EnqueuedTx>()
+            for ((txIdx, txXml) in block.transaction.withIndex()) {
+                try {
+                    val gtxData = GTXMLTransactionParser.parseGTXMLTransaction(txXml, txContext)
                     val tx = enqueueTx(node, gtxData.serialize(), blockNum)
-                    enqueued.add(tx!!.getRID())
+                    enqueued.add(EnqueuedTx(
+                            txIdx.toLong(), tx!!.getRID(), txXml.isFailure
+                    ))
+                    Unit
+                } catch (e: Exception) {
+                    if (!txXml.isFailure) {
+                        return TestOutput(false, false, null,
+                                listOf(TransactionFailure(blockNum, txIdx.toLong(), e)))
+                    }
                 }
             }
-            enqueuedTxsRids[blockNum] = enqueued
+            enqueuedTxs[blockNum] = enqueued
 
-            buildBlockAndCommit(node)
-            blockNum++
+            try {
+                buildBlockAndCommit(node)
+            } catch (e: Exception) {
+                return TestOutput(false, false, null,
+                        listOf(TransactionFailure(blockNum, -1, e)))
+            }
         }
 
-        // Assert height
-        passed = passed and (blockNum - 1 == getBestHeight(node))
 
-        // Assert consumed txs
-        passed = passed and enqueuedTxsRids.all { entry ->
-            entry.value.toTypedArray().contentDeepEquals(
-                    getTxRidsAtHeight(node, entry.key))
+        if (getBestHeight(node).toInt() != testType.block.size) {
+            return TestOutput(false, false, null,
+                    listOf(TransactionFailure(-1, -1,
+                            Exception("Unexpected error: not all blocks were built"))))
         }
 
-        // Clearing
-        tearDown()
+        val failures = mutableListOf<TransactionFailure>()
+        for (blockHeight in 1..testType.block.size) {
+            val actualRIDs = getTxRidsAtHeight(node, blockHeight.toLong()).map { it.byteArrayKeyOf() }.toSet()
 
-        return passed
+            enqueuedTxs[blockHeight.toLong()]!!.forEach {
+                val txRID = it.txRID.byteArrayKeyOf()
+                val present = actualRIDs.contains(txRID)
+                if (present && it.isFailure) {
+                    failures.add(TransactionFailure(blockHeight.toLong(), it.txIdx,
+                            Exception("Transaction should fail")))
+                } else if (!present && !it.isFailure) {
+                    val reason = node.getBlockchainInstance().networkAwareTxQueue.getRejectionReason(txRID)
+                    failures.add(TransactionFailure(blockHeight.toLong(), it.txIdx, reason))
+                }
+            }
+        }
+
+        return TestOutput(
+                failures.size == 0,
+                false,
+                null,
+                failures
+        )
     }
 
     private fun parseTest(xml: String): TestType {

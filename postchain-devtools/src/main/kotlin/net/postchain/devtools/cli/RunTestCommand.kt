@@ -32,10 +32,13 @@ class RunTestCommand : CliktCommand(name = "run-test", help = "Tests gtxml file"
         val result = TestLauncher().runXMLGTXTests(
                 File(filename).readText(),
                 blockchainRID,
-                (context.parent?.command as? Cli)?.config,
-                testOutputFileName
+                (context.parent?.command as? Cli)?.config
         )
 
-        println("\nTest ${if (result) "passed" else "failed"}")
+        if (testOutputFileName != null) {
+            File(testOutputFileName).writeText(result.toJSON())
+        }
+
+        println("\nTest ${if (result.passed) "passed" else "failed"}")
     }
 }

@@ -32,6 +32,7 @@ interface TransactionQueue {
     fun getTransactionQueueSize(): Int
     fun removeAll(transactionsToRemove: Collection<Transaction>)
     fun rejectTransaction(tx: Transaction, reason: Exception?)
+    fun getRejectionReason(txRID: ByteArrayKey): Exception?
 }
 
 
