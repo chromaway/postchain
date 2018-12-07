@@ -5,6 +5,7 @@ import mu.KLogging
 import net.postchain.base.gtxml.TestType
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.CommonsConfigurationFactory
+import net.postchain.core.UserMistake
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
@@ -14,6 +15,7 @@ import net.postchain.gtx.gtxml.TransactionContext
 import java.io.StringReader
 import javax.xml.bind.JAXBContext
 import javax.xml.bind.JAXBElement
+import javax.xml.bind.util.ValidationEventCollector
 
 /**
  * TODO: [et]: Maybe redesign this implementation based on [IntegrationTest] currently
@@ -180,9 +182,14 @@ class TestLauncher : IntegrationTest() {
     }
 
     private fun parseTest(xml: String): TestType {
-        val jaxbElement = jaxbContext
-                .createUnmarshaller()
+        val validator = ValidationEventCollector()
+        val jaxbElement = jaxbContext.createUnmarshaller()
+                .apply { eventHandler = validator }
                 .unmarshal(StringReader(xml)) as JAXBElement<*>
+
+        if (validator.hasEvents()) {
+            throw UserMistake(validator.events.first().message)
+        }
 
         return jaxbElement.value as TestType
     }
