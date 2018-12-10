@@ -95,7 +95,7 @@ fun validateMerklePath(cryptoSystem: CryptoSystem, path: MerklePath, target: Byt
 
     for (i in 0 until path.size) {
         val item = path[i]
-        val prefix = if (i == 0) byteArrayOf(1) else byteArrayOf(0)
+        val prefix = if (i == 0) leafPrefix else internalNodePrefix
         currentHash = cryptoSystem.digest(if (item.side == Side.LEFT) {
             prefix + item.hash + prefix + currentHash
         } else {

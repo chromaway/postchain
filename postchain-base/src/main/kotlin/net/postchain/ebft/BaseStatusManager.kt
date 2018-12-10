@@ -16,7 +16,7 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
     override val commitSignatures: Array<Signature?> = arrayOfNulls(nodeCount)
     override val myStatus: NodeStatus
     var intent: BlockIntent = DoNothingIntent
-    val quorum2f = (nodeCount / 3) * 2   // TODO: what if a new node is added to the network?
+    val quorum2f = (nodeCount / 3) * 2
 
     companion object : KLogging()
 

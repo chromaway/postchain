@@ -1,12 +1,11 @@
-package net.postchain.base
+package net.postchain.base.merkle
 
 import net.postchain.gtx.ArrayGTXValue
 import net.postchain.gtx.GTXValue
-import net.postchain.gtx.IntegerGTXValue
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class ContentLeafCompleteBinaryTreeTest {
+class ContentLeafFullBinaryTreeTest {
 
 
     @Test
@@ -20,12 +19,12 @@ class ContentLeafCompleteBinaryTreeTest {
                 "/ \\ / \\ \n" +
                 "1 2 3 4 \n"
 
-        val intArrayList = transformIntToGTXValue(intArray.toCollection(ArrayList()))
+        val intArrayList = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
 
-        val completeBinaryTree: ContentLeafCompleteBinaryTree = CompleteBinaryTreeFactory.buildCompleteBinaryTree(intArrayList)
+        val fullBinaryTree: ContentLeafFullBinaryTree = CompleteBinaryTreeFactory.buildCompleteBinaryTree(intArrayList)
 
         val printer = BTreePrinter()
-        val treePrintout = printer.printNode(completeBinaryTree)
+        val treePrintout = printer.printNode(fullBinaryTree)
         //println(treePrintout)
 
         assertEquals(expectedResult.trim(), treePrintout.trim())
@@ -47,12 +46,12 @@ class ContentLeafCompleteBinaryTreeTest {
                 "/ \\ / \\ / \\     \n" +
                 "1 2 3 4 5 6 "
 
-        val intArrayList = transformIntToGTXValue(intArray.toCollection(ArrayList()))
+        val intArrayList = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
 
-        val completeBinaryTree: ContentLeafCompleteBinaryTree = CompleteBinaryTreeFactory.buildCompleteBinaryTree(intArrayList)
+        val fullBinaryTree: ContentLeafFullBinaryTree = CompleteBinaryTreeFactory.buildCompleteBinaryTree(intArrayList)
 
         val printer = BTreePrinter()
-        val treePrintout = printer.printNode(completeBinaryTree)
+        val treePrintout = printer.printNode(fullBinaryTree)
         //println(treePrintout)
 
         assertEquals(expectedResult.trim(), treePrintout.trim())
@@ -83,12 +82,12 @@ class ContentLeafCompleteBinaryTreeTest {
                 "/ \\ / \\ / \\ / \\ \n" +
                 "1 2 3 4 5 6 7 8 \n"
 
-        val intArrayList = transformIntToGTXValue(intArray.toCollection(ArrayList()))
+        val intArrayList = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
 
-        val completeBinaryTree: ContentLeafCompleteBinaryTree = CompleteBinaryTreeFactory.buildCompleteBinaryTree(intArrayList)
+        val fullBinaryTree: ContentLeafFullBinaryTree = CompleteBinaryTreeFactory.buildCompleteBinaryTree(intArrayList)
 
         val printer = BTreePrinter()
-        val treePrintout = printer.printNode(completeBinaryTree)
+        val treePrintout = printer.printNode(fullBinaryTree)
         //println(treePrintout)
 
         assertEquals(expectedResult.trim(), treePrintout.trim())
@@ -120,12 +119,12 @@ class ContentLeafCompleteBinaryTreeTest {
                 "/ \\ / \\ / \\ / \\ / \\ / \\ \n" +
                 "1 2 3 4 5 6 7 8 9 0 1 2 "
 
-        val intArrayList = transformIntToGTXValue(intArray.toCollection(ArrayList()))
+        val intArrayList = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
 
-        val completeBinaryTree: ContentLeafCompleteBinaryTree = CompleteBinaryTreeFactory.buildCompleteBinaryTree(intArrayList)
+        val fullBinaryTree: ContentLeafFullBinaryTree = CompleteBinaryTreeFactory.buildCompleteBinaryTree(intArrayList)
 
         val printer = BTreePrinter()
-        val treePrintout = printer.printNode(completeBinaryTree)
+        val treePrintout = printer.printNode(fullBinaryTree)
         //println(treePrintout)
 
         assertEquals(expectedResult.trim(), treePrintout.trim())
@@ -174,29 +173,23 @@ class ContentLeafCompleteBinaryTreeTest {
                         "                        / \\                             \n" +
                         "                        1 2 "
 
-        val intArrayList = transformIntToGTXValue(intArray.toCollection(ArrayList()))
+        val intArrayList = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
 
         // Add the inner ArrayGtxValue
         val innerIntArray = intArrayOf(1,2,3)
-        val innerIntArrayList = transformIntToGTXValue(innerIntArray.toCollection(ArrayList()))
+        val innerIntArrayList = TreeHelper.transformIntToGTXValue(innerIntArray.toCollection(ArrayList()))
         val innerGtxIntArray: Array<GTXValue> = innerIntArrayList.toTypedArray()
         val innerArrayGTXValue = ArrayGTXValue(innerGtxIntArray)
         intArrayList.set(3, innerArrayGTXValue)
 
-        val completeBinaryTree: ContentLeafCompleteBinaryTree = CompleteBinaryTreeFactory.buildCompleteBinaryTree(intArrayList)
+        val fullBinaryTree: ContentLeafFullBinaryTree = CompleteBinaryTreeFactory.buildCompleteBinaryTree(intArrayList)
 
         val printer = BTreePrinter()
-        val treePrintout = printer.printNode(completeBinaryTree)
+        val treePrintout = printer.printNode(fullBinaryTree)
         //println(treePrintout)
 
         assertEquals(expectedResult.trim(), treePrintout.trim())
     }
 
-    private fun transformIntToGTXValue(intArray: ArrayList<Int>): ArrayList<GTXValue> {
-        val retArr = arrayListOf<GTXValue>()
-        for (i in intArray) {
-            retArr.add(IntegerGTXValue(i.toLong()))
-        }
-        return retArr
-    }
+
 }
