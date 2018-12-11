@@ -47,7 +47,9 @@ class MerkleHashCalculatorDummy: MerkleHashCalculator() {
 
 
     override fun calculateLeafHash(gtxValue: GTXValue): Hash {
-        return calculateHashOfGtxInternal(gtxValue, ::dummySerializatorFun, ::dummyAddOneHashFun)
+        val hash = calculateHashOfGtxInternal(gtxValue, ::dummySerializatorFun, ::dummyAddOneHashFun)
+        println("Hex: " + TreeHelper.convertToHex(hash))
+        return hash
     }
 
 

@@ -55,6 +55,10 @@ typealias Hash = ByteArray
 
 sealed class MerkleProofElement
 
+/**
+ * Just a node. Usually one of the sides (left or right) holds a [ProofHashedLeaf] and the other side
+ * holds a [ProofGtxLeaf] or [ProofNode].
+ */
 data class ProofNode(val left: MerkleProofElement, val right: MerkleProofElement): MerkleProofElement()
 
 /**
@@ -77,6 +81,21 @@ class MerkleProofTree(val root: MerkleProofElement) {
 
     fun proveGtxValue(leafToProve: GTXValue): Boolean {
         return false // TODO: fix
+    }
+
+    /**
+     * Mostly for debugging
+     */
+    fun maxLevel(): Int {
+        return maxLevelInternal(root)
+    }
+
+    private fun maxLevelInternal(node: MerkleProofElement): Int {
+        return when (node) {
+            is ProofGtxLeaf -> 1
+            is ProofHashedLeaf -> 1
+            is ProofNode -> maxOf(maxLevelInternal(node.left), maxLevelInternal(node.right)) + 1
+        }
     }
 }
 

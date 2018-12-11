@@ -23,7 +23,7 @@ class MerkleHashCalculatorTest {
         // 2. the add-one-hashed value
 
         val result = calculator.calculateLeafHash(iGtx)
-        Assert.assertEquals(expectedResultAfterAddOneHash, calculator.convertToHex(result))
+        Assert.assertEquals(expectedResultAfterAddOneHash, TreeHelper.convertToHex(result))
     }
 
     @Test
@@ -40,6 +40,6 @@ class MerkleHashCalculatorTest {
         // 2. the add-one-hashed value
 
         val result = calculator.calculateHashOfGtxInternal(iGtx, ::serializeGTXValueToByteArary, ::dummyAddOneHashFun)
-        Assert.assertEquals(expectedResultAfterAddOneHash, calculator.convertToHex(result))
+        Assert.assertEquals(expectedResultAfterAddOneHash, TreeHelper.convertToHex(result))
     }
 }

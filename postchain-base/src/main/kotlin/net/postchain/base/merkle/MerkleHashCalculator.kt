@@ -62,7 +62,6 @@ abstract class MerkleHashCalculator {
     fun calculateHashOfGtxInternal(gtxValue: GTXValue, serializeFun: (GTXValue) -> ByteArray, hashFun: (ByteArray) -> Hash): Hash {
         var byteArr: ByteArray = serializeFun(gtxValue)
         val resultArr = leafPrefix + hashFun(byteArr)
-        println("result: " + convertToHex(resultArr))
         return resultArr
     }
 
@@ -77,17 +76,5 @@ abstract class MerkleHashCalculator {
         return internalNodePrefix + hashFun(byteArraySum) // Adding the prefx at the last step
     }
 
-    /**
-     * Just used for testing
-     *
-     * @return A readable HEX string of the ByteArray
-     */
-    fun convertToHex(bytes: ByteArray): String {
-        val sb: StringBuilder = StringBuilder()
-        for (b in bytes) {
-            val st = String.format("%02X", b)
-            sb.append(st)
-        }
-        return sb.toString()
-    }
+
 }

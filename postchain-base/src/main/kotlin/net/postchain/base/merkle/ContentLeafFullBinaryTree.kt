@@ -3,8 +3,6 @@ package net.postchain.base.merkle
 import mu.KLogging
 import net.postchain.gtx.ArrayGTXValue
 import net.postchain.gtx.GTXValue
-import net.postchain.gtx.IntegerGTXValue
-import kotlin.math.pow
 
 
 /**
@@ -59,7 +57,19 @@ data class Leaf(val content: GTXValue): FbtElement()
  * ("content leaf" is supposed to indicate that it's the Leaf that carries all the content of the tree)
  */
 class ContentLeafFullBinaryTree(val root: FbtElement) {
+    /**
+     * Mostly for debugging
+     */
+    fun maxLevel(): Int {
+        return maxLevelInternal(root)
+    }
 
+    private fun maxLevelInternal(node: FbtElement): Int {
+        return when (node) {
+            is Leaf -> 1
+            is Node -> maxOf(maxLevelInternal(node.left), maxLevelInternal(node.right)) + 1
+        }
+    }
 }
 
 /**
@@ -168,107 +178,7 @@ object CompleteBinaryTreeFactory : KLogging() {
 
     }
 
-}
 
-/**
- * Utility class to turn binary trees into readable strings
- * (can be used for debugging)
- * Source for this code (with some mods): https://stackoverflow.com/questions/4965335/how-to-print-binary-tree-diagram
- */
-class BTreePrinter {
-
-    var buf: StringBuffer = StringBuffer()
-
-    fun printNode(tree: ContentLeafFullBinaryTree): String {
-        buf = StringBuffer()
-        val root = tree.root
-        val maxLevel: Int = maxLevel(root)
-
-        val tmpList = arrayListOf(root)
-        printNodeInternal(tmpList, 1, maxLevel, 0)
-        return buf.toString()
-    }
-
-    private fun printNodeInternal(nodes: ArrayList<FbtElement>, level: Int, maxLevel: Int, compensateFirstSpaces: Int) {
-        if (nodes.isEmpty())
-            return
-
-        val floor: Int = maxLevel - level
-        val numberTwo = 2.0
-        val endgeLines: Int = (numberTwo.pow(maxOf(floor-1, 0))).toInt()
-        val firstSpaces: Int = (numberTwo.pow(floor) - 1 + compensateFirstSpaces).toInt()
-        val betweenSpaces: Int = (numberTwo.pow(floor+1) - 1).toInt()
-
-        // Debugging, probably won't need it
-        println("nodes.size ${nodes.size}, level: $level , floor: $floor , endgeLines: $endgeLines , betweenSpaces: $betweenSpaces , firstSpaces: $firstSpaces , compenstation: $compensateFirstSpaces")
-
-        printWhitespaces(firstSpaces)
-
-        var compensateForEmptNodes = compensateFirstSpaces
-        var leafCount = 0
-
-        val newNodes = arrayListOf<FbtElement>()
-        for (node in nodes) {
-            when (node) {
-                is Node -> {
-                    buf.append("+") // No data to print // print(node.data)
-                    newNodes.add(node.left)
-                    newNodes.add(node.right)
-                    compensateForEmptNodes += leafCount * (betweenSpaces + 1)
-                }
-                is Leaf -> {
-                    leafCount++
-                    val content = node.content
-                    val dataStr = when (content) {
-                        is IntegerGTXValue -> content.integer.toString()
-                        else ->  content.toString()
-                    }
-                    buf.append(dataStr)
-                }
-            }
-
-            printWhitespaces(betweenSpaces)
-        }
-        buf.appendln("")
-
-        for (i in 1..endgeLines) {
-            for (j in 0..(nodes.size - 1)) {
-                printWhitespaces(firstSpaces - i)
-                val tmpNode = nodes.get(j)
-
-                when(tmpNode) {
-                    is Node -> {
-                        buf.append("/")
-                        printWhitespaces(i + i -1)
-                        buf.append("\\")
-                        printWhitespaces(endgeLines + endgeLines - i)
-                    }
-                    is Leaf -> {
-                        printWhitespaces(i + 1)
-                        printWhitespaces(endgeLines + endgeLines)
-                    }
-                }
-            }
-
-            buf.appendln("")
-        }
-
-        printNodeInternal(newNodes, (level + 1), maxLevel, compensateForEmptNodes)
-    }
-
-    private fun printWhitespaces(count: Int) {
-        for (i in 0..(count-1)) {
-            buf.append(" ")
-        }
-    }
-
-    private fun maxLevel(node: FbtElement): Int {
-        return when (node) {
-            is Leaf -> 1
-            is Node -> maxOf(maxLevel(node.left), maxLevel(node.right)) + 1
-        }
-    }
 
 }
-
 
