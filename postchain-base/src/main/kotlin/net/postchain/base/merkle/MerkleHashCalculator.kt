@@ -1,5 +1,6 @@
 package net.postchain.base.merkle
 
+import net.postchain.base.CryptoSystem
 import net.postchain.gtx.GTXValue
 
 
@@ -31,7 +32,7 @@ import net.postchain.gtx.GTXValue
  * --------
  *
  */
-abstract class MerkleHashCalculator {
+abstract class MerkleHashCalculator(val cryptoSystem: CryptoSystem?) {
 
     val internalNodePrefix = byteArrayOf(0)
     val leafPrefix = byteArrayOf(1)
@@ -59,9 +60,9 @@ abstract class MerkleHashCalculator {
      * @param hashFun The only reason we pass the function as a parameter is to simplify testing.
      * @return the hash of the [GTXValue].
      */
-    fun calculateHashOfGtxInternal(gtxValue: GTXValue, serializeFun: (GTXValue) -> ByteArray, hashFun: (ByteArray) -> Hash): Hash {
+    fun calculateHashOfGtxInternal(gtxValue: GTXValue, serializeFun: (GTXValue) -> ByteArray, hashFun: (ByteArray, CryptoSystem?) -> Hash): Hash {
         var byteArr: ByteArray = serializeFun(gtxValue)
-        val resultArr = leafPrefix + hashFun(byteArr)
+        val resultArr = leafPrefix + hashFun(byteArr, cryptoSystem)
         return resultArr
     }
 
@@ -71,9 +72,9 @@ abstract class MerkleHashCalculator {
      * @param hashFun The only reason we pass the function as a parameter is to simplify testing.
      * @return the hash of two combined hashes.
      */
-    fun calculateNodeHashInternal(hashLeft: Hash, hashRight: Hash, hashFun: (ByteArray) -> Hash): Hash {
+    fun calculateNodeHashInternal(hashLeft: Hash, hashRight: Hash, hashFun: (ByteArray, CryptoSystem?) -> Hash): Hash {
         val byteArraySum = hashLeft + hashRight
-        return internalNodePrefix + hashFun(byteArraySum) // Adding the prefx at the last step
+        return internalNodePrefix + hashFun(byteArraySum, cryptoSystem) // Adding the prefx at the last step
     }
 
 

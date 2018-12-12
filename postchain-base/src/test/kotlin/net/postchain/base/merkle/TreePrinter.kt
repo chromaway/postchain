@@ -46,14 +46,14 @@ object PrintableTreeFactory {
 
     fun buildPrintableTreeFromClfbTree(tree: ContentLeafFullBinaryTree): PrintableBinaryTree {
         val maxLevel = tree.maxLevel()
-        println("Max level: $maxLevel")
+        //println("Max level: $maxLevel")
         val newRoot: PTreeElement = fromClfbTreeInternal(1, maxLevel, tree.root)
         return PrintableBinaryTree(newRoot)
     }
 
     fun buildPrintableTreeFromProofTree(tree: MerkleProofTree): PrintableBinaryTree {
         val maxLevel = tree.maxLevel()
-        println("Max level: $maxLevel")
+        //println("Max level: $maxLevel")
         val newRoot: PTreeElement = fromProofTreeInternal(1, maxLevel, tree.root)
         return PrintableBinaryTree(newRoot)
 
@@ -75,14 +75,14 @@ object PrintableTreeFactory {
                 if (currentLevel < maxLevel) {
                     // Create node instead of leaf
                     val content = convertGtxToString(inElement.content)
-                    println("Early leaf $content at level: $currentLevel")
+                    //println("Early leaf $content at level: $currentLevel")
                     val emptyLeft: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     val emptyRight: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     PContentNode(content, emptyLeft, emptyRight)
                 } else {
                     // Normal leaf
                     val content = convertGtxToString(inElement.content)
-                    println("Normal leaf $content at level: $currentLevel")
+                    //println("Normal leaf $content at level: $currentLevel")
                     PLeaf(content)
                 }
             }
@@ -100,14 +100,14 @@ object PrintableTreeFactory {
                 if (currentLevel < maxLevel) {
                     // Create node instead of leaf
                     val content = convertGtxToString(inElement.content)
-                    println("Early leaf $content at level: $currentLevel")
+                    //println("Early leaf $content at level: $currentLevel")
                     val emptyLeft: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     val emptyRight: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     PContentNode(content, emptyLeft, emptyRight)
                 } else {
                     // Normal leaf
                     val content = convertGtxToString(inElement.content)
-                    println("Normal leaf $content at level: $currentLevel")
+                    //println("Normal leaf $content at level: $currentLevel")
                     PLeaf(content)
                 }
             }
@@ -175,7 +175,7 @@ class TreePrinter {
         val betweenSpaces: Int = (numberTwo.pow(floor+1) - 1).toInt()
 
         // Debugging, probably won't need it
-        println("nodes.size ${nodes.size}, level: $level , floor: $floor , endgeLines: $endgeLines , betweenSpaces: $betweenSpaces , firstSpaces: $firstSpaces , compenstation: $compensateFirstSpaces")
+        //println("nodes.size ${nodes.size}, level: $level , floor: $floor , endgeLines: $endgeLines , betweenSpaces: $betweenSpaces , firstSpaces: $firstSpaces , compenstation: $compensateFirstSpaces")
 
         printWhitespaces(firstSpaces)
 

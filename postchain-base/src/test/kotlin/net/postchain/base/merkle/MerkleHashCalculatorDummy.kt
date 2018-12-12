@@ -1,5 +1,6 @@
 package net.postchain.base.merkle
 
+import net.postchain.base.CryptoSystem
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.IntegerGTXValue
 
@@ -29,7 +30,7 @@ fun dummySerializatorFun(iGtx: GTXValue): ByteArray {
  * A simple dummy hashing function that's easy to test
  * It only adds 1 to all bytes in the byte array.
  */
-fun dummyAddOneHashFun(bArr: ByteArray): Hash {
+fun dummyAddOneHashFun(bArr: ByteArray, cryptoSystem: CryptoSystem?): Hash {
     val retArr = ByteArray(bArr.size)
     var pos = 0
     for (b: Byte in bArr.asIterable()) {
@@ -43,12 +44,12 @@ fun dummyAddOneHashFun(bArr: ByteArray): Hash {
  * The "dummy" version is a real calculator, but it uses simplified versions of
  * serializations and hashing
  */
-class MerkleHashCalculatorDummy: MerkleHashCalculator() {
+class MerkleHashCalculatorDummy: MerkleHashCalculator(null) {
 
 
     override fun calculateLeafHash(gtxValue: GTXValue): Hash {
         val hash = calculateHashOfGtxInternal(gtxValue, ::dummySerializatorFun, ::dummyAddOneHashFun)
-        println("Hex: " + TreeHelper.convertToHex(hash))
+        //println("Hex: " + TreeHelper.convertToHex(hash))
         return hash
     }
 

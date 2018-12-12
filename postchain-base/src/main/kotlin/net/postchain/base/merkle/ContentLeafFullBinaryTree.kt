@@ -2,7 +2,9 @@ package net.postchain.base.merkle
 
 import mu.KLogging
 import net.postchain.gtx.ArrayGTXValue
+import net.postchain.gtx.DictGTXValue
 import net.postchain.gtx.GTXValue
+import net.postchain.gtx.StringGTXValue
 
 
 /**
@@ -104,6 +106,24 @@ object CompleteBinaryTreeFactory : KLogging() {
         return buildSubTree(ret)
     }
 
+    /**
+     * The strategy for transforming [DictGTXValue] is pretty simple, just flatten it into an array.
+     * If you want to prove a ( [String] to [GTXValue] ) pair, you then have to prove both elements.
+     */
+    private fun buildFromDictGTXValue(dictGTXValue: DictGTXValue): FbtElement {
+        val keys: Set<String> = dictGTXValue.dict.keys
+        val flattenedDictList = arrayListOf<GTXValue>()
+
+        for (key in keys) {
+            val keyGtxString: GTXValue = StringGTXValue(key)
+            flattenedDictList.add(keyGtxString)
+
+            val content: GTXValue = dictGTXValue.get(key)!!
+            flattenedDictList.add(content)
+
+        }
+        return buildSubTree(flattenedDictList)
+    }
 
     /**
      * Builds the (sub?)tree from a list. We do this is in parts:
@@ -121,6 +141,7 @@ object CompleteBinaryTreeFactory : KLogging() {
         for (leaf: GTXValue in inList) {
             val locbtElement = when (leaf) {
                 is ArrayGTXValue -> buildFromArrayGTXValue(leaf)
+                is DictGTXValue -> buildFromDictGTXValue(leaf)
                 else -> Leaf(leaf)
             }
             leafArray.add(locbtElement)

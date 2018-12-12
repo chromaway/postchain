@@ -7,7 +7,7 @@ import org.junit.Test
 /**
  * In the comments below
  *   "[ .. ]" means "hash" and
- *   "(a + b)" means apped "b" after "a"
+ *   "(a + b)" means append "b" after "a" into "ab"
  *
  * Since we are using the dummy hash function, all binary numbers will be +1 after hash function
  *  02 -> 03 etc.

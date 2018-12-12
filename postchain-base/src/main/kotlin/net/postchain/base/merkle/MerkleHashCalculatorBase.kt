@@ -1,40 +1,46 @@
 package net.postchain.base.merkle
 
-import net.postchain.gtx.GTXValue
-import net.postchain.gtx.IntegerGTXValue
-import net.postchain.gtx.encodeGTXValue
+import net.postchain.base.CryptoSystem
+import net.postchain.core.ProgrammerMistake
+import net.postchain.gtx.*
 
 /**
- * This should be the serialization we always will use (unless in testing)
+ * This should be the serialization we use in production
  *
  * @param gtxValue to serialize
  * @return the byte array containing serialized data
  */
 fun serializeGTXValueToByteArary(gtxValue: GTXValue): ByteArray {
-    var byteArr: ByteArray? = null
-    when (gtxValue) {
-        is IntegerGTXValue -> {
-            byteArr = encodeGTXValue(gtxValue)
-        }
+    return when (gtxValue) {
+        is GTXNull ->           encodeGTXValue(gtxValue)
+        is IntegerGTXValue ->   encodeGTXValue(gtxValue)
+        is StringGTXValue ->    encodeGTXValue(gtxValue)
+        is ByteArrayGTXValue -> encodeGTXValue(gtxValue)
+        is ArrayGTXValue ->     throw ProgrammerMistake("GTXValue is an array (We should have transformed all collection-types to trees by now)")
+        is DictGTXValue ->      throw ProgrammerMistake("GTXValue is an dict (We should have transformed all collection-types to trees by now)")
         else -> {
-            throw NotImplementedError("This is a todo") // TODO: Fix
+            // TODO: Log a warning here? We don't know what this is!
+            encodeGTXValue(gtxValue) // Hope for the best
         }
     }
-    return byteArr!!
 }
 
-// TODO: replace
-fun dummyFun(bArr: ByteArray): Hash {
-    val retArr = ByteArray(bArr.size)
-    var pos = 0
-    for (b: Byte in bArr.asIterable()) {
-        retArr[pos] = b.inc()
-        pos++
+/**
+ * This should be the hashing function we use in production
+ *
+ * @param bArr is the data to hash
+ * @param cryptoSystem used to get the hash function
+ * @return the hash we calculated
+ */
+fun hashingFun(bArr: ByteArray, cryptoSystem: CryptoSystem?): Hash {
+    if (cryptoSystem == null) {
+        throw ProgrammerMistake("In this case we need the CryptoSystem to calculate the hash")
+    }  else {
+        return cryptoSystem!!.digest(bArr)
     }
-    return retArr
 }
 
-class MerkleHashCalculatorBase: MerkleHashCalculator() {
+class MerkleHashCalculatorBase(cryptoSystem: CryptoSystem): MerkleHashCalculator(cryptoSystem) {
 
     /**
      * Leafs hashes are prefixed to tell them apart from internal nodes
@@ -43,7 +49,7 @@ class MerkleHashCalculatorBase: MerkleHashCalculator() {
      * @return Returns the hash of the leaf.
      */
     override fun calculateLeafHash(gtxValue: GTXValue): Hash {
-        return calculateHashOfGtxInternal(gtxValue, ::serializeGTXValueToByteArary, ::dummyFun)
+        return calculateHashOfGtxInternal(gtxValue, ::serializeGTXValueToByteArary, ::hashingFun)
     }
 
 
@@ -55,7 +61,7 @@ class MerkleHashCalculatorBase: MerkleHashCalculator() {
      * @return Returns the hash of two combined hashes.
      */
     override fun calculateNodeHash(hashLeft: Hash, hashRight: Hash): Hash {
-        return calculateNodeHashInternal(hashLeft, hashRight, ::dummyFun)
+        return calculateNodeHashInternal(hashLeft, hashRight, ::hashingFun)
     }
 
 }
