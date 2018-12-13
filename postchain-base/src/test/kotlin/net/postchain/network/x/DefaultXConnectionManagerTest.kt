@@ -60,14 +60,16 @@ class DefaultXConnectionManagerTest {
         }
 
         // When
-        DefaultXConnectionManager(defaultConnectorFactory, peerInfo1, packetConverter1, cryptoSystem)
-                .connectChain(chainPeerConfig, false)
+        val connectionManager = DefaultXConnectionManager(defaultConnectorFactory, peerInfo1, packetConverter1, cryptoSystem)
+                .also { it.connectChain(chainPeerConfig, false) }
 
         // Then
         verify(chainPeerConfig, times(3)).chainID
         verify(chainPeerConfig).commConfiguration
         verify(communicationConfig).blockchainRID
         verify(communicationConfig, never()).othersPeerInfo()
+
+        connectionManager.shutdown()
     }
 
     @Test
@@ -83,14 +85,16 @@ class DefaultXConnectionManagerTest {
         }
 
         // When
-        DefaultXConnectionManager(defaultConnectorFactory, peerInfo1, packetConverter1, cryptoSystem)
-                .connectChain(chainPeerConfig, true)
+        val connectionManager = DefaultXConnectionManager(defaultConnectorFactory, peerInfo1, packetConverter1, cryptoSystem)
+                .also { it.connectChain(chainPeerConfig, true) }
 
         // Then
         verify(chainPeerConfig, times(3)).chainID
         verify(chainPeerConfig, times(2)).commConfiguration
         verify(communicationConfig).blockchainRID
         verify(communicationConfig).othersPeerInfo()
+
+        connectionManager.shutdown()
     }
 
     @Test
@@ -116,14 +120,16 @@ class DefaultXConnectionManagerTest {
         }
 
         // When
-        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem)
-                .connectChain(chainPeerConfig, true)
+        val connectionManager = DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem)
+                .also { it.connectChain(chainPeerConfig, true) }
 
         // Then
         verify(chainPeerConfig, times(3)).chainID
         verify(chainPeerConfig, times(1 + 1 + 1 * 2)).commConfiguration
         verify(communicationConfig, times(1 + 1 * 1)).blockchainRID
         verify(communicationConfig).othersPeerInfo()
+
+        connectionManager.shutdown()
     }
 
     @Test(expected = ProgrammerMistake::class)
@@ -171,15 +177,18 @@ class DefaultXConnectionManagerTest {
         }
 
         // When
-        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
-            connectChain(chainPeerConfig, false) // Without connecting to peers
-            connectChainPeer(1, peerInfo2.peerId())
-        }
+        val connectionManager = DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem)
+                .apply {
+                    connectChain(chainPeerConfig, false) // Without connecting to peers
+                    connectChainPeer(1, peerInfo2.peerId())
+                }
 
         // Then
         verify(chainPeerConfig, times(3)).chainID
         verify(chainPeerConfig, times(1 + 1 + 1)).commConfiguration
         verify(communicationConfig, times(1 + 1)).blockchainRID
+
+        connectionManager.shutdown()
     }
 
     @Test
@@ -203,7 +212,7 @@ class DefaultXConnectionManagerTest {
         }
 
         // When
-        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
+        val connectionManager = DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
             connectChain(chainPeerConfig, true) // Auto connect all peers
 
             // Emulates call of onPeerConnected() by XConnector
@@ -217,6 +226,8 @@ class DefaultXConnectionManagerTest {
         verify(chainPeerConfig, times(1 + 1 + 1 * 2)).commConfiguration
         verify(communicationConfig, times(1 + 1 * 1)).blockchainRID
         verify(communicationConfig).othersPeerInfo()
+
+        connectionManager.shutdown()
     }
 
     @Test(expected = ProgrammerMistake::class)
@@ -264,7 +275,7 @@ class DefaultXConnectionManagerTest {
         }
 
         // When
-        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
+        val connectionManager = DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
             connectChain(chainPeerConfig, true) // With autoConnect
 
             // Then / before peers connected
@@ -307,6 +318,8 @@ class DefaultXConnectionManagerTest {
             val internalChains = FieldUtils.readField(this, "chains", true) as Map<*, *>
             assertTrue { internalChains.isEmpty() }
         }
+
+        connectionManager.shutdown()
     }
 
     @Test(expected = ProgrammerMistake::class)
@@ -338,7 +351,7 @@ class DefaultXConnectionManagerTest {
         val connection2: XPeerConnection = mock()
 
         // When
-        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
+        val connectionManager = DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
             connectChain(chainPeerConfig, true) // With autoConnect
 
             // Emulates call of onPeerConnected() by XConnector
@@ -354,6 +367,8 @@ class DefaultXConnectionManagerTest {
             verify(connection2, times(1)).sendPacket(capture())
             assert(firstValue()).isContentEqualTo(byteArrayOf(0x04, 0x02))
         }
+
+        connectionManager.shutdown()
     }
 
     @Test(expected = ProgrammerMistake::class)
@@ -385,7 +400,7 @@ class DefaultXConnectionManagerTest {
         val connection2: XPeerConnection = mock()
 
         // When
-        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
+        val connectionManager = DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
             connectChain(chainPeerConfig, true) // With autoConnect
 
             // Emulates call of onPeerConnected() by XConnector
@@ -404,6 +419,8 @@ class DefaultXConnectionManagerTest {
             verify(connection2, times(1)).sendPacket(capture())
             assert(firstValue()).isContentEqualTo(byteArrayOf(0x04, 0x02))
         }
+
+        connectionManager.shutdown()
     }
 
 }

@@ -8,7 +8,7 @@ import net.postchain.network.PacketConverter
 import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPacketHandler
 
-class TestContext(
+class IntTestContext(
         ownerPeerInfo: PeerInfo,
         peerInfos: Array<PeerInfo>
 ) {
@@ -20,6 +20,6 @@ class TestContext(
     }
 
     val peer = NettyConnector<PacketConverter<Int>>(
-            MockIntegerPacketConverter(ownerPeerInfo, peerInfos),
+            IntMockIntegerPacketConverter(ownerPeerInfo, peerInfos),
             events)
 }

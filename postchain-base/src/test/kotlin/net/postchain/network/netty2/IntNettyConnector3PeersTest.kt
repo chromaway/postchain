@@ -19,15 +19,15 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-class NettyConnector3PeersTest {
+class IntNettyConnector3PeersTest {
 
     private val blockchainRid = byteArrayOf(0x01)
     private lateinit var peerInfo1: PeerInfo
     private lateinit var peerInfo2: PeerInfo
     private lateinit var peerInfo3: PeerInfo
-    private lateinit var context1: TestContext
-    private lateinit var context2: TestContext
-    private lateinit var context3: TestContext
+    private lateinit var context1: IntTestContext
+    private lateinit var context2: IntTestContext
+    private lateinit var context3: IntTestContext
 
     @Before
     fun setUp() {
@@ -36,9 +36,9 @@ class NettyConnector3PeersTest {
         peerInfo3 = PeerInfo("localhost", 3333, byteArrayOf(0, 0, 0, 3))
 
         // Creating
-        context1 = TestContext(peerInfo1, arrayOf(peerInfo1, peerInfo2, peerInfo3))
-        context2 = TestContext(peerInfo2, arrayOf(peerInfo1, peerInfo2, peerInfo3))
-        context3 = TestContext(peerInfo3, arrayOf(peerInfo1, peerInfo2, peerInfo3))
+        context1 = IntTestContext(peerInfo1, arrayOf(peerInfo1, peerInfo2, peerInfo3))
+        context2 = IntTestContext(peerInfo2, arrayOf(peerInfo1, peerInfo2, peerInfo3))
+        context3 = IntTestContext(peerInfo3, arrayOf(peerInfo1, peerInfo2, peerInfo3))
 
         // Initializing
         context1.peer.init(peerInfo1)

@@ -3,10 +3,10 @@ package net.postchain.network.x
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import net.postchain.base.PeerInfo
+import net.postchain.devtools.asString
 import net.postchain.network.IdentPacketInfo
 import net.postchain.network.PacketConverter
 import net.postchain.network.netty.NettyConnectorFactory
-import net.postchain.devtools.asString
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration.TEN_SECONDS
 import org.awaitility.kotlin.matches
@@ -139,6 +139,9 @@ class DefaultXCommunicationManagerIT {
                     context1.communicationManager.getPackets().map { it.second }.toTypedArray()
             )
         }*/
+
+        context1.shutdown()
+        context2.shutdown()
     }
 
     @Test

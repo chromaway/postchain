@@ -17,4 +17,9 @@ class IntegrationTestContext(
     val peerCommunicationConfig = BasePeerCommConfiguration(peerInfos, blockchainRid, myIndex, mock(), KeyPairHelper.privKey(myIndex))
     val connectionManager = DefaultXConnectionManager(connectorFactory, peerInfos[myIndex], packetConverter, SECP256K1CryptoSystem())
     val communicationManager = DefaultXCommunicationManager(connectionManager, peerCommunicationConfig, 1L, packetConverter)
+
+    fun shutdown() {
+        communicationManager.shutdown()
+        connectionManager.shutdown()
+    }
 }

@@ -16,6 +16,7 @@ import org.awaitility.Duration.FIVE_SECONDS
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import java.util.concurrent.TimeUnit
 
@@ -145,9 +146,13 @@ class DefaultXCommunicationManager2IT {
 //                    context1.communicationManager.getPackets().map { it.second }.toTypedArray()
 //            )
 //        }
+
+        context1.shutdown()
+        context2.shutdown()
     }
 
     @Test
+    @Ignore
     fun threePeers_SendsPackets_Successfully() {
 
     }
