@@ -3,6 +3,8 @@ package net.postchain.base.merkle
 import net.postchain.base.CryptoSystem
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.IntegerGTXValue
+import net.postchain.gtx.StringGTXValue
+import java.nio.charset.Charset
 
 
 /**
@@ -19,6 +21,12 @@ fun dummySerializatorFun(iGtx: GTXValue): ByteArray {
                 val b: Byte = i.toByte()
                 return byteArrayOf(b)
             }
+        }
+        is StringGTXValue -> {
+            val str = iGtx.string
+            val byteArr = str.toByteArray(Charset.defaultCharset()) // TODO: Do we need to think about charset?
+            println("leaf of string: $str becomes bytes: " + TreeHelper.convertToHex(byteArr))
+            return byteArr
         }
         else -> {
             throw IllegalArgumentException("We don't use any other than Integers for these tests")

@@ -1,7 +1,6 @@
 package net.postchain.base.merkle
 
-import net.postchain.gtx.GTXValue
-import net.postchain.gtx.IntegerGTXValue
+import net.postchain.gtx.*
 import kotlin.math.pow
 
 
@@ -136,7 +135,11 @@ object PrintableTreeFactory {
 
     private fun convertGtxToString(gtx: GTXValue): String {
         val dataStr = when (gtx) {
+            is GTXNull -> "N/A"
             is IntegerGTXValue -> gtx.integer.toString()
+            is StringGTXValue -> gtx.asString()
+            is ByteArrayGTXValue -> TreeHelper.convertToHex(gtx.asByteArray())
+
             else ->  gtx.toString()
         }
         return dataStr

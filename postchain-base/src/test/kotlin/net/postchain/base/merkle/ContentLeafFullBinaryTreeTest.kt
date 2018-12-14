@@ -1,7 +1,5 @@
 package net.postchain.base.merkle
 
-import net.postchain.gtx.ArrayGTXValue
-import net.postchain.gtx.GTXValue
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -74,5 +72,11 @@ class ContentLeafFullBinaryTreeTest {
         assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
     }
 
+    @Test
+    fun testIntDictLength4() {
+        val treeHolderFromDict = TreeHelper.buildThreeOf4_fromDict()
+        //println(treeHolderFromDict.treePrintout)
+        assertEquals(treeHolderFromDict.expectedPrintout.trim(), treeHolderFromDict.treePrintout.trim())
+    }
 
 }

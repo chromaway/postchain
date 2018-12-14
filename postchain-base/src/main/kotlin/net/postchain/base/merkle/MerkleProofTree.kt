@@ -130,13 +130,18 @@ object MerkleProofTreeFactory {
                         // Note that we compared using referential (===) identity!
                         // Needed here since there might be many GTXValues with the same content, and they are NOT
                         // the same since they are in different parts of the tree.
+                        // Example:
+                        // One example where this will not work is if there is a string "foo" at multiple places in the tree
+                        // (we will only prove the first occurrence).
                         foundGTXValue = valueToProve
                         break
                     }
                 }
                 if (foundGTXValue == null) {
+                    println("Hash the leaf of (type: "+ currentElement.content.type + ") with content: " + currentElement.content)
                     ProofHashedLeaf(calculator.calculateLeafHash(currentElement.content))
                 } else {
+                    println("Prove the leaf (type: "+ currentElement.content.type + ") with content: " + currentElement.content)
                     ProofGtxLeaf(currentElement.content)
                 }
             }
