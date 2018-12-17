@@ -38,15 +38,38 @@ class PrintableBinaryTree(val root: PTreeElement) {
 }
 
 
+fun convertGtxToString(gtx: GTXValue): String {
+    val dataStr = when (gtx) {
+        is GTXNull -> "N/A"
+        is IntegerGTXValue -> gtx.integer.toString()
+        is StringGTXValue -> gtx.asString()
+        is ByteArrayGTXValue -> TreeHelper.convertToHex(gtx.asByteArray())
+
+        else ->  gtx.toString()
+    }
+    return dataStr
+}
+
+fun convertHashToString(hash: Hash): String {
+    return TreeHelper.convertToHex(hash)
+}
+
 /**
  * Transforms other trees to printable trees
  */
 object PrintableTreeFactory {
 
-    fun buildPrintableTreeFromClfbTree(tree: ContentLeafFullBinaryTree): PrintableBinaryTree {
+    fun buildPrintableTreeFromClfbTree(tree: GtxFullBinaryTree ): PrintableBinaryTree {
         val maxLevel = tree.maxLevel()
         //println("Max level: $maxLevel")
-        val newRoot: PTreeElement = fromClfbTreeInternal(1, maxLevel, tree.root)
+        val newRoot: PTreeElement = genericTreeInternal(1, maxLevel, tree.root, ::convertGtxToString)
+        return PrintableBinaryTree(newRoot)
+    }
+
+    fun buildPrintableTreeFromHashTree(tree: HashFullBinaryTree ): PrintableBinaryTree {
+        val maxLevel = tree.maxLevel()
+        //println("Max level: $maxLevel")
+        val newRoot: PTreeElement = genericTreeInternal(1, maxLevel, tree.root, TreeHelper::convertToHex)
         return PrintableBinaryTree(newRoot)
     }
 
@@ -55,7 +78,6 @@ object PrintableTreeFactory {
         //println("Max level: $maxLevel")
         val newRoot: PTreeElement = fromProofTreeInternal(1, maxLevel, tree.root)
         return PrintableBinaryTree(newRoot)
-
     }
 
     private fun createEmptyInternal(currentLevel: Int, maxLevel: Int): PEmptyElement {
@@ -68,26 +90,27 @@ object PrintableTreeFactory {
         }
     }
 
-    private fun fromClfbTreeInternal(currentLevel: Int, maxLevel: Int, inElement: FbtElement): PTreeElement {
+    private fun <T>genericTreeInternal(currentLevel: Int, maxLevel: Int, inElement: FbtElement, toStr: (T) -> String): PTreeElement {
         return when(inElement) {
-            is Leaf -> {
+            is Leaf<*> -> {
                 if (currentLevel < maxLevel) {
                     // Create node instead of leaf
-                    val content = convertGtxToString(inElement.content)
+                    val content: String = toStr(inElement.content as T)
+                    //val content = convertGtxToString(inElement.content as GTXValue)
                     //println("Early leaf $content at level: $currentLevel")
                     val emptyLeft: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     val emptyRight: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     PContentNode(content, emptyLeft, emptyRight)
                 } else {
                     // Normal leaf
-                    val content = convertGtxToString(inElement.content)
+                    val content = toStr(inElement.content as T)
                     //println("Normal leaf $content at level: $currentLevel")
                     PLeaf(content)
                 }
             }
             is Node -> {
-                val left = fromClfbTreeInternal(currentLevel + 1, maxLevel, inElement.left)
-                val right = fromClfbTreeInternal(currentLevel + 1, maxLevel, inElement.right)
+                val left = genericTreeInternal(currentLevel + 1, maxLevel, inElement.left, toStr)
+                val right = genericTreeInternal(currentLevel + 1, maxLevel, inElement.right, toStr)
                 PNode(left, right)
             }
         }
@@ -132,19 +155,6 @@ object PrintableTreeFactory {
             }
         }
     }
-
-    private fun convertGtxToString(gtx: GTXValue): String {
-        val dataStr = when (gtx) {
-            is GTXNull -> "N/A"
-            is IntegerGTXValue -> gtx.integer.toString()
-            is StringGTXValue -> gtx.asString()
-            is ByteArrayGTXValue -> TreeHelper.convertToHex(gtx.asByteArray())
-
-            else ->  gtx.toString()
-        }
-        return dataStr
-    }
-
 
 }
 

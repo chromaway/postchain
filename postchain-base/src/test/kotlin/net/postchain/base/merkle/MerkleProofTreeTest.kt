@@ -21,7 +21,7 @@ class MerkleProofTreeTest {
 
     @Test
     fun test_tree_of4() {
-        val treeHolder = TreeHelper.buildTreeOf4()
+        val treeHolder = GtxTreeHelper.buildTreeOf4()
 
         // This is how the (dummy = +1) hash calculation works done for the right side of the path:
         //
@@ -59,7 +59,7 @@ class MerkleProofTreeTest {
 
     @Test
     fun test_tree_of7() {
-        val treeHolder: TreeHolderFromArray = TreeHelper.buildTreeOf7()
+        val treeHolder: TreeHolderFromArray = GtxTreeHelper.buildTreeOf7()
 
         Assert.assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
 
@@ -104,7 +104,7 @@ class MerkleProofTreeTest {
 
     @Test
     fun test_tree_of7_with_double_proof() {
-        val treeHolder: TreeHolderFromArray = TreeHelper.buildTreeOf7()
+        val treeHolder: TreeHolderFromArray = GtxTreeHelper.buildTreeOf7()
 
         Assert.assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
 
@@ -137,7 +137,7 @@ class MerkleProofTreeTest {
 
     @Test
     fun test_ArrayLength7_withInnerLength3Array() {
-        val treeHolder = TreeHelper.buildTreeOf7WithSubTree()
+        val treeHolder = GtxTreeHelper.buildTreeOf7WithSubTree()
 
         Assert.assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
 
@@ -197,7 +197,7 @@ class MerkleProofTreeTest {
 
     @Test
     fun test_tree_from_4dict() {
-        val treeHolder = TreeHelper.buildThreeOf4_fromDict()
+        val treeHolder = GtxTreeHelper.buildThreeOf4_fromDict()
 
         // This is how the (dummy = +1) hash calculation works done for the right side of the path:
         //
@@ -266,7 +266,7 @@ class MerkleProofTreeTest {
 
     @Test
     fun test_tree_from_4dict_prove_the_pair() {
-        val treeHolder = TreeHelper.buildThreeOf4_fromDict()
+        val treeHolder = GtxTreeHelper.buildThreeOf4_fromDict()
 
         val expectedPath =
                 "       +               \n" +
@@ -281,11 +281,11 @@ class MerkleProofTreeTest {
                         "/ \\             \n" +
                         "four 4 - - - - - - "
 
-        val treeStrFinder = TreeElementFinder<String>()
+        val treeStrFinder = GtxTreeElementFinder<String>()
         val strGtxValue4List = treeStrFinder.findGtxValueFromPrimitiveType("four", treeHolder.clfbTree.root)
         val strGtxValue4 = strGtxValue4List.get(0)
 
-        val treeIntFinder = TreeElementFinder<Int>()
+        val treeIntFinder = GtxTreeElementFinder<Int>()
         val intGtxValue4List = treeIntFinder.findGtxValueFromPrimitiveType(4, treeHolder.clfbTree.root)
         val intGtxValue4 = intGtxValue4List.get(0)
 

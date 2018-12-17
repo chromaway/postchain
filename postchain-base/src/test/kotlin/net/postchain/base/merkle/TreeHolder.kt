@@ -4,7 +4,7 @@ import net.postchain.gtx.DictGTXValue
 import net.postchain.gtx.GTXValue
 
 open class TreeHolder(val orgIntArray: IntArray,
-                      val clfbTree: ContentLeafFullBinaryTree,
+                      val clfbTree: GtxFullBinaryTree,
                       val treePrintout: String,
                       val expectedPrintout: String) {
 
@@ -12,7 +12,7 @@ open class TreeHolder(val orgIntArray: IntArray,
 }
 
 open class TreeHolderFromArray(orgIntArray: IntArray,
-                          clfbTree: ContentLeafFullBinaryTree,
+                          clfbTree: GtxFullBinaryTree,
                           treePrintout: String,
                           expectedPrintout: String,
                           val orgGtxList: List<GTXValue> ):
@@ -20,7 +20,7 @@ open class TreeHolderFromArray(orgIntArray: IntArray,
 }
 
 class TreeHolderSubTree(orgIntArray: IntArray,
-                        clfbTree: ContentLeafFullBinaryTree,
+                        clfbTree: GtxFullBinaryTree,
                         treePrintout: String,
                         expectedPrintout: String,
                         orgGtxList: List<GTXValue>,
@@ -30,9 +30,23 @@ class TreeHolderSubTree(orgIntArray: IntArray,
 }
 
 class TreeHolderFromDict(orgIntArray: IntArray,
-                         clfbTree: ContentLeafFullBinaryTree,
+                         clfbTree: GtxFullBinaryTree,
                          treePrintout: String,
                          expectedPrintout: String,
                          val orgGtxDict: DictGTXValue):
         TreeHolder (orgIntArray, clfbTree, treePrintout, expectedPrintout) {
+}
+
+open class TreeHashHolder(val orgIntArray: IntArray,
+                      val clfbTree: HashFullBinaryTree,
+                      val treePrintout: String,
+                      val expectedPrintout: String) {
+}
+
+open class TreeHashHolderFromArray(orgIntArray: IntArray,
+                               clfbTree: HashFullBinaryTree,
+                               treePrintout: String,
+                               expectedPrintout: String,
+                               val orgHashList: List<Hash> ):
+        TreeHashHolder (orgIntArray, clfbTree, treePrintout, expectedPrintout) {
 }

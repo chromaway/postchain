@@ -112,7 +112,7 @@ object MerkleProofTreeFactory {
      * @param calculator is the class we use for hash calculation
      */
     fun buildMerkleProofTree(valuesToProveList: List<GTXValue>,
-                             orginalTree: ContentLeafFullBinaryTree,
+                             orginalTree: GtxFullBinaryTree,
                              calculator: MerkleHashCalculator): MerkleProofTree {
 
         val rootElement = buildSubProofTree(valuesToProveList, orginalTree.root, calculator)
@@ -123,7 +123,7 @@ object MerkleProofTreeFactory {
                           currentElement: FbtElement,
                           calculator: MerkleHashCalculator): MerkleProofElement {
         return when (currentElement) {
-            is Leaf -> {
+            is Leaf<*> -> {
                 var foundGTXValue: GTXValue? = null
                 for (valueToProve: GTXValue in valuesToProveList) {
                     if (currentElement.content === valueToProve) {
@@ -138,11 +138,11 @@ object MerkleProofTreeFactory {
                     }
                 }
                 if (foundGTXValue == null) {
-                    println("Hash the leaf of (type: "+ currentElement.content.type + ") with content: " + currentElement.content)
-                    ProofHashedLeaf(calculator.calculateLeafHash(currentElement.content))
+                    println("Hash the leaf with content: " + currentElement.content)
+                    ProofHashedLeaf(calculator.calculateLeafHash(currentElement.content as GTXValue))
                 } else {
-                    println("Prove the leaf (type: "+ currentElement.content.type + ") with content: " + currentElement.content)
-                    ProofGtxLeaf(currentElement.content)
+                    println("Prove the leaf with content: " + currentElement.content)
+                    ProofGtxLeaf(currentElement.content as GTXValue)
                 }
             }
             is Node -> {

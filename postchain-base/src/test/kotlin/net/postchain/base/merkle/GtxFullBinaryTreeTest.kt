@@ -3,26 +3,26 @@ package net.postchain.base.merkle
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class ContentLeafFullBinaryTreeTest {
+class GtxFullBinaryTreeTest {
 
 
     @Test
     fun testIntArrayLength4() {
-        val treeHolder = TreeHelper.buildTreeOf4()
+        val treeHolder = GtxTreeHelper.buildTreeOf4()
         //println(treeHolder.treePrintout)
         assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
     }
 
     @Test
     fun testIntArrayLength7() {
-        val treeHolder = TreeHelper.buildTreeOf7()
+        val treeHolder = GtxTreeHelper.buildTreeOf7()
         //println(treeHolder.treePrintout)
         assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
     }
 
     @Test
     fun testIntArrayLength9() {
-        val treeHolder = TreeHelper.buildTreeOf9()
+        val treeHolder = GtxTreeHelper.buildTreeOf9()
         //println(treeHolder.treePrintout)
         assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
     }
@@ -54,7 +54,7 @@ class ContentLeafFullBinaryTreeTest {
 
         val intArrayList = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
 
-        val fullBinaryTree: ContentLeafFullBinaryTree = CompleteBinaryTreeFactory.buildCompleteBinaryTree(intArrayList)
+        val fullBinaryTree: GtxFullBinaryTree = (GtxFullBinaryTreeFactory()).buildFromArrayList(intArrayList)
 
         val printer = TreePrinter()
         val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
@@ -67,14 +67,14 @@ class ContentLeafFullBinaryTreeTest {
 
     @Test
     fun testIntArrayLength7withInnerLength3Array() {
-        val treeHolder = TreeHelper.buildTreeOf7WithSubTree()
+        val treeHolder = GtxTreeHelper.buildTreeOf7WithSubTree()
         //println(treeHolder.treePrintout)
         assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
     }
 
     @Test
     fun testIntDictLength4() {
-        val treeHolderFromDict = TreeHelper.buildThreeOf4_fromDict()
+        val treeHolderFromDict = GtxTreeHelper.buildThreeOf4_fromDict()
         //println(treeHolderFromDict.treePrintout)
         assertEquals(treeHolderFromDict.expectedPrintout.trim(), treeHolderFromDict.treePrintout.trim())
     }

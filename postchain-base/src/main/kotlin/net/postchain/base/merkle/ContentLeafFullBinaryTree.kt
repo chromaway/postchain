@@ -1,9 +1,6 @@
 package net.postchain.base.merkle
 
 import mu.KLogging
-import net.postchain.gtx.*
-import java.util.TreeSet
-import java.util.SortedSet
 
 
 /**
@@ -50,14 +47,13 @@ data class Node(val left: FbtElement, val right: FbtElement): FbtElement()
 /**
  *  Holds a [GTXValue]
  */
-data class Leaf(val content: GTXValue): FbtElement()
-
+data class Leaf<T>(val content: T): FbtElement()
 
 /**
  * Wrapper class for the root object.
  * ("content leaf" is supposed to indicate that it's the Leaf that carries all the content of the tree)
  */
-class ContentLeafFullBinaryTree(val root: FbtElement) {
+open class ContentLeafFullBinaryTree<T>(val root: FbtElement) {
     /**
      * Mostly for debugging
      */
@@ -67,136 +63,45 @@ class ContentLeafFullBinaryTree(val root: FbtElement) {
 
     private fun maxLevelInternal(node: FbtElement): Int {
         return when (node) {
-            is Leaf -> 1
+            is Leaf<*> -> 1
             is Node -> maxOf(maxLevelInternal(node.left), maxLevelInternal(node.right)) + 1
         }
     }
 
 }
 
-class TreeElementFinder<T> {
-
-    /**
-     * Use this to find [GTXValue] s in the tree
-     *
-     * @param toFind this can be a string or int, depending on the type param T
-     * @param node the root of the tree we are looking in
-     * @return A list of [GTXValue] , usually just containing one element, but can contain many, if say the same
-     *          string "foo" appear in many places in the tree.
-     */
-    fun findGtxValueFromPrimitiveType(toFind: T, node: FbtElement): List<GTXValue> {
-        val retArr = arrayListOf<GTXValue>()
-        when (node) {
-            is Node ->  {
-                val leftList = findGtxValueFromPrimitiveType(toFind, node.left)
-                val rightList = findGtxValueFromPrimitiveType(toFind, node.right)
-                retArr.addAll(leftList)
-                retArr.addAll(rightList)
-            }
-            is Leaf -> {
-                val gtxVal = node.content
-                when (gtxVal) {
-                    is StringGTXValue -> {
-                        if (toFind is String && toFind == gtxVal.string) {
-                            println("Found the string $toFind")
-                            retArr.add(gtxVal)
-                        }
-                    }
-                    is IntegerGTXValue -> {
-                        //println("Looking for: $toFind a num: ${gtxVal.integer} ")
-                        if (toFind is Int && toFind.toString() == gtxVal.integer.toString()) { // TODO: This conversion to string is ugly but for some reason comparison beween ints did not work!!??
-                            println("Found the int $toFind")
-                            retArr.add(gtxVal)
-                        }
-                    }
-                }
-            }
-        }
-        return retArr
-    }
-}
 
 /**
  * The factory does the actual conversion between list and tree.
  */
-object CompleteBinaryTreeFactory : KLogging() {
+abstract class CompleteBinaryTreeFactory<T> : KLogging() {
 
     /**
      * Builds a [ContentLeafFullBinaryTree]
      *
-     * @param originalList A collection of [GTXValue] used to create the tree
+     * @param originalList A collection of leafs used to create the tree
      */
-    fun buildCompleteBinaryTree(originalList: List<GTXValue>): ContentLeafFullBinaryTree {
+    fun buildCompleteBinaryTree(originalList: List<T>): ContentLeafFullBinaryTree<T> {
         val result = buildSubTree(originalList)
         return ContentLeafFullBinaryTree(result)
     }
 
-   /**
-     * Builds a [ContentLeafFullBinaryTree]
-     *
-     * @param arrayGTXValue An [ArrayGTXValue] holding the components needed to build the tree
-     */
-    fun buildCompleteBinaryTree(arrayGTXValue: ArrayGTXValue): ContentLeafFullBinaryTree {
-        val result = buildFromArrayGTXValue(arrayGTXValue)
-        return ContentLeafFullBinaryTree(result)
-    }
-
-    /**
-     * Builds a [ContentLeafFullBinaryTree]
-     *
-     * @param dictGTXValue An [DictGTXValue] holding the components needed to build the tree
-     */
-    fun buildCompleteBinaryTree(dictGTXValue: DictGTXValue): ContentLeafFullBinaryTree {
-        val result = buildFromDictGTXValue(dictGTXValue)
-        return ContentLeafFullBinaryTree(result)
-    }
-
-    // --------------- Private funcs ---------
-
-    private fun buildFromArrayGTXValue(arrayGTXValue: ArrayGTXValue): FbtElement {
-        val ret: List<GTXValue> = arrayGTXValue.array.map {it}
-        return buildSubTree(ret)
-    }
-
-    /**
-     * The strategy for transforming [DictGTXValue] is pretty simple, just flatten it into an array.
-     * If you want to prove a ( [String] to [GTXValue] ) pair, you then have to prove both elements.
-     */
-    private fun buildFromDictGTXValue(dictGTXValue: DictGTXValue): FbtElement {
-        val keys: SortedSet<String> = dictGTXValue.dict.keys.toSortedSet() // Needs to be sorted, or else the order is undefined
-        val flattenedDictList = arrayListOf<GTXValue>()
-
-        for (key in keys) {
-            //println("key extracted: $key")
-            val keyGtxString: GTXValue = StringGTXValue(key)
-            flattenedDictList.add(keyGtxString)
-
-            val content: GTXValue = dictGTXValue.get(key)!!
-            flattenedDictList.add(content)
-
-        }
-        return buildSubTree(flattenedDictList)
-    }
 
     /**
      * Builds the (sub?)tree from a list. We do this is in parts:
      *
-     * 1. Transform each [GTXValue] in the list into a [Leaf]
+     * 1. Transform each leaf in the list into a [Leaf]
      *    If a [GTXValue] proves to be a recursive type, make it into a [FbtElement]
      * 2. Create the nodes that exist above the leaf, all the way to the root.
      *
      * @return Root [FbtElement] node
      */
-    private fun buildSubTree(inList: List<GTXValue>): FbtElement {
+    protected fun buildSubTree(inList: List<T>): FbtElement {
         val leafArray = arrayListOf<FbtElement>()
 
         // 1. Build first (leaf) layer
-        for (leaf: GTXValue in inList) {
-            val locbtElement = when (leaf) {
-                is ArrayGTXValue -> buildFromArrayGTXValue(leaf)
-                is DictGTXValue -> buildFromDictGTXValue(leaf)
-                else -> Leaf(leaf)
-            }
+        for (leaf: T in inList) {
+            val locbtElement = handleLeaf(leaf)
             leafArray.add(locbtElement)
         }
 
@@ -205,6 +110,12 @@ object CompleteBinaryTreeFactory : KLogging() {
 
         return result.get(0)
     }
+
+    /**
+     * Transforms the incoming leaf into an [FbtElement]
+     */
+    abstract fun handleLeaf(leaf: T): FbtElement
+
 
     /**
      * Calls itself until the return value only holds 1 element
