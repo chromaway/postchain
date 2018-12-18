@@ -1,6 +1,7 @@
 package net.postchain.base.merkle
 
 import mu.KLogging
+import net.postchain.base.CryptoSystem
 
 
 /**
@@ -37,17 +38,48 @@ import mu.KLogging
 /**
  * Fbt = Full Binary Tree
  */
-sealed class FbtElement
+open class FbtElement
 
 /**
- *  Doesn't hold a [GTXValue]
+ * Super type of parent nodes.
+ * Doesn't hold any content, but can generate different prefixes when the hash is calculated
  */
-data class Node(val left: FbtElement, val right: FbtElement): FbtElement()
+open class Node(val left: FbtElement, val right: FbtElement): FbtElement() {
+
+    companion object NodeCompanion{
+        const val internalNodePrefixByte: Byte = 0
+    }
+
+    /**
+     * Get the prefix beloning to this instance
+     */
+    open fun getPrefixByte(): Byte {
+        return internalNodePrefixByte
+    }
+
+    // TODO remove
+    /**
+     * Calculate the hash of this instance
+    open fun calculateHash(calculator: MerkleHashCalculator): Hash {
+        val prefixBA = byteArrayOf(getPrefixByte())
+        val leftHash = calculator.calculateNodeHash(left)
+        val rightHash = calculator.calculateNodeHash(right)
+        return prefixBA + calculateNodeHashNoPrefix(leftHash, rightHash, calculator::
+
+    }
+     */
+}
 
 /**
  *  Holds a [GTXValue]
  */
 data class Leaf<T>(val content: T): FbtElement()
+
+/**
+ * Dummy filler. Will always be the right side.
+ * (This is needed for the case when an array only has one element)
+ */
+object EmptyLeaf: FbtElement()
 
 /**
  * Wrapper class for the root object.
@@ -63,8 +95,10 @@ open class ContentLeafFullBinaryTree<T>(val root: FbtElement) {
 
     private fun maxLevelInternal(node: FbtElement): Int {
         return when (node) {
+            is EmptyLeaf -> 0 // Doesn't count
             is Leaf<*> -> 1
             is Node -> maxOf(maxLevelInternal(node.left), maxLevelInternal(node.right)) + 1
+            else -> throw IllegalStateException("What is this type? $node")
         }
     }
 

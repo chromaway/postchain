@@ -62,8 +62,9 @@ class MerkleHashCalculatorDummy: MerkleHashCalculator(null) {
     }
 
 
-    override fun calculateNodeHash(hashLeft: Hash, hashRight: Hash): Hash {
-        return calculateNodeHashInternal(hashLeft, hashRight, ::dummyAddOneHashFun)
+    override fun calculateNodeHash(prefix: Byte, hashLeft: Hash, hashRight: Hash): Hash {
+        val prefixBA = byteArrayOf(prefix)
+        return prefixBA + calculateNodeHashNoPrefix(hashLeft, hashRight, ::dummyAddOneHashFun)
     }
 
 

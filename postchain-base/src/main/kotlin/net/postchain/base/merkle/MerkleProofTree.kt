@@ -59,7 +59,7 @@ sealed class MerkleProofElement
  * Just a node. Usually one of the sides (left or right) holds a [ProofHashedLeaf] and the other side
  * holds a [ProofGtxLeaf] or [ProofNode].
  */
-data class ProofNode(val left: MerkleProofElement, val right: MerkleProofElement): MerkleProofElement()
+data class ProofNode(val prefix: Byte, val left: MerkleProofElement, val right: MerkleProofElement): MerkleProofElement()
 
 /**
  * The data we want to prove exists in the Merkle Tree
@@ -79,8 +79,24 @@ data class ProofHashedLeaf(val hash: Hash): MerkleProofElement()
  */
 class MerkleProofTree(val root: MerkleProofElement) {
 
-    fun proveGtxValue(leafToProve: GTXValue): Boolean {
-        return false // TODO: fix
+    /**
+     * @return the calculated merkle root of the proof. For the proof to be valid, this [Hash] should equal the
+     *          merkle root of the block.
+     */
+    fun calculateMerkleRoot(calculator: MerkleHashCalculator): Hash {
+        return calculateMerkleRootInternal(root, calculator)
+    }
+
+    private fun calculateMerkleRootInternal(currentElement: MerkleProofElement, calculator: MerkleHashCalculator): Hash {
+        return when (currentElement) {
+            is ProofHashedLeaf -> currentElement.hash
+            is ProofGtxLeaf -> calculator.calculateLeafHash(currentElement.content)
+            is ProofNode -> {
+                val left = calculateMerkleRootInternal(currentElement.left, calculator)
+                val right = calculateMerkleRootInternal(currentElement.right, calculator)
+                calculator.calculateNodeHash(currentElement.prefix ,left, right)
+            }
+        }
     }
 
     /**
@@ -97,6 +113,7 @@ class MerkleProofTree(val root: MerkleProofElement) {
             is ProofNode -> maxOf(maxLevelInternal(node.left), maxLevelInternal(node.right)) + 1
         }
     }
+
 }
 
 /**
@@ -119,10 +136,13 @@ object MerkleProofTreeFactory {
         return MerkleProofTree(rootElement)
     }
 
-    fun buildSubProofTree(valuesToProveList: List<GTXValue>,
+    private fun buildSubProofTree(valuesToProveList: List<GTXValue>,
                           currentElement: FbtElement,
                           calculator: MerkleHashCalculator): MerkleProofElement {
         return when (currentElement) {
+            is EmptyLeaf -> {
+                ProofHashedLeaf(ByteArray(32)) // Just zeros
+            }
             is Leaf<*> -> {
                 var foundGTXValue: GTXValue? = null
                 for (valueToProve: GTXValue in valuesToProveList) {
@@ -148,19 +168,18 @@ object MerkleProofTreeFactory {
             is Node -> {
                 val left = buildSubProofTree(valuesToProveList, currentElement.left, calculator)
                 val right = buildSubProofTree(valuesToProveList, currentElement.right, calculator)
-                if (left is ProofHashedLeaf && right is ProofHashedLeaf) {
+                return if (left is ProofHashedLeaf && right is ProofHashedLeaf) {
                     // If both children are hashes, then
                     // we must reduce them to a new (combined) hash.
-                    val addedHash = calculator.calculateNodeHash(left.hash, right.hash)
+                    val addedHash = calculator.calculateNodeHash(currentElement.getPrefixByte(), left.hash, right.hash)
                     ProofHashedLeaf(addedHash)
                 } else {
-                    ProofNode(left, right)
+                    ProofNode(currentElement.getPrefixByte(), left, right)
                 }
             }
+            else -> throw IllegalStateException("Cannot handle $currentElement")
         }
 
     }
-
-
 
 }

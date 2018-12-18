@@ -5,11 +5,17 @@ import org.junit.Test
 
 class GtxFullBinaryTreeTest {
 
+    @Test
+    fun testIntArrayLength1() {
+        val treeHolder = GtxTreeHelper.buildTreeOf1()
+        println(treeHolder.treePrintout)
+        assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
+    }
 
     @Test
     fun testIntArrayLength4() {
         val treeHolder = GtxTreeHelper.buildTreeOf4()
-        //println(treeHolder.treePrintout)
+        println(treeHolder.treePrintout)
         assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
     }
 

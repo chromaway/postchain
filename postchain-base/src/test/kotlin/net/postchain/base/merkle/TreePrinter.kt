@@ -92,6 +92,7 @@ object PrintableTreeFactory {
 
     private fun <T>genericTreeInternal(currentLevel: Int, maxLevel: Int, inElement: FbtElement, toStr: (T) -> String): PTreeElement {
         return when(inElement) {
+            is EmptyLeaf -> PEmptyLeaf()
             is Leaf<*> -> {
                 if (currentLevel < maxLevel) {
                     // Create node instead of leaf
@@ -113,6 +114,7 @@ object PrintableTreeFactory {
                 val right = genericTreeInternal(currentLevel + 1, maxLevel, inElement.right, toStr)
                 PNode(left, right)
             }
+            else -> throw IllegalStateException("Not handling this $inElement")
         }
     }
 

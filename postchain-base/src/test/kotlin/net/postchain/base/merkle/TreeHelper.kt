@@ -15,10 +15,10 @@ object TreeHelper {
         return retList
     }
 
-    fun transformIntToHash(ints: List<Int>): MutableList<Hash> {
+    fun transformIntToHash(hexStrings: List<String>): MutableList<Hash> {
         val retList = arrayListOf<Hash>()
-        for (i in ints) {
-            val b = i.toByte()
+        for (hexStr in hexStrings) {
+            val b = hexStr.toByte()
             val byteArr: Hash = byteArrayOf(b)
             retList.add(byteArr)
         }
@@ -55,5 +55,19 @@ object TreeHelper {
         return sb.toString()
     }
 
+    /**
+     * @return a [ByteArray] from a hex string
+     */
+    fun convertToByteArray(hexString: String): ByteArray {
+        val len = hexString.length
+        val data = ByteArray(len / 2)
+        var i = 0
+        while (i < len) {
+            data[i / 2] = ((Character.digit(hexString.get(i), 16) shl 4) +
+                    Character.digit(hexString.get(i + 1), 16)).toByte()
+            i += 2
+        }
+        return data
+    }
 
 }

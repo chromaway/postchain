@@ -9,6 +9,26 @@ object GtxTreeHelper {
     private val factory = GtxFullBinaryTreeFactory()
 
 
+    fun buildTreeOf1(): TreeHolderFromArray {
+        val intArray = intArrayOf(1)
+        val expectedTree =
+                " +   \n" +
+                "/ \\ \n" +
+                "1 - "
+
+        val gtxArrayList = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
+        val gtxArr: Array<GTXValue> = gtxArrayList.toTypedArray()
+        val fullBinaryTree: GtxFullBinaryTree = factory.buildFromGtx(ArrayGTXValue(gtxArr))
+
+        val printer = TreePrinter()
+        val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
+        val treePrintout = printer.printNode(printableBinaryTree)
+        //println(treePrintout)
+
+        return TreeHolderFromArray(intArray, fullBinaryTree, treePrintout, expectedTree, gtxArrayList)
+    }
+
+
     fun buildTreeOf4(): TreeHolderFromArray {
         val intArray = intArrayOf(1,2,3,4)
         val expectedTree =
@@ -20,8 +40,8 @@ object GtxTreeHelper {
                         "1 2 3 4 \n"
 
         val gtxArrayList = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
-
-        val fullBinaryTree: GtxFullBinaryTree = factory.buildFromArrayList(gtxArrayList)
+        val gtxArr: Array<GTXValue> = gtxArrayList.toTypedArray()
+        val fullBinaryTree: GtxFullBinaryTree = factory.buildFromGtx(ArrayGTXValue(gtxArr))
 
         val printer = TreePrinter()
         val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
@@ -180,7 +200,7 @@ object GtxTreeHelper {
 
         val gtxDict = TreeHelper.transformStringAndIntToDictGTXValue(stringArray.toCollection(ArrayList()), intArray.toCollection(ArrayList()))
 
-        val fullBinaryTree: GtxFullBinaryTree = factory.buildFromDict(gtxDict)
+        val fullBinaryTree: GtxFullBinaryTree = factory.buildFromGtx(gtxDict)
 
         val printer = TreePrinter()
         val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)

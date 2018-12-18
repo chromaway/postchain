@@ -42,6 +42,8 @@ fun hashingFun(bArr: ByteArray, cryptoSystem: CryptoSystem?): Hash {
 
 class MerkleHashCalculatorBase(cryptoSystem: CryptoSystem): MerkleHashCalculator(cryptoSystem) {
 
+
+
     /**
      * Leafs hashes are prefixed to tell them apart from internal nodes
      *
@@ -60,8 +62,21 @@ class MerkleHashCalculatorBase(cryptoSystem: CryptoSystem): MerkleHashCalculator
      * @param hashRight The hash of the right sub tree
      * @return Returns the hash of two combined hashes.
      */
-    override fun calculateNodeHash(hashLeft: Hash, hashRight: Hash): Hash {
-        return calculateNodeHashInternal(hashLeft, hashRight, ::hashingFun)
+    //override fun calculateNodeHash(hashLeft: Hash, hashRight: Hash): Hash {
+    //    return calculateNodeHashNoPrefix(hashLeft, hashRight, ::hashingFun)
+    //}
+
+    /**
+     * Internal nodes' hashes are prefixed to tell them apart from leafs.
+     *
+     * @param prefix What byte to put in front of the hash
+     * @param hashLeft The hash of the left sub tree
+     * @param hashRight The hash of the right sub tree
+     * @return Returns the hash of two combined hashes.
+     */
+    override fun calculateNodeHash(prefix: Byte, hashLeft: Hash, hashRight: Hash): Hash {
+        val prefixBA = byteArrayOf(prefix)
+        return prefixBA + calculateNodeHashNoPrefix(hashLeft, hashRight, ::hashingFun)
     }
 
 }

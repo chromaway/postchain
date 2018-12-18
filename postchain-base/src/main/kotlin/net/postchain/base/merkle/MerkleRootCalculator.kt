@@ -31,7 +31,10 @@ object MerkleRootCalculator {
                 val left = computeSubTreeHash(element.left, calculator)
                 val right = computeSubTreeHash(element.right, calculator)
 
-                calculator.calculateNodeHash(left, right)
+                calculator.calculateNodeHash(element.getPrefixByte(), left, right)
+            }
+            else -> {
+                throw IllegalStateException("TODO fix") // TODO fix
             }
         }
     }
