@@ -119,6 +119,8 @@ class TestLauncher : IntegrationTest() {
                 )
         )
 
+        val failures = mutableListOf<TransactionFailure>()
+
         for ((blockIdx, block) in testType.block.withIndex()) {
             logger.info("Block will be processed")
             val blockNum = blockIdx.toLong() + 1
@@ -134,8 +136,7 @@ class TestLauncher : IntegrationTest() {
                     Unit
                 } catch (e: Exception) {
                     if (!txXml.isFailure) {
-                        return TestOutput(false, false, null,
-                                listOf(TransactionFailure(blockNum, txIdx.toLong(), e)))
+                        failures.add(TransactionFailure(blockNum, txIdx.toLong(), e))
                     }
                 }
             }
@@ -144,19 +145,19 @@ class TestLauncher : IntegrationTest() {
             try {
                 buildBlockAndCommit(node)
             } catch (e: Exception) {
+                failures.add(TransactionFailure(blockNum, -1, e))
                 return TestOutput(false, false, null,
-                        listOf(TransactionFailure(blockNum, -1, e)))
+                       failures)
             }
         }
 
 
         if (getBestHeight(node).toInt() != testType.block.size) {
-            return TestOutput(false, false, null,
-                    listOf(TransactionFailure(-1, -1,
-                            Exception("Unexpected error: not all blocks were built"))))
+            failures.add(TransactionFailure(-1, -1,
+                            Exception("Unexpected error: not all blocks were built")))
         }
 
-        val failures = mutableListOf<TransactionFailure>()
+
         for (blockHeight in 1..testType.block.size) {
             val actualRIDs = getTxRidsAtHeight(node, blockHeight.toLong()).map { it.byteArrayKeyOf() }.toSet()
 
