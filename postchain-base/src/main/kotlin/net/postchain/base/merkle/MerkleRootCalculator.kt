@@ -1,27 +1,25 @@
 package net.postchain.base.merkle
 
-import net.postchain.base.CryptoSystem
-
 object MerkleRootCalculator {
 
-    val hashTreeFactory = HashFullBinaryTreeFactory()
+    //val hashTreeFactory = HashFullBinaryTreeFactory()
 
 
     /**
      * @param cryptoSystem - needed to find the hash/digest function
      * @param hashes - all the hashes we will use as leaves in the tree
      *  @return the merkle root
-     */
     fun computeMerkleRootHash(cryptoSystem: CryptoSystem,
                               hashes: Array<ByteArray>): Hash {
         val treeWithHashesAsLeaves = hashTreeFactory.buildFromArrayList(hashes.toList())
         return computeSubTreeHash(treeWithHashesAsLeaves.root, MerkleHashCalculatorBase(cryptoSystem))
     }
+     */
 
     /**
      * Inner recursion
      */
-    fun computeSubTreeHash(element: FbtElement, calculator: MerkleHashCalculator): Hash {
+    fun computeSubTreeHash(element: BinaryTreeElement, calculator: MerkleHashCalculator): Hash {
         return when(element) {
             is Leaf<*> -> {
                 val x = element.content

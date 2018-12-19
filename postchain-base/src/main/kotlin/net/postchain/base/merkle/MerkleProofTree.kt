@@ -122,64 +122,67 @@ class MerkleProofTree(val root: MerkleProofElement) {
 object MerkleProofTreeFactory {
 
     /**
-     * @param valuesToProveList Note that these instances must BE EXACTLY THE SAME as the one you are looking for.
-     *                          (Reason being that there might be many [GTXValue] with the same value and we need
-     *                          the position to be correct)
+     * Builds the [MerkleProofTree] from the [GtxBinaryTree]
+     * Note that the [GtxBinaryTree] already has marked all elements that should be proven, so all we have to
+     * do now is to convert the rest to hashes.
+     *
      * @param orginalTree is the tree we will use
      * @param calculator is the class we use for hash calculation
      */
-    fun buildMerkleProofTree(valuesToProveList: List<GTXValue>,
-                             orginalTree: GtxFullBinaryTree,
+    fun buildMerkleProofTree(orginalTree: GtxBinaryTree,
                              calculator: MerkleHashCalculator): MerkleProofTree {
 
-        val rootElement = buildSubProofTree(valuesToProveList, orginalTree.root, calculator)
+        val rootElement = buildSubProofTree(orginalTree.root, calculator)
         return MerkleProofTree(rootElement)
     }
 
-    private fun buildSubProofTree(valuesToProveList: List<GTXValue>,
-                          currentElement: FbtElement,
-                          calculator: MerkleHashCalculator): MerkleProofElement {
+    private fun buildSubProofTree(currentElement: BinaryTreeElement,
+                                  calculator: MerkleHashCalculator): MerkleProofElement {
         return when (currentElement) {
             is EmptyLeaf -> {
                 ProofHashedLeaf(ByteArray(32)) // Just zeros
             }
             is Leaf<*> -> {
-                var foundGTXValue: GTXValue? = null
-                for (valueToProve: GTXValue in valuesToProveList) {
-                    if (currentElement.content === valueToProve) {
-                        // Note that we compared using referential (===) identity!
-                        // Needed here since there might be many GTXValues with the same content, and they are NOT
-                        // the same since they are in different parts of the tree.
-                        // Example:
-                        // One example where this will not work is if there is a string "foo" at multiple places in the tree
-                        // (we will only prove the first occurrence).
-                        foundGTXValue = valueToProve
-                        break
-                    }
-                }
-                if (foundGTXValue == null) {
-                    println("Hash the leaf with content: " + currentElement.content)
-                    ProofHashedLeaf(calculator.calculateLeafHash(currentElement.content as GTXValue))
-                } else {
+                if (currentElement.isPathLeaf()) {
+                    // Don't convert it
                     println("Prove the leaf with content: " + currentElement.content)
                     ProofGtxLeaf(currentElement.content as GTXValue)
+                } else {
+                    // Make it a hash
+                    println("Hash the leaf with content: " + currentElement.content)
+                    ProofHashedLeaf(calculator.calculateLeafHash(currentElement.content as GTXValue))
+                }
+            }
+            is SubTreeRootNode<*> ->  {
+                if (currentElement.isPathLeaf()) {
+                    // Don't convert it
+                    println("Prove the node with content: " + currentElement.content)
+                    ProofGtxLeaf(currentElement.content as GTXValue)
+                } else {
+                    // Convert
+                    println("Convert node ")
+                    convertNode(currentElement, calculator)
                 }
             }
             is Node -> {
-                val left = buildSubProofTree(valuesToProveList, currentElement.left, calculator)
-                val right = buildSubProofTree(valuesToProveList, currentElement.right, calculator)
-                return if (left is ProofHashedLeaf && right is ProofHashedLeaf) {
-                    // If both children are hashes, then
-                    // we must reduce them to a new (combined) hash.
-                    val addedHash = calculator.calculateNodeHash(currentElement.getPrefixByte(), left.hash, right.hash)
-                    ProofHashedLeaf(addedHash)
-                } else {
-                    ProofNode(currentElement.getPrefixByte(), left, right)
-                }
+                convertNode(currentElement, calculator)
             }
             else -> throw IllegalStateException("Cannot handle $currentElement")
         }
 
+    }
+
+    private fun convertNode(currentNode: Node, calculator: MerkleHashCalculator): MerkleProofElement {
+        val left = buildSubProofTree(currentNode.left, calculator)
+        val right = buildSubProofTree(currentNode.right, calculator)
+        return if (left is ProofHashedLeaf && right is ProofHashedLeaf) {
+            // If both children are hashes, then
+            // we must reduce them to a new (combined) hash.
+            val addedHash = calculator.calculateNodeHash(currentNode.getPrefixByte(), left.hash, right.hash)
+            ProofHashedLeaf(addedHash)
+        } else {
+            ProofNode(currentNode.getPrefixByte(), left, right)
+        }
     }
 
 }

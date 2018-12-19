@@ -1,7 +1,6 @@
 package net.postchain.base.merkle
 
 import mu.KLogging
-import net.postchain.base.CryptoSystem
 
 
 /**
@@ -36,15 +35,22 @@ import net.postchain.base.CryptoSystem
  */
 
 /**
- * Fbt = Full Binary Tree
+ * The root class of the tree elements.
  */
-open class FbtElement
+open class BinaryTreeElement {
+
+    // This will tell us if this structure is the leaf of a path
+    // (A "path leaf" is something we will not convert to a hash in a merkle proof tree)
+    private var isPathLeaf = false
+    fun setPathLeaf(isLeaf: Boolean) { isPathLeaf = isLeaf }
+    fun isPathLeaf() = isPathLeaf
+}
 
 /**
  * Super type of parent nodes.
  * Doesn't hold any content, but can generate different prefixes when the hash is calculated
  */
-open class Node(val left: FbtElement, val right: FbtElement): FbtElement() {
+open class Node(val left: BinaryTreeElement, val right: BinaryTreeElement): BinaryTreeElement() {
 
     companion object NodeCompanion{
         const val internalNodePrefixByte: Byte = 0
@@ -56,36 +62,41 @@ open class Node(val left: FbtElement, val right: FbtElement): FbtElement() {
     open fun getPrefixByte(): Byte {
         return internalNodePrefixByte
     }
-
-    // TODO remove
-    /**
-     * Calculate the hash of this instance
-    open fun calculateHash(calculator: MerkleHashCalculator): Hash {
-        val prefixBA = byteArrayOf(getPrefixByte())
-        val leftHash = calculator.calculateNodeHash(left)
-        val rightHash = calculator.calculateNodeHash(right)
-        return prefixBA + calculateNodeHashNoPrefix(leftHash, rightHash, calculator::
-
-    }
-     */
 }
 
 /**
- *  Holds a [GTXValue]
+ * Represents a node that is a root of it's own sub tree.
+ * The [SubTreeRootNode] can be proven, and should also have a reference to the original structure (content)
  */
-data class Leaf<T>(val content: T): FbtElement()
+open class SubTreeRootNode<T>(left: BinaryTreeElement, right: BinaryTreeElement, isProofLeaf: Boolean, val content: T): Node(left, right) {
+
+    init {
+        setPathLeaf(isProofLeaf)
+    }
+}
+
+/**
+ *  Holds content of type (T).
+ *
+ *  Can be set to to be a "path leaf"
+ */
+data class Leaf<T>(val content: T, val leafIsPathLeaf: Boolean = false): BinaryTreeElement() {
+    init {
+        setPathLeaf(leafIsPathLeaf)
+    }
+}
 
 /**
  * Dummy filler. Will always be the right side.
  * (This is needed for the case when an array only has one element)
  */
-object EmptyLeaf: FbtElement()
+object EmptyLeaf: BinaryTreeElement()
 
 /**
  * Wrapper class for the root object.
  * ("content leaf" is supposed to indicate that it's the Leaf that carries all the content of the tree)
  */
-open class ContentLeafFullBinaryTree<T>(val root: FbtElement) {
+open class BinaryTree<T>(val root: BinaryTreeElement) {
     /**
      * Mostly for debugging
      */
@@ -93,7 +104,7 @@ open class ContentLeafFullBinaryTree<T>(val root: FbtElement) {
         return maxLevelInternal(root)
     }
 
-    private fun maxLevelInternal(node: FbtElement): Int {
+    private fun maxLevelInternal(node: BinaryTreeElement): Int {
         return when (node) {
             is EmptyLeaf -> 0 // Doesn't count
             is Leaf<*> -> 1
@@ -108,57 +119,68 @@ open class ContentLeafFullBinaryTree<T>(val root: FbtElement) {
 /**
  * The factory does the actual conversion between list and tree.
  */
-abstract class CompleteBinaryTreeFactory<T> : KLogging() {
+abstract class CompleteBinaryTreeFactory<T,TPath> : KLogging() {
 
     /**
-     * Builds a [ContentLeafFullBinaryTree]
+     * Builds a [BinaryTree]
      *
      * @param originalList A collection of leafs used to create the tree
-     */
-    fun buildCompleteBinaryTree(originalList: List<T>): ContentLeafFullBinaryTree<T> {
-        val result = buildSubTree(originalList)
-        return ContentLeafFullBinaryTree(result)
+    fun buildCompleteBinaryTree(originalList: List<T>, pathList: List<TPath>): BinaryTree<T> {
+        val result = buildSubTreeFromLeafList(originalList, pathList)
+        return BinaryTree(result)
     }
+     */
 
 
     /**
      * Builds the (sub?)tree from a list. We do this is in parts:
      *
      * 1. Transform each leaf in the list into a [Leaf]
-     *    If a [GTXValue] proves to be a recursive type, make it into a [FbtElement]
+     *    If a [GTXValue] proves to be a recursive type, make it into a [BinaryTreeElement]
      * 2. Create the nodes that exist above the leaf, all the way to the root.
      *
-     * @return Root [FbtElement] node
-     */
-    protected fun buildSubTree(inList: List<T>): FbtElement {
-        val leafArray = arrayListOf<FbtElement>()
+     * @param leafList the list of leafs we should build a sub tree from
+     * @param pathList paths to various leafs
+     * @param keepOnlyRelevantPathsFun the function we will use to filter out paths relevant for a specific element
+     * @return Root [BinaryTreeElement] node of the generated sub tree
+    protected fun <SearchKey>buildSubTreeFromLeafList(leafList: List<T>,
+                                                      pathList: List<TPath>,
+                                                      keepOnlyRelevantPathsFun: (SearchKey, List<TPath>) -> List<TPath>
+    ): BinaryTreeElement {
+        val leafArray = arrayListOf<BinaryTreeElement>()
 
         // 1. Build first (leaf) layer
-        for (leaf: T in inList) {
-            val locbtElement = handleLeaf(leaf)
+        for (i in 0..(leafList.size - 1)) {
+            val pathsRelevantForThisLeaf = keepOnlyRelevantPathsFun(i, pathList)
+            val leaf = leafList[i]
+            val locbtElement = handleLeaf(leaf, pathsRelevantForThisLeaf)
             leafArray.add(locbtElement)
         }
 
         // 2. Build all higher layers
-        val result = buildHigherLayer(1, leafArray)
+        val result = buildHigherLayer(1, leafArray, pathList)
 
         return result.get(0)
     }
+     */
 
     /**
-     * Transforms the incoming leaf into an [FbtElement]
+     * Transforms the incoming leaf into an [BinaryTreeElement]
      */
-    abstract fun handleLeaf(leaf: T): FbtElement
+    abstract fun handleLeaf(leaf: T, pathList: List<TPath>): BinaryTreeElement
 
 
     /**
      * Calls itself until the return value only holds 1 element
      *
+     * Note: This method can only create standard [Node] that fills up the area between the "top" and the leaves.
+     *       These "in-between" nodes cannot be "path leaf" or have any interesting properties.
+     *
      * @param layer What layer we aim calculate
      * @param inList The array of nodes we should build from
-     * @return All [FbtElement] nodes of the next layer
+     * @return All [BinaryTreeElement] nodes of the next layer
      */
-    private fun buildHigherLayer(layer: Int, inList: List<FbtElement>): List<FbtElement> {
+    protected fun buildHigherLayer(layer: Int, inList: List<BinaryTreeElement>): List<BinaryTreeElement> {
 
         if (inList.isEmpty()) {
             throw IllegalStateException("Cannot work on empty arrays. Layer: $layer")
@@ -166,11 +188,11 @@ abstract class CompleteBinaryTreeFactory<T> : KLogging() {
             return inList
         }
 
-        val returnArray = arrayListOf<FbtElement>()
+        val returnArray = arrayListOf<BinaryTreeElement>()
         var nrOfNodesToCreate = inList.size / 2
-        var leftValue: FbtElement? = null
+        var leftValue: BinaryTreeElement? = null
         var isLeft = true
-        for (element: FbtElement in inList) {
+        for (element: BinaryTreeElement in inList) {
             if(isLeft)  {
                 leftValue = element
                 isLeft = false

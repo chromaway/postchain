@@ -2,7 +2,7 @@ package net.postchain.base.merkle
 
 object HashTreeHelper {
 
-    private val factory = HashFullBinaryTreeFactory()
+    //private val factory = HashFullBinaryTreeFactory()
 
 
     /*
@@ -21,7 +21,7 @@ object HashTreeHelper {
         val list: List<String> = intArray.toCollection(ArrayList())
         val hashArrayList = TreeHelper.transformIntToHash(list)
 
-        val fullBinaryTree: HashFullBinaryTree = factory.buildFromArrayList(hashArrayList)
+        val fullBinaryTree: HashBinaryTree = factory.buildFromArrayList(hashArrayList)
 
         val printer = TreePrinter()
         val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromHashTree(fullBinaryTree)

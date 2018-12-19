@@ -14,12 +14,12 @@ import kotlin.math.pow
  */
 open class PTreeElement
 
-class PNode(val left: PTreeElement, val right: PTreeElement): PTreeElement()
+class PNode(val left: PTreeElement, val right: PTreeElement, val pathLeaf: Boolean): PTreeElement()
 /**
  * [PContentNode] represents a hanging leaf that is not at max level depth
  */
-class PContentNode(val content: String, val left: PTreeElement, val right: PTreeElement): PTreeElement()
-class PLeaf(val content: String): PTreeElement()
+class PContentNode(val content: String, val left: PTreeElement, val right: PTreeElement, val pathLeaf: Boolean): PTreeElement()
+class PLeaf(val content: String, val pathLeaf: Boolean): PTreeElement()
 
 /**
  * We use empty elements to make it easier to draw non existing parts of the tree
@@ -59,14 +59,14 @@ fun convertHashToString(hash: Hash): String {
  */
 object PrintableTreeFactory {
 
-    fun buildPrintableTreeFromClfbTree(tree: GtxFullBinaryTree ): PrintableBinaryTree {
+    fun buildPrintableTreeFromClfbTree(tree: GtxBinaryTree ): PrintableBinaryTree {
         val maxLevel = tree.maxLevel()
         //println("Max level: $maxLevel")
         val newRoot: PTreeElement = genericTreeInternal(1, maxLevel, tree.root, ::convertGtxToString)
         return PrintableBinaryTree(newRoot)
     }
 
-    fun buildPrintableTreeFromHashTree(tree: HashFullBinaryTree ): PrintableBinaryTree {
+    fun buildPrintableTreeFromHashTree(tree: HashBinaryTree ): PrintableBinaryTree {
         val maxLevel = tree.maxLevel()
         //println("Max level: $maxLevel")
         val newRoot: PTreeElement = genericTreeInternal(1, maxLevel, tree.root, TreeHelper::convertToHex)
@@ -90,7 +90,7 @@ object PrintableTreeFactory {
         }
     }
 
-    private fun <T>genericTreeInternal(currentLevel: Int, maxLevel: Int, inElement: FbtElement, toStr: (T) -> String): PTreeElement {
+    private fun <T>genericTreeInternal(currentLevel: Int, maxLevel: Int, inElement: BinaryTreeElement, toStr: (T) -> String): PTreeElement {
         return when(inElement) {
             is EmptyLeaf -> PEmptyLeaf()
             is Leaf<*> -> {
@@ -101,18 +101,18 @@ object PrintableTreeFactory {
                     //println("Early leaf $content at level: $currentLevel")
                     val emptyLeft: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     val emptyRight: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
-                    PContentNode(content, emptyLeft, emptyRight)
+                    PContentNode(content, emptyLeft, emptyRight, inElement.isPathLeaf())
                 } else {
                     // Normal leaf
                     val content = toStr(inElement.content as T)
                     //println("Normal leaf $content at level: $currentLevel")
-                    PLeaf(content)
+                    PLeaf(content, inElement.isPathLeaf())
                 }
             }
             is Node -> {
                 val left = genericTreeInternal(currentLevel + 1, maxLevel, inElement.left, toStr)
                 val right = genericTreeInternal(currentLevel + 1, maxLevel, inElement.right, toStr)
-                PNode(left, right)
+                PNode(left, right, inElement.isPathLeaf())
             }
             else -> throw IllegalStateException("Not handling this $inElement")
         }
@@ -127,12 +127,12 @@ object PrintableTreeFactory {
                     //println("Early leaf $content at level: $currentLevel")
                     val emptyLeft: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     val emptyRight: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
-                    PContentNode(content, emptyLeft, emptyRight)
+                    PContentNode(content, emptyLeft, emptyRight, true)
                 } else {
                     // Normal leaf
                     val content = convertGtxToString(inElement.content)
                     //println("Normal leaf $content at level: $currentLevel")
-                    PLeaf(content)
+                    PLeaf(content, true)
                 }
             }
             is ProofHashedLeaf -> {
@@ -142,18 +142,18 @@ object PrintableTreeFactory {
                     //println("Early hash leaf $content at level: $currentLevel")
                     val emptyLeft: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     val emptyRight: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
-                    PContentNode(content, emptyLeft, emptyRight)
+                    PContentNode(content, emptyLeft, emptyRight, false)
                 } else {
                     // Normal leaf
                     val content = TreeHelper.convertToHex(inElement.hash)
                     //println("Normal hash leaf $content at level: $currentLevel")
-                    PLeaf(content)
+                    PLeaf(content, false)
                 }
             }
             is ProofNode -> {
                 val left = fromProofTreeInternal(currentLevel + 1, maxLevel, inElement.left)
                 val right = fromProofTreeInternal(currentLevel + 1, maxLevel, inElement.right)
-                PNode(left, right)
+                PNode(left, right, false)
             }
         }
     }
@@ -201,13 +201,21 @@ class TreePrinter {
         for (node in nodes) {
             when (node) {
                 is PNode -> {
-                    buf.append("+") // No data to print // print(node.data)
+                    if (node.pathLeaf){
+                        buf.append("#") // This is a proof leaf
+                    } else {
+                        buf.append("+") // Not a proof leaf
+                    }
                     newNodes.add(node.left)
                     newNodes.add(node.right)
                     compensateForEmptNodes += leafCount * (betweenSpaces + 1)
                 }
                 is PContentNode -> {
-                    buf.append(node.content)
+                    if (node.pathLeaf) {
+                        buf.append("*" + node.content)
+                    } else {
+                        buf.append(node.content)
+                    }
                     newNodes.add(node.left)
                     newNodes.add(node.right)
                     compensateForEmptNodes += leafCount * (betweenSpaces + 1)
@@ -220,7 +228,11 @@ class TreePrinter {
                 }
                 is PLeaf -> {
                     leafCount++
-                    buf.append(node.content)
+                    if (node.pathLeaf) {
+                        buf.append("*" + node.content)
+                    } else {
+                        buf.append(node.content)
+                    }
                 }
                 is PEmptyLeaf -> {
                     leafCount++

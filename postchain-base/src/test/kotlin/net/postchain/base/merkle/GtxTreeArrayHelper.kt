@@ -1,15 +1,23 @@
 package net.postchain.base.merkle
 
 import net.postchain.gtx.ArrayGTXValue
+import net.postchain.gtx.GTXPath
 import net.postchain.gtx.GTXValue
 
-object GtxTreeHelper {
+object GtxTreeArrayHelper {
 
 
     private val factory = GtxFullBinaryTreeFactory()
 
 
+    /**
+     * Use this if you don't have a path to prove
+     */
     fun buildTreeOf1(): TreeHolderFromArray {
+        return buildTreeOf1(null)
+    }
+
+    fun buildTreeOf1(gtxPath: GTXPath?): TreeHolderFromArray {
         val intArray = intArrayOf(1)
         val expectedTree =
                 " +   \n" +
@@ -18,7 +26,12 @@ object GtxTreeHelper {
 
         val gtxArrayList = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
         val gtxArr: Array<GTXValue> = gtxArrayList.toTypedArray()
-        val fullBinaryTree: GtxFullBinaryTree = factory.buildFromGtx(ArrayGTXValue(gtxArr))
+
+        val fullBinaryTree: GtxBinaryTree = if (gtxPath != null) {
+            factory.buildFromGtxAndPath(ArrayGTXValue(gtxArr), listOf(gtxPath))
+        } else {
+            factory.buildFromGtx(ArrayGTXValue(gtxArr))
+        }
 
         val printer = TreePrinter()
         val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
@@ -30,6 +43,10 @@ object GtxTreeHelper {
 
 
     fun buildTreeOf4(): TreeHolderFromArray {
+        return buildTreeOf4(null)
+    }
+
+    fun buildTreeOf4(gtxPath: GTXPath?): TreeHolderFromArray {
         val intArray = intArrayOf(1,2,3,4)
         val expectedTree =
                 "   +       \n" +
@@ -41,7 +58,11 @@ object GtxTreeHelper {
 
         val gtxArrayList = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
         val gtxArr: Array<GTXValue> = gtxArrayList.toTypedArray()
-        val fullBinaryTree: GtxFullBinaryTree = factory.buildFromGtx(ArrayGTXValue(gtxArr))
+        val fullBinaryTree: GtxBinaryTree = if (gtxPath != null) {
+            factory.buildFromGtxAndPath(ArrayGTXValue(gtxArr), listOf(gtxPath))
+        } else {
+            factory.buildFromGtx(ArrayGTXValue(gtxArr))
+        }
 
         val printer = TreePrinter()
         val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
@@ -52,6 +73,18 @@ object GtxTreeHelper {
     }
 
     fun buildTreeOf7(): TreeHolderFromArray {
+        return buildTreeOf7(null)
+    }
+
+    fun buildTreeOf7(gtxPath: GTXPath?): TreeHolderFromArray {
+        return if (gtxPath == null) {
+            buildTreeOf7(listOf())
+        } else {
+            buildTreeOf7(listOf(gtxPath))
+        }
+    }
+
+    fun buildTreeOf7(gtxPaths: List<GTXPath>): TreeHolderFromArray {
         val intArray = intArrayOf(1, 2, 3, 4, 5, 6, 7)
 
         val expectedTree =
@@ -70,8 +103,9 @@ object GtxTreeHelper {
 
 
         val gtxList: List<GTXValue> = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
+        val gtxArr: Array<GTXValue> = gtxList.toTypedArray()
 
-        val fullBinaryTree: GtxFullBinaryTree = factory.buildFromArrayList(gtxList)
+        val fullBinaryTree = factory.buildFromGtxAndPath(ArrayGTXValue(gtxArr), gtxPaths)
 
         val printer = TreePrinter()
         val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
@@ -109,7 +143,7 @@ object GtxTreeHelper {
 
         val gtxList: List<GTXValue> = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
 
-        val fullBinaryTree: GtxFullBinaryTree = factory.buildFromArrayList(gtxList)
+        val fullBinaryTree: GtxBinaryTree = factory.buildFromGtx(TreeHelper.transformGTXsToArrayGTXValue(gtxList))
 
         val printer = TreePrinter()
         val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
@@ -120,7 +154,11 @@ object GtxTreeHelper {
 
     }
 
-    fun buildTreeOf7WithSubTree(): TreeHolderSubTree {
+    fun buildTreeOf7WithSubTree(): TreeHolderFromArray {
+        return buildTreeOf7(null)
+    }
+
+    fun buildTreeOf7WithSubTree(gtxPath: GTXPath): TreeHolderSubTree {
         val intArray = intArrayOf(1,2,3,4,5,6,7)
         val expectedTree =
                 "                               +                                                               \n" +
@@ -171,7 +209,13 @@ object GtxTreeHelper {
         val innerArrayGTXValue = ArrayGTXValue(innerGtxIntArray)
         gtxArrayList.set(3, innerArrayGTXValue)
 
-        val fullBinaryTree: GtxFullBinaryTree = factory.buildFromArrayList(gtxArrayList)
+        val gtxArr: Array<GTXValue> = gtxArrayList.toTypedArray()
+
+        val fullBinaryTree: GtxBinaryTree = if (gtxPath != null) {
+            factory.buildFromGtxAndPath(ArrayGTXValue(gtxArr), listOf(gtxPath))
+        } else {
+            factory.buildFromGtx(ArrayGTXValue(gtxArr))
+        }
 
         val printer = TreePrinter()
         val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
@@ -181,31 +225,5 @@ object GtxTreeHelper {
         return TreeHolderSubTree(intArray, fullBinaryTree, treePrintout, expectedTree, gtxArrayList, innerGtxIntArray)
     }
 
-    fun buildThreeOf4_fromDict(): TreeHolderFromDict {
-        val stringArray = arrayOf("one","two","three","four")
-        val intArray = intArrayOf(1,2,3,4)
-        val expectedTree =
-                "       +               \n" +
-                        "      / \\       \n" +
-                        "     /   \\      \n" +
-                        "    /     \\     \n" +
-                        "   /       \\    \n" +
-                        "   +       +       \n" +
-                        "  / \\     / \\   \n" +
-                        " /   \\   /   \\  \n" +
-                        " +   +   +   +   \n" +
-                        "/ \\ / \\ / \\ / \\ \n" +
-                        "four 4 one 1 three 3 two 2 "
 
-
-        val gtxDict = TreeHelper.transformStringAndIntToDictGTXValue(stringArray.toCollection(ArrayList()), intArray.toCollection(ArrayList()))
-
-        val fullBinaryTree: GtxFullBinaryTree = factory.buildFromGtx(gtxDict)
-
-        val printer = TreePrinter()
-        val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
-        val treePrintout = printer.printNode(printableBinaryTree)
-        //println(treePrintout)
-        return TreeHolderFromDict(intArray, fullBinaryTree, treePrintout, expectedTree, gtxDict)
-    }
 }

@@ -1,5 +1,7 @@
 package net.postchain.base.merkle
 
+import net.postchain.gtx.GTXPath
+import net.postchain.gtx.GTXPathFactory
 import net.postchain.gtx.GTXValue
 import org.junit.Assert
 import org.junit.Test
@@ -18,24 +20,24 @@ import kotlin.test.assertEquals
  *   7 -> 07
  *   12 -> 0C
  */
-class MerkleProofTreeTest {
+class MerkleProofTreeArrayTest {
 
     val expected1ElementArrayMerkleRoot = "0702030101010101010101010101010101010101010101010101010101010101010101"
     val expected4ElementArrayMerkleRoot = "0701030403050103060307"
 
     @Test
     fun test_tree_of1() {
-        val treeHolder = GtxTreeHelper.buildTreeOf1()
+        val path: Array<Any> = arrayOf(0)
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder = GtxTreeArrayHelper.buildTreeOf1(gtxPath)
 
         val expectedPath =
                 " +   \n" +
                 "/ \\ \n" +
-                "1 0000000000000000000000000000000000000000000000000000000000000000 "
+                "*1 0000000000000000000000000000000000000000000000000000000000000000 "
 
-        val value1 = treeHolder.orgGtxList[0]
-        val listOfOneGtxInt: List<GTXValue> = listOf(value1)
         val calculator = MerkleHashCalculatorDummy()
-        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(listOfOneGtxInt, treeHolder.clfbTree, calculator)
+        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(treeHolder.clfbTree, calculator)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -49,12 +51,14 @@ class MerkleProofTreeTest {
 
     @Test
     fun test_tree_of1_merkle_root() {
-        val treeHolder = GtxTreeHelper.buildTreeOf1()
+        val path: Array<Any> = arrayOf(0)
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder = GtxTreeArrayHelper.buildTreeOf1(gtxPath)
 
         val value1 = treeHolder.orgGtxList[0]
         val listOfOneGtxInt: List<GTXValue> = listOf(value1)
         val calculator = MerkleHashCalculatorDummy()
-        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(listOfOneGtxInt, treeHolder.clfbTree, calculator)
+        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(treeHolder.clfbTree, calculator)
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
         assertEquals(expected1ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot))
@@ -62,7 +66,9 @@ class MerkleProofTreeTest {
 
     @Test
     fun test_tree_of4() {
-        val treeHolder = GtxTreeHelper.buildTreeOf4()
+        val path: Array<Any> = arrayOf(0)
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder = GtxTreeArrayHelper.buildTreeOf4(gtxPath)
 
         // This is how the (dummy = +1) hash calculation works done for the right side of the path:
         //
@@ -79,13 +85,11 @@ class MerkleProofTreeTest {
                 " /   \\  \n" +
                 " +   0002050206   \n" +
                 "/ \\     \n" +
-                "1 0103 - - "
+                "*1 0103 - - "
 
 
-        val value1 = treeHolder.orgGtxList[0]
-        val listOfOneGtxInt: List<GTXValue> = listOf(value1)
         val calculator = MerkleHashCalculatorDummy()
-        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(listOfOneGtxInt, treeHolder.clfbTree, calculator)
+        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(treeHolder.clfbTree, calculator)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -99,7 +103,9 @@ class MerkleProofTreeTest {
 
     @Test
     fun test_tree_of4_merkle_root() {
-        val treeHolder = GtxTreeHelper.buildTreeOf4()
+        val path: Array<Any> = arrayOf(0)
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder = GtxTreeArrayHelper.buildTreeOf4(gtxPath)
 
         // How to calculate the root of the proof above:
         // (see the test above for where we get these numbers)
@@ -115,10 +121,8 @@ class MerkleProofTreeTest {
         // 07     0103040305 + 0103060307 ->
         // 0701030403050103060307
 
-        val value1 = treeHolder.orgGtxList[0]
-        val listOfOneGtxInt: List<GTXValue> = listOf(value1)
         val calculator = MerkleHashCalculatorDummy()
-        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(listOfOneGtxInt, treeHolder.clfbTree, calculator)
+        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(treeHolder.clfbTree, calculator)
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
         assertEquals(expected4ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot))
@@ -128,9 +132,9 @@ class MerkleProofTreeTest {
 
     @Test
     fun test_tree_of7() {
-        val treeHolder: TreeHolderFromArray = GtxTreeHelper.buildTreeOf7()
-
-        Assert.assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
+        val path: Array<Any> = arrayOf(3)
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder: TreeHolderFromArray = GtxTreeArrayHelper.buildTreeOf7(gtxPath)
 
         // This is how the (dummy = +1) hash calculation works done for the right side of the path:
         //
@@ -154,11 +158,10 @@ class MerkleProofTreeTest {
                 " /   \\          \n" +
                 " 0002030204   +   .   .   \n" +
                 "    / \\         \n" +
-                "- - 0104 4 - - - - "
+                "- - 0104 *4 - - - - "
 
-        val value4: List<GTXValue> = listOf(treeHolder.orgGtxList[3])
         val calculator = MerkleHashCalculatorDummy()
-        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(value4, treeHolder.clfbTree, calculator)
+        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(treeHolder.clfbTree, calculator)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -173,9 +176,13 @@ class MerkleProofTreeTest {
 
     @Test
     fun test_tree_of7_with_double_proof() {
-        val treeHolder: TreeHolderFromArray = GtxTreeHelper.buildTreeOf7()
+        val path1: Array<Any> = arrayOf(3)
+        val path2: Array<Any> = arrayOf(6)
+        val gtxPath1: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path1)
+        val gtxPath2: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path2)
+        val treeHolder: TreeHolderFromArray = GtxTreeArrayHelper.buildTreeOf7(listOf(gtxPath1, gtxPath2))
 
-        Assert.assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
+        //Assert.assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
 
         val expectedPath =
                 "       +               \n" +
@@ -186,13 +193,12 @@ class MerkleProofTreeTest {
                 "   +       +       \n" +
                 "  / \\     / \\   \n" +
                 " /   \\   /   \\  \n" +
-                " 0002030204   +   0002070208   7   \n" +
+                " 0002030204   +   0002070208   *7   \n" +
                 "    / \\         \n" +
-                "- - 0104 4 - - - - "
+                "- - 0104 *4 - - - - "
 
-        val value4and7: List<GTXValue> = listOf(treeHolder.orgGtxList[3], treeHolder.orgGtxList[6])
         val calculator = MerkleHashCalculatorDummy()
-        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(value4and7, treeHolder.clfbTree, calculator)
+        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(treeHolder.clfbTree, calculator)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -206,9 +212,10 @@ class MerkleProofTreeTest {
 
     @Test
     fun test_ArrayLength7_withInnerLength3Array() {
-        val treeHolder = GtxTreeHelper.buildTreeOf7WithSubTree()
+        val path: Array<Any> = arrayOf(3,1)
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder = GtxTreeArrayHelper.buildTreeOf7WithSubTree(gtxPath)
 
-        Assert.assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
 
         val expectedPath =
                 "                               +                                                               \n" +
@@ -247,13 +254,13 @@ class MerkleProofTreeTest {
                 "                         /   \\                                  \n" +
                 " .   .   .   .   .   .   +   0104   .   .   .   .   .   .   .   .   \n" +
                 "                        / \\                                     \n" +
-                "- - - - - - - - - - - - 0102 9 - - - - - - - - - - - - - - - - - - "
+                "- - - - - - - - - - - - 0102 *9 - - - - - - - - - - - - - - - - - - "
 
 
-        val theNineLeaf = treeHolder.orgGtxSubArray[1]  // This is the one with a "9" in it.
-        val listOfOneGtxInt: List<GTXValue> = listOf(theNineLeaf)
+        //val theNineLeaf = treeHolder.orgGtxSubArray[1]  // This is the one with a "9" in it.
+        //val listOfOneGtxInt: List<GTXValue> = listOf(theNineLeaf)
         val calculator = MerkleHashCalculatorDummy()
-        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(listOfOneGtxInt, treeHolder.clfbTree, calculator)
+        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(treeHolder.clfbTree, calculator)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -266,9 +273,9 @@ class MerkleProofTreeTest {
 
     @Test
     fun test_ArrayLength7_withInnerLength3Array_path2three() {
-        val treeHolder = GtxTreeHelper.buildTreeOf7WithSubTree()
-
-        Assert.assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
+        val path: Array<Any> = arrayOf(2)
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder = GtxTreeArrayHelper.buildTreeOf7WithSubTree(gtxPath)
 
         // How to calculate the hash of the sub tree?
         // 07 + [
@@ -299,13 +306,12 @@ class MerkleProofTreeTest {
                 " /   \\          \n" +
                 " 0002030204   +   .   .   \n" +
                 "    / \\         \n" +
-                "- - 3 07010304030C0205 - - - - "
+                "- - *3 07010304030C0205 - - - - "
 
 
-        val theThreeLeaf = treeHolder.orgGtxList[2]  // This is the one with a "3" in it.
-        val listOfOneGtxInt: List<GTXValue> = listOf(theThreeLeaf)
+        //val theThreeLeaf = treeHolder.orgGtxList[2]  // This is the one with a "3" in it.
         val calculator = MerkleHashCalculatorDummy()
-        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(listOfOneGtxInt, treeHolder.clfbTree, calculator)
+        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(treeHolder.clfbTree, calculator)
 
         // Print the result tree
         val printer = TreePrinter()

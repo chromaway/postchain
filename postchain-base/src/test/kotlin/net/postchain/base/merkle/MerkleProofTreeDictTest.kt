@@ -1,5 +1,7 @@
 package net.postchain.base.merkle
 
+import net.postchain.gtx.GTXPath
+import net.postchain.gtx.GTXPathFactory
 import net.postchain.gtx.GTXValue
 import org.junit.Assert
 import org.junit.Test
@@ -25,7 +27,9 @@ class MerkleProofTreeDictTest {
 
     @Test
     fun test_tree_from_4dict() {
-        val treeHolder = GtxTreeHelper.buildThreeOf4_fromDict()
+        val path: Array<Any> = arrayOf("four")
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder = GtxTreeDictHelper.buildThreeOf4_fromDict(gtxPath)
 
         // This is how the (dummy = +1) hash calculation works done for the right side of the path:
         //
@@ -74,13 +78,10 @@ class MerkleProofTreeDictTest {
                         " /   \\          \n" +
                         " +   00027170670203   .   .   \n" +
                         "/ \\             \n" +
-                        "0167707673 4 - - - - - - "
+                        "0167707673 *4 - - - - - - "
 
-        val key4 = "four"
-        val value4 = treeHolder.orgGtxDict.get(key4)
-        val listOfOneGtxInt: List<GTXValue> = listOf(value4!!)
         val calculator = MerkleHashCalculatorDummy()
-        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(listOfOneGtxInt, treeHolder.clfbTree, calculator)
+        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(treeHolder.clfbTree, calculator)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -94,7 +95,9 @@ class MerkleProofTreeDictTest {
 
     @Test
     fun test_tree_from_4dict_proof() {
-        val treeHolder = GtxTreeHelper.buildThreeOf4_fromDict()
+        val path: Array<Any> = arrayOf("four")
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder = GtxTreeDictHelper.buildThreeOf4_fromDict(gtxPath)
 
         // 08 + [
         //        (00 + [
@@ -126,11 +129,8 @@ class MerkleProofTreeDictTest {
         //       ] ->
         //  080102046A737976040802047372690405010204786C76696904070204787B730406
 
-        val key4 = "four"
-        val value4 = treeHolder.orgGtxDict.get(key4)
-        val listOfOneGtxInt: List<GTXValue> = listOf(value4!!)
         val calculator = MerkleHashCalculatorDummy()
-        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(listOfOneGtxInt, treeHolder.clfbTree, calculator)
+        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(treeHolder.clfbTree, calculator)
 
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
@@ -138,43 +138,6 @@ class MerkleProofTreeDictTest {
 
     }
 
-    @Test
-    fun test_tree_from_4dict_prove_the_pair() {
-        val treeHolder = GtxTreeHelper.buildThreeOf4_fromDict()
 
-        val expectedPath =
-                "       +               \n" +
-                        "      / \\       \n" +
-                        "     /   \\      \n" +
-                        "    /     \\     \n" +
-                        "   /       \\    \n" +
-                        "   +       000103776B75686803060103777A720305       \n" +
-                        "  / \\           \n" +
-                        " /   \\          \n" +
-                        " +   00027170670203   .   .   \n" +
-                        "/ \\             \n" +
-                        "four 4 - - - - - - "
-
-        val treeStrFinder = GtxTreeElementFinder<String>()
-        val strGtxValue4List = treeStrFinder.findGtxValueFromPrimitiveType("four", treeHolder.clfbTree.root)
-        val strGtxValue4 = strGtxValue4List.get(0)
-
-        val treeIntFinder = GtxTreeElementFinder<Int>()
-        val intGtxValue4List = treeIntFinder.findGtxValueFromPrimitiveType(4, treeHolder.clfbTree.root)
-        val intGtxValue4 = intGtxValue4List.get(0)
-
-        val listOfTwoGtxValues: List<GTXValue> = listOf(intGtxValue4, strGtxValue4)
-        val calculator = MerkleHashCalculatorDummy()
-        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(listOfTwoGtxValues, treeHolder.clfbTree, calculator)
-
-        // Print the result tree
-        val printer = TreePrinter()
-        val pbt = PrintableTreeFactory.buildPrintableTreeFromProofTree(merkleProofTree)
-        val resultPrintout = printer.printNode(pbt)
-        //println(resultPrintout)
-
-        Assert.assertEquals(expectedPath.trim(), resultPrintout.trim())
-
-    }
 
 }
