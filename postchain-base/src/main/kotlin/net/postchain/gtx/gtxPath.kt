@@ -191,6 +191,7 @@ class GTXPath(val pathElements: List<GTXPathElement>): KLogging()  {
 
 
 
+    // TODO:  We might not need this at all. If not used 2019-04-01 plz remove
     /**
      * @return The [GTXValue] that the path leads to, or null if the path cannot be followed
      */

@@ -1,8 +1,8 @@
-package net.postchain.base.merkle
+package net.postchain.base.merkle.proof
 
+import net.postchain.base.merkle.*
 import net.postchain.gtx.GTXPath
 import net.postchain.gtx.GTXPathFactory
-import net.postchain.gtx.GTXValue
 import org.junit.Assert
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -21,7 +21,10 @@ import kotlin.test.assertEquals
  *   12 -> 0C
  */
 
-class MerkleProofTreeDictTest {
+class DictToMerkleProofTreeTest {
+
+    val calculator = MerkleHashCalculatorDummy()
+    val factory = GtxMerkleProofTreeFactory(calculator)
 
     val expectedMerkleRoot = "080102046A737976040802047372690405010204786C76696904070204787B730406"
 
@@ -29,7 +32,7 @@ class MerkleProofTreeDictTest {
     fun test_tree_from_4dict() {
         val path: Array<Any> = arrayOf("four")
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
-        val treeHolder = GtxTreeDictHelper.buildThreeOf4_fromDict(gtxPath)
+        val treeHolder = DictToGtxBinaryTreeHelper.buildThreeOf4_fromDict(gtxPath)
 
         // This is how the (dummy = +1) hash calculation works done for the right side of the path:
         //
@@ -80,8 +83,7 @@ class MerkleProofTreeDictTest {
                         "/ \\             \n" +
                         "0167707673 *4 - - - - - - "
 
-        val calculator = MerkleHashCalculatorDummy()
-        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(treeHolder.clfbTree, calculator)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -97,7 +99,7 @@ class MerkleProofTreeDictTest {
     fun test_tree_from_4dict_proof() {
         val path: Array<Any> = arrayOf("four")
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
-        val treeHolder = GtxTreeDictHelper.buildThreeOf4_fromDict(gtxPath)
+        val treeHolder = DictToGtxBinaryTreeHelper.buildThreeOf4_fromDict(gtxPath)
 
         // 08 + [
         //        (00 + [
@@ -129,8 +131,7 @@ class MerkleProofTreeDictTest {
         //       ] ->
         //  080102046A737976040802047372690405010204786C76696904070204787B730406
 
-        val calculator = MerkleHashCalculatorDummy()
-        val merkleProofTree: MerkleProofTree = MerkleProofTreeFactory.buildMerkleProofTree(treeHolder.clfbTree, calculator)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
 
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)

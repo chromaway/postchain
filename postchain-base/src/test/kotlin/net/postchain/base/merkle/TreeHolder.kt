@@ -1,5 +1,6 @@
 package net.postchain.base.merkle
 
+import net.postchain.base.merkle.root.HashBinaryTree
 import net.postchain.gtx.DictGTXValue
 import net.postchain.gtx.GTXValue
 

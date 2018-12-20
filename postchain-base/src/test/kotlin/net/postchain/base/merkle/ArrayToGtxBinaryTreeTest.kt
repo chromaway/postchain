@@ -9,7 +9,7 @@ class ArrayToGtxBinaryTreeTest {
 
     @Test
     fun testIntArrayLength1() {
-        val treeHolder = GtxTreeArrayHelper.buildTreeOf1()
+        val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf1()
         println(treeHolder.treePrintout)
         assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
     }
@@ -24,7 +24,7 @@ class ArrayToGtxBinaryTreeTest {
                 "*1 - "
 
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
-        val treeHolder = GtxTreeArrayHelper.buildTreeOf1(gtxPath)
+        val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf1(gtxPath)
         //println(treeHolder.treePrintout)
 
         assertEquals(expectedTreeWithPath.trim(), treeHolder.treePrintout.trim())
@@ -32,7 +32,7 @@ class ArrayToGtxBinaryTreeTest {
 
     @Test
     fun testIntArrayLength4() {
-        val treeHolder = GtxTreeArrayHelper.buildTreeOf4()
+        val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf4()
         println(treeHolder.treePrintout)
         assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
     }
@@ -49,21 +49,21 @@ class ArrayToGtxBinaryTreeTest {
                 "1 2 3 *4 "
 
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
-        val treeHolder = GtxTreeArrayHelper.buildTreeOf4(gtxPath)
+        val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf4(gtxPath)
         //println(treeHolder.treePrintout)
         assertEquals(expected.trim(), treeHolder.treePrintout.trim())
     }
 
     @Test
     fun testIntArrayLength7() {
-        val treeHolder = GtxTreeArrayHelper.buildTreeOf7()
+        val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf7()
         //println(treeHolder.treePrintout)
         assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
     }
 
     @Test
     fun testIntArrayLength9() {
-        val treeHolder = GtxTreeArrayHelper.buildTreeOf9()
+        val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf9()
         //println(treeHolder.treePrintout)
         assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
     }
@@ -108,7 +108,7 @@ class ArrayToGtxBinaryTreeTest {
 
     @Test
     fun testIntArrayLength7withInnerLength3Array() {
-        val treeHolder = GtxTreeArrayHelper.buildTreeOf7WithSubTree()
+        val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf7WithSubTree()
         //println(treeHolder.treePrintout)
         assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
     }

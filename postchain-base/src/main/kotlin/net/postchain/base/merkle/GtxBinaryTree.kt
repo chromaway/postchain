@@ -20,9 +20,7 @@ class GtxArrayHeadNode(left: BinaryTreeElement, right: BinaryTreeElement, isProo
         const val prefixByte: Byte = 7
     }
 
-    override fun getPrefixByte(): Byte {
-        return prefixByte
-    }
+    override fun getPrefixByte(): Byte = prefixByte
 }
 
 /**
@@ -34,9 +32,7 @@ class GtxDictHeadNode(left: BinaryTreeElement, right: BinaryTreeElement, isProof
         const val prefixByte: Byte = 8
     }
 
-    override fun getPrefixByte(): Byte {
-        return prefixByte
-    }
+    override fun getPrefixByte(): Byte = prefixByte
 }
 
 /**
@@ -47,56 +43,13 @@ class GtxBinaryTree(root: BinaryTreeElement) : BinaryTree<GTXValue>(root) {
 
 }
 
-// TODO: Probably not needed anymore since the GTXPath
-class GtxTreeElementFinder<T> {
-
-    /**
-     * Use this to find [GTXValue] s in the tree
-     *
-     * @param toFind this can be a string or int, depending on the type param T
-     * @param node the root of the tree we are looking in
-     * @return A list of [GTXValue] , usually just containing one element, but can contain many, if say the same
-     *          string "foo" appear in many places in the tree.
-     */
-    fun findGtxValueFromPrimitiveType(toFind: T, node: BinaryTreeElement): List<GTXValue> {
-        val retArr = arrayListOf<GTXValue>()
-        when (node) {
-            is Node ->  {
-                val leftList = findGtxValueFromPrimitiveType(toFind, node.left)
-                val rightList = findGtxValueFromPrimitiveType(toFind, node.right)
-                retArr.addAll(leftList)
-                retArr.addAll(rightList)
-            }
-            is Leaf<*> -> {
-                val gtxVal = node.content
-                when (gtxVal) {
-                    is StringGTXValue -> {
-                        if (toFind is String && toFind == gtxVal.string) {
-                            println("Found the string $toFind")
-                            retArr.add(gtxVal)
-                        }
-                    }
-                    is IntegerGTXValue -> {
-                        //println("Looking for: $toFind a num: ${gtxVal.integer} ")
-                        if (toFind is Int && toFind.toString() == gtxVal.integer.toString()) { // TODO: This conversion to string is ugly but for some reason comparison beween ints did not work!!??
-                            println("Found the int $toFind")
-                            retArr.add(gtxVal)
-                        }
-                    }
-                }
-            }
-        }
-        return retArr
-    }
-}
-
 /**
  * This can build two types of trees:
  * 1. Make a binary tree out of a GTX object graph
  * 2. Same as above, but we also marked each GTX sub structure that should be a path leaf.
  *    If you want this option (2) you have to provide a list of [GTXPath]
  */
-class GtxFullBinaryTreeFactory : CompleteBinaryTreeFactory<GTXValue, GTXPath>() {
+class GtxFullBinaryTreeFactory : BinaryTreeFactory<GTXValue, GTXPath>() {
 
 
     /**

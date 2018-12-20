@@ -1,5 +1,7 @@
 package net.postchain.base.merkle
 
+import net.postchain.base.merkle.proof.*
+import net.postchain.base.merkle.root.HashBinaryTree
 import net.postchain.gtx.*
 import kotlin.math.pow
 
@@ -66,14 +68,14 @@ object PrintableTreeFactory {
         return PrintableBinaryTree(newRoot)
     }
 
-    fun buildPrintableTreeFromHashTree(tree: HashBinaryTree ): PrintableBinaryTree {
+    fun buildPrintableTreeFromHashTree(tree: HashBinaryTree): PrintableBinaryTree {
         val maxLevel = tree.maxLevel()
         //println("Max level: $maxLevel")
         val newRoot: PTreeElement = genericTreeInternal(1, maxLevel, tree.root, TreeHelper::convertToHex)
         return PrintableBinaryTree(newRoot)
     }
 
-    fun buildPrintableTreeFromProofTree(tree: MerkleProofTree): PrintableBinaryTree {
+    fun buildPrintableTreeFromProofTree(tree: GtxMerkleProofTree): PrintableBinaryTree {
         val maxLevel = tree.maxLevel()
         //println("Max level: $maxLevel")
         val newRoot: PTreeElement = fromProofTreeInternal(1, maxLevel, tree.root)
@@ -120,32 +122,32 @@ object PrintableTreeFactory {
 
     private fun fromProofTreeInternal(currentLevel: Int, maxLevel: Int, inElement: MerkleProofElement): PTreeElement {
         return when(inElement) {
-            is ProofGtxLeaf -> {
+            is ProofValueLeaf<*> -> {
                 if (currentLevel < maxLevel) {
                     // Create node instead of leaf
-                    val content = convertGtxToString(inElement.content)
+                    val content = convertGtxToString(inElement.content as GTXValue)
                     //println("Early leaf $content at level: $currentLevel")
                     val emptyLeft: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     val emptyRight: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     PContentNode(content, emptyLeft, emptyRight, true)
                 } else {
                     // Normal leaf
-                    val content = convertGtxToString(inElement.content)
+                    val content = convertGtxToString(inElement.content as GTXValue)
                     //println("Normal leaf $content at level: $currentLevel")
                     PLeaf(content, true)
                 }
             }
-            is ProofHashedLeaf -> {
+            is ProofHashedLeaf<*> -> {
                 if (currentLevel < maxLevel) {
                     // Create node instead of leaf
-                    val content = TreeHelper.convertToHex(inElement.hash)
+                    val content = TreeHelper.convertToHex(inElement.hash as Hash)
                     //println("Early hash leaf $content at level: $currentLevel")
                     val emptyLeft: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     val emptyRight: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     PContentNode(content, emptyLeft, emptyRight, false)
                 } else {
                     // Normal leaf
-                    val content = TreeHelper.convertToHex(inElement.hash)
+                    val content = TreeHelper.convertToHex(inElement.hash as Hash)
                     //println("Normal hash leaf $content at level: $currentLevel")
                     PLeaf(content, false)
                 }

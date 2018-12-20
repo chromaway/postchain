@@ -1,7 +1,6 @@
 package net.postchain.base.merkle
 
 import net.postchain.base.CryptoSystem
-import net.postchain.gtx.GTXValue
 
 
 /**
@@ -32,59 +31,33 @@ import net.postchain.gtx.GTXValue
  * --------
  *
  */
-abstract class MerkleHashCalculator(val cryptoSystem: CryptoSystem?) {
 
-    val internalNodePrefixByte: Byte = 0
-    val leafPrefixByte: Byte = 1
-    val arrayHeadNodePrefixByte: Byte = 7
-    val dictionaryHeadNodePrefixByte: Byte = 8
 
-    val internalNodePrefix = byteArrayOf(internalNodePrefixByte)
-    val leafPrefix = byteArrayOf(leafPrefixByte)
+/**
+ * Can calculate hashes of leaves and nodes
+ */
+abstract class MerkleHashCalculator<T>(cryptoSystem: CryptoSystem?): BinaryNodeHashCalculator(cryptoSystem) {
 
     /**
      * Leaf hashes are prefixed to tell them apart from internal nodes.
      *
-     * @param gtxValue The leaf
+     * @param value The leaf
      * @return the hash of a leaf.
      */
-    abstract fun calculateLeafHash(gtxValue: GTXValue): Hash
+    abstract fun calculateLeafHash(value: T): Hash
+
 
     /**
-     * Internal nodes' hashes are prefixed to tell them apart from leafs.
-     *
-     * @param hashLeft The hash of the left sub tree
-     * @param hashRight The hash of the right sub tree
-     * @return Returns the hash of two combined hashes.
-     */
-    //abstract fun calculateNodeHash(hashLeft: Hash, hashRight: Hash): Hash
-
-    /**
-     * Same as above but with prefix
-     */
-    abstract fun calculateNodeHash(prefix: Byte, hashLeft: Hash, hashRight: Hash): Hash
-
-    /**
-     * @param gtxValue The leaf
+     * @param valueToHash The leaf
      * @param serializeFun The only reason we pass the function as a parameter is to simplify testing.
      * @param hashFun The only reason we pass the function as a parameter is to simplify testing.
-     * @return the hash of the [GTXValue].
+     * @return the hash of the valueToHash.
      */
-    fun calculateHashOfGtxInternal(gtxValue: GTXValue, serializeFun: (GTXValue) -> ByteArray, hashFun: (ByteArray, CryptoSystem?) -> Hash): Hash {
-        var byteArr: ByteArray = serializeFun(gtxValue)
-        val resultArr = leafPrefix + hashFun(byteArr, cryptoSystem)
-        return resultArr
+    protected fun calculateHashOfValueInternal(valueToHash: T, serializeFun: (T) -> ByteArray, hashFun: (ByteArray, CryptoSystem?) -> Hash): Hash {
+        var byteArr: ByteArray = serializeFun(valueToHash)
+        return byteArrayOf(Leaf.leafPrefixByte) + hashFun(byteArr, cryptoSystem)
     }
 
-    /**
-     * @param hashLeft The hash of the left sub tree
-     * @param hashRight The hash of the right sub tree
-     * @param hashFun The only reason we pass the function as a parameter is to simplify testing.
-     * @return the hash of two combined hashes.
-     */
-    fun calculateNodeHashNoPrefix(hashLeft: Hash, hashRight: Hash, hashFun: (ByteArray, CryptoSystem?) -> Hash): Hash {
-        val byteArraySum = hashLeft + hashRight
-        return hashFun(byteArraySum, cryptoSystem) // Adding the prefx at the last step
-    }
+
 
 }

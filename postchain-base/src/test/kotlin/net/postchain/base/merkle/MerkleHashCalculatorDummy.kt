@@ -52,11 +52,11 @@ fun dummyAddOneHashFun(bArr: ByteArray, cryptoSystem: CryptoSystem?): Hash {
  * The "dummy" version is a real calculator, but it uses simplified versions of
  * serializations and hashing
  */
-class MerkleHashCalculatorDummy: MerkleHashCalculator(null) {
+class MerkleHashCalculatorDummy: MerkleHashCalculator<GTXValue>(null) {
 
 
-    override fun calculateLeafHash(gtxValue: GTXValue): Hash {
-        val hash = calculateHashOfGtxInternal(gtxValue, ::dummySerializatorFun, ::dummyAddOneHashFun)
+    override fun calculateLeafHash(value: GTXValue): Hash {
+        val hash = calculateHashOfValueInternal(value, ::dummySerializatorFun, ::dummyAddOneHashFun)
         //println("Hex: " + TreeHelper.convertToHex(hash))
         return hash
     }
@@ -64,7 +64,7 @@ class MerkleHashCalculatorDummy: MerkleHashCalculator(null) {
 
     override fun calculateNodeHash(prefix: Byte, hashLeft: Hash, hashRight: Hash): Hash {
         val prefixBA = byteArrayOf(prefix)
-        return prefixBA + calculateNodeHashNoPrefix(hashLeft, hashRight, ::dummyAddOneHashFun)
+        return prefixBA + calculateNodeHashNoPrefixInternal(hashLeft, hashRight, ::dummyAddOneHashFun)
     }
 
 

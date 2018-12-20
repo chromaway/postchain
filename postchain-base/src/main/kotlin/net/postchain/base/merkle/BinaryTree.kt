@@ -4,7 +4,8 @@ import mu.KLogging
 
 
 /**
- * This is a "full" binary tree that stores values in the leafs only.
+ * This is usually a "full" binary tree that stores values in the leafs only. The exception to the "empty nodes" is
+ * when we need to store collection structures in nodes, so that they can be used for proofs.
  *
  * (A "full" binary tree is a binary tree where each node has 2 or 0 children.
  * In a Full Binary, number of leaf nodes is number of internal nodes plus 1
@@ -20,7 +21,7 @@ import mu.KLogging
  *  -------------
  *  As the name suggests, we have values/content in the leafs (but no content in the nodes):
  *  -------------
- *                 root
+ *               array root
  *             /          \
  *        node1234        node567
  *       /     \           /     \
@@ -30,12 +31,17 @@ import mu.KLogging
  *  -------------
  *
  *  NOTE:
- *  These trees will typically not be "balanced" nor "complete" (since we will transform arrays of arrays into trees)
+ *  These trees will typically not be "balanced" nor "complete" since we will transform arrays of arrays into trees,
+ *  see tests for more info.
  *
  */
 
 /**
  * The root class of the tree elements.
+ *
+ * All elements have some idea about if they are a (proof) path leaf or not.
+ * If you are not building a proof, this will be false on all elements.
+ * (Prefixes are used when a [Hash] is calculated for the node.)
  */
 open class BinaryTreeElement {
 
@@ -44,11 +50,16 @@ open class BinaryTreeElement {
     private var isPathLeaf = false
     fun setPathLeaf(isLeaf: Boolean) { isPathLeaf = isLeaf }
     fun isPathLeaf() = isPathLeaf
+
+    /**
+     * Get the prefix belonging to this instance
+     */
+    open fun getPrefixByte(): Byte = 0 // Usually overidden
 }
 
 /**
- * Super type of parent nodes.
- * Doesn't hold any content, but can generate different prefixes when the hash is calculated
+ * Super type of binary (parent) nodes.
+ * Doesn't hold any content.
  */
 open class Node(val left: BinaryTreeElement, val right: BinaryTreeElement): BinaryTreeElement() {
 
@@ -56,12 +67,7 @@ open class Node(val left: BinaryTreeElement, val right: BinaryTreeElement): Bina
         const val internalNodePrefixByte: Byte = 0
     }
 
-    /**
-     * Get the prefix beloning to this instance
-     */
-    open fun getPrefixByte(): Byte {
-        return internalNodePrefixByte
-    }
+    override fun getPrefixByte(): Byte = internalNodePrefixByte
 }
 
 /**
@@ -84,6 +90,12 @@ data class Leaf<T>(val content: T, val leafIsPathLeaf: Boolean = false): BinaryT
     init {
         setPathLeaf(leafIsPathLeaf)
     }
+
+    companion object LeafCompanion{
+        const val leafPrefixByte: Byte = 1
+    }
+
+    override fun getPrefixByte(): Byte = leafPrefixByte
 }
 
 /**
@@ -119,50 +131,37 @@ open class BinaryTree<T>(val root: BinaryTreeElement) {
 /**
  * The factory does the actual conversion between list and tree.
  */
-abstract class CompleteBinaryTreeFactory<T,TPath> : KLogging() {
-
-    /**
-     * Builds a [BinaryTree]
-     *
-     * @param originalList A collection of leafs used to create the tree
-    fun buildCompleteBinaryTree(originalList: List<T>, pathList: List<TPath>): BinaryTree<T> {
-        val result = buildSubTreeFromLeafList(originalList, pathList)
-        return BinaryTree(result)
-    }
-     */
-
+abstract class BinaryTreeFactory<T,TPath> : KLogging() {
 
     /**
      * Builds the (sub?)tree from a list. We do this is in parts:
      *
      * 1. Transform each leaf in the list into a [Leaf]
-     *    If a [GTXValue] proves to be a recursive type, make it into a [BinaryTreeElement]
      * 2. Create the nodes that exist above the leaf, all the way to the root.
      *
+     * Note: this implementation cannot do proof trees, have to be overridden for that.
+     *
      * @param leafList the list of leafs we should build a sub tree from
-     * @param pathList paths to various leafs
-     * @param keepOnlyRelevantPathsFun the function we will use to filter out paths relevant for a specific element
      * @return Root [BinaryTreeElement] node of the generated sub tree
-    protected fun <SearchKey>buildSubTreeFromLeafList(leafList: List<T>,
-                                                      pathList: List<TPath>,
-                                                      keepOnlyRelevantPathsFun: (SearchKey, List<TPath>) -> List<TPath>
-    ): BinaryTreeElement {
+     */
+    protected fun buildSubTreeFromLeafList(leafList: List<T>): BinaryTreeElement {
+
+        val emptyPaths = listOf<TPath>()
         val leafArray = arrayListOf<BinaryTreeElement>()
 
         // 1. Build first (leaf) layer
         for (i in 0..(leafList.size - 1)) {
-            val pathsRelevantForThisLeaf = keepOnlyRelevantPathsFun(i, pathList)
+            //val pathsRelevantForThisLeaf = keepOnlyRelevantPathsFun(i, pathList)
             val leaf = leafList[i]
-            val locbtElement = handleLeaf(leaf, pathsRelevantForThisLeaf)
-            leafArray.add(locbtElement)
+            val btElement = handleLeaf(leaf, emptyPaths)
+            leafArray.add(btElement)
         }
 
         // 2. Build all higher layers
-        val result = buildHigherLayer(1, leafArray, pathList)
+        val result = buildHigherLayer(1, leafArray)
 
         return result.get(0)
     }
-     */
 
     /**
      * Transforms the incoming leaf into an [BinaryTreeElement]

@@ -2,7 +2,7 @@ package net.postchain.base.merkle
 
 import net.postchain.gtx.GTXPath
 
-object GtxTreeDictHelper {
+object DictToGtxBinaryTreeHelper {
 
     private val factory = GtxFullBinaryTreeFactory()
 
