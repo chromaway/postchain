@@ -26,7 +26,53 @@ class DictToMerkleProofTreeTest {
     val calculator = MerkleHashCalculatorDummy()
     val factory = GtxMerkleProofTreeFactory(calculator)
 
-    val expectedMerkleRoot = "080102046A737976040802047372690405010204786C76696904070204787B730406"
+    val expectedMerkleRoot1 = "08027170670203"
+    val expectedMerkleRoot4 = "080102046A737976040802047372690405010204786C76696904070204787B730406"
+
+
+    @Test
+    fun test_tree_from_1dict() {
+        val path: Array<Any> = arrayOf("one")
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder = DictToGtxBinaryTreeHelper.buildThreeOf1_fromDict(gtxPath)
+
+        // How to convert one to hash?:
+        // "one" ->(serialization) 6F6E65
+        // 01 + [6F6E65] ->
+        // 01706F66 ->
+        val expectedTree =" +   \n" +
+                "/ \\ \n" +
+                "01706F66 *1 "
+
+        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+
+        // Print the result tree
+        val printer = TreePrinter()
+        val pbt = PrintableTreeFactory.buildPrintableTreeFromProofTree(merkleProofTree)
+        val resultPrintout = printer.printNode(pbt)
+        //println(resultPrintout)
+
+        Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
+
+    }
+
+
+    @Test
+    fun test_tree_from_1dict_proof() {
+        val path: Array<Any> = arrayOf("one")
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder = DictToGtxBinaryTreeHelper.buildThreeOf1_fromDict(gtxPath)
+        // 08 + [01706F66 + (01 + [01])
+        // 08 + [01706F66 + 0102]
+        // 08 + 02717067 + 0203
+
+        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+
+
+        val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
+        assertEquals(expectedMerkleRoot1, TreeHelper.convertToHex(merkleProofRoot))
+
+    }
 
     @Test
     fun test_tree_from_4dict() {
@@ -135,10 +181,11 @@ class DictToMerkleProofTreeTest {
 
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
-        assertEquals(expectedMerkleRoot, TreeHelper.convertToHex(merkleProofRoot))
+        assertEquals(expectedMerkleRoot4, TreeHelper.convertToHex(merkleProofRoot))
 
     }
 
+    // TODO: Do proof out of Dict to Dict
 
 
 }

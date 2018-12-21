@@ -7,6 +7,10 @@ import org.junit.Test
 
 class ArrayToGtxBinaryTreeTest {
 
+
+    /**
+     *  When we only have one element, the tree should have a right dummy leaf (or else it wouldn't be "full".
+     */
     @Test
     fun testIntArrayLength1() {
         val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf1()
@@ -15,7 +19,7 @@ class ArrayToGtxBinaryTreeTest {
     }
 
     @Test
-    fun testIntArrayLength1_proof() {
+    fun testIntArrayLength1_withPath() {
         val path: Array<Any> = arrayOf(0)
 
         val expectedTreeWithPath =
@@ -38,7 +42,7 @@ class ArrayToGtxBinaryTreeTest {
     }
 
     @Test
-    fun testIntArrayLength4_proof() {
+    fun testIntArrayLength4_withPath() {
         val path: Array<Any> = arrayOf(3)
 
         val expected = "   +       \n" +
@@ -106,6 +110,9 @@ class ArrayToGtxBinaryTreeTest {
     }
 
 
+    /**
+     * An array within an array.
+     */
     @Test
     fun testIntArrayLength7withInnerLength3Array() {
         val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf7WithSubTree()
