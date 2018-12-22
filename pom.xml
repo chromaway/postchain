@@ -194,6 +194,7 @@
                 <configuration>
                     <enableSshAgent>true</enableSshAgent>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <allowUntracked>true</allowUntracked>
                     <pushFeatures>true</pushFeatures>
                     <pushReleases>true</pushReleases>
                     <pushHotfixes>true</pushHotfixes>
