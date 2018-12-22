@@ -113,4 +113,9 @@ class BaseTransactionQueue(queueCapacity: Int = 2500) : TransactionQueue {
         queueSet.removeAll(transactionsToRemove.map { ByteArrayKey(it.getRID()) })
         taken.removeAll(transactionsToRemove.map { ComparableTransaction(it) })
     }
+
+    @Synchronized
+    override fun getRejectionReason(txRID: ByteArrayKey): Exception? {
+        return rejects.get(txRID)
+    }
 }
