@@ -1,6 +1,9 @@
 package net.postchain.base.merkle
 
 import net.postchain.base.CryptoSystem
+import net.postchain.base.merkle.proof.GtxMerkleProofTree
+import net.postchain.base.merkle.proof.GtxMerkleProofTreeFactory
+import net.postchain.gtx.GTXPath
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.IntegerGTXValue
 import net.postchain.gtx.StringGTXValue
@@ -52,8 +55,15 @@ fun dummyAddOneHashFun(bArr: ByteArray, cryptoSystem: CryptoSystem?): Hash {
  * The "dummy" version is a real calculator, but it uses simplified versions of
  * serializations and hashing
  */
-class MerkleHashCalculatorDummy: MerkleHashCalculator<GTXValue>(null) {
+class MerkleHashCalculatorDummy: MerkleHashCalculator<GTXValue, GTXPath>(null) {
+    val treeFactory = GtxFullBinaryTreeFactory()
 
+    var proofTreeFactory: GtxMerkleProofTreeFactory
+    var baseCalc: BinaryNodeHashCalculator
+    init {
+        proofTreeFactory = GtxMerkleProofTreeFactory(this)
+        baseCalc = BinaryNodeHashCalculatorBase(cryptoSystem)
+    }
 
     override fun calculateLeafHash(value: GTXValue): Hash {
         val hash = calculateHashOfValueInternal(value, ::dummySerializatorFun, ::dummyAddOneHashFun)
@@ -61,11 +71,18 @@ class MerkleHashCalculatorDummy: MerkleHashCalculator<GTXValue>(null) {
         return hash
     }
 
-
     override fun calculateNodeHash(prefix: Byte, hashLeft: Hash, hashRight: Hash): Hash {
         val prefixBA = byteArrayOf(prefix)
         return prefixBA + calculateNodeHashNoPrefixInternal(hashLeft, hashRight, ::dummyAddOneHashFun)
     }
 
+    override fun isContainerProofValueLeaf(value: GTXValue): Boolean {
+        return value.isContainerType()
+    }
+
+    override fun buildTreeFromContainerValue(value: GTXValue): GtxMerkleProofTree {
+        val root: GtxBinaryTree = treeFactory.buildFromGtx(value)
+        return proofTreeFactory.buildGtxMerkleProofTree(root)
+    }
 
 }

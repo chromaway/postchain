@@ -72,20 +72,34 @@ data class ProofHashedLeaf<T>(val hash: T): MerkleProofElement()
  * The "Proof Tree" can be used to prove that one or more values is/are indeed part of the Merkle tree
  * We will use the [MerkleProofTree] to calculate the BlockRID (see doc in top of this file)
  */
-open class MerkleProofTree<T>(val root: MerkleProofElement) {
+open class MerkleProofTree<T,TPath>(val root: MerkleProofElement) {
 
     /**
+     * Note: When calculating the merkle root of a proof of a complicated structure (array or dict)
+     *       means that the value-to-be-proved (i.e. array/dict) must be transformed to a binary tree
+     *       before we can calculate it's hash.
+     *
      * @return the calculated merkle root of the proof. For the proof to be valid, this [Hash] should equal the
      *          merkle root of the block.
      */
-    fun calculateMerkleRoot(calculator: MerkleHashCalculator<T>): Hash {
+    fun calculateMerkleRoot(calculator: MerkleHashCalculator<T,TPath>): Hash {
         return calculateMerkleRootInternal(root, calculator)
     }
 
-    private fun calculateMerkleRootInternal(currentElement: MerkleProofElement, calculator: MerkleHashCalculator<T>): Hash {
+    private fun calculateMerkleRootInternal(currentElement: MerkleProofElement, calculator: MerkleHashCalculator<T,TPath>): Hash {
         return when (currentElement) {
             is ProofHashedLeaf<*> -> currentElement.hash as Hash
-            is ProofValueLeaf<*> -> calculator.calculateLeafHash(currentElement.content as T)
+            is ProofValueLeaf<*> -> {
+                val value = currentElement.content as T
+                if (calculator.isContainerProofValueLeaf(value)) {
+                    // We have a container value to prove, so need to convert the value to a binary tree, and THEN hash it
+                    val merkleProofTree: MerkleProofTree<T,TPath> = calculator.buildTreeFromContainerValue(value)
+                    calculateMerkleRootInternal(merkleProofTree.root, calculator)
+                } else {
+                    // This is a primitive value, just hash it
+                    calculator.calculateLeafHash(value)
+                }
+            }
             is ProofNode -> {
                 val left = calculateMerkleRootInternal(currentElement.left, calculator)
                 val right = calculateMerkleRootInternal(currentElement.right, calculator)
@@ -114,7 +128,7 @@ open class MerkleProofTree<T>(val root: MerkleProofElement) {
 /**
  * Builds [MerkleProofTree] (but needs to be overridden
  */
-abstract class MerkleProofTreeFactory<T>(val calculator: MerkleHashCalculator<T>) {
+abstract class MerkleProofTreeFactory<T,TPath>(val calculator: MerkleHashCalculator<T,TPath>) {
 
     /**
      * Builds the [MerkleProofTree] from the [BinaryTree]
@@ -124,7 +138,7 @@ abstract class MerkleProofTreeFactory<T>(val calculator: MerkleHashCalculator<T>
      * @param orginalTree is the tree we will use
      * @param calculator is the class we use for hash calculation
      */
-    fun buildMerkleProofTree(orginalTree: BinaryTree<T>): MerkleProofTree<T> {
+    fun buildMerkleProofTree(orginalTree: BinaryTree<T>): MerkleProofTree<T,TPath> {
 
         val rootElement = buildSubProofTree(orginalTree.root, calculator)
         return MerkleProofTree(rootElement)
@@ -132,10 +146,10 @@ abstract class MerkleProofTreeFactory<T>(val calculator: MerkleHashCalculator<T>
 
 
     abstract fun buildSubProofTree(currentElement: BinaryTreeElement,
-                               calculator: MerkleHashCalculator<T>): MerkleProofElement
+                               calculator: MerkleHashCalculator<T, TPath>): MerkleProofElement
 
 
-    protected fun convertNode(currentNode: Node, calculator: MerkleHashCalculator<T>): MerkleProofElement {
+    protected fun convertNode(currentNode: Node, calculator: MerkleHashCalculator<T,TPath>): MerkleProofElement {
         val left = buildSubProofTree(currentNode.left, calculator)
         val right = buildSubProofTree(currentNode.right, calculator)
         return if (left is ProofHashedLeaf<*> && right is ProofHashedLeaf<*>) {

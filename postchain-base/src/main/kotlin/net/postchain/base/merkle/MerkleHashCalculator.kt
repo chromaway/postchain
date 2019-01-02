@@ -1,6 +1,7 @@
 package net.postchain.base.merkle
 
 import net.postchain.base.CryptoSystem
+import net.postchain.base.merkle.proof.MerkleProofTree
 
 
 /**
@@ -36,7 +37,7 @@ import net.postchain.base.CryptoSystem
 /**
  * Can calculate hashes of leaves and nodes
  */
-abstract class MerkleHashCalculator<T>(cryptoSystem: CryptoSystem?): BinaryNodeHashCalculator(cryptoSystem) {
+abstract class MerkleHashCalculator<T, TPath>(cryptoSystem: CryptoSystem?): BinaryNodeHashCalculator(cryptoSystem) {
 
     /**
      * Leaf hashes are prefixed to tell them apart from internal nodes.
@@ -58,6 +59,14 @@ abstract class MerkleHashCalculator<T>(cryptoSystem: CryptoSystem?): BinaryNodeH
         return byteArrayOf(Leaf.leafPrefixByte) + hashFun(byteArr, cryptoSystem)
     }
 
+    /**
+     * @return True if the value can hold other values.
+     */
+    abstract fun isContainerProofValueLeaf(value: T): Boolean
 
+    /**
+     * @return a sub root of a [MerkleProofTree] built from the value
+     */
+    abstract fun buildTreeFromContainerValue(value: T): MerkleProofTree<T, TPath>
 
 }

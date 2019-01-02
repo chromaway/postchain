@@ -1,6 +1,8 @@
 package net.postchain.base.merkle
 
 import net.postchain.base.CryptoSystem
+import net.postchain.base.merkle.proof.GtxMerkleProofTree
+import net.postchain.base.merkle.proof.GtxMerkleProofTreeFactory
 import net.postchain.core.ProgrammerMistake
 import net.postchain.gtx.*
 
@@ -28,10 +30,14 @@ fun serializeGTXValueToByteArary(gtxValue: GTXValue): ByteArray {
 /**
  * The calculator intended to be used is production for trees that hold [GTXValue]
  */
-class GtxMerkleHashCalculator(cryptoSystem: CryptoSystem): MerkleHashCalculator<GTXValue>(cryptoSystem) {
+class GtxMerkleHashCalculator(cryptoSystem: CryptoSystem): MerkleHashCalculator<GTXValue, GTXPath>(cryptoSystem) {
 
+    val treeFactory = GtxFullBinaryTreeFactory()
+
+    var proofTreeFactory: GtxMerkleProofTreeFactory
     var baseCalc: BinaryNodeHashCalculator
     init {
+        proofTreeFactory = GtxMerkleProofTreeFactory(this)
         baseCalc = BinaryNodeHashCalculatorBase(cryptoSystem)
     }
 
@@ -49,6 +55,13 @@ class GtxMerkleHashCalculator(cryptoSystem: CryptoSystem): MerkleHashCalculator<
         return calculateHashOfValueInternal(value, ::serializeGTXValueToByteArary, MerkleBasics::hashingFun)
     }
 
+    override fun isContainerProofValueLeaf(value: GTXValue): Boolean {
+        return value.isContainerType()
+    }
 
+    override fun buildTreeFromContainerValue(value: GTXValue): GtxMerkleProofTree {
+        val root: GtxBinaryTree = treeFactory.buildFromGtx(value)
+        return proofTreeFactory.buildGtxMerkleProofTree(root)
+    }
 
 }

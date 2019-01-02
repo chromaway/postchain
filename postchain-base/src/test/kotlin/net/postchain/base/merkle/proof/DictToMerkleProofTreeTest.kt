@@ -8,6 +8,10 @@ import org.junit.Test
 import kotlin.test.assertEquals
 
 /**
+ * In this class we test if we can generate proofs out of dictionary structures.
+ * First we test to build a proof to a primitive type value in the dict.
+ * Later we test to build a proof where the dict value is a complex type (dict or array)
+ *
  * In the comments below
  *   "<...>" means "serialization" and
  *   "[ .. ]" means "hash" and
@@ -28,6 +32,7 @@ class DictToMerkleProofTreeTest {
 
     val expectedMerkleRoot1 = "08027170670203"
     val expectedMerkleRoot4 = "080102046A737976040802047372690405010204786C76696904070204787B730406"
+    val expectedMerkleRootDictInDict = "0802717067090204696D6B6C78040C020477697A6972040B"
 
 
     @Test
@@ -90,7 +95,7 @@ class DictToMerkleProofTreeTest {
         //
         // 00 + [(00 +
         //         [
-        //            (01 + [<three>]) +
+        //            (01 + [<three>]) +   <-- "th" is before "tw"
         //            (01 + [<3>])
         //         ])
         //       (00 +
@@ -185,7 +190,83 @@ class DictToMerkleProofTreeTest {
 
     }
 
-    // TODO: Do proof out of Dict to Dict
+    /**
+     * This test will create a proof of a sub-dictionary inside the main dictionary.
+     *
+     * Note: This test depend on the auto-generated output of toString() of the "data class" of the GTX Dict.
+     */
+    @Test
+    fun test_tree_from_dict_of_dict_where_path_is_to_sub_dict() {
+        val path: Array<Any> = arrayOf("one")
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder = DictToGtxBinaryTreeHelper.buildTreeOf1WithSubTree(gtxPath)
+
+        val expectedPath = " +   \n" +
+                "/ \\ \n" +
+                "01706F66 *DictGTXValue(dict={seven=IntegerGTXValue(integer=7), eight=IntegerGTXValue(integer=8)}) "
+
+        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+
+        // Print the result tree
+        val printer = TreePrinter()
+        val pbt = PrintableTreeFactory.buildPrintableTreeFromProofTree(merkleProofTree)
+        val resultPrintout = printer.printNode(pbt)
+        //println(resultPrintout)
+
+        Assert.assertEquals(expectedPath.trim(), resultPrintout.trim())
+
+    }
+
+    @Test
+    fun test_tree_from_dict_of_dict_where_path_is_to_sub_dict_proof() {
+        val path: Array<Any> = arrayOf("one")
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder = DictToGtxBinaryTreeHelper.buildTreeOf1WithSubTree(gtxPath)
+
+        // 08 + [ (01 + [<one>])
+        //      +
+        //      (08 + [
+        //            (00 + [
+        //                 (01 + [<eight>]) +  <--- "e" (Eight) is before "s" (Seven)
+        //                 (01 + [<8>])
+        //                  ])
+        //             +
+        //            (00 + [
+        //                 (01 + [<seven>]) +
+        //                 (01 + [<7>])
+        //                  ])
+        //            ])
+        //      ] ->
+        // <eight> = <6569676874> = 666A686975
+        // <seven> = <736576656E> = 746677666F
+        // 08 + [ 01 + [6F6E65]
+        //      +
+        //      (08 + [
+        //            (00 + [01666A686975 + 0109])
+        //             +
+        //            (00 + [01746677666F + 0108])
+        //            ])
+        //      ] ->
+        //
+        // 08 + [ 01 + 706F66
+        //        +
+        //       (08 + [ 0002676B696A76020A + 000275677867700209])
+        //      ] ->
+        //
+        // 08 + [ 01706F66
+        //        +
+        //       (08 +0103686C6A6B77030B + 01037668796871030A)
+        //      ] ->
+        //
+        // 08 + [ 01706F66+ 08 + 0103686C6A6B77030B + 01037668796871030A] ->
+        //
+        // 08 02717067 09 0204696D6B6C78040C 020477697A6972040B
+
+        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+
+        val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
+        assertEquals(expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleProofRoot))
+    }
 
 
 }

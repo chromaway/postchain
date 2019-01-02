@@ -1,18 +1,19 @@
 package net.postchain.base.merkle.proof
 
 import net.postchain.base.merkle.*
+import net.postchain.gtx.GTXPath
 import net.postchain.gtx.GTXValue
 
 /**
  * See [MerkleProofTree] for documentation
  */
-class GtxMerkleProofTree(root: MerkleProofElement): MerkleProofTree<GTXValue>(root) {
+class GtxMerkleProofTree(root: MerkleProofElement): MerkleProofTree<GTXValue, GTXPath>(root) {
 }
 
 /**
  * Builds proofs
  */
-class GtxMerkleProofTreeFactory(calculator: MerkleHashCalculator<GTXValue>): MerkleProofTreeFactory<GTXValue>(calculator)  {
+class GtxMerkleProofTreeFactory(calculator: MerkleHashCalculator<GTXValue, GTXPath>): MerkleProofTreeFactory<GTXValue, GTXPath>(calculator)  {
 
     /**
      * Builds the [MerkleProofTree] from the [GtxBinaryTree]
@@ -29,7 +30,7 @@ class GtxMerkleProofTreeFactory(calculator: MerkleHashCalculator<GTXValue>): Mer
     }
 
     override fun buildSubProofTree(currentElement: BinaryTreeElement,
-                                  calculator: MerkleHashCalculator<GTXValue>): MerkleProofElement {
+                                  calculator: MerkleHashCalculator<GTXValue, GTXPath>): MerkleProofElement {
         return when (currentElement) {
             is EmptyLeaf -> {
                 ProofHashedLeaf(MerkleBasics.EMPTY_HASH) // Just zeros
