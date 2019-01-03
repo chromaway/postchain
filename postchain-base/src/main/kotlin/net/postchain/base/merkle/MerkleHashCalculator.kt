@@ -5,37 +5,8 @@ import net.postchain.base.merkle.proof.MerkleProofTree
 
 
 /**
- * Abstract class responsible for calculating hashes and serialization
- *
- * -----------
- * Motivation for the use of prefixes can be found at various places, for example:
- *
- * https://bitslog.wordpress.com/2018/06/09/leaf-node-weakness-in-bitcoin-merkle-tree-design/
- *
- * --------
- * (Excerpt from blog post)
- * The Problem
- *
- * Bitcoin Merkle tree makes no distinction between inner nodes and leaf nodes. The depth of the
- * tree is implicitly given by the number of transactions. Inner nodes have no specific format,
- * and are 64 bytes in length. Therefore, an attacker can submit to the blockchain a transaction that has
- * exactly 64 bytes in length and then force a victim system to re-interpret this transaction as an inner node
- * of the tree.
- *  An attacker can therefore provide an SPV proof (a Merkle branch) that adds an additional leaf node extending
- *  the dual transaction/node and provide proof of payment of any transaction he wishes.
- *
- * Remedy
- * (The fifth solution suggestioned is the one we are using:)
- * 5. A hard-forking solution is adding a prefix to internal nodes of the Merkle tree before performing node
- * hashing and adding a different prefix to transaction IDs and then also hash them.
- * Ripple ([2]) uses a such a prefix system.
- * --------
- *
- */
-
-
-/**
- * Can calculate hashes of leaves and nodes
+ * Abstract class responsible for calculating hashes and serialization.
+ * Can calculate hashes of leaves and nodes.
  */
 abstract class MerkleHashCalculator<T, TPath>(cryptoSystem: CryptoSystem?): BinaryNodeHashCalculator(cryptoSystem) {
 
@@ -60,13 +31,19 @@ abstract class MerkleHashCalculator<T, TPath>(cryptoSystem: CryptoSystem?): Bina
     }
 
     /**
-     * @return True if the value can hold other values.
+     * Note: We must override this method if the value can be a container.
+     *
+     * @return True if the value can hold other values (i.e. if it is a container of sorts).
      */
-    abstract fun isContainerProofValueLeaf(value: T): Boolean
+    open fun isContainerProofValueLeaf(value: T): Boolean = false
 
     /**
-     * @return a sub root of a [MerkleProofTree] built from the value
+     * Note; We must override this method if a value can be a container
+     *
+     * @return a sub root of a [MerkleProofTree] built from the value (where the value is expected to be a container)
      */
-    abstract fun buildTreeFromContainerValue(value: T): MerkleProofTree<T, TPath>
+    open fun buildTreeFromContainerValue(value: T): MerkleProofTree<T, TPath> {
+        throw IllegalStateException("A value $value cannot be a container")
+    }
 
 }

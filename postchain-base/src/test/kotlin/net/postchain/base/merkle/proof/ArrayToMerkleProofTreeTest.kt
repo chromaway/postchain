@@ -9,6 +9,16 @@ import org.junit.Test
 import kotlin.test.assertEquals
 
 /**
+ * In this class we test if we can generate proofs out of GTX array structures.
+ * 1. First we test to build a proof where the value-to-be-proved a primitive type value in the array.
+ * 2. Then we create a double proof (more than one value-to-be-proved in the same proof tree).
+ * 3. Then we test to build a proof where the value-to-be-proved is a primitive value located in a sub-array.
+ * 4. Later we test to build a proof where the value-to-be-proved is a complex type (another array)
+ *
+ * -----------------
+ * How to read the tests
+ * -----------------
+ *
  * In the comments below
  *   "<...>" means "serialization" and
  *   "[ .. ]" means "hash" and
@@ -28,8 +38,12 @@ class ArrayToMerkleProofTreeTest {
 
     val expected1ElementArrayMerkleRoot = "0702030101010101010101010101010101010101010101010101010101010101010101"
     val expected4ElementArrayMerkleRoot = "0701030403050103060307"
+    val expectet7and3ElementArrayMerkleRoot = "070102040504060204070A040607060F050801020409040A030A"
 
 
+    // ---------------------
+    // 1. First we test to build a proof where the value-to-be-proved a primitive type value in the array.
+    // ---------------------
     @Test
     fun test_tree_of1() {
         val path: Array<Any> = arrayOf(0)
@@ -59,8 +73,6 @@ class ArrayToMerkleProofTreeTest {
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
         val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf1(gtxPath)
 
-        val value1 = treeHolder.orgGtxList[0]
-        val listOfOneGtxInt: List<GTXValue> = listOf(value1)
         val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
@@ -173,6 +185,9 @@ class ArrayToMerkleProofTreeTest {
 
     }
 
+    // ---------------------
+    // 2. Then we create a double proof (more than one value-to-be-proved in the same proof tree).
+    // ---------------------
 
     @Test
     fun test_tree_of7_with_double_proof() {
@@ -209,8 +224,11 @@ class ArrayToMerkleProofTreeTest {
 
     }
 
+    // ---------------------
+    // 3. Then we test to build a proof where the value-to-be-proved is a primitive value located in a sub-array.
+    // ---------------------
     @Test
-    fun test_ArrayLength7_withInnerLength3Array() {
+    fun test_ArrayLength7_withInnerLength3Array_path2nine() {
         val path: Array<Any> = arrayOf(3,1)
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
         val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf7WithSubTree(gtxPath)
@@ -268,6 +286,17 @@ class ArrayToMerkleProofTreeTest {
     }
 
     @Test
+    fun test_ArrayLength7_withInnerLength3Array_path2nine_proof() {
+        val path: Array<Any> = arrayOf(3,1)
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf7WithSubTree(gtxPath)
+
+        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
+        assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot))
+    }
+
+    @Test
     fun test_ArrayLength7_withInnerLength3Array_path2three() {
         val path: Array<Any> = arrayOf(2)
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
@@ -311,11 +340,67 @@ class ArrayToMerkleProofTreeTest {
         val printer = TreePrinter()
         val pbt = PrintableTreeFactory.buildPrintableTreeFromProofTree(merkleProofTree)
         val resultPrintout = printer.printNode(pbt)
-        println(resultPrintout)
+        //println(resultPrintout)
 
         Assert.assertEquals(expectedPath.trim(), resultPrintout.trim())
     }
 
+    @Test
+    fun test_ArrayLength7_withInnerLength3Array_path2three_proof() {
+        val path: Array<Any> = arrayOf(2)
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf7WithSubTree(gtxPath)
+
+        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
+        assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot))
+    }
+
+    // ---------------------
+    // 4. Later we test to build a proof where the value-to-be-proved is a complex type (another array)
+    // ---------------------
+
+    /**
+     * Note: This test depend on the auto-generated output of toString() of the "data class" of the GTX array.
+     */
+    @Test
+    fun test_ArrayLength7_withInnerLength3Array_path2subArray() {
+        val path: Array<Any> = arrayOf(3)
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf7WithSubTree(gtxPath)
+
+        val expectedPath ="       +               \n" +
+                "      / \\       \n" +
+                "     /   \\      \n" +
+                "    /     \\     \n" +
+                "   /       \\    \n" +
+                "   +       0001030803090209       \n" +
+                "  / \\           \n" +
+                " /   \\          \n" +
+                " 0002030204   +   .   .   \n" +
+                "    / \\         \n" +
+                "- - 0104 *ArrayGTXValue(array=[IntegerGTXValue(integer=1), IntegerGTXValue(integer=9), IntegerGTXValue(integer=3)]) - - - - "
 
 
+        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+
+        // Print the result tree
+        val printer = TreePrinter()
+        val pbt = PrintableTreeFactory.buildPrintableTreeFromProofTree(merkleProofTree)
+        val resultPrintout = printer.printNode(pbt)
+        //println(resultPrintout)
+
+        Assert.assertEquals(expectedPath.trim(), resultPrintout.trim())
+    }
+
+    @Test
+    fun test_ArrayLength7_withInnerLength3Array_path2subArray_proof() {
+        val path: Array<Any> = arrayOf(3)
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf7WithSubTree(gtxPath)
+
+        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
+        assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot))
+    }
 }

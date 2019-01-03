@@ -31,7 +31,7 @@ interface GTXValue {
     fun asByteArray(convert: Boolean = false): ByteArray
     fun asPrimitive(): Any?
     fun getRawGTXValue(): RawGTXValue
-    fun isContainerType(): Boolean
+    fun isContainerType(): Boolean  // Returns true if the GTX value can hold other GTX values
 }
 
 fun wrapValue(r: RawGTXValue): GTXValue {
@@ -155,9 +155,7 @@ data class ArrayGTXValue(val array: Array<out GTXValue>) : AbstractGTXValue() {
         return array.map({ it.asPrimitive() }).toTypedArray()
     }
 
-    override fun isContainerType(): Boolean {
-        return true
-    }
+    override fun isContainerType() = true
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -197,9 +195,7 @@ data class DictGTXValue(val dict: Map<String, GTXValue>) : AbstractGTXValue() {
         return dict
     }
 
-    override fun isContainerType(): Boolean {
-        return true
-    }
+    override fun isContainerType() = true
 
     override fun getRawGTXValue(): net.postchain.gtx.messages.GTXValue {
         return RawGTXValue.dict(
@@ -231,9 +227,7 @@ object GTXNull : AbstractGTXValue() {
         return null
     }
 
-    override fun isContainerType(): Boolean {
-        return false
-    }
+    override fun isContainerType() = false
 }
 
 data class IntegerGTXValue(val integer: Long) : AbstractGTXValue() {
@@ -252,9 +246,7 @@ data class IntegerGTXValue(val integer: Long) : AbstractGTXValue() {
         return integer
     }
 
-    override fun isContainerType(): Boolean {
-        return false
-    }
+    override fun isContainerType() = false
 }
 
 data class StringGTXValue(val string: String) : AbstractGTXValue() {
@@ -283,9 +275,7 @@ data class StringGTXValue(val string: String) : AbstractGTXValue() {
         return string
     }
 
-    override fun isContainerType(): Boolean {
-        return false
-    }
+    override fun isContainerType() = false
 }
 
 data class ByteArrayGTXValue(val bytearray: ByteArray) : AbstractGTXValue() {
@@ -304,9 +294,7 @@ data class ByteArrayGTXValue(val bytearray: ByteArray) : AbstractGTXValue() {
         return bytearray
     }
 
-    override fun isContainerType(): Boolean {
-        return false
-    }
+    override fun isContainerType() = false
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

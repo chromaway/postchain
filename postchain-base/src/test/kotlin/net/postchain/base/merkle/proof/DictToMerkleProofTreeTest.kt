@@ -8,9 +8,14 @@ import org.junit.Test
 import kotlin.test.assertEquals
 
 /**
- * In this class we test if we can generate proofs out of dictionary structures.
- * First we test to build a proof to a primitive type value in the dict.
- * Later we test to build a proof where the dict value is a complex type (dict or array)
+ * In this class we test if we can generate proofs out of GTX dictionary structures.
+ * 1. First we test to build a proof where the value-to-be-proved a primitive type value in the dict.
+ * 2. Then we test to build a proof where the value-to-be-proved is a primitive value located in a sub-dict.
+ * 3. Later we test to build a proof where the value-to-be-proved is a complex type (another dict)
+ *
+ * -----------------
+ * How to read the tests
+ * -----------------
  *
  * In the comments below
  *   "<...>" means "serialization" and
@@ -35,6 +40,9 @@ class DictToMerkleProofTreeTest {
     val expectedMerkleRootDictInDict = "0802717067090204696D6B6C78040C020477697A6972040B"
 
 
+    // ---------------------
+    // 1. First we test to build a proof where the value-to-be-proved a primitive type value in the dict.
+    // ---------------------
     @Test
     fun test_tree_from_1dict() {
         val path: Array<Any> = arrayOf("one")
@@ -190,6 +198,54 @@ class DictToMerkleProofTreeTest {
 
     }
 
+    // ---------------------
+    // 2. Then we test to build a proof where the value-to-be-proved is a primitive value located in a sub-dict.
+    // ---------------------
+    @Test
+    fun test_tree_from_dictOfDict() {
+        val path: Array<Any> = arrayOf("one", "seven")
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder = DictToGtxBinaryTreeHelper.buildTreeOf1WithSubTree(gtxPath)
+
+        val expectedPath = "       +               \n" +
+                "      / \\       \n" +
+                "     /   \\      \n" +
+                "    /     \\     \n" +
+                "   /       \\    \n" +
+                "   01706F66       +       \n" +
+                "          / \\   \n" +
+                "         /   \\  \n" +
+                " .   .   0002676B696A76020A   +   \n" +
+                "            / \\ \n" +
+                "- - - - - - 01746677666F *7 "
+
+        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+
+        // Print the result tree
+        val printer = TreePrinter()
+        val pbt = PrintableTreeFactory.buildPrintableTreeFromProofTree(merkleProofTree)
+        val resultPrintout = printer.printNode(pbt)
+        //println(resultPrintout)
+
+        Assert.assertEquals(expectedPath.trim(), resultPrintout.trim())
+
+    }
+
+    @Test
+    fun test_tree_from_dictOfDict_proof() {
+        val path: Array<Any> = arrayOf("one", "seven")
+        val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
+        val treeHolder = DictToGtxBinaryTreeHelper.buildTreeOf1WithSubTree(gtxPath)
+
+        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+
+        val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
+        assertEquals(expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleProofRoot))
+    }
+
+    // ---------------------
+    // 3. Later we test to build a proof where the value-to-be-proved is a complex type (another dict)
+    // ---------------------
     /**
      * This test will create a proof of a sub-dictionary inside the main dictionary.
      *

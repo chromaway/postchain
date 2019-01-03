@@ -98,7 +98,7 @@ object DictToGtxBinaryTreeHelper {
                 "- - - - eight 8 seven 7 "
 
 
-        // Add the inner ArrayGtxValue
+        // Add the inner DictGtxValue
         val innerStringArray = arrayOf("seven", "eight")
         val innerIntArray = intArrayOf(7, 8)
         val innerGtxDict = TreeHelper.transformStringAndIntToDictGTXValue(innerStringArray.toCollection(ArrayList()), innerIntArray.toCollection(ArrayList()))
