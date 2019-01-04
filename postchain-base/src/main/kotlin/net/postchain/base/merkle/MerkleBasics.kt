@@ -7,7 +7,9 @@ import net.postchain.gtx.GTXValue
 import net.postchain.gtx.GTXPath
 
 /**
- * Some generic package documentation goes here:
+ * This file holds some basic stuff, like constants etc..
+ *
+ * Some generic documentation (package wide documentation) goes here too, see below:
  *
  * ---------
  * Design Overview
