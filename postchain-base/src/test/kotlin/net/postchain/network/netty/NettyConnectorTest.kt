@@ -14,6 +14,7 @@ import org.junit.Ignore
 import org.junit.Test
 import java.util.concurrent.TimeUnit
 
+@Ignore
 class NettyConnectorTest {
 
     private val cryptoSystem = SECP256K1CryptoSystem()

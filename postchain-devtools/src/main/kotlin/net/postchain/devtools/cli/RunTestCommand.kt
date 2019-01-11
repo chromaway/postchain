@@ -21,14 +21,24 @@ class RunTestCommand : CliktCommand(name = "run-test", help = "Tests gtxml file"
             help = "BlockchainRID Hexadecimal string"
     ).required()
 
+    private val testOutputFileName by option(
+            names = *arrayOf("--output"),
+            help = "Path to output file"
+    )
+
     override fun run() {
         println("Gtxml file will be processed: $filename\n")
 
         val result = TestLauncher().runXMLGTXTests(
                 File(filename).readText(),
                 blockchainRID,
-                (context.parent?.command as? Cli)?.config)
+                (context.parent?.command as? Cli)?.config
+        )
 
-        println("\nTest ${if (result) "passed" else "failed"}")
+        if (testOutputFileName != null) {
+            File(testOutputFileName).writeText(result.toJSON())
+        }
+
+        println("\nTest ${if (result.passed) "passed" else "failed"}")
     }
 }
