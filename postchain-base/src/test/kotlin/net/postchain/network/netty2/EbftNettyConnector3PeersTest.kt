@@ -32,10 +32,6 @@ class EbftNettyConnector3PeersTest {
     private lateinit var context2: EbftTestContext
     private lateinit var context3: EbftTestContext
 
-    private lateinit var peerCommConfiguration1: PeerCommConfiguration
-    private lateinit var peerCommConfiguration2: PeerCommConfiguration
-    private lateinit var peerCommConfiguration3: PeerCommConfiguration
-
     @Before
     fun setUp() {
         val privKey1 = cryptoSystem.getRandomBytes(32)
@@ -52,19 +48,13 @@ class EbftNettyConnector3PeersTest {
         peerInfo3 = PeerInfo("localhost", 3333, pubKey3)
         val peers = arrayOf(peerInfo1, peerInfo2, peerInfo3)
 
-        peerCommConfiguration1 = BasePeerCommConfiguration(
-                peers, blockchainRid, 0, cryptoSystem, privKey1)
-
-        peerCommConfiguration2 = BasePeerCommConfiguration(
-                peers, blockchainRid, 1, cryptoSystem, privKey2)
-
-        peerCommConfiguration3 = BasePeerCommConfiguration(
-                peers, blockchainRid, 2, cryptoSystem, privKey3)
-
         // Creating
-        context1 = EbftTestContext(peerCommConfiguration1)
-        context2 = EbftTestContext(peerCommConfiguration2)
-        context3 = EbftTestContext(peerCommConfiguration3)
+        context1 = EbftTestContext(
+                BasePeerCommConfiguration(peers, blockchainRid, 0, cryptoSystem, privKey1))
+        context2 = EbftTestContext(
+                BasePeerCommConfiguration(peers, blockchainRid, 1, cryptoSystem, privKey2))
+        context3 = EbftTestContext(
+                BasePeerCommConfiguration(peers, blockchainRid, 2, cryptoSystem, privKey3))
 
         // Initializing
         context1.peer.init(peerInfo1)

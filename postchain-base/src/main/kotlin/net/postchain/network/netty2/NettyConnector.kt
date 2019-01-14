@@ -1,5 +1,6 @@
 package net.postchain.network.netty2
 
+import mu.KLogging
 import net.postchain.base.PeerInfo
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.network.PacketConverter
@@ -12,6 +13,8 @@ class NettyConnector<PC : PacketConverter<*>>(
         val eventReceiver: XConnectorEvents
 ) : XConnector {
 
+    companion object : KLogging()
+
     private lateinit var server: NettyServer
 
     override fun init(peerInfo: PeerInfo) {
@@ -20,8 +23,10 @@ class NettyConnector<PC : PacketConverter<*>>(
                 NettyServerPeerConnection(packetConverter).onConnected { connection, identPacketInfo ->
                     val descriptor = XPeerConnectionDescriptor(
                             identPacketInfo.peerID.byteArrayKeyOf(),
-                            byteArrayOf().byteArrayKeyOf()) // TODO: Fix this stub
-                    eventReceiver.onPeerConnected(descriptor, connection)?.also(connection::accept)
+                            identPacketInfo.blockchainRID.byteArrayKeyOf())
+                    eventReceiver.onPeerConnected(descriptor, connection)
+                            ?.also { connection.accept(it) }
+//                            ?: connection.close()
                 }
             }
             run(peerInfo.port)
@@ -29,11 +34,22 @@ class NettyConnector<PC : PacketConverter<*>>(
     }
 
     override fun connectPeer(peerConnectionDescriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo) {
-        NettyClientPeerConnection(peerInfo, packetConverter).also { connection ->
-            connection.open {
-                eventReceiver.onPeerConnected(peerConnectionDescriptor, connection)
-                        ?.also(connection::accept)
+        try {
+            NettyClientPeerConnection(peerInfo, packetConverter).also { connection ->
+                connection.open(
+                        onConnected = {
+                            eventReceiver.onPeerConnected(peerConnectionDescriptor, connection)
+                                    ?.also { connection.accept(it) }
+//                                    ?: connection.close()
+                        },
+                        onDisconnected = {
+                            eventReceiver.onPeerDisconnected(peerConnectionDescriptor)
+                        }
+                )
             }
+        } catch (e: Exception) {
+            logger.error { e.message }
+            eventReceiver.onPeerDisconnected(peerConnectionDescriptor) // TODO: [et]: Maybe create different event receiver.
         }
     }
 

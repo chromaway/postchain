@@ -18,9 +18,9 @@ class DefaultXCommunicationManager<PacketType>(
 
     companion object : KLogging()
 
-    var inboundPackets = mutableListOf<Pair<Int, PacketType>>()
+    private var inboundPackets = mutableListOf<Pair<Int, PacketType>>()
 
-    init {
+    override fun init() {
         val peerConfig = XChainPeerConfiguration(
                 chainID,
                 config,

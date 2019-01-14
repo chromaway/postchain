@@ -15,6 +15,8 @@ class NettyConnectorFactory<PC : PacketConverter<*>> : XConnectorFactory<PC> {
             eventReceiver: XConnectorEvents,
             cryptoSystem: CryptoSystem?): XConnector {
 
-        return NettyConnector(packetConverter, eventReceiver)
+        return NettyConnector(packetConverter, eventReceiver).apply {
+            init(peerInfo)
+        }
     }
 }

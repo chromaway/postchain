@@ -15,6 +15,7 @@ import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 
+@Deprecated("For deprecated 'netty' package")
 class DefaultXCommunicationManagerIT {
 
     private val blockchainRid = byteArrayOf(0x01)

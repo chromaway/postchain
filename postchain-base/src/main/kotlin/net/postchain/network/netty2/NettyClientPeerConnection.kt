@@ -9,6 +9,7 @@ import net.postchain.network.IdentPacketConverter
 import net.postchain.network.x.LazyPacket
 import net.postchain.network.x.XPacketHandler
 import net.postchain.network.x.XPeerConnection
+import nl.komponents.kovenant.task
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 
@@ -20,13 +21,16 @@ class NettyClientPeerConnection(
     private val nettyClient = NettyClient()
     private lateinit var context: ChannelHandlerContext
     private var packetHandler: XPacketHandler? = null
+    private lateinit var onDisconnected: () -> Unit
 
-    fun open(onSuccess: () -> Unit) {
+    fun open(onConnected: () -> Unit, onDisconnected: () -> Unit) {
+        this.onDisconnected = onDisconnected
+
         nettyClient.apply {
             setChannelHandler(this@NettyClientPeerConnection)
             connect(peerAddress())
             if (connectFuture.isSuccess) {
-                onSuccess()
+                onConnected()
             }
         }
     }
@@ -36,6 +40,10 @@ class NettyClientPeerConnection(
             context = ctx
             context.writeAndFlush(buildIdentPacket())
         }
+    }
+
+    override fun channelInactive(ctx: ChannelHandlerContext?) {
+        onDisconnected()
     }
 
     override fun channelRead(ctx: ChannelHandlerContext?, msg: Any?) {
@@ -49,12 +57,13 @@ class NettyClientPeerConnection(
     }
 
     override fun sendPacket(packet: LazyPacket) {
-//        println("Send: ${Arrays.toString(packet())}")
         context.writeAndFlush(Transport.wrapMessage(packet()))
     }
 
     override fun close() {
-        nettyClient.shutdown()
+        task {
+            nettyClient.shutdown()
+        }
     }
 
     private fun peerAddress(): SocketAddress {

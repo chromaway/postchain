@@ -21,7 +21,5 @@ class EbftTestContext(config: PeerCommConfiguration) {
 
     fun encodePacket(message: EbftMessage): ByteArray = peer.packetConverter.encodePacket(message)
 
-    fun decodePacket(bytes: ByteArray): EbftMessage {
-        return peer.packetConverter.decodePacket(bytes)!!
-    }
+    fun decodePacket(bytes: ByteArray): EbftMessage = peer.packetConverter.decodePacket(bytes)!!
 }

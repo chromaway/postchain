@@ -31,6 +31,7 @@ class NettyServerPeerConnection<PC : PacketConverter<*>>(
     }
 
     override fun close() {
+        context.close()
     }
 
     fun onConnected(handler: (XPeerConnection, IdentPacketInfo) -> Unit): ChannelHandler {
