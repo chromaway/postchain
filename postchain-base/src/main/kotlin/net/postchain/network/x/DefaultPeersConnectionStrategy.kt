@@ -11,7 +11,15 @@ object DefaultPeersConnectionStrategy : PeersConnectionStrategy {
     }
 
     private fun validate(configuration: PeerCommConfiguration) {
+        // peerInfo
+        require(!configuration.peerInfo.isEmpty()) {
+            "Invalid PeerCommConfiguration: peerInfo must not be empty"
+        }
 
+        // myIndex
+        val message = "Invalid PeerCommConfiguration: myIndex must be in range [0..${configuration.peerInfo.size - 1}]"
+        require(configuration.myIndex >= 0) { message }
+        require(configuration.myIndex < configuration.peerInfo.size) { message }
     }
 
     private fun runEachPeerAction(configuration: PeerCommConfiguration, action: (PeerInfo) -> Unit) {
