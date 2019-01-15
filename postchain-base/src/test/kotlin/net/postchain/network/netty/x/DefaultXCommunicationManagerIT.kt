@@ -49,6 +49,7 @@ class DefaultXCommunicationManager2IT {
     }
 
     @Test
+    @Ignore
     fun twoPeers_SendsPackets_Successfully() {
         val connectorFactory = NettyConnectorFactory<PacketConverter<Int>>()
         val peerInfos = arrayOf(peerInfo1, peerInfo2)

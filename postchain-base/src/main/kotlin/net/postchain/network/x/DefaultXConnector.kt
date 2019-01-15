@@ -11,14 +11,11 @@ class DefaultXConnector(
 ) : XConnector, Shutdownable {
 
     override fun init(peerInfo: PeerInfo) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun shutdown() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun connectPeer(descriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

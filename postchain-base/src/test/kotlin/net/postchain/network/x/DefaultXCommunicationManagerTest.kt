@@ -85,7 +85,7 @@ class DefaultXCommunicationManagerTest {
         communicationManager.shutdown()
     }
 
-    @Test(expected = AssertionError::class)
+    @Test(expected = IllegalArgumentException::class)
     fun sendPacket_will_result_in_exception_if_no_recipients_was_given() {
         // When / Then exception
         DefaultXCommunicationManager(mock(), mock(), CHAIN_ID, mock<PacketConverter<Int>>())
@@ -94,12 +94,55 @@ class DefaultXCommunicationManagerTest {
                 }
     }
 
-    @Test(expected = AssertionError::class)
+    @Test(expected = IllegalArgumentException::class)
     fun sendPacket_will_result_in_exception_if_more_then_one_recipients_was_given() {
         // When / Then exception
         DefaultXCommunicationManager(mock(), mock(), CHAIN_ID, mock<PacketConverter<Int>>())
                 .apply {
                     sendPacket(0, setOf(0, 42))
+                }
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun sendPacket_will_result_in_exception_if_too_big_recipient_index_was_given() {
+        // Given
+        val peersConfig: PeerCommConfiguration = mock {
+            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+        }
+
+        // When / Then exception
+        DefaultXCommunicationManager(mock(), peersConfig, CHAIN_ID, mock<PacketConverter<Int>>())
+                .apply {
+                    sendPacket(0, setOf(42))
+                }
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun sendPacket_will_result_in_exception_if_negative_recipient_index_was_given() {
+        // Given
+        val peersConfig: PeerCommConfiguration = mock {
+            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+        }
+
+        // When / Then exception
+        DefaultXCommunicationManager(mock(), peersConfig, CHAIN_ID, mock<PacketConverter<Int>>())
+                .apply {
+                    sendPacket(0, setOf(-1))
+                }
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun sendPacket_will_result_in_exception_if_myIndex_was_given() {
+        // Given
+        val peersConfig: PeerCommConfiguration = mock {
+            on { myIndex } doReturn 1
+            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+        }
+
+        // When / Then exception
+        DefaultXCommunicationManager(mock(), peersConfig, CHAIN_ID, mock<PacketConverter<Int>>())
+                .apply {
+                    sendPacket(0, setOf(1))
                 }
     }
 
@@ -111,6 +154,7 @@ class DefaultXCommunicationManagerTest {
         val peerCommunicationConfig: PeerCommConfiguration = mock {
             on { blockchainRID } doReturn blockchainRid
             on { peerInfo } doReturn arrayOf(peerInfo1Mock, peerInfo2)
+            on { myIndex } doReturn 1
         }
 
         // When
@@ -126,7 +170,7 @@ class DefaultXCommunicationManagerTest {
 
         // Then
         verify(connectionManager).sendPacket(any(), eq(CHAIN_ID), eq(peerInfo1.peerId()))
-        verify(peerCommunicationConfig).peerInfo
+        verify(peerCommunicationConfig, times(2)).peerInfo
         verify(peerInfo1Mock).pubKey
 
         communicationManager.shutdown()

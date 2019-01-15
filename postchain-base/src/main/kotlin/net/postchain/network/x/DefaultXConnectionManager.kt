@@ -39,10 +39,13 @@ class DefaultXConnectionManager<PC : PacketConverter<*>>(
     @Synchronized
     override fun shutdown() {
         isShutDown = true
+
         chains.forEach { _, chain ->
             chain.connections.forEach { _, conn -> conn.close() }
         }
         chains.clear()
+
+        connector.shutdown()
     }
 
     @Synchronized
@@ -134,6 +137,8 @@ class DefaultXConnectionManager<PC : PacketConverter<*>>(
 
     @Synchronized
     override fun disconnectChain(chainID: Long) {
+        logger.debug { "${myPeerId()}: Disconnecting chain: $chainID" }
+
         val chain = chains[chainID]
         if (chain != null) {
             chain.connections.forEach { _, conn ->
@@ -141,6 +146,10 @@ class DefaultXConnectionManager<PC : PacketConverter<*>>(
             }
             chain.connections.clear()
             chains.remove(chainID)
+            logger.debug { "${myPeerId()}: Chain disconnected: $chainID" }
+
+        } else {
+            logger.debug { "${myPeerId()}: Unknown chain: $chainID" }
         }
     }
 

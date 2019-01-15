@@ -19,53 +19,51 @@ class DefaultXCommunicationManager1PeerIT {
     private val pubKey = secp256k1_derivePubKey(privKey)
     private val peerInfo = PeerInfo("localhost", 3331, pubKey)
 
+    private fun startTestContext(peers: Array<PeerInfo>, myIndex: Int = 0): EbftIntegrationTestContext {
+        val peerConfiguration = BasePeerCommConfiguration(
+                peers, blockchainRid, myIndex, cryptoSystem, privKey)
+
+        return EbftIntegrationTestContext(peerInfo, peerConfiguration)
+    }
+
     @Test
     fun singlePeer_launched_successfully() {
-        val context = buildTestContext(arrayOf(peerInfo))
+        startTestContext(arrayOf(peerInfo))
+                .use { context ->
+                    context.communicationManager.init()
 
-        // Waiting for all connections establishing
-        await().atMost(Duration.FIVE_SECONDS)
-                .untilAsserted {
-                    val actual = context.connectionManager.getConnectedPeers(context.chainId)
-                    assert(actual).isEmpty()
+                    // Waiting for all connections establishing
+                    await().atMost(Duration.FIVE_SECONDS)
+                            .untilAsserted {
+                                val actual = context.connectionManager.getConnectedPeers(context.chainId)
+                                assert(actual).isEmpty()
+                            }
                 }
-
-        context.shutdown()
     }
 
-    @Test
-    fun singlePeer_launched_with_empty_peers_config_successfully() {
-        val context = buildTestContext(arrayOf())
-
-        // Waiting for all connections establishing
-        await().atMost(Duration.FIVE_SECONDS)
-                .untilAsserted {
-                    val actual = context.connectionManager.getConnectedPeers(context.chainId)
-                    assert(actual).isEmpty()
+    @Test(expected = IllegalArgumentException::class)
+    fun singlePeer_launching_with_empty_peers_will_result_in_exception() {
+        startTestContext(arrayOf())
+                .use {
+                    it.communicationManager.init()
                 }
-
-        context.shutdown()
     }
 
-    /*
-    @Test
-    fun singlePeer_launched_with_wrong_myIndex_in_config_successfully() {
-        val context = buildTestContext(arrayOf(peerInfo), 42)
 
-        // Waiting for all connections establishing
-        await().atMost(Duration.FIVE_SECONDS)
-                .untilAsserted {
-                    val actual1 = context.connectionManager.getConnectedPeers(context.chainId)
-                    assert(actual1).isEmpty()
+    @Test(expected = IllegalArgumentException::class)
+    fun singlePeer_launching_with_wrong_too_big_myIndex_will_result_in_exception() {
+        startTestContext(arrayOf(peerInfo), 42)
+                .use {
+                    it.communicationManager.init()
                 }
-
-        context.shutdown()
     }
-    */
 
-    private fun buildTestContext(peers: Array<PeerInfo>, myIndex: Int = 0): EbftIntegrationTestContext {
-        val peerConfiguration = BasePeerCommConfiguration(peers, blockchainRid, myIndex, cryptoSystem, privKey)
-        return EbftIntegrationTestContext(peerInfo, peerConfiguration)
-                .apply { communicationManager.init() }
+    @Test(expected = IllegalArgumentException::class)
+    fun singlePeer_launching_with_wrong_negative_myIndex_will_result_in_exception() {
+        startTestContext(arrayOf(peerInfo), -1)
+                .use {
+                    it.communicationManager.init()
+                }
     }
+
 }
