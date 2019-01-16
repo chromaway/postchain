@@ -18,9 +18,6 @@
             <bytea>03EF3F5BE98D499B048BA28B247036B611A1CED7FCF87C17C8B5CA3B3CE1EE23A4</bytea>
         </array>
     </entry>
-    <entry key="blocksigningprivkey">
-        <bytea>3132333435363738393031323334353637383930313233343536373839303131</bytea>
-    </entry>
     <entry key="gtx">
         <dict>
             <entry key="modules">
