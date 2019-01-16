@@ -8,6 +8,7 @@ typealias PeerID = ByteArray
 
 open class PeerInfo(val host: String, open val port: Int, val pubKey: ByteArray, val privateKey: ByteArray? = null)
 
+@Deprecated("Use {@code zero} port to obtain dynamic/ephemeral port")
 class DynamicPortPeerInfo(host: String, pubKey: ByteArray, privateKey: ByteArray? = null) : PeerInfo(host, 0, pubKey, privateKey) {
 
     private val latch = CountDownLatch(1)

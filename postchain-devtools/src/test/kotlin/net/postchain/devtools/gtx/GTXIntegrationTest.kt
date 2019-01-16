@@ -7,10 +7,10 @@ import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.configurations.GTXTestModule
 import net.postchain.core.Transaction
-import net.postchain.gtx.*
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.gtx.*
 import org.junit.Assert
 import org.junit.Test
 

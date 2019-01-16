@@ -5,15 +5,15 @@ package net.postchain.base
 import mu.KLogging
 import net.postchain.common.toHex
 import net.postchain.core.TransactionQueue
-import net.postchain.network.CommManager
 import net.postchain.ebft.message.EbftMessage
+import net.postchain.network.CommunicationManager
 
 /**
  * Transaction queue for transactions added locally via the REST API
  */
 class NetworkAwareTxQueue(
         private val queue: TransactionQueue,
-        private val network: CommManager<EbftMessage>,
+        private val network: CommunicationManager<EbftMessage>,
         private val nodeIndex: Int)
     : TransactionQueue by queue {
 

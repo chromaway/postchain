@@ -35,8 +35,8 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
         return EBFTBlockchainInstanceWorker(
                 engine,
                 blockchainConfig.configData.context.nodeID,
-                buildCommunicationManager(blockchainConfig),
-//                buildXCommunicationManager(blockchainConfig),
+//                buildCommunicationManager(blockchainConfig),
+                buildXCommunicationManager(blockchainConfig),
                 restartHandler)
     }
 
@@ -61,7 +61,7 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
                 connectionManager,
                 communicationConfig,
                 blockchainConfig.chainID,
-                packetConverter)
+                packetConverter).apply { init() }
     }
 
     @Deprecated("See XCommunicationManager")

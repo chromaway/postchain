@@ -32,12 +32,7 @@ object PeerInfoCollectionFactory {
             val port = config.getInt("node.$it.port")
             val host = config.getString("node.$it.host")
             val pubKey = config.getString("node.$it.pubkey").hexStringToByteArray()
-
-            if (port == 0) {
-                DynamicPortPeerInfo(host, pubKey)
-            } else {
-                PeerInfo(host, port, pubKey)
-            }
+            PeerInfo(host, port, pubKey)
         }
     }
 

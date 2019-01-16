@@ -3,16 +3,15 @@
 package net.postchain.devtools
 
 import mu.KLogging
-import net.postchain.base.DynamicPortPeerInfo
 import net.postchain.base.PeerInfo
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.core.*
-import net.postchain.gtx.GTXValue
-import net.postchain.gtx.gtx
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.privKeyHex
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.KeyPairHelper.pubKeyHex
+import net.postchain.gtx.GTXValue
+import net.postchain.gtx.gtx
 import org.apache.commons.configuration2.CompositeConfiguration
 import org.apache.commons.configuration2.Configuration
 import org.apache.commons.configuration2.MapConfiguration
@@ -28,6 +27,7 @@ import java.io.File
 
 open class IntegrationTest {
 
+    private val BASE_PORT = 9870
     protected val nodes = mutableListOf<SingleChainTestNode>()
     val configOverrides = MapConfiguration(mutableMapOf<String, String>())
     val cryptoSystem = SECP256K1CryptoSystem()
@@ -99,15 +99,16 @@ open class IntegrationTest {
 
     protected fun createConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
             : Configuration {
+
         val propertiesFile = File(configFile)
         val params = Parameters()
+                .fileBased()
+                .setLocationStrategy(ClasspathLocationStrategy())
+                .setFile(propertiesFile)
         // Read first file directly via the builder
-        val builder = FileBasedConfigurationBuilder(PropertiesConfiguration::class.java)
-                .configure(params
-                        .fileBased()
-                        .setLocationStrategy(ClasspathLocationStrategy())
-                        .setFile(propertiesFile))
-        val baseConfig = builder.configuration
+        val baseConfig = FileBasedConfigurationBuilder(PropertiesConfiguration::class.java)
+                .configure(params)
+                .configuration
 
         baseConfig.listDelimiterHandler = DefaultListDelimiterHandler(',')
         val chainId = baseConfig.getLong("activechainids")
@@ -117,10 +118,13 @@ open class IntegrationTest {
         baseConfig.setProperty("database.schema", baseConfig.getString("database.schema") + nodeIndex)
         baseConfig.setProperty("blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: newschool
         baseConfig.setProperty("blockchain.$chainId.blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: oldschool
+
+        // peers
+        var port = (baseConfig.getProperty("node.0.port") as String).toInt()
         for (i in 0 until nodeCount) {
             baseConfig.setProperty("node.$i.id", "node$i")
             baseConfig.setProperty("node.$i.host", "127.0.0.1")
-            baseConfig.setProperty("node.$i.port", "0")
+            baseConfig.setProperty("node.$i.port", port++)
             baseConfig.setProperty("node.$i.pubkey", pubKeyHex(i))
         }
         baseConfig.setProperty("blockchain.$chainId.testmyindex", nodeIndex)
@@ -130,6 +134,7 @@ open class IntegrationTest {
         return CompositeConfiguration().apply {
             addConfiguration(configOverrides)
             addConfiguration(baseConfig)
+
         }
     }
 
@@ -139,7 +144,10 @@ open class IntegrationTest {
 
     fun createPeerInfos(nodeCount: Int): Array<PeerInfo> {
         if (peerInfos == null) {
-            peerInfos = Array(nodeCount) { DynamicPortPeerInfo("localhost", pubKey(it)) }
+            peerInfos = Array(nodeCount) {
+                // TODO: Fix this hack
+                PeerInfo("localhost", BASE_PORT + it, pubKey(it))
+            }
         }
 
         return peerInfos!!
