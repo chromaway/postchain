@@ -3,7 +3,6 @@ package net.postchain.base.merkle.proof
 import net.postchain.base.merkle.*
 import net.postchain.gtx.GTXPath
 import net.postchain.gtx.GTXPathFactory
-import net.postchain.gtx.GTXValue
 import org.junit.Assert
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -55,7 +54,7 @@ class ArrayToMerkleProofTreeTest {
                 "/ \\ \n" +
                 "*1 0000000000000000000000000000000000000000000000000000000000000000 "
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -73,7 +72,7 @@ class ArrayToMerkleProofTreeTest {
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
         val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf1(gtxPath)
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
         assertEquals(expected1ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot))
@@ -103,7 +102,7 @@ class ArrayToMerkleProofTreeTest {
                 "*1 0103 - - "
 
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -135,7 +134,7 @@ class ArrayToMerkleProofTreeTest {
         // 07     0103040305 + 0103060307 ->
         // 0701030403050103060307
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
         assertEquals(expected4ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot))
@@ -173,7 +172,7 @@ class ArrayToMerkleProofTreeTest {
                 "    / \\         \n" +
                 "- - 0104 *4 - - - - "
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -212,7 +211,7 @@ class ArrayToMerkleProofTreeTest {
                 "    / \\         \n" +
                 "- - 0104 *4 - - - - "
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -274,7 +273,7 @@ class ArrayToMerkleProofTreeTest {
                 "- - - - - - - - - - - - 0102 *9 - - - - - - - - - - - - - - - - - - "
 
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -291,7 +290,7 @@ class ArrayToMerkleProofTreeTest {
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
         val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf7WithSubTree(gtxPath)
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
         assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot))
     }
@@ -334,7 +333,7 @@ class ArrayToMerkleProofTreeTest {
                 "- - *3 07010304030C0205 - - - - "
 
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -351,7 +350,7 @@ class ArrayToMerkleProofTreeTest {
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
         val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf7WithSubTree(gtxPath)
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
         assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot))
     }
@@ -382,7 +381,7 @@ class ArrayToMerkleProofTreeTest {
                 "- - 0104 *ArrayGTXValue(array=[IntegerGTXValue(integer=1), IntegerGTXValue(integer=9), IntegerGTXValue(integer=3)]) - - - - "
 
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -399,7 +398,7 @@ class ArrayToMerkleProofTreeTest {
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
         val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf7WithSubTree(gtxPath)
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
         assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot))
     }

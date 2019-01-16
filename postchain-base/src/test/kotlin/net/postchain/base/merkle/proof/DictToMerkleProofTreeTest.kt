@@ -57,7 +57,7 @@ class DictToMerkleProofTreeTest {
                 "/ \\ \n" +
                 "01706F66 *1 "
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -79,7 +79,7 @@ class DictToMerkleProofTreeTest {
         // 08 + [01706F66 + 0102]
         // 08 + 02717067 + 0203
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
@@ -142,7 +142,7 @@ class DictToMerkleProofTreeTest {
                         "/ \\             \n" +
                         "0167707673 *4 - - - - - - "
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -190,7 +190,7 @@ class DictToMerkleProofTreeTest {
         //       ] ->
         //  080102046A737976040802047372690405010204786C76696904070204787B730406
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
@@ -219,7 +219,7 @@ class DictToMerkleProofTreeTest {
                 "            / \\ \n" +
                 "- - - - - - 01746677666F *7 "
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -237,7 +237,7 @@ class DictToMerkleProofTreeTest {
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
         val treeHolder = DictToGtxBinaryTreeHelper.buildTreeOf1WithSubTree(gtxPath)
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
         assertEquals(expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleProofRoot))
@@ -261,7 +261,7 @@ class DictToMerkleProofTreeTest {
                 "/ \\ \n" +
                 "01706F66 *DictGTXValue(dict={seven=IntegerGTXValue(integer=7), eight=IntegerGTXValue(integer=8)}) "
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -318,7 +318,7 @@ class DictToMerkleProofTreeTest {
         //
         // 08 02717067 09 0204696D6B6C78040C 020477697A6972040B
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
         assertEquals(expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleProofRoot))

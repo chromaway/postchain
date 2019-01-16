@@ -10,7 +10,7 @@ import net.postchain.gtx.GTXValue
  */
 object MixArrayDictToGtxBinaryTreeHelper {
 
-    private val factory = GtxFullBinaryTreeFactory()
+    private val factory = GtxBinaryTreeFactory()
 
     fun buildTreeOfDict1WithSubArray4(): TreeHolderFromDict {
         return buildTreeOfDict1WithSubArray4(null)

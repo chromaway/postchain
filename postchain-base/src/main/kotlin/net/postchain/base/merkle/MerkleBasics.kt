@@ -59,6 +59,14 @@ typealias Hash = ByteArray
 object MerkleBasics {
 
     /**
+     * Prefixes are put in front of the the hash, after the hash value has been calculated
+     */
+    const val HASH_PREFIX_NODE: Byte = 0
+    const val HASH_PREFIX_LEAF: Byte = 1
+    const val HASH_PREFIX_NODE_GTX_ARRAY: Byte = 7
+    const val HASH_PREFIX_NODE_GTX_DICT: Byte = 8
+
+    /**
      * Use this to represent a hash of an empty element (in a tree, typically)
      */
     val EMPTY_HASH = ByteArray(32) // Just zeros

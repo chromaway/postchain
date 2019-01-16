@@ -36,7 +36,7 @@ class MixArrayDictToMerkleProofTreeTest {
                 "            / \\ \n" +
                 "- - - - - - 0104 *4 "
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -65,7 +65,7 @@ class MixArrayDictToMerkleProofTreeTest {
         // 08 + 02 + 717067 + 0802040504060204070408 ->
         // 08027170670802040504060204070408
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
         assertEquals(expecedMerkleRoot_dict1_array4, TreeHelper.convertToHex(merkleProofRoot))
@@ -84,7 +84,7 @@ class MixArrayDictToMerkleProofTreeTest {
                 "/ \\ \n" +
                 "01706F66 *ArrayGTXValue(array=[IntegerGTXValue(integer=1), IntegerGTXValue(integer=2), IntegerGTXValue(integer=3), IntegerGTXValue(integer=4)])"
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -102,7 +102,7 @@ class MixArrayDictToMerkleProofTreeTest {
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
         val treeHolder = MixArrayDictToGtxBinaryTreeHelper.buildTreeOfDict1WithSubArray4(gtxPath)
 
-        val merkleProofTree: GtxMerkleProofTree = factory.buildGtxMerkleProofTree(treeHolder.clfbTree)
+        val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
         assertEquals(expecedMerkleRoot_dict1_array4, TreeHelper.convertToHex(merkleProofRoot))

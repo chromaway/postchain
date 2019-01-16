@@ -6,7 +6,7 @@ import net.postchain.gtx.GTXValue
 
 object DictToGtxBinaryTreeHelper {
 
-    private val factory = GtxFullBinaryTreeFactory()
+    private val factory = GtxBinaryTreeFactory()
 
     /**
      * When we only have one element in the Dict we don't have to generate dummies, since a dict will always have even pairs.

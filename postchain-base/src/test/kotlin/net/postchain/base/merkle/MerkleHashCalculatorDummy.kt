@@ -56,7 +56,7 @@ fun dummyAddOneHashFun(bArr: ByteArray, cryptoSystem: CryptoSystem?): Hash {
  * serializations and hashing
  */
 class MerkleHashCalculatorDummy: MerkleHashCalculator<GTXValue, GTXPath>(null) {
-    val treeFactory = GtxFullBinaryTreeFactory()
+    val treeFactory = GtxBinaryTreeFactory()
 
     var proofTreeFactory: GtxMerkleProofTreeFactory
     var baseCalc: BinaryNodeHashCalculator
@@ -82,7 +82,7 @@ class MerkleHashCalculatorDummy: MerkleHashCalculator<GTXValue, GTXPath>(null) {
 
     override fun buildTreeFromContainerValue(value: GTXValue): GtxMerkleProofTree {
         val root: GtxBinaryTree = treeFactory.buildFromGtx(value)
-        return proofTreeFactory.buildGtxMerkleProofTree(root)
+        return proofTreeFactory.buildFromBinaryTree(root)
     }
 
 }

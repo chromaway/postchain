@@ -99,7 +99,7 @@ class ArrayToGtxBinaryTreeTest {
 
         val intArrayList = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
 
-        val fullBinaryTree: GtxBinaryTree = (GtxFullBinaryTreeFactory()).buildFromGtx(TreeHelper.transformGTXsToArrayGTXValue(intArrayList))
+        val fullBinaryTree: GtxBinaryTree = (GtxBinaryTreeFactory()).buildFromGtx(TreeHelper.transformGTXsToArrayGTXValue(intArrayList))
 
         val printer = TreePrinter()
         val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)

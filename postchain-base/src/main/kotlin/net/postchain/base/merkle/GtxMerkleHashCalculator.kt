@@ -32,7 +32,7 @@ fun serializeGTXValueToByteArary(gtxValue: GTXValue): ByteArray {
  */
 class GtxMerkleHashCalculator(cryptoSystem: CryptoSystem): MerkleHashCalculator<GTXValue, GTXPath>(cryptoSystem) {
 
-    val treeFactory = GtxFullBinaryTreeFactory()
+    val treeFactory = GtxBinaryTreeFactory()
 
     var proofTreeFactory: GtxMerkleProofTreeFactory
     var baseCalc: BinaryNodeHashCalculator
@@ -61,7 +61,7 @@ class GtxMerkleHashCalculator(cryptoSystem: CryptoSystem): MerkleHashCalculator<
 
     override fun buildTreeFromContainerValue(value: GTXValue): GtxMerkleProofTree {
         val root: GtxBinaryTree = treeFactory.buildFromGtx(value)
-        return proofTreeFactory.buildGtxMerkleProofTree(root)
+        return proofTreeFactory.buildFromBinaryTree(root)
     }
 
 }

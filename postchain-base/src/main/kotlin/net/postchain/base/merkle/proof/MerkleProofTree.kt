@@ -1,6 +1,15 @@
 package net.postchain.base.merkle.proof
 
 import net.postchain.base.merkle.*
+import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_NODE
+import net.postchain.gtx.ArrayGTXValue
+import net.postchain.gtx.ByteArrayGTXValue
+import net.postchain.gtx.GTXValue
+import net.postchain.gtx.IntegerGTXValue
+
+const val SERIALIZATION_HASH_LEAF_TYPE: Long = 0
+const val SERIALIZATION_VALUE_LEAF_TYPE: Long = 1
+const val SERIALIZATION_NODE_TYPE: Long = 2
 
 /**
  * (Here is some info about Merkle Proofs and the way we tackle it)
@@ -48,13 +57,18 @@ import net.postchain.base.merkle.*
  *
  */
 
-sealed class MerkleProofElement
+open class MerkleProofElement
 
 /**
- * Just a node. Usually one of the sides (left or right) holds a [ProofHashedLeaf] and the other side
- * holds a [ProofValueLeaf] or [ProofNode].
+ * Base class for nodes
  */
-data class ProofNode(val prefix: Byte, val left: MerkleProofElement, val right: MerkleProofElement): MerkleProofElement()
+open class ProofNode(val prefix: Byte, val left: MerkleProofElement, val right: MerkleProofElement): MerkleProofElement()
+
+/**
+ * A dummy node that does not represent anything in the original structure.
+ * Usually one of the sides (left or right) holds a [ProofHashedLeaf] and the other side holds a [ProofValueLeaf] or [ProofNode].
+ */
+class ProofNodeSimple(left: MerkleProofElement, right: MerkleProofElement): ProofNode(HASH_PREFIX_NODE, left, right)
 
 /**
  * The data we want to prove exists in the Merkle Tree
@@ -66,13 +80,25 @@ data class ProofValueLeaf<T>(val content: T): MerkleProofElement()
 /**
  * The hash in this leaf is a hash of an entire sub tree of the original Merkle tree
  */
-data class ProofHashedLeaf<T>(val hash: T): MerkleProofElement()
+data class ProofHashedLeaf(val hash: Hash): MerkleProofElement() {
+
+    // (Probably not needed but I implement equals to get rid of the warning)
+    override fun equals(other: Any?): Boolean {
+        return if (other is ProofHashedLeaf) {
+            this.hash.contentEquals(other.hash)
+        } else {
+            false
+        }
+    }
+}
 
 /**
  * The "Proof Tree" can be used to prove that one or more values is/are indeed part of the Merkle tree
  * We will use the [MerkleProofTree] to calculate the BlockRID (see doc in top of this file)
  */
-open class MerkleProofTree<T,TPath>(val root: MerkleProofElement) {
+abstract class MerkleProofTree<T,TPath>(val root: MerkleProofElement) {
+
+
 
     /**
      * Note: When calculating the merkle root of a proof of a complicated structure (array or dict)
@@ -88,7 +114,7 @@ open class MerkleProofTree<T,TPath>(val root: MerkleProofElement) {
 
     private fun calculateMerkleRootInternal(currentElement: MerkleProofElement, calculator: MerkleHashCalculator<T,TPath>): Hash {
         return when (currentElement) {
-            is ProofHashedLeaf<*> -> currentElement.hash as Hash
+            is ProofHashedLeaf -> currentElement.hash
             is ProofValueLeaf<*> -> {
                 val value = currentElement.content as T
                 if (calculator.isContainerProofValueLeaf(value)) {
@@ -105,8 +131,56 @@ open class MerkleProofTree<T,TPath>(val root: MerkleProofElement) {
                 val right = calculateMerkleRootInternal(currentElement.right, calculator)
                 calculator.calculateNodeHash(currentElement.prefix ,left, right)
             }
+            else -> {
+                throw IllegalStateException("Should have handled this type: $currentElement")
+            }
         }
     }
+
+
+    /**
+     * Note that we have our own primitive serialization format. It is based on arrays that begins with an integer.
+     * The integer tells us what the content is.
+     * 0 -> just a hash
+     * 1 -> value to be proven
+     * 2 -> a node
+     * (we can add more in sub classes)
+     */
+    fun serializeToGtx(): GTXValue {
+
+        return serializeToGtxInternal(this.root)
+    }
+
+    protected fun serializeToGtxInternal(currentElement: MerkleProofElement): GTXValue {
+        return when (currentElement) {
+            is ProofHashedLeaf -> {
+                val tail = ByteArrayGTXValue(currentElement.hash)
+                val head = IntegerGTXValue(SERIALIZATION_HASH_LEAF_TYPE)
+                val arr: Array<GTXValue> = arrayOf(head, tail)
+                ArrayGTXValue(arr)
+            }
+            is ProofValueLeaf<*> -> {
+                val tail = serializeValueLeafToGtx(currentElement.content as T)
+                val head = IntegerGTXValue(SERIALIZATION_VALUE_LEAF_TYPE)
+                val arr: Array<GTXValue> = arrayOf(head, tail)
+                ArrayGTXValue(arr)
+            }
+            is ProofNode -> {
+                val tail1 = serializeToGtxInternal(currentElement.left)
+                val tail2 = serializeToGtxInternal(currentElement.right)
+                val head = IntegerGTXValue(SERIALIZATION_NODE_TYPE)
+                val arr: Array<GTXValue> = arrayOf(head, tail1, tail2)
+                ArrayGTXValue(arr)
+            }
+            else -> serializeOtherTypes(currentElement)
+        }
+    }
+
+    abstract fun serializeValueLeafToGtx(valueLeaf: T): GTXValue
+
+
+    abstract fun serializeOtherTypes(currentElement: MerkleProofElement): GTXValue
+
 
     /**
      * Mostly for debugging
@@ -118,50 +192,10 @@ open class MerkleProofTree<T,TPath>(val root: MerkleProofElement) {
     private fun maxLevelInternal(node: MerkleProofElement): Int {
         return when (node) {
             is ProofValueLeaf<*> -> 1
-            is ProofHashedLeaf<*> -> 1
+            is ProofHashedLeaf -> 1
             is ProofNode -> maxOf(maxLevelInternal(node.left), maxLevelInternal(node.right)) + 1
         }
     }
 
 }
 
-/**
- * Builds [MerkleProofTree] (but needs to be overridden
- */
-abstract class MerkleProofTreeFactory<T,TPath>(val calculator: MerkleHashCalculator<T,TPath>) {
-
-    /**
-     * Builds the [MerkleProofTree] from the [BinaryTree]
-     * Note that the [BinaryTree] already has marked all elements that should be proven, so all we have to
-     * do now is to convert the rest to hashes.
-     *
-     * @param orginalTree is the tree we will use
-     * @param calculator is the class we use for hash calculation
-     */
-    fun buildMerkleProofTree(orginalTree: BinaryTree<T>): MerkleProofTree<T,TPath> {
-
-        val rootElement = buildSubProofTree(orginalTree.root, calculator)
-        return MerkleProofTree(rootElement)
-    }
-
-
-    abstract fun buildSubProofTree(currentElement: BinaryTreeElement,
-                               calculator: MerkleHashCalculator<T, TPath>): MerkleProofElement
-
-
-    protected fun convertNode(currentNode: Node, calculator: MerkleHashCalculator<T,TPath>): MerkleProofElement {
-        val left = buildSubProofTree(currentNode.left, calculator)
-        val right = buildSubProofTree(currentNode.right, calculator)
-        return if (left is ProofHashedLeaf<*> && right is ProofHashedLeaf<*>) {
-            // If both children are hashes, then
-            // we must reduce them to a new (combined) hash.
-            val addedHash = calculator.calculateNodeHash(
-                    currentNode.getPrefixByte(),
-                    left.hash as Hash,
-                    right.hash as Hash)
-            ProofHashedLeaf(addedHash)
-        } else {
-            ProofNode(currentNode.getPrefixByte(), left, right)
-        }
-    }
-}

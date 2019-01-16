@@ -7,7 +7,7 @@ import net.postchain.gtx.GTXValue
 object ArrayToGtxBinaryTreeHelper {
 
 
-    private val factory = GtxFullBinaryTreeFactory()
+    private val factory = GtxBinaryTreeFactory()
 
 
     /**
