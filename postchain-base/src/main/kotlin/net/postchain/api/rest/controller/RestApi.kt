@@ -22,7 +22,9 @@ import spark.Service
 /**
  * Contains information on the rest API, such as network parameters and available queries
  */
-class RestApi(private val listenPort: Int, private val basePath: String) : Modellable {
+class RestApi(private val listenPort: Int, private val basePath: String,
+              private val sslCertificate: String? = null,
+              private val sslCertificatePassword: String? = null) : Modellable {
 
     companion object : KLogging()
 
@@ -89,7 +91,9 @@ class RestApi(private val listenPort: Int, private val basePath: String) : Model
     private fun buildRouter(http: Service) {
 
         http.port(listenPort)
-
+        if(sslCertificate != null) {
+            http.secure(sslCertificate, sslCertificatePassword, null, null)
+        }
         http.before { req, res ->
             res.header(ACCESS_CONTROL_ALLOW_ORIGIN, "*")
             res.header(ACCESS_CONTROL_REQUEST_METHOD, "POST, GET, OPTIONS")
@@ -114,7 +118,6 @@ class RestApi(private val listenPort: Int, private val basePath: String) : Model
 
                 "OK"
             }
-
             http.post("/tx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
                 val n = TimeLog.startSumConc("RestApi.buildRouter().postTx")
                 logger.debug("Request body: ${request.body()}")
@@ -126,7 +129,6 @@ class RestApi(private val listenPort: Int, private val basePath: String) : Model
                 TimeLog.end("RestApi.buildRouter().postTx", n)
                 "{}"
             }
-
             http.get("/tx/$PARAM_BLOCKCHAIN_RID/$PARAM_HASH_HEX", "application/json", { request, _ ->
                 runTxActionOnModel(request) { model, txRID ->
                     model.getTransaction(txRID)
