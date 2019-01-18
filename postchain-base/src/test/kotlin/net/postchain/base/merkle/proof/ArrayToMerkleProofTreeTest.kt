@@ -75,14 +75,14 @@ class ArrayToMerkleProofTreeTest {
         //println("Serilalized: $serialize")
 
         val expectedSerialization = "ArrayGTXValue(array=[\n" +
-                "  IntegerGTXValue(integer=3), \n" +  // 3 =  node type is array
+                "  IntegerGTXValue(integer=103), \n" +  // 103 =  node type is array
                 "  IntegerGTXValue(integer=1), \n" +  // lenght of array
                 "  ArrayGTXValue(array=[\n" +
-                "    IntegerGTXValue(integer=1), \n" + // 1 = value to prove
+                "    IntegerGTXValue(integer=101), \n" + // 101 = value to prove
                 "    IntegerGTXValue(integer=1)\n" +
                 "  ]), \n" +
                 "  ArrayGTXValue(array=[\n" +
-                "    IntegerGTXValue(integer=0), \n" + // 0 = hash
+                "    IntegerGTXValue(integer=100), \n" + // 100 = hash
                 "    ByteArrayGTXValue(bytearray=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])\n" +
                 "  ])\n" +
                 "])\n"
@@ -153,21 +153,21 @@ class ArrayToMerkleProofTreeTest {
         //println("Serilalized: $serialize")
 
         val expectedSerialization = "ArrayGTXValue(array=[\n" +
-                "  IntegerGTXValue(integer=3), \n" +// 3 = array head node type
+                "  IntegerGTXValue(integer=103), \n" +// 103 = array head node type
                 "  IntegerGTXValue(integer=4), \n" + // length of array
                 "  ArrayGTXValue(array=[\n" +
-                "    IntegerGTXValue(integer=2), \n" +
+                "    IntegerGTXValue(integer=102), \n" +
                 "    ArrayGTXValue(array=[\n" +
-                "      IntegerGTXValue(integer=1), \n" +// 1 = value to prove
+                "      IntegerGTXValue(integer=101), \n" +// 101 = value to prove
                 "      IntegerGTXValue(integer=1)\n" +
                 "    ]), \n" +
                 "    ArrayGTXValue(array=[\n" +
-                "      IntegerGTXValue(integer=0), \n" +// 0 = hash
+                "      IntegerGTXValue(integer=100), \n" +// 100 = hash
                 "      ByteArrayGTXValue(bytearray=[1, 3])\n" +
                 "    ])\n" +
                 "  ]), \n" +
                 "  ArrayGTXValue(array=[\n" +
-                "    IntegerGTXValue(integer=0), \n" +// 0 = hash
+                "    IntegerGTXValue(integer=100), \n" +// 100 = hash
                 "    ByteArrayGTXValue(bytearray=[0, 2, 5, 2, 6])\n" +
                 "  ])\n" +
                 "])\n"
@@ -251,7 +251,7 @@ class ArrayToMerkleProofTreeTest {
         val printer = TreePrinter()
         val pbt = PrintableTreeFactory.buildPrintableTreeFromProofTree(merkleProofTree)
         val resultPrintout = printer.printNode(pbt)
-        println(resultPrintout)
+        //println(resultPrintout)
 
         Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
 
@@ -260,27 +260,27 @@ class ArrayToMerkleProofTreeTest {
         //println("Serilalized: $serialize")
 
         val expectedSerialization = "ArrayGTXValue(array=[\n" +
-                "  IntegerGTXValue(integer=3),\n" + // 3 = array head node type
+                "  IntegerGTXValue(integer=103),\n" + // 103 = array head node type
                 "  IntegerGTXValue(integer=7),\n" + // length of array
                 "  ArrayGTXValue(array=[\n" +
-                "    IntegerGTXValue(integer=2),\n" + // 2 = dummy node
+                "    IntegerGTXValue(integer=102),\n" + // 102 = dummy node
                 "    ArrayGTXValue(array=[\n" +
-                "      IntegerGTXValue(integer=0),\n" + // 0 = hash
+                "      IntegerGTXValue(integer=100),\n" + // 100 = hash
                 "      ByteArrayGTXValue(bytearray=[0, 2, 3, 2, 4])]),\n" +
                 "      ArrayGTXValue(array=[\n" +
-                "        IntegerGTXValue(integer=2),\n" + // 2 = dummy node
+                "        IntegerGTXValue(integer=102),\n" + // 102 = dummy node
                 "        ArrayGTXValue(array=[\n" +
-                "          IntegerGTXValue(integer=0),\n" +  // 0 = hash
+                "          IntegerGTXValue(integer=100),\n" +  // 100 = hash
                 "          ByteArrayGTXValue(bytearray=[1, 4])\n" +
                 "        ]),\n" +
                 "        ArrayGTXValue(array=[\n" +
-                "          IntegerGTXValue(integer=1),\n" + // 1 = value to prove
+                "          IntegerGTXValue(integer=101),\n" + // 101 = value to prove
                 "          IntegerGTXValue(integer=4)\n" +
                 "        ])\n" +
                 "      ])\n" +
                 "    ]),\n" +
                 "    ArrayGTXValue(array=[\n" +
-                "      IntegerGTXValue(integer=0),\n" + // 0 = hash
+                "      IntegerGTXValue(integer=100),\n" + // 100 = hash
                 "      ByteArrayGTXValue(bytearray=[0, 1, 3, 8, 3, 9, 2, 9])\n" +
                 "    ])\n" +
                 "  ])\n"
@@ -511,22 +511,22 @@ class ArrayToMerkleProofTreeTest {
         println("Serilalized: $serialize")
 
         val expectedSerialization = "ArrayGTXValue(array=[\n" +
-                "  IntegerGTXValue(integer=3), \n" + // 3 = array head node type
+                "  IntegerGTXValue(integer=103), \n" + // 103 = array head node type
                 "  IntegerGTXValue(integer=7), \n" + // length of array
                 "  ArrayGTXValue(array=[\n" +
-                "    IntegerGTXValue(integer=2), \n" + // 2 = dummy node
+                "    IntegerGTXValue(integer=102), \n" + // 102 = dummy node
                 "    ArrayGTXValue(array=[\n" +
-                "      IntegerGTXValue(integer=0), \n" + // 0 = hash
+                "      IntegerGTXValue(integer=100), \n" + // 100 = hash
                 "      ByteArrayGTXValue(bytearray=[0, 2, 3, 2, 4])\n" +
                 "    ]),\n" +
                 "    ArrayGTXValue(array=[\n" +
-                "      IntegerGTXValue(integer=2), \n" + // 2 = dummy node
+                "      IntegerGTXValue(integer=102), \n" + // 102 = dummy node
                 "      ArrayGTXValue(array=[\n" +
-                "        IntegerGTXValue(integer=0), \n" + // 0 = hash
+                "        IntegerGTXValue(integer=100), \n" + // 100 = hash
                 "        ByteArrayGTXValue(bytearray=[1, 4])\n" +
                 "      ]), \n" +
                 "      ArrayGTXValue(array=[\n" +
-                "        IntegerGTXValue(integer=1), \n" + // 1 = value to prove
+                "        IntegerGTXValue(integer=101), \n" + // 101 = value to prove
                 "        ArrayGTXValue(array=[\n" +  // Here the value to prove is a regular ArrayGTXValue. Interesting to see that this is deserialized propely (i.e. kept)
                 "          IntegerGTXValue(integer=1), \n" +
                 "          IntegerGTXValue(integer=9), \n" +
@@ -536,7 +536,7 @@ class ArrayToMerkleProofTreeTest {
                 "    ])\n" +
                 "  ]), \n" +
                 "  ArrayGTXValue(array=[\n" +
-                "    IntegerGTXValue(integer=0), \n" + // 0 = hash
+                "    IntegerGTXValue(integer=100), \n" + // 100 = hash
                 "    ByteArrayGTXValue(bytearray=[0, 1, 3, 8, 3, 9, 2, 9])\n" +
                 "  ])\n" +
                 "])\n"

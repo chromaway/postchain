@@ -7,9 +7,9 @@ import net.postchain.gtx.ByteArrayGTXValue
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.IntegerGTXValue
 
-const val SERIALIZATION_HASH_LEAF_TYPE: Long = 0
-const val SERIALIZATION_VALUE_LEAF_TYPE: Long = 1
-const val SERIALIZATION_NODE_TYPE: Long = 2
+const val SERIALIZATION_HASH_LEAF_TYPE: Long = 100
+const val SERIALIZATION_VALUE_LEAF_TYPE: Long = 101
+const val SERIALIZATION_NODE_TYPE: Long = 102
 
 /**
  * (Here is some info about Merkle Proofs and the way we tackle it)

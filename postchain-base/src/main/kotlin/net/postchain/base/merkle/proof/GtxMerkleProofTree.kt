@@ -5,8 +5,8 @@ import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_NODE_GTX_DICT
 import net.postchain.gtx.*
 
 
-const val SERIALIZATION_ARRAY_TYPE: Long = 3
-const val SERIALIZATION_DICT_TYPE: Long = 4
+const val SERIALIZATION_ARRAY_TYPE: Long = 103
+const val SERIALIZATION_DICT_TYPE: Long = 104
 
 /**
  * Represents a proof node that once was the head of a GTX array.
