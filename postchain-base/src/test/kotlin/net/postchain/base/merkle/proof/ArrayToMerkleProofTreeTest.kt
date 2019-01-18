@@ -1,6 +1,8 @@
 package net.postchain.base.merkle.proof
 
 import net.postchain.base.merkle.*
+import net.postchain.base.merkle.TreeHelper.stripWhite
+import net.postchain.gtx.ArrayGTXValue
 import net.postchain.gtx.GTXPath
 import net.postchain.gtx.GTXPathFactory
 import org.junit.Assert
@@ -29,6 +31,10 @@ import kotlin.test.assertEquals
  * The dummy serializer doesn't do anything but converting an int to a byte:
  *   7 -> 07
  *   12 -> 0C
+ *
+ * -----------------
+ * Note: The testing of the exact serialization format is not very important and can be removed. The only important
+ * thing is that we keep testing after deserialization.
  */
 class ArrayToMerkleProofTreeTest {
 
@@ -49,7 +55,7 @@ class ArrayToMerkleProofTreeTest {
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
         val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf1(gtxPath)
 
-        val expectedPath =
+        val expectedTree =
                 " +   \n" +
                 "/ \\ \n" +
                 "*1 0000000000000000000000000000000000000000000000000000000000000000 "
@@ -62,7 +68,37 @@ class ArrayToMerkleProofTreeTest {
         val resultPrintout = printer.printNode(pbt)
         //println(resultPrintout)
 
-        Assert.assertEquals(expectedPath.trim(), resultPrintout.trim())
+        Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
+
+        // Proof -> Serialize
+        val serialize: ArrayGTXValue = merkleProofTree.serializeToGtx()
+        //println("Serilalized: $serialize")
+
+        val expectedSerialization = "ArrayGTXValue(array=[\n" +
+                "  IntegerGTXValue(integer=3), \n" +  // 3 =  node type is array
+                "  IntegerGTXValue(integer=1), \n" +  // lenght of array
+                "  ArrayGTXValue(array=[\n" +
+                "    IntegerGTXValue(integer=1), \n" + // 1 = value to prove
+                "    IntegerGTXValue(integer=1)\n" +
+                "  ]), \n" +
+                "  ArrayGTXValue(array=[\n" +
+                "    IntegerGTXValue(integer=0), \n" + // 0 = hash
+                "    ByteArrayGTXValue(bytearray=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])\n" +
+                "  ])\n" +
+                "])\n"
+        Assert.assertEquals(stripWhite(expectedSerialization), stripWhite(serialize.toString())) // Not really needed, Can be removed
+
+        // Serialize -> deserialize
+        val deserialized = factory.deserialize(serialize)
+
+
+        // Print the result tree
+        val pbtDes = PrintableTreeFactory.buildPrintableTreeFromProofTree(deserialized)
+        val deserializedPrintout = printer.printNode(pbtDes)
+        //println(deserializedPrintout)
+
+        Assert.assertEquals(expectedTree.trim(), deserializedPrintout.trim())
+
 
     }
 
@@ -93,7 +129,7 @@ class ArrayToMerkleProofTreeTest {
         // 00 + 02050206
         // 0002050206  <-- Combined hash of 3 and 4.
 
-        val expectedPath =
+        val expectedTree =
                 "   +       \n" +
                 "  / \\   \n" +
                 " /   \\  \n" +
@@ -110,7 +146,44 @@ class ArrayToMerkleProofTreeTest {
         val resultPrintout = printer.printNode(pbt)
         //println(resultPrintout)
 
-        Assert.assertEquals(expectedPath.trim(), resultPrintout.trim())
+        Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
+
+        // Proof -> Serialize
+        val serialize: ArrayGTXValue = merkleProofTree.serializeToGtx()
+        //println("Serilalized: $serialize")
+
+        val expectedSerialization = "ArrayGTXValue(array=[\n" +
+                "  IntegerGTXValue(integer=3), \n" +// 3 = array head node type
+                "  IntegerGTXValue(integer=4), \n" + // length of array
+                "  ArrayGTXValue(array=[\n" +
+                "    IntegerGTXValue(integer=2), \n" +
+                "    ArrayGTXValue(array=[\n" +
+                "      IntegerGTXValue(integer=1), \n" +// 1 = value to prove
+                "      IntegerGTXValue(integer=1)\n" +
+                "    ]), \n" +
+                "    ArrayGTXValue(array=[\n" +
+                "      IntegerGTXValue(integer=0), \n" +// 0 = hash
+                "      ByteArrayGTXValue(bytearray=[1, 3])\n" +
+                "    ])\n" +
+                "  ]), \n" +
+                "  ArrayGTXValue(array=[\n" +
+                "    IntegerGTXValue(integer=0), \n" +// 0 = hash
+                "    ByteArrayGTXValue(bytearray=[0, 2, 5, 2, 6])\n" +
+                "  ])\n" +
+                "])\n"
+
+        Assert.assertEquals(stripWhite(expectedSerialization), stripWhite(serialize.toString())) // Not really needed, Can be removed
+
+        // Serialize -> deserialize
+        val deserialized = factory.deserialize(serialize)
+
+
+        // Print the result tree
+        val pbtDes = PrintableTreeFactory.buildPrintableTreeFromProofTree(deserialized)
+        val deserializedPrintout = printer.printNode(pbtDes)
+        //println(deserializedPrintout)
+
+        Assert.assertEquals(expectedTree.trim(), deserializedPrintout.trim())
 
     }
 
@@ -160,7 +233,7 @@ class ArrayToMerkleProofTreeTest {
         // 00 + [00 + 02070208 + 0108 ]
         // 00 + [00020702080108 ]
         // 00 +  01030803090209
-        val expectedPath = "       +               \n" +
+        val expectedTree = "       +               \n" +
                 "      / \\       \n" +
                 "     /   \\      \n" +
                 "    /     \\     \n" +
@@ -178,9 +251,51 @@ class ArrayToMerkleProofTreeTest {
         val printer = TreePrinter()
         val pbt = PrintableTreeFactory.buildPrintableTreeFromProofTree(merkleProofTree)
         val resultPrintout = printer.printNode(pbt)
-        //println(resultPrintout)
+        println(resultPrintout)
 
-        Assert.assertEquals(expectedPath.trim(), resultPrintout.trim())
+        Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
+
+        // Proof -> Serialize
+        val serialize: ArrayGTXValue = merkleProofTree.serializeToGtx()
+        //println("Serilalized: $serialize")
+
+        val expectedSerialization = "ArrayGTXValue(array=[\n" +
+                "  IntegerGTXValue(integer=3),\n" + // 3 = array head node type
+                "  IntegerGTXValue(integer=7),\n" + // length of array
+                "  ArrayGTXValue(array=[\n" +
+                "    IntegerGTXValue(integer=2),\n" + // 2 = dummy node
+                "    ArrayGTXValue(array=[\n" +
+                "      IntegerGTXValue(integer=0),\n" + // 0 = hash
+                "      ByteArrayGTXValue(bytearray=[0, 2, 3, 2, 4])]),\n" +
+                "      ArrayGTXValue(array=[\n" +
+                "        IntegerGTXValue(integer=2),\n" + // 2 = dummy node
+                "        ArrayGTXValue(array=[\n" +
+                "          IntegerGTXValue(integer=0),\n" +  // 0 = hash
+                "          ByteArrayGTXValue(bytearray=[1, 4])\n" +
+                "        ]),\n" +
+                "        ArrayGTXValue(array=[\n" +
+                "          IntegerGTXValue(integer=1),\n" + // 1 = value to prove
+                "          IntegerGTXValue(integer=4)\n" +
+                "        ])\n" +
+                "      ])\n" +
+                "    ]),\n" +
+                "    ArrayGTXValue(array=[\n" +
+                "      IntegerGTXValue(integer=0),\n" + // 0 = hash
+                "      ByteArrayGTXValue(bytearray=[0, 1, 3, 8, 3, 9, 2, 9])\n" +
+                "    ])\n" +
+                "  ])\n"
+
+        Assert.assertEquals(stripWhite(expectedSerialization), stripWhite(serialize.toString())) // Not really needed, Can be removed
+
+        // Serialize -> deserialize
+        val deserialized = factory.deserialize(serialize)
+
+        // Print the result tree
+        val pbtDes = PrintableTreeFactory.buildPrintableTreeFromProofTree(deserialized)
+        val deserializedPrintout = printer.printNode(pbtDes)
+        //println(deserializedPrintout)
+
+        Assert.assertEquals(expectedTree.trim(), deserializedPrintout.trim())
 
     }
 
@@ -198,7 +313,7 @@ class ArrayToMerkleProofTreeTest {
 
         //Assert.assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
 
-        val expectedPath =
+        val expectedTree =
                 "       +               \n" +
                 "      / \\       \n" +
                 "     /   \\      \n" +
@@ -219,7 +334,7 @@ class ArrayToMerkleProofTreeTest {
         val resultPrintout = printer.printNode(pbt)
         //println(resultPrintout)
 
-        Assert.assertEquals(expectedPath.trim(), resultPrintout.trim())
+        Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
 
     }
 
@@ -233,7 +348,7 @@ class ArrayToMerkleProofTreeTest {
         val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf7WithSubTree(gtxPath)
 
 
-        val expectedPath =
+        val expectedTree =
                 "                               +                                                               \n" +
                 "                              / \\                               \n" +
                 "                             /   \\                              \n" +
@@ -281,7 +396,7 @@ class ArrayToMerkleProofTreeTest {
         val resultPrintout = printer.printNode(pbt)
         //println(resultPrintout)
 
-        Assert.assertEquals(expectedPath.trim(), resultPrintout.trim())
+        Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
     }
 
     @Test
@@ -319,7 +434,7 @@ class ArrayToMerkleProofTreeTest {
         //      ] ->
         // 07 + [ 000203020B0104 ] ->
         // 07 +   010304030C0205
-        val expectedPath =
+        val expectedTree =
                 "       +               \n" +
                 "      / \\       \n" +
                 "     /   \\      \n" +
@@ -341,7 +456,7 @@ class ArrayToMerkleProofTreeTest {
         val resultPrintout = printer.printNode(pbt)
         //println(resultPrintout)
 
-        Assert.assertEquals(expectedPath.trim(), resultPrintout.trim())
+        Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
     }
 
     @Test
@@ -368,7 +483,7 @@ class ArrayToMerkleProofTreeTest {
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
         val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf7WithSubTree(gtxPath)
 
-        val expectedPath ="       +               \n" +
+        val expectedTree ="       +               \n" +
                 "      / \\       \n" +
                 "     /   \\      \n" +
                 "    /     \\     \n" +
@@ -389,7 +504,56 @@ class ArrayToMerkleProofTreeTest {
         val resultPrintout = printer.printNode(pbt)
         //println(resultPrintout)
 
-        Assert.assertEquals(expectedPath.trim(), resultPrintout.trim())
+        Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
+
+        // Proof -> Serialize
+        val serialize: ArrayGTXValue = merkleProofTree.serializeToGtx()
+        println("Serilalized: $serialize")
+
+        val expectedSerialization = "ArrayGTXValue(array=[\n" +
+                "  IntegerGTXValue(integer=3), \n" + // 3 = array head node type
+                "  IntegerGTXValue(integer=7), \n" + // length of array
+                "  ArrayGTXValue(array=[\n" +
+                "    IntegerGTXValue(integer=2), \n" + // 2 = dummy node
+                "    ArrayGTXValue(array=[\n" +
+                "      IntegerGTXValue(integer=0), \n" + // 0 = hash
+                "      ByteArrayGTXValue(bytearray=[0, 2, 3, 2, 4])\n" +
+                "    ]),\n" +
+                "    ArrayGTXValue(array=[\n" +
+                "      IntegerGTXValue(integer=2), \n" + // 2 = dummy node
+                "      ArrayGTXValue(array=[\n" +
+                "        IntegerGTXValue(integer=0), \n" + // 0 = hash
+                "        ByteArrayGTXValue(bytearray=[1, 4])\n" +
+                "      ]), \n" +
+                "      ArrayGTXValue(array=[\n" +
+                "        IntegerGTXValue(integer=1), \n" + // 1 = value to prove
+                "        ArrayGTXValue(array=[\n" +  // Here the value to prove is a regular ArrayGTXValue. Interesting to see that this is deserialized propely (i.e. kept)
+                "          IntegerGTXValue(integer=1), \n" +
+                "          IntegerGTXValue(integer=9), \n" +
+                "          IntegerGTXValue(integer=3)\n" +
+                "        ])\n" +
+                "      ])\n" +
+                "    ])\n" +
+                "  ]), \n" +
+                "  ArrayGTXValue(array=[\n" +
+                "    IntegerGTXValue(integer=0), \n" + // 0 = hash
+                "    ByteArrayGTXValue(bytearray=[0, 1, 3, 8, 3, 9, 2, 9])\n" +
+                "  ])\n" +
+                "])\n"
+
+        Assert.assertEquals(stripWhite(expectedSerialization), stripWhite(serialize.toString())) // Not really needed, Can be removed
+
+        // Serialize -> deserialize
+        val deserialized = factory.deserialize(serialize)
+
+
+        // Print the result tree
+        val pbtDes = PrintableTreeFactory.buildPrintableTreeFromProofTree(deserialized)
+        val deserializedPrintout = printer.printNode(pbtDes)
+        println(deserializedPrintout)
+
+        Assert.assertEquals(expectedTree.trim(), deserializedPrintout.trim())
+
     }
 
     @Test

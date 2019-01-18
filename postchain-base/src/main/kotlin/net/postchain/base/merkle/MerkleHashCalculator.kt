@@ -27,7 +27,7 @@ abstract class MerkleHashCalculator<T, TPath>(cryptoSystem: CryptoSystem?): Bina
      */
     protected fun calculateHashOfValueInternal(valueToHash: T, serializeFun: (T) -> ByteArray, hashFun: (ByteArray, CryptoSystem?) -> Hash): Hash {
         var byteArr: ByteArray = serializeFun(valueToHash)
-        return byteArrayOf(Leaf.leafPrefixByte) + hashFun(byteArr, cryptoSystem)
+        return byteArrayOf(MerkleBasics.HASH_PREFIX_LEAF) + hashFun(byteArr, cryptoSystem)
     }
 
     /**

@@ -85,4 +85,11 @@ object TreeHelper {
         return data
     }
 
+    /**
+     * Sometimes we need to strip white spaces and newlines etc for string comparison.
+     */
+    fun stripWhite(s: String): String {
+        return s.replace("\\s".toRegex(), "")
+    }
+
 }

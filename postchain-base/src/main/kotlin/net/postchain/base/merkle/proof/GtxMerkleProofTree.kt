@@ -42,13 +42,13 @@ class GtxMerkleProofTree(root: MerkleProofElement): MerkleProofTree<GTXValue, GT
      * "Other types" refers to [ProofNodeGtxArrayHead] and [ProofNodeGtxDictHead] in this case. We add the following integers to our
      * serialization policy: [SERIALIZATION_ARRAY_TYPE] and [SERIALIZATION_DICT_TYPE].
      */
-    override fun serializeOtherTypes(currentElement: MerkleProofElement): GTXValue {
+    override fun serializeOtherTypes(currentElement: MerkleProofElement): ArrayGTXValue {
 
         return when (currentElement) {
             is ProofNodeGtxArrayHead -> {
                 val tail1 = serializeToGtxInternal(currentElement.left)
                 val tail2 = serializeToGtxInternal(currentElement.right)
-                val size = IntegerGTXValue(currentElement.size as Long)
+                val size = IntegerGTXValue(currentElement.size.toLong())
                 val head = IntegerGTXValue(SERIALIZATION_ARRAY_TYPE)
                 val arr: Array<GTXValue> = arrayOf(head, size, tail1, tail2)
                 ArrayGTXValue(arr)
@@ -56,7 +56,7 @@ class GtxMerkleProofTree(root: MerkleProofElement): MerkleProofTree<GTXValue, GT
             is ProofNodeGtxDictHead -> {
                 val tail1 = serializeToGtxInternal(currentElement.left)
                 val tail2 = serializeToGtxInternal(currentElement.right)
-                val size = IntegerGTXValue(currentElement.size as Long)
+                val size = IntegerGTXValue(currentElement.size.toLong())
                 val head = IntegerGTXValue(SERIALIZATION_DICT_TYPE)
                 val arr: Array<GTXValue> = arrayOf(head, size, tail1, tail2)
                 ArrayGTXValue(arr)

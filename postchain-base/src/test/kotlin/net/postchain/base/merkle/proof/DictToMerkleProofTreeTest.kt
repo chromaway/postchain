@@ -1,6 +1,7 @@
 package net.postchain.base.merkle.proof
 
 import net.postchain.base.merkle.*
+import net.postchain.gtx.ArrayGTXValue
 import net.postchain.gtx.GTXPath
 import net.postchain.gtx.GTXPathFactory
 import org.junit.Assert
@@ -28,6 +29,10 @@ import kotlin.test.assertEquals
  * The dummy serializer doesn't do anything but converting an int to a byte:
  *   7 -> 07
  *   12 -> 0C
+ *
+ * -----------------
+ * Note: The testing of the exact serialization format is not very important and can be removed. The only important
+ * thing is that we keep testing after deserialization.
  */
 
 class DictToMerkleProofTreeTest {
@@ -66,6 +71,35 @@ class DictToMerkleProofTreeTest {
         //println(resultPrintout)
 
         Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
+
+        // Proof -> Serialize
+        val serialize: ArrayGTXValue = merkleProofTree.serializeToGtx()
+        //println("Serilalized: $serialize")
+
+        val expectedSerialization = "ArrayGTXValue(array=[\n" +
+                "  IntegerGTXValue(integer=4),\n" + // 4 = dict head node type
+                "  IntegerGTXValue(integer=1),\n" + // length of dict
+                "  ArrayGTXValue(array=[\n" +
+                "    IntegerGTXValue(integer=0),\n" + // 0 = hash
+                "    ByteArrayGTXValue(bytearray=[1, 112, 111, 102])\n" +
+                "  ]),\n" +
+                "  ArrayGTXValue(array=[\n" +
+                "    IntegerGTXValue(integer=1),  \n" + // 1 = value to prove
+                "    IntegerGTXValue(integer=1)\n" +
+                "  ])\n" +
+                "])\n"
+
+        Assert.assertEquals(TreeHelper.stripWhite(expectedSerialization), TreeHelper.stripWhite(serialize.toString())) // Not really needed, Can be removed
+
+        // Serialize -> deserialize
+        val deserialized = factory.deserialize(serialize)
+
+        // Print the result tree
+        val pbtDes = PrintableTreeFactory.buildPrintableTreeFromProofTree(deserialized)
+        val deserializedPrintout = printer.printNode(pbtDes)
+        //println(deserializedPrintout)
+
+        Assert.assertEquals(expectedTree.trim(), deserializedPrintout.trim())
 
     }
 
@@ -129,7 +163,7 @@ class DictToMerkleProofTreeTest {
         //      01 03777A72 0305
         // 000103776B75686803060103777A720305
         //
-        val expectedPath =
+        val expectedTree =
                 "       +               \n" +
                         "      / \\       \n" +
                         "     /   \\      \n" +
@@ -150,7 +184,50 @@ class DictToMerkleProofTreeTest {
         val resultPrintout = printer.printNode(pbt)
         //println(resultPrintout)
 
-        Assert.assertEquals(expectedPath.trim(), resultPrintout.trim())
+        Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
+
+        // Proof -> Serialize
+        val serialize: ArrayGTXValue = merkleProofTree.serializeToGtx()
+        //println("Serilalized: $serialize")
+
+        val expectedSerialization = "ArrayGTXValue(array=[\n" +
+                "  IntegerGTXValue(integer=4), \n" + // 4 = dict head node type
+                "  IntegerGTXValue(integer=4), \n" + // length of the dict
+                "  ArrayGTXValue(array=[\n" +
+                "    IntegerGTXValue(integer=2), \n" + // 2 = dummy node
+                "    ArrayGTXValue(array=[\n" +
+                "      IntegerGTXValue(integer=2), \n" + // 2 = dummy node
+                "      ArrayGTXValue(array=[\n" +
+                "        IntegerGTXValue(integer=0), \n" + // 0 = hash
+                "        ByteArrayGTXValue(bytearray=[1, 103, 112, 118, 115])\n" +
+                "      ]),\n" +
+                "      ArrayGTXValue(array=[\n" +
+                "        IntegerGTXValue(integer=1),   \n" + // 1 = value to prove
+                "        IntegerGTXValue(integer=4)\n" +
+                "      ])\n" +
+                "    ]),  \n" +
+                "    ArrayGTXValue(array=[\n" +
+                "      IntegerGTXValue(integer=0),   \n" + // 0 = hash
+                "      ByteArrayGTXValue(bytearray=[0, 2, 113, 112, 103, 2, 3])\n" +
+                "    ])\n" +
+                "  ]),   \n" +
+                "  ArrayGTXValue(array=[\n" +
+                "    IntegerGTXValue(integer=0),   \n" + // 0 = hash
+                "    ByteArrayGTXValue(bytearray=[0, 1, 3, 119, 107, 117, 104, 104, 3, 6, 1, 3, 119, 122, 114, 3, 5])\n" +
+                "  ])\n" +
+                "])\n"
+
+        Assert.assertEquals(TreeHelper.stripWhite(expectedSerialization), TreeHelper.stripWhite(serialize.toString())) // Not really needed, Can be removed
+
+        // Serialize -> deserialize
+        val deserialized = factory.deserialize(serialize)
+
+        // Print the result tree
+        val pbtDes = PrintableTreeFactory.buildPrintableTreeFromProofTree(deserialized)
+        val deserializedPrintout = printer.printNode(pbtDes)
+        //println(deserializedPrintout)
+
+        Assert.assertEquals(expectedTree.trim(), deserializedPrintout.trim())
 
     }
 
@@ -207,7 +284,7 @@ class DictToMerkleProofTreeTest {
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
         val treeHolder = DictToGtxBinaryTreeHelper.buildTreeOf1WithSubTree(gtxPath)
 
-        val expectedPath = "       +               \n" +
+        val expectedTree = "       +               \n" +
                 "      / \\       \n" +
                 "     /   \\      \n" +
                 "    /     \\     \n" +
@@ -227,7 +304,51 @@ class DictToMerkleProofTreeTest {
         val resultPrintout = printer.printNode(pbt)
         //println(resultPrintout)
 
-        Assert.assertEquals(expectedPath.trim(), resultPrintout.trim())
+        Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
+
+        // Proof -> Serialize
+        val serialize: ArrayGTXValue = merkleProofTree.serializeToGtx()
+        println("Serilalized: $serialize")
+
+        val expectedSerialization =  "ArrayGTXValue(array=[\n" +
+                "  IntegerGTXValue(integer=4), \n" + // 4 = dict head node type
+                "  IntegerGTXValue(integer=1), \n" + // length of the dict
+                "  ArrayGTXValue(array=[\n" +
+                "    IntegerGTXValue(integer=0),\n" +
+                "    ByteArrayGTXValue(bytearray=[1, 112, 111, 102])\n" +
+                "  ]),\n" +
+                "  ArrayGTXValue(array=[\n" +
+                "    IntegerGTXValue(integer=4), \n" + // 4 = dict head node type
+                "    IntegerGTXValue(integer=2), \n" + // length of the dict
+                "    ArrayGTXValue(array=[\n" +
+                "      IntegerGTXValue(integer=0), \n" + // 0 = hash
+                "      ByteArrayGTXValue(bytearray=[0, 2, 103, 107, 105, 106, 118, 2, 10])\n" +
+                "    ]), \n" +
+                "    ArrayGTXValue(array=[\n" +
+                "      IntegerGTXValue(integer=2), \n" + // 2 = dummy node
+                "      ArrayGTXValue(array=[\n" +
+                "        IntegerGTXValue(integer=0), \n" + // 0 = hash
+                "        ByteArrayGTXValue(bytearray=[1, 116, 102, 119, 102, 111])\n" +
+                "      ]), \n" +
+                "      ArrayGTXValue(array=[\n" +
+                "        IntegerGTXValue(integer=1), \n" + // 1 = value to prove
+                "        IntegerGTXValue(integer=7)\n" +
+                "      ])\n" +
+                "    ])\n" +
+                "  ])\n" +
+                "])\n"
+
+        Assert.assertEquals(TreeHelper.stripWhite(expectedSerialization), TreeHelper.stripWhite(serialize.toString())) // Not really needed, Can be removed
+
+        // Serialize -> deserialize
+        val deserialized = factory.deserialize(serialize)
+
+        // Print the result tree
+        val pbtDes = PrintableTreeFactory.buildPrintableTreeFromProofTree(deserialized)
+        val deserializedPrintout = printer.printNode(pbtDes)
+        println(deserializedPrintout)
+
+        Assert.assertEquals(expectedTree.trim(), deserializedPrintout.trim())
 
     }
 
@@ -257,7 +378,7 @@ class DictToMerkleProofTreeTest {
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
         val treeHolder = DictToGtxBinaryTreeHelper.buildTreeOf1WithSubTree(gtxPath)
 
-        val expectedPath = " +   \n" +
+        val expectedTree = " +   \n" +
                 "/ \\ \n" +
                 "01706F66 *DictGTXValue(dict={seven=IntegerGTXValue(integer=7), eight=IntegerGTXValue(integer=8)}) "
 
@@ -269,7 +390,40 @@ class DictToMerkleProofTreeTest {
         val resultPrintout = printer.printNode(pbt)
         //println(resultPrintout)
 
-        Assert.assertEquals(expectedPath.trim(), resultPrintout.trim())
+        Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
+
+        // Proof -> Serialize
+        val serialize: ArrayGTXValue = merkleProofTree.serializeToGtx()
+        //println("Serilalized: $serialize")
+
+        val expectedSerialization = "ArrayGTXValue(array=[\n" +
+                "  IntegerGTXValue(integer=4),\n" +  // 4 = dict head node type
+                "  IntegerGTXValue(integer=1),\n" + // lenght of the dict
+                "  ArrayGTXValue(array=[\n" +
+                "    IntegerGTXValue(integer=0),\n" + // 0 = Hash
+                "    ByteArrayGTXValue(bytearray=[1, 112, 111, 102])\n" +
+                "  ]),\n" +
+                "  ArrayGTXValue(array=[\n" +
+                "    IntegerGTXValue(integer=1), \n" + // 1 = value to be proved (in this case an entire dict)
+                "    DictGTXValue(dict={\n" +  // The value is a DictGTXValue, in it's raw form
+                "      seven=IntegerGTXValue(integer=7), \n" +
+                "      eight=IntegerGTXValue(integer=8)\n" +
+                "    })\n" +
+                "  ])\n" +
+                "])\n"
+
+        Assert.assertEquals(TreeHelper.stripWhite(expectedSerialization), TreeHelper.stripWhite(serialize.toString())) // Not really needed, Can be removed
+
+        // Serialize -> deserialize
+        val deserialized = factory.deserialize(serialize)
+
+        // Print the result tree
+        val pbtDes = PrintableTreeFactory.buildPrintableTreeFromProofTree(deserialized)
+        val deserializedPrintout = printer.printNode(pbtDes)
+        //println(deserializedPrintout)
+
+        Assert.assertEquals(expectedTree.trim(), deserializedPrintout.trim())
+
 
     }
 

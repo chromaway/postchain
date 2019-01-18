@@ -146,12 +146,12 @@ abstract class MerkleProofTree<T,TPath>(val root: MerkleProofElement) {
      * 2 -> a node
      * (we can add more in sub classes)
      */
-    fun serializeToGtx(): GTXValue {
+    fun serializeToGtx(): ArrayGTXValue {
 
         return serializeToGtxInternal(this.root)
     }
 
-    protected fun serializeToGtxInternal(currentElement: MerkleProofElement): GTXValue {
+    protected fun serializeToGtxInternal(currentElement: MerkleProofElement): ArrayGTXValue {
         return when (currentElement) {
             is ProofHashedLeaf -> {
                 val tail = ByteArrayGTXValue(currentElement.hash)
@@ -165,7 +165,7 @@ abstract class MerkleProofTree<T,TPath>(val root: MerkleProofElement) {
                 val arr: Array<GTXValue> = arrayOf(head, tail)
                 ArrayGTXValue(arr)
             }
-            is ProofNode -> {
+            is ProofNodeSimple -> {
                 val tail1 = serializeToGtxInternal(currentElement.left)
                 val tail2 = serializeToGtxInternal(currentElement.right)
                 val head = IntegerGTXValue(SERIALIZATION_NODE_TYPE)
@@ -179,7 +179,7 @@ abstract class MerkleProofTree<T,TPath>(val root: MerkleProofElement) {
     abstract fun serializeValueLeafToGtx(valueLeaf: T): GTXValue
 
 
-    abstract fun serializeOtherTypes(currentElement: MerkleProofElement): GTXValue
+    abstract fun serializeOtherTypes(currentElement: MerkleProofElement): ArrayGTXValue
 
 
     /**
@@ -194,6 +194,7 @@ abstract class MerkleProofTree<T,TPath>(val root: MerkleProofElement) {
             is ProofValueLeaf<*> -> 1
             is ProofHashedLeaf -> 1
             is ProofNode -> maxOf(maxLevelInternal(node.left), maxLevelInternal(node.right)) + 1
+            else -> throw IllegalStateException("Should be able to handle node type: $node")
         }
     }
 

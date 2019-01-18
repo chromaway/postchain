@@ -137,17 +137,17 @@ object PrintableTreeFactory {
                     PLeaf(content, true)
                 }
             }
-            is ProofHashedLeaf<*> -> {
+            is ProofHashedLeaf -> {
                 if (currentLevel < maxLevel) {
                     // Create node instead of leaf
-                    val content = TreeHelper.convertToHex(inElement.hash as Hash)
+                    val content = TreeHelper.convertToHex(inElement.hash)
                     //println("Early hash leaf $content at level: $currentLevel")
                     val emptyLeft: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     val emptyRight: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     PContentNode(content, emptyLeft, emptyRight, false)
                 } else {
                     // Normal leaf
-                    val content = TreeHelper.convertToHex(inElement.hash as Hash)
+                    val content = TreeHelper.convertToHex(inElement.hash)
                     //println("Normal hash leaf $content at level: $currentLevel")
                     PLeaf(content, false)
                 }
@@ -157,6 +157,7 @@ object PrintableTreeFactory {
                 val right = fromProofTreeInternal(currentLevel + 1, maxLevel, inElement.right)
                 PNode(left, right, false)
             }
+            else -> throw IllegalStateException("Should have handled this element type: $inElement")
         }
     }
 

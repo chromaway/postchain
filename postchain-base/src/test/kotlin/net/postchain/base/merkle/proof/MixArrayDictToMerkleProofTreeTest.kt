@@ -24,7 +24,7 @@ class MixArrayDictToMerkleProofTreeTest {
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
         val treeHolder = MixArrayDictToGtxBinaryTreeHelper.buildTreeOfDict1WithSubArray4(gtxPath)
 
-        val expectedPath = "       +               \n" +
+        val expectedTree = "       +               \n" +
                 "      / \\       \n" +
                 "     /   \\      \n" +
                 "    /     \\     \n" +
@@ -44,7 +44,7 @@ class MixArrayDictToMerkleProofTreeTest {
         val resultPrintout = printer.printNode(pbt)
         //println(resultPrintout)
 
-        Assert.assertEquals(expectedPath.trim(), resultPrintout.trim())
+        Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
     }
 
     @Test
@@ -80,7 +80,7 @@ class MixArrayDictToMerkleProofTreeTest {
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
         val treeHolder = MixArrayDictToGtxBinaryTreeHelper.buildTreeOfDict1WithSubArray4(gtxPath)
 
-        val expectedPath = " +   \n" +
+        val expectedTree = " +   \n" +
                 "/ \\ \n" +
                 "01706F66 *ArrayGTXValue(array=[IntegerGTXValue(integer=1), IntegerGTXValue(integer=2), IntegerGTXValue(integer=3), IntegerGTXValue(integer=4)])"
 
@@ -92,7 +92,7 @@ class MixArrayDictToMerkleProofTreeTest {
         val resultPrintout = printer.printNode(pbt)
         println(resultPrintout)
 
-        Assert.assertEquals(expectedPath.trim(), resultPrintout.trim())
+        Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
 
     }
 
