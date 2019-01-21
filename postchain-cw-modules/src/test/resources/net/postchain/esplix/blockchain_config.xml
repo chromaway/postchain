@@ -23,10 +23,12 @@
     </entry>
     <entry key="signers">
         <array>
-            <bytea>0350FE40766BC0CE8D08B3F5B810E49A8352FDD458606BD5FAFE5ACDCDC8FF3F57</bytea>
-            <bytea>035676109C54B9A16D271ABEB4954316A40A32BCCE023AC14C8E26E958AA68FBA9</bytea>
-            <bytea>03F811D3E806E6D093A4BCCE49C145BA78F9A4B2FBD167753ECAB2A13530B081F8</bytea>
-            <bytea>03EF3F5BE98D499B048BA28B247036B611A1CED7FCF87C17C8B5CA3B3CE1EE23A4</bytea>
+            <!-- privKey: 0000000000000000000000000000000001000000000000000000000000000000 -->
+            <bytea>03a301697bdfcd704313ba48e51d567543f2a182031efd6915ddc07bbcc4e16070</bytea>
+            <!--<bytea>0350FE40766BC0CE8D08B3F5B810E49A8352FDD458606BD5FAFE5ACDCDC8FF3F57</bytea>-->
+            <!--<bytea>035676109C54B9A16D271ABEB4954316A40A32BCCE023AC14C8E26E958AA68FBA9</bytea>-->
+            <!--<bytea>03F811D3E806E6D093A4BCCE49C145BA78F9A4B2FBD167753ECAB2A13530B081F8</bytea>-->
+            <!--<bytea>03EF3F5BE98D499B048BA28B247036B611A1CED7FCF87C17C8B5CA3B3CE1EE23A4</bytea>-->
         </array>
     </entry>
     <entry key="gtx">
@@ -39,7 +41,7 @@
         <dict>
             <entry key="modules">
                 <array>
-                    <string>net.postchain.configurations.GTXTestModule</string>
+                    <string>net.postchain.modules.esplix_r4.BaseEsplixModuleFactory</string>
                 </array>
             </entry>
         </dict>

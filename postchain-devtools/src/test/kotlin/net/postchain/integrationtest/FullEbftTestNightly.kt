@@ -12,9 +12,11 @@ import net.postchain.devtools.SingleChainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
+@Ignore
 @RunWith(JUnitParamsRunner::class)
 class FullEbftTestNightly : EbftIntegrationTest() {
 
@@ -44,11 +46,11 @@ class FullEbftTestNightly : EbftIntegrationTest() {
         configOverrides.setProperty("blockchain.1.blockstrategy", OnDemandBlockBuildingStrategy::class.qualifiedName)
         createEbftNodes(nodesCount)
         var txId = 0
-        ebftNodes[0].getBlockchainInstance().statusManager
+        nodes[0].getBlockchainInstance().statusManager
         for (i in 0 until blockCount) {
             for (tx in 0 until txPerBlock) {
                 val currentTxId = txId++
-                ebftNodes.forEach {
+                nodes.forEach {
                     it.getBlockchainInstance()
                             .getEngine()
                             .getTransactionQueue()
@@ -56,15 +58,15 @@ class FullEbftTestNightly : EbftIntegrationTest() {
                 }
             }
             logger.info { "Trigger block" }
-            ebftNodes.forEach { strategy(it).buildBlocksUpTo(i.toLong()) }
+            nodes.forEach { strategy(it).buildBlocksUpTo(i.toLong()) }
             logger.info { "Await committed" }
-            ebftNodes.forEach { strategy(it).awaitCommitted(i) }
+            nodes.forEach { strategy(it).awaitCommitted(i) }
         }
 
-        val queries = ebftNodes[0].getBlockchainInstance().getEngine().getBlockQueries()
+        val queries = nodes[0].getBlockchainInstance().getEngine().getBlockQueries()
         val referenceHeight = queries.getBestHeight().get()
         logger.info { "$blockCount, refHe: $referenceHeight" }
-        ebftNodes.forEach { node ->
+        nodes.forEach { node ->
             val queries = node.getBlockchainInstance().getEngine().getBlockQueries()
             assertEquals(referenceHeight, queries.getBestHeight().get())
 

@@ -31,7 +31,6 @@ class BaseBlockchainConfigurationData(
         return data["signers"]!!.asArray().map { it.asByteArray() }
     }
 
-
     fun getBlockBuildingStrategyName(): String {
         return data["blockstrategy"]?.get("name")?.asString() ?: ""
     }

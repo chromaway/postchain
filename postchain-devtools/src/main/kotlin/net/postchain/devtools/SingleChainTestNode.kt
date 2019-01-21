@@ -3,19 +3,22 @@ package net.postchain.devtools
 import net.postchain.PostchainNode
 import net.postchain.StorageBuilder
 import net.postchain.api.rest.controller.Model
-import net.postchain.base.*
+import net.postchain.base.BaseApiInfrastructure
+import net.postchain.base.BaseBlockchainInfrastructure
+import net.postchain.base.BaseConfigurationDataStore
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.base.data.SQLDatabaseAccess
+import net.postchain.base.withWriteConnection
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
-import net.postchain.core.BlockchainConfigurationFactory
 import net.postchain.core.BlockchainProcess
 import net.postchain.core.NODE_ID_TODO
 import net.postchain.ebft.BlockchainInstanceModel
+import net.postchain.gtx.GTXValue
 import net.postchain.gtx.encodeGTXValue
 import org.apache.commons.configuration2.Configuration
 
-class SingleChainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
+class SingleChainTestNode(nodeConfig: Configuration, blockchainConfig: GTXValue) : PostchainNode(nodeConfig) {
 
     private val chainId: Long
     private val blockchainRID: ByteArray
@@ -36,6 +39,7 @@ class SingleChainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig)
             true
         }
 
+        /*
         val configData = BaseBlockchainConfigurationData.readFromCommonsConfiguration(
                 nodeConfig, chainId, blockchainRID, NODE_ID_TODO)
         val factoryClass = Class.forName(configData.data["configurationfactory"]!!.asString())
@@ -44,9 +48,11 @@ class SingleChainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig)
         val blockchainConfiguration = factory.makeBlockchainConfiguration(configData)
         val configAsByteArray = encodeGTXValue(
                 (blockchainConfiguration as BaseBlockchainConfiguration).configData.data)
+*/
 
         withWriteConnection(storage, chainId) { eContext ->
-            BaseConfigurationDataStore.addConfigurationData(eContext, 0, configAsByteArray)
+            BaseConfigurationDataStore.addConfigurationData(
+                    eContext, 0, encodeGTXValue(blockchainConfig))
             true
         }
     }

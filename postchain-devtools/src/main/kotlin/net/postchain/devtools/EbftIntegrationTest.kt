@@ -2,30 +2,29 @@
 
 package net.postchain.devtools
 
-import net.postchain.PostchainNode
-import net.postchain.devtools.KeyPairHelper.privKeyHex
-import org.junit.After
-
 open class EbftIntegrationTest : IntegrationTest() {
 
-    protected var ebftNodes: Array<SingleChainTestNode> = arrayOf()
-
     open fun createEbftNodes(count: Int) {
-        ebftNodes = Array(count) { createEBFTNode(it, count) }
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(count))
+        createNodes(count, "/gtx_it/blockchain_config.xml")
     }
 
+    /*
     private fun createEBFTNode(nodeIndex: Int, nodeCount: Int): SingleChainTestNode {
         configOverrides.setProperty("messaging.privkey", privKeyHex(nodeIndex))
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
 
         val config = createConfig(nodeIndex, nodeCount, DEFAULT_CONFIG_FILE)
-        return SingleChainTestNode(config)
+        return SingleChainTestNode(config, DEFAULT_BLOCKCHAIN_CONFIG_FILE)
                 .apply { startBlockchain() }
     }
+    */
 
+    /*
     @After
     fun tearDownEbftNodes() {
         ebftNodes.forEach(PostchainNode::stopAllBlockchain)
         ebftNodes = arrayOf()
     }
+    */
 }

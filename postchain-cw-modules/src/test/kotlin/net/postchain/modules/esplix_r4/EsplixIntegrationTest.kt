@@ -43,14 +43,9 @@ class EsplixIntegrationTest : IntegrationTest() {
 
     @Test
     fun testEsplix() {
-        configOverrides.setProperty("blockchain.1.configurationfactory",
-                GTXBlockchainConfigurationFactory::class.qualifiedName)
-        configOverrides.setProperty("blockchain.1.gtx.modules",
-                BaseEsplixModuleFactory::class.qualifiedName)
-
         val creator = 0
         val user = 1
-        val node = createNode(0)
+        val node = createNode(0, "/net/postchain/esplix/blockchain_config.xml")
         var currentBlockHeight = -1L
 
         fun buildBlockAndCommitWithTx(data: ByteArray, fail: Boolean = false) {

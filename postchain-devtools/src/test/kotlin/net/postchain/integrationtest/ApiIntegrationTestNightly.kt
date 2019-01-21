@@ -16,9 +16,11 @@ import net.postchain.integrationtest.JsonTools.jsonAsMap
 import net.postchain.devtools.EbftIntegrationTest
 import net.postchain.devtools.testinfra.TestTransaction
 import org.junit.Assert.*
+import org.junit.Ignore
 import org.junit.Test
 
 
+@Ignore
 class ApiIntegrationTestNightly : EbftIntegrationTest() {
 
     private val gson = JsonTools.buildGson()
@@ -71,7 +73,7 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
             for (i in 0 until txCount) {
                 val tx = TestTransaction(currentId - i)
 
-                val body = given().port(ebftNodes[0].getRestApiHttpPort())
+                val body = given().port(nodes[0].getRestApiHttpPort())
                         .get("/tx/$blockchainRID/${tx.getRID().toHex()}/confirmationProof")
                         .then()
                         .statusCode(200)
@@ -110,7 +112,7 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
                 }
 
                 // Assert Merkle Path
-                val header = ebftNodes[0]
+                val header = nodes[0]
                         .getBlockchainInstance()
                         .blockchainConfiguration
                         .decodeBlockHeader(blockHeader) as BaseBlockHeader
@@ -121,13 +123,13 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
 
     private fun awaitConfirmed(blockchainRID: String, tx: Transaction) {
         RestTools.awaitConfirmed(
-                ebftNodes[0].getRestApiHttpPort(),
+                nodes[0].getRestApiHttpPort(),
                 blockchainRID,
                 tx.getRID().toHex())
     }
 
     private fun testStatusGet(path: String, expectedStatus: Int, extraChecks: (responseBody: String) -> Unit = {}) {
-        val response = given().port(ebftNodes[0].getRestApiHttpPort())
+        val response = given().port(nodes[0].getRestApiHttpPort())
                 .get(path)
                 .then()
                 .statusCode(expectedStatus)
@@ -137,7 +139,7 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
     }
 
     private fun testStatusPost(toIndex: Int, path: String, body: String, expectedStatus: Int) {
-        given().port(ebftNodes[toIndex].getRestApiHttpPort())
+        given().port(nodes[toIndex].getRestApiHttpPort())
                 .body(body)
                 .post(path)
                 .then()

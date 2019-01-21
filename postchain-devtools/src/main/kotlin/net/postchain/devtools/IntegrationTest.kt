@@ -12,6 +12,7 @@ import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.KeyPairHelper.pubKeyHex
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.gtx
+import net.postchain.gtx.gtxml.GTXMLValueParser
 import org.apache.commons.configuration2.CompositeConfiguration
 import org.apache.commons.configuration2.Configuration
 import org.apache.commons.configuration2.MapConfiguration
@@ -27,7 +28,6 @@ import java.io.File
 
 open class IntegrationTest {
 
-    private val BASE_PORT = 9870
     protected val nodes = mutableListOf<SingleChainTestNode>()
     val configOverrides = MapConfiguration(mutableMapOf<String, String>())
     val cryptoSystem = SECP256K1CryptoSystem()
@@ -40,7 +40,9 @@ open class IntegrationTest {
     private var expectedSuccessRids = mutableMapOf<Long, MutableList<ByteArray>>()
 
     companion object : KLogging() {
+        const val BASE_PORT = 9870
         const val DEFAULT_CONFIG_FILE = "config.properties"
+        const val DEFAULT_BLOCKCHAIN_CONFIG_FILE = "blockchain_config.xml"
     }
 
     @After
@@ -83,18 +85,22 @@ open class IntegrationTest {
         }
     }
 
-    protected fun createNode(nodeIndex: Int): SingleChainTestNode =
-            createSingleNode(nodeIndex, 1)
+    protected fun createNode(nodeIndex: Int, blockchainConfigFilename: String): SingleChainTestNode =
+            createSingleNode(nodeIndex, 1, blockchainConfigFilename)
 
-    protected fun createNodes(count: Int): Array<SingleChainTestNode> =
-            Array(count) { createSingleNode(it, count) }
+    protected fun createNodes(count: Int, blockchainConfigFilename: String): Array<SingleChainTestNode> =
+            Array(count) { createSingleNode(it, count, blockchainConfigFilename) }
 
-    private fun createSingleNode(nodeIndex: Int, totalNodesCount: Int): SingleChainTestNode {
-        val config = createConfig(nodeIndex, totalNodesCount, DEFAULT_CONFIG_FILE)
-        return SingleChainTestNode(config).apply {
-            startBlockchain()
-            nodes.add(this)
-        }
+    private fun createSingleNode(nodeIndex: Int, totalNodesCount: Int, blockchainConfigFilename: String): SingleChainTestNode {
+        val nodeConfig = createConfig(
+                nodeIndex, totalNodesCount, DEFAULT_CONFIG_FILE)
+
+        val blockchainConfig = GTXMLValueParser.parseGTXMLValue(
+                javaClass.getResource(blockchainConfigFilename).readText())
+
+        return SingleChainTestNode(nodeConfig, blockchainConfig)
+                .apply { startBlockchain() }
+                .also { nodes.add(it) }
     }
 
     protected fun createConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
@@ -113,11 +119,11 @@ open class IntegrationTest {
         baseConfig.listDelimiterHandler = DefaultListDelimiterHandler(',')
         val chainId = baseConfig.getLong("activechainids")
         val signers = Array(nodeCount) { pubKeyHex(it) }.joinToString(",")
-        baseConfig.setProperty("blockchain.$chainId.signers", signers)
+//        baseConfig.setProperty("blockchain.$chainId.signers", signers)
         // append nodeIndex to schema name
         baseConfig.setProperty("database.schema", baseConfig.getString("database.schema") + nodeIndex)
-        baseConfig.setProperty("blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: newschool
-        baseConfig.setProperty("blockchain.$chainId.blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: oldschool
+//        baseConfig.setProperty("blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: newschool
+//        baseConfig.setProperty("blockchain.$chainId.blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: oldschool
 
         // peers
         var port = (baseConfig.getProperty("node.0.port") as String).toInt()
@@ -127,7 +133,7 @@ open class IntegrationTest {
             baseConfig.setProperty("node.$i.port", port++)
             baseConfig.setProperty("node.$i.pubkey", pubKeyHex(i))
         }
-        baseConfig.setProperty("blockchain.$chainId.testmyindex", nodeIndex)
+//        baseConfig.setProperty("blockchain.$chainId.testmyindex", nodeIndex)
 
         configOverrides.setProperty("messaging.privkey", privKeyHex(nodeIndex))
 

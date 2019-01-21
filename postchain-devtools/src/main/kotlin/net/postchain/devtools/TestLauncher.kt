@@ -9,6 +9,7 @@ import net.postchain.core.UserMistake
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.gtx.GTXNull
 import net.postchain.gtx.gtx
 import net.postchain.gtx.gtxml.GTXMLTransactionParser
 import net.postchain.gtx.gtxml.TransactionContext
@@ -51,7 +52,7 @@ class TestLauncher : IntegrationTest() {
         config.setProperty("node.0.pubkey", config.getProperty("test.node.0.pubkey"))
         config.setProperty("database.schema", config.getProperty("test.database.schema"))
 
-        return SingleChainTestNode(config).apply {
+        return SingleChainTestNode(config, GTXNull /*DEFAULT_BLOCKCHAIN_CONFIG_FILE*/).apply {
             startBlockchain()
             nodes.add(this)
         }

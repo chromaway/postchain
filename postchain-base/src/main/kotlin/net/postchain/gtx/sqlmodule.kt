@@ -4,9 +4,7 @@ import net.postchain.core.*
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.MapListHandler
 import org.apache.commons.dbutils.handlers.ScalarHandler
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Paths
+import java.io.File
 
 fun decodeSQLTextArray(a: Any): Array<String> {
     val arr = a as java.sql.Array
@@ -24,7 +22,7 @@ fun makeSQLQueryDesc(opName: String, argNames: Array<String>, argTypes: Array<St
     var fixedArgNames = if (argNames.size > argTypes.size) {
         // Queries returns a table. The column names of that table are also
         // included in argNames for some reason
-        argNames.slice(0..argTypes.size-1).toTypedArray()
+        argNames.slice(0..argTypes.size - 1).toTypedArray()
     } else argNames
     if (fixedArgNames.size != fixedArgNames.size)
         throw UserMistake("Cannot define SQL op ${opName}: wrong parameter list")
@@ -86,9 +84,8 @@ fun convertExtOpDataToPrimitives(opDesc: SQLOpDesc, opData: ExtOpData): MutableL
     return myArgs
 }
 
-class SQLGTXOperation(val opDesc: SQLOpDesc, opData: ExtOpData):
-        GTXOperation(opData)
-{
+class SQLGTXOperation(val opDesc: SQLOpDesc, opData: ExtOpData) :
+        GTXOperation(opData) {
     lateinit var args: Array<Any?>
     override fun isCorrect(): Boolean {
         val myArgs = convertExtOpDataToPrimitives(opDesc, data)
@@ -104,8 +101,7 @@ class SQLGTXOperation(val opDesc: SQLOpDesc, opData: ExtOpData):
     }
 }
 
-class SQLGTXModule(private val moduleFiles: Array<String>): GTXModule
-{
+class SQLGTXModule(private val moduleFiles: Array<String>) : GTXModule {
     lateinit var ops: Map<String, SQLOpDesc>
     lateinit var queries: Map<String, SQLOpDesc>
 
@@ -174,7 +170,6 @@ class SQLGTXModule(private val moduleFiles: Array<String>): GTXModule
     }
 
 
-
     private fun getOperatorMap(oplist: MutableList<MutableMap<String, Any>>): Map<String, SQLOpDesc> {
         val opList = mutableListOf<Pair<String, SQLOpDesc>>()
         for (op in oplist) {
@@ -204,7 +199,7 @@ class SQLGTXModule(private val moduleFiles: Array<String>): GTXModule
     private fun populateOps(ctx: EContext) {
         val r = QueryRunner()
         val oplist = r.query(ctx.conn, "SELECT * FROM gtx_sqlm_get_functions()", MapListHandler())
-        ops =  getOperatorMap(oplist)
+        ops = getOperatorMap(oplist)
     }
 
 
@@ -217,29 +212,45 @@ class SQLGTXModule(private val moduleFiles: Array<String>): GTXModule
 
     override fun initializeDB(ctx: EContext) {
         GTXSchemaManager.autoUpdateSQLSchema(ctx, 0, javaClass, "sqlgtx.sql")
-        for (fileName in moduleFiles) {
-            val moduleName = "SQLM_$fileName"
+        for (filename in moduleFiles) {
+            val moduleName = "SQLM_$filename"
             if (GTXSchemaManager.getModuleVersion(ctx, moduleName) == null) {
                 try {
-
-                    val sql = String(Files.readAllBytes(Paths.get(fileName)), StandardCharsets.UTF_8)
+                    val sql = readModuleFileContent(filename)
                     ctx.conn.createStatement().use {
                         it.execute(sql)
                     }
                     GTXSchemaManager.setModuleVersion(ctx, moduleName, 0)
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    throw UserMistake("Failed to load SQL GTX module ${fileName}", e)
+                    throw UserMistake("Failed to load SQL GTX module ${filename}", e)
                 }
             }
         }
         populateOps(ctx)
         populateQueries(ctx)
     }
+
+    private fun readModuleFileContent(filename: String): String {
+        /*
+        * We use Spring convention here when files under resources are labeled with prefix 'classpath:'.
+        * */
+        val resourcePrefix = "classpath:"
+        return if (filename.startsWith(resourcePrefix)) {
+            javaClass.getResource(filename.substringAfter(resourcePrefix))
+                    .readText()
+        } else {
+            File(filename).readText()
+        }
+    }
 }
 
-class SQLGTXModuleFactory: GTXModuleFactory {
+class SQLGTXModuleFactory : GTXModuleFactory {
     override fun makeModule(data: GTXValue, blockchainRID: ByteArray): GTXModule {
-        return SQLGTXModule(data["gtx"]!!["sqlmodules"]?.asArray()?.map { it.asString() }!!.toTypedArray())
+        return SQLGTXModule(
+                data["gtx"]!!["sqlmodules"]
+                        ?.asArray()
+                        ?.map(GTXValue::asString)
+                !!.toTypedArray())
     }
 }

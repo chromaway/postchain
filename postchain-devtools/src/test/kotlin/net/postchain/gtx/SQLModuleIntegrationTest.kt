@@ -7,7 +7,6 @@ import net.postchain.devtools.KeyPairHelper.pubKey
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.nio.file.Paths
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
@@ -25,24 +24,7 @@ class SQLModuleIntegrationTest : IntegrationTest() {
 
     @Test
     fun testBuildBlock() {
-        val sqlModulePath = Paths.get(javaClass.getResource("sqlmodule1.sql").toURI()).toString()
-        /* FYI: [et]: Commons config has been used again instead of gtx-config
-        gtxConfig = gtx(
-                "configurationfactory" to gtx(GTXBlockchainConfigurationFactory::class.qualifiedName!!),
-                "signers" to gtxConfigSigners(),
-                "gtx" to gtx(
-                        "modules" to gtx(listOf(gtx(SQLGTXModuleFactory::class.qualifiedName!!))),
-                        "sqlmodules" to gtx(listOf(gtx(sqlModulePath)))
-                )
-        )
-        */
-
-        configOverrides.setProperty("blockchain.1.configurationfactory", GTXBlockchainConfigurationFactory::class.qualifiedName)
-        configOverrides.setProperty("blockchain.1.gtx.modules", listOf(SQLGTXModuleFactory::class.qualifiedName))
-        configOverrides.setProperty("blockchain.1.gtx.sqlmodules", listOf(sqlModulePath))
-
-//        val node = createDataLayerNG(0)
-        val node = createNode(0)
+        val node = createNode(0, "/net/postchain/gtx/blockchain_config.xml")
 
         enqueueTx(node, makeTx(0, "k", "v"), 0)
         buildBlockAndCommit(node)
