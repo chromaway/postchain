@@ -1,6 +1,6 @@
 // Copyright (c) 2017 ChromaWay Inc. See README for license information.
 
-package net.postchain.test
+package net.postchain.devtools
 
 import mu.KLogging
 import net.postchain.base.DynamicPortPeerInfo
@@ -9,10 +9,10 @@ import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.core.*
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.gtx
-import net.postchain.test.KeyPairHelper.privKey
-import net.postchain.test.KeyPairHelper.privKeyHex
-import net.postchain.test.KeyPairHelper.pubKey
-import net.postchain.test.KeyPairHelper.pubKeyHex
+import net.postchain.devtools.KeyPairHelper.privKey
+import net.postchain.devtools.KeyPairHelper.privKeyHex
+import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.devtools.KeyPairHelper.pubKeyHex
 import org.apache.commons.configuration2.CompositeConfiguration
 import org.apache.commons.configuration2.Configuration
 import org.apache.commons.configuration2.MapConfiguration

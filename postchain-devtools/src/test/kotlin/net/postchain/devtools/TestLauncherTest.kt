@@ -1,4 +1,4 @@
-package net.postchain.test
+package net.postchain.devtools
 
 import org.junit.Assert.assertEquals
 import org.junit.Ignore

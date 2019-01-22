@@ -2,11 +2,8 @@
 # Postchain Node Docker file
 FROM openjdk:8-jre-alpine
 
-RUN apk update && apk add bash
-
-ADD ./postchain-base/target/postchain-base-2.4.0-SNAPSHOT-jar-with-dependencies.jar /opt/chromaway/postchain-2.4.0-SNAPSHOT.jar
-ADD ./configuration_78967baa.xml /opt/chromaway/configuration_78967baa.xml
+ADD ./postchain-base-2.4.0-SNAPSHOT-jar-with-dependencies.jar /opt/chromaway/postchain-2.4.0-SNAPSHOT-jwd.jar
 ADD ./entrypoint.sh /opt/chromaway/entrypoint.sh
-# ADD ./wait-for-it.sh /opt/chromaway/wait-for-it.sh
 
-ENTRYPOINT ["bash", "/opt/chromaway/entrypoint.sh"]
+WORKDIR /postchain-node
+ENTRYPOINT ["sh", "/opt/chromaway/entrypoint.sh"]

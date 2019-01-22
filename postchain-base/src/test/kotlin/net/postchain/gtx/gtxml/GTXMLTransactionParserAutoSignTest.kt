@@ -8,9 +8,9 @@ import net.postchain.gtx.GTXData
 import net.postchain.gtx.IntegerGTXValue
 import net.postchain.gtx.OpData
 import net.postchain.gtx.StringGTXValue
-import net.postchain.test.KeyPairHelper.privKey
-import net.postchain.test.KeyPairHelper.pubKey
-import net.postchain.test.MockCryptoSystem
+import net.postchain.devtools.KeyPairHelper.privKey
+import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.devtools.MockCryptoSystem
 import org.junit.Test
 
 class GTXMLTransactionParserAutoSignTest {

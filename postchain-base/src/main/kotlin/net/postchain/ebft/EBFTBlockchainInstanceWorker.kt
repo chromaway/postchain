@@ -7,7 +7,6 @@ import net.postchain.core.NODE_ID_AUTO
 import net.postchain.core.RestartHandler
 import net.postchain.ebft.message.EbftMessage
 import net.postchain.network.CommManager
-import net.postchain.network.CommunicationManager
 import kotlin.concurrent.thread
 
 /**
@@ -81,7 +80,11 @@ open class EBFTBlockchainInstanceWorker(
         updateLoop = thread(name = "updateLoop") {
             while (!Thread.interrupted()) {
                 syncManager.update()
-                Thread.sleep(50)
+                try {
+                    Thread.sleep(50)
+                } catch (e: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                }
             }
         }
     }

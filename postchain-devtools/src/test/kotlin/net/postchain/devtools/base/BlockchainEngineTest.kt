@@ -1,16 +1,16 @@
 // Copyright (c) 2017 ChromaWay Inc. See README for license information.
 
-package net.postchain.test.base
+package net.postchain.devtools.base
 
 import net.postchain.core.*
-import net.postchain.test.IntegrationTest
-import net.postchain.test.KeyPairHelper.privKey
-import net.postchain.test.KeyPairHelper.pubKey
-import net.postchain.test.SingleChainTestNode
-import net.postchain.test.testinfra.ErrorTransaction
-import net.postchain.test.testinfra.TestBlockchainConfiguration
-import net.postchain.test.testinfra.TestTransaction
-import net.postchain.test.testinfra.UnexpectedExceptionTransaction
+import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.KeyPairHelper.privKey
+import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.devtools.SingleChainTestNode
+import net.postchain.devtools.testinfra.ErrorTransaction
+import net.postchain.devtools.testinfra.TestBlockchainConfiguration
+import net.postchain.devtools.testinfra.TestTransaction
+import net.postchain.devtools.testinfra.UnexpectedExceptionTransaction
 import org.junit.Assert.*
 import org.junit.Test
 

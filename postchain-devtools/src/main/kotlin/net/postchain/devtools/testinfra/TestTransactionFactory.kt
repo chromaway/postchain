@@ -1,4 +1,4 @@
-package net.postchain.test.testinfra
+package net.postchain.devtools.testinfra
 
 import net.postchain.core.Transaction
 import net.postchain.core.TransactionFactory

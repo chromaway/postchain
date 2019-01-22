@@ -6,9 +6,8 @@ import net.postchain.base.PeerInfo
 import net.postchain.network.IdentPacketInfo
 import net.postchain.network.PacketConverter
 import net.postchain.network.netty.NettyConnectorFactory
-import net.postchain.test.asString
+import net.postchain.devtools.asString
 import org.awaitility.Awaitility.await
-import org.awaitility.Duration.FIVE_SECONDS
 import org.awaitility.Duration.TEN_SECONDS
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo

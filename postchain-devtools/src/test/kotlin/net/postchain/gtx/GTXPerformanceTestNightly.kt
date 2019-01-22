@@ -7,11 +7,11 @@ import junitparams.Parameters
 import mu.KLogging
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.configurations.GTXTestModule
-import net.postchain.test.EbftIntegrationTest
-import net.postchain.test.KeyPairHelper.privKey
-import net.postchain.test.KeyPairHelper.pubKey
-import net.postchain.test.OnDemandBlockBuildingStrategy
-import net.postchain.test.SingleChainTestNode
+import net.postchain.devtools.EbftIntegrationTest
+import net.postchain.devtools.KeyPairHelper.privKey
+import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.devtools.OnDemandBlockBuildingStrategy
+import net.postchain.devtools.SingleChainTestNode
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,10 +30,10 @@ class GTXPerformanceTestNightly : EbftIntegrationTest() {
     }
 
     private fun makeTestTx(id: Long, value: String): ByteArray {
-        val b = GTXDataBuilder(net.postchain.test.gtx.testBlockchainRID, arrayOf(pubKey(0)), net.postchain.test.gtx.myCS)
+        val b = GTXDataBuilder(net.postchain.devtools.gtx.testBlockchainRID, arrayOf(pubKey(0)), net.postchain.devtools.gtx.myCS)
         b.addOperation("gtx_test", arrayOf(gtx(id), gtx(value)))
         b.finish()
-        b.sign(net.postchain.test.gtx.myCS.makeSigner(pubKey(0), privKey(0)))
+        b.sign(net.postchain.devtools.gtx.myCS.makeSigner(pubKey(0), privKey(0)))
         return b.serialize()
     }
 

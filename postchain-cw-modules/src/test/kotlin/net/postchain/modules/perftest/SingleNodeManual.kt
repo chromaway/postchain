@@ -4,9 +4,9 @@ import net.postchain.common.TimeLog
 import net.postchain.configurations.GTXTestModule
 import net.postchain.gtx.GTXBlockchainConfigurationFactory
 import net.postchain.modules.ft.BaseFTModuleFactory
-import net.postchain.test.IntegrationTest
-import net.postchain.test.KeyPairHelper.pubKeyHex
-import net.postchain.test.SingleChainTestNode
+import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.KeyPairHelper.pubKeyHex
+import net.postchain.devtools.SingleChainTestNode
 import org.junit.Test
 
 /**

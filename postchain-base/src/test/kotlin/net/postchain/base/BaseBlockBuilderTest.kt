@@ -8,9 +8,9 @@ import net.postchain.base.data.BaseTransactionFactory
 import net.postchain.core.BlockEContext
 import net.postchain.core.EContext
 import net.postchain.core.InitialBlockData
-import net.postchain.test.KeyPairHelper.privKey
-import net.postchain.test.KeyPairHelper.pubKey
-import net.postchain.test.MockCryptoSystem
+import net.postchain.devtools.KeyPairHelper.privKey
+import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.devtools.MockCryptoSystem
 import org.easymock.EasyMock.mock
 import org.junit.Test
 import java.sql.Connection

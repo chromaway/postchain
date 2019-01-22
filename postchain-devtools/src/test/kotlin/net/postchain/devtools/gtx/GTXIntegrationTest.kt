@@ -1,6 +1,6 @@
 // Copyright (c) 2017 ChromaWay Inc. See README for license information.
 
-package net.postchain.test.gtx
+package net.postchain.devtools.gtx
 
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
@@ -8,9 +8,9 @@ import net.postchain.common.toHex
 import net.postchain.configurations.GTXTestModule
 import net.postchain.core.Transaction
 import net.postchain.gtx.*
-import net.postchain.test.IntegrationTest
-import net.postchain.test.KeyPairHelper.privKey
-import net.postchain.test.KeyPairHelper.pubKey
+import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.KeyPairHelper.privKey
+import net.postchain.devtools.KeyPairHelper.pubKey
 import org.junit.Assert
 import org.junit.Test
 

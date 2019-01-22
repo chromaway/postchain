@@ -1,4 +1,4 @@
-package net.postchain.test
+package net.postchain.devtools
 
 import mu.KLogging
 import net.postchain.base.BaseBlockchainConfigurationData

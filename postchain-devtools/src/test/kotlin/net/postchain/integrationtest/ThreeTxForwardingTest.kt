@@ -5,9 +5,9 @@ package net.postchain.integrationtest
 import net.postchain.api.rest.controller.Model
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.common.toHex
-import net.postchain.test.EbftIntegrationTest
-import net.postchain.test.SingleChainTestNode
-import net.postchain.test.testinfra.TestTransaction
+import net.postchain.devtools.EbftIntegrationTest
+import net.postchain.devtools.SingleChainTestNode
+import net.postchain.devtools.testinfra.TestTransaction
 import org.junit.Assert
 import org.junit.Test
 

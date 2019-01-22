@@ -1,4 +1,4 @@
-package net.postchain.test
+package net.postchain.devtools
 
 import net.postchain.PostchainNode
 import net.postchain.StorageBuilder

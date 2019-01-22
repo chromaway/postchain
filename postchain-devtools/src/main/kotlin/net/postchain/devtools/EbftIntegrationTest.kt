@@ -1,9 +1,9 @@
 // Copyright (c) 2017 ChromaWay Inc. See README for license information.
 
-package net.postchain.test
+package net.postchain.devtools
 
 import net.postchain.PostchainNode
-import net.postchain.test.KeyPairHelper.privKeyHex
+import net.postchain.devtools.KeyPairHelper.privKeyHex
 import org.junit.After
 
 open class EbftIntegrationTest : IntegrationTest() {

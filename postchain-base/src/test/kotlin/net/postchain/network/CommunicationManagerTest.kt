@@ -2,7 +2,7 @@ package net.postchain.network
 
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerInfo
-import net.postchain.test.EasyMockUtils.anyOfType
+import net.postchain.devtools.EasyMockUtils.anyOfType
 import org.easymock.EasyMock.*
 import org.junit.Test
 

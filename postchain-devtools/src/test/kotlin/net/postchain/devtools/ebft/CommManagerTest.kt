@@ -1,6 +1,6 @@
 // Copyright (c) 2017 ChromaWay Inc. See README for license information.
 
-package net.postchain.test.ebft
+package net.postchain.devtools.ebft
 
 /*
 class CommunicationManagerTest : IntegrationTest() {

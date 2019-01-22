@@ -38,5 +38,7 @@ class CommandRunNode : Command {
                 CommonsConfigurationFactory.readFromFile(nodeConfigFile))
 
         chainIDs.forEach(node::startBlockchain)
+
+        println("Postchain node launching is done")
     }
 }

@@ -11,8 +11,8 @@ import net.postchain.gtx.EMPTY_SIGNATURE
 import net.postchain.gtx.GTXDataBuilder
 import net.postchain.gtx.GTXTransactionFactory
 import net.postchain.gtx.gtx
-import net.postchain.test.KeyPairHelper.privKey
-import net.postchain.test.KeyPairHelper.pubKey
+import net.postchain.devtools.KeyPairHelper.privKey
+import net.postchain.devtools.KeyPairHelper.pubKey
 import org.hamcrest.core.IsEqual.equalTo
 import java.util.*
 

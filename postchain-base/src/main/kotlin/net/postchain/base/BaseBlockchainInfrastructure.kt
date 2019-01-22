@@ -43,6 +43,7 @@ class BaseBlockchainInfrastructure(
 
         val gtxData = decodeGTXValue(rawConfigurationData)
         val confData = BaseBlockchainConfigurationData(gtxData, actualContext, blockSigner)
+
         val bcfClass = Class.forName(confData.data["configurationfactory"]!!.asString())
         val factory = (bcfClass.newInstance() as BlockchainConfigurationFactory)
 
