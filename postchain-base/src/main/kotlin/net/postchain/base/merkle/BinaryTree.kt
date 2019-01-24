@@ -1,6 +1,5 @@
 package net.postchain.base.merkle
 
-import mu.KLogging
 import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_LEAF
 import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_NODE
 

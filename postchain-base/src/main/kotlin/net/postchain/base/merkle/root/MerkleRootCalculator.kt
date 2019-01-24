@@ -3,6 +3,7 @@ package net.postchain.base.merkle.root
 import net.postchain.base.CryptoSystem
 import net.postchain.base.merkle.*
 import net.postchain.base.merkle.MerkleBasics.EMPTY_HASH
+import net.postchain.gtx.merkle.GtxMerkleHashCalculator
 
 object MerkleRootCalculator {
 

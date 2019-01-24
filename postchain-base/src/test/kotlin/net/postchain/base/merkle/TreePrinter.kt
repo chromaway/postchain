@@ -3,6 +3,8 @@ package net.postchain.base.merkle
 import net.postchain.base.merkle.proof.*
 import net.postchain.base.merkle.root.HashBinaryTree
 import net.postchain.gtx.*
+import net.postchain.gtx.merkle.GtxBinaryTree
+import net.postchain.gtx.merkle.proof.GtxMerkleProofTree
 import kotlin.math.pow
 
 
@@ -61,7 +63,7 @@ fun convertHashToString(hash: Hash): String {
  */
 object PrintableTreeFactory {
 
-    fun buildPrintableTreeFromClfbTree(tree: GtxBinaryTree ): PrintableBinaryTree {
+    fun buildPrintableTreeFromClfbTree(tree: GtxBinaryTree): PrintableBinaryTree {
         val maxLevel = tree.maxLevel()
         //println("Max level: $maxLevel")
         val newRoot: PTreeElement = genericTreeInternal(1, maxLevel, tree.root, ::convertGtxToString)

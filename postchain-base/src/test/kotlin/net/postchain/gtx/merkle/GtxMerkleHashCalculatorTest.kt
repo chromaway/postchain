@@ -1,6 +1,7 @@
-package net.postchain.base.merkle
+package net.postchain.gtx.merkle
 
 import net.postchain.base.SECP256K1CryptoSystem
+import net.postchain.base.merkle.TreeHelper
 import net.postchain.gtx.IntegerGTXValue
 import org.junit.Assert
 import org.junit.Test

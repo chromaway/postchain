@@ -1,7 +1,10 @@
-package net.postchain.base.merkle.proof
+package net.postchain.gtx.merkle.proof
 
 import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_NODE_GTX_ARRAY
 import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_NODE_GTX_DICT
+import net.postchain.base.merkle.proof.MerkleProofElement
+import net.postchain.base.merkle.proof.MerkleProofTree
+import net.postchain.base.merkle.proof.ProofNode
 import net.postchain.gtx.*
 
 

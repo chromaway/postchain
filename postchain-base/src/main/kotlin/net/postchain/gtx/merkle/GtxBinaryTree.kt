@@ -1,9 +1,11 @@
-package net.postchain.base.merkle
+package net.postchain.gtx.merkle
 
+import net.postchain.base.merkle.BinaryTree
+import net.postchain.base.merkle.BinaryTreeElement
 import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_NODE_GTX_ARRAY
 import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_NODE_GTX_DICT
+import net.postchain.base.merkle.SubTreeRootNode
 import net.postchain.gtx.*
-import java.util.SortedSet
 
 /**
  * In this file we handle the most common case, where the binary tree holds only [GTXValue] s.

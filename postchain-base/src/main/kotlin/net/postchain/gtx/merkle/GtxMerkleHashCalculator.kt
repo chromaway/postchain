@@ -1,8 +1,9 @@
-package net.postchain.base.merkle
+package net.postchain.gtx.merkle
 
 import net.postchain.base.CryptoSystem
-import net.postchain.base.merkle.proof.GtxMerkleProofTree
-import net.postchain.base.merkle.proof.GtxMerkleProofTreeFactory
+import net.postchain.base.merkle.*
+import net.postchain.gtx.merkle.proof.GtxMerkleProofTree
+import net.postchain.gtx.merkle.proof.GtxMerkleProofTreeFactory
 import net.postchain.core.ProgrammerMistake
 import net.postchain.gtx.*
 

@@ -1,7 +1,11 @@
-package net.postchain.base.merkle.proof
+package net.postchain.gtx.merkle.proof
 
 import net.postchain.base.merkle.*
+import net.postchain.base.merkle.proof.*
 import net.postchain.gtx.*
+import net.postchain.gtx.merkle.GtxArrayHeadNode
+import net.postchain.gtx.merkle.GtxBinaryTree
+import net.postchain.gtx.merkle.GtxDictHeadNode
 
 
 /**
@@ -92,13 +96,13 @@ class GtxMerkleProofTreeFactory(calculator: MerkleHashCalculator<GTXValue, GTXPa
     override fun deserializeSubOther(typeCode: Long, currentSerializedArrayGtx: ArrayGTXValue): MerkleProofElement {
 
         return when (typeCode) {
-            SERIALIZATION_ARRAY_TYPE  ->  {
+            SERIALIZATION_ARRAY_TYPE ->  {
                 val size = (currentSerializedArrayGtx.get(1) as IntegerGTXValue).integer.toInt()
                 val left: MerkleProofElement = deserializeSub(currentSerializedArrayGtx.get(2) as ArrayGTXValue)
                 val right: MerkleProofElement = deserializeSub(currentSerializedArrayGtx.get(3) as ArrayGTXValue)
                 ProofNodeGtxArrayHead(size, left, right)
             }
-            SERIALIZATION_DICT_TYPE  ->  {
+            SERIALIZATION_DICT_TYPE ->  {
                 val size = (currentSerializedArrayGtx.get(1) as IntegerGTXValue).integer.toInt()
                 val left: MerkleProofElement = deserializeSub(currentSerializedArrayGtx.get(2) as ArrayGTXValue)
                 val right: MerkleProofElement = deserializeSub(currentSerializedArrayGtx.get(3) as ArrayGTXValue)

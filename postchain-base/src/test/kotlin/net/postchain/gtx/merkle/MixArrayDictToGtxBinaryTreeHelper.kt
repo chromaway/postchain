@@ -1,5 +1,9 @@
-package net.postchain.base.merkle
+package net.postchain.gtx.merkle
 
+import net.postchain.base.merkle.PrintableTreeFactory
+import net.postchain.base.merkle.TreeHelper
+import net.postchain.gtx.merkle.TreeHolderFromDict
+import net.postchain.base.merkle.TreePrinter
 import net.postchain.gtx.ArrayGTXValue
 import net.postchain.gtx.DictGTXValue
 import net.postchain.gtx.GTXPath
@@ -33,7 +37,7 @@ object MixArrayDictToGtxBinaryTreeHelper {
 
         // Add the inner ArrayGtxValue
         val innerIntArray = intArrayOf(1,2,3,4)
-        val gtxArrayList = TreeHelper.transformIntToGTXValue(innerIntArray.toCollection(ArrayList()))
+        val gtxArrayList = GtxTreeHelper.transformIntToGTXValue(innerIntArray.toCollection(ArrayList()))
         val gtxs: Array<GTXValue> = gtxArrayList.toTypedArray()
         val innerGtxArr = ArrayGTXValue(gtxs)
 

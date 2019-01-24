@@ -1,5 +1,9 @@
-package net.postchain.base.merkle
+package net.postchain.gtx.merkle
 
+import net.postchain.base.merkle.PrintableTreeFactory
+import net.postchain.base.merkle.TreeHelper
+import net.postchain.gtx.merkle.TreeHolderFromDict
+import net.postchain.base.merkle.TreePrinter
 import net.postchain.gtx.DictGTXValue
 import net.postchain.gtx.GTXPath
 import net.postchain.gtx.GTXValue
@@ -24,7 +28,7 @@ object DictToGtxBinaryTreeHelper {
                 "one 1"
 
 
-        val gtxDict = TreeHelper.transformStringAndIntToDictGTXValue(stringArray.toCollection(ArrayList()), intArray.toCollection(ArrayList()))
+        val gtxDict = GtxTreeHelper.transformStringAndIntToDictGTXValue(stringArray.toCollection(ArrayList()), intArray.toCollection(ArrayList()))
 
         val fullBinaryTree: GtxBinaryTree = if (gtxPath != null) {
             factory.buildFromGtxAndPath(gtxDict, listOf(gtxPath))
@@ -61,7 +65,7 @@ object DictToGtxBinaryTreeHelper {
                         "four 4 one 1 three 3 two 2 "
 
 
-        val gtxDict = TreeHelper.transformStringAndIntToDictGTXValue(stringArray.toCollection(ArrayList()), intArray.toCollection(ArrayList()))
+        val gtxDict = GtxTreeHelper.transformStringAndIntToDictGTXValue(stringArray.toCollection(ArrayList()), intArray.toCollection(ArrayList()))
 
         val fullBinaryTree: GtxBinaryTree = if (gtxPath != null) {
             factory.buildFromGtxAndPath(gtxDict, listOf(gtxPath))
@@ -101,7 +105,7 @@ object DictToGtxBinaryTreeHelper {
         // Add the inner DictGtxValue
         val innerStringArray = arrayOf("seven", "eight")
         val innerIntArray = intArrayOf(7, 8)
-        val innerGtxDict = TreeHelper.transformStringAndIntToDictGTXValue(innerStringArray.toCollection(ArrayList()), innerIntArray.toCollection(ArrayList()))
+        val innerGtxDict = GtxTreeHelper.transformStringAndIntToDictGTXValue(innerStringArray.toCollection(ArrayList()), innerIntArray.toCollection(ArrayList()))
 
         // Put the inner Dict in the outer Dict
         val outerMap = HashMap<String, GTXValue>()

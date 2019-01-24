@@ -3,6 +3,10 @@ package net.postchain.base.merkle.proof
 import net.postchain.base.merkle.*
 import net.postchain.gtx.GTXPath
 import net.postchain.gtx.GTXPathFactory
+import net.postchain.gtx.merkle.MerkleHashCalculatorDummy
+import net.postchain.gtx.merkle.MixArrayDictToGtxBinaryTreeHelper
+import net.postchain.gtx.merkle.proof.GtxMerkleProofTree
+import net.postchain.gtx.merkle.proof.GtxMerkleProofTreeFactory
 import org.junit.Assert
 import org.junit.Test
 import kotlin.test.assertEquals

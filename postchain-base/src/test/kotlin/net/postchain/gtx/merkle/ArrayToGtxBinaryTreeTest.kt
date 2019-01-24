@@ -1,5 +1,8 @@
-package net.postchain.base.merkle
+package net.postchain.gtx.merkle
 
+import net.postchain.base.merkle.PrintableTreeFactory
+import net.postchain.base.merkle.TreeHelper
+import net.postchain.base.merkle.TreePrinter
 import net.postchain.gtx.GTXPath
 import net.postchain.gtx.GTXPathFactory
 import org.junit.Assert.assertEquals
@@ -14,7 +17,7 @@ class ArrayToGtxBinaryTreeTest {
     @Test
     fun testIntArrayLength1() {
         val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf1()
-        println(treeHolder.treePrintout)
+        //println(treeHolder.treePrintout)
         assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
     }
 
@@ -97,9 +100,9 @@ class ArrayToGtxBinaryTreeTest {
                 "/ \\ / \\ / \\ / \\ / \\ / \\         \n" +
                 "1 2 3 4 5 6 7 8 9 0 1 2 - - - - "
 
-        val intArrayList = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
+        val intArrayList = GtxTreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
 
-        val fullBinaryTree: GtxBinaryTree = (GtxBinaryTreeFactory()).buildFromGtx(TreeHelper.transformGTXsToArrayGTXValue(intArrayList))
+        val fullBinaryTree: GtxBinaryTree = (GtxBinaryTreeFactory()).buildFromGtx(GtxTreeHelper.transformGTXsToArrayGTXValue(intArrayList))
 
         val printer = TreePrinter()
         val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)

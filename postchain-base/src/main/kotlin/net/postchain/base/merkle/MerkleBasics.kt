@@ -1,10 +1,9 @@
 package net.postchain.base.merkle
 
 import net.postchain.base.CryptoSystem
-import net.postchain.base.merkle.proof.GtxMerkleProofTree
+import net.postchain.gtx.merkle.proof.GtxMerkleProofTree
 import net.postchain.core.ProgrammerMistake
 import net.postchain.gtx.GTXValue
-import net.postchain.gtx.GTXPath
 
 /**
  * This file holds some basic stuff, like constants etc..

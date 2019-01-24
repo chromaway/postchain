@@ -1,4 +1,4 @@
-package net.postchain.base.merkle
+package net.postchain.gtx.merkle
 
 import net.postchain.gtx.GTXPath
 import net.postchain.gtx.GTXPathFactory

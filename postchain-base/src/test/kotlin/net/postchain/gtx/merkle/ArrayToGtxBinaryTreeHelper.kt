@@ -1,5 +1,6 @@
-package net.postchain.base.merkle
+package net.postchain.gtx.merkle
 
+import net.postchain.base.merkle.*
 import net.postchain.gtx.ArrayGTXValue
 import net.postchain.gtx.GTXPath
 import net.postchain.gtx.GTXValue
@@ -24,7 +25,7 @@ object ArrayToGtxBinaryTreeHelper {
                 "/ \\ \n" +
                 "1 - "
 
-        val gtxArrayList = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
+        val gtxArrayList = GtxTreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
         val gtxArr: Array<GTXValue> = gtxArrayList.toTypedArray()
 
         val fullBinaryTree: GtxBinaryTree = if (gtxPath != null) {
@@ -56,7 +57,7 @@ object ArrayToGtxBinaryTreeHelper {
                         "/ \\ / \\ \n" +
                         "1 2 3 4 \n"
 
-        val gtxArrayList = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
+        val gtxArrayList = GtxTreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
         val gtxArr: Array<GTXValue> = gtxArrayList.toTypedArray()
         val fullBinaryTree: GtxBinaryTree = if (gtxPath != null) {
             factory.buildFromGtxAndPath(ArrayGTXValue(gtxArr), listOf(gtxPath))
@@ -102,7 +103,7 @@ object ArrayToGtxBinaryTreeHelper {
 
 
 
-        val gtxList: List<GTXValue> = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
+        val gtxList: List<GTXValue> = GtxTreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
         val gtxArr: Array<GTXValue> = gtxList.toTypedArray()
 
         val fullBinaryTree = factory.buildFromGtxAndPath(ArrayGTXValue(gtxArr), gtxPaths)
@@ -141,9 +142,9 @@ object ArrayToGtxBinaryTreeHelper {
                 "1 2 3 4 5 6 7 8 - - - - - - - - "
 
 
-        val gtxList: List<GTXValue> = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
+        val gtxList: List<GTXValue> = GtxTreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
 
-        val fullBinaryTree: GtxBinaryTree = factory.buildFromGtx(TreeHelper.transformGTXsToArrayGTXValue(gtxList))
+        val fullBinaryTree: GtxBinaryTree = factory.buildFromGtx(GtxTreeHelper.transformGTXsToArrayGTXValue(gtxList))
 
         val printer = TreePrinter()
         val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
@@ -200,11 +201,11 @@ object ArrayToGtxBinaryTreeHelper {
                         "- - - - - - - - - - - - 1 9 - - - - - - - - - - - - - - - - - - "
 
 
-        val gtxArrayList = TreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
+        val gtxArrayList = GtxTreeHelper.transformIntToGTXValue(intArray.toCollection(ArrayList()))
 
         // Add the inner ArrayGtxValue
         val innerIntArray = intArrayOf(1,9,3)
-        val innerIntArrayList = TreeHelper.transformIntToGTXValue(innerIntArray.toCollection(ArrayList()))
+        val innerIntArrayList = GtxTreeHelper.transformIntToGTXValue(innerIntArray.toCollection(ArrayList()))
         val innerGtxIntArray: Array<GTXValue> = innerIntArrayList.toTypedArray()
         val innerArrayGTXValue = ArrayGTXValue(innerGtxIntArray)
         gtxArrayList.set(3, innerArrayGTXValue)
