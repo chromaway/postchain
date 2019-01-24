@@ -4,10 +4,6 @@ import net.postchain.base.merkle.BinaryTree
 import net.postchain.base.merkle.BinaryTreeElement
 import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.base.merkle.Node
-import net.postchain.gtx.ArrayGTXValue
-import net.postchain.gtx.ByteArrayGTXValue
-import net.postchain.gtx.IntegerGTXValue
-
 
 /**
  * Base class for building [MerkleProofTree] (but needs to be overridden to actually do something)
@@ -59,39 +55,5 @@ abstract class MerkleProofTreeFactory<T,TPath>(val calculator: MerkleHashCalcula
     open fun buildNodeOfCorrectType(currentNode: Node, left: MerkleProofElement, right: MerkleProofElement): ProofNode {
         return ProofNode(currentNode.getPrefixByte(), left, right)
     }
-
-
-    // ---------- Deserialization -----
-    /**
-     * Call this method from sub class to deserialize
-     */
-    protected fun deserializeSub(currentSerializedArrayGtx: ArrayGTXValue): MerkleProofElement {
-
-        val head = currentSerializedArrayGtx.get(0)
-        val typeCode = (head as IntegerGTXValue).integer
-        val secondElement = currentSerializedArrayGtx.get(1)
-        return when (typeCode) {
-            SERIALIZATION_HASH_LEAF_TYPE -> {
-                val byteArray = secondElement as ByteArrayGTXValue
-                ProofHashedLeaf(byteArray.bytearray)
-            }
-            SERIALIZATION_VALUE_LEAF_TYPE -> ProofValueLeaf(secondElement)
-            SERIALIZATION_NODE_TYPE -> {
-                val left: MerkleProofElement = deserializeSub(secondElement as ArrayGTXValue)
-                val right: MerkleProofElement = deserializeSub(currentSerializedArrayGtx.get(2) as ArrayGTXValue)
-                ProofNodeSimple(left, right)
-            }
-            else -> deserializeSubOther(typeCode, currentSerializedArrayGtx)
-        }
-    }
-
-    /**
-     * Override this to handle extra types (defined in subclass)
-     */
-    open fun deserializeSubOther(typeCode: Long, currentSerializedArrayGtx: ArrayGTXValue): MerkleProofElement {
-        throw IllegalStateException("Override this method to handle type: $typeCode")
-    }
-
-
 
 }

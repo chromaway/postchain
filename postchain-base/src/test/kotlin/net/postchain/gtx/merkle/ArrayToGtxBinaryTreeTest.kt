@@ -40,7 +40,7 @@ class ArrayToGtxBinaryTreeTest {
     @Test
     fun testIntArrayLength4() {
         val treeHolder = ArrayToGtxBinaryTreeHelper.buildTreeOf4()
-        println(treeHolder.treePrintout)
+        //println(treeHolder.treePrintout)
         assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
     }
 

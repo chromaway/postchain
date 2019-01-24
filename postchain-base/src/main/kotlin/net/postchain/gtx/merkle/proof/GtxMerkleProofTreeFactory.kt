@@ -92,10 +92,22 @@ class GtxMerkleProofTreeFactory(calculator: MerkleHashCalculator<GTXValue, GTXPa
         return GtxMerkleProofTree(rootElement)
     }
 
+    fun deserializeSub(currentSerializedArrayGtx: ArrayGTXValue): MerkleProofElement {
 
-    override fun deserializeSubOther(typeCode: Long, currentSerializedArrayGtx: ArrayGTXValue): MerkleProofElement {
-
+        val head = currentSerializedArrayGtx.get(0)
+        val typeCode = (head as IntegerGTXValue).integer
+        val secondElement = currentSerializedArrayGtx.get(1)
         return when (typeCode) {
+            SERIALIZATION_HASH_LEAF_TYPE -> {
+                val byteArray = secondElement as ByteArrayGTXValue
+                ProofHashedLeaf(byteArray.bytearray)
+            }
+            SERIALIZATION_VALUE_LEAF_TYPE -> ProofValueLeaf(secondElement)
+            SERIALIZATION_NODE_TYPE -> {
+                val left: MerkleProofElement = deserializeSub(secondElement as ArrayGTXValue)
+                val right: MerkleProofElement = deserializeSub(currentSerializedArrayGtx.get(2) as ArrayGTXValue)
+                ProofNodeSimple(left, right)
+            }
             SERIALIZATION_ARRAY_TYPE ->  {
                 val size = (currentSerializedArrayGtx.get(1) as IntegerGTXValue).integer.toInt()
                 val left: MerkleProofElement = deserializeSub(currentSerializedArrayGtx.get(2) as ArrayGTXValue)

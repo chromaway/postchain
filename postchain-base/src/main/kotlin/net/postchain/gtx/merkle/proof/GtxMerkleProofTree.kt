@@ -1,10 +1,8 @@
 package net.postchain.gtx.merkle.proof
 
-import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_NODE_GTX_ARRAY
-import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_NODE_GTX_DICT
-import net.postchain.base.merkle.proof.MerkleProofElement
-import net.postchain.base.merkle.proof.MerkleProofTree
-import net.postchain.base.merkle.proof.ProofNode
+import net.postchain.base.merkle.proof.*
+import net.postchain.gtx.merkle.GtxMerkleBasics.HASH_PREFIX_NODE_GTX_ARRAY
+import net.postchain.gtx.merkle.GtxMerkleBasics.HASH_PREFIX_NODE_GTX_DICT
 import net.postchain.gtx.*
 
 
@@ -33,21 +31,49 @@ class ProofNodeGtxDictHead(val size: Int, left: MerkleProofElement, right: Merkl
 class GtxMerkleProofTree(root: MerkleProofElement): MerkleProofTree<GTXValue, GTXPath>(root) {
 
     /**
-     * In this case the implementation is trivial. We already have a value of the
-     * correct type, so let's return it.
+     * Note that we have our own primitive serialization format. It is based on arrays that begins with an integer.
+     * The integer tells us what the content is.
+     * 0 -> just a hash
+     * 1 -> value to be proven
+     * 2 -> a node
+     * (we can add more in sub classes)
      */
-    override fun serializeValueLeafToGtx(valueLeaf: GTXValue): GTXValue {
-        return valueLeaf
+    fun serializeToGtx(): ArrayGTXValue {
+
+        return serializeToGtxInternal(this.root)
     }
 
 
     /**
-     * "Other types" refers to [ProofNodeGtxArrayHead] and [ProofNodeGtxDictHead] in this case. We add the following integers to our
-     * serialization policy: [SERIALIZATION_ARRAY_TYPE] and [SERIALIZATION_DICT_TYPE].
+     * In this case the implementation is trivial. We already have a value of the
+     * correct type, so let's return it.
      */
-    override fun serializeOtherTypes(currentElement: MerkleProofElement): ArrayGTXValue {
+    fun serializeValueLeafToGtx(valueLeaf: GTXValue): GTXValue {
+        return valueLeaf
+    }
 
+
+    fun serializeToGtxInternal(currentElement: MerkleProofElement): ArrayGTXValue {
         return when (currentElement) {
+            is ProofHashedLeaf -> {
+                val tail = ByteArrayGTXValue(currentElement.hash)
+                val head = IntegerGTXValue(SERIALIZATION_HASH_LEAF_TYPE)
+                val arr: Array<GTXValue> = arrayOf(head, tail)
+                ArrayGTXValue(arr)
+            }
+            is ProofValueLeaf<*> -> {
+                val tail = serializeValueLeafToGtx(currentElement.content as GTXValue)
+                val head = IntegerGTXValue(SERIALIZATION_VALUE_LEAF_TYPE)
+                val arr: Array<GTXValue> = arrayOf(head, tail)
+                ArrayGTXValue(arr)
+            }
+            is ProofNodeSimple -> {
+                val tail1 = serializeToGtxInternal(currentElement.left)
+                val tail2 = serializeToGtxInternal(currentElement.right)
+                val head = IntegerGTXValue(SERIALIZATION_NODE_TYPE)
+                val arr: Array<GTXValue> = arrayOf(head, tail1, tail2)
+                ArrayGTXValue(arr)
+            }
             is ProofNodeGtxArrayHead -> {
                 val tail1 = serializeToGtxInternal(currentElement.left)
                 val tail2 = serializeToGtxInternal(currentElement.right)

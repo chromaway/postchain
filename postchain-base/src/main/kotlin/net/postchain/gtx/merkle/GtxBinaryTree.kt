@@ -2,8 +2,8 @@ package net.postchain.gtx.merkle
 
 import net.postchain.base.merkle.BinaryTree
 import net.postchain.base.merkle.BinaryTreeElement
-import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_NODE_GTX_ARRAY
-import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_NODE_GTX_DICT
+import net.postchain.gtx.merkle.GtxMerkleBasics.HASH_PREFIX_NODE_GTX_ARRAY
+import net.postchain.gtx.merkle.GtxMerkleBasics.HASH_PREFIX_NODE_GTX_DICT
 import net.postchain.base.merkle.SubTreeRootNode
 import net.postchain.gtx.*
 
