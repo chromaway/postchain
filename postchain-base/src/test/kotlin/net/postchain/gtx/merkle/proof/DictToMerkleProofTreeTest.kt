@@ -80,14 +80,14 @@ class DictToMerkleProofTreeTest {
         val serialize: ArrayGTXValue = merkleProofTree.serializeToGtx()
         //println("Serilalized: $serialize")
 
-        val expectedSerialization = "ArrayGTXValue(array=[\n" +
+        val expectedSerialization = "ArrayGTXValue(args=[\n" +
                 "  IntegerGTXValue(integer=104),\n" + // 104 = dict head node type
                 "  IntegerGTXValue(integer=1),\n" + // length of dict
-                "  ArrayGTXValue(array=[\n" +
+                "  ArrayGTXValue(args=[\n" +
                 "    IntegerGTXValue(integer=100),\n" + // 100 = hash
                 "    ByteArrayGTXValue(bytearray=[1, 112, 111, 102])\n" +
                 "  ]),\n" +
-                "  ArrayGTXValue(array=[\n" +
+                "  ArrayGTXValue(args=[\n" +
                 "    IntegerGTXValue(integer=101),  \n" + // 101 = value to prove
                 "    IntegerGTXValue(integer=1)\n" +
                 "  ])\n" +
@@ -194,28 +194,28 @@ class DictToMerkleProofTreeTest {
         val serialize: ArrayGTXValue = merkleProofTree.serializeToGtx()
         //println("Serilalized: $serialize")
 
-        val expectedSerialization = "ArrayGTXValue(array=[\n" +
+        val expectedSerialization = "ArrayGTXValue(args=[\n" +
                 "  IntegerGTXValue(integer=104), \n" + // 104 = dict head node type
                 "  IntegerGTXValue(integer=4), \n" + // length of the dict
-                "  ArrayGTXValue(array=[\n" +
+                "  ArrayGTXValue(args=[\n" +
                 "    IntegerGTXValue(integer=102), \n" + // 102 = dummy node
-                "    ArrayGTXValue(array=[\n" +
+                "    ArrayGTXValue(args=[\n" +
                 "      IntegerGTXValue(integer=102), \n" + // 102 = dummy node
-                "      ArrayGTXValue(array=[\n" +
+                "      ArrayGTXValue(args=[\n" +
                 "        IntegerGTXValue(integer=100), \n" + // 100 = hash
                 "        ByteArrayGTXValue(bytearray=[1, 103, 112, 118, 115])\n" +
                 "      ]),\n" +
-                "      ArrayGTXValue(array=[\n" +
+                "      ArrayGTXValue(args=[\n" +
                 "        IntegerGTXValue(integer=101),   \n" + // 101 = value to prove
                 "        IntegerGTXValue(integer=4)\n" +
                 "      ])\n" +
                 "    ]),  \n" +
-                "    ArrayGTXValue(array=[\n" +
+                "    ArrayGTXValue(args=[\n" +
                 "      IntegerGTXValue(integer=100),   \n" + // 100 = hash
                 "      ByteArrayGTXValue(bytearray=[0, 2, 113, 112, 103, 2, 3])\n" +
                 "    ])\n" +
                 "  ]),   \n" +
-                "  ArrayGTXValue(array=[\n" +
+                "  ArrayGTXValue(args=[\n" +
                 "    IntegerGTXValue(integer=100),   \n" + // 100 = hash
                 "    ByteArrayGTXValue(bytearray=[0, 1, 3, 119, 107, 117, 104, 104, 3, 6, 1, 3, 119, 122, 114, 3, 5])\n" +
                 "  ])\n" +
@@ -314,27 +314,27 @@ class DictToMerkleProofTreeTest {
         val serialize: ArrayGTXValue = merkleProofTree.serializeToGtx()
         println("Serilalized: $serialize")
 
-        val expectedSerialization =  "ArrayGTXValue(array=[\n" +
+        val expectedSerialization =  "ArrayGTXValue(args=[\n" +
                 "  IntegerGTXValue(integer=104), \n" + // 104 = dict head node type
                 "  IntegerGTXValue(integer=1), \n" + // length of the dict
-                "  ArrayGTXValue(array=[\n" +
+                "  ArrayGTXValue(args=[\n" +
                 "    IntegerGTXValue(integer=100),\n" +
                 "    ByteArrayGTXValue(bytearray=[1, 112, 111, 102])\n" +
                 "  ]),\n" +
-                "  ArrayGTXValue(array=[\n" +
+                "  ArrayGTXValue(args=[\n" +
                 "    IntegerGTXValue(integer=104), \n" + // 104 = dict head node type
                 "    IntegerGTXValue(integer=2), \n" + // length of the dict
-                "    ArrayGTXValue(array=[\n" +
+                "    ArrayGTXValue(args=[\n" +
                 "      IntegerGTXValue(integer=100), \n" + // 100 = hash
                 "      ByteArrayGTXValue(bytearray=[0, 2, 103, 107, 105, 106, 118, 2, 10])\n" +
                 "    ]), \n" +
-                "    ArrayGTXValue(array=[\n" +
+                "    ArrayGTXValue(args=[\n" +
                 "      IntegerGTXValue(integer=102), \n" + // 102 = dummy node
-                "      ArrayGTXValue(array=[\n" +
+                "      ArrayGTXValue(args=[\n" +
                 "        IntegerGTXValue(integer=100), \n" + // 100 = hash
                 "        ByteArrayGTXValue(bytearray=[1, 116, 102, 119, 102, 111])\n" +
                 "      ]), \n" +
-                "      ArrayGTXValue(array=[\n" +
+                "      ArrayGTXValue(args=[\n" +
                 "        IntegerGTXValue(integer=101), \n" + // 101 = value to prove
                 "        IntegerGTXValue(integer=7)\n" +
                 "      ])\n" +
@@ -400,14 +400,14 @@ class DictToMerkleProofTreeTest {
         val serialize: ArrayGTXValue = merkleProofTree.serializeToGtx()
         //println("Serilalized: $serialize")
 
-        val expectedSerialization = "ArrayGTXValue(array=[\n" +
+        val expectedSerialization = "ArrayGTXValue(args=[\n" +
                 "  IntegerGTXValue(integer=104),\n" +  // 104 = dict head node type
                 "  IntegerGTXValue(integer=1),\n" + // lenght of the dict
-                "  ArrayGTXValue(array=[\n" +
+                "  ArrayGTXValue(args=[\n" +
                 "    IntegerGTXValue(integer=100),\n" + // 100 = Hash
                 "    ByteArrayGTXValue(bytearray=[1, 112, 111, 102])\n" +
                 "  ]),\n" +
-                "  ArrayGTXValue(array=[\n" +
+                "  ArrayGTXValue(args=[\n" +
                 "    IntegerGTXValue(integer=101), \n" + // 101 = value to be proved (in this case an entire dict)
                 "    DictGTXValue(dict={\n" +  // The value is a DictGTXValue, in it's raw form
                 "      seven=IntegerGTXValue(integer=7), \n" +

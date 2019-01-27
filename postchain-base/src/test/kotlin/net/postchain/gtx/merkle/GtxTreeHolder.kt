@@ -2,7 +2,9 @@ package net.postchain.gtx.merkle
 
 import net.postchain.base.merkle.TreeHolder
 import net.postchain.gtx.DictGTXValue
+import net.postchain.gtx.OperationGTXValue
 import net.postchain.gtx.GTXValue
+import net.postchain.gtx.TransactionBodyGTXValue
 
 
 open class TreeHolderFromArray(orgIntArray: IntArray,
@@ -28,5 +30,21 @@ class TreeHolderFromDict(orgIntArray: IntArray,
                          treePrintout: String,
                          expectedPrintout: String,
                          val orgGtxDict: DictGTXValue):
+        TreeHolder(orgIntArray, clfbTree, treePrintout, expectedPrintout) {
+}
+
+class TreeHolderFromOperation(orgIntArray: IntArray,
+                         clfbTree: GtxBinaryTree,
+                         treePrintout: String,
+                         expectedPrintout: String,
+                         val orgGtxOperation: OperationGTXValue):
+  TreeHolder(orgIntArray, clfbTree, treePrintout, expectedPrintout) {
+}
+
+class TreeHolderFromTransactionBody(orgIntArray: IntArray,
+                              clfbTree: GtxBinaryTree,
+                              treePrintout: String,
+                              expectedPrintout: String,
+                              val orgGtxTransBody: TransactionBodyGTXValue):
         TreeHolder(orgIntArray, clfbTree, treePrintout, expectedPrintout) {
 }

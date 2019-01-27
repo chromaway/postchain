@@ -14,7 +14,7 @@ import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_NODE
  *
  * The tree is filled from left to right.
  *
- *  Our rule for transforming an array into a [ContentLeafFullBinaryTree] is illustrated by Example3 below:
+ *  Our rule for transforming an args into a [ContentLeafFullBinaryTree] is illustrated by Example3 below:
  *  -------------
  *  Example3:
  *
@@ -22,7 +22,7 @@ import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_NODE
  *  -------------
  *  As the name suggests, we have values/content in the leafs (but no content in the nodes):
  *  -------------
- *               array root
+ *               args root
  *             /          \
  *        node1234        node567
  *       /     \           /     \
@@ -93,7 +93,7 @@ data class Leaf<T>(val content: T, val leafIsPathLeaf: Boolean = false): BinaryT
 
 /**
  * Dummy filler. Will always be the right side.
- * (This is needed for the case when an array only has one element)
+ * (This is needed for the case when an args only has one element)
  */
 object EmptyLeaf: BinaryTreeElement()
 

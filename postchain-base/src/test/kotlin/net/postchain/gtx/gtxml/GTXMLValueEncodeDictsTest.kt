@@ -55,7 +55,7 @@ class GTXMLValueEncodeDictsTest {
                                 ))
                         )),
                         DictGTXValue(mapOf(
-                                "array" to ArrayGTXValue(arrayOf(
+                                "args" to ArrayGTXValue(arrayOf(
                                         IntegerGTXValue(1),
                                         StringGTXValue("2")
                                 )),
@@ -82,11 +82,11 @@ class GTXMLValueEncodeDictsTest {
                     <int>42</int>
                 </entry>
                 <entry key="k3">
-                    <array/>
+                    <args/>
                 </entry>
                 <entry key="k4">
-                    <array>
-                        <array>
+                    <args>
+                        <args>
                             <null xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
                             <dict>
                                 <entry key="1">
@@ -96,13 +96,13 @@ class GTXMLValueEncodeDictsTest {
                                     <int>2</int>
                                 </entry>
                             </dict>
-                        </array>
+                        </args>
                         <dict>
-                            <entry key="array">
-                                <array>
+                            <entry key="args">
+                                <args>
                                     <int>1</int>
                                     <string>2</string>
-                                </array>
+                                </args>
                             </entry>
                             <entry key="str">
                                 <string>foo</string>
@@ -111,7 +111,7 @@ class GTXMLValueEncodeDictsTest {
                                 <int>42</int>
                             </entry>
                         </dict>
-                    </array>
+                    </args>
                 </entry>
                 <entry key="k5">
                     <dict/>

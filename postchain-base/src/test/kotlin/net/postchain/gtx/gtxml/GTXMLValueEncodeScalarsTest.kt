@@ -61,9 +61,9 @@ class GTXMLValueEncodeScalarsTest {
 
         val actual = GTXMLValueEncoder.encodeXMLGTXValue(array)
         val expected = expected("""
-            <array>
+            <args>
                 <bytea>0102030A0B0C</bytea>
-            </array>
+            </args>
         """.trimIndent())
 
         assert(actual).isEqualTo(expected)

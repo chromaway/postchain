@@ -76,7 +76,7 @@ class MixArrayDictToMerkleProofTreeTest {
     }
 
     /**
-     * Here we try to prove the entire sub array (1,2,3,4)
+     * Here we try to prove the entire sub args (1,2,3,4)
      */
     @Test
     fun test_tree_from_dict_with_arr_where_path_is_to_sub_arr() {
@@ -86,7 +86,7 @@ class MixArrayDictToMerkleProofTreeTest {
 
         val expectedTree = " +   \n" +
                 "/ \\ \n" +
-                "01706F66 *ArrayGTXValue(array=[IntegerGTXValue(integer=1), IntegerGTXValue(integer=2), IntegerGTXValue(integer=3), IntegerGTXValue(integer=4)])"
+                "01706F66 *ArrayGTXValue(args=[IntegerGTXValue(integer=1), IntegerGTXValue(integer=2), IntegerGTXValue(integer=3), IntegerGTXValue(integer=4)])"
 
         val merkleProofTree: GtxMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 

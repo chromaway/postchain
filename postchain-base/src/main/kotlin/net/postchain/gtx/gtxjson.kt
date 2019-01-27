@@ -58,6 +58,7 @@ class GTXValueAdapter : JsonDeserializer<GTXValue>, JsonSerializer<GTXValue> {
             GTXValueType.BYTEARRAY -> return JsonPrimitive(v.asByteArray().toHex())
             GTXValueType.DICT -> return encodeDict(v, t, c)
             GTXValueType.ARRAY -> return encodeArray(v, t, c)
+            else -> throw NotImplementedError("TODO") // TODO: fix
         }
     }
 }

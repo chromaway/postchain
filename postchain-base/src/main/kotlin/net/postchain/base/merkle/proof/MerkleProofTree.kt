@@ -96,8 +96,8 @@ abstract class MerkleProofTree<T,TPath>(val root: MerkleProofElement) {
 
 
     /**
-     * Note: When calculating the merkle root of a proof of a complicated structure (array or dict)
-     *       means that the value-to-be-proved (i.e. array/dict) must be transformed to a binary tree
+     * Note: When calculating the merkle root of a proof of a complicated structure (args or dict)
+     *       means that the value-to-be-proved (i.e. args/dict) must be transformed to a binary tree
      *       before we can calculate it's hash.
      *
      * @return the calculated merkle root of the proof. For the proof to be valid, this [Hash] should equal the

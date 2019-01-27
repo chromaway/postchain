@@ -54,7 +54,7 @@ class GTXPath(val pathElements: List<GTXPathElement>): KLogging()  {
      */
     fun tail(): GTXPath {
         if (pathElements.isEmpty()) {
-            throw IllegalArgumentException("Impossible to tail this array")
+            throw IllegalArgumentException("Impossible to tail this args")
         }
         val tail: List<GTXPathElement> = pathElements.subList(1, pathElements.size)
         return GTXPath(tail)
@@ -209,7 +209,7 @@ class GTXPath(val pathElements: List<GTXPathElement>): KLogging()  {
                             return null
                         }
                     } else {
-                        logger.debug("Incorrect path! Expected array at element: $counter")
+                        logger.debug("Incorrect path! Expected args at element: $counter")
                         return null
                     }
                 }
@@ -241,7 +241,7 @@ object GTXPathFactory {
     /**
      * Use this constructor to convert a weakly typed path to a [GTXPath]
      *
-     * @param inputArr is just an array with Ints and Strings representing the path
+     * @param inputArr is just an args with Ints and Strings representing the path
      * @return a [GTXPath] (same same by well typed)
      */
     fun buildFromArrayOfPointers(inputArr: Array<Any>): GTXPath {

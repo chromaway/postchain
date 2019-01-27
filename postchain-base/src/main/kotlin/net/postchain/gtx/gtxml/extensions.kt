@@ -19,7 +19,7 @@ fun gtxValueTypeOf(type: String): GTXValueType {
         "string" -> STRING
         "int" -> INTEGER
         "bytea" -> BYTEARRAY
-        "array" -> ARRAY
+        "args" -> ARRAY
         "dict" -> DICT
         else -> throw IllegalArgumentException("Unknown type of GTXValueType: $type")
     }

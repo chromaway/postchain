@@ -53,7 +53,7 @@ abstract class BinaryTreeFactory<T,TPath> : KLogging() {
      *       These "in-between" nodes cannot be "path leaf" or have any interesting properties.
      *
      * @param layer What layer we aim calculate
-     * @param inList The array of nodes we should build from
+     * @param inList The args of nodes we should build from
      * @return All [BinaryTreeElement] nodes of the next layer
      */
     protected fun buildHigherLayer(layer: Int, inList: List<BinaryTreeElement>): List<BinaryTreeElement> {
@@ -88,7 +88,7 @@ abstract class BinaryTreeFactory<T,TPath> : KLogging() {
 
         // Extra check
         if (nrOfNodesToCreate != 0) {
-            logger.warn("Why didn't we build exactly the correct amount? Layer: $layer , residue: $nrOfNodesToCreate , input array size: ${inList.size}")
+            logger.warn("Why didn't we build exactly the correct amount? Layer: $layer , residue: $nrOfNodesToCreate , input args size: ${inList.size}")
         }
 
         return buildHigherLayer((layer + 1), returnArray)

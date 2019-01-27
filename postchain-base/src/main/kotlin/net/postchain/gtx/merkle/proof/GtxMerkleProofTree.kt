@@ -10,7 +10,7 @@ const val SERIALIZATION_ARRAY_TYPE: Long = 103
 const val SERIALIZATION_DICT_TYPE: Long = 104
 
 /**
- * Represents a proof node that once was the head of a GTX array.
+ * Represents a proof node that once was the head of a GTX args.
  *
  * Note: We keep the size in case we need to use a [GTXPath] to find a value
  */

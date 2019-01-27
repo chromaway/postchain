@@ -35,6 +35,7 @@ object GTXMLValueParser {
                 BYTEARRAY -> ByteArrayGTXValue(value as ByteArray)
                 ARRAY -> parseArrayGTXMLValue(value as ArrayType, params)
                 DICT -> parseDictGTXMLValue(value as DictType, params)
+                else -> throw NotImplementedError("TODO") // TODO: fix
             }
         }
     }

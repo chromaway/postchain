@@ -38,7 +38,7 @@ public class ObjectFactory {
     private final static QName _String_QNAME = new QName("", "string");
     private final static QName _Bytea_QNAME = new QName("", "bytea");
     private final static QName _Test_QNAME = new QName("", "test");
-    private final static QName _Array_QNAME = new QName("", "array");
+    private final static QName _Array_QNAME = new QName("", "args");
     private final static QName _Param_QNAME = new QName("", "param");
     private final static QName _Dict_QNAME = new QName("", "dict");
     private final static QName _Int_QNAME = new QName("", "int");
@@ -180,7 +180,7 @@ public class ObjectFactory {
      * Create an instance of {@link JAXBElement }{@code <}{@link ArrayType }{@code >}}
      * 
      */
-    @XmlElementDecl(namespace = "", name = "array")
+    @XmlElementDecl(namespace = "", name = "args")
     public JAXBElement<ArrayType> createArray(ArrayType value) {
         return new JAXBElement<ArrayType>(_Array_QNAME, ArrayType.class, null, value);
     }

@@ -114,7 +114,7 @@ class ArrayToGtxBinaryTreeTest {
 
 
     /**
-     * An array within an array.
+     * An args within an args.
      */
     @Test
     fun testIntArrayLength7withInnerLength3Array() {

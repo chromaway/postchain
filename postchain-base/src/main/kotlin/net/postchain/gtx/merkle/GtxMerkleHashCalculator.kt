@@ -11,7 +11,7 @@ import net.postchain.gtx.*
  * This should be the serialization we use in production
  *
  * @param gtxValue to serialize
- * @return the byte array containing serialized data
+ * @return the byte args containing serialized data
  */
 fun serializeGTXValueToByteArary(gtxValue: GTXValue): ByteArray {
     return when (gtxValue) {
@@ -19,7 +19,7 @@ fun serializeGTXValueToByteArary(gtxValue: GTXValue): ByteArray {
         is IntegerGTXValue ->   encodeGTXValue(gtxValue)
         is StringGTXValue ->    encodeGTXValue(gtxValue)
         is ByteArrayGTXValue -> encodeGTXValue(gtxValue)
-        is ArrayGTXValue ->     throw ProgrammerMistake("GTXValue is an array (We should have transformed all collection-types to trees by now)")
+        is ArrayGTXValue ->     throw ProgrammerMistake("GTXValue is an args (We should have transformed all collection-types to trees by now)")
         is DictGTXValue ->      throw ProgrammerMistake("GTXValue is an dict (We should have transformed all collection-types to trees by now)")
         else -> {
             // TODO: Log a warning here? We don't know what this is!

@@ -190,7 +190,7 @@ class BasicAccountInput(override val accountID: ByteArray, override val descript
     }
 
     /**
-     * Verifies that [pubkey] exists in the signers array in the operation data structure
+     * Verifies that [pubkey] exists in the signers args in the operation data structure
      *
      * @param ctx contextual information
      * @param dbops database operations

@@ -9,7 +9,7 @@ class GTXMLValueParserArraysTest {
 
     @Test
     fun parseGTXValue_array_empty_successfully() {
-        val xml = "<array></array>"
+        val xml = "<args></args>"
         val actual = GTXMLValueParser.parseGTXMLValue(xml)
         val expected = ArrayGTXValue(arrayOf())
 
@@ -18,7 +18,7 @@ class GTXMLValueParserArraysTest {
 
     @Test
     fun parseGTXValue_array_of_scalars_successfully() {
-        val xml = "<array><string>hello</string><int>42</int></array>"
+        val xml = "<args><string>hello</string><int>42</int></args>"
         val actual = GTXMLValueParser.parseGTXMLValue(xml)
         val expected = ArrayGTXValue(arrayOf(
                 StringGTXValue("hello"),
@@ -30,7 +30,7 @@ class GTXMLValueParserArraysTest {
 
     @Test
     fun parseGTXValue_array_with_params_successfully() {
-        val xml = "<array><string>hello</string><param type='int' key='num'/></array>"
+        val xml = "<args><string>hello</string><param type='int' key='num'/></args>"
         val actual = GTXMLValueParser.parseGTXMLValue(
                 xml,
                 mapOf("num" to IntegerGTXValue(42)))
@@ -45,7 +45,7 @@ class GTXMLValueParserArraysTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun parseGTXValue_array_with_not_found_param_throws_exception() {
-        val xml = "<array><string>hello</string><param type='int' key='UNKNOWN_KEY'/></array>"
+        val xml = "<args><string>hello</string><param type='int' key='UNKNOWN_KEY'/></args>"
         GTXMLValueParser.parseGTXMLValue(
                 xml,
                 mapOf("num" to IntegerGTXValue(42)))
@@ -53,7 +53,7 @@ class GTXMLValueParserArraysTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun parseGTXValue_array_with_CASE_SENSITIVE_not_found_param_throws_exception() {
-        val xml = "<array><string>hello</string><param type='int' key='CASE_SENSITIVE_KEY'/></array>"
+        val xml = "<args><string>hello</string><param type='int' key='CASE_SENSITIVE_KEY'/></args>"
         GTXMLValueParser.parseGTXMLValue(
                 xml,
                 mapOf("case_sensitive_key" to IntegerGTXValue(42)))
@@ -62,16 +62,16 @@ class GTXMLValueParserArraysTest {
     @Test
     fun parseGTXValue_array_of_arrays_successfully() {
         val xml = """
-            <array>
-                <array>
+            <args>
+                <args>
                     <string>foo</string>
                     <string>bar</string>
-                </array>
-                <array>
+                </args>
+                <args>
                     <int>42</int>
                     <int>43</int>
-                </array>
-            </array>
+                </args>
+            </args>
         """.trimIndent()
 
         val actual = GTXMLValueParser.parseGTXMLValue(xml)
@@ -92,36 +92,36 @@ class GTXMLValueParserArraysTest {
     @Test
     fun parseGTXValue_array_of_all_types_successfully() {
         val xml = """
-            <array>
+            <args>
                 <string>foo</string>
                 <int>42</int>
-                <array>
+                <args>
                     <null xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
                     <string>foo</string>
                     <null/>
                     <string>bar</string>
-                    <array>
+                    <args>
                         <int>42</int>
                         <int>43</int>
-                        <array>
+                        <args>
                             <int>44</int>
-                        </array>
+                        </args>
                         <dict>
                             <entry key="hello"><string>world</string></entry>
                             <entry key="123"><int>123</int></entry>
                         </dict>
-                    </array>
+                    </args>
                     <dict>
                         <entry key="hello">
-                            <array>
+                            <args>
                                 <string>world</string>
                                 <string>world</string>
-                            </array>
+                            </args>
                         </entry>
                         <entry key="123"><int>123</int></entry>
                     </dict>
-                </array>
-                <array>
+                </args>
+                <args>
                     <int>42</int>
                     <dict>
                         <entry key="hello"><string>world</string></entry>
@@ -129,7 +129,7 @@ class GTXMLValueParserArraysTest {
                             <param type='int' key='param_int_123'/>
                         </entry>
                     </dict>
-                </array>
+                </args>
                 <dict>
                     <entry key="hello"><string>world</string></entry>
                     <entry key="dict123">
@@ -141,13 +141,13 @@ class GTXMLValueParserArraysTest {
                         </dict>
                     </entry>
                     <entry key="array123">
-                        <array>
+                        <args>
                             <int>42</int>
                             <int>43</int>
-                        </array>
+                        </args>
                     </entry>
                 </dict>
-            </array>
+            </args>
         """.trimIndent()
 
         val actual = GTXMLValueParser.parseGTXMLValue(

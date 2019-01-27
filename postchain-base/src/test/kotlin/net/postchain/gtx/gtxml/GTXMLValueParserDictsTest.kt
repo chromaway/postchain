@@ -134,30 +134,30 @@ class GTXMLValueParserDictsTest {
                 </entry>
 
                 <entry key="entry_3">
-                    <array>
+                    <args>
                         <string>foo</string>
                         <string>bar</string>
-                        <array>
+                        <args>
                             <param type='int' key='param_int_42'/>
                             <int>43</int>
-                            <array>
+                            <args>
                                 <int>44</int>
-                            </array>
+                            </args>
                             <dict>
                                 <entry key="hello"><string>world</string></entry>
                                 <entry key="123"><int>123</int></entry>
                             </dict>
-                        </array>
+                        </args>
                         <dict>
                             <entry key="hello">
-                                <array>
+                                <args>
                                     <string>world</string>
                                     <string>world</string>
-                                </array>
+                                </args>
                             </entry>
                             <entry key="123"><int>123</int></entry>
                         </dict>
-                    </array>
+                    </args>
                 </entry>
 
                 <entry key="entry_4">
@@ -173,10 +173,10 @@ class GTXMLValueParserDictsTest {
                             </dict>
                         </entry>
                         <entry key="array123">
-                            <array>
+                            <args>
                                 <int>42</int>
                                 <int>43</int>
-                            </array>
+                            </args>
                         </entry>
                     </dict>
                 </entry>

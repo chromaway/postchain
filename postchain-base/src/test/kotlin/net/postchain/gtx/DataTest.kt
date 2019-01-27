@@ -33,15 +33,15 @@ class GTXDataTest {
         val b = GTXDataBuilder(testBlockchainRID, signerPub.slice(0..2).toTypedArray(), crypto)
         // primitives
         b.addOperation("hello", arrayOf(GTXNull, gtx(42), gtx("Wow"), gtx(signerPub[0])))
-        // array of primitives
+        // args of primitives
         b.addOperation("bro", arrayOf(gtx(GTXNull, gtx(2), gtx("Nope"))))
         // dict
         b.addOperation("dictator", arrayOf(gtx(mapOf("two" to gtx(2), "five" to GTXNull))))
         // complex structure
         b.addOperation("soup", arrayOf(
-                // map with array
-                gtx(mapOf("array" to gtx(gtx(1), gtx(2), gtx(3)))),
-                // array with map
+                // map with args
+                gtx(mapOf("args" to gtx(gtx(1), gtx(2), gtx(3)))),
+                // args with map
                 gtx(gtx(mapOf("inner" to gtx("space"))), GTXNull)
         ))
         b.finish()
@@ -87,7 +87,7 @@ class GTXDataTest {
         assertEquals(2, dict2["two"]!!.asInteger())
         assertNull(dict2["six"])
         val mapWithArray = d.operations[3].args[0]
-        assertEquals(2, mapWithArray["array"]!![1].asInteger())
+        assertEquals(2, mapWithArray["args"]!![1].asInteger())
         val arrayWithMap = d.operations[3].args[1]
         assertEquals("space", arrayWithMap[0]["inner"]!!.asString())
     }

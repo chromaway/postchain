@@ -35,7 +35,7 @@ import javax.xml.bind.annotation.XmlType;
  *         &lt;element ref="{}string"/>
  *         &lt;element ref="{}int"/>
  *         &lt;element ref="{}bytea"/>
- *         &lt;element ref="{}array"/>
+ *         &lt;element ref="{}args"/>
  *         &lt;element ref="{}dict"/>
  *         &lt;element ref="{}param"/>
  *       &lt;/choice>
@@ -54,7 +54,7 @@ import javax.xml.bind.annotation.XmlType;
 public class OperationType {
 
     @XmlElementRefs({
-        @XmlElementRef(name = "array", type = JAXBElement.class, required = false),
+        @XmlElementRef(name = "args", type = JAXBElement.class, required = false),
         @XmlElementRef(name = "param", type = JAXBElement.class, required = false),
         @XmlElementRef(name = "bytea", type = JAXBElement.class, required = false),
         @XmlElementRef(name = "string", type = JAXBElement.class, required = false),

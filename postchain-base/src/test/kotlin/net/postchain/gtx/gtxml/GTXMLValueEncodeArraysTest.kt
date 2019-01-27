@@ -13,8 +13,8 @@ class GTXMLValueEncodeArraysTest {
         val gtxValue = ArrayGTXValue(arrayOf())
         val actual = GTXMLValueEncoder.encodeXMLGTXValue(gtxValue)
         val expected = arrayOf(
-                expected("<array></array>"),
-                expected("<array/>"))
+                expected("<args></args>"),
+                expected("<args/>"))
 
         assert(actual).isIn(*expected)
     }
@@ -26,10 +26,10 @@ class GTXMLValueEncodeArraysTest {
                 IntegerGTXValue(42)))
         val actual = GTXMLValueEncoder.encodeXMLGTXValue(gtxValue)
         val expected = expected("""
-            <array>
+            <args>
                 <string>hello</string>
                 <int>42</int>
-            </array>""".trimIndent())
+            </args>""".trimIndent())
 
         assert(actual).isEqualTo(expected)
     }
@@ -50,7 +50,7 @@ class GTXMLValueEncodeArraysTest {
                                 ))
                         )),
                         DictGTXValue(mapOf(
-                                "array" to ArrayGTXValue(arrayOf(
+                                "args" to ArrayGTXValue(arrayOf(
                                         IntegerGTXValue(1),
                                         StringGTXValue("2")
                                 )),
@@ -68,13 +68,13 @@ class GTXMLValueEncodeArraysTest {
         val actual = GTXMLValueEncoder.encodeXMLGTXValue(gtxValue)
 
         val expected = expected("""
-            <array>
+            <args>
                 <null xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
                 <string>hello</string>
                 <int>42</int>
-                <array/>
-                <array>
-                    <array>
+                <args/>
+                <args>
+                    <args>
                         <dict>
                             <entry key="0">
                                 <null xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
@@ -86,13 +86,13 @@ class GTXMLValueEncodeArraysTest {
                                 <int>2</int>
                             </entry>
                         </dict>
-                    </array>
+                    </args>
                     <dict>
-                        <entry key="array">
-                            <array>
+                        <entry key="args">
+                            <args>
                                 <int>1</int>
                                 <string>2</string>
-                            </array>
+                            </args>
                         </entry>
                         <entry key="str">
                             <string>foo</string>
@@ -101,7 +101,7 @@ class GTXMLValueEncodeArraysTest {
                             <int>42</int>
                         </entry>
                     </dict>
-                </array>
+                </args>
                 <dict/>
                 <dict>
                     <entry key="1">
@@ -111,7 +111,7 @@ class GTXMLValueEncodeArraysTest {
                         <int>42</int>
                     </entry>
                 </dict>
-            </array>""".trimIndent())
+            </args>""".trimIndent())
 
         assert(actual).isEqualTo(expected)
     }
