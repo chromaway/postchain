@@ -35,37 +35,6 @@ data class DictGTXPathElement(val key: String): SearchableGTXPathElement() {
     override fun getSearchKey(): Any = key
 }
 
-enum class TransactionPathType {
-    OPERATION, SIGNER, SIGNATURE
-}
-
-/**
- * Represents what to prove in a [TransactionGTXValue] . This can be one and only one of these:
- * 1. An operation (or part of operation),
- * 2, A signer
- * 3. A signature
- */
-data class TransDataGTXPathElement(val type: TransactionPathType): GTXPathElement() { }
-
-object TransDataGTXPathElementFactory {
-
-    fun buildFromString(text: String): TransDataGTXPathElement? {
-
-        val upper = text.toUpperCase()
-        val type: TransactionPathType?  = when (upper) {
-            "OPERATION" -> TransactionPathType.OPERATION
-            "SIGNER" -> TransactionPathType.SIGNER
-            "SIGNATURE" -> TransactionPathType.SIGNATURE
-            else -> null
-        }
-        return if (type != null) {
-            TransDataGTXPathElement(type)
-        } else {
-            null
-        }
-    }
-}
-
 /**
  * The last element of the path
  */
@@ -239,8 +208,6 @@ object GTXPathFactory {
     /**
      * Use this constructor to convert a weakly typed path to a [GTXPath]
      *
-     * NOTE: This method is NOT safe. There might be name clashes, since a string might mean many things.
-     *
      * @param inputArr is just an args with Ints and Strings representing the path
      * @return a [GTXPath] (same same by well typed)
      */
@@ -252,14 +219,7 @@ object GTXPathFactory {
                     pathElementList.add(ArrayGTXPathElement(item))
                 }
                 is String -> {
-                    // Note that this is not very secure, since the spelling is incorrect, it will be interpreted as a
-                    // dictionary key. Also, if a dictionary key clashes with one of our keywords, we will have a bug.
-                    val x = TransDataGTXPathElementFactory.buildFromString(item)
-                    if (x != null) {
-                        pathElementList.add(x)
-                    } else {
-                        pathElementList.add(DictGTXPathElement(item))
-                    }
+                    pathElementList.add(DictGTXPathElement(item))
                 }
                 else -> throw IllegalArgumentException("A path structure must only consist of Ints and Strings, not $item")
             }
@@ -297,39 +257,6 @@ class GTXPathSet(val paths: Set<GTXPath>): MerklePathSet {
     fun keepOnlyDictPaths(): GTXPathSet {
         val filteredPaths = paths.filter { it.pathElements.first() is DictGTXPathElement }
         return GTXPathSet(filteredPaths.toSet())
-    }
-
-    fun keepOnlyPathsToOperations(): GTXPathSet {
-        return keepOnlyPathsToTransactionType(TransactionPathType.OPERATION)
-    }
-
-    fun keepOnlyPathsToSigners(): GTXPathSet {
-        return keepOnlyPathsToTransactionType(TransactionPathType.SIGNER)
-    }
-
-    fun keepOnlyPathsToSignatures(): GTXPathSet {
-        return keepOnlyPathsToTransactionType(TransactionPathType.SIGNATURE)
-    }
-
-    /**
-     * Internal impl
-     *
-     * @param transactionPathType the transaction path type we are interested in
-     * @return a new set of all paths that are of wrong type removed (only the tail is kept for relevant paths)
-     */
-    private fun keepOnlyPathsToTransactionType(transactionPathType: TransactionPathType): GTXPathSet {
-        val filteredGtxPaths = paths.filter {
-            // Does this path lead to a signature?
-            val firstPathElement = it.pathElements.first() // Only need to check first element
-            val typedPathElement = when (firstPathElement) {
-                is TransDataGTXPathElement -> firstPathElement
-                else -> null // Wrong type, ignore
-            }
-            typedPathElement != null && typedPathElement.type == transactionPathType
-        }.map {
-            it.tail() // No need to keep the transaction type
-        }
-        return GTXPathSet(filteredGtxPaths.toSet())
     }
 
     // ----------- Filter on index/key ---------

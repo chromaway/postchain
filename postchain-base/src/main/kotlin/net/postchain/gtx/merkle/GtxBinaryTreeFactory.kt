@@ -4,8 +4,6 @@ import net.postchain.base.merkle.*
 import net.postchain.gtx.*
 import net.postchain.gtx.merkle.factory.GtxBinaryTreeFactoryArray
 import net.postchain.gtx.merkle.factory.GtxBinaryTreeFactoryDict
-import net.postchain.gtx.merkle.factory.GtxBinaryTreeFactoryOperation
-import net.postchain.gtx.merkle.factory.GtxBinaryTreeFactoryTransaction
 
 
 /**
@@ -73,9 +71,6 @@ class GtxBinaryTreeFactory : BinaryTreeFactory<GTXValue, GTXPathSet>() {
         return when (leaf) {
             is ArrayGTXValue -> GtxBinaryTreeFactoryArray.buildFromArrayGTXValue(leaf, gtxPaths)
             is DictGTXValue -> GtxBinaryTreeFactoryDict.buildFromDictGTXValue(leaf, gtxPaths)
-            is OperationGTXValue -> GtxBinaryTreeFactoryOperation.buildFromOperationGTXValue(leaf, gtxPaths)
-            is TransactionBodyGTXValue -> GtxBinaryTreeFactoryTransaction.buildFromTransactionBodyGTXValue(leaf, gtxPaths)
-            is TransactionGTXValue -> GtxBinaryTreeFactoryTransaction.buildFromTransactionGTXValue(leaf, gtxPaths)
             else -> {
                 if (leaf.isContainerType()) {
                     throw IllegalStateException("Programmer should have dealt with this container type: ${leaf.type}")
