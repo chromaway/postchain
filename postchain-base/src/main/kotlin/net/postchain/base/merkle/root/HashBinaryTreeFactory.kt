@@ -3,7 +3,7 @@ package net.postchain.base.merkle.root
 import net.postchain.base.merkle.*
 
 
-class HashBinaryTreeFactory : BinaryTreeFactory<Hash, ByteArray>() {
+class HashBinaryTreeFactory : BinaryTreeFactory<Hash, HashPathSet>() {
 
     /**
      * Will take a list of hashes and generate a binary tree from it.
@@ -32,7 +32,7 @@ class HashBinaryTreeFactory : BinaryTreeFactory<Hash, ByteArray>() {
      * @param pathList wont be used (a bit ugly that we need to send it)
      * @return A [Leaf] with the hash in it
      */
-    override fun handleLeaf(leaf: Hash, pathList: List<ByteArray>): BinaryTreeElement {
+    override fun handleLeaf(leaf: Hash, paths: HashPathSet?): BinaryTreeElement {
         return Leaf(leaf)
     }
 }

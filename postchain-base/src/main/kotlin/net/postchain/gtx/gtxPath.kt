@@ -2,6 +2,7 @@ package net.postchain.gtx
 
 import java.util.LinkedList
 import mu.KLogging
+import net.postchain.base.merkle.MerklePathSet
 
 /**
  * [GTXPath] is used for referencing a sub-structure of a GTX graph (a mix of arrays and dictionaries)
@@ -32,6 +33,37 @@ data class ArrayGTXPathElement(val index: Int): SearchableGTXPathElement() {
  */
 data class DictGTXPathElement(val key: String): SearchableGTXPathElement() {
     override fun getSearchKey(): Any = key
+}
+
+enum class TransactionPathType {
+    OPERATION, SIGNER, SIGNATURE
+}
+
+/**
+ * Represents what to prove in a [TransactionGTXValue] . This can be one and only one of these:
+ * 1. An operation (or part of operation),
+ * 2, A signer
+ * 3. A signature
+ */
+data class TransDataGTXPathElement(val type: TransactionPathType): GTXPathElement() { }
+
+object TransDataGTXPathElementFactory {
+
+    fun buildFromString(text: String): TransDataGTXPathElement? {
+
+        val upper = text.toUpperCase()
+        val type: TransactionPathType?  = when (upper) {
+            "OPERATION" -> TransactionPathType.OPERATION
+            "SIGNER" -> TransactionPathType.SIGNER
+            "SIGNATURE" -> TransactionPathType.SIGNATURE
+            else -> null
+        }
+        return if (type != null) {
+            TransDataGTXPathElement(type)
+        } else {
+            null
+        }
+    }
 }
 
 /**
@@ -99,7 +131,7 @@ class GTXPath(val pathElements: List<GTXPathElement>): KLogging()  {
         /**
          * Please don't add anything to this list, it is supposed to be empty :-D
          */
-        val NO_PATHS: List<GTXPath> = listOf()
+        val NO_PATHS: GTXPathSet = GTXPathSet(setOf())
 
         // Some debug output
         fun debugRerpresentation(paths: List<GTXPath>): String {
@@ -110,40 +142,6 @@ class GTXPath(val pathElements: List<GTXPathElement>): KLogging()  {
             return sb.toString()
         }
 
-        /**
-         * @param arrayIndex the index we are looking for
-         * @param gtxPaths
-         * @return A new list, where all [GTXPath] without a match has been filtered out
-         *         and the one that remain only hold the tail.
-         */
-        fun getTailIfFirstElementIsArrayOfThisIndexFromList(arrayIndex: Int, gtxPaths: List<GTXPath>): List<GTXPath> {
-            return genericGetTailFormList(arrayIndex, gtxPaths, ::getTailIfFirstElementIsArrayOfThisIndex)
-        }
-
-
-        /**
-         * @param dictKey the key we are looking for
-         * @param gtxPaths
-         * @return A new list, where all [GTXPath] without a match has been filtered out
-         *         and the one that remain only hold the tail.
-         */
-        fun getTailIfFirstElementIsDictOfThisKeyFromList(dictKey: String, gtxPaths: List<GTXPath>): List<GTXPath> {
-            return genericGetTailFormList(dictKey, gtxPaths, ::getTailIfFirstElementIsDictOfThisKey)
-        }
-
-        /**
-         * Internal impl
-         */
-        private fun <T>genericGetTailFormList(seachKey: T, gtxPaths: List<GTXPath>, filterFun: (T, GTXPath) -> GTXPath?): List<GTXPath> {
-            val retGtxPaths = arrayListOf<GTXPath>()
-            for (gtxPath in gtxPaths) {
-                val newPath = filterFun(seachKey, gtxPath)
-                if (newPath != null) {
-                    retGtxPaths.add(newPath)
-                }
-            }
-            return retGtxPaths
-        }
 
         /**
          * @return If the first element of [GTXPath] matches the given "next" [GTXValue],
@@ -179,7 +177,7 @@ class GTXPath(val pathElements: List<GTXPathElement>): KLogging()  {
             }
 
             if (firstElement is SearchableGTXPathElement)  {
-                if (firstElement.getSearchKey().toString() == searchKey.toString()) { // Don't know why Kotlin does this!!
+                if (firstElement.getSearchKey().toString() == searchKey.toString()) { // Don't know why Kotlin does this!! (shouldn't have to do toString())
                     // We have a match, then we can remove this element
                     return gtxPath.tail()
                 }
@@ -241,6 +239,8 @@ object GTXPathFactory {
     /**
      * Use this constructor to convert a weakly typed path to a [GTXPath]
      *
+     * NOTE: This method is NOT safe. There might be name clashes, since a string might mean many things.
+     *
      * @param inputArr is just an args with Ints and Strings representing the path
      * @return a [GTXPath] (same same by well typed)
      */
@@ -252,7 +252,14 @@ object GTXPathFactory {
                     pathElementList.add(ArrayGTXPathElement(item))
                 }
                 is String -> {
-                    pathElementList.add(DictGTXPathElement(item))
+                    // Note that this is not very secure, since the spelling is incorrect, it will be interpreted as a
+                    // dictionary key. Also, if a dictionary key clashes with one of our keywords, we will have a bug.
+                    val x = TransDataGTXPathElementFactory.buildFromString(item)
+                    if (x != null) {
+                        pathElementList.add(x)
+                    } else {
+                        pathElementList.add(DictGTXPathElement(item))
+                    }
                 }
                 else -> throw IllegalArgumentException("A path structure must only consist of Ints and Strings, not $item")
             }
@@ -260,5 +267,102 @@ object GTXPathFactory {
         // Add one last element
         pathElementList.add(LeafGTXPathElement)
         return GTXPath(pathElementList)
+    }
+}
+
+
+/**
+ * A collection of [GTXPath]s. Order among the paths is not important
+ */
+class GTXPathSet(val paths: Set<GTXPath>): MerklePathSet {
+
+
+    override fun isEmpty(): Boolean {
+        return paths.isEmpty()
+    }
+
+    /**
+     * @return true is any of the paths in the list is (just) a leaf
+     */
+    override fun isThisAProofLeaf(): Boolean {
+        return paths.any{ it.isAtLeaf() }
+    }
+
+    // ----------- Filter on type of next path element ---------
+    fun keepOnlyArrayPaths(): GTXPathSet {
+        val filteredPaths = paths.filter { it.pathElements.first() is ArrayGTXPathElement }
+        return GTXPathSet(filteredPaths.toSet())
+    }
+
+    fun keepOnlyDictPaths(): GTXPathSet {
+        val filteredPaths = paths.filter { it.pathElements.first() is DictGTXPathElement }
+        return GTXPathSet(filteredPaths.toSet())
+    }
+
+    fun keepOnlyPathsToOperations(): GTXPathSet {
+        return keepOnlyPathsToTransactionType(TransactionPathType.OPERATION)
+    }
+
+    fun keepOnlyPathsToSigners(): GTXPathSet {
+        return keepOnlyPathsToTransactionType(TransactionPathType.SIGNER)
+    }
+
+    fun keepOnlyPathsToSignatures(): GTXPathSet {
+        return keepOnlyPathsToTransactionType(TransactionPathType.SIGNATURE)
+    }
+
+    /**
+     * Internal impl
+     *
+     * @param transactionPathType the transaction path type we are interested in
+     * @return a new set of all paths that are of wrong type removed (only the tail is kept for relevant paths)
+     */
+    private fun keepOnlyPathsToTransactionType(transactionPathType: TransactionPathType): GTXPathSet {
+        val filteredGtxPaths = paths.filter {
+            // Does this path lead to a signature?
+            val firstPathElement = it.pathElements.first() // Only need to check first element
+            val typedPathElement = when (firstPathElement) {
+                is TransDataGTXPathElement -> firstPathElement
+                else -> null // Wrong type, ignore
+            }
+            typedPathElement != null && typedPathElement.type == transactionPathType
+        }.map {
+            it.tail() // No need to keep the transaction type
+        }
+        return GTXPathSet(filteredGtxPaths.toSet())
+    }
+
+    // ----------- Filter on index/key ---------
+
+    /**
+     * @param arrayIndex the index we are looking for
+     * @return A new path set, where all [GTXPath] without a match has been filtered out
+     *         and the one that remain only hold the tail.
+     */
+    fun getTailIfFirstElementIsArrayOfThisIndexFromList(arrayIndex: Int): GTXPathSet {
+        return genericGetTailFormList(arrayIndex, GTXPath.GTXPathList::getTailIfFirstElementIsArrayOfThisIndex)
+    }
+
+    /**
+     * @param dictKey the key we are looking for
+     * @return A new path set, where all [GTXPath] without a match has been filtered out
+     *         and the one that remain only hold the tail.
+     */
+    fun getTailIfFirstElementIsDictOfThisKeyFromList(dictKey: String): GTXPathSet {
+        return genericGetTailFormList(dictKey, GTXPath.GTXPathList::getTailIfFirstElementIsDictOfThisKey)
+    }
+
+    /**
+     * Internal impl (will work with any search key type)
+     */
+    private fun <T>genericGetTailFormList(seachKey: T, filterFun: (T, GTXPath) -> GTXPath?): GTXPathSet {
+        val retGtxPaths = arrayListOf<GTXPath>()
+        for (gtxPath in paths) {
+            val newPath = filterFun(seachKey, gtxPath)
+            if (newPath != null) {
+                retGtxPaths.add(newPath)
+            }
+        }
+        return GTXPathSet(retGtxPaths.toSet())
     }
 }

@@ -19,11 +19,14 @@ class TransactionBodyToGtxBinaryTreeTest {
 
     @Test
     fun testBodyWith1Operation_andNoSigners_withPath() {
-        val path: Array<Any> = arrayOf(0)
+        val path: Array<Any> = arrayOf("OPERATION", 0)
 
-        val expectedTreeWithPath = " +   \n" +
-                "/ \\ \n" +
-                "*MyOp - "
+        val expectedTreeWithPath = "   +       \n" +
+                "  / \\   \n" +
+                " /   \\  \n" +
+                " +   FF00FF00   \n" +
+                "/ \\     \n" +
+                "*ZOp - - - "
 
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
         val treeHolder = TransactionBodyToGtxBinaryTreeHelper.buildTreeOfBodyWith1Operation_andNoSigners(gtxPath)
@@ -41,19 +44,45 @@ class TransactionBodyToGtxBinaryTreeTest {
 
     @Test
     fun testBodyWith2Operations_and1Signer_withPath() {
-        val path: Array<Any> = arrayOf(4)
+        val path: Array<Any> = arrayOf("OPERATION",0,2)
 
-        val expected = "       +               \n" +
-                "      / \\       \n" +
-                "     /   \\      \n" +
-                "    /     \\     \n" +
-                "   /       \\    \n" +
-                "   +       *4       \n" +
-                "  / \\           \n" +
-                " /   \\          \n" +
-                " +   +   .   .   \n" +
-                "/ \\ / \\         \n" +
-                "MyOp 1 2 3 - - - - "
+        val expected = "                               +                                                               \n" +
+                "                              / \\                               \n" +
+                "                             /   \\                              \n" +
+                "                            /     \\                             \n" +
+                "                           /       \\                            \n" +
+                "                          /         \\                           \n" +
+                "                         /           \\                          \n" +
+                "                        /             \\                         \n" +
+                "                       /               \\                        \n" +
+                "                      /                 \\                       \n" +
+                "                     /                   \\                      \n" +
+                "                    /                     \\                     \n" +
+                "                   /                       \\                    \n" +
+                "                  /                         \\                   \n" +
+                "                 /                           \\                  \n" +
+                "                /                             \\                 \n" +
+                "               /                               \\                \n" +
+                "               +                               +                               \n" +
+                "              / \\                             / \\               \n" +
+                "             /   \\                           /   \\              \n" +
+                "            /     \\                         /     \\             \n" +
+                "           /       \\                       /       \\            \n" +
+                "          /         \\                     /         \\           \n" +
+                "         /           \\                   /           \\          \n" +
+                "        /             \\                 /             \\         \n" +
+                "       /               \\               /               \\        \n" +
+                "       +               +               FF00FF00               22112211               \n" +
+                "      / \\             / \\                                       \n" +
+                "     /   \\           /   \\                                      \n" +
+                "    /     \\         /     \\                                     \n" +
+                "   /       \\       /       \\                                    \n" +
+                "   +       4       ZOp       -       .       .       .       .       \n" +
+                "  / \\                                                           \n" +
+                " /   \\                                                          \n" +
+                " +   +   .   .   .   .   .   .   .   .   .   .   .   .   \n" +
+                "/ \\ / \\                                                 \n" +
+                "MyOp 1 *2 3 - - - - - - - - - - - - - - - - - - - - - - - - "
 
         val gtxPath: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path)
         val treeHolder = TransactionBodyToGtxBinaryTreeHelper.buildTreeOfBodyWith2Operations_andASigner(gtxPath)

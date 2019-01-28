@@ -49,7 +49,7 @@ object OperationToGtxBinaryTreeHelper {
         val operation = buildOnlyNameOperation(nameStr)
 
         val fullBinaryTree: GtxBinaryTree = if (gtxPath != null) {
-            factory.buildFromGtxAndPath(operation, listOf(gtxPath))
+            factory.buildFromGtxAndPath(operation, GTXPathSet(setOf(gtxPath)))
         } else {
             factory.buildFromGtx(operation)
         }
@@ -87,7 +87,7 @@ object OperationToGtxBinaryTreeHelper {
         val operation = buildOperationWithIntegerArugments(nameStr, intArray)
 
         val fullBinaryTree: GtxBinaryTree = if (gtxPath != null) {
-            factory.buildFromGtxAndPath(operation, listOf(gtxPath))
+            factory.buildFromGtxAndPath(operation, GTXPathSet(setOf(gtxPath)))
         } else {
             factory.buildFromGtx(operation)
         }

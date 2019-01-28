@@ -20,8 +20,8 @@ object TransactionBodyToGtxBinaryTreeHelper {
 
     fun buildTransBodyGtxValueTwoOperation(blockchainRidHex: String, signersHex: List<String>): TransactionBodyGTXValue {
         val bcRid  = ByteArrayGTXValue(TreeHelper.convertToByteArray(blockchainRidHex))
-        val operation1: OperationGTXValue = OperationToGtxBinaryTreeHelper.buildOnlyNameOperation("ZOp")
-        val operation2: OperationGTXValue = OperationToGtxBinaryTreeHelper.buildOperationWithIntegerArugments("MyOp", intArrayOf(1,2,3,4))
+        val operation1: OperationGTXValue = OperationToGtxBinaryTreeHelper.buildOperationWithIntegerArugments("MyOp", intArrayOf(1,2,3,4))
+        val operation2: OperationGTXValue = OperationToGtxBinaryTreeHelper.buildOnlyNameOperation("ZOp")
         val signers: Array<ByteArrayGTXValue> = signersHex.map{ ByteArrayGTXValue(TreeHelper.convertToByteArray(it)) }.toTypedArray()
         return TransactionBodyGTXValue(bcRid, arrayOf(operation1, operation2), signers)
     }
@@ -37,14 +37,17 @@ object TransactionBodyToGtxBinaryTreeHelper {
     fun buildTreeOfBodyWith1Operation_andNoSigners(gtxPath: GTXPath?): TreeHolderFromTransactionBody {
         val blockchainRidStr = "FF00FF00"
         val intArray = intArrayOf()
-        val expectedTree = " +   \n" +
-                "/ \\ \n" +
-                "MyOp -"
+        val expectedTree = "   +       \n" +
+                "  / \\   \n" +
+                " /   \\  \n" +
+                " +   FF00FF00   \n" +
+                "/ \\     \n" +
+                "ZOp - - - "
 
         val transBody =  buildTransBodyGtxValueOneOperation(blockchainRidStr, listOf())
 
         val fullBinaryTree: GtxBinaryTree = if (gtxPath != null) {
-            factory.buildFromGtxAndPath(transBody, listOf(gtxPath))
+            factory.buildFromGtxAndPath(transBody, GTXPathSet(setOf(gtxPath)))
         } else {
             factory.buildFromGtx(transBody)
         }
@@ -66,14 +69,48 @@ object TransactionBodyToGtxBinaryTreeHelper {
         val blockchainRidStr = "FF00FF00"
         val signer1 = "22112211"
         val intArray = intArrayOf()
-        val expectedTree = " +   \n" +
-                "/ \\ \n" +
-                "MyOp -"
+        val expectedTree = "                               +                                                               \n" +
+                "                              / \\                               \n" +
+                "                             /   \\                              \n" +
+                "                            /     \\                             \n" +
+                "                           /       \\                            \n" +
+                "                          /         \\                           \n" +
+                "                         /           \\                          \n" +
+                "                        /             \\                         \n" +
+                "                       /               \\                        \n" +
+                "                      /                 \\                       \n" +
+                "                     /                   \\                      \n" +
+                "                    /                     \\                     \n" +
+                "                   /                       \\                    \n" +
+                "                  /                         \\                   \n" +
+                "                 /                           \\                  \n" +
+                "                /                             \\                 \n" +
+                "               /                               \\                \n" +
+                "               +                               +                               \n" +
+                "              / \\                             / \\               \n" +
+                "             /   \\                           /   \\              \n" +
+                "            /     \\                         /     \\             \n" +
+                "           /       \\                       /       \\            \n" +
+                "          /         \\                     /         \\           \n" +
+                "         /           \\                   /           \\          \n" +
+                "        /             \\                 /             \\         \n" +
+                "       /               \\               /               \\        \n" +
+                "       +               +               FF00FF00               22112211               \n" +
+                "      / \\             / \\                                       \n" +
+                "     /   \\           /   \\                                      \n" +
+                "    /     \\         /     \\                                     \n" +
+                "   /       \\       /       \\                                    \n" +
+                "   +       4       ZOp       -       .       .       .       .       \n" +
+                "  / \\                                                           \n" +
+                " /   \\                                                          \n" +
+                " +   +   .   .   .   .   .   .   .   .   .   .   .   .   \n" +
+                "/ \\ / \\                                                 \n" +
+                "MyOp 1 2 3 - - - - - - - - - - - - - - - - - - - - - - - - "
 
         val transBody =  buildTransBodyGtxValueTwoOperation(blockchainRidStr, listOf(signer1))
 
         val fullBinaryTree: GtxBinaryTree = if (gtxPath != null) {
-            factory.buildFromGtxAndPath(transBody, listOf(gtxPath))
+            factory.buildFromGtxAndPath(transBody, GTXPathSet(setOf(gtxPath)))
         } else {
             factory.buildFromGtx(transBody)
         }

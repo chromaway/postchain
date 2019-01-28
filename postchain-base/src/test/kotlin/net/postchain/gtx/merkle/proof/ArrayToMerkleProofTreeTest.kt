@@ -6,6 +6,7 @@ import net.postchain.base.merkle.TreeHelper.stripWhite
 import net.postchain.gtx.ArrayGTXValue
 import net.postchain.gtx.GTXPath
 import net.postchain.gtx.GTXPathFactory
+import net.postchain.gtx.GTXPathSet
 import net.postchain.gtx.merkle.ArrayToGtxBinaryTreeHelper
 import net.postchain.gtx.merkle.MerkleHashCalculatorDummy
 import net.postchain.gtx.merkle.proof.GtxMerkleProofTree
@@ -314,7 +315,7 @@ class ArrayToMerkleProofTreeTest {
         val path2: Array<Any> = arrayOf(6)
         val gtxPath1: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path1)
         val gtxPath2: GTXPath = GTXPathFactory.buildFromArrayOfPointers(path2)
-        val treeHolder: TreeHolderFromArray = ArrayToGtxBinaryTreeHelper.buildTreeOf7(listOf(gtxPath1, gtxPath2))
+        val treeHolder: TreeHolderFromArray = ArrayToGtxBinaryTreeHelper.buildTreeOf7(GTXPathSet(setOf(gtxPath1, gtxPath2)))
 
         //Assert.assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
 

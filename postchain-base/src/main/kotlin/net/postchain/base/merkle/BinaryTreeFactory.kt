@@ -8,7 +8,7 @@ import mu.KLogging
  *
  * Note: The idea is that you should sub class for each type of element (for example [GTXValue]) you want to build.
  */
-abstract class BinaryTreeFactory<T,TPath> : KLogging() {
+abstract class BinaryTreeFactory<T,TPathSet: MerklePathSet> : KLogging() {
 
     /**
      * Builds the (sub?)tree from a list. We do this is in parts:
@@ -23,14 +23,13 @@ abstract class BinaryTreeFactory<T,TPath> : KLogging() {
      */
     protected fun buildSubTreeFromLeafList(leafList: List<T>): BinaryTreeElement {
 
-        val emptyPaths = listOf<TPath>()
         val leafArray = arrayListOf<BinaryTreeElement>()
 
         // 1. Build first (leaf) layer
         for (i in 0..(leafList.size - 1)) {
             //val pathsRelevantForThisLeaf = keepOnlyRelevantPathsFun(i, pathList)
             val leaf = leafList[i]
-            val btElement = handleLeaf(leaf, emptyPaths)
+            val btElement = handleLeaf(leaf, null)
             leafArray.add(btElement)
         }
 
@@ -42,9 +41,21 @@ abstract class BinaryTreeFactory<T,TPath> : KLogging() {
 
     /**
      * Transforms the incoming leaf into an [BinaryTreeElement]
+     * The idea with this function is that it can be recursive (if the leaf in turn is complex object with sub objects).
+     *
+     * @param leaf the raw data we should wrap in a leaf
+     * @param paths a collection of proof paths that might point to this leaf
+     * @return the resulting [BinaryTreeElement] the leaf got converted to
      */
-    abstract fun handleLeaf(leaf: T, pathList: List<TPath>): BinaryTreeElement
+    abstract fun handleLeaf(leaf: T, paths: TPathSet?): BinaryTreeElement
 
+    /**
+     * Just like [handleLeaf] but we know that this leaf should not be a complex type, but something we can
+     * immediately wrap
+     */
+    fun handlePrimitiveLeaf(leaf: T, paths: TPathSet): BinaryTreeElement {
+        return Leaf(leaf, paths.isThisAProofLeaf())
+    }
 
     /**
      * Calls itself until the return value only holds 1 element
@@ -56,7 +67,7 @@ abstract class BinaryTreeFactory<T,TPath> : KLogging() {
      * @param inList The args of nodes we should build from
      * @return All [BinaryTreeElement] nodes of the next layer
      */
-    protected fun buildHigherLayer(layer: Int, inList: List<BinaryTreeElement>): List<BinaryTreeElement> {
+    fun buildHigherLayer(layer: Int, inList: List<BinaryTreeElement>): List<BinaryTreeElement> {
 
         if (inList.isEmpty()) {
             throw IllegalStateException("Cannot work on empty arrays. Layer: $layer")

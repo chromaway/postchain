@@ -4,10 +4,7 @@ import net.postchain.base.merkle.PrintableTreeFactory
 import net.postchain.base.merkle.TreeHelper
 import net.postchain.gtx.merkle.TreeHolderFromDict
 import net.postchain.base.merkle.TreePrinter
-import net.postchain.gtx.ArrayGTXValue
-import net.postchain.gtx.DictGTXValue
-import net.postchain.gtx.GTXPath
-import net.postchain.gtx.GTXValue
+import net.postchain.gtx.*
 
 /**
  * Used for the case when we are mixing dicts and arrays in the same test
@@ -47,7 +44,7 @@ object MixArrayDictToGtxBinaryTreeHelper {
         val gtxDict = DictGTXValue(outerMap)
 
         val fullBinaryTree: GtxBinaryTree = if (gtxPath != null) {
-            factory.buildFromGtxAndPath(gtxDict, listOf(gtxPath))
+            factory.buildFromGtxAndPath(gtxDict, GTXPathSet(setOf(gtxPath)))
         } else {
             factory.buildFromGtx(gtxDict)
         }

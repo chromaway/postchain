@@ -6,6 +6,7 @@ import net.postchain.gtx.merkle.TreeHolderFromDict
 import net.postchain.base.merkle.TreePrinter
 import net.postchain.gtx.DictGTXValue
 import net.postchain.gtx.GTXPath
+import net.postchain.gtx.GTXPathSet
 import net.postchain.gtx.GTXValue
 
 object DictToGtxBinaryTreeHelper {
@@ -31,7 +32,7 @@ object DictToGtxBinaryTreeHelper {
         val gtxDict = GtxTreeHelper.transformStringAndIntToDictGTXValue(stringArray.toCollection(ArrayList()), intArray.toCollection(ArrayList()))
 
         val fullBinaryTree: GtxBinaryTree = if (gtxPath != null) {
-            factory.buildFromGtxAndPath(gtxDict, listOf(gtxPath))
+            factory.buildFromGtxAndPath(gtxDict, GTXPathSet(setOf(gtxPath)))
         } else {
             factory.buildFromGtx(gtxDict)
         }
@@ -68,7 +69,7 @@ object DictToGtxBinaryTreeHelper {
         val gtxDict = GtxTreeHelper.transformStringAndIntToDictGTXValue(stringArray.toCollection(ArrayList()), intArray.toCollection(ArrayList()))
 
         val fullBinaryTree: GtxBinaryTree = if (gtxPath != null) {
-            factory.buildFromGtxAndPath(gtxDict, listOf(gtxPath))
+            factory.buildFromGtxAndPath(gtxDict, GTXPathSet(setOf(gtxPath)))
         } else {
             factory.buildFromGtx(gtxDict)
         }
@@ -113,7 +114,7 @@ object DictToGtxBinaryTreeHelper {
         val gtxDict = DictGTXValue(outerMap)
 
         val fullBinaryTree: GtxBinaryTree = if (gtxPath != null) {
-            factory.buildFromGtxAndPath(gtxDict, listOf(gtxPath))
+            factory.buildFromGtxAndPath(gtxDict, GTXPathSet(setOf(gtxPath)))
         } else {
             factory.buildFromGtx(gtxDict)
         }
