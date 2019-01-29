@@ -5,6 +5,7 @@ import assertk.assertions.isEqualTo
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.UserMistake
 import net.postchain.gtx.*
+import net.postchain.gtv.*
 import org.junit.Test
 
 class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
@@ -26,17 +27,17 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
-                                        StringGTXValue("hello"),
-                                        StringGTXValue("hello2"),
-                                        StringGTXValue("hello3"),
-                                        IntegerGTXValue(42),
-                                        IntegerGTXValue(43))),
+                                        GtvString("hello"),
+                                        GtvString("hello2"),
+                                        GtvString("hello3"),
+                                        GtvInteger(42),
+                                        GtvInteger(43))),
                         OpData("ft_transfer",
                                 arrayOf(
-                                        StringGTXValue("HELLO"),
-                                        StringGTXValue("HELLO2"),
-                                        IntegerGTXValue(142),
-                                        IntegerGTXValue(143)))
+                                        GtvString("HELLO"),
+                                        GtvString("HELLO2"),
+                                        GtvInteger(142),
+                                        GtvInteger(143)))
                 )
         )
 
@@ -72,17 +73,17 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
-                                        StringGTXValue("hello"),
-                                        StringGTXValue("hello2"),
-                                        StringGTXValue("hello3"),
-                                        IntegerGTXValue(42),
-                                        IntegerGTXValue(43))),
+                                        GtvString("hello"),
+                                        GtvString("hello2"),
+                                        GtvString("hello3"),
+                                        GtvInteger(42),
+                                        GtvInteger(43))),
                         OpData("ft_transfer",
                                 arrayOf(
-                                        StringGTXValue("HELLO"),
-                                        StringGTXValue("HELLO2"),
-                                        IntegerGTXValue(142),
-                                        IntegerGTXValue(143)))
+                                        GtvString("HELLO"),
+                                        GtvString("HELLO2"),
+                                        GtvInteger(142),
+                                        GtvInteger(143)))
                 )
         )
 
@@ -152,24 +153,24 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                         byteArrayOf(0x0E, 0x0F)
                 ),
                 arrayOf(OpData("ft_transfer",
-                        arrayOf(StringGTXValue("hello"),
-                                StringGTXValue("my string param"),
-                                IntegerGTXValue(123),
-                                ByteArrayGTXValue(byteArrayOf(0x0A, 0x0B, 0x0C)))
+                        arrayOf(GtvString("hello"),
+                                GtvString("my string param"),
+                                GtvInteger(123),
+                                GtvByteArray(byteArrayOf(0x0A, 0x0B, 0x0C)))
                 ))
         )
 
         val context = TransactionContext(
                 null,
                 mapOf(
-                        "param_signer" to ByteArrayGTXValue(byteArrayOf(0x01, 0x02, 0x03)),
+                        "param_signer" to GtvByteArray(byteArrayOf(0x01, 0x02, 0x03)),
 
-                        "param_string" to StringGTXValue("my string param"),
-                        "param_int" to IntegerGTXValue(123),
-                        "param_bytearray" to ByteArrayGTXValue(byteArrayOf(0x0A, 0x0B, 0x0C)),
+                        "param_string" to GtvString("my string param"),
+                        "param_int" to GtvInteger(123),
+                        "param_bytearray" to GtvByteArray(byteArrayOf(0x0A, 0x0B, 0x0C)),
 
-                        "param_signature_1" to ByteArrayGTXValue(byteArrayOf(0x0A, 0x0B, 0x0C, 0x0D)),
-                        "param_signature_2" to ByteArrayGTXValue(byteArrayOf(0x0E, 0x0F))
+                        "param_signature_1" to GtvByteArray(byteArrayOf(0x0A, 0x0B, 0x0C, 0x0D)),
+                        "param_signature_2" to GtvByteArray(byteArrayOf(0x0E, 0x0F))
                 )
         )
 
@@ -193,7 +194,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
         val context = TransactionContext(
                 null,
                 mapOf(
-                        "param_foo" to StringGTXValue("my string param")
+                        "param_foo" to GtvString("my string param")
                 )
         )
 
@@ -207,7 +208,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
         val context = TransactionContext(
                 null,
                 mapOf(
-                        "param_foo" to StringGTXValue("my string param")
+                        "param_foo" to GtvString("my string param")
                 )
         )
 
@@ -225,18 +226,18 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                 arrayOf(),
                 arrayOf(
                         OpData("ft_transfer",
-                                arrayOf(ArrayGTXValue(arrayOf(
-                                        StringGTXValue("foo"),
-                                        ArrayGTXValue(arrayOf(
-                                                StringGTXValue("foo"),
-                                                StringGTXValue("bar")
+                                arrayOf(GtvArray(arrayOf(
+                                        GtvString("foo"),
+                                        GtvArray(arrayOf(
+                                                GtvString("foo"),
+                                                GtvString("bar")
                                         )),
-                                        DictGTXValue(mapOf(
-                                                "key2" to StringGTXValue("42"),
-                                                "key1" to IntegerGTXValue(42),
-                                                "key3" to ArrayGTXValue(arrayOf(
-                                                        StringGTXValue("hello"),
-                                                        IntegerGTXValue(42)))
+                                        GtvDictionary(mapOf(
+                                                "key2" to GtvString("42"),
+                                                "key1" to GtvInteger(42),
+                                                "key3" to GtvArray(arrayOf(
+                                                        GtvString("hello"),
+                                                        GtvInteger(42)))
                                         ))
                                 )))
                         )
@@ -246,18 +247,18 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
         val context = TransactionContext(
                 null,
                 mapOf("param_compound" to
-                        ArrayGTXValue(arrayOf(
-                                StringGTXValue("foo"),
-                                ArrayGTXValue(arrayOf(
-                                        StringGTXValue("foo"),
-                                        StringGTXValue("bar")
+                        GtvArray(arrayOf(
+                                GtvString("foo"),
+                                GtvArray(arrayOf(
+                                        GtvString("foo"),
+                                        GtvString("bar")
                                 )),
-                                DictGTXValue(mapOf(
-                                        "key1" to IntegerGTXValue(42),
-                                        "key2" to StringGTXValue("42"),
-                                        "key3" to ArrayGTXValue(arrayOf(
-                                                StringGTXValue("hello"),
-                                                IntegerGTXValue(42)
+                                GtvDictionary(mapOf(
+                                        "key1" to GtvInteger(42),
+                                        "key2" to GtvString("42"),
+                                        "key3" to GtvArray(arrayOf(
+                                                GtvString("hello"),
+                                                GtvInteger(42)
                                         ))
                                 ))
                         ))

@@ -198,7 +198,7 @@
     fun query(
       ctxt: EContext, 
       name: String, 
-      args: GTXValue): GTXValue
+      args: Gtv): Gtv
     fun initializeDB(ctx: EContext)</y:MethodLabel>
           </y:UML>
         </y:UMLClassNode>
@@ -354,7 +354,7 @@ fun getDigestForSigning(crypto: CryptoSystem):
           </y:NodeLabel>
           <y:UML clipContent="true" constraint="" hasDetailsColor="false" omitDetails="false" stereotype="" use3DEffect="true">
             <y:AttributeLabel>val opName: String
-val args: Array&lt;GTXValue&gt;
+val args: Array&lt;Gtv&gt;
 </y:AttributeLabel>
             <y:MethodLabel/>
           </y:UML>
@@ -376,16 +376,16 @@ val args: Array&lt;GTXValue&gt;
             </y:ModelParameter>
           </y:NodeLabel>
           <y:UML clipContent="true" constraint="" hasDetailsColor="false" omitDetails="false" stereotype="" use3DEffect="true">
-            <y:AttributeLabel>val type: GTXValue</y:AttributeLabel>
+            <y:AttributeLabel>val type: Gtv</y:AttributeLabel>
             <y:MethodLabel>    fun asString(): String
-    fun asArray(): Array&lt;out GTXValue&gt;
+    fun asArray(): Array&lt;out Gtv&gt;
     fun getSize(): Int
     fun isNull(): Boolean
-    fun asDict(): Map&lt;String, GTXValue&gt;
+    fun asDict(): Map&lt;String, Gtv&gt;
     fun asInteger(): Long
     fun asByteArray(convert: Boolean = false): ByteArray
     fun asPrimitive(): Any?
-    fun getRawGTXValue(): RawGTXValue</y:MethodLabel>
+    fun getRawGtv(): RawGtv</y:MethodLabel>
           </y:UML>
         </y:UMLClassNode>
       </data>
@@ -814,7 +814,7 @@ fun secp256k1_verify(
             </y:ModelParameter>
           </y:NodeLabel>
           <y:UML clipContent="true" constraint="" hasDetailsColor="false" omitDetails="false" stereotype="" use3DEffect="true">
-            <y:AttributeLabel>  val data: GTXValue,
+            <y:AttributeLabel>  val data: Gtv,
   partialContext: BlockchainContext,
   val blockSigner: Signer
   ---------------
@@ -1535,7 +1535,7 @@ txFactory: TransactionFactory
 val opIndex: Int
 val blockchainRID: ByteArray
 val signers: Array&lt;ByteArray&gt;
-val args: Array&lt;GTXValue&gt;</y:AttributeLabel>
+val args: Array&lt;Gtv&gt;</y:AttributeLabel>
             <y:MethodLabel/>
           </y:UML>
         </y:UMLClassNode>
@@ -1651,7 +1651,7 @@ val allowOverrides: Boolean
           <y:UML clipContent="true" constraint="" hasDetailsColor="false" omitDetails="false" stereotype="" use3DEffect="true">
             <y:AttributeLabel>val conf: ConfT
 val opmap: Map&lt;String, (ConfT, ExtOpData)-&gt; Transactor&gt;
-val querymap: Map&lt;String, (ConfT, EContext, GTXValue)-&gt;GTXValue&gt;</y:AttributeLabel>
+val querymap: Map&lt;String, (ConfT, EContext, Gtv)-&gt;Gtv&gt;</y:AttributeLabel>
             <y:MethodLabel/>
           </y:UML>
         </y:UMLClassNode>

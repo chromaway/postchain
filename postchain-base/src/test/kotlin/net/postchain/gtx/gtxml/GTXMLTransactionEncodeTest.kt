@@ -5,6 +5,7 @@ import assertk.assertions.isEqualTo
 import net.postchain.common.hexStringToByteArray
 import net.postchain.gtx.*
 import org.junit.Test
+import net.postchain.gtv.*
 
 class GTXMLTransactionEncodeTest {
 
@@ -23,17 +24,17 @@ class GTXMLTransactionEncodeTest {
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
-                                        StringGTXValue("hello"),
-                                        StringGTXValue("hello2"),
-                                        StringGTXValue("hello3"),
-                                        IntegerGTXValue(42),
-                                        IntegerGTXValue(43))),
+                                        GtvString("hello"),
+                                        GtvString("hello2"),
+                                        GtvString("hello3"),
+                                        GtvInteger(42),
+                                        GtvInteger(43))),
                         OpData("ft_transfer",
                                 arrayOf(
-                                        StringGTXValue("HELLO"),
-                                        StringGTXValue("HELLO2"),
-                                        IntegerGTXValue(142),
-                                        IntegerGTXValue(143)))
+                                        GtvString("HELLO"),
+                                        GtvString("HELLO2"),
+                                        GtvInteger(142),
+                                        GtvInteger(143)))
                 )
         )
 
@@ -69,17 +70,17 @@ class GTXMLTransactionEncodeTest {
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
-                                        StringGTXValue("hello"),
-                                        StringGTXValue("hello2"),
-                                        StringGTXValue("hello3"),
-                                        IntegerGTXValue(42),
-                                        IntegerGTXValue(43))),
+                                        GtvString("hello"),
+                                        GtvString("hello2"),
+                                        GtvString("hello3"),
+                                        GtvInteger(42),
+                                        GtvInteger(43))),
                         OpData("ft_transfer",
                                 arrayOf(
-                                        StringGTXValue("HELLO"),
-                                        StringGTXValue("HELLO2"),
-                                        IntegerGTXValue(142),
-                                        IntegerGTXValue(143)))
+                                        GtvString("HELLO"),
+                                        GtvString("HELLO2"),
+                                        GtvInteger(142),
+                                        GtvInteger(143)))
                 )
         )
 
@@ -146,25 +147,25 @@ class GTXMLTransactionEncodeTest {
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
-                                        StringGTXValue("foo"),
-                                        ArrayGTXValue(arrayOf(
-                                                StringGTXValue("foo"),
-                                                ArrayGTXValue(arrayOf(
-                                                        StringGTXValue("foo"),
-                                                        StringGTXValue("bar")
+                                        GtvString("foo"),
+                                        GtvArray(arrayOf(
+                                                GtvString("foo"),
+                                                GtvArray(arrayOf(
+                                                        GtvString("foo"),
+                                                        GtvString("bar")
                                                 )),
-                                                DictGTXValue(mapOf(
-                                                        "key1" to IntegerGTXValue(42),
-                                                        "key2" to StringGTXValue("42"),
-                                                        "key3" to ArrayGTXValue(arrayOf(
-                                                                StringGTXValue("hello"),
-                                                                IntegerGTXValue(42)
+                                                GtvDictionary(mapOf(
+                                                        "key1" to GtvInteger(42),
+                                                        "key2" to GtvString("42"),
+                                                        "key3" to GtvArray(arrayOf(
+                                                                GtvString("hello"),
+                                                                GtvInteger(42)
                                                         ))
                                                 ))
                                         )),
-                                        DictGTXValue(mapOf(
-                                                "key1" to GTXNull,
-                                                "key2" to StringGTXValue("42")
+                                        GtvDictionary(mapOf(
+                                                "key1" to GtvNull,
+                                                "key2" to GtvString("42")
                                         ))
                                 ))
                 ))

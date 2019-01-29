@@ -1,10 +1,10 @@
 package net.postchain.base.merkle
 
 import net.postchain.base.merkle.root.HashBinaryTree
-import net.postchain.gtx.merkle.GtxBinaryTree
+import net.postchain.gtv.merkle.GtvBinaryTree
 
 open class TreeHolder(val orgIntArray: IntArray,
-                      val clfbTree: GtxBinaryTree,
+                      val clfbTree: GtvBinaryTree,
                       val treePrintout: String,
                       val expectedPrintout: String) {
 

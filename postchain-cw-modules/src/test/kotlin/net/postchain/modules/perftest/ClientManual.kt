@@ -3,7 +3,7 @@ package net.postchain.modules.perftest
 import io.restassured.RestAssured.*
 import net.postchain.common.toHex
 import net.postchain.gtx.GTXDataBuilder
-import net.postchain.gtx.gtx
+import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.modules.ft.testBlockchainRID
 import net.postchain.devtools.modules.ft.FTIntegrationTest
 import org.junit.Test
@@ -27,7 +27,7 @@ class ClientManual : FTIntegrationTest() {
 
     fun makeTestTx(id: Long, value: String): ByteArray {
         val b = GTXDataBuilder(testBlockchainRID, arrayOf(alicePubKey), cryptoSystem)
-        b.addOperation("gtx_test", arrayOf(gtx(id), gtx(value)))
+        b.addOperation("gtx_test", arrayOf(gtv(id), gtv(value)))
         b.finish()
         b.sign(cryptoSystem.makeSigner(alicePubKey, alicePrivKey))
         return b.serialize()

@@ -3,8 +3,8 @@ package net.postchain.cli
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
 import net.postchain.base.BaseConfigurationDataStore
-import net.postchain.gtx.encodeGTXValue
-import net.postchain.gtx.gtxml.GTXMLValueParser
+import net.postchain.gtv.GtvEncoder.encodeGtv
+import net.postchain.gtv.gtvml.GtvMLParser
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
 import java.io.File
@@ -54,14 +54,14 @@ class CommandAddConfiguration : Command {
         println("add-configuration will be executed with options: " +
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
-        val gtxValue = GTXMLValueParser.parseGTXMLValue(
+        val Gtv = GtvMLParser.parseGtvML(
                 File(blockchainConfigFile).readText())
-        val encodedGtxValue = encodeGTXValue(gtxValue)
+        val encodedGtv = encodeGtv(Gtv)
 
         var result = false
         runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
             if (force || BaseConfigurationDataStore.getConfigurationData(ctx, height) == null) {
-                result = BaseConfigurationDataStore.addConfigurationData(ctx, height, encodedGtxValue) > 0
+                result = BaseConfigurationDataStore.addConfigurationData(ctx, height, encodedGtv) > 0
             } else {
                 println("Blockchain configuration of chainId $chainId at height $height " +
                         "already exists. Use -f flag to force addition.")

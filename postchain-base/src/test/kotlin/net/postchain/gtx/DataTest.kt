@@ -5,6 +5,8 @@ package net.postchain.gtx
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.Signature
+import net.postchain.gtv.*
+import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import org.junit.Assert.*
@@ -32,17 +34,17 @@ class GTXDataTest {
 
         val b = GTXDataBuilder(testBlockchainRID, signerPub.slice(0..2).toTypedArray(), crypto)
         // primitives
-        b.addOperation("hello", arrayOf(GTXNull, gtx(42), gtx("Wow"), gtx(signerPub[0])))
+        b.addOperation("hello", arrayOf(GtvNull, gtv(42), gtv("Wow"), gtv(signerPub[0])))
         // args of primitives
-        b.addOperation("bro", arrayOf(gtx(GTXNull, gtx(2), gtx("Nope"))))
+        b.addOperation("bro", arrayOf(gtv(GtvNull, gtv(2), gtv("Nope"))))
         // dict
-        b.addOperation("dictator", arrayOf(gtx(mapOf("two" to gtx(2), "five" to GTXNull))))
+        b.addOperation("dictator", arrayOf(gtv(mapOf("two" to gtv(2), "five" to GtvNull))))
         // complex structure
         b.addOperation("soup", arrayOf(
                 // map with args
-                gtx(mapOf("args" to gtx(gtx(1), gtx(2), gtx(3)))),
+                gtv(mapOf("args" to gtv(gtv(1), gtv(2), gtv(3)))),
                 // args with map
-                gtx(gtx(mapOf("inner" to gtx("space"))), GTXNull)
+                gtv(gtv(mapOf("inner" to gtv("space"))), GtvNull)
         ))
         b.finish()
         b.sign(crypto.makeSigner(signerPub[0], signerPriv[0]))

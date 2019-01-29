@@ -2,6 +2,7 @@ package net.postchain.gtx
 
 import net.postchain.StorageBuilder
 import net.postchain.base.withWriteConnection
+import net.postchain.gtv.GtvFactory.gtv
 import org.apache.commons.configuration2.MapConfiguration
 import org.junit.Assert
 import org.junit.Test
@@ -12,8 +13,8 @@ class SQLModuleTest {
     @Test
     fun testModule() {
         val moduleFileName = Paths.get(javaClass.getResource("sqlmodule1.sql").toURI()).toString()
-        val config = gtx(
-                "gtx" to gtx("sqlmodules" to gtx(gtx(moduleFileName)))
+        val config = gtv(
+                "gtx" to gtv("sqlmodules" to gtv(gtv(moduleFileName)))
         )
 
         val mf = SQLGTXModuleFactory()

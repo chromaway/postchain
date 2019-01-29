@@ -3,7 +3,7 @@ package net.postchain.base.merkle.root
 import net.postchain.base.CryptoSystem
 import net.postchain.base.merkle.*
 import net.postchain.base.merkle.MerkleBasics.EMPTY_HASH
-import net.postchain.gtx.merkle.GtxMerkleHashCalculator
+import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 
 object MerkleRootCalculator {
 
@@ -19,7 +19,7 @@ object MerkleRootCalculator {
     fun computeMerkleRoot(cryptoSystem: CryptoSystem,
                               hashes: Array<Hash>): Hash {
         val treeWithHashesAsLeaves = hashTreeFactory.buildFromList(hashes.toList())
-        return computeMerkleRoot(treeWithHashesAsLeaves, GtxMerkleHashCalculator(cryptoSystem))
+        return computeMerkleRoot(treeWithHashesAsLeaves, GtvMerkleHashCalculator(cryptoSystem))
     }
 
     /**

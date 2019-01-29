@@ -9,7 +9,7 @@ import net.postchain.core.UserMistake
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
-import net.postchain.gtx.gtx
+import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtx.gtxml.GTXMLTransactionParser
 import net.postchain.gtx.gtxml.TransactionContext
 import java.io.StringReader
@@ -104,12 +104,12 @@ class TestLauncher : IntegrationTest() {
         val txContext = TransactionContext(
                 blockchainRID?.hexStringToByteArray(),
                 mapOf(
-                        "user1pub" to gtx(pubKey(0)),
-                        "user2pub" to gtx(user2pub),
-                        "user3pub" to gtx(user3pub),
-                        "Alice" to gtx(pubKey(0)),
-                        "Bob" to gtx(user2pub),
-                        "Claire" to gtx(user3pub)
+                        "user1pub" to gtv(pubKey(0)),
+                        "user2pub" to gtv(user2pub),
+                        "user3pub" to gtv(user3pub),
+                        "Alice" to gtv(pubKey(0)),
+                        "Bob" to gtv(user2pub),
+                        "Claire" to gtv(user3pub)
                 ),
                 true,
                 mapOf(

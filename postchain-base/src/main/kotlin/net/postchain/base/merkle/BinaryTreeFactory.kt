@@ -1,12 +1,13 @@
 package net.postchain.base.merkle
 
 import mu.KLogging
+import net.postchain.gtv.Gtv
 
 
 /**
  * The factory does the conversion between list of elements and tree of elements.
  *
- * Note: The idea is that you should sub class for each type of element (for example [GTXValue]) you want to build.
+ * Note: The idea is that you should sub class for each type of element (for example [Gtv]) you want to build.
  */
 abstract class BinaryTreeFactory<T,TPathSet: MerklePathSet> : KLogging() {
 

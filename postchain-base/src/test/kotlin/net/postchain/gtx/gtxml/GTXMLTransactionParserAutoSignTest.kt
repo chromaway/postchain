@@ -5,9 +5,9 @@ import assertk.assertions.isEqualTo
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.gtx.GTXData
-import net.postchain.gtx.IntegerGTXValue
+import net.postchain.gtv.GtvInteger
 import net.postchain.gtx.OpData
-import net.postchain.gtx.StringGTXValue
+import net.postchain.gtv.GtvString
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.MockCryptoSystem
@@ -44,11 +44,11 @@ class GTXMLTransactionParserAutoSignTest {
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
-                                        StringGTXValue("hello"),
-                                        StringGTXValue("hello2"),
-                                        StringGTXValue("hello3"),
-                                        IntegerGTXValue(42),
-                                        IntegerGTXValue(43)))
+                                        GtvString("hello"),
+                                        GtvString("hello2"),
+                                        GtvString("hello3"),
+                                        GtvInteger(42),
+                                        GtvInteger(43)))
                 )
         )
 
@@ -103,11 +103,11 @@ class GTXMLTransactionParserAutoSignTest {
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
-                                        StringGTXValue("hello"),
-                                        StringGTXValue("hello2"),
-                                        StringGTXValue("hello3"),
-                                        IntegerGTXValue(42),
-                                        IntegerGTXValue(43)))
+                                        GtvString("hello"),
+                                        GtvString("hello2"),
+                                        GtvString("hello3"),
+                                        GtvInteger(42),
+                                        GtvInteger(43)))
                 )
         )
 
@@ -136,11 +136,11 @@ class GTXMLTransactionParserAutoSignTest {
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
-                                        StringGTXValue("hello"),
-                                        StringGTXValue("hello2"),
-                                        StringGTXValue("hello3"),
-                                        IntegerGTXValue(42),
-                                        IntegerGTXValue(43)))
+                                        GtvString("hello"),
+                                        GtvString("hello2"),
+                                        GtvString("hello3"),
+                                        GtvInteger(42),
+                                        GtvInteger(43)))
                 )
         )
 

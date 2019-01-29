@@ -5,6 +5,8 @@ package net.postchain.gtx
 import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.core.EContext
 import net.postchain.core.TxEContext
+import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtv.*
 import org.apache.commons.dbutils.handlers.ScalarHandler
 
 /**
@@ -42,7 +44,7 @@ class GTX_timeb(u: Unit, opData: ExtOpData) : GTXOperation(opData) {
 
 }
 
-fun lastBlockInfoQuery(config: Unit, ctx: EContext, args: GTXValue): GTXValue {
+fun lastBlockInfoQuery(config: Unit, ctx: EContext, args: Gtv): Gtv {
     val dba = SQLDatabaseAccess()
     val prevHeight = dba.getLastBlockHeight(ctx)
     val prevTimestamp = dba.getLastBlockTimestamp(ctx)
@@ -52,14 +54,14 @@ fun lastBlockInfoQuery(config: Unit, ctx: EContext, args: GTXValue): GTXValue {
         prevBlockRID = prevBlockRIDs[0]
     } else
         prevBlockRID = null
-    return gtx(
-            "height" to gtx(prevHeight),
-            "timestamp" to gtx(prevTimestamp),
-            "blockRID" to (if (prevBlockRID != null) gtx(prevBlockRID) else GTXNull)
+    return gtv(
+            "height" to gtv(prevHeight),
+            "timestamp" to gtv(prevTimestamp),
+            "blockRID" to (if (prevBlockRID != null) gtv(prevBlockRID) else GtvNull)
     )
 }
 
-fun txConfirmationTime(config: Unit, ctx: EContext, args: GTXValue): GTXValue {
+fun txConfirmationTime(config: Unit, ctx: EContext, args: Gtv): Gtv {
     val dba = SQLDatabaseAccess()
     val txRID = args["txRID"]!!.asByteArray(true)
     val info = dba.getBlockInfo(ctx, txRID)
@@ -69,10 +71,10 @@ fun txConfirmationTime(config: Unit, ctx: EContext, args: GTXValue): GTXValue {
             ScalarHandler<ByteArray>(), info.blockIid)
     val blockHeight = dba.queryRunner.query(ctx.conn,"SELECT block_height FROM blocks WHERE block_iid = ?",
             ScalarHandler<Long>(), info.blockIid)
-    return gtx(
-            "timestamp" to gtx(timestamp),
-            "blockRID" to gtx(blockRID),
-            "blockHeight" to gtx(blockHeight)
+    return gtv(
+            "timestamp" to gtv(timestamp),
+            "blockRID" to gtv(blockRID),
+            "blockHeight" to gtv(blockHeight)
     )
 }
 

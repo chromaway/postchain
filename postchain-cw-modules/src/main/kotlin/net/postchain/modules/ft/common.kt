@@ -6,13 +6,13 @@ import net.postchain.base.CryptoSystem
 import net.postchain.core.EContext
 import net.postchain.core.TxEContext
 import net.postchain.gtx.ExtOpData
-import net.postchain.gtx.GTXValue
+import net.postchain.gtv.Gtv
 
 class OpEContext (val txCtx: TxEContext, val opIndex: Int)
 
-typealias ExtraData = Map<String, GTXValue>
+typealias ExtraData = Map<String, Gtv>
 
-val NoExtraData = mapOf<String, GTXValue>()
+val NoExtraData = mapOf<String, Gtv>()
 
 fun getExtraData(data: ExtOpData, idx: Int): ExtraData {
     if (data.args.size > idx) {
@@ -33,8 +33,8 @@ open class FTRules<DataT>(val staticRules: Array<(DataT)->Boolean>, val dbRules:
 }
 
 interface AccountFactory {
-    fun makeInputAccount(accountID: ByteArray, descriptor: GTXValue): FTInputAccount
-    fun makeOutputAccount(accountID: ByteArray, descriptor: GTXValue): FTOutputAccount
+    fun makeInputAccount(accountID: ByteArray, descriptor: Gtv): FTInputAccount
+    fun makeOutputAccount(accountID: ByteArray, descriptor: Gtv): FTOutputAccount
 }
 
 interface AccountResolver {
@@ -75,7 +75,7 @@ interface FTDBOps {
     fun registerAccount(ctx: OpEContext, accountID: ByteArray, accountType: Int, accountDesc: ByteArray)
     fun registerAsset(ctx: OpEContext, assetID: String)
 
-    fun getDescriptor(ctx: EContext, accountID: ByteArray): GTXValue?
+    fun getDescriptor(ctx: EContext, accountID: ByteArray): Gtv?
     fun getBalance(ctx: EContext, accountID: ByteArray, assetID: String): Long
     fun getHistory(ctx: EContext, accountID: ByteArray, assetID: String): List<HistoryEntry>
 }

@@ -1,19 +1,19 @@
 package net.postchain.gtx.gtxml
 
-import net.postchain.gtx.GTXValueType
-import net.postchain.gtx.GTXValueType.*
+import net.postchain.gtv.GtvType
+import net.postchain.gtv.GtvType.*
 import javax.xml.namespace.QName
 
 /**
- * Returns [GTXValueType] object correspondent to [QName]
+ * Returns [GtvType] object correspondent to [QName]
  */
-fun gtxValueTypeOf(qname: QName): GTXValueType =
-        gtxValueTypeOf(qname.localPart)
+fun GtvTypeOf(qname: QName): GtvType =
+        GtvTypeOf(qname.localPart)
 
 /**
- * Returns [GTXValueType] object correspondent to [String]
+ * Returns [GtvType] object correspondent to [String]
  */
-fun gtxValueTypeOf(type: String): GTXValueType {
+fun GtvTypeOf(type: String): GtvType {
     return when (type) {
         "null" -> NULL
         "string" -> STRING
@@ -21,7 +21,7 @@ fun gtxValueTypeOf(type: String): GTXValueType {
         "bytea" -> BYTEARRAY
         "args" -> ARRAY
         "dict" -> DICT
-        else -> throw IllegalArgumentException("Unknown type of GTXValueType: $type")
+        else -> throw IllegalArgumentException("Unknown type of GtvType: $type")
     }
 }
 

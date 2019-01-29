@@ -2,9 +2,9 @@ package net.postchain.base.merkle
 
 import net.postchain.base.merkle.proof.*
 import net.postchain.base.merkle.root.HashBinaryTree
-import net.postchain.gtx.*
-import net.postchain.gtx.merkle.GtxBinaryTree
-import net.postchain.gtx.merkle.proof.GtxMerkleProofTree
+import net.postchain.gtv.merkle.GtvBinaryTree
+import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
+import net.postchain.gtv.*
 import kotlin.math.pow
 
 
@@ -42,12 +42,12 @@ class PrintableBinaryTree(val root: PTreeElement) {
 }
 
 
-fun convertGtxToString(gtx: GTXValue): String {
+fun convertGtxToString(gtx: Gtv): String {
     val dataStr = when (gtx) {
-        is GTXNull -> "N/A"
-        is IntegerGTXValue -> gtx.integer.toString()
-        is StringGTXValue -> gtx.asString()
-        is ByteArrayGTXValue -> TreeHelper.convertToHex(gtx.asByteArray())
+        is GtvNull -> "N/A"
+        is GtvInteger -> gtx.integer.toString()
+        is GtvString -> gtx.asString()
+        is GtvByteArray -> TreeHelper.convertToHex(gtx.asByteArray())
 
         else ->  gtx.toString()
     }
@@ -63,7 +63,7 @@ fun convertHashToString(hash: Hash): String {
  */
 object PrintableTreeFactory {
 
-    fun buildPrintableTreeFromClfbTree(tree: GtxBinaryTree): PrintableBinaryTree {
+    fun buildPrintableTreeFromClfbTree(tree: GtvBinaryTree): PrintableBinaryTree {
         val maxLevel = tree.maxLevel()
         //println("Max level: $maxLevel")
         val newRoot: PTreeElement = genericTreeInternal(1, maxLevel, tree.root, ::convertGtxToString)
@@ -77,7 +77,7 @@ object PrintableTreeFactory {
         return PrintableBinaryTree(newRoot)
     }
 
-    fun buildPrintableTreeFromProofTree(tree: GtxMerkleProofTree): PrintableBinaryTree {
+    fun buildPrintableTreeFromProofTree(tree: GtvMerkleProofTree): PrintableBinaryTree {
         val maxLevel = tree.maxLevel()
         //println("Max level: $maxLevel")
         val newRoot: PTreeElement = fromProofTreeInternal(1, maxLevel, tree.root)
@@ -101,7 +101,7 @@ object PrintableTreeFactory {
                 if (currentLevel < maxLevel) {
                     // Create node instead of leaf
                     val content: String = toStr(inElement.content as T)
-                    //val content = convertGtxToString(inElement.content as GTXValue)
+                    //val content = convertGtxToString(inElement.content as Gtv)
                     //println("Early leaf $content at level: $currentLevel")
                     val emptyLeft: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     val emptyRight: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
@@ -127,14 +127,14 @@ object PrintableTreeFactory {
             is ProofValueLeaf<*> -> {
                 if (currentLevel < maxLevel) {
                     // Create node instead of leaf
-                    val content = convertGtxToString(inElement.content as GTXValue)
+                    val content = convertGtxToString(inElement.content as Gtv)
                     //println("Early leaf $content at level: $currentLevel")
                     val emptyLeft: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     val emptyRight: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     PContentNode(content, emptyLeft, emptyRight, true)
                 } else {
                     // Normal leaf
-                    val content = convertGtxToString(inElement.content as GTXValue)
+                    val content = convertGtxToString(inElement.content as Gtv)
                     //println("Normal leaf $content at level: $currentLevel")
                     PLeaf(content, true)
                 }

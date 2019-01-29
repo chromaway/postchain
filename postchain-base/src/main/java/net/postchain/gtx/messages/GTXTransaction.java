@@ -8,10 +8,11 @@ package net.postchain.gtx.messages;
 
 import java.io.*;
 import java.util.*;
+
+import net.postchain.gtv.messages.Messages;
 import org.asnlab.asndt.runtime.conv.*;
 import org.asnlab.asndt.runtime.conv.annotation.*;
 import org.asnlab.asndt.runtime.type.AsnType;
-import org.asnlab.asndt.runtime.value.*;
 
 public class GTXTransaction {
 

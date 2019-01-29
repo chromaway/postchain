@@ -4,12 +4,12 @@ import net.postchain.common.hexStringToByteArray
 import net.postchain.core.BlockchainContext
 import net.postchain.core.NODE_ID_AUTO
 import net.postchain.core.NODE_ID_READ_ONLY
-import net.postchain.gtx.GTXValue
-import net.postchain.gtx.gtx
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvFactory
 import org.apache.commons.configuration2.Configuration
 
 class BaseBlockchainConfigurationData(
-        val data: GTXValue,
+        val data: Gtv,
         partialContext: BlockchainContext,
         val blockSigner: Signer
 ) {
@@ -36,7 +36,7 @@ class BaseBlockchainConfigurationData(
         return data["blockstrategy"]?.get("name")?.asString() ?: ""
     }
 
-    fun getBlockBuildingStrategy(): GTXValue? {
+    fun getBlockBuildingStrategy(): Gtv? {
         return data["blockstrategy"]
     }
 
@@ -44,7 +44,7 @@ class BaseBlockchainConfigurationData(
         fun readFromCommonsConfiguration(config: Configuration, chainId: Long, blockchainRID: ByteArray, nodeID: Int):
                 BaseBlockchainConfigurationData {
 
-            val gtxConfig = convertConfigToGTXValue(config.subset("blockchain.$chainId"))
+            val gtxConfig = convertConfigToGtv(config.subset("blockchain.$chainId"))
             val cryptoSystem = SECP256K1CryptoSystem()
             val privKey = gtxConfig["blocksigningprivkey"]!!.asByteArray()
             val pubKey = secp256k1_derivePubKey(privKey)
@@ -56,64 +56,64 @@ class BaseBlockchainConfigurationData(
                     signer)
         }
 
-        private fun convertGTXConfigToGTXValue(config: Configuration): GTXValue {
+        private fun convertGTXConfigToGtv(config: Configuration): Gtv {
             val properties = mutableListOf(
-                    "modules" to gtx(
-                            config.getStringArray("gtx.modules").map { gtx(it) }
+                    "modules" to GtvFactory.gtv(
+                            config.getStringArray("gtx.modules").map { GtvFactory.gtv(it) }
                     )
             )
 
             if (config.containsKey("gtx.ft.assets")) {
-                val ftProps = mutableListOf<Pair<String, GTXValue>>()
+                val ftProps = mutableListOf<Pair<String, Gtv>>()
                 val assets = config.getStringArray("gtx.ft.assets")
 
-                ftProps.add("assets" to gtx(*assets.map { assetName ->
-                    val issuers = gtx(
+                ftProps.add("assets" to GtvFactory.gtv(*assets.map { assetName ->
+                    val issuers = GtvFactory.gtv(
                             *config.getStringArray("gtx.ft.asset.${assetName}.issuers").map(
-                                    { gtx(it.hexStringToByteArray()) }
+                                    { GtvFactory.gtv(it.hexStringToByteArray()) }
                             ).toTypedArray())
 
-                    gtx(
-                            "name" to gtx(assetName),
+                    GtvFactory.gtv(
+                            "name" to GtvFactory.gtv(assetName),
                             "issuers" to issuers
                     )
                 }.toTypedArray()))
-                properties.add("ft" to gtx(*ftProps.toTypedArray()))
+                properties.add("ft" to GtvFactory.gtv(*ftProps.toTypedArray()))
             }
 
             if (config.containsKey("gtx.sqlmodules")) {
-                properties.add("sqlmodules" to gtx(*
-                config.getStringArray("gtx.sqlmodules").map { gtx(it) }.toTypedArray()
+                properties.add("sqlmodules" to GtvFactory.gtv(*
+                config.getStringArray("gtx.sqlmodules").map { GtvFactory.gtv(it) }.toTypedArray()
                 ))
             }
 
             if (config.containsKey("gtx.rellSrcModule")) {
-                properties.add("rellSrcModule" to gtx(config.getString("gtx.rellSrcModule")))
+                properties.add("rellSrcModule" to GtvFactory.gtv(config.getString("gtx.rellSrcModule")))
             }
 
-            return gtx(*properties.toTypedArray())
+            return GtvFactory.gtv(*properties.toTypedArray())
         }
 
-        private fun convertConfigToGTXValue(config: Configuration): GTXValue {
+        private fun convertConfigToGtv(config: Configuration): Gtv {
 
-            fun blockStrategy(config: Configuration): GTXValue {
-                return gtx(
-                        "name" to gtx(config.getString("blockstrategy"))
+            fun blockStrategy(config: Configuration): Gtv {
+                return GtvFactory.gtv(
+                        "name" to GtvFactory.gtv(config.getString("blockstrategy"))
                 )
             }
 
             val properties = mutableListOf(
                     "blockstrategy" to blockStrategy(config),
-                    "configurationfactory" to gtx(config.getString("configurationfactory")),
-                    "signers" to gtx(config.getStringArray("signers").map { gtx(it.hexStringToByteArray()) }),
-                    "blocksigningprivkey" to gtx(config.getString("blocksigningprivkey").hexStringToByteArray())
+                    "configurationfactory" to GtvFactory.gtv(config.getString("configurationfactory")),
+                    "signers" to GtvFactory.gtv(config.getStringArray("signers").map { GtvFactory.gtv(it.hexStringToByteArray()) }),
+                    "blocksigningprivkey" to GtvFactory.gtv(config.getString("blocksigningprivkey").hexStringToByteArray())
             )
 
             if (config.containsKey("gtx.modules")) {
-                properties.add(Pair("gtx", convertGTXConfigToGTXValue(config)))
+                properties.add(Pair("gtx", convertGTXConfigToGtv(config)))
             }
 
-            return gtx(*properties.toTypedArray())
+            return GtvFactory.gtv(*properties.toTypedArray())
         }
     }
 

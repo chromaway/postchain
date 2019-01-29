@@ -12,9 +12,10 @@ import java.io.ByteArrayOutputStream
 import java.util.*
 import net.postchain.gtx.messages.GTXOperation as RawGTXOperation
 import net.postchain.gtx.messages.GTXTransaction as RawGTXTransaction
-import net.postchain.gtx.messages.GTXValue as RawGTXValue
+import net.postchain.gtv.messages.Gtv as RawGtv
+import net.postchain.gtv.*
 
-data class OpData(val opName: String, val args: Array<GTXValue>) {
+data class OpData(val opName: String, val args: Array<Gtv>) {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -39,7 +40,7 @@ class ExtOpData(val opName: String,
                 val opIndex: Int,
                 val blockchainRID: ByteArray,
                 val signers: Array<ByteArray>,
-                val args: Array<GTXValue>)
+                val args: Array<Gtv>)
 
 val EMPTY_SIGNATURE: ByteArray = ByteArray(0)
 
@@ -61,7 +62,7 @@ data class GTXData(
         rtx.operations = Vector<RawGTXOperation>(operations.map {
             val rop = RawGTXOperation()
             rop.opName = it.opName
-            rop.args = Vector<RawGTXValue>(it.args.map { it.getRawGTXValue() })
+            rop.args = Vector<RawGtv>(it.args.map { it.getRawGtv() })
             rop
         })
         rtx.signatures = Vector<ByteArray>(signatures.toMutableList())
@@ -113,7 +114,7 @@ fun decodeGTXData(_rawData: ByteArray): GTXData {
     val ops = rawGTX.operations.map {
         OpData(
                 it.opName,
-                it.args.map(::wrapValue).toTypedArray())
+                it.args.map(GtvFactory::wrapValue).toTypedArray())
     }.toTypedArray()
 
     return GTXData(
@@ -162,7 +163,7 @@ class GTXDataBuilder(val blockchainRID: ByteArray,
         return signatures.all { !it.contentEquals(EMPTY_SIGNATURE) }
     }
 
-    fun addOperation(opName: String, args: Array<GTXValue>) {
+    fun addOperation(opName: String, args: Array<Gtv>) {
         if (finished) throw ProgrammerMistake("Already finished")
         operations.add(OpData(opName, args))
     }

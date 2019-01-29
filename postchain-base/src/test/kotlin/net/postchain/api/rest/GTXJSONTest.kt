@@ -4,8 +4,8 @@ package net.postchain.api.rest
 
 import net.postchain.gtx.make_gtx_gson
 import net.postchain.common.hexStringToByteArray
-import net.postchain.gtx.GTXValue
-import net.postchain.gtx.gtx
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvFactory.gtv
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
 import org.junit.Assert
@@ -19,22 +19,22 @@ class GTXJSONTest {
         val jsonValue = JsonObject()
         jsonValue.add("foo", JsonPrimitive("bar"))
         jsonValue.add("bar", JsonPrimitive("1234"))
-        val gtxValue = gson.fromJson<GTXValue>(jsonValue, GTXValue::class.java)!!
-        Assert.assertEquals("bar", gtxValue["foo"]!!.asString())
-        Assert.assertEquals("1234", gtxValue["bar"]!!.asString())
-        Assert.assertTrue(gtxValue["bar"]!!.asByteArray(true).size == 2)
+        val Gtv = gson.fromJson<Gtv>(jsonValue, Gtv::class.java)!!
+        Assert.assertEquals("bar", Gtv["foo"]!!.asString())
+        Assert.assertEquals("1234", Gtv["bar"]!!.asString())
+        Assert.assertTrue(Gtv["bar"]!!.asByteArray(true).size == 2)
     }
 
     @Test
     fun testBoth() {
         val gson = make_gtx_gson()
-        val gtxValue = gtx("foo" to gtx("bar"), "bar" to gtx("1234".hexStringToByteArray()))
-        val jsonValue = gson.toJson(gtxValue, GTXValue::class.java)
+        val Gtv = gtv("foo" to gtv("bar"), "bar" to gtv("1234".hexStringToByteArray()))
+        val jsonValue = gson.toJson(Gtv, Gtv::class.java)
         println(jsonValue)
-        val gtxValue2 = gson.fromJson<GTXValue>(jsonValue, GTXValue::class.java)!!
-        Assert.assertEquals("bar", gtxValue2["foo"]!!.asString())
-        Assert.assertEquals("1234", gtxValue2["bar"]!!.asString())
-        Assert.assertTrue(gtxValue2["bar"]!!.asByteArray(true).size == 2)
+        val Gtv2 = gson.fromJson<Gtv>(jsonValue, Gtv::class.java)!!
+        Assert.assertEquals("bar", Gtv2["foo"]!!.asString())
+        Assert.assertEquals("1234", Gtv2["bar"]!!.asString())
+        Assert.assertTrue(Gtv2["bar"]!!.asByteArray(true).size == 2)
     }
 
 

@@ -12,7 +12,7 @@ import net.postchain.core.BlockchainConfigurationFactory
 import net.postchain.core.BlockchainProcess
 import net.postchain.core.NODE_ID_TODO
 import net.postchain.ebft.BlockchainInstanceModel
-import net.postchain.gtx.encodeGTXValue
+import net.postchain.gtv.GtvEncoder.encodeGtv
 import org.apache.commons.configuration2.Configuration
 
 class SingleChainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
@@ -42,7 +42,7 @@ class SingleChainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig)
         val factory = (factoryClass.newInstance() as BlockchainConfigurationFactory)
 
         val blockchainConfiguration = factory.makeBlockchainConfiguration(configData)
-        val configAsByteArray = encodeGTXValue(
+        val configAsByteArray = encodeGtv(
                 (blockchainConfiguration as BaseBlockchainConfiguration).configData.data)
 
         withWriteConnection(storage, chainId) { eContext ->

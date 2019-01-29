@@ -7,6 +7,7 @@ import net.postchain.base.BaseBlockchainConfigurationData
 import net.postchain.base.Storage
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.core.*
+import net.postchain.gtv.*
 import nl.komponents.kovenant.Promise
 
 open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationData, val module: GTXModule)
@@ -29,7 +30,7 @@ open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationDat
             private val gson = make_gtx_gson()
 
             override fun query(query: String): Promise<String, Exception> {
-                val gtxQuery = gson.fromJson<GTXValue>(query, GTXValue::class.java)
+                val gtxQuery = gson.fromJson<Gtv>(query, Gtv::class.java)
                 return runOp {
                     val type = gtxQuery.asDict().get("type") ?: throw UserMistake("Missing query type")
                     val queryResult = module.query(it, type.asString(), gtxQuery)
@@ -46,7 +47,7 @@ open class GTXBlockchainConfigurationFactory : BlockchainConfigurationFactory {
                 createGtxModule(configurationData.context.blockchainRID, configurationData.data))
     }
 
-    open fun createGtxModule(blockchainRID: ByteArray, data: GTXValue): GTXModule {
+    open fun createGtxModule(blockchainRID: ByteArray, data: Gtv): GTXModule {
         val gtxConfig = data["gtx"]!!
         val list = gtxConfig["modules"]!!.asArray().map { it.asString() }
         if (list.isEmpty()) {

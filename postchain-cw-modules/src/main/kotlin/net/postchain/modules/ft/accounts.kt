@@ -4,10 +4,10 @@ package net.postchain.modules.ft
 
 import net.postchain.base.CryptoSystem
 import net.postchain.core.UserMistake
-import net.postchain.gtx.GTXNull
-import net.postchain.gtx.GTXValue
-import net.postchain.gtx.encodeGTXValue
-import net.postchain.gtx.gtx
+import net.postchain.gtv.GtvNull
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvEncoder.encodeGtv
+import net.postchain.gtv.GtvFactory.gtv
 
 /**
  * FT works through accounts. Accounts has their own balance, history and what authorization is necessary to initiate
@@ -26,7 +26,7 @@ interface FTAccount {
  * @property skipUpdate signals if deltas should be applied to the database in a token transfer operation
  */
 interface FTInputAccount : FTAccount {
-    val descriptor: GTXValue
+    val descriptor: Gtv
     val skipUpdate: Boolean
     fun verifyInput(ctx: OpEContext, dbops: FTDBOps, index: Int, data: CompleteTransferData): Boolean
     fun applyInput(ctx: OpEContext, dbops: FTDBOps, index: Int, data: CompleteTransferData): Boolean
@@ -39,7 +39,7 @@ interface FTInputAccount : FTAccount {
  * @property skipUpdate signals if deltas should be applied to the database of a token transfer operation
  */
 interface FTOutputAccount : FTAccount {
-    val descriptor: GTXValue?
+    val descriptor: Gtv?
     val skipUpdate: Boolean
     fun verifyOutput(ctx: OpEContext, dbops: FTDBOps, index: Int, data: CompleteTransferData): Boolean
     fun applyOutput(ctx: OpEContext, dbops: FTDBOps, index: Int, data: CompleteTransferData): Boolean
@@ -48,12 +48,12 @@ interface FTOutputAccount : FTAccount {
 /**
  * Constructor for input accounts, taking accountID and account descriptor as input values
  */
-typealias InputAccountConstructor = (ByteArray, GTXValue)->FTInputAccount
+typealias InputAccountConstructor = (ByteArray, Gtv)->FTInputAccount
 
 /**
  * Constructor for output accounts, taking accountID and account descriptor as input values
  */
-typealias OutputAccountConstructor = (ByteArray, GTXValue)->FTOutputAccount
+typealias OutputAccountConstructor = (ByteArray, Gtv)->FTOutputAccount
 
 /**
  * A pair of account constructors, one input and one output
@@ -86,7 +86,7 @@ class SimpleOutputAccount(override val accountID: ByteArray): FTOutputAccount {
  * Constructor for a [SimpleOutputAccount]
  */
 val simpleOutputAccount = {
-    accid: ByteArray, _: GTXValue ->
+    accid: ByteArray, _: Gtv ->
     SimpleOutputAccount(accid)
 }
 
@@ -103,7 +103,7 @@ class BaseAccountFactory(val accountConstructors: Map<Int, AccountConstructors>)
      * @param descriptor the account descriptor
      * @return the input account
      */
-    override fun makeInputAccount(accountID: ByteArray, descriptor: GTXValue): FTInputAccount {
+    override fun makeInputAccount(accountID: ByteArray, descriptor: Gtv): FTInputAccount {
         val accType = descriptor[0].asInteger().toInt()
         if (accType in accountConstructors) {
             return accountConstructors[accType]!!.first(accountID, descriptor)
@@ -117,7 +117,7 @@ class BaseAccountFactory(val accountConstructors: Map<Int, AccountConstructors>)
      * @param descriptor the account descriptor
      * @return the output account
      */
-    override fun makeOutputAccount(accountID: ByteArray, descriptor: GTXValue): FTOutputAccount {
+    override fun makeOutputAccount(accountID: ByteArray, descriptor: Gtv): FTOutputAccount {
         val accType = descriptor[0].asInteger().toInt()
         if (accType in accountConstructors) {
             return accountConstructors[accType]!!.second(accountID, descriptor)
@@ -172,7 +172,7 @@ class BaseAccountResolver(val factory: AccountFactory) : AccountResolver {
  * @property blockchainRID reference to blockchain account is tied to
  * @property pubkey the cryptographic public key associated with the account
  */
-class BasicAccountInput(override val accountID: ByteArray, override val descriptor: GTXValue) : FTInputAccount {
+class BasicAccountInput(override val accountID: ByteArray, override val descriptor: Gtv) : FTInputAccount {
     val blockchainRID = descriptor[1]
     val pubkey = descriptor[2].asByteArray()
 
@@ -225,8 +225,8 @@ object BasicAccount : AccountType(1, ::BasicAccountInput, simpleOutputAccount) {
      * @return the account descriptor
      */
     fun makeDescriptor(blockchainRID: ByteArray, pubKey: ByteArray): ByteArray {
-        return encodeGTXValue(
-                gtx(gtx(code.toLong()), gtx(blockchainRID), gtx(pubKey))
+        return encodeGtv(
+                gtv(gtv(code.toLong()), gtv(blockchainRID), gtv(pubKey))
         )
     }
 }
@@ -238,7 +238,7 @@ object BasicAccount : AccountType(1, ::BasicAccountInput, simpleOutputAccount) {
  * @property descriptor account descriptor including [blockchainRID]
  * @property blockchainRID reference to blockchain account is tied to
  */
-class NullAccountInput(override val accountID: ByteArray, override val descriptor: GTXValue) : FTInputAccount {
+class NullAccountInput(override val accountID: ByteArray, override val descriptor: Gtv) : FTInputAccount {
     override val skipUpdate = false
     val blockchainRID = descriptor[1]
 
@@ -274,9 +274,9 @@ object NullAccount : AccountType(0, ::NullAccountInput, simpleOutputAccount) {
      * @return the account descriptor
      */
     fun makeDescriptor(blockchainRID: ByteArray?, pubKey: ByteArray): ByteArray {
-        val gtxBlockchainRID = if (blockchainRID == null) GTXNull else gtx(blockchainRID)
-        return encodeGTXValue(
-                gtx(gtx(code.toLong()), gtxBlockchainRID, gtx(pubKey))
+        val gtxBlockchainRID = if (blockchainRID == null) GtvNull else gtv(blockchainRID)
+        return encodeGtv(
+                gtv(gtv(code.toLong()), gtxBlockchainRID, gtv(pubKey))
         )
     }
 }

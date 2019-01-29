@@ -5,8 +5,8 @@ package net.postchain.modules.ft
 import net.postchain.core.TxEContext
 import net.postchain.gtx.ExtOpData
 import net.postchain.gtx.GTXOperation
-import net.postchain.gtx.GTXValue
-import net.postchain.gtx.decodeGTXValue
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvFactory.decodeGtv
 
 /**
  * Collection of information relevant to the register operation
@@ -14,7 +14,7 @@ import net.postchain.gtx.decodeGTXValue
 class FTRegisterData(val opData: ExtOpData,
                      val accountID: ByteArray,
                      val accountRawDesc: ByteArray,
-                     val accountDesc: GTXValue,
+                     val accountDesc: Gtv,
                      val extra: ExtraData)
 
 typealias StaticRegisterRule = (FTRegisterData)->Boolean
@@ -33,7 +33,7 @@ class FT_register_op (val config: FTConfig, data: ExtOpData): GTXOperation(data)
             data,
             config.cryptoSystem.digest(data.args[0].asByteArray()),
             data.args[0].asByteArray(),
-            decodeGTXValue(data.args[0].asByteArray()),
+            decodeGtv(data.args[0].asByteArray()),
             getExtraData(data, 1)
     )
 

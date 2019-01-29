@@ -8,10 +8,12 @@ package net.postchain.gtx.messages;
 
 import java.io.*;
 import java.util.*;
+
+import net.postchain.gtv.messages.Gtv;
+import net.postchain.gtv.messages.Messages;
 import org.asnlab.asndt.runtime.conv.*;
 import org.asnlab.asndt.runtime.conv.annotation.*;
 import org.asnlab.asndt.runtime.type.AsnType;
-import org.asnlab.asndt.runtime.value.*;
 
 public class GTXOperation {
 
@@ -19,7 +21,7 @@ public class GTXOperation {
 	public String opName;
 
 	@Component(1)
-	public Vector<GTXValue> args;
+	public Vector<Gtv> args;
 
 
 	public boolean equals(Object obj) {
@@ -45,7 +47,7 @@ public class GTXOperation {
 	static {
 		CONV = new AnnotationCompositeConverter(GTXOperation.class);
 		AsnConverter opNameConverter = StringConverter.INSTANCE;
-		AsnConverter argsConverter = new VectorConverter(GTXValue.CONV);
+		AsnConverter argsConverter = new VectorConverter(Gtv.CONV);
 		CONV.setComponentConverters(new AsnConverter[] { opNameConverter, argsConverter });
 	}
 

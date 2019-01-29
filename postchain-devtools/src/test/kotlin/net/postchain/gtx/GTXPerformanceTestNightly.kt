@@ -12,6 +12,7 @@ import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.SingleChainTestNode
+import net.postchain.gtv.GtvFactory.gtv
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,7 +32,7 @@ class GTXPerformanceTestNightly : EbftIntegrationTest() {
 
     private fun makeTestTx(id: Long, value: String): ByteArray {
         val b = GTXDataBuilder(net.postchain.devtools.gtx.testBlockchainRID, arrayOf(pubKey(0)), net.postchain.devtools.gtx.myCS)
-        b.addOperation("gtx_test", arrayOf(gtx(id), gtx(value)))
+        b.addOperation("gtx_test", arrayOf(gtv(id), gtv(value)))
         b.finish()
         b.sign(net.postchain.devtools.gtx.myCS.makeSigner(pubKey(0), privKey(0)))
         return b.serialize()

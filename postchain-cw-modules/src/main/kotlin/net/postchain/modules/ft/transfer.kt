@@ -7,7 +7,7 @@ import net.postchain.core.TxEContext
 import net.postchain.core.UserMistake
 import net.postchain.gtx.ExtOpData
 import net.postchain.gtx.GTXOperation
-import net.postchain.gtx.GTXValue
+import net.postchain.gtv.Gtv
 
 class TransferElement<AccountT>(val account: AccountT,
                                 val assetID: String,
@@ -38,7 +38,7 @@ typealias StaticTransferData = TransferData<ByteArray, ByteArray>
 fun parseTransferData(opData: ExtOpData): StaticTransferData {
     val args = opData.args
     if (args.size < 2) throw UserMistake("Not enough arguments to transfer")
-    fun parseElement(it: GTXValue): StaticTransferElement {
+    fun parseElement(it: Gtv): StaticTransferElement {
         val extra = if (it.getSize() >= 4) it[3].asDict() else NoExtraData
         return TransferElement(
                 it[0].asByteArray(),

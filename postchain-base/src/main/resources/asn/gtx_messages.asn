@@ -2,21 +2,21 @@ Messages DEFINITIONS ::= BEGIN
 
 	DictPair ::= SEQUENCE {
 		name UTF8String,
-		value GTXValue
+		value Gtv
 	}
 	
-	GTXValue ::= CHOICE {
+	Gtv ::= CHOICE {
 		null [0] NULL,
 		byteArray [1] OCTET STRING,
 		string [2] UTF8String,
 		integer [3] INTEGER,
 		dict [4] SEQUENCE OF DictPair,
-		array [5] SEQUENCE OF GTXValue
+		array [5] SEQUENCE OF Gtv
 	}
 	
 	GTXOperation ::= SEQUENCE {
 		opName UTF8String,
-		args SEQUENCE OF GTXValue
+		args SEQUENCE OF Gtv
 	}
 	
 	GTXTransaction ::= SEQUENCE {

@@ -4,6 +4,7 @@ package net.postchain.configurations
 
 import net.postchain.core.*
 import net.postchain.gtx.*
+import net.postchain.gtv.*
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.ScalarHandler
 
@@ -43,9 +44,9 @@ class GTXTestModule: SimpleGTXModule<Unit>(Unit,
                     WHERE transactions.tx_rid = ?""",
                     nullableStringReader, txRID.asByteArray(true))
             if (value == null)
-                GTXNull
+                GtvNull
             else
-                gtx(value)
+                GtvFactory.gtv(value)
         })
 ) {
     override fun initializeDB(ctx: EContext) {

@@ -1,6 +1,6 @@
 package net.postchain.base.merkle.root
 
-import net.postchain.gtx.merkle.MerkleHashCalculatorDummy
+import net.postchain.gtv.merkle.MerkleHashCalculatorDummy
 import net.postchain.base.merkle.TreeHelper
 import org.junit.Assert
 import org.junit.Test

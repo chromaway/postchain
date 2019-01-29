@@ -6,8 +6,8 @@ import net.postchain.base.BaseConfigurationDataStore
 import net.postchain.base.data.BaseBlockStore
 import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.common.hexStringToByteArray
-import net.postchain.gtx.encodeGTXValue
-import net.postchain.gtx.gtxml.GTXMLValueParser
+import net.postchain.gtv.GtvEncoder.encodeGtv
+import net.postchain.gtv.gtvml.GtvMLParser
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
 import java.io.File
@@ -55,14 +55,14 @@ class CommandAddBlockchain : Command {
         println("add-blockchain will be executed with options: " +
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
-        val gtxValue = GTXMLValueParser.parseGTXMLValue(
+        val Gtv = GtvMLParser.parseGtvML(
                 File(blockchainConfigFile).readText())
-        val encodedGtxValue = encodeGTXValue(gtxValue)
+        val encodedGtv = encodeGtv(Gtv)
 
         runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
             if (force || SQLDatabaseAccess().getBlockchainRID(ctx) == null) {
                 BaseBlockStore().initialize(ctx, blockchainRID.hexStringToByteArray())
-                BaseConfigurationDataStore.addConfigurationData(ctx, 0, encodedGtxValue)
+                BaseConfigurationDataStore.addConfigurationData(ctx, 0, encodedGtv)
                 println("Configuration has been added successfully")
             } else {
                 println("Blockchain with chainId $chainId already exists. Use -f flag to force addition.")

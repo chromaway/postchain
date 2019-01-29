@@ -5,6 +5,7 @@ import net.postchain.base.gtxml.OperationsType
 import net.postchain.base.gtxml.SignaturesType
 import net.postchain.base.gtxml.SignersType
 import net.postchain.common.toHex
+import net.postchain.gtv.gtvml.GtvMLEncoder
 import net.postchain.gtx.GTXData
 import net.postchain.gtx.OpData
 import java.io.StringWriter
@@ -46,7 +47,7 @@ object GTXMLTransactionEncoder {
             operations.forEach {
                 val operationType = objectFactory.createOperationType()
                 operationType.name = it.opName
-                it.args.map(GTXMLValueEncoder::encodeGTXMLValueToJAXBElement)
+                it.args.map(GtvMLEncoder::encodeGTXMLValueToJAXBElement)
                         .toCollection(operationType.parameters)
                 this.operation.add(operationType)
             }

@@ -1,9 +1,9 @@
 package net.postchain.base.merkle
 
 import net.postchain.base.CryptoSystem
-import net.postchain.gtx.merkle.proof.GtxMerkleProofTree
+import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 import net.postchain.core.ProgrammerMistake
-import net.postchain.gtx.GTXValue
+import net.postchain.gtv.Gtv
 
 /**
  * This file holds some basic stuff, like constants etc..
@@ -15,10 +15,10 @@ import net.postchain.gtx.GTXValue
  * ---------
  * The way to create a merkle proof tree and to actually prove it using the code in this package is done this way:
  *
- * 1. Transform the hierarchy (usually a [GTXValue]) to a binary tree (usually a [GtxBinaryTree]).
+ * 1. Transform the hierarchy (usually a [Gtv]) to a binary tree (usually a [GtvBinaryTree]).
  *       - The reason we have this unnecessary step, is to be able to look at the binary tree in tests before it's
  *       destroyed (Easier to find bugs if we move in small steps).
- * 2. Transform the binary tree into a proof tree (usually a [GtxMerkleProofTree]).
+ * 2. Transform the binary tree into a proof tree (usually a [GtvMerkleProofTree]).
  *       - To do this we have to provide a path (usually [GTXPath]) to the element(s) we want to prove.
  *       - The proof tree will hold the element(s) (=values-to-be-proven) in clear text, but the rest of the tree is
  *     only hashes.

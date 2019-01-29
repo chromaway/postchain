@@ -7,8 +7,8 @@ import net.postchain.base.DynamicPortPeerInfo
 import net.postchain.base.PeerInfo
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.core.*
-import net.postchain.gtx.GTXValue
-import net.postchain.gtx.gtx
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.privKeyHex
 import net.postchain.devtools.KeyPairHelper.pubKey
@@ -31,7 +31,7 @@ open class IntegrationTest {
     protected val nodes = mutableListOf<SingleChainTestNode>()
     val configOverrides = MapConfiguration(mutableMapOf<String, String>())
     val cryptoSystem = SECP256K1CryptoSystem()
-    var gtxConfig: GTXValue? = null
+    var gtxConfig: Gtv? = null
 
     // PeerInfos must be shared between all nodes because
     // a listening node will update the PeerInfo port after
@@ -133,8 +133,8 @@ open class IntegrationTest {
         }
     }
 
-    protected fun gtxConfigSigners(nodeCount: Int = 1): GTXValue {
-        return gtx(*Array(nodeCount) { gtx(pubKey(it)) })
+    protected fun gtxConfigSigners(nodeCount: Int = 1): Gtv {
+        return gtv(*Array(nodeCount) { gtv(pubKey(it)) })
     }
 
     fun createPeerInfos(nodeCount: Int): Array<PeerInfo> {

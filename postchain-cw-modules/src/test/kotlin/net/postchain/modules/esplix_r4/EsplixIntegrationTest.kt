@@ -5,7 +5,7 @@ import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.gtx.GTXBlockchainConfigurationFactory
 import net.postchain.gtx.GTXDataBuilder
-import net.postchain.gtx.gtx
+import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.modules.esplix_r4.BaseEsplixModuleFactory
 import net.postchain.modules.esplix_r4.computeChainID
 import net.postchain.modules.esplix_r4.computeMessageID
@@ -23,8 +23,8 @@ class EsplixIntegrationTest : IntegrationTest() {
     fun makeCreateChainTx(creator: Int, nonce: ByteArray, payload: ByteArray): ByteArray {
         val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(creator)), myCS)
         b.addOperation("R4createChain", arrayOf(
-                gtx(nonce),
-                gtx(payload)))
+                gtv(nonce),
+                gtv(payload)))
         b.finish()
         b.sign(myCS.makeSigner(pubKey(creator), privKey(creator)))
         return b.serialize()
@@ -34,8 +34,8 @@ class EsplixIntegrationTest : IntegrationTest() {
     fun makePostMessage(poster: Int, prevID: ByteArray, payload: ByteArray): ByteArray {
         val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(poster)), myCS)
         b.addOperation("R4postMessage", arrayOf(
-                gtx(prevID),
-                gtx(payload)))
+                gtv(prevID),
+                gtv(payload)))
         b.finish()
         b.sign(myCS.makeSigner(pubKey(poster), privKey(poster)))
         return b.serialize()

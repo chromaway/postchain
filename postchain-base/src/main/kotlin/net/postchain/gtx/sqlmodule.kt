@@ -7,6 +7,8 @@ import org.apache.commons.dbutils.handlers.ScalarHandler
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Paths
+import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtv.*
 
 fun decodeSQLTextArray(a: Any): Array<String> {
     val arr = a as java.sql.Array
@@ -14,7 +16,7 @@ fun decodeSQLTextArray(a: Any): Array<String> {
 }
 
 class SQLOpArg(val name: String,
-               val type: GTXValueType,
+               val type: GtvType,
                val isSigner: Boolean,
                val isNullable: Boolean)
 
@@ -49,11 +51,11 @@ private fun convertArgs(argNames: Array<String>, argTypes: Array<String>, opName
     val args = mutableListOf<SQLOpArg>()
     for (i in 1 until argNames.size) {
         val gtxType = when (argTypes[i]) {
-            "bigint" -> Pair(GTXValueType.INTEGER, false)
-            "int" -> Pair(GTXValueType.INTEGER, false)
-            "text" -> Pair(GTXValueType.STRING, false)
-            "gtx_signer" -> Pair(GTXValueType.BYTEARRAY, true)
-            "bytea" -> Pair(GTXValueType.BYTEARRAY, false)
+            "bigint" -> Pair(GtvType.INTEGER, false)
+            "int" -> Pair(GtvType.INTEGER, false)
+            "text" -> Pair(GtvType.STRING, false)
+            "gtx_signer" -> Pair(GtvType.BYTEARRAY, true)
+            "bytea" -> Pair(GtvType.BYTEARRAY, false)
             else -> throw UserMistake("Unsupported argument type ${argTypes[i]} in ${opName}")
         }
         // only signer is not nullable
@@ -125,20 +127,20 @@ class SQLGTXModule(private val moduleFiles: Array<String>): GTXModule
         }
     }
 
-    override fun query(ctx: EContext, name: String, args: GTXValue): GTXValue {
+    override fun query(ctx: EContext, name: String, args: Gtv): Gtv {
         val opDesc = queries.get(name)
 
         if (opDesc == null) {
             throw UserMistake("Query of type ${name} is not available")
         }
 
-        if (args !is DictGTXValue) {
-            throw ProgrammerMistake("args is not a DictGTXValue")
+        if (args !is GtvDictionary) {
+            throw ProgrammerMistake("args is not a GtvDictionary")
         }
 
         val myArgs = mutableListOf<Any?>()
         opDesc.args.forEach { spec ->
-            val arg = args.get(spec.name) ?: GTXNull
+            val arg = args.get(spec.name) ?: GtvNull
 
             if (arg.isNull() && !spec.isNullable) {
                 throw UserMistake("Missing non-nullable argument ${spec.name}")
@@ -152,25 +154,25 @@ class SQLGTXModule(private val moduleFiles: Array<String>): GTXModule
         val qResult = r.query(ctx.conn, opDesc.query, MapListHandler(),
                 ctx.chainID, *primitiveArgs)
 
-        val list = mutableListOf<GTXValue>()
+        val list = mutableListOf<Gtv>()
         qResult.forEach {
-            val obj = mutableMapOf<String, GTXValue>()
+            val obj = mutableMapOf<String, Gtv>()
             it.entries.forEach {
                 // Integer, String, ByteArray accepted as column type
                 val dbValue = it.value
-                val gtxValue = when (dbValue) {
-                    is Int, is Long, is Short, is Byte -> gtx((dbValue as Number).toLong())
-                    is String -> gtx(dbValue)
-                    is ByteArray -> gtx(dbValue)
+                val Gtv = when (dbValue) {
+                    is Int, is Long, is Short, is Byte -> gtv((dbValue as Number).toLong())
+                    is String -> gtv(dbValue)
+                    is ByteArray -> gtv(dbValue)
                     else -> throw ProgrammerMistake("Unsupported return type" +
                             " ${dbValue.javaClass.simpleName} of column ${it.key} " +
                             "from query ${name}")
                 }
-                obj.set(it.key, gtxValue)
+                obj.set(it.key, Gtv)
             }
-            list.add(DictGTXValue(obj))
+            list.add(GtvDictionary(obj))
         }
-        return ArrayGTXValue(list.toTypedArray())
+        return GtvArray(list.toTypedArray())
     }
 
 
@@ -239,7 +241,7 @@ class SQLGTXModule(private val moduleFiles: Array<String>): GTXModule
 }
 
 class SQLGTXModuleFactory: GTXModuleFactory {
-    override fun makeModule(data: GTXValue, blockchainRID: ByteArray): GTXModule {
+    override fun makeModule(data: Gtv, blockchainRID: ByteArray): GTXModule {
         return SQLGTXModule(data["gtx"]!!["sqlmodules"]?.asArray()?.map { it.asString() }!!.toTypedArray())
     }
 }

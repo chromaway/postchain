@@ -2,9 +2,10 @@ package net.postchain.base.merkle.root
 
 import org.junit.Assert
 import org.junit.Test
+import net.postchain.gtv.Gtv
 
 /**
- * This is so simple compared to the [GTXValue] stuff that one test is enough
+ * This is so simple compared to the [Gtv] stuff that one test is enough
  */
 class HashBinaryTreeTest {
 
