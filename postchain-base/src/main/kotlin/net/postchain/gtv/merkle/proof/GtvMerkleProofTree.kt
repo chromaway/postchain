@@ -28,7 +28,7 @@ class ProofNodeGtvDictHead(val size: Int, left: MerkleProofElement, right: Merkl
 /**
  * See [MerkleProofTree] for documentation
  */
-class GtvMerkleProofTree(root: MerkleProofElement): MerkleProofTree<Gtv, GtvPath>(root) {
+class GtvMerkleProofTree(root: MerkleProofElement): MerkleProofTree<Gtv>(root) {
 
     /**
      * Note that we have our own primitive serialization format. It is based on arrays that begins with an integer.

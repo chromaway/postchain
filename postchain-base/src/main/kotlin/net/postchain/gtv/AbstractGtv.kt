@@ -7,11 +7,7 @@ import net.postchain.core.UserMistake
  */
 abstract class AbstractGtv : Gtv {
 
-    override operator fun get(i: Int): Gtv {
-        throw UserMistake("Type error: args expected")
-    }
-
-    override operator fun get(s: String): Gtv? {
+    override operator fun get(key: String): Gtv? {
         throw UserMistake("Type error: dict expected")
     }
 
@@ -20,10 +16,6 @@ abstract class AbstractGtv : Gtv {
     }
 
     override fun asArray(): Array<out Gtv> {
-        throw UserMistake("Type error: args expected")
-    }
-
-    override fun getSize(): Int {
         throw UserMistake("Type error: args expected")
     }
 

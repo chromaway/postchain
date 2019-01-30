@@ -12,28 +12,28 @@ import net.postchain.gtv.GtvEncoder.encodeGtv
 /**
  * This should be the serialization we use in production
  *
- * @param Gtv to serialize
+ * @param gtv to serialize
  * @return the byte args containing serialized data
  */
-fun serializeGtvToByteArary(Gtv: Gtv): ByteArray {
-    return when (Gtv) {
-        is GtvNull ->      encodeGtv (Gtv)
-        is GtvInteger ->   encodeGtv(Gtv)
-        is GtvString ->    encodeGtv(Gtv)
-        is GtvByteArray -> encodeGtv(Gtv)
-        is GtvArray ->     throw ProgrammerMistake("Gtv is an args (We should have transformed all collection-types to trees by now)")
-        is GtvDictionary ->throw ProgrammerMistake("Gtv is an dict (We should have transformed all collection-types to trees by now)")
-        else -> {
+fun serializeGtvToByteArary(gtv: Gtv): ByteArray {
+    return when (gtv) {
+        is GtvNull      -> encodeGtv(gtv)
+        is GtvInteger   -> encodeGtv(gtv)
+        is GtvString    -> encodeGtv(gtv)
+        is GtvByteArray -> encodeGtv(gtv)
+        is GtvPrimitive -> {
             // TODO: Log a warning here? We don't know what this is!
-            encodeGtv(Gtv) // Hope for the best
+            encodeGtv(gtv) // Hope for the best, because all primitives should be able to do this.
         }
+        is GtvCollection -> throw ProgrammerMistake("Gtv is a collection (We should have transformed all collection-types to trees by now)")
+        else             -> throw ProgrammerMistake("Note a primitive and not a collection: what is it? type: ${gtv.type}")
     }
 }
 
 /**
  * The calculator intended to be used is production for trees that hold [Gtv]
  */
-class GtvMerkleHashCalculator(cryptoSystem: CryptoSystem): MerkleHashCalculator<Gtv, GtvPath>(cryptoSystem) {
+class GtvMerkleHashCalculator(cryptoSystem: CryptoSystem): MerkleHashCalculator<Gtv>(cryptoSystem) {
 
     val treeFactory = GtvBinaryTreeFactory()
 
@@ -59,7 +59,11 @@ class GtvMerkleHashCalculator(cryptoSystem: CryptoSystem): MerkleHashCalculator<
     }
 
     override fun isContainerProofValueLeaf(value: Gtv): Boolean {
-        return value.isContainerType()
+        return when (value) {
+            is GtvCollection -> true
+            is GtvPrimitive -> false
+            else -> throw IllegalStateException("The type is neither collection or primitive. type: ${value.type} ")
+        }
     }
 
     override fun buildTreeFromContainerValue(value: Gtv): GtvMerkleProofTree {

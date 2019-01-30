@@ -2,12 +2,9 @@ package net.postchain.gtv.merkle
 
 import net.postchain.base.CryptoSystem
 import net.postchain.base.merkle.*
+import net.postchain.gtv.*
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
-import net.postchain.gtv.GtvPath
-import net.postchain.gtv.Gtv
-import net.postchain.gtv.GtvInteger
-import net.postchain.gtv.GtvString
 import java.nio.charset.Charset
 
 
@@ -56,7 +53,7 @@ fun dummyAddOneHashFun(bArr: ByteArray, cryptoSystem: CryptoSystem?): Hash {
  * The "dummy" version is a real calculator, but it uses simplified versions of
  * serializations and hashing
  */
-class MerkleHashCalculatorDummy: MerkleHashCalculator<Gtv,GtvPath>(null) {
+class MerkleHashCalculatorDummy: MerkleHashCalculator<Gtv>(null) {
     val treeFactory =GtvBinaryTreeFactory()
 
     var proofTreeFactory:GtvMerkleProofTreeFactory
@@ -78,7 +75,11 @@ class MerkleHashCalculatorDummy: MerkleHashCalculator<Gtv,GtvPath>(null) {
     }
 
     override fun isContainerProofValueLeaf(value: Gtv): Boolean {
-        return value.isContainerType()
+        return when (value) {
+            is GtvCollection -> true
+            is GtvPrimitive -> false
+            else -> throw IllegalStateException("The type is neither collection or primitive. type: ${value.type} ")
+        }
     }
 
     override fun buildTreeFromContainerValue(value: Gtv):GtvMerkleProofTree {

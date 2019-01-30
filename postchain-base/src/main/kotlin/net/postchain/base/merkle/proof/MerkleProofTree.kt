@@ -92,7 +92,7 @@ data class ProofHashedLeaf(val hash: Hash): MerkleProofElement() {
  * The "Proof Tree" can be used to prove that one or more values is/are indeed part of the Merkle tree
  * We will use the [MerkleProofTree] to calculate the BlockRID (see doc in top of this file)
  */
-abstract class MerkleProofTree<T,TPath>(val root: MerkleProofElement) {
+abstract class MerkleProofTree<T>(val root: MerkleProofElement) {
 
 
     /**
@@ -103,18 +103,18 @@ abstract class MerkleProofTree<T,TPath>(val root: MerkleProofElement) {
      * @return the calculated merkle root of the proof. For the proof to be valid, this [Hash] should equal the
      *          merkle root of the block.
      */
-    fun calculateMerkleRoot(calculator: MerkleHashCalculator<T,TPath>): Hash {
+    fun calculateMerkleRoot(calculator: MerkleHashCalculator<T>): Hash {
         return calculateMerkleRootInternal(root, calculator)
     }
 
-    private fun calculateMerkleRootInternal(currentElement: MerkleProofElement, calculator: MerkleHashCalculator<T,TPath>): Hash {
+    private fun calculateMerkleRootInternal(currentElement: MerkleProofElement, calculator: MerkleHashCalculator<T>): Hash {
         return when (currentElement) {
             is ProofHashedLeaf -> currentElement.hash
             is ProofValueLeaf<*> -> {
                 val value = currentElement.content as T
                 if (calculator.isContainerProofValueLeaf(value)) {
                     // We have a container value to prove, so need to convert the value to a binary tree, and THEN hash it
-                    val merkleProofTree: MerkleProofTree<T,TPath> = calculator.buildTreeFromContainerValue(value)
+                    val merkleProofTree: MerkleProofTree<T> = calculator.buildTreeFromContainerValue(value)
                     calculateMerkleRootInternal(merkleProofTree.root, calculator)
                 } else {
                     // This is a primitive value, just hash it

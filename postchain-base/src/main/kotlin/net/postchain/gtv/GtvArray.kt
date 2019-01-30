@@ -4,11 +4,11 @@ import java.util.*
 import net.postchain.gtv.messages.Gtv as RawGtv
 
 
-data class GtvArray(val array: Array<out Gtv>) : AbstractGtv() {
+data class GtvArray(val array: Array<out Gtv>) : GtvCollection() {
 
     override val type = GtvType.ARRAY
 
-    override operator fun get(i: Int): Gtv {
+    operator fun get(i: Int): Gtv {
         return array[i]
     }
 
@@ -29,8 +29,6 @@ data class GtvArray(val array: Array<out Gtv>) : AbstractGtv() {
     override fun asPrimitive(): Any? {
         return array.map({ it.asPrimitive() }).toTypedArray()
     }
-
-    override fun isContainerType() = true
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

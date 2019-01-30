@@ -70,14 +70,11 @@ class GtvBinaryTreeFactory : BinaryTreeFactory<Gtv, GtvPathSet>() {
 
         //println("handleLeaf, Proof path (size: ${GtvPaths.size} ) list: " + GtvPath.debugRerpresentation(GtvPaths))
         return when (leaf) {
-            is GtvArray -> GtvBinaryTreeFactoryArray.buildFromGtvArray(leaf, GtvPaths)
+            is GtvPrimitive  -> handlePrimitiveLeaf(leaf, GtvPaths)
+            is GtvArray      -> GtvBinaryTreeFactoryArray.buildFromGtvArray(leaf, GtvPaths)
             is GtvDictionary -> GtvBinaryTreeFactoryDict.buildFromGtvDictionary(leaf, GtvPaths)
-            else -> {
-                if (leaf.isContainerType()) {
-                    throw IllegalStateException("Programmer should have dealt with this container type: ${leaf.type}")
-                }
-                handlePrimitiveLeaf(leaf, GtvPaths)
-            }
+            is GtvCollection -> throw IllegalStateException("Programmer should have dealt with this container type: ${leaf.type}")
+            else ->             throw IllegalStateException("What is this? Not container and not primitive? type: ${leaf.type}")
         }
     }
 }

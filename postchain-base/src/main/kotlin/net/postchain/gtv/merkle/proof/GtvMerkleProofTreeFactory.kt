@@ -15,7 +15,7 @@ import net.postchain.gtv.merkle.GtvDictHeadNode
  * 1. A binary tree
  * 2. The serialized format
  */
-class GtvMerkleProofTreeFactory(calculator: MerkleHashCalculator<Gtv, GtvPath>): MerkleProofTreeFactory<Gtv, GtvPath>(calculator)  {
+class GtvMerkleProofTreeFactory(calculator: MerkleHashCalculator<Gtv>): MerkleProofTreeFactory<Gtv>(calculator)  {
 
     /**
      * Builds the [MerkleProofTree] from the [GtvBinaryTree]
@@ -32,7 +32,7 @@ class GtvMerkleProofTreeFactory(calculator: MerkleHashCalculator<Gtv, GtvPath>):
     }
 
     override fun buildFromBinaryTreeSub(currentElement: BinaryTreeElement,
-                               calculator: MerkleHashCalculator<Gtv, GtvPath>): MerkleProofElement {
+                               calculator: MerkleHashCalculator<Gtv>): MerkleProofElement {
         return when (currentElement) {
             is EmptyLeaf -> {
                 ProofHashedLeaf(MerkleBasics.EMPTY_HASH) // Just zeros

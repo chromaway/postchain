@@ -5,11 +5,12 @@ import net.postchain.core.BlockchainContext
 import net.postchain.core.NODE_ID_AUTO
 import net.postchain.core.NODE_ID_READ_ONLY
 import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvDictionary
 import net.postchain.gtv.GtvFactory
 import org.apache.commons.configuration2.Configuration
 
 class BaseBlockchainConfigurationData(
-        val data: Gtv,
+        val data: GtvDictionary,
         partialContext: BlockchainContext,
         val blockSigner: Signer
 ) {
@@ -33,7 +34,8 @@ class BaseBlockchainConfigurationData(
 
 
     fun getBlockBuildingStrategyName(): String {
-        return data["blockstrategy"]?.get("name")?.asString() ?: ""
+        val stratDict = data["blockstrategy"] as GtvDictionary
+        return stratDict?.get("name")?.asString() ?: ""
     }
 
     fun getBlockBuildingStrategy(): Gtv? {
@@ -44,7 +46,7 @@ class BaseBlockchainConfigurationData(
         fun readFromCommonsConfiguration(config: Configuration, chainId: Long, blockchainRID: ByteArray, nodeID: Int):
                 BaseBlockchainConfigurationData {
 
-            val gtxConfig = convertConfigToGtv(config.subset("blockchain.$chainId"))
+            val gtxConfig = convertConfigToGtv(config.subset("blockchain.$chainId")) as GtvDictionary
             val cryptoSystem = SECP256K1CryptoSystem()
             val privKey = gtxConfig["blocksigningprivkey"]!!.asByteArray()
             val pubKey = secp256k1_derivePubKey(privKey)

@@ -2,7 +2,7 @@ package net.postchain.gtv
 
 import net.postchain.gtv.messages.Gtv as RawGtv
 
-data class GtvInteger(val integer: Long) : AbstractGtv() {
+data class GtvInteger(val integer: Long) : GtvPrimitive() {
 
     override val type: GtvType = GtvType.INTEGER
 
@@ -17,6 +17,4 @@ data class GtvInteger(val integer: Long) : AbstractGtv() {
     override fun asPrimitive(): Any {
         return integer
     }
-
-    override fun isContainerType() = false
 }

@@ -23,6 +23,12 @@ import net.postchain.gtv.*
 class GtvArrayHeadNode(left: BinaryTreeElement, right: BinaryTreeElement, isProofLeaf: Boolean, content: Gtv, val size: Int):
         SubTreeRootNode<Gtv>(left, right, isProofLeaf, content) {
 
+    init {
+        if (content !is GtvArray) {
+            throw IllegalStateException("How come we use this array type when the type is not an GtvArray?")
+        }
+    }
+
     override fun getPrefixByte(): Byte = HASH_PREFIX_NODE_Gtv_ARRAY
 }
 
@@ -33,6 +39,12 @@ class GtvArrayHeadNode(left: BinaryTreeElement, right: BinaryTreeElement, isProo
  */
 class GtvDictHeadNode(left: BinaryTreeElement, right: BinaryTreeElement, isProofLeaf: Boolean, content: Gtv, val size: Int):
         SubTreeRootNode<Gtv>(left, right, isProofLeaf, content){
+
+    init {
+        if (content !is GtvDictionary) {
+            throw IllegalStateException("How come we use this dict type when the type is not an GtvDictionary?")
+        }
+    }
 
     override fun getPrefixByte(): Byte = HASH_PREFIX_NODE_Gtv_DICT
 }

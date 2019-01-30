@@ -3,6 +3,7 @@
 package net.postchain.base
 
 import net.postchain.core.*
+import net.postchain.gtv.GtvDictionary
 
 class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
                                 val blockchainConfiguration: BlockchainConfiguration,
@@ -12,7 +13,7 @@ class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
     private var lastBlockTime: Long
     private var lastTxTime = System.currentTimeMillis()
     private var lastTxSize = 0
-    private val strategyData = configData.getBlockBuildingStrategy()
+    private val strategyData = configData.getBlockBuildingStrategy() as GtvDictionary
     private val maxBlockTime = strategyData?.get("maxblocktime")?.asInteger() ?: 30000
     private val blockDelay = strategyData?.get("blockdelay")?.asInteger() ?: 100
     private val maxBlockTransactions = strategyData?.get("maxblocktransactions")?.asInteger() ?: 100

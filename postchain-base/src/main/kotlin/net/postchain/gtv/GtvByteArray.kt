@@ -4,7 +4,7 @@ import java.util.*
 import net.postchain.gtv.messages.Gtv as RawGtv
 
 
-data class GtvByteArray(val bytearray: ByteArray) : AbstractGtv() {
+data class GtvByteArray(val bytearray: ByteArray) : GtvPrimitive() {
 
     override val type: GtvType = GtvType.BYTEARRAY
 
@@ -19,8 +19,6 @@ data class GtvByteArray(val bytearray: ByteArray) : AbstractGtv() {
     override fun asPrimitive(): Any? {
         return bytearray
     }
-
-    override fun isContainerType() = false
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

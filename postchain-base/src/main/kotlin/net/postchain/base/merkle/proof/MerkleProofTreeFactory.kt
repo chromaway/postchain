@@ -13,7 +13,7 @@ import net.postchain.base.merkle.Node
  *     see [BinaryTreeFactory] )
  * 2. The serialized format
  */
-abstract class MerkleProofTreeFactory<T,TPath>(val calculator: MerkleHashCalculator<T, TPath>) {
+abstract class MerkleProofTreeFactory<T>(val calculator: MerkleHashCalculator<T>) {
 
     /**
      * Converts [BinaryTreeElement] into a [MerkleProofElement].
@@ -25,11 +25,11 @@ abstract class MerkleProofTreeFactory<T,TPath>(val calculator: MerkleHashCalcula
      * @param calculator is the class we use for hash calculation
      * @return the [MerkleProofElement] we have built.
      */
-    abstract fun buildFromBinaryTreeSub(currentElement: BinaryTreeElement, calculator: MerkleHashCalculator<T, TPath>):
+    abstract fun buildFromBinaryTreeSub(currentElement: BinaryTreeElement, calculator: MerkleHashCalculator<T>):
             MerkleProofElement
 
 
-    protected fun convertNode(currentNode: Node, calculator: MerkleHashCalculator<T, TPath>): MerkleProofElement {
+    protected fun convertNode(currentNode: Node, calculator: MerkleHashCalculator<T>): MerkleProofElement {
         val left = buildFromBinaryTreeSub(currentNode.left, calculator)
         val right = buildFromBinaryTreeSub(currentNode.right, calculator)
         return if (left is ProofHashedLeaf && right is ProofHashedLeaf) {

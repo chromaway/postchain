@@ -33,7 +33,7 @@ class GTXTestOp(u: Unit, opdata: ExtOpData): GTXOperation(opdata) {
 class GTXTestModule: SimpleGTXModule<Unit>(Unit,
         mapOf("gtx_test" to ::GTXTestOp),
         mapOf("gtx_test_get_value" to { u, ctxt, args ->
-            val txRID = args.get("txRID")
+            val txRID = (args as GtvDictionary).get("txRID")
             if (txRID == null) {
                 throw UserMistake("No txRID property supplied")
             }

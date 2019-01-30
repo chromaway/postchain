@@ -4,7 +4,7 @@ import net.postchain.common.hexStringToByteArray
 import net.postchain.core.UserMistake
 import net.postchain.gtv.messages.Gtv as RawGtv
 
-data class GtvString(val string: String) : AbstractGtv() {
+data class GtvString(val string: String) : GtvPrimitive() {
 
     override val type: GtvType = GtvType.STRING
 
@@ -29,6 +29,4 @@ data class GtvString(val string: String) : AbstractGtv() {
     override fun asPrimitive(): Any? {
         return string
     }
-
-    override fun isContainerType() = false
 }

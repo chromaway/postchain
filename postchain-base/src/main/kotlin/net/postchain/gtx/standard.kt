@@ -63,7 +63,8 @@ fun lastBlockInfoQuery(config: Unit, ctx: EContext, args: Gtv): Gtv {
 
 fun txConfirmationTime(config: Unit, ctx: EContext, args: Gtv): Gtv {
     val dba = SQLDatabaseAccess()
-    val txRID = args["txRID"]!!.asByteArray(true)
+    val argsDict = args as GtvDictionary
+    val txRID = argsDict["txRID"]!!.asByteArray(true)
     val info = dba.getBlockInfo(ctx, txRID)
     val timestamp = dba.queryRunner.query(ctx.conn,"SELECT timestamp FROM blocks WHERE block_iid = ?",
             ScalarHandler<Long>(), info.blockIid)
