@@ -18,9 +18,9 @@ class DefaultXCommunicationManager<PacketType>(
 
     companion object : KLogging()
 
-    var inboundPackets = mutableListOf<Pair<Int, PacketType>>()
+    private var inboundPackets = mutableListOf<Pair<Int, PacketType>>()
 
-    init {
+    override fun init() {
         val peerConfig = XChainPeerConfiguration(
                 chainID,
                 config,
@@ -40,7 +40,18 @@ class DefaultXCommunicationManager<PacketType>(
     }
 
     override fun sendPacket(packet: PacketType, recipients: Set<Int>) {
-        assert(recipients.size == 1)
+        require(recipients.size == 1) {
+            "CommunicationManager.sendPacket(): multiple recipients are not allowed"
+        }
+
+        require(recipients.first() in config.peerInfo.indices) {
+            "CommunicationManager.sendPacket(): recipient must be in range ${config.peerInfo.indices}"
+        }
+
+        require(recipients.first() != config.myIndex) {
+            "CommunicationManager.sendPacket(): recipient must not be equal to myIndex ${config.myIndex}"
+        }
+
         val peerIdx = recipients.first()
         connectionManager.sendPacket(
                 { packetConverter.encodePacket(packet) },

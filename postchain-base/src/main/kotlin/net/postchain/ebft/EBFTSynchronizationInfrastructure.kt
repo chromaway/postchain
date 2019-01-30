@@ -13,7 +13,7 @@ import net.postchain.ebft.message.EbftMessage
 import net.postchain.network.CommManager
 import net.postchain.network.CommunicationManager
 import net.postchain.network.PeerConnectionManager
-import net.postchain.network.netty.NettyConnectorFactory
+import net.postchain.network.netty2.NettyConnectorFactory
 import net.postchain.network.x.DefaultXCommunicationManager
 import net.postchain.network.x.DefaultXConnectionManager
 import net.postchain.network.x.XConnectionManager
@@ -35,8 +35,8 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
         return EBFTBlockchainInstanceWorker(
                 engine,
                 blockchainConfig.configData.context.nodeID,
-                buildCommunicationManager(blockchainConfig),
-//                buildXCommunicationManager(blockchainConfig),
+//                buildCommunicationManager(blockchainConfig),
+                buildXCommunicationManager(blockchainConfig),
                 restartHandler)
     }
 
@@ -61,7 +61,7 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
                 connectionManager,
                 communicationConfig,
                 blockchainConfig.chainID,
-                packetConverter)
+                packetConverter).apply { init() }
     }
 
     @Deprecated("See XCommunicationManager")

@@ -32,7 +32,7 @@ open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationDat
             override fun query(query: String): Promise<String, Exception> {
                 val gtxQuery = gson.fromJson<Gtv>(query, Gtv::class.java)
                 return runOp {
-                    val type = gtxQuery.asDict().get("type") ?: throw UserMistake("Missing query type")
+                    val type = gtxQuery.asDict()["type"] ?: throw UserMistake("Missing query type")
                     val queryResult = module.query(it, type.asString(), gtxQuery)
                     gtxToJSON(queryResult, gson)
                 }
@@ -57,11 +57,11 @@ open class GTXBlockchainConfigurationFactory : BlockchainConfigurationFactory {
         fun makeModule(name: String): GTXModule {
             val moduleClass = Class.forName(name)
             val instance = moduleClass.newInstance()
-            if (instance is GTXModule) {
-                return instance
-            } else if (instance is GTXModuleFactory) {
-                return instance.makeModule(data, blockchainRID) //TODO
-            } else throw UserMistake("Module class not recognized")
+            return when (instance) {
+                is GTXModule -> instance
+                is GTXModuleFactory -> instance.makeModule(data, blockchainRID) //TODO
+                else -> throw UserMistake("Module class not recognized")
+            }
         }
 
         return if (list.size == 1) {

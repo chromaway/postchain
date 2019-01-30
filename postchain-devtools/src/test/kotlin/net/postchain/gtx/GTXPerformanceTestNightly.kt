@@ -14,10 +14,12 @@ import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.SingleChainTestNode
 import net.postchain.gtv.GtvFactory.gtv
 import org.junit.Assert
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.system.measureNanoTime
 
+@Ignore
 @RunWith(JUnitParamsRunner::class)
 class GTXPerformanceTestNightly : EbftIntegrationTest() {
 
@@ -119,16 +121,16 @@ class GTXPerformanceTestNightly : EbftIntegrationTest() {
         createEbftNodes(nodeCount)
 
         var txId = 0
-        val statusManager = ebftNodes[0].getBlockchainInstance().statusManager
+        val statusManager = nodes[0].getBlockchainInstance().statusManager
         for (i in 0 until blockCount) {
             for (tx in 0 until txPerBlock) {
-                val txFactory = ebftNodes[statusManager.primaryIndex()]
+                val txFactory = nodes[statusManager.primaryIndex()]
                         .getBlockchainInstance()
                         .blockchainConfiguration
                         .getTransactionFactory()
 
                 val tx = makeTestTx(1, (txId++).toString())
-                ebftNodes[statusManager.primaryIndex()]
+                nodes[statusManager.primaryIndex()]
                         .getBlockchainInstance()
                         .getEngine()
                         .getTransactionQueue()
@@ -136,8 +138,8 @@ class GTXPerformanceTestNightly : EbftIntegrationTest() {
             }
 
             val nanoDelta = measureNanoTime {
-                ebftNodes.forEach { strategy(it).buildBlocksUpTo(i.toLong()) }
-                ebftNodes.forEach { strategy(it).awaitCommitted(i) }
+                nodes.forEach { strategy(it).buildBlocksUpTo(i.toLong()) }
+                nodes.forEach { strategy(it).awaitCommitted(i) }
             }
 
             println("Time elapsed: ${nanoDelta / 1000000} ms")

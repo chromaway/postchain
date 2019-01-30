@@ -10,6 +10,7 @@ import net.postchain.core.byteArrayKeyOf
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtv.GtvNull
 import net.postchain.gtx.gtxml.GTXMLTransactionParser
 import net.postchain.gtx.gtxml.TransactionContext
 import java.io.StringReader
@@ -51,7 +52,7 @@ class TestLauncher : IntegrationTest() {
         config.setProperty("node.0.pubkey", config.getProperty("test.node.0.pubkey"))
         config.setProperty("database.schema", config.getProperty("test.database.schema"))
 
-        return SingleChainTestNode(config).apply {
+        return SingleChainTestNode(config, GtvNull /*DEFAULT_BLOCKCHAIN_CONFIG_FILE*/).apply {
             startBlockchain()
             nodes.add(this)
         }

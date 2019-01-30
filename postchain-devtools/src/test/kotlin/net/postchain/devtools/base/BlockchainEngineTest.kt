@@ -12,13 +12,15 @@ import net.postchain.devtools.testinfra.TestBlockchainConfiguration
 import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.devtools.testinfra.UnexpectedExceptionTransaction
 import org.junit.Assert.*
+import org.junit.Ignore
 import org.junit.Test
 
+@Ignore
 class BlockchainEngineTest : IntegrationTest() {
 
     @Test
     fun testBuildBlock() {
-        val node = createNode(0)
+        val node = createNode(0, "/net/postchain/gtx_it/blockchain_config.xml")
         val txQueue = node.getBlockchainInstance().getEngine().getTransactionQueue()
 
         txQueue.enqueue(TestTransaction(0))
@@ -56,7 +58,7 @@ class BlockchainEngineTest : IntegrationTest() {
 
     @Test
     fun testLoadUnfinishedEmptyBlock() {
-        val (node0, node1) = createNodes(2)
+        val (node0, node1) = createNodes(2, "blockchain_config.xml")
 
         val blockData = createBlockWithTxAndCommit(node0, 0)
 
@@ -68,7 +70,7 @@ class BlockchainEngineTest : IntegrationTest() {
 
     @Test
     fun testLoadUnfinishedBlock2tx() {
-        val (node0, node1) = createNodes(2)
+        val (node0, node1) = createNodes(2, "blockchain_config.xml")
 
         val blockData = createBlockWithTxAndCommit(node0, 2)
         loadUnfinishedAndCommit(node1, blockData)
@@ -80,7 +82,7 @@ class BlockchainEngineTest : IntegrationTest() {
 
     @Test
     fun testMultipleLoadUnfinishedBlocks() {
-        val (node0, node1) = createNodes(2)
+        val (node0, node1) = createNodes(2, "blockchain_config.xml")
 
         for (i in 0..10) {
             val blockData = createBlockWithTxAndCommit(node0, 2, i * 2)
@@ -94,7 +96,7 @@ class BlockchainEngineTest : IntegrationTest() {
 
     @Test
     fun testLoadUnfinishedBlockTxFail() {
-        val (node0, node1) = createNodes(2)
+        val (node0, node1) = createNodes(2, "blockchain_config.xml")
 
         val blockData = createBlockWithTxAndCommit(node0, 2)
 
@@ -121,7 +123,7 @@ class BlockchainEngineTest : IntegrationTest() {
 
     @Test
     fun testLoadUnfinishedBlockInvalidHeader() {
-        val (node0, node1) = createNodes(2)
+        val (node0, node1) = createNodes(2, "blockchain_config.xml")
 
         val blockData = createBlockWithTxAndCommit(node0, 2)
         blockData.header.prevBlockRID[0]++
@@ -137,7 +139,7 @@ class BlockchainEngineTest : IntegrationTest() {
 
     @Test
     fun testAddBlock() {
-        val (node0, node1) = createNodes(2)
+        val (node0, node1) = createNodes(2, "blockchain_config.xml")
 
         val blockBuilder = createBlockWithTx(node0, 2)
         val witness = commitBlock(blockBuilder)

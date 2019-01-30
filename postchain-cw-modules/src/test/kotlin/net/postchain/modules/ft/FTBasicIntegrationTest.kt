@@ -2,13 +2,15 @@ package net.postchain.modules.ft
 
 import net.postchain.common.toHex
 import net.postchain.core.Transaction
+import net.postchain.devtools.modules.ft.FTIntegrationTest
 import net.postchain.gtx.GTXBlockchainConfigurationFactory
 import net.postchain.gtv.Gtv
 import net.postchain.gtx.make_gtx_gson
-import net.postchain.devtools.modules.ft.FTIntegrationTest
 import org.junit.Assert
+import org.junit.Ignore
 import org.junit.Test
 
+@Ignore
 class FTBasicIntegrationTest : FTIntegrationTest() {
 
     @Test
@@ -21,7 +23,7 @@ class FTBasicIntegrationTest : FTIntegrationTest() {
         configOverrides.setProperty("blockchain.1.gtx.ft.asset.USD.issuers", issuerPubKeys[0].toHex())
         configOverrides.setProperty("blockchain.1.gtx.ft.openRegistration", true)
 
-        val node = createNode(0)
+        val node = createNode(0, "")
         val validTxs = mutableListOf<Transaction>()
         var currentBlockHeight = -1L
 

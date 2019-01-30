@@ -1,6 +1,7 @@
 package net.postchain.base
 
 import net.postchain.StorageBuilder
+import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.base.data.BaseTransactionQueue
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.*
@@ -53,7 +54,10 @@ class BaseBlockchainInfrastructure(
 
     override fun makeBlockchainEngine(configuration: BlockchainConfiguration): BaseBlockchainEngine {
         val storage = StorageBuilder.buildStorage(config, -1) // TODO: nodeID
-        val tq = BaseTransactionQueue(config.getInt("queuecapacity", 2500))
+        // TODO: [et]: Maybe extract 'queuecapacity' param from ''
+        val tq = BaseTransactionQueue(
+                (configuration as BaseBlockchainConfiguration)
+                        .configData.getBlockBuildingStrategy()?.get("queuecapacity")?.asInteger()?.toInt() ?: 2500)
         return BaseBlockchainEngine(configuration, storage, configuration.chainID, tq)
                 .apply { initializeDB() }
     }

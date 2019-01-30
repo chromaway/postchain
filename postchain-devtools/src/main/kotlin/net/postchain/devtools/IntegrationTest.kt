@@ -3,12 +3,12 @@
 package net.postchain.devtools
 
 import mu.KLogging
-import net.postchain.base.DynamicPortPeerInfo
 import net.postchain.base.PeerInfo
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.core.*
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtv.gtvml.GtvMLParser
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.privKeyHex
 import net.postchain.devtools.KeyPairHelper.pubKey
@@ -40,7 +40,9 @@ open class IntegrationTest {
     private var expectedSuccessRids = mutableMapOf<Long, MutableList<ByteArray>>()
 
     companion object : KLogging() {
+        const val BASE_PORT = 9870
         const val DEFAULT_CONFIG_FILE = "config.properties"
+        const val DEFAULT_BLOCKCHAIN_CONFIG_FILE = "blockchain_config.xml"
     }
 
     @After
@@ -83,53 +85,62 @@ open class IntegrationTest {
         }
     }
 
-    protected fun createNode(nodeIndex: Int): SingleChainTestNode =
-            createSingleNode(nodeIndex, 1)
+    protected fun createNode(nodeIndex: Int, blockchainConfigFilename: String): SingleChainTestNode =
+            createSingleNode(nodeIndex, 1, blockchainConfigFilename)
 
-    protected fun createNodes(count: Int): Array<SingleChainTestNode> =
-            Array(count) { createSingleNode(it, count) }
+    protected fun createNodes(count: Int, blockchainConfigFilename: String): Array<SingleChainTestNode> =
+            Array(count) { createSingleNode(it, count, blockchainConfigFilename) }
 
-    private fun createSingleNode(nodeIndex: Int, totalNodesCount: Int): SingleChainTestNode {
-        val config = createConfig(nodeIndex, totalNodesCount, DEFAULT_CONFIG_FILE)
-        return SingleChainTestNode(config).apply {
-            startBlockchain()
-            nodes.add(this)
-        }
+    private fun createSingleNode(nodeIndex: Int, totalNodesCount: Int, blockchainConfigFilename: String): SingleChainTestNode {
+        val nodeConfig = createConfig(
+                nodeIndex, totalNodesCount, DEFAULT_CONFIG_FILE)
+
+        val blockchainConfig = GtvMLParser.parseGtvML(
+                javaClass.getResource(blockchainConfigFilename).readText())
+
+        return SingleChainTestNode(nodeConfig, blockchainConfig)
+                .apply { startBlockchain() }
+                .also { nodes.add(it) }
     }
 
     protected fun createConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
             : Configuration {
+
         val propertiesFile = File(configFile)
         val params = Parameters()
+                .fileBased()
+                .setLocationStrategy(ClasspathLocationStrategy())
+                .setFile(propertiesFile)
         // Read first file directly via the builder
-        val builder = FileBasedConfigurationBuilder(PropertiesConfiguration::class.java)
-                .configure(params
-                        .fileBased()
-                        .setLocationStrategy(ClasspathLocationStrategy())
-                        .setFile(propertiesFile))
-        val baseConfig = builder.configuration
+        val baseConfig = FileBasedConfigurationBuilder(PropertiesConfiguration::class.java)
+                .configure(params)
+                .configuration
 
         baseConfig.listDelimiterHandler = DefaultListDelimiterHandler(',')
         val chainId = baseConfig.getLong("activechainids")
         val signers = Array(nodeCount) { pubKeyHex(it) }.joinToString(",")
-        baseConfig.setProperty("blockchain.$chainId.signers", signers)
+//        baseConfig.setProperty("blockchain.$chainId.signers", signers)
         // append nodeIndex to schema name
         baseConfig.setProperty("database.schema", baseConfig.getString("database.schema") + nodeIndex)
-        baseConfig.setProperty("blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: newschool
-        baseConfig.setProperty("blockchain.$chainId.blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: oldschool
+//        baseConfig.setProperty("blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: newschool
+//        baseConfig.setProperty("blockchain.$chainId.blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: oldschool
+
+        // peers
+        var port = (baseConfig.getProperty("node.0.port") as String).toInt()
         for (i in 0 until nodeCount) {
             baseConfig.setProperty("node.$i.id", "node$i")
             baseConfig.setProperty("node.$i.host", "127.0.0.1")
-            baseConfig.setProperty("node.$i.port", "0")
+            baseConfig.setProperty("node.$i.port", port++)
             baseConfig.setProperty("node.$i.pubkey", pubKeyHex(i))
         }
-        baseConfig.setProperty("blockchain.$chainId.testmyindex", nodeIndex)
+//        baseConfig.setProperty("blockchain.$chainId.testmyindex", nodeIndex)
 
         configOverrides.setProperty("messaging.privkey", privKeyHex(nodeIndex))
 
         return CompositeConfiguration().apply {
             addConfiguration(configOverrides)
             addConfiguration(baseConfig)
+
         }
     }
 
@@ -139,7 +150,10 @@ open class IntegrationTest {
 
     fun createPeerInfos(nodeCount: Int): Array<PeerInfo> {
         if (peerInfos == null) {
-            peerInfos = Array(nodeCount) { DynamicPortPeerInfo("localhost", pubKey(it)) }
+            peerInfos = Array(nodeCount) {
+                // TODO: Fix this hack
+                PeerInfo("localhost", BASE_PORT + it, pubKey(it))
+            }
         }
 
         return peerInfos!!
