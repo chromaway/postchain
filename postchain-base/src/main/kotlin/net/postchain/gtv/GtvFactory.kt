@@ -39,7 +39,7 @@ object GtvFactory {
         return GtvByteArray(ba)
     }
 
-    fun gtv(vararg a: Gtv): Gtv {
+    fun gtv(vararg a: Gtv): GtvArray {
         return GtvArray(a)
     }
 
@@ -47,7 +47,7 @@ object GtvFactory {
         return GtvArray(a.toTypedArray())
     }
 
-    fun gtv(vararg pairs: Pair<String, Gtv>): Gtv {
+    fun gtv(vararg pairs: Pair<String, Gtv>): GtvDictionary {
         return GtvDictionary(mapOf(*pairs))
     }
 

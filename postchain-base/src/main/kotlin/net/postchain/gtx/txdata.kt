@@ -12,6 +12,8 @@ import java.util.*
 import net.postchain.gtv.messages.Gtv as RawGtv
 import net.postchain.gtv.*
 import net.postchain.gtx.factory.GtxDataFactory
+import net.postchain.gtx.serializer.GtxDataSerializer
+import java.io.ByteArrayOutputStream
 
 object GtxBase {
     const val NR_FIELDS_TRANSACTION = 2
@@ -72,22 +74,9 @@ data class GTXData(
     }
 
     fun serialize(): ByteArray {
-        throw NotImplementedError("TODO")
-        /*
-        val rtx = RawGTXTransaction()
-        rtx.blockchainRID = blockchainRID
-        rtx.operations = Vector<RawGTXOperation>(operations.map {
-            val rop = RawGTXOperation()
-            rop.opName = it.opName
-            rop.args = Vector<RawGtv>(it.args.map { it.getRawGtv() })
-            rop
-        })
-        rtx.signatures = Vector<ByteArray>(signatures.toMutableList())
-        rtx.signers = Vector<ByteArray>(signers.toMutableList())
-        val outs = ByteArrayOutputStream()
-        rtx.der_encode(outs)
-        return outs.toByteArray()
-        */
+        // TODO: We are producing a new structure now (Trans -> Trans Body -> Op), so make sure the callers get it!
+        val gtvArray = GtxDataSerializer.serializeToGtv(this)
+        return GtvEncoder.encodeGtv(gtvArray)
     }
 
     fun serializeWithoutSignatures(): ByteArray {
@@ -133,24 +122,6 @@ fun decodeGTXData(_rawData: ByteArray): GTXData {
     // GTV -> GTXData
     return GtxDataFactory.deserializeFromGtv(gtv)
 }
-
-/*
-fun decodeGTXData(_rawData: ByteArray): GTXData {
-    val rawGTX = RawGTXTransaction.der_decode(ByteArrayInputStream(_rawData))
-    val signers: Array<ByteArray> = rawGTX.signers.toArray(arrayOf())
-    val ops = rawGTX.operations.map {
-        OpData(
-                it.opName,
-                it.args.map(GtvFactory::wrapValue).toTypedArray())
-    }.toTypedArray()
-
-    return GTXData(
-            rawGTX.blockchainRID,
-            signers,
-            rawGTX.signatures.toArray(arrayOf()),
-            ops)
-}
-*/
 
 // TODO: cache data for signing and digest
 

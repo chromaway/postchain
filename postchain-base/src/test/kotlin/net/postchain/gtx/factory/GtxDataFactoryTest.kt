@@ -21,10 +21,11 @@ class GtxDataFactoryTest {
     @Test
     fun testBuildGTXDataFromGtv_one_operation() {
 
+        // ---------- Build expected  ----------------------
         val expectedOp = OpData(op_name, op_args.map{ gtv(it.toLong())}.toTypedArray() )
         val expectedData = GTXData(blockchainRID, arrayOf(aliceSigner), arrayOf(aliceSignature), arrayOf(expectedOp))
 
-        // ---------- Build da GTV struct
+        // ---------- Build da GTV struct -----------------
 
         // Operation Data
         val opName: GtvString = gtv(op_name)
@@ -41,7 +42,7 @@ class GtxDataFactoryTest {
         val signatures: GtvArray = gtv(listOf(gtv(aliceSignature)))
         val tx = gtv(listOf(txb, signatures))
 
-        // GTXData
+        // ---------- Convert it ------------------------------
         val data: GTXData = GtxDataFactory.deserializeFromGtv(tx)
 
         Assert.assertEquals(data, expectedData)
