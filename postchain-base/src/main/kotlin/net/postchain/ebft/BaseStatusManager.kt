@@ -390,7 +390,7 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
                 return true
             } else {
                 // otherwise we set intent to FetchCommitSignatureIntent with current blockRID and list of nodes which
-                // are already in prepared state but don't have commit signatures in our args
+                // are already in prepared state but don't have commit signatures in our array
 
                 val unfetchedNodes = mutableListOf<Int>()
                 for ((i, nodeStatus) in nodeStatuses.withIndex()) {

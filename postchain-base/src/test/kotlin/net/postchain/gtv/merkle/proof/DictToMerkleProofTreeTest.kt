@@ -80,14 +80,14 @@ class DictToMerkleProofTreeTest {
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
         //println("Serilalized: $serialize")
 
-        val expectedSerialization = "GtvArray(args=[\n" +
+        val expectedSerialization = "GtvArray(array=[\n" +
                 "  GtvInteger(integer=104),\n" + // 104 = dict head node type
                 "  GtvInteger(integer=1),\n" + // length of dict
-                "  GtvArray(args=[\n" +
+                "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100),\n" + // 100 = hash
                 "    GtvByteArray(bytearray=[1, 112, 111, 102])\n" +
                 "  ]),\n" +
-                "  GtvArray(args=[\n" +
+                "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=101),  \n" + // 101 = value to prove
                 "    GtvInteger(integer=1)\n" +
                 "  ])\n" +
@@ -194,28 +194,28 @@ class DictToMerkleProofTreeTest {
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
         //println("Serilalized: $serialize")
 
-        val expectedSerialization = "GtvArray(args=[\n" +
+        val expectedSerialization = "GtvArray(array=[\n" +
                 "  GtvInteger(integer=104), \n" + // 104 = dict head node type
                 "  GtvInteger(integer=4), \n" + // length of the dict
-                "  GtvArray(args=[\n" +
+                "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=102), \n" + // 102 = dummy node
-                "    GtvArray(args=[\n" +
+                "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=102), \n" + // 102 = dummy node
-                "      GtvArray(args=[\n" +
+                "      GtvArray(array=[\n" +
                 "        GtvInteger(integer=100), \n" + // 100 = hash
                 "        GtvByteArray(bytearray=[1, 103, 112, 118, 115])\n" +
                 "      ]),\n" +
-                "      GtvArray(args=[\n" +
+                "      GtvArray(array=[\n" +
                 "        GtvInteger(integer=101),   \n" + // 101 = value to prove
                 "        GtvInteger(integer=4)\n" +
                 "      ])\n" +
                 "    ]),  \n" +
-                "    GtvArray(args=[\n" +
+                "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=100),   \n" + // 100 = hash
                 "      GtvByteArray(bytearray=[0, 2, 113, 112, 103, 2, 3])\n" +
                 "    ])\n" +
                 "  ]),   \n" +
-                "  GtvArray(args=[\n" +
+                "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100),   \n" + // 100 = hash
                 "    GtvByteArray(bytearray=[0, 1, 3, 119, 107, 117, 104, 104, 3, 6, 1, 3, 119, 122, 114, 3, 5])\n" +
                 "  ])\n" +
@@ -314,27 +314,27 @@ class DictToMerkleProofTreeTest {
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
         println("Serilalized: $serialize")
 
-        val expectedSerialization =  "GtvArray(args=[\n" +
+        val expectedSerialization =  "GtvArray(array=[\n" +
                 "  GtvInteger(integer=104), \n" + // 104 = dict head node type
                 "  GtvInteger(integer=1), \n" + // length of the dict
-                "  GtvArray(args=[\n" +
+                "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100),\n" +
                 "    GtvByteArray(bytearray=[1, 112, 111, 102])\n" +
                 "  ]),\n" +
-                "  GtvArray(args=[\n" +
+                "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=104), \n" + // 104 = dict head node type
                 "    GtvInteger(integer=2), \n" + // length of the dict
-                "    GtvArray(args=[\n" +
+                "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=100), \n" + // 100 = hash
                 "      GtvByteArray(bytearray=[0, 2, 103, 107, 105, 106, 118, 2, 10])\n" +
                 "    ]), \n" +
-                "    GtvArray(args=[\n" +
+                "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=102), \n" + // 102 = dummy node
-                "      GtvArray(args=[\n" +
+                "      GtvArray(array=[\n" +
                 "        GtvInteger(integer=100), \n" + // 100 = hash
                 "        GtvByteArray(bytearray=[1, 116, 102, 119, 102, 111])\n" +
                 "      ]), \n" +
-                "      GtvArray(args=[\n" +
+                "      GtvArray(array=[\n" +
                 "        GtvInteger(integer=101), \n" + // 101 = value to prove
                 "        GtvInteger(integer=7)\n" +
                 "      ])\n" +
@@ -400,14 +400,14 @@ class DictToMerkleProofTreeTest {
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
         //println("Serilalized: $serialize")
 
-        val expectedSerialization = "GtvArray(args=[\n" +
+        val expectedSerialization = "GtvArray(array=[\n" +
                 "  GtvInteger(integer=104),\n" +  // 104 = dict head node type
                 "  GtvInteger(integer=1),\n" + // lenght of the dict
-                "  GtvArray(args=[\n" +
+                "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100),\n" + // 100 = Hash
                 "    GtvByteArray(bytearray=[1, 112, 111, 102])\n" +
                 "  ]),\n" +
-                "  GtvArray(args=[\n" +
+                "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=101), \n" + // 101 = value to be proved (in this case an entire dict)
                 "    GtvDictionary(dict={\n" +  // The value is a GtvDictionary, in it's raw form
                 "      seven=GtvInteger(integer=7), \n" +

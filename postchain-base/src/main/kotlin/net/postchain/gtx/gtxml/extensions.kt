@@ -19,7 +19,7 @@ fun GtvTypeOf(type: String): GtvType {
         "string" -> STRING
         "int" -> INTEGER
         "bytea" -> BYTEARRAY
-        "args" -> ARRAY
+        "array" -> ARRAY
         "dict" -> DICT
         else -> throw IllegalArgumentException("Unknown type of GtvType: $type")
     }

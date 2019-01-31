@@ -39,7 +39,7 @@ object GtvMLParser {
                 BYTEARRAY -> GtvByteArray(value as ByteArray)
                 ARRAY -> parseArrayGtvML(value as ArrayType, params)
                 DICT -> parseDictGtvML(value as DictType, params)
-                else -> throw NotImplementedError("TODO") // TODO: fix
+                else -> throw IllegalStateException("Type not known: ${GtvTypeOf(qName)}")
             }
         }
     }

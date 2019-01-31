@@ -60,7 +60,7 @@ class GtvAdapter : JsonDeserializer<Gtv>, JsonSerializer<Gtv> {
             GtvType.BYTEARRAY -> return JsonPrimitive(v.asByteArray().toHex())
             GtvType.DICT -> return encodeDict(v, t, c)
             GtvType.ARRAY -> return encodeArray(v, t, c)
-            else -> throw NotImplementedError("TODO") // TODO: fix
+            else -> throw IllegalStateException("Should have taken care of all cases, type not known: ${v.type}" )
         }
     }
 }

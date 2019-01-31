@@ -16,11 +16,11 @@ import org.junit.Test
 import kotlin.test.assertEquals
 
 /**
- * In this class we test if we can generate proofs out ofGtv args structures.
- * 1. First we test to build a proof where the value-to-be-proved a primitive type value in the args.
+ * In this class we test if we can generate proofs out ofGtv array structures.
+ * 1. First we test to build a proof where the value-to-be-proved a primitive type value in the array.
  * 2. Then we create a double proof (more than one value-to-be-proved in the same proof tree).
- * 3. Then we test to build a proof where the value-to-be-proved is a primitive value located in a sub-args.
- * 4. Later we test to build a proof where the value-to-be-proved is a complex type (another args)
+ * 3. Then we test to build a proof where the value-to-be-proved is a primitive value located in a sub-array.
+ * 4. Later we test to build a proof where the value-to-be-proved is a complex type (another array)
  *
  * -----------------
  * How to read the tests
@@ -53,7 +53,7 @@ class ArrayToMerkleProofTreeTest {
 
 
     // ---------------------
-    // 1. First we test to build a proof where the value-to-be-proved a primitive type value in the args.
+    // 1. First we test to build a proof where the value-to-be-proved a primitive type value in the array.
     // ---------------------
     @Test
     fun test_tree_of1() {
@@ -80,14 +80,14 @@ class ArrayToMerkleProofTreeTest {
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
         //println("Serilalized: $serialize")
 
-        val expectedSerialization = "GtvArray(args=[\n" +
-                "  GtvInteger(integer=103), \n" +  // 103 =  node type is args
-                "  GtvInteger(integer=1), \n" +  // lenght of args
-                "  GtvArray(args=[\n" +
+        val expectedSerialization = "GtvArray(array=[\n" +
+                "  GtvInteger(integer=103), \n" +  // 103 =  node type is array
+                "  GtvInteger(integer=1), \n" +  // lenght of array
+                "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=101), \n" + // 101 = value to prove
                 "    GtvInteger(integer=1)\n" +
                 "  ]), \n" +
-                "  GtvArray(args=[\n" +
+                "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100), \n" + // 100 = hash
                 "    GtvByteArray(bytearray=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])\n" +
                 "  ])\n" +
@@ -158,21 +158,21 @@ class ArrayToMerkleProofTreeTest {
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
         //println("Serilalized: $serialize")
 
-        val expectedSerialization = "GtvArray(args=[\n" +
-                "  GtvInteger(integer=103), \n" +// 103 = args head node type
-                "  GtvInteger(integer=4), \n" + // length of args
-                "  GtvArray(args=[\n" +
+        val expectedSerialization = "GtvArray(array=[\n" +
+                "  GtvInteger(integer=103), \n" +// 103 = array head node type
+                "  GtvInteger(integer=4), \n" + // length of array
+                "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=102), \n" +
-                "    GtvArray(args=[\n" +
+                "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=101), \n" +// 101 = value to prove
                 "      GtvInteger(integer=1)\n" +
                 "    ]), \n" +
-                "    GtvArray(args=[\n" +
+                "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=100), \n" +// 100 = hash
                 "      GtvByteArray(bytearray=[1, 3])\n" +
                 "    ])\n" +
                 "  ]), \n" +
-                "  GtvArray(args=[\n" +
+                "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100), \n" +// 100 = hash
                 "    GtvByteArray(bytearray=[0, 2, 5, 2, 6])\n" +
                 "  ])\n" +
@@ -265,27 +265,27 @@ class ArrayToMerkleProofTreeTest {
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
         //println("Serilalized: $serialize")
 
-        val expectedSerialization = "GtvArray(args=[\n" +
-                "  GtvInteger(integer=103),\n" + // 103 = args head node type
-                "  GtvInteger(integer=7),\n" + // length of args
-                "  GtvArray(args=[\n" +
+        val expectedSerialization = "GtvArray(array=[\n" +
+                "  GtvInteger(integer=103),\n" + // 103 = array head node type
+                "  GtvInteger(integer=7),\n" + // length of array
+                "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=102),\n" + // 102 = dummy node
-                "    GtvArray(args=[\n" +
+                "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=100),\n" + // 100 = hash
                 "      GtvByteArray(bytearray=[0, 2, 3, 2, 4])]),\n" +
-                "      GtvArray(args=[\n" +
+                "      GtvArray(array=[\n" +
                 "        GtvInteger(integer=102),\n" + // 102 = dummy node
-                "        GtvArray(args=[\n" +
+                "        GtvArray(array=[\n" +
                 "          GtvInteger(integer=100),\n" +  // 100 = hash
                 "          GtvByteArray(bytearray=[1, 4])\n" +
                 "        ]),\n" +
-                "        GtvArray(args=[\n" +
+                "        GtvArray(array=[\n" +
                 "          GtvInteger(integer=101),\n" + // 101 = value to prove
                 "          GtvInteger(integer=4)\n" +
                 "        ])\n" +
                 "      ])\n" +
                 "    ]),\n" +
-                "    GtvArray(args=[\n" +
+                "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=100),\n" + // 100 = hash
                 "      GtvByteArray(bytearray=[0, 1, 3, 8, 3, 9, 2, 9])\n" +
                 "    ])\n" +
@@ -345,7 +345,7 @@ class ArrayToMerkleProofTreeTest {
     }
 
     // ---------------------
-    // 3. Then we test to build a proof where the value-to-be-proved is a primitive value located in a sub-args.
+    // 3. Then we test to build a proof where the value-to-be-proved is a primitive value located in a sub-array.
     // ---------------------
     @Test
     fun test_ArrayLength7_withInnerLength3Array_path2nine() {
@@ -477,11 +477,11 @@ class ArrayToMerkleProofTreeTest {
     }
 
     // ---------------------
-    // 4. Later we test to build a proof where the value-to-be-proved is a complex type (another args)
+    // 4. Later we test to build a proof where the value-to-be-proved is a complex type (another array)
     // ---------------------
 
     /**
-     * Note: This test depend on the auto-generated output of toString() of the "data class" of theGtv args.
+     * Note: This test depend on the auto-generated output of toString() of the "data class" of theGtv array.
      */
     @Test
     fun test_ArrayLength7_withInnerLength3Array_path2subArray() {
@@ -499,7 +499,7 @@ class ArrayToMerkleProofTreeTest {
                 " /   \\          \n" +
                 " 0002030204   +   .   .   \n" +
                 "    / \\         \n" +
-                "- - 0104 *GtvArray(args=[GtvInteger(integer=1), GtvInteger(integer=9), GtvInteger(integer=3)]) - - - - "
+                "- - 0104 *GtvArray(array=[GtvInteger(integer=1), GtvInteger(integer=9), GtvInteger(integer=3)]) - - - - "
 
 
         val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
@@ -516,24 +516,24 @@ class ArrayToMerkleProofTreeTest {
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
         println("Serilalized: $serialize")
 
-        val expectedSerialization = "GtvArray(args=[\n" +
-                "  GtvInteger(integer=103), \n" + // 103 = args head node type
-                "  GtvInteger(integer=7), \n" + // length of args
-                "  GtvArray(args=[\n" +
+        val expectedSerialization = "GtvArray(array=[\n" +
+                "  GtvInteger(integer=103), \n" + // 103 = array head node type
+                "  GtvInteger(integer=7), \n" + // length of array
+                "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=102), \n" + // 102 = dummy node
-                "    GtvArray(args=[\n" +
+                "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=100), \n" + // 100 = hash
                 "      GtvByteArray(bytearray=[0, 2, 3, 2, 4])\n" +
                 "    ]),\n" +
-                "    GtvArray(args=[\n" +
+                "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=102), \n" + // 102 = dummy node
-                "      GtvArray(args=[\n" +
+                "      GtvArray(array=[\n" +
                 "        GtvInteger(integer=100), \n" + // 100 = hash
                 "        GtvByteArray(bytearray=[1, 4])\n" +
                 "      ]), \n" +
-                "      GtvArray(args=[\n" +
+                "      GtvArray(array=[\n" +
                 "        GtvInteger(integer=101), \n" + // 101 = value to prove
-                "        GtvArray(args=[\n" +  // Here the value to prove is a regular GtvArray. Interesting to see that this is deserialized propely (i.e. kept)
+                "        GtvArray(array=[\n" +  // Here the value to prove is a regular GtvArray. Interesting to see that this is deserialized propely (i.e. kept)
                 "          GtvInteger(integer=1), \n" +
                 "          GtvInteger(integer=9), \n" +
                 "          GtvInteger(integer=3)\n" +
@@ -541,7 +541,7 @@ class ArrayToMerkleProofTreeTest {
                 "      ])\n" +
                 "    ])\n" +
                 "  ]), \n" +
-                "  GtvArray(args=[\n" +
+                "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100), \n" + // 100 = hash
                 "    GtvByteArray(bytearray=[0, 1, 3, 8, 3, 9, 2, 9])\n" +
                 "  ])\n" +

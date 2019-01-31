@@ -55,7 +55,7 @@ class GtvMLEncodeDictsTest {
                                 ))
                         )),
                         GtvDictionary(mapOf(
-                                "args" to GtvArray(arrayOf(
+                                "array" to GtvArray(arrayOf(
                                         GtvInteger(1),
                                         GtvString("2")
                                 )),
@@ -82,11 +82,11 @@ class GtvMLEncodeDictsTest {
                     <int>42</int>
                 </entry>
                 <entry key="k3">
-                    <args/>
+                    <array/>
                 </entry>
                 <entry key="k4">
-                    <args>
-                        <args>
+                    <array>
+                        <array>
                             <null xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
                             <dict>
                                 <entry key="1">
@@ -96,13 +96,13 @@ class GtvMLEncodeDictsTest {
                                     <int>2</int>
                                 </entry>
                             </dict>
-                        </args>
+                        </array>
                         <dict>
-                            <entry key="args">
-                                <args>
+                            <entry key="array">
+                                <array>
                                     <int>1</int>
                                     <string>2</string>
-                                </args>
+                                </array>
                             </entry>
                             <entry key="str">
                                 <string>foo</string>
@@ -111,7 +111,7 @@ class GtvMLEncodeDictsTest {
                                 <int>42</int>
                             </entry>
                         </dict>
-                    </args>
+                    </array>
                 </entry>
                 <entry key="k5">
                     <dict/>

@@ -61,9 +61,9 @@ class GtvMLEncodeScalarsTest {
 
         val actual = GtvMLEncoder.encodeXMLGtv(array)
         val expected = expected("""
-            <args>
+            <array>
                 <bytea>0102030A0B0C</bytea>
-            </args>
+            </array>
         """.trimIndent())
 
         assert(actual).isEqualTo(expected)

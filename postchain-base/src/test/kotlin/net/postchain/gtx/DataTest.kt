@@ -35,15 +35,15 @@ class GTXDataTest {
         val b = GTXDataBuilder(testBlockchainRID, signerPub.slice(0..2).toTypedArray(), crypto)
         // primitives
         b.addOperation("hello", arrayOf(GtvNull, gtv(42), gtv("Wow"), gtv(signerPub[0])))
-        // args of primitives
+        // array of primitives
         b.addOperation("bro", arrayOf(gtv(GtvNull, gtv(2), gtv("Nope"))))
         // dict
         b.addOperation("dictator", arrayOf(gtv(mapOf("two" to gtv(2), "five" to GtvNull))))
         // complex structure
         b.addOperation("soup", arrayOf(
-                // map with args
-                gtv(mapOf("args" to gtv(gtv(1), gtv(2), gtv(3)))),
-                // args with map
+                // map with array
+                gtv(mapOf("array" to gtv(gtv(1), gtv(2), gtv(3)))),
+                // array with map
                 gtv(gtv(mapOf("inner" to gtv("space"))), GtvNull)
         ))
         b.finish()
@@ -90,7 +90,7 @@ class GTXDataTest {
         assertEquals(2, dict2["two"]!!.asInteger())
         assertNull(dict2["six"])
         val mapWithArray = d.operations[3].args[0] as GtvDictionary
-        val valArgs = mapWithArray["args"] as GtvArray
+        val valArgs = mapWithArray["array"] as GtvArray
         assertEquals(2, valArgs!![1].asInteger())
         val arrayWithMap = d.operations[3].args[1] as GtvArray
         val firstDict = arrayWithMap[0] as GtvDictionary

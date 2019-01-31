@@ -8,7 +8,7 @@ import org.junit.Test
 class MixArrayDictToGtvBinaryTreeTest {
 
     /**
-     * An args within a dict.
+     * An arrays within a dict.
      */
     @Test
     fun testIntDictLength1withInnerLength4Array() {

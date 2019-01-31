@@ -13,7 +13,7 @@ import net.postchain.gtv.GtvEncoder.encodeGtv
  * This should be the serialization we use in production
  *
  * @param gtv to serialize
- * @return the byte args containing serialized data
+ * @return the byte array containing serialized data
  */
 fun serializeGtvToByteArary(gtv: Gtv): ByteArray {
     return when (gtv) {

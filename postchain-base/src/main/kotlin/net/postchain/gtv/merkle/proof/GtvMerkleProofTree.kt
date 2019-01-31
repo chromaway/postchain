@@ -1,8 +1,8 @@
 package net.postchain.gtv.merkle.proof
 
 import net.postchain.base.merkle.proof.*
-import net.postchain.gtv.merkle.GtvMerkleBasics.HASH_PREFIX_NODE_Gtv_ARRAY
-import net.postchain.gtv.merkle.GtvMerkleBasics.HASH_PREFIX_NODE_Gtv_DICT
+import net.postchain.gtv.merkle.GtvMerkleBasics.HASH_PREFIX_NODE_GTV_ARRAY
+import net.postchain.gtv.merkle.GtvMerkleBasics.HASH_PREFIX_NODE_GTV_DICT
 import net.postchain.gtv.*
 
 
@@ -10,11 +10,11 @@ const val SERIALIZATION_ARRAY_TYPE: Long = 103
 const val SERIALIZATION_DICT_TYPE: Long = 104
 
 /**
- * Represents a proof node that once was the head of a Gtv args.
+ * Represents a proof node that once was the head of a Gtv array
  *
  * Note: We keep the size in case we need to use a [GtvPath] to find a value
  */
-class ProofNodeGtvArrayHead(val size: Int, left: MerkleProofElement, right: MerkleProofElement): ProofNode(HASH_PREFIX_NODE_Gtv_ARRAY, left, right)
+class ProofNodeGtvArrayHead(val size: Int, left: MerkleProofElement, right: MerkleProofElement): ProofNode(HASH_PREFIX_NODE_GTV_ARRAY, left, right)
 
 /**
  * Represents a proof node that once was the head of a Gtv dict.
@@ -23,7 +23,7 @@ class ProofNodeGtvArrayHead(val size: Int, left: MerkleProofElement, right: Merk
  * our value, and a dictionary of size == 1 (only our key/value pair in it) will serve just as well, but we save the
  * size anyway for symmetry.
  */
-class ProofNodeGtvDictHead(val size: Int, left: MerkleProofElement, right: MerkleProofElement): ProofNode(HASH_PREFIX_NODE_Gtv_DICT, left, right)
+class ProofNodeGtvDictHead(val size: Int, left: MerkleProofElement, right: MerkleProofElement): ProofNode(HASH_PREFIX_NODE_GTV_DICT, left, right)
 
 /**
  * See [MerkleProofTree] for documentation

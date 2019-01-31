@@ -55,7 +55,7 @@ class GtvPath(val pathElements: List<GtvPathElement>): KLogging()  {
      */
     fun tail(): GtvPath {
         if (pathElements.isEmpty()) {
-            throw IllegalArgumentException("Impossible to tail this args")
+            throw IllegalArgumentException("Impossible to tail this array")
         }
         val tail: List<GtvPathElement> = pathElements.subList(1, pathElements.size)
         return GtvPath(tail)
@@ -176,7 +176,7 @@ class GtvPath(val pathElements: List<GtvPathElement>): KLogging()  {
                             return null
                         }
                     } else {
-                        logger.debug("Incorrect path! Expected args at element: $counter")
+                        logger.debug("Incorrect path! Expected array at element: $counter")
                         return null
                     }
                 }
@@ -208,7 +208,7 @@ object GtvPathFactory {
     /**
      * Use this constructor to convert a weakly typed path to a [GtvPath]
      *
-     * @param inputArr is just an args with Ints and Strings representing the path
+     * @param inputArr is just an array with Ints and Strings representing the path
      * @return a [GtvPath] (same same by well typed)
      */
     fun buildFromArrayOfPointers(inputArr: Array<Any>): GtvPath {

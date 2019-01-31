@@ -13,8 +13,8 @@ class GtvMLEncodeArraysTest {
         val Gtv = GtvArray(arrayOf())
         val actual = GtvMLEncoder.encodeXMLGtv(Gtv)
         val expected = arrayOf(
-                expected("<args></args>"),
-                expected("<args/>"))
+                expected("<array></array>"),
+                expected("<array/>"))
 
         assert(actual).isIn(*expected)
     }
@@ -26,10 +26,10 @@ class GtvMLEncodeArraysTest {
                 GtvInteger(42)))
         val actual = GtvMLEncoder.encodeXMLGtv(Gtv)
         val expected = expected("""
-            <args>
+            <array>
                 <string>hello</string>
                 <int>42</int>
-            </args>""".trimIndent())
+            </array>""".trimIndent())
 
         assert(actual).isEqualTo(expected)
     }
@@ -50,7 +50,7 @@ class GtvMLEncodeArraysTest {
                                 ))
                         )),
                         GtvDictionary(mapOf(
-                                "args" to GtvArray(arrayOf(
+                                "array" to GtvArray(arrayOf(
                                         GtvInteger(1),
                                         GtvString("2")
                                 )),
@@ -68,13 +68,13 @@ class GtvMLEncodeArraysTest {
         val actual = GtvMLEncoder.encodeXMLGtv(Gtv)
 
         val expected = expected("""
-            <args>
+            <array>
                 <null xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
                 <string>hello</string>
                 <int>42</int>
-                <args/>
-                <args>
-                    <args>
+                <array/>
+                <array>
+                    <array>
                         <dict>
                             <entry key="0">
                                 <null xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
@@ -86,13 +86,13 @@ class GtvMLEncodeArraysTest {
                                 <int>2</int>
                             </entry>
                         </dict>
-                    </args>
+                    </array>
                     <dict>
-                        <entry key="args">
-                            <args>
+                        <entry key="array">
+                            <array>
                                 <int>1</int>
                                 <string>2</string>
-                            </args>
+                            </array>
                         </entry>
                         <entry key="str">
                             <string>foo</string>
@@ -101,7 +101,7 @@ class GtvMLEncodeArraysTest {
                             <int>42</int>
                         </entry>
                     </dict>
-                </args>
+                </array>
                 <dict/>
                 <dict>
                     <entry key="1">
@@ -111,7 +111,7 @@ class GtvMLEncodeArraysTest {
                         <int>42</int>
                     </entry>
                 </dict>
-            </args>""".trimIndent())
+            </array>""".trimIndent())
 
         assert(actual).isEqualTo(expected)
     }

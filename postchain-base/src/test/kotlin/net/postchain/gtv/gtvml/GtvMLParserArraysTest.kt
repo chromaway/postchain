@@ -9,7 +9,7 @@ class GtvMLParserArraysTest {
 
     @Test
     fun parseGtv_array_empty_successfully() {
-        val xml = "<args></args>"
+        val xml = "<array></array>"
         val actual = GtvMLParser.parseGtvML(xml)
         val expected = GtvArray(arrayOf())
 
@@ -18,7 +18,7 @@ class GtvMLParserArraysTest {
 
     @Test
     fun parseGtv_array_of_scalars_successfully() {
-        val xml = "<args><string>hello</string><int>42</int></args>"
+        val xml = "<array><string>hello</string><int>42</int></array>"
         val actual = GtvMLParser.parseGtvML(xml)
         val expected = GtvArray(arrayOf(
                 GtvString("hello"),
@@ -30,7 +30,7 @@ class GtvMLParserArraysTest {
 
     @Test
     fun parseGtv_array_with_params_successfully() {
-        val xml = "<args><string>hello</string><param type='int' key='num'/></args>"
+        val xml = "<array><string>hello</string><param type='int' key='num'/></array>"
         val actual = GtvMLParser.parseGtvML(
                 xml,
                 mapOf("num" to GtvInteger(42)))
@@ -45,7 +45,7 @@ class GtvMLParserArraysTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun parseGtv_array_with_not_found_param_throws_exception() {
-        val xml = "<args><string>hello</string><param type='int' key='UNKNOWN_KEY'/></args>"
+        val xml = "<array><string>hello</string><param type='int' key='UNKNOWN_KEY'/></array>"
         GtvMLParser.parseGtvML(
                 xml,
                 mapOf("num" to GtvInteger(42)))
@@ -53,7 +53,7 @@ class GtvMLParserArraysTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun parseGtv_array_with_CASE_SENSITIVE_not_found_param_throws_exception() {
-        val xml = "<args><string>hello</string><param type='int' key='CASE_SENSITIVE_KEY'/></args>"
+        val xml = "<array><string>hello</string><param type='int' key='CASE_SENSITIVE_KEY'/></array>"
         GtvMLParser.parseGtvML(
                 xml,
                 mapOf("case_sensitive_key" to GtvInteger(42)))
@@ -62,16 +62,16 @@ class GtvMLParserArraysTest {
     @Test
     fun parseGtv_array_of_arrays_successfully() {
         val xml = """
-            <args>
-                <args>
+            <array>
+                <array>
                     <string>foo</string>
                     <string>bar</string>
-                </args>
-                <args>
+                </array>
+                <array>
                     <int>42</int>
                     <int>43</int>
-                </args>
-            </args>
+                </array>
+            </array>
         """.trimIndent()
 
         val actual = GtvMLParser.parseGtvML(xml)
@@ -92,36 +92,36 @@ class GtvMLParserArraysTest {
     @Test
     fun parseGtv_array_of_all_types_successfully() {
         val xml = """
-            <args>
+            <array>
                 <string>foo</string>
                 <int>42</int>
-                <args>
+                <array>
                     <null xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
                     <string>foo</string>
                     <null/>
                     <string>bar</string>
-                    <args>
+                    <array>
                         <int>42</int>
                         <int>43</int>
-                        <args>
+                        <array>
                             <int>44</int>
-                        </args>
+                        </array>
                         <dict>
                             <entry key="hello"><string>world</string></entry>
                             <entry key="123"><int>123</int></entry>
                         </dict>
-                    </args>
+                    </array>
                     <dict>
                         <entry key="hello">
-                            <args>
+                            <array>
                                 <string>world</string>
                                 <string>world</string>
-                            </args>
+                            </array>
                         </entry>
                         <entry key="123"><int>123</int></entry>
                     </dict>
-                </args>
-                <args>
+                </array>
+                <array>
                     <int>42</int>
                     <dict>
                         <entry key="hello"><string>world</string></entry>
@@ -129,7 +129,7 @@ class GtvMLParserArraysTest {
                             <param type='int' key='param_int_123'/>
                         </entry>
                     </dict>
-                </args>
+                </array>
                 <dict>
                     <entry key="hello"><string>world</string></entry>
                     <entry key="dict123">
@@ -141,13 +141,13 @@ class GtvMLParserArraysTest {
                         </dict>
                     </entry>
                     <entry key="array123">
-                        <args>
+                        <array>
                             <int>42</int>
                             <int>43</int>
-                        </args>
+                        </array>
                     </entry>
                 </dict>
-            </args>
+            </array>
         """.trimIndent()
 
         val actual = GtvMLParser.parseGtvML(

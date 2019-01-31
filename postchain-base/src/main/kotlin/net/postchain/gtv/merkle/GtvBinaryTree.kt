@@ -2,8 +2,8 @@ package net.postchain.gtv.merkle
 
 import net.postchain.base.merkle.BinaryTree
 import net.postchain.base.merkle.BinaryTreeElement
-import net.postchain.gtv.merkle.GtvMerkleBasics.HASH_PREFIX_NODE_Gtv_ARRAY
-import net.postchain.gtv.merkle.GtvMerkleBasics.HASH_PREFIX_NODE_Gtv_DICT
+import net.postchain.gtv.merkle.GtvMerkleBasics.HASH_PREFIX_NODE_GTV_ARRAY
+import net.postchain.gtv.merkle.GtvMerkleBasics.HASH_PREFIX_NODE_GTV_DICT
 import net.postchain.base.merkle.SubTreeRootNode
 import net.postchain.gtv.*
 
@@ -29,7 +29,7 @@ class GtvArrayHeadNode(left: BinaryTreeElement, right: BinaryTreeElement, isProo
         }
     }
 
-    override fun getPrefixByte(): Byte = HASH_PREFIX_NODE_Gtv_ARRAY
+    override fun getPrefixByte(): Byte = HASH_PREFIX_NODE_GTV_ARRAY
 }
 
 /**
@@ -46,7 +46,7 @@ class GtvDictHeadNode(left: BinaryTreeElement, right: BinaryTreeElement, isProof
         }
     }
 
-    override fun getPrefixByte(): Byte = HASH_PREFIX_NODE_Gtv_DICT
+    override fun getPrefixByte(): Byte = HASH_PREFIX_NODE_GTV_DICT
 }
 
 /**

@@ -113,7 +113,7 @@ class ArrayToGtvBinaryTreeTest {
 
 
     /**
-     * An args within an args.
+     * An array within an array.
      */
     @Test
     fun testIntArrayLength7withInnerLength3Array() {
