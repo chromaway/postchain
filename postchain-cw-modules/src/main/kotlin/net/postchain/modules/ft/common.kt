@@ -7,6 +7,7 @@ import net.postchain.core.EContext
 import net.postchain.core.TxEContext
 import net.postchain.gtx.ExtOpData
 import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvArray
 
 class OpEContext (val txCtx: TxEContext, val opIndex: Int)
 
@@ -33,8 +34,8 @@ open class FTRules<DataT>(val staticRules: Array<(DataT)->Boolean>, val dbRules:
 }
 
 interface AccountFactory {
-    fun makeInputAccount(accountID: ByteArray, descriptor: Gtv): FTInputAccount
-    fun makeOutputAccount(accountID: ByteArray, descriptor: Gtv): FTOutputAccount
+    fun makeInputAccount(accountID: ByteArray, descriptor: GtvArray): FTInputAccount
+    fun makeOutputAccount(accountID: ByteArray, descriptor: GtvArray): FTOutputAccount
 }
 
 interface AccountResolver {

@@ -49,11 +49,11 @@ class SQLModuleIntegrationTest : IntegrationTest() {
         val gson = make_gtx_gson()
 
         var result = blockQueries.query("""{type: 'test_get_value', q_key: 'hello'}""").get()
-        var gtxResult = gson.fromJson<Gtv>(result, Gtv::class.java)
+        var gtxResult = gson.fromJson<Gtv>(result, Gtv::class.java) as GtvCollection
         assertEquals(0, gtxResult.getSize())
 
         result = blockQueries.query("""{type: 'test_get_value', q_key: 'k'}""").get()
-        gtxResult = gson.fromJson<Gtv>(result, Gtv::class.java)
+        gtxResult = gson.fromJson<Gtv>(result, Gtv::class.java) as GtvArray
         assertEquals(1, gtxResult.getSize())
         val hit0 = gtxResult[0].asDict()
         assertNotNull(hit0["val"])
@@ -62,10 +62,11 @@ class SQLModuleIntegrationTest : IntegrationTest() {
         assertTrue(pubKey(0).contentEquals(hit0["owner"]!!.asByteArray(true)))
 
         result = blockQueries.query("""{type: 'test_get_count'}""").get()
-        gtxResult = gson.fromJson<Gtv>(result, Gtv::class.java)
+        gtxResult = gson.fromJson<Gtv>(result, Gtv::class.java) as GtvArray
         assertEquals(1, gtxResult.getSize())
-        assertEquals(1, gtxResult[0]["nbigint"]!!.asInteger())
-        assertEquals(2, gtxResult[0]["ncount"]!!.asInteger())
+        val first = gtxResult[0] as GtvDictionary
+        assertEquals(1, first["nbigint"]!!.asInteger())
+        assertEquals(2, first["ncount"]!!.asInteger())
 
         println(result)
     }
