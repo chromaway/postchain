@@ -27,15 +27,15 @@ object GtvFactory {
     }
 
     // helper methods:
-    fun gtv(i: Long): Gtv {
+    fun gtv(i: Long): GtvInteger {
         return GtvInteger(i)
     }
 
-    fun gtv(s: String): Gtv {
+    fun gtv(s: String): GtvString {
         return GtvString(s)
     }
 
-    fun gtv(ba: ByteArray): Gtv {
+    fun gtv(ba: ByteArray): GtvByteArray {
         return GtvByteArray(ba)
     }
 
@@ -43,7 +43,7 @@ object GtvFactory {
         return GtvArray(a)
     }
 
-    fun gtv(a: List<Gtv>): Gtv {
+    fun gtv(a: List<Gtv>): GtvArray {
         return GtvArray(a.toTypedArray())
     }
 
@@ -51,7 +51,7 @@ object GtvFactory {
         return GtvDictionary(mapOf(*pairs))
     }
 
-    fun gtv(dict: Map<String, Gtv>): Gtv {
+    fun gtv(dict: Map<String, Gtv>): GtvDictionary {
         return GtvDictionary(dict)
     }
 

@@ -8,12 +8,16 @@ import net.postchain.core.ProgrammerMistake
 import net.postchain.core.Signature
 import net.postchain.core.UserMistake
 import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.util.*
-import net.postchain.gtx.messages.GTXOperation as RawGTXOperation
-import net.postchain.gtx.messages.GTXTransaction as RawGTXTransaction
 import net.postchain.gtv.messages.Gtv as RawGtv
 import net.postchain.gtv.*
+import net.postchain.gtx.factory.GtxDataFactory
+
+object GtxBase {
+    const val NR_FIELDS_TRANSACTION = 2
+    const val NR_FIELDS_TRANSACTION_BODY = 3
+    const val NR_FIELDS_OPERATION = 2
+}
 
 data class OpData(val opName: String, val args: Array<Gtv>) {
 
@@ -44,6 +48,17 @@ class ExtOpData(val opName: String,
 
 val EMPTY_SIGNATURE: ByteArray = ByteArray(0)
 
+data class GTXTransactionBodyData(
+        val blockchainRID: ByteArray,
+        val operations: Array<OpData>,
+        val signers: Array<ByteArray>) {
+}
+
+data class GTXTransactionData(
+        val transactionBodyData: GTXTransactionBodyData,
+        val signatures: Array<ByteArray>) {
+}
+
 data class GTXData(
         val blockchainRID: ByteArray,
         val signers: Array<ByteArray>,
@@ -57,6 +72,8 @@ data class GTXData(
     }
 
     fun serialize(): ByteArray {
+        throw NotImplementedError("TODO")
+        /*
         val rtx = RawGTXTransaction()
         rtx.blockchainRID = blockchainRID
         rtx.operations = Vector<RawGTXOperation>(operations.map {
@@ -70,6 +87,7 @@ data class GTXData(
         val outs = ByteArrayOutputStream()
         rtx.der_encode(outs)
         return outs.toByteArray()
+        */
     }
 
     fun serializeWithoutSignatures(): ByteArray {
@@ -109,6 +127,15 @@ data class GTXData(
 
 
 fun decodeGTXData(_rawData: ByteArray): GTXData {
+    // Decode to RawGTV
+    val gtv: Gtv = GtvFactory.decodeGtv(_rawData)
+
+    // GTV -> GTXData
+    return GtxDataFactory.deserializeFromGtv(gtv)
+}
+
+/*
+fun decodeGTXData(_rawData: ByteArray): GTXData {
     val rawGTX = RawGTXTransaction.der_decode(ByteArrayInputStream(_rawData))
     val signers: Array<ByteArray> = rawGTX.signers.toArray(arrayOf())
     val ops = rawGTX.operations.map {
@@ -123,6 +150,7 @@ fun decodeGTXData(_rawData: ByteArray): GTXData {
             rawGTX.signatures.toArray(arrayOf()),
             ops)
 }
+*/
 
 // TODO: cache data for signing and digest
 

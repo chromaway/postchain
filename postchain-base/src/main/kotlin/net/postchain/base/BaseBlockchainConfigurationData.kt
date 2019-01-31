@@ -5,8 +5,9 @@ import net.postchain.core.BlockchainContext
 import net.postchain.core.NODE_ID_AUTO
 import net.postchain.core.NODE_ID_READ_ONLY
 import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvArray
 import net.postchain.gtv.GtvDictionary
-import net.postchain.gtv.GtvFactory
+import net.postchain.gtv.GtvFactory.gtv
 import org.apache.commons.configuration2.Configuration
 
 class BaseBlockchainConfigurationData(
@@ -58,9 +59,9 @@ class BaseBlockchainConfigurationData(
         }
 
         private fun convertGTXConfigToGtv(config: Configuration): Gtv {
-            val properties = mutableListOf(
-                    "modules" to GtvFactory.gtv(
-                            config.getStringArray("gtx.modules").map { GtvFactory.gtv(it) }
+            val properties: MutableList<Pair<String, Gtv>> = mutableListOf(
+                    "modules" to gtv(
+                            config.getStringArray("gtx.modules").map { gtv(it) }
                     )
             )
 
@@ -68,53 +69,53 @@ class BaseBlockchainConfigurationData(
                 val ftProps = mutableListOf<Pair<String, Gtv>>()
                 val assets = config.getStringArray("gtx.ft.assets")
 
-                ftProps.add("assets" to GtvFactory.gtv(*assets.map { assetName ->
-                    val issuers = GtvFactory.gtv(
+                ftProps.add("assets" to gtv(*assets.map { assetName ->
+                    val issuers = gtv(
                             *config.getStringArray("gtx.ft.asset.${assetName}.issuers").map(
-                                    { GtvFactory.gtv(it.hexStringToByteArray()) }
+                                    { gtv(it.hexStringToByteArray()) }
                             ).toTypedArray())
 
-                    GtvFactory.gtv(
-                            "name" to GtvFactory.gtv(assetName),
+                    gtv(
+                            "name" to gtv(assetName),
                             "issuers" to issuers
                     )
                 }.toTypedArray()))
-                properties.add("ft" to GtvFactory.gtv(*ftProps.toTypedArray()))
+                properties.add("ft" to gtv(*ftProps.toTypedArray()))
             }
 
             if (config.containsKey("gtx.sqlmodules")) {
-                properties.add("sqlmodules" to GtvFactory.gtv(*
-                config.getStringArray("gtx.sqlmodules").map { GtvFactory.gtv(it) }.toTypedArray()
+                properties.add("sqlmodules" to gtv(*
+                config.getStringArray("gtx.sqlmodules").map { gtv(it) }.toTypedArray()
                 ))
             }
 
             if (config.containsKey("gtx.rellSrcModule")) {
-                properties.add("rellSrcModule" to GtvFactory.gtv(config.getString("gtx.rellSrcModule")))
+                properties.add("rellSrcModule" to gtv(config.getString("gtx.rellSrcModule")))
             }
 
-            return GtvFactory.gtv(*properties.toTypedArray())
+            return gtv(*properties.toTypedArray())
         }
 
         private fun convertConfigToGtv(config: Configuration): Gtv {
 
             fun blockStrategy(config: Configuration): Gtv {
-                return GtvFactory.gtv(
-                        "name" to GtvFactory.gtv(config.getString("blockstrategy"))
+                return gtv(
+                        "name" to gtv(config.getString("blockstrategy"))
                 )
             }
 
             val properties = mutableListOf(
                     "blockstrategy" to blockStrategy(config),
-                    "configurationfactory" to GtvFactory.gtv(config.getString("configurationfactory")),
-                    "signers" to GtvFactory.gtv(config.getStringArray("signers").map { GtvFactory.gtv(it.hexStringToByteArray()) }),
-                    "blocksigningprivkey" to GtvFactory.gtv(config.getString("blocksigningprivkey").hexStringToByteArray())
+                    "configurationfactory" to gtv(config.getString("configurationfactory")),
+                    "signers" to gtv(config.getStringArray("signers").map { gtv(it.hexStringToByteArray()) }),
+                    "blocksigningprivkey" to gtv(config.getString("blocksigningprivkey").hexStringToByteArray())
             )
 
             if (config.containsKey("gtx.modules")) {
                 properties.add(Pair("gtx", convertGTXConfigToGtv(config)))
             }
 
-            return GtvFactory.gtv(*properties.toTypedArray())
+            return gtv(*properties.toTypedArray())
         }
     }
 
