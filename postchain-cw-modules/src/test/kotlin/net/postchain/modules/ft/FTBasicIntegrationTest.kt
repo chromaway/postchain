@@ -5,7 +5,7 @@ import net.postchain.core.Transaction
 import net.postchain.devtools.modules.ft.FTIntegrationTest
 import net.postchain.gtx.GTXBlockchainConfigurationFactory
 import net.postchain.gtv.Gtv
-import net.postchain.gtx.make_gtv_gson
+import net.postchain.gtv.make_gtv_gson
 import org.junit.Assert
 import org.junit.Ignore
 import org.junit.Test

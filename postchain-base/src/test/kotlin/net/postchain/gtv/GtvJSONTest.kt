@@ -2,7 +2,6 @@
 
 package net.postchain.gtv
 
-import net.postchain.gtx.make_gtv_gson
 import net.postchain.common.hexStringToByteArray
 import net.postchain.gtv.GtvFactory.gtv
 import com.google.gson.JsonObject

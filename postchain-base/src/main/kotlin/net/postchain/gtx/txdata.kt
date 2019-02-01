@@ -74,7 +74,6 @@ data class GTXData(
     }
 
     fun serialize(): ByteArray {
-        // TODO: We are producing a new structure now (Trans -> Trans Body -> Op), so make sure the callers get it!
         val gtvArray = GtxDataSerializer.serializeToGtv(this)
         return GtvEncoder.encodeGtv(gtvArray)
     }
