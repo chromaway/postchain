@@ -46,21 +46,22 @@ class SQLModuleIntegrationTest : IntegrationTest() {
             blockQueries.query("""{type: 'non-existing'}""").get()
         }
 
-        val gson = make_gtx_gson()
+        val gson = make_gtv_gson()
 
         // ------------------------------------------
-        // Look for key "hello" in type "test_get_value"
+        // Shouldn't find key "hello" in type "test_get_value"
         // ------------------------------------------
         val result = blockQueries.query("""{type: 'test_get_value', q_key: 'hello'}""").get()
         val gtvResult = gson.fromJson<Gtv>(result, Gtv::class.java) as GtvCollection
         assertEquals(0, gtvResult.getSize())
 
         // ------------------------------------------
-        // Look for key "k" in type "test_get_value"
+        // Should find 1 hit for key "k" in type "test_get_value"
         // ------------------------------------------
         val result1 = blockQueries.query("""{type: 'test_get_value', q_key: 'k'}""").get()
         val gtvArrRes1 = gson.fromJson<Gtv>(result1, Gtv::class.java) as GtvArray
         assertEquals(1, gtvArrRes1.getSize())
+
         val hit0 = gtvArrRes1[0].asDict()
         assertNotNull(hit0["val"])
         assertEquals("v2", hit0["val"]!!.asString())

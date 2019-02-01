@@ -27,14 +27,14 @@ open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationDat
     override fun makeBlockQueries(storage: Storage): BlockQueries {
         return object : BaseBlockQueries(this@GTXBlockchainConfiguration, storage, blockStore,
                 chainID, configData.subjectID) {
-            private val gson = make_gtx_gson()
+            private val gson = make_gtv_gson()
 
             override fun query(query: String): Promise<String, Exception> {
                 val gtxQuery = gson.fromJson<Gtv>(query, Gtv::class.java)
                 return runOp {
                     val type = gtxQuery.asDict()["type"] ?: throw UserMistake("Missing query type")
                     val queryResult = module.query(it, type.asString(), gtxQuery)
-                    gtxToJSON(queryResult, gson)
+                    gtvToJSON(queryResult, gson)
                 }
             }
         }
