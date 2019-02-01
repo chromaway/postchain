@@ -19,8 +19,8 @@ class GtvBinaryTreeFactory : BinaryTreeFactory<Gtv, GtvPathSet>() {
      * Generic builder.
      * @param Gtv will take any damn thing
      */
-    fun buildFromGtv(Gtv: Gtv): GtvBinaryTree {
-        return buildFromGtvAndPath(Gtv, GtvPath.NO_PATHS)
+    fun buildFromGtv(gtv: Gtv): GtvBinaryTree {
+        return buildFromGtvAndPath(gtv, GtvPath.NO_PATHS)
     }
 
     /**
@@ -28,8 +28,8 @@ class GtvBinaryTreeFactory : BinaryTreeFactory<Gtv, GtvPathSet>() {
      * @param Gtv will take any damn thing
      * @param GtvPathList will tell us what element that are path leafs
      */
-    fun buildFromGtvAndPath(Gtv: Gtv, GtvPaths: GtvPathSet): GtvBinaryTree {
-        val result = handleLeaf(Gtv, GtvPaths)
+    fun buildFromGtvAndPath(gtv: Gtv, GtvPaths: GtvPathSet): GtvBinaryTree {
+        val result = handleLeaf(gtv, GtvPaths)
         return GtvBinaryTree(result)
     }
 

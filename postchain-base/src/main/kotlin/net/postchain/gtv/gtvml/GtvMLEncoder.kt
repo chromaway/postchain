@@ -17,32 +17,32 @@ object GtvMLEncoder {
     /**
      * Encodes [Gtv] into XML format
      */
-    fun encodeXMLGtv(Gtv: Gtv): String {
+    fun encodeXMLGtv(gtv: Gtv): String {
         return with(StringWriter()) {
-            JAXB.marshal(encodeGTXMLValueToJAXBElement(Gtv), this)
+            JAXB.marshal(encodeGTXMLValueToJAXBElement(gtv), this)
             toString()
         }
     }
 
-    fun encodeGTXMLValueToJAXBElement(Gtv: Gtv): JAXBElement<*> {
-        return when (Gtv) {
+    fun encodeGTXMLValueToJAXBElement(gtv: Gtv): JAXBElement<*> {
+        return when (gtv) {
             /**
              * Note: null element will be equal to:
              *      `<null xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>`
              */
             is GtvNull -> objectFactory.createNull(null)
-            is GtvString -> objectFactory.createString(Gtv.string)
-            is GtvInteger -> objectFactory.createInt(BigInteger.valueOf(Gtv.integer))
-            is GtvByteArray -> objectFactory.createBytea(Gtv.bytearray) // See comments in GTXMLValueEncodeScalarsTest
-            is GtvArray -> createArrayElement(Gtv)
-            is GtvDictionary -> createDictElement(Gtv)
-            else -> throw IllegalArgumentException("Unknown type of Gtv")
+            is GtvString -> objectFactory.createString(gtv.string)
+            is GtvInteger -> objectFactory.createInt(BigInteger.valueOf(gtv.integer))
+            is GtvByteArray -> objectFactory.createBytea(gtv.bytearray) // See comments in GTXMLValueEncodeScalarsTest
+            is GtvArray -> createArrayElement(gtv)
+            is GtvDictionary -> createDictElement(gtv)
+            else -> throw IllegalArgumentException("Unknown GTV type: {${gtv.type}")
         }
     }
 
-    private fun createArrayElement(Gtv: GtvArray): JAXBElement<ArrayType> {
+    private fun createArrayElement(gtv: GtvArray): JAXBElement<ArrayType> {
         return with(objectFactory.createArrayType()) {
-            Gtv.array
+            gtv.array
                     .map(GtvMLEncoder::encodeGTXMLValueToJAXBElement)
                     .toCollection(this.elements)
 
@@ -50,9 +50,9 @@ object GtvMLEncoder {
         }
     }
 
-    private fun createDictElement(Gtv: GtvDictionary): JAXBElement<DictType> {
+    private fun createDictElement(gtv: GtvDictionary): JAXBElement<DictType> {
         return with(objectFactory.createDictType()) {
-            Gtv.dict.map { entry ->
+            gtv.dict.map { entry ->
                 val entryType = objectFactory.createEntryType()
                 entryType.key = entry.key
                 entryType.value = encodeGTXMLValueToJAXBElement(entry.value)
