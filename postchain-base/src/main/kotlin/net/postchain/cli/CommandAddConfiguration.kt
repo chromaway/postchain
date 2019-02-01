@@ -54,9 +54,9 @@ class CommandAddConfiguration : Command {
         println("add-configuration will be executed with options: " +
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
-        val Gtv = GtvMLParser.parseGtvML(
+        val gtv = GtvMLParser.parseGtvML(
                 File(blockchainConfigFile).readText())
-        val encodedGtv = encodeGtv(Gtv)
+        val encodedGtv = encodeGtv(gtv)
 
         var result = false
         runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->

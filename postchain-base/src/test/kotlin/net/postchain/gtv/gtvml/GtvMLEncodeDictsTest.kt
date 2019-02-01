@@ -10,8 +10,8 @@ class GtvMLEncodeDictsTest {
 
     @Test
     fun encodeXMLGtv_dict_empty_successfully() {
-        val Gtv = GtvDictionary(mapOf())
-        val actual = GtvMLEncoder.encodeXMLGtv(Gtv)
+        val gtv = GtvDictionary(mapOf())
+        val actual = GtvMLEncoder.encodeXMLGtv(gtv)
         val expected = arrayOf(
                 expected("<dict></dict>"),
                 expected("<dict/>"))
@@ -21,11 +21,11 @@ class GtvMLEncodeDictsTest {
 
     @Test
     fun encodeXMLGtv_dict_successfully() {
-        val Gtv = GtvDictionary(mapOf(
+        val gtv = GtvDictionary(mapOf(
                 "hello" to GtvString("world"),
                 "123" to GtvInteger(123L)
         ))
-        val actual = GtvMLEncoder.encodeXMLGtv(Gtv)
+        val actual = GtvMLEncoder.encodeXMLGtv(gtv)
         val expected = expected("""
             <dict>
                 <entry key="hello">
@@ -42,7 +42,7 @@ class GtvMLEncodeDictsTest {
 
     @Test
     fun encodeXMLGtv_compound_dict_successfully() {
-        val Gtv = GtvDictionary(mapOf(
+        val gtv = GtvDictionary(mapOf(
                 "k1" to GtvString("hello"),
                 "k2" to GtvInteger(42),
                 "k3" to GtvArray(arrayOf()),
@@ -71,7 +71,7 @@ class GtvMLEncodeDictsTest {
                 ))
         ))
 
-        val actual = GtvMLEncoder.encodeXMLGtv(Gtv)
+        val actual = GtvMLEncoder.encodeXMLGtv(gtv)
 
         val expected = expected("""
             <dict>

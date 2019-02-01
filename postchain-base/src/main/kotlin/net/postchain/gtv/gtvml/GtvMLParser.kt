@@ -58,15 +58,15 @@ object GtvMLParser {
     }
 
     private fun parseParam(paramType: ParamType, params: Map<String, Gtv>): Gtv {
-        val Gtv = params[paramType.key]
+        val gtv = params[paramType.key]
                 ?: throw IllegalArgumentException("Can't resolve param ${paramType.key}")
 
-        if (paramType.type != null && GtvTypeOf(paramType.type) != Gtv.type) {
+        if (paramType.type != null && GtvTypeOf(paramType.type) != gtv.type) {
             throw IllegalArgumentException("Incompatible types of <param> and Gtv: " +
-                    "found: '${Gtv.type}', required: '${GtvTypeOf(paramType.type)}'")
+                    "found: '${gtv.type}', required: '${GtvTypeOf(paramType.type)}'")
         }
 
-        return Gtv
+        return gtv
     }
 
     private fun parseJaxbElement(xml: String) =

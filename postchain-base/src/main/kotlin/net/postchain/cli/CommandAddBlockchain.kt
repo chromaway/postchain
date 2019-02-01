@@ -55,9 +55,9 @@ class CommandAddBlockchain : Command {
         println("add-blockchain will be executed with options: " +
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
-        val Gtv = GtvMLParser.parseGtvML(
+        val gtv = GtvMLParser.parseGtvML(
                 File(blockchainConfigFile).readText())
-        val encodedGtv = encodeGtv(Gtv)
+        val encodedGtv = encodeGtv(gtv)
 
         runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
             if (force || SQLDatabaseAccess().getBlockchainRID(ctx) == null) {

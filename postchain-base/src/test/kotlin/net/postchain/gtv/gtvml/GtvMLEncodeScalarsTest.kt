@@ -9,8 +9,8 @@ class GtvMLEncodeScalarsTest {
 
     @Test
     fun encodeXMLGtv_null_successfully() {
-        val Gtv = GtvNull
-        val actual = GtvMLEncoder.encodeXMLGtv(Gtv)
+        val gtv = GtvNull
+        val actual = GtvMLEncoder.encodeXMLGtv(gtv)
         val expected = expected("<null xsi:nil=\"true\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>")
 
         assert(actual).isEqualTo(expected)
@@ -18,8 +18,8 @@ class GtvMLEncodeScalarsTest {
 
     @Test
     fun encodeXMLGtv_string_successfully() {
-        val Gtv = GtvString("hello")
-        val actual = GtvMLEncoder.encodeXMLGtv(Gtv)
+        val gtv = GtvString("hello")
+        val actual = GtvMLEncoder.encodeXMLGtv(gtv)
         val expected = expected("<string>hello</string>")
 
         assert(actual).isEqualTo(expected)
@@ -27,8 +27,8 @@ class GtvMLEncodeScalarsTest {
 
     @Test
     fun encodeXMLGtv_int_successfully() {
-        val Gtv = GtvInteger(42)
-        val actual = GtvMLEncoder.encodeXMLGtv(Gtv)
+        val gtv = GtvInteger(42)
+        val actual = GtvMLEncoder.encodeXMLGtv(gtv)
         val expected = expected("<int>42</int>")
 
         assert(actual).isEqualTo(expected)
@@ -45,9 +45,9 @@ class GtvMLEncodeScalarsTest {
      */
     @Test
     fun encodeXMLGtv_bytea_as_root_element_and_xmladapter_not_called_successfully() {
-        val Gtv = GtvByteArray(
+        val gtv = GtvByteArray(
                 byteArrayOf(0x01, 0x02, 0x03, 0x0A, 0x0B, 0x0C))
-        val actual = GtvMLEncoder.encodeXMLGtv(Gtv)
+        val actual = GtvMLEncoder.encodeXMLGtv(gtv)
         val expected = expected("<bytea>AQIDCgsM</bytea>") // 0102030A0B0C
 
         assert(actual).isEqualTo(expected)
@@ -55,9 +55,9 @@ class GtvMLEncodeScalarsTest {
 
     @Test
     fun encodeXMLGtv_bytea_as_nested_element_successfully() {
-        val Gtv = GtvByteArray(
+        val gtv = GtvByteArray(
                 byteArrayOf(0x01, 0x02, 0x03, 0x0A, 0x0B, 0x0C))
-        val array = GtvArray(arrayOf(Gtv))
+        val array = GtvArray(arrayOf(gtv))
 
         val actual = GtvMLEncoder.encodeXMLGtv(array)
         val expected = expected("""
@@ -71,8 +71,8 @@ class GtvMLEncodeScalarsTest {
 
     @Test
     fun encodeXMLGtv_bytea_empty_successfully() {
-        val Gtv = GtvByteArray(byteArrayOf())
-        val actual = GtvMLEncoder.encodeXMLGtv(Gtv)
+        val gtv = GtvByteArray(byteArrayOf())
+        val actual = GtvMLEncoder.encodeXMLGtv(gtv)
         val expected = expected("<bytea></bytea>")
 
         assert(actual).isEqualTo(expected)

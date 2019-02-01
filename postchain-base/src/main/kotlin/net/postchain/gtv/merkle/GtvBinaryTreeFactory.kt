@@ -62,7 +62,7 @@ class GtvBinaryTreeFactory : BinaryTreeFactory<Gtv, GtvPathSet>() {
      * Handles different types of [Gtv] values
      */
     override fun handleLeaf(leaf: Gtv, GtvPathSet: GtvPathSet?): BinaryTreeElement {
-        val GtvPaths = if (GtvPathSet == null) {
+        val gtvPaths = if (GtvPathSet == null) {
             GtvPath.NO_PATHS
         } else {
             GtvPathSet
@@ -70,9 +70,9 @@ class GtvBinaryTreeFactory : BinaryTreeFactory<Gtv, GtvPathSet>() {
 
         //println("handleLeaf, Proof path (size: ${GtvPaths.size} ) list: " + GtvPath.debugRerpresentation(GtvPaths))
         return when (leaf) {
-            is GtvPrimitive  -> handlePrimitiveLeaf(leaf, GtvPaths)
-            is GtvArray      -> GtvBinaryTreeFactoryArray.buildFromGtvArray(leaf, GtvPaths)
-            is GtvDictionary -> GtvBinaryTreeFactoryDict.buildFromGtvDictionary(leaf, GtvPaths)
+            is GtvPrimitive  -> handlePrimitiveLeaf(leaf, gtvPaths)
+            is GtvArray      -> GtvBinaryTreeFactoryArray.buildFromGtvArray(leaf, gtvPaths)
+            is GtvDictionary -> GtvBinaryTreeFactoryDict.buildFromGtvDictionary(leaf, gtvPaths)
             is GtvCollection -> throw IllegalStateException("Programmer should have dealt with this container type: ${leaf.type}")
             else ->             throw IllegalStateException("What is this? Not container and not primitive? type: ${leaf.type}")
         }

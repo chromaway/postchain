@@ -156,7 +156,7 @@ class SQLGTXModule(private val moduleFiles: Array<String>) : GTXModule {
             it.entries.forEach {
                 // Integer, String, ByteArray accepted as column type
                 val dbValue = it.value
-                val Gtv = when (dbValue) {
+                val gtv = when (dbValue) {
                     is Int, is Long, is Short, is Byte -> gtv((dbValue as Number).toLong())
                     is String -> gtv(dbValue)
                     is ByteArray -> gtv(dbValue)
@@ -164,7 +164,7 @@ class SQLGTXModule(private val moduleFiles: Array<String>) : GTXModule {
                             " ${dbValue.javaClass.simpleName} of column ${it.key} " +
                             "from query ${name}")
                 }
-                obj.set(it.key, Gtv)
+                obj.set(it.key, gtv)
             }
             list.add(GtvDictionary(obj))
         }
