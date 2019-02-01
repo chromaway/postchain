@@ -48,27 +48,35 @@ class SQLModuleIntegrationTest : IntegrationTest() {
 
         val gson = make_gtx_gson()
 
-        var result = blockQueries.query("""{type: 'test_get_value', q_key: 'hello'}""").get()
-        var gtxResult = gson.fromJson<Gtv>(result, Gtv::class.java) as GtvCollection
-        assertEquals(0, gtxResult.getSize())
+        // ------------------------------------------
+        // Look for key "hello" in type "test_get_value"
+        // ------------------------------------------
+        val result = blockQueries.query("""{type: 'test_get_value', q_key: 'hello'}""").get()
+        val gtvResult = gson.fromJson<Gtv>(result, Gtv::class.java) as GtvCollection
+        assertEquals(0, gtvResult.getSize())
 
-        result = blockQueries.query("""{type: 'test_get_value', q_key: 'k'}""").get()
-        gtxResult = gson.fromJson<Gtv>(result, Gtv::class.java) as GtvArray
-        assertEquals(1, gtxResult.getSize())
-        val hit0 = gtxResult[0].asDict()
+        // ------------------------------------------
+        // Look for key "k" in type "test_get_value"
+        // ------------------------------------------
+        val result1 = blockQueries.query("""{type: 'test_get_value', q_key: 'k'}""").get()
+        val gtvArrRes1 = gson.fromJson<Gtv>(result1, Gtv::class.java) as GtvArray
+        assertEquals(1, gtvArrRes1.getSize())
+        val hit0 = gtvArrRes1[0].asDict()
         assertNotNull(hit0["val"])
         assertEquals("v2", hit0["val"]!!.asString())
         assertNotNull(hit0["owner"])
         assertTrue(pubKey(0).contentEquals(hit0["owner"]!!.asByteArray(true)))
 
-        result = blockQueries.query("""{type: 'test_get_count'}""").get()
-        gtxResult = gson.fromJson<Gtv>(result, Gtv::class.java) as GtvArray
-        assertEquals(1, gtxResult.getSize())
-        val first = gtxResult[0] as GtvDictionary
-        assertEquals(1, first["nbigint"]!!.asInteger())
-        assertEquals(2, first["ncount"]!!.asInteger())
+        // ------------------------------------------
+        // Look for type "test_get_count"
+        // ------------------------------------------
+        val result2 = blockQueries.query("""{type: 'test_get_count'}""").get()
+        val gtvArrRes2 = gson.fromJson<Gtv>(result2, Gtv::class.java) as GtvArray
+        assertEquals(1, gtvArrRes2.getSize())
+        assertEquals(1, gtvArrRes2[0]["nbigint"]!!.asInteger())
+        assertEquals(2, gtvArrRes2[0]["ncount"]!!.asInteger())
 
-        println(result)
+        println(result2)
     }
 
 }

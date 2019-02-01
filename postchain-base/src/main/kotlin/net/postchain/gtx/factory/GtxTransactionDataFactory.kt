@@ -25,8 +25,8 @@ object GtxTransactionDataFactory {
 
         // 2. signatures
         val signaturesGtvArr = (mainArr[1] as GtvArray)
-        val signnatures: Array<ByteArray> = signaturesGtvArr.array.map { (it as GtvByteArray).bytearray }.toTypedArray()
+        val signatures: Array<ByteArray> = signaturesGtvArr.array.map { (it as GtvByteArray).bytearray }.toTypedArray()
 
-        return GTXTransactionData(transactionBody, signnatures)
+        return GTXTransactionData(transactionBody, signatures)
     }
 }

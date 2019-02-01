@@ -8,8 +8,8 @@ data class GtvArray(val array: Array<out Gtv>) : GtvCollection() {
 
     override val type = GtvType.ARRAY
 
-    operator fun get(i: Int): Gtv {
-        return array[i]
+    override operator fun get(index: Int): Gtv {
+        return array[index]
     }
 
     override fun asArray(): Array<out Gtv> {

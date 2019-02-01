@@ -16,8 +16,11 @@ enum class GtvType {
 interface Gtv {
     val type: GtvType
 
-    operator fun get(key: String): Gtv? // TODO: I (Olle) think this should be removed to force a type cast to GtvDictionary.
+    // Collection methods here
+    operator fun get(index: Int): Gtv
+    operator fun get(key: String): Gtv?
 
+    // Convert to sub-class
     fun asString(): String
     fun asArray(): Array<out Gtv>
     fun isNull(): Boolean
@@ -25,6 +28,7 @@ interface Gtv {
     fun asInteger(): Long
     fun asByteArray(convert: Boolean = false): ByteArray
 
+    // Other conversions
     fun asPrimitive(): Any?
     fun getRawGtv(): RawGtv
 }

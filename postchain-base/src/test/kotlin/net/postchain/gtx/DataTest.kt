@@ -84,16 +84,13 @@ class GTXDataTest {
         assertEquals("Wow", op0.args[2].asString())
         assertTrue(op0.args[3].asByteArray().contentEquals(signerPub[0]))
         val op1 = d.operations[1]
-        val firstArg = op1.args[0] as GtvArray
-        assertEquals("Nope", firstArg[2].asString())
+        assertEquals("Nope", op1.args[0][2].asString())
         val dict2 = d.operations[2].args[0]
         assertEquals(2, dict2["two"]!!.asInteger())
         assertNull(dict2["six"])
-        val mapWithArray = d.operations[3].args[0] as GtvDictionary
-        val valArgs = mapWithArray["array"] as GtvArray
-        assertEquals(2, valArgs!![1].asInteger())
-        val arrayWithMap = d.operations[3].args[1] as GtvArray
-        val firstDict = arrayWithMap[0] as GtvDictionary
-        assertEquals("space", firstDict["inner"]!!.asString())
+        val mapWithArray = d.operations[3].args[0]
+        assertEquals(2, mapWithArray["array"]!![1].asInteger())
+        val arrayWithMap = d.operations[3].args[1]
+        assertEquals("space", arrayWithMap[0]["inner"]!!.asString())
     }
 }

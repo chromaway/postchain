@@ -94,9 +94,9 @@ class GtvMerkleProofTreeFactory(calculator: MerkleHashCalculator<Gtv>): MerklePr
 
     fun deserializeSub(currentSerializedArrayGtv: GtvArray): MerkleProofElement {
 
-        val head = currentSerializedArrayGtv.get(0)
+        val head = currentSerializedArrayGtv[0]
         val typeCode = (head as GtvInteger).integer
-        val secondElement = currentSerializedArrayGtv.get(1)
+        val secondElement = currentSerializedArrayGtv[1]
         return when (typeCode) {
             SERIALIZATION_HASH_LEAF_TYPE -> {
                 val byteArray = secondElement as GtvByteArray
@@ -105,19 +105,19 @@ class GtvMerkleProofTreeFactory(calculator: MerkleHashCalculator<Gtv>): MerklePr
             SERIALIZATION_VALUE_LEAF_TYPE -> ProofValueLeaf(secondElement)
             SERIALIZATION_NODE_TYPE -> {
                 val left: MerkleProofElement = deserializeSub(secondElement as GtvArray)
-                val right: MerkleProofElement = deserializeSub(currentSerializedArrayGtv.get(2) as GtvArray)
+                val right: MerkleProofElement = deserializeSub(currentSerializedArrayGtv[2] as GtvArray)
                 ProofNodeSimple(left, right)
             }
             SERIALIZATION_ARRAY_TYPE ->  {
-                val size = (currentSerializedArrayGtv.get(1) as GtvInteger).integer.toInt()
-                val left: MerkleProofElement = deserializeSub(currentSerializedArrayGtv.get(2) as GtvArray)
-                val right: MerkleProofElement = deserializeSub(currentSerializedArrayGtv.get(3) as GtvArray)
+                val size = (currentSerializedArrayGtv[1] as GtvInteger).integer.toInt()
+                val left: MerkleProofElement = deserializeSub(currentSerializedArrayGtv[2] as GtvArray)
+                val right: MerkleProofElement = deserializeSub(currentSerializedArrayGtv[3] as GtvArray)
                 ProofNodeGtvArrayHead(size, left, right)
             }
             SERIALIZATION_DICT_TYPE ->  {
-                val size = (currentSerializedArrayGtv.get(1) as GtvInteger).integer.toInt()
-                val left: MerkleProofElement = deserializeSub(currentSerializedArrayGtv.get(2) as GtvArray)
-                val right: MerkleProofElement = deserializeSub(currentSerializedArrayGtv.get(3) as GtvArray)
+                val size = (currentSerializedArrayGtv[1] as GtvInteger).integer.toInt()
+                val left: MerkleProofElement = deserializeSub(currentSerializedArrayGtv[2] as GtvArray)
+                val right: MerkleProofElement = deserializeSub(currentSerializedArrayGtv[3] as GtvArray)
                 ProofNodeGtvDictHead(size, left, right)
             }
             else -> throw IllegalStateException("Should handle the type $typeCode")

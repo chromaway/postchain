@@ -7,6 +7,10 @@ import net.postchain.core.UserMistake
  */
 abstract class AbstractGtv : Gtv {
 
+    override operator fun get(index: Int): Gtv {
+        throw UserMistake("Type error: array expected")
+    }
+
     override operator fun get(key: String): Gtv? {
         throw UserMistake("Type error: dict expected")
     }

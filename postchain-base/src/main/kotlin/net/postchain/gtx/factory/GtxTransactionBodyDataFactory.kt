@@ -24,7 +24,6 @@ object GtxTransactionBodyDataFactory {
 
         //  1. blockchainRId
         val blockchainRid: ByteArray = (mainArr[0] as GtvByteArray).bytearray
-        val args: Array<Gtv> = (mainArr[1] as GtvArray).array.map {it}.toTypedArray() // Not sure why this gets rid of "out"
 
         // 2. operations
         val opsGtvArr = (mainArr[1] as GtvArray)

@@ -21,6 +21,7 @@ object OpDataFactory {
 
         // 1. Operation name
         val name: String = (mainArr[0] as GtvString).string
+
         // 2. array of arguments
         val args: Array<Gtv> = (mainArr[1] as GtvArray).array.map {it}.toTypedArray() // Not sure why this gets rid of "out"
 
