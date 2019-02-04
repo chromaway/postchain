@@ -5,15 +5,13 @@ package net.postchain.integrationtest
 import net.postchain.api.rest.controller.Model
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.common.toHex
-import net.postchain.devtools.EbftIntegrationTest
+import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.SingleChainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
 import org.junit.Assert
-import org.junit.Ignore
 import org.junit.Test
 
-@Ignore
-class ThreeTxForwardingTest : EbftIntegrationTest() {
+class ThreeTxForwardingTest : IntegrationTest() {
 
     private fun strategy(node: SingleChainTestNode): ThreeTxStrategy {
         return node
@@ -31,8 +29,9 @@ class ThreeTxForwardingTest : EbftIntegrationTest() {
 
     @Test
     fun testTxNotForwardedIfPrimary() {
-        configOverrides.setProperty("blockchain.1.blockstrategy", ThreeTxStrategy::class.java.name)
-        createEbftNodes(3)
+        val count = 3
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(count))
+        createNodes(count, "/net/postchain/three_tx/blockchain_config.xml")
 
         apiModel(0).postTransaction(tx(0))
         apiModel(1).postTransaction(tx(1))

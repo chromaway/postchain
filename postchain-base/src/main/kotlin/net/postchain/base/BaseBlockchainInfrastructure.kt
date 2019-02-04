@@ -19,8 +19,7 @@ class BaseBlockchainInfrastructure(
     val subjectID: ByteArray
 
     init {
-        val chainId = config.getLong("activechainids") // TODO: [et]: Extract fields names
-        val privKey = config.getString("blockchain.$chainId.blocksigningprivkey").hexStringToByteArray()
+        val privKey = config.getString("messaging.privkey").hexStringToByteArray()
         val pubKey = secp256k1_derivePubKey(privKey)
         blockSigner = cryptoSystem.makeSigner(pubKey, privKey)
         subjectID = pubKey

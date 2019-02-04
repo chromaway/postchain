@@ -103,7 +103,7 @@ open class IntegrationTest {
                 .also { nodes.add(it) }
     }
 
-    protected fun createConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
+    private fun createConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
             : Configuration {
 
         val propertiesFile = File(configFile)

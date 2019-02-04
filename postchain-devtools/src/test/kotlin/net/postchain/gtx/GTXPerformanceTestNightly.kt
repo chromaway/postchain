@@ -7,20 +7,18 @@ import junitparams.Parameters
 import mu.KLogging
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.configurations.GTXTestModule
-import net.postchain.devtools.EbftIntegrationTest
+import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.SingleChainTestNode
 import org.junit.Assert
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.system.measureNanoTime
 
-@Ignore
 @RunWith(JUnitParamsRunner::class)
-class GTXPerformanceTestNightly : EbftIntegrationTest() {
+class GTXPerformanceTestNightly : IntegrationTest() {
 
     companion object : KLogging()
 
@@ -103,7 +101,6 @@ class GTXPerformanceTestNightly : EbftIntegrationTest() {
         println("Time elapsed: ${nanoDelta / 1000000} ms")
     }
 
-
     @Test
     @Parameters(
             "3, 100", "4, 100", "10, 100",
@@ -112,12 +109,8 @@ class GTXPerformanceTestNightly : EbftIntegrationTest() {
     )
     fun runXNodesWithYTxPerBlock(nodeCount: Int, txPerBlock: Int) {
         val blockCount = 2
-        configOverrides.setProperty("blockchain.1.blockstrategy", OnDemandBlockBuildingStrategy::class.qualifiedName)
-        configOverrides.setProperty("blockchain.1.configurationfactory", GTXBlockchainConfigurationFactory::class.qualifiedName)
-        configOverrides.setProperty("blockchain.1.gtx.modules",
-                listOf(GTXTestModule::class.qualifiedName, StandardOpsGTXModule::class.qualifiedName))
-
-        createEbftNodes(nodeCount)
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
+        createNodes(nodeCount, "/net/postchain/performance/blockchain_config_$nodeCount.xml")
 
         var txId = 0
         val statusManager = nodes[0].getBlockchainInstance().statusManager

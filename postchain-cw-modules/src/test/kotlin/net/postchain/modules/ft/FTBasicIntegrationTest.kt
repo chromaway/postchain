@@ -3,27 +3,16 @@ package net.postchain.modules.ft
 import net.postchain.common.toHex
 import net.postchain.core.Transaction
 import net.postchain.devtools.modules.ft.FTIntegrationTest
-import net.postchain.gtx.GTXBlockchainConfigurationFactory
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.make_gtx_gson
 import org.junit.Assert
-import org.junit.Ignore
 import org.junit.Test
 
-@Ignore
 class FTBasicIntegrationTest : FTIntegrationTest() {
 
     @Test
     fun testEverything() {
-        configOverrides.setProperty("blockchain.1.configurationfactory",
-                GTXBlockchainConfigurationFactory::class.qualifiedName)
-        configOverrides.setProperty("blockchain.1.gtx.modules",
-                BaseFTModuleFactory::class.qualifiedName)
-        configOverrides.setProperty("blockchain.1.gtx.ft.assets", "USD")
-        configOverrides.setProperty("blockchain.1.gtx.ft.asset.USD.issuers", issuerPubKeys[0].toHex())
-        configOverrides.setProperty("blockchain.1.gtx.ft.openRegistration", true)
-
-        val node = createNode(0, "")
+        val node = createNode(0, "/net/postchain/ft_basic/blockchain_config.xml")
         val validTxs = mutableListOf<Transaction>()
         var currentBlockHeight = -1L
 

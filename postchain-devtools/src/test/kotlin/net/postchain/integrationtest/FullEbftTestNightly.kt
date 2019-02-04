@@ -6,19 +6,17 @@ import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import junitparams.naming.TestCaseName
 import mu.KLogging
-import net.postchain.devtools.EbftIntegrationTest
+import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.SingleChainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@Ignore
 @RunWith(JUnitParamsRunner::class)
-class FullEbftTestNightly : EbftIntegrationTest() {
+class FullEbftTestNightly : IntegrationTest() {
 
     companion object : KLogging()
 
@@ -43,8 +41,9 @@ class FullEbftTestNightly : EbftIntegrationTest() {
                     "nodesCount: $nodesCount, blockCount: $blockCount, txPerBlock: $txPerBlock"
         }
 
-        configOverrides.setProperty("blockchain.1.blockstrategy", OnDemandBlockBuildingStrategy::class.qualifiedName)
-        createEbftNodes(nodesCount)
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+        createNodes(nodesCount, "/net/postchain/full_ebft/blockchain_config_$nodesCount.xml")
+
         var txId = 0
         nodes[0].getBlockchainInstance().statusManager
         for (i in 0 until blockCount) {
