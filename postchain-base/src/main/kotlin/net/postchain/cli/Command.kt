@@ -10,5 +10,5 @@ interface Command {
     /**
      * TODO: [et]
      */
-    fun execute()
+    fun execute(): CliResult
 }

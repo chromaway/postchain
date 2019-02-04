@@ -27,7 +27,7 @@ class CommandRunNode : Command {
 
     override fun key(): String = "run-node"
 
-    override fun execute() {
+    override fun execute(): CliResult {
         println("run-node will be executed with options: " +
                 "${ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE)}")
 
@@ -38,7 +38,6 @@ class CommandRunNode : Command {
                 CommonsConfigurationFactory.readFromFile(nodeConfigFile))
 
         chainIDs.forEach(node::startBlockchain)
-
-        println("Postchain node launching is done")
+        return Ok("Postchain node launching is done")
     }
 }
