@@ -50,7 +50,7 @@ class NettyServer : Shutdownable {
     override fun shutdown() {
         bindFuture.channel().close()
         bindFuture.channel().closeFuture().sync()
-        parentGroup.shutdownGracefully(0, 0, TimeUnit.SECONDS).sync()
-        childGroup.shutdownGracefully(0, 0, TimeUnit.SECONDS).sync()
+        parentGroup.shutdownGracefully(2, 2, TimeUnit.SECONDS).sync()
+        childGroup.shutdownGracefully(2, 2, TimeUnit.SECONDS).sync()
     }
 }

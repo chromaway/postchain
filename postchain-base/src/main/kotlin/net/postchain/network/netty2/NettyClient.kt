@@ -45,6 +45,6 @@ class NettyClient : Shutdownable {
     override fun shutdown() {
         connectFuture.channel().close()
         connectFuture.channel().closeFuture().sync()
-        group.shutdownGracefully(0, 0, TimeUnit.SECONDS).sync()
+        group.shutdownGracefully(2, 2, TimeUnit.SECONDS).sync()
     }
 }
