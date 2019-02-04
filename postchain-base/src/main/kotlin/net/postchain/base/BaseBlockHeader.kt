@@ -2,9 +2,11 @@
 
 package net.postchain.base
 
+import net.postchain.base.gtv.BlockHeaderData
+import net.postchain.base.gtv.BlockHeaderDataFactory
 import net.postchain.core.BlockHeader
 import net.postchain.core.InitialBlockData
-import java.io.ByteArrayInputStream
+import net.postchain.gtv.GtvEncoder
 import java.io.ByteArrayOutputStream
 import java.util.*
 
@@ -19,14 +21,12 @@ import java.util.*
 class BaseBlockHeader(override val rawData: ByteArray, private val cryptoSystem: CryptoSystem) : BlockHeader {
     override val prevBlockRID: ByteArray
     override val blockRID: ByteArray
-    val timestamp: Long get() = blockHeaderRec.timestamp
-    val blockHeaderRec: net.postchain.base.messages.BlockHeader
+    val timestamp: Long get() = blockHeaderRec.getTimestamp()
+    val blockHeaderRec: BlockHeaderData
 
     init {
-        blockHeaderRec = net.postchain.base.messages.BlockHeader.der_decode(
-                ByteArrayInputStream(rawData)
-        )
-        prevBlockRID = blockHeaderRec.prevBlockHash
+        blockHeaderRec = BlockHeaderDataFactory.buildFromBinary(rawData)
+        prevBlockRID = blockHeaderRec.getPreviousBlockRid()
         blockRID = cryptoSystem.digest(rawData)
     }
 
@@ -41,15 +41,10 @@ class BaseBlockHeader(override val rawData: ByteArray, private val cryptoSystem:
          * @return Serialized block header
          */
         @JvmStatic fun make(cryptoSystem: CryptoSystem, iBlockData: InitialBlockData, rootHash: ByteArray, timestamp: Long): BaseBlockHeader {
-            val bh = net.postchain.base.messages.BlockHeader()
-            bh.prevBlockHash = iBlockData.prevBlockRID
-            bh.rootHash = rootHash
-            bh.height = iBlockData.height
-            bh.timestamp = timestamp
-            bh.extra = Vector()
-            val outs = ByteArrayOutputStream()
-            bh.der_encode(outs)
-            return BaseBlockHeader(outs.toByteArray(), cryptoSystem)
+            val gtvBh = BlockHeaderDataFactory.buildFromDomainObjects(iBlockData, rootHash, timestamp)
+
+            val raw = GtvEncoder.encodeGtv(gtvBh.toGtv())
+            return BaseBlockHeader(raw, cryptoSystem)
         }
     }
 
@@ -72,6 +67,11 @@ class BaseBlockHeader(override val rawData: ByteArray, private val cryptoSystem:
      * @return Boolean for if hash is part of the Merkle path
      */
     fun validateMerklePath(merklePath: MerklePath, targetTxHash: ByteArray): Boolean {
-        return validateMerklePath(cryptoSystem, merklePath, targetTxHash, blockHeaderRec.rootHash)
+        return validateMerklePath(cryptoSystem, merklePath, targetTxHash, blockHeaderRec.getMerkleRootHash())
     }
+
+
 }
+
+
+

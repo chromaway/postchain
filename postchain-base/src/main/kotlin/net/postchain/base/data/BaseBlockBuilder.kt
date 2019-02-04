@@ -62,10 +62,10 @@ open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, 
             !Arrays.equals(header.prevBlockRID, initialBlockData.prevBlockRID) ->
                 ValidationResult(false, "header.prevBlockRID != initialBlockData.prevBlockRID")
 
-            header.blockHeaderRec.height != initialBlockData.height ->
+            header.blockHeaderRec.getHeight() != initialBlockData.height ->
                 ValidationResult(false, "header.blockHeaderRec.height != initialBlockData.height")
 
-            !Arrays.equals(header.blockHeaderRec.rootHash, computeRootHash()) ->
+            !Arrays.equals(header.blockHeaderRec.getMerkleRootHash(), computeRootHash()) ->
                 ValidationResult(false, "header.blockHeaderRec.rootHash, computeRootHash()")
 
             bctx.timestamp >= header.timestamp ->
