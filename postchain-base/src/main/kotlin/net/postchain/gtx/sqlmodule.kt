@@ -21,7 +21,7 @@ class SQLOpArg(val name: String,
 class SQLOpDesc(val name: String, val query: String, val args: Array<SQLOpArg>)
 
 fun makeSQLQueryDesc(opName: String, argNames: Array<String>, argTypes: Array<String>): SQLOpDesc {
-    var fixedArgNames = if (argNames.size > argTypes.size) {
+    val fixedArgNames = if (argNames.size > argTypes.size) {
         // Queries returns a table. The column names of that table are also
         // included in argNames for some reason
         argNames.slice(0..argTypes.size - 1).toTypedArray()

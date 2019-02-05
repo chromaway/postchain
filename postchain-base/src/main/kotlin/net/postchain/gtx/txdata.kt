@@ -7,13 +7,11 @@ import net.postchain.base.Signer
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.Signature
 import net.postchain.core.UserMistake
-import java.io.ByteArrayInputStream
 import java.util.*
 import net.postchain.gtv.messages.Gtv as RawGtv
 import net.postchain.gtv.*
 import net.postchain.gtx.factory.GtxDataFactory
 import net.postchain.gtx.serializer.GtxDataSerializer
-import java.io.ByteArrayOutputStream
 
 object GtxBase {
     const val NR_FIELDS_TRANSACTION = 2
@@ -53,13 +51,11 @@ val EMPTY_SIGNATURE: ByteArray = ByteArray(0)
 data class GTXTransactionBodyData(
         val blockchainRID: ByteArray,
         val operations: Array<OpData>,
-        val signers: Array<ByteArray>) {
-}
+        val signers: Array<ByteArray>)
 
 data class GTXTransactionData(
         val transactionBodyData: GTXTransactionBodyData,
-        val signatures: Array<ByteArray>) {
-}
+        val signatures: Array<ByteArray>)
 
 data class GTXData(
         val blockchainRID: ByteArray,

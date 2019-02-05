@@ -4,7 +4,6 @@ package net.postchain.base
 
 import net.postchain.core.BlockHeader
 import net.postchain.core.InitialBlockData
-import net.postchain.core.UserMistake
 import org.junit.Assert.assertArrayEquals
 import org.junit.Test
 

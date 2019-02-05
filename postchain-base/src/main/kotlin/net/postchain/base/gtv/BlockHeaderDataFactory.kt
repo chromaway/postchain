@@ -3,7 +3,6 @@ package net.postchain.base.gtv
 import net.postchain.core.InitialBlockData
 import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
-import kotlin.concurrent.timer
 
 object BlockHeaderDataFactory {
 
@@ -28,10 +27,10 @@ object BlockHeaderDataFactory {
     fun buildFromDomainObjects(iBlockData: InitialBlockData, rootHash: ByteArray, timestamp: Long): BlockHeaderData {
         val previousBlockRid: GtvByteArray = gtv(iBlockData.prevBlockRID)
         val merkleRootHash: GtvByteArray = gtv(rootHash)
-        val timestamp: GtvInteger = gtv(timestamp)
+        val gtvTimestamp: GtvInteger = gtv(timestamp)
         val height: GtvInteger = gtv(iBlockData.height)
         val extra = GtvDictionary(HashMap<String, Gtv>())
 
-        return BlockHeaderData(previousBlockRid, merkleRootHash, timestamp, height, extra)
+        return BlockHeaderData(previousBlockRid, merkleRootHash, gtvTimestamp, height, extra)
     }
 }

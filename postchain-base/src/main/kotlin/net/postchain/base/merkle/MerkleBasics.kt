@@ -79,7 +79,7 @@ object MerkleBasics {
         if (cryptoSystem == null) {
             throw ProgrammerMistake("In this case we need the CryptoSystem to calculate the hash")
         }  else {
-            return cryptoSystem!!.digest(bArr)
+            return cryptoSystem.digest(bArr)
         }
     }
 }

@@ -9,9 +9,8 @@ import net.postchain.base.merkle.MerklePathSet
  */
 
 
-sealed class GtvPathElement {
+sealed class GtvPathElement
 
-}
 
 abstract class SearchableGtvPathElement: GtvPathElement() {
 
@@ -38,7 +37,7 @@ data class DictGtvPathElement(val key: String): SearchableGtvPathElement() {
 /**
  * The last element of the path
  */
-object LeafGtvPathElement: GtvPathElement() { }
+object LeafGtvPathElement: GtvPathElement()
 
 
 /**
@@ -65,12 +64,14 @@ class GtvPath(val pathElements: List<GtvPathElement>): KLogging()  {
      * @return true if there is only a leaf left
      */
     fun isAtLeaf(): Boolean {
-        val firstElement = pathElements.first()
-        if (firstElement == null) {
+        return try {
+            val firstElement = pathElements.first()
+            firstElement is LeafGtvPathElement
+        } catch (e: NoSuchElementException) {
+            // Will be thrown if there is no "first" element
             logger.warn("Why are using an empty path?") // This should not happen, so maybe warning?
             return true
         }
-        return firstElement is LeafGtvPathElement
     }
 
     // For debug
@@ -139,8 +140,9 @@ class GtvPath(val pathElements: List<GtvPathElement>): KLogging()  {
                 throw IllegalArgumentException("Have to provide a search key")
             }
 
-            val firstElement = gtxPath.pathElements.first()
-            if (firstElement == null) {
+            val firstElement = try {
+                 gtxPath.pathElements.first()
+            } catch (e: NoSuchElementException) {
                 logger.debug("Why are we dropping first element of an empty path?") // This should not happen, so maybe warning?
                 return null
             }
@@ -153,51 +155,6 @@ class GtvPath(val pathElements: List<GtvPathElement>): KLogging()  {
             }
             return null
         }
-    }
-
-
-
-
-    // TODO:  We might not need this at all. If not used 2019-04-01 plz remove
-    /**
-     * @return The [Gtv] that the path leads to, or null if the path cannot be followed
-     */
-    fun getLeafFromGtvGraph(root: Gtv): Gtv? {
-        var currentGtv: Gtv = root
-        var counter= 0
-        for (pathElement in pathElements) {
-            when (pathElement) {
-                is ArrayGtvPathElement -> {
-                    if (currentGtv is GtvArray) {
-                        if (pathElement.index <= currentGtv.getSize()) {
-                            currentGtv = currentGtv.array[pathElement.index]
-                        } else {
-                            logger.debug("Incorrect path! Array index: ${pathElement.index} out of bounds, path at element: $counter")
-                            return null
-                        }
-                    } else {
-                        logger.debug("Incorrect path! Expected array at element: $counter")
-                        return null
-                    }
-                }
-                is DictGtvPathElement -> {
-                    if (currentGtv is GtvDictionary) {
-                        val found: Gtv? = currentGtv.get(pathElement.key)
-                        if (found != null) {
-                            currentGtv = found
-                        } else {
-                            logger.debug("Incorrect path! Dict key: ${pathElement.key} not found, path at element: $counter")
-                            return null
-                        }
-                    } else {
-                        logger.debug("Incorrect path! Expected a dict at element: $counter")
-                        return null
-                    }
-                }
-            }
-            counter++
-        }
-        return currentGtv
     }
 
 }

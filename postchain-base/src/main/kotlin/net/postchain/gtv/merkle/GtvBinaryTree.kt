@@ -52,4 +52,4 @@ class GtvDictHeadNode(left: BinaryTreeElement, right: BinaryTreeElement, isProof
 /**
  * Represents a [BinaryTree] that only holds Gtv values.
  */
-class GtvBinaryTree(root: BinaryTreeElement) : BinaryTree<Gtv>(root) { }
+class GtvBinaryTree(root: BinaryTreeElement) : BinaryTree<Gtv>(root)

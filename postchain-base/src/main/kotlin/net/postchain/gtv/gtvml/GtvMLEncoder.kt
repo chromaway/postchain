@@ -1,4 +1,4 @@
-package net.postchain.gtv.gtvml;
+package net.postchain.gtv.gtvml
 
 import net.postchain.base.gtxml.ArrayType
 import net.postchain.base.gtxml.DictType

@@ -7,8 +7,6 @@ import net.postchain.base.gtv.BlockHeaderDataFactory
 import net.postchain.core.BlockHeader
 import net.postchain.core.InitialBlockData
 import net.postchain.gtv.GtvEncoder
-import java.io.ByteArrayOutputStream
-import java.util.*
 
 /**
  * BaseBlockHeader implements elements and functionality that are necessary to describe and operate on a block header

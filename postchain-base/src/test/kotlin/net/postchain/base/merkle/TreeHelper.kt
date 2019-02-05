@@ -16,7 +16,7 @@ object TreeHelper {
      * @return A readable HEX string of the ByteArray
      */
     fun convertToHex(bytes: ByteArray): String {
-        val sb: StringBuilder = StringBuilder()
+        val sb = StringBuilder()
         for (b in bytes) {
             val st = String.format("%02X", b)
             sb.append(st)

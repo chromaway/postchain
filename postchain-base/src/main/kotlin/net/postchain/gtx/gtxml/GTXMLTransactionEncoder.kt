@@ -1,4 +1,4 @@
-package net.postchain.gtx.gtxml;
+package net.postchain.gtx.gtxml
 
 import net.postchain.base.gtxml.ObjectFactory
 import net.postchain.base.gtxml.OperationsType

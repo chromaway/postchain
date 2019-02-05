@@ -37,13 +37,12 @@ class PEmptyNode(val left: PEmptyElement, val right: PEmptyElement): PEmptyEleme
  * Wrapper class for the root object.
  * ("content leaf" is supposed to indicate that it's the PLeaf that carries all the content of the tree)
  */
-class PrintableBinaryTree(val root: PTreeElement) {
+class PrintableBinaryTree(val root: PTreeElement)
 
-}
 
 
 fun convertGtxToString(gtx: Gtv): String {
-    val dataStr = when (gtx) {
+    return when (gtx) {
         is GtvNull -> "N/A"
         is GtvInteger -> gtx.integer.toString()
         is GtvString -> gtx.asString()
@@ -51,7 +50,6 @@ fun convertGtxToString(gtx: Gtv): String {
 
         else ->  gtx.toString()
     }
-    return dataStr
 }
 
 fun convertHashToString(hash: Hash): String {
@@ -94,6 +92,7 @@ object PrintableTreeFactory {
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun <T>genericTreeInternal(currentLevel: Int, maxLevel: Int, inElement: BinaryTreeElement, toStr: (T) -> String): PTreeElement {
         return when(inElement) {
             is EmptyLeaf -> PEmptyLeaf()

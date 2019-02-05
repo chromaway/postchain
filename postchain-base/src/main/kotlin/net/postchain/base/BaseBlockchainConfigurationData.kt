@@ -34,7 +34,7 @@ class BaseBlockchainConfigurationData(
     }
 
     fun getBlockBuildingStrategyName(): String {
-        val stratDict = data["blockstrategy"] as GtvDictionary
+        val stratDict = data["blockstrategy"]
         return stratDict?.get("name")?.asString() ?: ""
     }
 
@@ -71,7 +71,7 @@ class BaseBlockchainConfigurationData(
 
                 ftProps.add("assets" to gtv(*assets.map { assetName ->
                     val issuers = gtv(
-                            *config.getStringArray("gtx.ft.asset.${assetName}.issuers").map(
+                            *config.getStringArray("gtx.ft.asset.$assetName.issuers").map(
                                     { gtv(it.hexStringToByteArray()) }
                             ).toTypedArray())
 

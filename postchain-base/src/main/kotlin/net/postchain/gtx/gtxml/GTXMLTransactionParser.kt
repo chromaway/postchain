@@ -133,8 +133,8 @@ object GTXMLTransactionParser {
     private fun signTransaction(gtxData: GTXData, signers: Map<ByteArrayKey, Signer>) {
         for (i in 0 until gtxData.signers.size) {
             if (gtxData.signatures[i].isEmpty()) {
-                val signer = signers[gtxData.signers[i]?.byteArrayKeyOf()]
-                        ?: throw IllegalArgumentException("Signer ${gtxData.signers[i]?.byteArrayKeyOf()} is absent")
+                val signer = signers[gtxData.signers[i].byteArrayKeyOf()]
+                        ?: throw IllegalArgumentException("Signer ${gtxData.signers[i].byteArrayKeyOf()} is absent")
                 gtxData.signatures[i] = signer(gtxData.serializeWithoutSignatures()).data
             }
         }

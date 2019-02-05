@@ -86,6 +86,10 @@ data class ProofHashedLeaf(val hash: Hash): MerkleProofElement() {
             false
         }
     }
+
+    override fun hashCode(): Int {
+        return hash.hashCode()
+    }
 }
 
 /**
@@ -107,11 +111,12 @@ abstract class MerkleProofTree<T>(val root: MerkleProofElement) {
         return calculateMerkleRootInternal(root, calculator)
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun calculateMerkleRootInternal(currentElement: MerkleProofElement, calculator: MerkleHashCalculator<T>): Hash {
         return when (currentElement) {
             is ProofHashedLeaf -> currentElement.hash
             is ProofValueLeaf<*> -> {
-                val value = currentElement.content as T
+                val value = currentElement.content as T // Compiler "unchecked cast" warning here, but this is actually safe.
                 if (calculator.isContainerProofValueLeaf(value)) {
                     // We have a container value to prove, so need to convert the value to a binary tree, and THEN hash it
                     val merkleProofTree: MerkleProofTree<T> = calculator.buildTreeFromContainerValue(value)
