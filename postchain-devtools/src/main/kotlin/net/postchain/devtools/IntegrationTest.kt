@@ -106,24 +106,19 @@ open class IntegrationTest {
     private fun createConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
             : Configuration {
 
-        val propertiesFile = File(configFile)
+        // Read first file directly via the builder
         val params = Parameters()
                 .fileBased()
                 .setLocationStrategy(ClasspathLocationStrategy())
-                .setFile(propertiesFile)
-        // Read first file directly via the builder
+                .setListDelimiterHandler(DefaultListDelimiterHandler(','))
+                .setFile(File(configFile))
+
         val baseConfig = FileBasedConfigurationBuilder(PropertiesConfiguration::class.java)
                 .configure(params)
                 .configuration
 
-        baseConfig.listDelimiterHandler = DefaultListDelimiterHandler(',')
-        val chainId = baseConfig.getLong("activechainids")
-        val signers = Array(nodeCount) { pubKeyHex(it) }.joinToString(",")
-//        baseConfig.setProperty("blockchain.$chainId.signers", signers)
         // append nodeIndex to schema name
         baseConfig.setProperty("database.schema", baseConfig.getString("database.schema") + nodeIndex)
-//        baseConfig.setProperty("blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: newschool
-//        baseConfig.setProperty("blockchain.$chainId.blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: oldschool
 
         // peers
         var port = (baseConfig.getProperty("node.0.port") as String).toInt()
@@ -133,7 +128,6 @@ open class IntegrationTest {
             baseConfig.setProperty("node.$i.port", port++)
             baseConfig.setProperty("node.$i.pubkey", pubKeyHex(i))
         }
-//        baseConfig.setProperty("blockchain.$chainId.testmyindex", nodeIndex)
 
         configOverrides.setProperty("messaging.privkey", privKeyHex(nodeIndex))
 
