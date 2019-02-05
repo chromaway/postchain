@@ -6,18 +6,25 @@ import net.postchain.gtv.GtvFactory.gtv
 /**
  * The structure of the block header goes like this:
  *
- *  1. prevBlockRid [GtvByteArray]
- *  2. rootHash [GtvByteArray]
- *  3. timestamp [GtvInteger]
- *  4. height [GtvInteger]
- *  5. extra  [GtvDictionary]
+ *  1. bockchainRid [GtvByteArray]
+ *  2. prevBlockRid [GtvByteArray]
+ *  3. rootHash [GtvByteArray]
+ *  4. timestamp [GtvInteger]
+ *  5. height [GtvInteger]
+ *  6. extra  [GtvDictionary]
  */
 data class BlockHeaderData(
+        val gtvBlockchainRid: GtvByteArray,
         val gtvPreviousBlockRid: GtvByteArray,
         val gtvMerkleRootHash: GtvByteArray,
         val gtvTimestamp: GtvInteger,
         val gtvHeight: GtvInteger,
         val gtvExtra: GtvDictionary) {
+
+
+    fun getBlockchainRid(): ByteArray {
+        return gtvBlockchainRid.bytearray
+    }
 
     fun getPreviousBlockRid(): ByteArray {
         return gtvPreviousBlockRid.bytearray
@@ -45,7 +52,7 @@ data class BlockHeaderData(
     }
 
     fun toGtv(): GtvArray {
-        return gtv(gtvPreviousBlockRid, gtvMerkleRootHash, gtvTimestamp, gtvHeight, gtvExtra)
+        return gtv(gtvBlockchainRid, gtvPreviousBlockRid, gtvMerkleRootHash, gtvTimestamp, gtvHeight, gtvExtra)
     }
 
 }
