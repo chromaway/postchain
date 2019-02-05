@@ -19,6 +19,7 @@ val testBlockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895
 val myCS = SECP256K1CryptoSystem()
 
 open class FTIntegrationTest : IntegrationTest() {
+
     val issuerPubKeys = arrayOf(pubKey(0), pubKey(1))
     val issuerPrivKeys = arrayOf(privKey(0), privKey(1))
     val accUtil = AccountUtil(net.postchain.devtools.modules.ft.testBlockchainRID, SECP256K1CryptoSystem())

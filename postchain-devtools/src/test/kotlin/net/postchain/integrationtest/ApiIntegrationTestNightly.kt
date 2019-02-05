@@ -12,16 +12,13 @@ import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.Signature
 import net.postchain.core.Transaction
-import net.postchain.integrationtest.JsonTools.jsonAsMap
-import net.postchain.devtools.EbftIntegrationTest
+import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.testinfra.TestTransaction
+import net.postchain.integrationtest.JsonTools.jsonAsMap
 import org.junit.Assert.*
-import org.junit.Ignore
 import org.junit.Test
 
-
-@Ignore
-class ApiIntegrationTestNightly : EbftIntegrationTest() {
+class ApiIntegrationTestNightly : IntegrationTest() {
 
     private val gson = JsonTools.buildGson()
     private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
@@ -29,7 +26,9 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
 
     @Test
     fun testMixedAPICalls() {
-        createEbftNodes(3)
+        val nodeCount = 3
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
+        createNodes(nodeCount, "/net/postchain/api/blockchain_config.xml")
 
         testStatusGet("/tx/$blockchainRID/$txHashHex", 404)
         testStatusGet("/tx/$blockchainRID/$txHashHex/status", 200) {
@@ -52,7 +51,9 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
     @Suppress("UNCHECKED_CAST")
     fun testConfirmationProof() {
         val nodeCount = 3
-        createEbftNodes(nodeCount)
+//        createEbftNodes(nodeCount)
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
+        createNodes(nodeCount, "/net/postchain/api/blockchain_config.xml")
 
         var blockHeight = 0
         var currentId = 0

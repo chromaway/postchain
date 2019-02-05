@@ -19,7 +19,7 @@
         * Single node GTX: SingleNodeGtxBlockchainConfigurationFactory
         * Normal Gtx: GTXBlockchainConfigurationFactory
         -->
-        <string>net.postchain.gtx.GTXBlockchainConfigurationFactory</string>
+        <string>net.postchain.devtools.testinfra.TestBlockchainConfigurationFactory</string>
     </entry>
     <entry key="signers">
         <array>
@@ -37,7 +37,7 @@
         <dict>
             <entry key="modules">
                 <array>
-                    <string>net.postchain.modules.esplix_r4.BaseEsplixModuleFactory</string>
+                    <string>net.postchain.configurations.GTXTestModule</string>
                 </array>
             </entry>
         </dict>

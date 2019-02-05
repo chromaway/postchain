@@ -2,19 +2,16 @@
 
 package net.postchain.devtools.gtx
 
-import net.postchain.configurations.GTXTestModule
-import net.postchain.gtx.GTXBlockchainConfigurationFactory
-import net.postchain.devtools.EbftIntegrationTest
+import net.postchain.devtools.IntegrationTest
 import org.junit.Test
 
-class GTXClientTestBackendManual: EbftIntegrationTest() {
+class GTXClientTestBackendManual : IntegrationTest() {
 
     @Test
     fun testBuildBlock() {
-        configOverrides.setProperty("api.port", 7741)
-        configOverrides.setProperty("blockchain.1.configurationfactory", GTXBlockchainConfigurationFactory::class.qualifiedName)
-        configOverrides.setProperty("blockchain.1.gtx.modules", GTXTestModule::class.qualifiedName)
-        createEbftNodes(1)
-        Thread.sleep(600000)
+        val nodeCount = 1
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
+        createNodes(nodeCount, "/net/postchain/manual/blockchain_config.xml")
+        Thread.sleep(6000/*00*/)
     }
 }
