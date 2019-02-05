@@ -8,7 +8,7 @@ import java.lang.management.ManagementFactory
 
 fun main(args: Array<String>) {
     dumpPid()
-    val cliResult = Cli().run { parse(args) }
+    val cliResult = Cli().parse(args)
     when(cliResult){
         is CliError -> {
             when(cliResult) {
@@ -20,12 +20,15 @@ fun main(args: Array<String>) {
                 }
                 else -> cliResult.message?.let { println(it) }
             }
+            System.exit(cliResult.code)
         }
         is Ok -> {
             cliResult.info?.also { println(it) }
+            if(!cliResult.isLongRunning){
+                System.exit(cliResult.code)
+            }
         }
     }
-    System.exit(cliResult.code)
 }
 
 fun dumpPid() {

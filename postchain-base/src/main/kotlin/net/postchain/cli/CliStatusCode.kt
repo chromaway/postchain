@@ -1,7 +1,7 @@
 package net.postchain.cli
 
 sealed class CliResult(open val code: Int = -1)
-data class Ok(val info: String? = null, override val code: Int = 0) : CliResult()
+data class Ok(val info: String? = null, override val code: Int = 0, val isLongRunning: Boolean = false) : CliResult()
 
 sealed class CliError(open val message: String? = null) : CliResult() {
 
