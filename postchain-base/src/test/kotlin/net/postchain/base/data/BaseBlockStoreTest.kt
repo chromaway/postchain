@@ -43,6 +43,7 @@ class BaseBlockStoreTest {
         val anotherRID = cryptoSystem.digest("A RID".toByteArray())
         expect(db.getLastBlockHeight(ctx)).andReturn(0)
         expect(db.getBlockRIDs(ctx, 0)).andReturn(listOf(anotherRID))
+        expect(db.getBlockchainRID(ctx)).andReturn(blockchainRID)
         expect(db.insertBlock(ctx, 1)).andReturn(17)
         expect(db.getLastBlockTimestamp(ctx)).andReturn(1509606236)
         replay(db)

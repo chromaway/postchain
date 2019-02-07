@@ -26,9 +26,10 @@ class BaseBlockStore : BlockStore {
         }
         val prevHeight = getLastBlockHeight(ctx)
         val prevTimestamp = getLastBlockTimestamp(ctx)
-        val prevBlockRID = if (prevHeight == -1L) {
-            db.getBlockchainRID(ctx)
+        val blockchainRID: ByteArray = db.getBlockchainRID(ctx)
                     ?: throw UserMistake("Blockchain RID not found for chainId ${ctx.chainID}")
+        val prevBlockRID = if (prevHeight == -1L) {
+            blockchainRID
         } else {
             val prevBlockRIDs = getBlockRIDs(ctx, prevHeight)
             if (prevBlockRIDs.isEmpty()) {
@@ -38,7 +39,7 @@ class BaseBlockStore : BlockStore {
         }
 
         val blockIid = db.insertBlock(ctx, prevHeight + 1)
-        return InitialBlockData(blockIid, ctx.chainID, prevBlockRID, prevHeight + 1, prevTimestamp)
+        return InitialBlockData(blockchainRID, blockIid, ctx.chainID, prevBlockRID, prevHeight + 1, prevTimestamp)
     }
 
     override fun addTransaction(bctx: BlockEContext, tx: Transaction): TxEContext {

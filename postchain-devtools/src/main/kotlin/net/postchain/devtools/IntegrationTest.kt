@@ -25,7 +25,24 @@ import org.junit.After
 import org.junit.Assert.*
 import java.io.File
 
-
+/**
+ * Postchain has different test categories:
+ *
+ * 1. Unit tests - A test whithout dependencies.
+ * 2. Integration tests - Depends on the DB.
+ * 3. Nightly test - Tests with a lot of data.
+ * 4. Manual test - Requires some manual work to run.
+ *
+ * Type 2-4 are often heavy, and should inherit this class to get help doing common tasks.
+ * Examples of tasks this class will help you with are:
+ *
+ * - Creating a configuration for:
+ *    - single node
+ *    - multiple nodes
+ * - Verifying all transactions in the BC
+ * - Building and committing a block
+ * - etc
+ */
 open class IntegrationTest {
 
     protected val nodes = mutableListOf<SingleChainTestNode>()

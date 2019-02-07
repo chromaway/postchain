@@ -31,6 +31,7 @@ interface MultiSigBlockWitness : BlockWitness {
 }
 
 class InitialBlockData(
+        val blockchainRid: ByteArray,
         val blockIID: Long,
         val chainID: Long,
         val prevBlockRID: ByteArray,

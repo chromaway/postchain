@@ -21,6 +21,7 @@ class BaseBlockBuilderTest {
     val tf = BaseTransactionFactory()
     val ctx = EContext(mock(Connection::class.java), 2L, 0)
     val bctx = BlockEContext(mock(Connection::class.java), 2, 0, 1, 10)
+    val myBlockchainRid = "bcRid".toByteArray()
     val dummy = ByteArray(32, { 0 })
     val subjects = arrayOf("test".toByteArray())
     val signer = cryptoSystem.makeSigner(pubKey(0), privKey(0))
@@ -29,7 +30,7 @@ class BaseBlockBuilderTest {
     @Test
     fun invalidMonotoneTimestamp() {
         val timestamp = 1L
-        val blockData = InitialBlockData(2, 2, dummy, 1, timestamp)
+        val blockData = InitialBlockData(myBlockchainRid,2, 2, dummy, 1, timestamp)
         val header = BaseBlockHeader.make(cryptoSystem, blockData, dummy, timestamp)
         bbb.bctx = bctx
         bbb.initialBlockData = blockData
@@ -39,7 +40,7 @@ class BaseBlockBuilderTest {
     @Test
     fun invalidMonotoneTimestampEquals() {
         val timestamp = 10L
-        val blockData = InitialBlockData(2, 2, dummy, 1, timestamp)
+        val blockData = InitialBlockData(myBlockchainRid,2, 2, dummy, 1, timestamp)
         val header = BaseBlockHeader.make(cryptoSystem, blockData, dummy, timestamp)
         bbb.bctx = bctx
         bbb.initialBlockData = blockData
@@ -49,7 +50,7 @@ class BaseBlockBuilderTest {
     @Test
     fun validMonotoneTimestamp() {
         val timestamp = 100L
-        val blockData = InitialBlockData(2, 2, dummy, 1, timestamp)
+        val blockData = InitialBlockData(myBlockchainRid,2, 2, dummy, 1, timestamp)
         val header = BaseBlockHeader.make(cryptoSystem, blockData, dummy, timestamp)
         bbb.bctx = bctx
         bbb.initialBlockData = blockData

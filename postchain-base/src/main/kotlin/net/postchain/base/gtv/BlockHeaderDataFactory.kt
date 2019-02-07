@@ -25,8 +25,8 @@ object BlockHeaderDataFactory {
         return BlockHeaderData(gtvBlockchainRid, previousBlockRid, merkleRootHash, timestamp, height, extra)
     }
 
-    fun buildFromDomainObjects(blockchainRid: ByteArray, iBlockData: InitialBlockData, rootHash: ByteArray, timestamp: Long): BlockHeaderData {
-        val gtvBlockchainRid: GtvByteArray = gtv(blockchainRid)
+    fun buildFromDomainObjects(iBlockData: InitialBlockData, rootHash: ByteArray, timestamp: Long): BlockHeaderData {
+        val gtvBlockchainRid: GtvByteArray = gtv(iBlockData.blockchainRid)
         val previousBlockRid: GtvByteArray = gtv(iBlockData.prevBlockRID)
         val merkleRootHash: GtvByteArray = gtv(rootHash)
         val gtvTimestamp: GtvInteger = gtv(timestamp)
