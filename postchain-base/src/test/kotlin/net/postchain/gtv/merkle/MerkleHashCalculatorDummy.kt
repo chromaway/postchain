@@ -29,8 +29,11 @@ fun dummySerializatorFun(iGtv: Gtv): ByteArray {
             println("leaf of string: $str becomes bytes: " + TreeHelper.convertToHex(byteArr))
             return byteArr
         }
+        is GtvByteArray -> {
+            return iGtv.asByteArray() // No need to do anything
+        }
         else -> {
-            throw IllegalArgumentException("We don't use any other than Integers for these tests")
+            throw IllegalArgumentException("We don't use any other than Integers, Strings and ByteArray for these tests: ${iGtv.type.name}")
         }
     }
 }

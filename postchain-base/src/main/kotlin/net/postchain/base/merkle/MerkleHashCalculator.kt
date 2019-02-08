@@ -7,6 +7,8 @@ import net.postchain.base.merkle.proof.MerkleProofTree
 /**
  * Abstract class responsible for calculating hashes and serialization.
  * Can calculate hashes of leaves and nodes.
+ *
+ * Note: We make this class abstract so we can use a dummy version during test (this makes tests easier to understand).
  */
 abstract class MerkleHashCalculator<T>(cryptoSystem: CryptoSystem?): BinaryNodeHashCalculator(cryptoSystem) {
 

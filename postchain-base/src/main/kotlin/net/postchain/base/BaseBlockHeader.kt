@@ -39,9 +39,9 @@ class BaseBlockHeader(override val rawData: ByteArray, private val cryptoSystem:
          * @return Serialized block header
          */
         @JvmStatic fun make(cryptoSystem: CryptoSystem, iBlockData: InitialBlockData, rootHash: ByteArray, timestamp: Long): BaseBlockHeader {
-            val gtvBh = BlockHeaderDataFactory.buildFromDomainObjects(iBlockData, rootHash, timestamp)
+            val gtvBhd = BlockHeaderDataFactory.buildFromDomainObjects(iBlockData, rootHash, timestamp)
 
-            val raw = GtvEncoder.encodeGtv(gtvBh.toGtv())
+            val raw = GtvEncoder.encodeGtv(gtvBhd.toGtv())
             return BaseBlockHeader(raw, cryptoSystem)
         }
     }

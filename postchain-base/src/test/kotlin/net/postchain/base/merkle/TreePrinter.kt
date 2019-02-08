@@ -1,7 +1,6 @@
 package net.postchain.base.merkle
 
 import net.postchain.base.merkle.proof.*
-import net.postchain.base.merkle.root.HashBinaryTree
 import net.postchain.gtv.merkle.GtvBinaryTree
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 import net.postchain.gtv.*
@@ -65,13 +64,6 @@ object PrintableTreeFactory {
         val maxLevel = tree.maxLevel()
         //println("Max level: $maxLevel")
         val newRoot: PTreeElement = genericTreeInternal(1, maxLevel, tree.root, ::convertGtxToString)
-        return PrintableBinaryTree(newRoot)
-    }
-
-    fun buildPrintableTreeFromHashTree(tree: HashBinaryTree): PrintableBinaryTree {
-        val maxLevel = tree.maxLevel()
-        //println("Max level: $maxLevel")
-        val newRoot: PTreeElement = genericTreeInternal(1, maxLevel, tree.root, TreeHelper::convertToHex)
         return PrintableBinaryTree(newRoot)
     }
 

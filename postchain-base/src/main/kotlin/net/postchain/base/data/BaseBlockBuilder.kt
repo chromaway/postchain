@@ -3,7 +3,10 @@
 package net.postchain.base.data
 
 import net.postchain.base.*
+import net.postchain.base.merkle.MerkleRootCalculator
+import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import java.util.*
 
 /**
@@ -21,6 +24,8 @@ open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, 
     : AbstractBlockBuilder(eContext, store, txFactory) {
 
 
+    private val merkleRootCalculator = MerkleRootCalculator(GtvMerkleHashCalculator(cryptoSystem))
+
     /**
      * Computes the root hash for the Merkle tree of transactions currently in a block
      *
@@ -28,7 +33,8 @@ open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, 
      */
     fun computeRootHash(): ByteArray {
         val digests = rawTransactions.map { txFactory.decodeTransaction(it).getHash() }
-        return computeMerkleRootHash(cryptoSystem, digests.toTypedArray())
+
+        return merkleRootCalculator.calculateMerkleRoot(digests)
     }
 
     /**
@@ -65,11 +71,11 @@ open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, 
             header.blockHeaderRec.getHeight() != initialBlockData.height ->
                 ValidationResult(false, "header.blockHeaderRec.height != initialBlockData.height")
 
-            !Arrays.equals(header.blockHeaderRec.getMerkleRootHash(), computeRootHash()) ->
-                ValidationResult(false, "header.blockHeaderRec.rootHash, computeRootHash()")
-
             bctx.timestamp >= header.timestamp ->
                 ValidationResult(false, "bctx.timestamp >= header.timestamp")
+
+            !Arrays.equals(header.blockHeaderRec.getMerkleRootHash(), computeRootHash()) -> // Do this last since most expensive check!
+                ValidationResult(false, "header.blockHeaderRec.rootHash != computeRootHash()")
 
             else -> ValidationResult(true)
         }
