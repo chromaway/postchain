@@ -6,8 +6,7 @@ import net.postchain.core.BlockchainEngine
 import net.postchain.core.NODE_ID_AUTO
 import net.postchain.core.RestartHandler
 import net.postchain.ebft.message.EbftMessage
-import net.postchain.network.CommManager
-import java.lang.Exception
+import net.postchain.network.CommunicationManager
 import kotlin.concurrent.thread
 
 /**
@@ -19,7 +18,7 @@ import kotlin.concurrent.thread
 open class EBFTBlockchainInstanceWorker(
         private val engine: BlockchainEngine,
         nodeIndex: Int,
-        communicationManager: CommManager<EbftMessage>,
+        communicationManager: CommunicationManager<EbftMessage>,
         val restartHandler: RestartHandler
 ) : BlockchainInstanceModel {
 
