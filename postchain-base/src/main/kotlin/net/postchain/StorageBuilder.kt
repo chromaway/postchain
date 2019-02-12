@@ -44,7 +44,7 @@ class StorageBuilder {
             return BasicDataSource().apply {
                 addConnectionProperty("currentSchema", schema(config))
                 driverClassName = config.getString("database.driverclass")
-                url = config.getString("database.url")
+                url = "${config.getString("database.url")}?loggerLevel=OFF"
                 username = config.getString("database.username")
                 password = config.getString("database.password")
                 defaultAutoCommit = false
