@@ -14,12 +14,11 @@ services:
       POSTGRES_PASSWORD: postchain
 
   postchain:
-    image: chromaway/postchain:2.4.0-beta
-    restart: always
+    image: chromaway/postchain:2.4.3
     ports:
       - 7740:7740
     volumes:
-      - ./postchain_config:/external_config
+      - $PWD/postchain_config:/postchain-node/external_config
     environment:
       - ENV_NODE_CONFIG=./external_config/config.0.properties
       - ENV_BLOCKCHAIN_CONFIG=./external_config/configuration_78967baa.xml
