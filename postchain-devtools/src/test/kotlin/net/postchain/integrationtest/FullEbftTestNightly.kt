@@ -10,6 +10,7 @@ import net.postchain.devtools.EbftIntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.SingleChainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
+import net.postchain.ebft.worker.ValidatorWorker
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -44,7 +45,7 @@ class FullEbftTestNightly : EbftIntegrationTest() {
         configOverrides.setProperty("blockchain.1.blockstrategy", OnDemandBlockBuildingStrategy::class.qualifiedName)
         createEbftNodes(nodesCount)
         var txId = 0
-        ebftNodes[0].getBlockchainInstance().statusManager
+        (ebftNodes[0].getBlockchainInstance() as ValidatorWorker).statusManager
         for (i in 0 until blockCount) {
             for (tx in 0 until txPerBlock) {
                 val currentTxId = txId++

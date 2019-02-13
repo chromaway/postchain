@@ -32,7 +32,7 @@ class ValidatorWorker(
     override val networkAwareTxQueue: NetworkAwareTxQueue
 
     private val blockManager: BlockManager
-    private val statusManager: BaseStatusManager
+    val statusManager: BaseStatusManager
 
     init {
         val blockQueries = engine.getBlockQueries()
