@@ -3,7 +3,6 @@ package net.postchain.network.x
 import mu.KLogging
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerInfo
-import net.postchain.core.NODE_ID_READ_ONLY
 import net.postchain.core.Shutdownable
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.network.CommunicationManager
@@ -16,9 +15,13 @@ class DefaultXCommunicationManager<PacketType>(
         val packetConverter: PacketConverter<PacketType>
 ) : CommunicationManager<PacketType>, Shutdownable {
 
+    override fun getPeerIndex(peerID: XPeerID): Int {
+        return config.peerInfo.map { XPeerID(it.pubKey) }.indexOf(peerID)
+    }
+
     companion object : KLogging()
 
-    var inboundPackets = mutableListOf<Pair<Int, PacketType>>()
+    var inboundPackets = mutableListOf<Pair<XPeerID, PacketType>>()
 
     init {
         val peerConfig = XChainPeerConfiguration(
@@ -33,7 +36,7 @@ class DefaultXCommunicationManager<PacketType>(
     override fun peers(): Array<PeerInfo> = config.peerInfo
 
     @Synchronized
-    override fun getPackets(): MutableList<Pair<Int, PacketType>> {
+    override fun getPackets(): MutableList<Pair<XPeerID, PacketType>> {
         val currentQueue = inboundPackets
         inboundPackets = mutableListOf()
         return currentQueue
@@ -63,17 +66,7 @@ class DefaultXCommunicationManager<PacketType>(
         // use of parallel processing in different threads
         val decodedPacket = packetConverter.decodePacket(peerID.byteArray, packet)
         synchronized(this) {
-            inboundPackets.add(
-                    getPeerIndex(peerID) to decodedPacket)
+            inboundPackets.add(peerID to decodedPacket)
         }
-    }
-
-    private fun getPeerIndex(peerID: XPeerID): Int {
-        for (pi in config.peerInfo.withIndex()) {
-            if (pi.value.pubKey.contentEquals(peerID.byteArray)) {
-                return pi.index
-            }
-        }
-        return NODE_ID_READ_ONLY
     }
 }

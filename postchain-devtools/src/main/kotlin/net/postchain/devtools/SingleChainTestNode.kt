@@ -11,7 +11,7 @@ import net.postchain.common.toHex
 import net.postchain.core.BlockchainConfigurationFactory
 import net.postchain.core.BlockchainProcess
 import net.postchain.core.NODE_ID_TODO
-import net.postchain.ebft.BlockchainInstanceModel
+import net.postchain.ebft.worker.WorkerBase
 import net.postchain.gtx.encodeGTXValue
 import org.apache.commons.configuration2.Configuration
 
@@ -66,8 +66,8 @@ class SingleChainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig)
                 .restApi?.actualPort() ?: 0
     }
 
-    fun getBlockchainInstance(): BlockchainInstanceModel {
-        return processManager.retrieveBlockchain(chainId) as BlockchainInstanceModel
+    fun getBlockchainInstance(): WorkerBase {
+        return processManager.retrieveBlockchain(chainId) as WorkerBase
     }
 
     private fun blockchainRID(process: BlockchainProcess): String {

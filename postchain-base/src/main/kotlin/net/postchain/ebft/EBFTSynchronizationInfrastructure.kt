@@ -8,6 +8,7 @@ import net.postchain.core.BlockchainProcess
 import net.postchain.core.RestartHandler
 import net.postchain.core.SynchronizationInfrastructure
 import net.postchain.ebft.message.EbftMessage
+import net.postchain.ebft.worker.ValidatorWorker
 import net.postchain.network.CommunicationManager
 import net.postchain.network.IdentPacketConverter
 import net.postchain.network.netty.NettyConnectorFactory
@@ -37,7 +38,8 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
                 communicationConfig,
                 blockchainConfig.chainID
         )
-        return EBFTBlockchainInstanceWorker(
+        // TODO: start ValidatorWorker or ReplicaWorker based on nodeID value
+        return ValidatorWorker(
                 engine,
                 nodeIndex = blockchainConfig.configData.context.nodeID,
                 communicationManager = defaultXCommunicationManager,
