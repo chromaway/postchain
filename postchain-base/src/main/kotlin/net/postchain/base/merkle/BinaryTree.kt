@@ -44,7 +44,7 @@ import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_NODE
  * If you are not building a proof, this will be false on all elements.
  * (Prefixes are used when a [Hash] is calculated for the node.)
  */
-open class BinaryTreeElement {
+open class BinaryTreeElement() {
 
     // This will tell us if this structure is the leaf of a path
     // (A "path leaf" is something we will not convert to a hash in a merkle proof tree)
@@ -56,6 +56,11 @@ open class BinaryTreeElement {
      * Get the prefix belonging to this instance
      */
     open fun getPrefixByte(): Byte = HASH_PREFIX_NODE // Usually overidden
+
+    /**
+     * Get the number of bytes this element represents
+     */
+    open fun getNrOfBytes(): Int = throw IllegalStateException("Should implement this in sub class")
 }
 
 /**
@@ -83,19 +88,23 @@ open class SubTreeRootNode<T>(left: BinaryTreeElement, right: BinaryTreeElement,
  *
  *  Can be set to to be a "path leaf"
  */
-data class Leaf<T>(val content: T, val leafIsPathLeaf: Boolean = false): BinaryTreeElement() {
+data class Leaf<T>(val content: T, val leafIsPathLeaf: Boolean = false, val sizeInBytes: Int): BinaryTreeElement() {
     init {
         setPathLeaf(leafIsPathLeaf)
     }
 
     override fun getPrefixByte(): Byte = HASH_PREFIX_LEAF
+
+    override fun getNrOfBytes(): Int = sizeInBytes
 }
 
 /**
  * Dummy filler. Will always be the right side.
  * (This is needed for the case when an args only has one element)
  */
-object EmptyLeaf: BinaryTreeElement()
+object EmptyLeaf: BinaryTreeElement() {
+    override fun getNrOfBytes() = 0
+}
 
 /**
  * Wrapper class for the root object.

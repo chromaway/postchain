@@ -77,4 +77,10 @@ class GtvBinaryTreeFactory : BinaryTreeFactory<Gtv, GtvPathSet>() {
             else ->             throw IllegalStateException("What is this? Not container and not primitive? type: ${leaf.type}")
         }
     }
+
+    override fun getNrOfBytes(leaf: Gtv): Int {
+        return leaf.nrOfBytes()
+    }
+
+
 }

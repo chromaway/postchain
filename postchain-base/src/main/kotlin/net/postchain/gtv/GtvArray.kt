@@ -30,6 +30,15 @@ data class GtvArray(val array: Array<out Gtv>) : GtvCollection() {
         return array.map({ it.asPrimitive() }).toTypedArray()
     }
 
+    override fun nrOfBytes(): Int {
+        // This could be expensive since it will go all the way down to the leaf
+        var sumNrOfBytes =0
+        for (elem in array) {
+            sumNrOfBytes += elem.nrOfBytes()
+        }
+        return sumNrOfBytes
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

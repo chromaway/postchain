@@ -1,13 +1,14 @@
 package net.postchain.base.merkle
 
 import net.postchain.base.CryptoSystem
+import net.postchain.base.merkle.proof.MerkleHashCarrier
 
 abstract class BinaryNodeHashCalculator(val cryptoSystem: CryptoSystem?) {
 
     /**
      * Same as above but with prefix
      */
-    abstract fun calculateNodeHash(prefix: Byte, hashLeft: Hash, hashRight: Hash): Hash
+    abstract fun calculateNodeHash(prefix: Byte, hashLeft: MerkleHashCarrier, hashRight: MerkleHashCarrier): MerkleHashCarrier
 
     /**
      * @param hashLeft The hash of the left sub tree

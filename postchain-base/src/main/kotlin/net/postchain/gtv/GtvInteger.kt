@@ -17,4 +17,8 @@ data class GtvInteger(val integer: Long) : GtvPrimitive() {
     override fun asPrimitive(): Any {
         return integer
     }
+
+    override fun nrOfBytes(): Int {
+        return 8
+    }
 }

@@ -39,5 +39,8 @@ abstract class AbstractGtv : Gtv {
         throw UserMistake("Type error: byte args expected")
     }
 
+    override fun nrOfBytes(): Int {
+        throw UserMistake("Implementation expected")
+    }
 
 }

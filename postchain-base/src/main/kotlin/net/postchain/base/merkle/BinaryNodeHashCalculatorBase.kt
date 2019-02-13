@@ -1,6 +1,7 @@
 package net.postchain.base.merkle
 
 import net.postchain.base.CryptoSystem
+import net.postchain.base.merkle.proof.MerkleHashCarrier
 
 /**
  * This is the implementation that is intended to be used in production
@@ -15,8 +16,7 @@ class BinaryNodeHashCalculatorBase(cryptoSystem: CryptoSystem?): BinaryNodeHashC
      * @param hashRight The hash of the right sub tree
      * @return Returns the hash of two combined hashes.
      */
-    override fun calculateNodeHash(prefix: Byte, hashLeft: Hash, hashRight: Hash): Hash {
-        val prefixBA = byteArrayOf(prefix)
-        return prefixBA + calculateNodeHashNoPrefixInternal(hashLeft, hashRight, MerkleBasics::hashingFun)
+    override fun calculateNodeHash(prefix: Byte, hashLeft: MerkleHashCarrier, hashRight: MerkleHashCarrier): MerkleHashCarrier {
+        return MerkleHashCarrier(prefix, calculateNodeHashNoPrefixInternal(hashLeft.getHashWithPrefix(), hashRight.getHashWithPrefix(), MerkleBasics::hashingFun))
     }
 }

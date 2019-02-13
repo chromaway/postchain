@@ -133,14 +133,14 @@ object PrintableTreeFactory {
             is ProofHashedLeaf -> {
                 if (currentLevel < maxLevel) {
                     // Create node instead of leaf
-                    val content = TreeHelper.convertToHex(inElement.hash)
+                    val content = TreeHelper.convertToHex(inElement.merkleHashCarrier.getHashWithPrefix())
                     //println("Early hash leaf $content at level: $currentLevel")
                     val emptyLeft: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     val emptyRight: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     PContentNode(content, emptyLeft, emptyRight, false)
                 } else {
                     // Normal leaf
-                    val content = TreeHelper.convertToHex(inElement.hash)
+                    val content = TreeHelper.convertToHex(inElement.merkleHashCarrier.getHashWithPrefix())
                     //println("Normal hash leaf $content at level: $currentLevel")
                     PLeaf(content, false)
                 }

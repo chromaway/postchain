@@ -28,7 +28,7 @@ class GtvMerkleProofTreeFactory(calculator: MerkleHashCalculator<Gtv>): MerklePr
     fun buildFromBinaryTree(orginalTree: GtvBinaryTree): GtvMerkleProofTree {
 
         val rootElement = buildFromBinaryTreeSub(orginalTree.root, calculator)
-        return GtvMerkleProofTree(rootElement)
+        return GtvMerkleProofTree(rootElement, orginalTree.root.getNrOfBytes())
     }
 
     override fun buildFromBinaryTreeSub(currentElement: BinaryTreeElement,
@@ -89,10 +89,10 @@ class GtvMerkleProofTreeFactory(calculator: MerkleHashCalculator<Gtv>): MerklePr
     fun deserialize(serializedRootArrayGtv: GtvArray): GtvMerkleProofTree {
 
         val rootElement = deserializeSub(serializedRootArrayGtv)
-        return GtvMerkleProofTree(rootElement)
+        return GtvMerkleProofTree(rootElement) // TODO: Q77: We don't know the size, since we don't have the original GTV struct at hand. This shouldn't be a problem since we are not gonna put this in cache anyway
     }
 
-    fun deserializeSub(currentSerializedArrayGtv: GtvArray): MerkleProofElement {
+    private fun deserializeSub(currentSerializedArrayGtv: GtvArray): MerkleProofElement {
 
         val head = currentSerializedArrayGtv[0]
         val typeCode = (head as GtvInteger).integer
@@ -100,7 +100,8 @@ class GtvMerkleProofTreeFactory(calculator: MerkleHashCalculator<Gtv>): MerklePr
         return when (typeCode) {
             SERIALIZATION_HASH_LEAF_TYPE -> {
                 val byteArray = secondElement as GtvByteArray
-                ProofHashedLeaf(byteArray.bytearray)
+                val merkleHashCarrier = MerkleHashCarrier.build( byteArray.bytearray ) // TODO: Q77: Should we really smack on prefix upon serialization?
+                ProofHashedLeaf(merkleHashCarrier)
             }
             SERIALIZATION_VALUE_LEAF_TYPE -> ProofValueLeaf(secondElement)
             SERIALIZATION_NODE_TYPE -> {

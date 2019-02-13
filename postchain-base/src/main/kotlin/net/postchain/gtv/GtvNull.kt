@@ -17,4 +17,8 @@ object GtvNull : GtvPrimitive() {
     override fun asPrimitive(): Any? {
         return null
     }
+
+    override fun nrOfBytes(): Int {
+        return 0
+    }
 }

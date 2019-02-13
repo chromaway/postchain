@@ -1,6 +1,8 @@
 package net.postchain.base.merkle
 
+import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.MerkleHashCalculatorDummy
+import net.postchain.gtv.merkleHashWithPrefix
 import org.junit.Assert
 import org.junit.Test
 
@@ -8,9 +10,8 @@ class MerkleRootCalculatorTest {
 
 
     val calculator = MerkleHashCalculatorDummy()
-    val merkleRootCalculator = MerkleRootCalculator(calculator)
 
-    val expectedMerkleRootOf1 = "0702030101010101010101010101010101010101010101010101010101010101010101"
+    val expectedMerkleRootOf1 = "070203010101010101010101010101010101010101010101010101010101010101010101"
     val expectedMerkleRootOf4 = "0701030403050103060307"
 
 
@@ -28,7 +29,8 @@ class MerkleRootCalculatorTest {
         // 07    0203   0101010101010101010101010101010101010101010101010101010101010101
 
         val listOfHashes: List<Hash> = strArray.map { TreeHelper.convertToByteArray(it) }
-        val merkleRoot = merkleRootCalculator.calculateMerkleRoot(listOfHashes)
+        val gtvArr = gtv(listOfHashes.map { gtv(it)})
+        val merkleRoot = gtvArr.merkleHashWithPrefix(calculator)
 
         Assert.assertEquals(expectedMerkleRootOf1, TreeHelper.convertToHex(merkleRoot))
     }
@@ -55,7 +57,8 @@ class MerkleRootCalculatorTest {
         // 07     0103040305   0103060307
 
         val listOfHashes: List<Hash> = strArray.map { TreeHelper.convertToByteArray(it) }
-        val merkleRoot = merkleRootCalculator.calculateMerkleRoot(listOfHashes)
+        val gtvArr = gtv(listOfHashes.map { gtv(it)})
+        val merkleRoot = gtvArr.merkleHashWithPrefix(calculator)
 
         Assert.assertEquals(expectedMerkleRootOf4, TreeHelper.convertToHex(merkleRoot))
     }

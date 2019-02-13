@@ -32,4 +32,14 @@ data class GtvDictionary(val dict: Map<String, Gtv>) : GtvCollection() {
             it.value.asPrimitive()
         }
     }
+
+    override fun nrOfBytes(): Int {
+        // This could be expensive since it will go all the way down to the leaf
+        var sumNrOfBytes =0
+        for (key in dict.keys) {
+            sumNrOfBytes += (key.length * 2)
+            sumNrOfBytes += dict[key]!!.nrOfBytes()
+        }
+        return sumNrOfBytes
+    }
 }

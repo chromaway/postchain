@@ -2,6 +2,7 @@ package net.postchain.gtv.merkle
 
 import net.postchain.base.CryptoSystem
 import net.postchain.base.merkle.*
+import net.postchain.base.merkle.proof.MerkleHashCarrier
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
 import net.postchain.core.ProgrammerMistake
@@ -44,7 +45,7 @@ class GtvMerkleHashCalculator(cryptoSystem: CryptoSystem): MerkleHashCalculator<
         baseCalc = BinaryNodeHashCalculatorBase(cryptoSystem)
     }
 
-    override fun calculateNodeHash(prefix: Byte, hashLeft: Hash, hashRight: Hash): Hash {
+    override fun calculateNodeHash(prefix: Byte, hashLeft: MerkleHashCarrier, hashRight: MerkleHashCarrier): MerkleHashCarrier {
         return baseCalc.calculateNodeHash(prefix, hashLeft, hashRight)
     }
 
@@ -54,7 +55,7 @@ class GtvMerkleHashCalculator(cryptoSystem: CryptoSystem): MerkleHashCalculator<
      * @param value The leaf
      * @return Returns the hash of the leaf.
      */
-    override fun calculateLeafHash(value: Gtv): Hash {
+    override fun calculateLeafHash(value: Gtv): MerkleHashCarrier {
         return calculateHashOfValueInternal(value, ::serializeGtvToByteArary, MerkleBasics::hashingFun)
     }
 

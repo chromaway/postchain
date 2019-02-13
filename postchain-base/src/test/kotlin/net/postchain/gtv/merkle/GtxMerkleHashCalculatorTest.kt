@@ -23,7 +23,7 @@ class GtvMerkleHashCalculatorTest {
         // 2. the add-one-hashed value
 
         val result = calculator.calculateLeafHash(iGtv)
-        Assert.assertEquals(expectedResultAfterAddOneHash, TreeHelper.convertToHex(result))
+        Assert.assertEquals(expectedResultAfterAddOneHash, TreeHelper.convertToHex(result.getHashWithPrefix()))
     }
 
 
@@ -41,6 +41,6 @@ class GtvMerkleHashCalculatorTest {
         // 2. the 32 byte hashed value
 
         val result = calculator.calculateLeafHash(iGtv)
-        Assert.assertEquals(expectedResultAfterAddOneHash, TreeHelper.convertToHex(result))
+        Assert.assertEquals(expectedResultAfterAddOneHash, TreeHelper.convertToHex(result.getHashWithPrefix()))
     }
 }

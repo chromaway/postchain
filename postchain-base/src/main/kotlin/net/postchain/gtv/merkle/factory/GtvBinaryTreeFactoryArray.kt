@@ -26,10 +26,11 @@ object GtvBinaryTreeFactoryArray {
         // 1. Build leaf layer
         val leafList: List<Gtv> = GtvArray.array.map {it}
         if (leafList.isEmpty()) {
-            return GtvArrayHeadNode(EmptyLeaf, EmptyLeaf, isThisAProofLeaf, GtvArray, 0)
+            return GtvArrayHeadNode(EmptyLeaf, EmptyLeaf, isThisAProofLeaf, GtvArray, 0, 0)
         }
 
         val leafArray = mainFactory.buildLeafElements(leafList, GtvPaths)
+        val sumNrOfBytes = leafArray.sumBy { it.getNrOfBytes() }
 
         // 2. Build all higher layers
         val result = mainFactory.buildHigherLayer(1, leafArray)
@@ -38,14 +39,14 @@ object GtvBinaryTreeFactoryArray {
         val orgRoot = result.get(0)
         return when (orgRoot) {
             is Node -> {
-                GtvArrayHeadNode(orgRoot.left, orgRoot.right, isThisAProofLeaf, GtvArray, leafList.size)
+                GtvArrayHeadNode(orgRoot.left, orgRoot.right, isThisAProofLeaf, GtvArray, leafList.size, sumNrOfBytes)
             }
             is Leaf<*> -> {
                 if (leafList.size > 1) {
                     throw IllegalStateException("How come we got a leaf returned when we had ${leafList.size} elements is the args?")
                 } else {
                     // Create a dummy to the right
-                    GtvArrayHeadNode(orgRoot, EmptyLeaf, isThisAProofLeaf, GtvArray, leafList.size)
+                    GtvArrayHeadNode(orgRoot, EmptyLeaf, isThisAProofLeaf, GtvArray, leafList.size, sumNrOfBytes)
                 }
             }
             else -> throw IllegalStateException("Should not find element of this type here: $orgRoot")

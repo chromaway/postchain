@@ -2,15 +2,13 @@
 
 package net.postchain.base
 
-import org.junit.Test
-
 import org.junit.Assert.*
-import net.postchain.base.merkle.MerkleRootCalculator
-import net.postchain.base.merkle.TreeHelper.convertToHex
+import net.postchain.gtv.GtvFactory
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
+import net.postchain.gtv.merkleHashWithPrefix
 
 val cryptoSystem = SECP256K1CryptoSystem()
-val merkleRootCalculator = MerkleRootCalculator(GtvMerkleHashCalculator(cryptoSystem))
+val calculator = GtvMerkleHashCalculator(cryptoSystem)
 
 class MerkleTest {
 
@@ -25,7 +23,9 @@ class MerkleTest {
 
     fun merkleRoot(stringList: Array<String>): ByteArray {
         val hashList = hashList(stringList).toList()
-        return merkleRootCalculator.calculateMerkleRoot(hashList)
+        val gtvArr = GtvFactory.gtv(hashList.map { GtvFactory.gtv(it) })
+        return gtvArr.merkleHashWithPrefix(calculator)
+
         //return computeMerkleRootHash(cryptoSystem, hashList(stringList))
     }
 

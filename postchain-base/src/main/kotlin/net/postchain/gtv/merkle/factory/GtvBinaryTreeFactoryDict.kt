@@ -26,11 +26,12 @@ object GtvBinaryTreeFactoryDict {
         val keys: SortedSet<String> = GtvDictionary.dict.keys.toSortedSet() // Needs to be sorted, or else the order is undefined
 
         if (keys.isEmpty()) {
-            return GtvDictHeadNode(EmptyLeaf, EmptyLeaf, isThisAProofLeaf, GtvDictionary, keys.size)
+            return GtvDictHeadNode(EmptyLeaf, EmptyLeaf, isThisAProofLeaf, GtvDictionary, keys.size, 0)
         }
 
         // 1. Build first (leaf) layer
         val leafArray = buildLeafElementFromDict(keys, GtvDictionary, GtvPaths)
+        val sumNrOfBytes = leafArray.sumBy { it.getNrOfBytes() }
 
         // 2. Build all higher layers
         val result = mainFactory.buildHigherLayer(1, leafArray)
@@ -38,7 +39,7 @@ object GtvBinaryTreeFactoryDict {
         // 3. Fix and return the root node
         val orgRoot = result.get(0)
         return when (orgRoot) {
-            is Node -> GtvDictHeadNode(orgRoot.left, orgRoot.right, isThisAProofLeaf, GtvDictionary, keys.size)
+            is Node -> GtvDictHeadNode(orgRoot.left, orgRoot.right, isThisAProofLeaf, GtvDictionary, keys.size, sumNrOfBytes)
             else -> throw IllegalStateException("Should not find element of this type here: $orgRoot")
         }
     }

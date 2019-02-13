@@ -55,8 +55,14 @@ abstract class BinaryTreeFactory<T,TPathSet: MerklePathSet> : KLogging() {
      * immediately wrap
      */
     fun handlePrimitiveLeaf(leaf: T, paths: TPathSet): BinaryTreeElement {
-        return Leaf(leaf, paths.isThisAProofLeaf())
+        return Leaf(leaf, paths.isThisAProofLeaf(), getNrOfBytes(leaf))
     }
+
+    /**
+     * @param leaf the leaf we want to know the size of
+     * @return Number of bytes this leaf consumes
+     */
+    abstract fun getNrOfBytes(leaf: T): Int
 
     /**
      * Calls itself until the return value only holds 1 element

@@ -47,7 +47,7 @@ class ArrayToMerkleProofTreeTest {
     val calculator = MerkleHashCalculatorDummy()
     val factory =GtvMerkleProofTreeFactory(calculator)
 
-    val expected1ElementArrayMerkleRoot = "0702030101010101010101010101010101010101010101010101010101010101010101"
+    val expected1ElementArrayMerkleRoot = "070203010101010101010101010101010101010101010101010101010101010101010101"
     val expected4ElementArrayMerkleRoot = "0701030403050103060307"
     val expectet7and3ElementArrayMerkleRoot = "070102040504060204070A040607060F050801020409040A030A"
 
@@ -64,7 +64,7 @@ class ArrayToMerkleProofTreeTest {
         val expectedTree =
                 " +   \n" +
                 "/ \\ \n" +
-                "*1 0000000000000000000000000000000000000000000000000000000000000000 "
+                "*1 000000000000000000000000000000000000000000000000000000000000000000"
 
         val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
@@ -89,7 +89,7 @@ class ArrayToMerkleProofTreeTest {
                 "  ]), \n" +
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100), \n" + // 100 = hash
-                "    GtvByteArray(bytearray=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])\n" +
+                "    GtvByteArray(bytearray=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])\n" +
                 "  ])\n" +
                 "])\n"
         Assert.assertEquals(stripWhite(expectedSerialization), stripWhite(serialize.toString())) // Not really needed, Can be removed
@@ -117,7 +117,7 @@ class ArrayToMerkleProofTreeTest {
         val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
-        assertEquals(expected1ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot))
+        assertEquals(expected1ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
     }
 
     @Test
@@ -216,7 +216,7 @@ class ArrayToMerkleProofTreeTest {
         val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
-        assertEquals(expected4ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot))
+        assertEquals(expected4ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
     }
 
 
@@ -413,7 +413,7 @@ class ArrayToMerkleProofTreeTest {
 
         val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
-        assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot))
+        assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
     }
 
     @Test
@@ -473,7 +473,7 @@ class ArrayToMerkleProofTreeTest {
 
         val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
-        assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot))
+        assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
     }
 
     // ---------------------
@@ -570,6 +570,6 @@ class ArrayToMerkleProofTreeTest {
 
         val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
-        assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot))
+        assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
     }
 }

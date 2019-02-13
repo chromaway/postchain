@@ -2,6 +2,7 @@ package net.postchain.gtv.merkle
 
 import net.postchain.base.CryptoSystem
 import net.postchain.base.merkle.*
+import net.postchain.base.merkle.proof.MerkleHashCarrier
 import net.postchain.gtv.*
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
@@ -59,22 +60,21 @@ fun dummyAddOneHashFun(bArr: ByteArray, cryptoSystem: CryptoSystem?): Hash {
 class MerkleHashCalculatorDummy: MerkleHashCalculator<Gtv>(null) {
     val treeFactory =GtvBinaryTreeFactory()
 
-    var proofTreeFactory:GtvMerkleProofTreeFactory
+    var proofTreeFactory: GtvMerkleProofTreeFactory
     var baseCalc: BinaryNodeHashCalculator
     init {
         proofTreeFactory =GtvMerkleProofTreeFactory(this)
         baseCalc = BinaryNodeHashCalculatorBase(cryptoSystem)
     }
 
-    override fun calculateLeafHash(value: Gtv): Hash {
+    override fun calculateLeafHash(value: Gtv): MerkleHashCarrier {
         val hash = calculateHashOfValueInternal(value, ::dummySerializatorFun, ::dummyAddOneHashFun)
         //println("Hex: " + TreeHelper.convertToHex(hash))
         return hash
     }
 
-    override fun calculateNodeHash(prefix: Byte, hashLeft: Hash, hashRight: Hash): Hash {
-        val prefixBA = byteArrayOf(prefix)
-        return prefixBA + calculateNodeHashNoPrefixInternal(hashLeft, hashRight, ::dummyAddOneHashFun)
+    override fun calculateNodeHash(prefix: Byte, hashLeft: MerkleHashCarrier, hashRight: MerkleHashCarrier): MerkleHashCarrier {
+        return MerkleHashCarrier(prefix ,calculateNodeHashNoPrefixInternal(hashLeft.getHashWithPrefix(), hashRight.getHashWithPrefix(), ::dummyAddOneHashFun))
     }
 
     override fun isContainerProofValueLeaf(value: Gtv): Boolean {

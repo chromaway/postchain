@@ -2,6 +2,7 @@ package net.postchain.base.merkle.proof
 
 import net.postchain.base.merkle.*
 import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_NODE
+import net.postchain.base.merkle.MerkleBasics.UNKNOWN_SIZE_IN_BYTE
 
 const val SERIALIZATION_HASH_LEAF_TYPE: Long = 100
 const val SERIALIZATION_VALUE_LEAF_TYPE: Long = 101
@@ -76,27 +77,29 @@ data class ProofValueLeaf<T>(val content: T): MerkleProofElement()
 /**
  * The hash in this leaf is a hash of an entire sub tree of the original Merkle tree
  */
-data class ProofHashedLeaf(val hash: Hash): MerkleProofElement() {
+data class ProofHashedLeaf(val merkleHashCarrier: MerkleHashCarrier): MerkleProofElement() {
 
     // (Probably not needed but I implement equals to get rid of the warning)
     override fun equals(other: Any?): Boolean {
         return if (other is ProofHashedLeaf) {
-            this.hash.contentEquals(other.hash)
+            this.merkleHashCarrier.equals(other.merkleHashCarrier)
         } else {
             false
         }
     }
 
     override fun hashCode(): Int {
-        return hash.hashCode()
+        return merkleHashCarrier.hashCode()
     }
 }
+
+
 
 /**
  * The "Proof Tree" can be used to prove that one or more values is/are indeed part of the Merkle tree
  * We will use the [MerkleProofTree] to calculate the BlockRID (see doc in top of this file)
  */
-abstract class MerkleProofTree<T>(val root: MerkleProofElement) {
+abstract class MerkleProofTree<T>(val root: MerkleProofElement, val totalNrOfBytes: Int = UNKNOWN_SIZE_IN_BYTE ) {
 
 
     /**
@@ -107,14 +110,15 @@ abstract class MerkleProofTree<T>(val root: MerkleProofElement) {
      * @return the calculated merkle root of the proof. For the proof to be valid, this [Hash] should equal the
      *          merkle root of the block.
      */
-    fun calculateMerkleRoot(calculator: MerkleHashCalculator<T>): Hash {
-        return calculateMerkleRootInternal(root, calculator)
+    fun calculateMerkleRoot(calculator: MerkleHashCalculator<T>): MerkleHashSummary {
+        val calculatedSummary = calculateMerkleRootInternal(root, calculator)
+        return MerkleHashSummary(calculatedSummary, totalNrOfBytes)
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun calculateMerkleRootInternal(currentElement: MerkleProofElement, calculator: MerkleHashCalculator<T>): Hash {
+    private fun calculateMerkleRootInternal(currentElement: MerkleProofElement, calculator: MerkleHashCalculator<T>): MerkleHashCarrier {
         return when (currentElement) {
-            is ProofHashedLeaf -> currentElement.hash
+            is ProofHashedLeaf -> currentElement.merkleHashCarrier
             is ProofValueLeaf<*> -> {
                 val value = currentElement.content as T // Compiler "unchecked cast" warning here, but this is actually safe.
                 if (calculator.isContainerProofValueLeaf(value)) {

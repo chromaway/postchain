@@ -3,10 +3,12 @@
 package net.postchain.base.data
 
 import net.postchain.base.*
-import net.postchain.base.merkle.MerkleRootCalculator
 import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
+import net.postchain.gtv.merkleHashWithPrefix
+import net.postchain.gtv.merkleHashWithoutPrefix
 import java.util.*
 
 /**
@@ -24,7 +26,7 @@ open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, 
     : AbstractBlockBuilder(eContext, store, txFactory) {
 
 
-    private val merkleRootCalculator = MerkleRootCalculator(GtvMerkleHashCalculator(cryptoSystem))
+    private val calc = GtvMerkleHashCalculator(cryptoSystem)
 
     /**
      * Computes the root hash for the Merkle tree of transactions currently in a block
@@ -34,7 +36,9 @@ open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, 
     fun computeRootHash(): ByteArray {
         val digests = rawTransactions.map { txFactory.decodeTransaction(it).getHash() }
 
-        return merkleRootCalculator.calculateMerkleRoot(digests)
+        val gtvArr = gtv(digests.map {gtv(it)})
+
+        return gtvArr.merkleHashWithoutPrefix(calc)
     }
 
     /**
@@ -64,6 +68,10 @@ open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, 
     override fun validateBlockHeader(blockHeader: BlockHeader): ValidationResult {
         val header = blockHeader as BaseBlockHeader
 
+        val computedMerkleRoot = computeRootHash()
+        println("computed MR: ${computedMerkleRoot.toHex()}")
+
+        println("header MR: ${header.blockHeaderRec.getMerkleRootHash().toHex()}")
         return when {
             !Arrays.equals(header.prevBlockRID, initialBlockData.prevBlockRID) ->
                 ValidationResult(false, "header.prevBlockRID != initialBlockData.prevBlockRID")
@@ -74,7 +82,7 @@ open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, 
             bctx.timestamp >= header.timestamp ->
                 ValidationResult(false, "bctx.timestamp >= header.timestamp")
 
-            !Arrays.equals(header.blockHeaderRec.getMerkleRootHash(), computeRootHash()) -> // Do this last since most expensive check!
+            !Arrays.equals(header.blockHeaderRec.getMerkleRootHash(), computedMerkleRoot) -> // Do this last since most expensive check!
                 ValidationResult(false, "header.blockHeaderRec.rootHash != computeRootHash()")
 
             else -> ValidationResult(true)

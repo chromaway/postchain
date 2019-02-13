@@ -29,4 +29,8 @@ data class GtvString(val string: String) : GtvPrimitive() {
     override fun asPrimitive(): Any? {
         return string
     }
+
+    override fun nrOfBytes(): Int {
+        return (string.length * 2)
+    }
 }

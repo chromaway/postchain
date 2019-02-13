@@ -1,6 +1,7 @@
 package net.postchain.base.merkle
 
 import net.postchain.base.CryptoSystem
+import net.postchain.base.merkle.proof.MerkleHashCarrier
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 import net.postchain.core.ProgrammerMistake
 import net.postchain.gtv.Gtv
@@ -66,7 +67,9 @@ object MerkleBasics {
     /**
      * Use this to represent a hash of an empty element (in a tree, typically)
      */
-    val EMPTY_HASH = ByteArray(32) // Just zeros
+    val EMPTY_HASH = MerkleHashCarrier(HASH_PREFIX_NODE, ByteArray(32)) // Just zeros
+
+    const val UNKNOWN_SIZE_IN_BYTE = -101
 
     /**
      * This should be the hashing function we use in production

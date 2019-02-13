@@ -20,7 +20,7 @@ import net.postchain.gtv.*
  *
  * @param size is how many element we have in the original array.
  */
-class GtvArrayHeadNode(left: BinaryTreeElement, right: BinaryTreeElement, isProofLeaf: Boolean, content: Gtv, val size: Int):
+class GtvArrayHeadNode(left: BinaryTreeElement, right: BinaryTreeElement, isProofLeaf: Boolean, content: Gtv, val size: Int, val sizeInBytes: Int):
         SubTreeRootNode<Gtv>(left, right, isProofLeaf, content) {
 
     init {
@@ -30,6 +30,8 @@ class GtvArrayHeadNode(left: BinaryTreeElement, right: BinaryTreeElement, isProo
     }
 
     override fun getPrefixByte(): Byte = HASH_PREFIX_NODE_GTV_ARRAY
+
+    override fun getNrOfBytes(): Int = sizeInBytes
 }
 
 /**
@@ -37,7 +39,7 @@ class GtvArrayHeadNode(left: BinaryTreeElement, right: BinaryTreeElement, isProo
  *
  * @param size is how many key-pairs we have in the original dict.
  */
-class GtvDictHeadNode(left: BinaryTreeElement, right: BinaryTreeElement, isProofLeaf: Boolean, content: Gtv, val size: Int):
+class GtvDictHeadNode(left: BinaryTreeElement, right: BinaryTreeElement, isProofLeaf: Boolean, content: Gtv, val size: Int, val sizeInBytes: Int):
         SubTreeRootNode<Gtv>(left, right, isProofLeaf, content){
 
     init {
@@ -47,6 +49,8 @@ class GtvDictHeadNode(left: BinaryTreeElement, right: BinaryTreeElement, isProof
     }
 
     override fun getPrefixByte(): Byte = HASH_PREFIX_NODE_GTV_DICT
+
+    override fun getNrOfBytes(): Int = sizeInBytes
 }
 
 /**

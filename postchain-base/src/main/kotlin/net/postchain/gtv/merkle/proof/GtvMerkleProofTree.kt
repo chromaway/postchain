@@ -1,5 +1,6 @@
 package net.postchain.gtv.merkle.proof
 
+import net.postchain.base.merkle.MerkleBasics.UNKNOWN_SIZE_IN_BYTE
 import net.postchain.base.merkle.proof.*
 import net.postchain.gtv.merkle.GtvMerkleBasics.HASH_PREFIX_NODE_GTV_ARRAY
 import net.postchain.gtv.merkle.GtvMerkleBasics.HASH_PREFIX_NODE_GTV_DICT
@@ -8,6 +9,8 @@ import net.postchain.gtv.*
 
 const val SERIALIZATION_ARRAY_TYPE: Long = 103
 const val SERIALIZATION_DICT_TYPE: Long = 104
+
+
 
 /**
  * Represents a proof node that once was the head of a Gtv array
@@ -27,8 +30,11 @@ class ProofNodeGtvDictHead(val size: Int, left: MerkleProofElement, right: Merkl
 
 /**
  * See [MerkleProofTree] for documentation
+ *
+ * @property root is the root of the proof
+ * @property totalNrOfBytes is the size in bytes of the original [Gtv] structure (sometimes we don't have the size, e.g. after deserialization)
  */
-class GtvMerkleProofTree(root: MerkleProofElement): MerkleProofTree<Gtv>(root) {
+class GtvMerkleProofTree(root: MerkleProofElement, totalNrOfBytes: Int = UNKNOWN_SIZE_IN_BYTE ): MerkleProofTree<Gtv>(root, totalNrOfBytes) {
 
     /**
      * Note that we have our own primitive serialization format. It is based on arrays that begins with an integer.
@@ -56,7 +62,7 @@ class GtvMerkleProofTree(root: MerkleProofElement): MerkleProofTree<Gtv>(root) {
     fun serializeToGtvInternal(currentElement: MerkleProofElement): GtvArray {
         return when (currentElement) {
             is ProofHashedLeaf -> {
-                val tail = GtvByteArray(currentElement.hash)
+                val tail = GtvByteArray(currentElement.merkleHashCarrier.getHashWithPrefix()) // TODO: Q77: Should we really smack on prefix upon serialization?
                 val head = GtvInteger(SERIALIZATION_HASH_LEAF_TYPE)
                 val arr: Array<Gtv> = arrayOf(head, tail)
                 GtvArray(arr)

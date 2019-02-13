@@ -121,7 +121,7 @@ class DictToMerkleProofTreeTest {
 
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
-        assertEquals(expectedMerkleRoot1, TreeHelper.convertToHex(merkleProofRoot))
+        assertEquals(expectedMerkleRoot1, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
 
     }
 
@@ -275,7 +275,7 @@ class DictToMerkleProofTreeTest {
 
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
-        assertEquals(expectedMerkleRoot4, TreeHelper.convertToHex(merkleProofRoot))
+        assertEquals(expectedMerkleRoot4, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
 
     }
 
@@ -365,7 +365,7 @@ class DictToMerkleProofTreeTest {
         val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
-        assertEquals(expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleProofRoot))
+        assertEquals(expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
     }
 
     // ---------------------
@@ -479,7 +479,7 @@ class DictToMerkleProofTreeTest {
         val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
-        assertEquals(expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleProofRoot))
+        assertEquals(expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
     }
 
 

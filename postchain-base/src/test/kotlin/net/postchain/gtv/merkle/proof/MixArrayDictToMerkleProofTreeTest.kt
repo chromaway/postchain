@@ -72,7 +72,7 @@ class MixArrayDictToMerkleProofTreeTest {
         val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
-        assertEquals(expecedMerkleRoot_dict1_array4, TreeHelper.convertToHex(merkleProofRoot))
+        assertEquals(expecedMerkleRoot_dict1_array4, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
     }
 
     /**
@@ -109,7 +109,7 @@ class MixArrayDictToMerkleProofTreeTest {
         val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
 
         val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
-        assertEquals(expecedMerkleRoot_dict1_array4, TreeHelper.convertToHex(merkleProofRoot))
+        assertEquals(expecedMerkleRoot_dict1_array4, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
     }
 
 }

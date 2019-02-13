@@ -37,8 +37,8 @@ abstract class MerkleProofTreeFactory<T>(val calculator: MerkleHashCalculator<T>
             // we must reduce them to a new (combined) hash.
             val addedHash = calculator.calculateNodeHash(
                     currentNode.getPrefixByte(),
-                    left.hash,
-                    right.hash)
+                    left.merkleHashCarrier,
+                    right.merkleHashCarrier)
             ProofHashedLeaf(addedHash)
         } else {
             buildNodeOfCorrectType(currentNode, left, right)

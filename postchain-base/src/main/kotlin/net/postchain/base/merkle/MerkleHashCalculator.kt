@@ -1,6 +1,7 @@
 package net.postchain.base.merkle
 
 import net.postchain.base.CryptoSystem
+import net.postchain.base.merkle.proof.MerkleHashCarrier
 import net.postchain.base.merkle.proof.MerkleProofTree
 
 
@@ -18,7 +19,7 @@ abstract class MerkleHashCalculator<T>(cryptoSystem: CryptoSystem?): BinaryNodeH
      * @param value The leaf
      * @return the hash of a leaf.
      */
-    abstract fun calculateLeafHash(value: T): Hash
+    abstract fun calculateLeafHash(value: T): MerkleHashCarrier
 
 
     /**
@@ -27,9 +28,9 @@ abstract class MerkleHashCalculator<T>(cryptoSystem: CryptoSystem?): BinaryNodeH
      * @param hashFun The only reason we pass the function as a parameter is to simplify testing.
      * @return the hash of the valueToHash.
      */
-    protected fun calculateHashOfValueInternal(valueToHash: T, serializeFun: (T) -> ByteArray, hashFun: (ByteArray, CryptoSystem?) -> Hash): Hash {
+    protected fun calculateHashOfValueInternal(valueToHash: T, serializeFun: (T) -> ByteArray, hashFun: (ByteArray, CryptoSystem?) -> Hash): MerkleHashCarrier {
         val byteArr: ByteArray = serializeFun(valueToHash)
-        return byteArrayOf(MerkleBasics.HASH_PREFIX_LEAF) + hashFun(byteArr, cryptoSystem)
+        return MerkleHashCarrier(MerkleBasics.HASH_PREFIX_LEAF, hashFun(byteArr, cryptoSystem))
     }
 
     /**

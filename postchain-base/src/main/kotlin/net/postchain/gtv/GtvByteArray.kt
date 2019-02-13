@@ -20,6 +20,10 @@ data class GtvByteArray(val bytearray: ByteArray) : GtvPrimitive() {
         return bytearray
     }
 
+    override fun nrOfBytes(): Int {
+        return bytearray.size
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
