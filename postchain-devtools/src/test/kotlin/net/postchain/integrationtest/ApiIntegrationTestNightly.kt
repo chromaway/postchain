@@ -12,14 +12,13 @@ import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.Signature
 import net.postchain.core.Transaction
-import net.postchain.integrationtest.JsonTools.jsonAsMap
-import net.postchain.devtools.EbftIntegrationTest
+import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.testinfra.TestTransaction
+import net.postchain.integrationtest.JsonTools.jsonAsMap
 import org.junit.Assert.*
 import org.junit.Test
 
-
-class ApiIntegrationTestNightly : EbftIntegrationTest() {
+class ApiIntegrationTestNightly : IntegrationTest() {
 
     private val gson = JsonTools.buildGson()
     private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
@@ -27,7 +26,9 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
 
     @Test
     fun testMixedAPICalls() {
-        createEbftNodes(3)
+        val nodeCount = 3
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
+        createNodes(nodeCount, "/net/postchain/api/blockchain_config.xml")
 
         testStatusGet("/tx/$blockchainRID/$txHashHex", 404)
         testStatusGet("/tx/$blockchainRID/$txHashHex/status", 200) {
@@ -50,7 +51,9 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
     @Suppress("UNCHECKED_CAST")
     fun testConfirmationProof() {
         val nodeCount = 3
-        createEbftNodes(nodeCount)
+//        createEbftNodes(nodeCount)
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
+        createNodes(nodeCount, "/net/postchain/api/blockchain_config.xml")
 
         var blockHeight = 0
         var currentId = 0
@@ -71,7 +74,7 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
             for (i in 0 until txCount) {
                 val tx = TestTransaction(currentId - i)
 
-                val body = given().port(ebftNodes[0].getRestApiHttpPort())
+                val body = given().port(nodes[0].getRestApiHttpPort())
                         .get("/tx/$blockchainRID/${tx.getRID().toHex()}/confirmationProof")
                         .then()
                         .statusCode(200)
@@ -110,7 +113,7 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
                 }
 
                 // Assert Merkle Path
-                val header = ebftNodes[0]
+                val header = nodes[0]
                         .getBlockchainInstance()
                         .blockchainConfiguration
                         .decodeBlockHeader(blockHeader) as BaseBlockHeader
@@ -121,13 +124,13 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
 
     private fun awaitConfirmed(blockchainRID: String, tx: Transaction) {
         RestTools.awaitConfirmed(
-                ebftNodes[0].getRestApiHttpPort(),
+                nodes[0].getRestApiHttpPort(),
                 blockchainRID,
                 tx.getRID().toHex())
     }
 
     private fun testStatusGet(path: String, expectedStatus: Int, extraChecks: (responseBody: String) -> Unit = {}) {
-        val response = given().port(ebftNodes[0].getRestApiHttpPort())
+        val response = given().port(nodes[0].getRestApiHttpPort())
                 .get(path)
                 .then()
                 .statusCode(expectedStatus)
@@ -137,7 +140,7 @@ class ApiIntegrationTestNightly : EbftIntegrationTest() {
     }
 
     private fun testStatusPost(toIndex: Int, path: String, body: String, expectedStatus: Int) {
-        given().port(ebftNodes[toIndex].getRestApiHttpPort())
+        given().port(nodes[toIndex].getRestApiHttpPort())
                 .body(body)
                 .post(path)
                 .then()

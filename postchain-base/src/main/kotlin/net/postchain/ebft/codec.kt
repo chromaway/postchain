@@ -9,18 +9,17 @@ import net.postchain.core.Signature
 import net.postchain.core.UserMistake
 import net.postchain.ebft.message.EbftMessage
 import net.postchain.ebft.message.SignedMessage
-import java.util.Arrays
+import java.util.*
 
-fun encodeAndSign(m: EbftMessage, sign: Signer): ByteArray {
-    val signingBytes = m.encode()
+fun encodeAndSign(message: EbftMessage, sign: Signer): ByteArray {
+    val signingBytes = message.encode()
     val signature = sign(signingBytes)
-    val sm = SignedMessage(signingBytes, signature.subjectID, signature.data)
-    return sm.encode()
+    return SignedMessage(signingBytes, signature.subjectID, signature.data).encode()
 }
 
 fun decodeSignedMessage(bytes: ByteArray): SignedMessage {
     try {
-        return  SignedMessage.decode(bytes)
+        return SignedMessage.decode(bytes)
     } catch (e: Exception) {
         throw UserMistake("bytes ${bytes.toHex()} cannot be decoded", e)
     }
@@ -28,19 +27,26 @@ fun decodeSignedMessage(bytes: ByteArray): SignedMessage {
 
 fun decodeWithoutVerification(bytes: ByteArray): SignedMessage {
     try {
-        val sm = SignedMessage.decode(bytes)
-        return sm
+        return SignedMessage.decode(bytes)
     } catch (e: Exception) {
         throw UserMistake("bytes cannot be decoded", e)
     }
 }
 
-fun decodeAndVerify(bytes: ByteArray, pubkey: ByteArray, verify: Verifier): EbftMessage {
-    val sm = SignedMessage.decode(bytes)
-    if (Arrays.equals(sm.pubKey, pubkey)
-            && verify(sm.message, Signature(sm.pubKey, sm.signature))) {
-        return EbftMessage.decode(sm.message)
-    } else {
-        throw UserMistake("Verification failed")
-    }
+fun decodeAndVerify(bytes: ByteArray, pubKey: ByteArray, verify: Verifier): EbftMessage {
+    return tryDecodeAndVerify(bytes, pubKey, verify)
+            ?: throw UserMistake("Verification failed")
+}
+
+fun decodeAndVerify(bytes: ByteArray, verify: Verifier): EbftMessage? {
+    val message = SignedMessage.decode(bytes)
+    val verified = verify(message.message, Signature(message.pubKey, message.signature))
+    return if (verified) EbftMessage.decode(message.message) else null
+}
+
+fun tryDecodeAndVerify(bytes: ByteArray, pubKey: ByteArray, verify: Verifier): EbftMessage? {
+    val message = SignedMessage.decode(bytes)
+    val verified = Arrays.equals(message.pubKey, pubKey)
+            && verify(message.message, Signature(message.pubKey, message.signature))
+    return if (verified) EbftMessage.decode(message.message) else null
 }

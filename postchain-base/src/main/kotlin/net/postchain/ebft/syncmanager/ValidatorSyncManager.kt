@@ -226,7 +226,9 @@ class ValidatorSyncManager(
     private fun fetchCommitSignatures(blockRID: ByteArray, nodes: Array<Int>) {
         val message = GetBlockSignature(blockRID)
         logger.debug("Fetching commit signature for block with RID ${blockRID.toHex()} from nodes ${Arrays.toString(nodes)}")
-        communicationManager.sendPacket(message, nodes.toSet())
+        nodes.forEach {
+            communicationManager.sendPacket(message, setOf(it))
+        }
     }
 
     /**

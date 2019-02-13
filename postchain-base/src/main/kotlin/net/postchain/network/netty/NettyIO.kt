@@ -46,7 +46,7 @@ abstract class NettyIO(protected val group: EventLoopGroup,
         }
 
         fun createIdentPacketBytes(descriptor: XPeerConnectionDescriptor, ephemeralPubKey: ByteArray) =
-                descriptor.peerID.byteArray +
+                descriptor.peerId.byteArray + // == peerInfo.pubKey
                         identPacketDelimiter +
                         descriptor.blockchainRID.byteArray +
                         identPacketDelimiter +
@@ -54,9 +54,10 @@ abstract class NettyIO(protected val group: EventLoopGroup,
     }
 
     init {
-        Thread({startSocket()}).start()
+        Thread({ startSocket() }).start()
     }
 
     abstract fun startSocket()
 }
+
 class DecodedMessageHolder(val byteArray: ByteArray, val serial: Long)

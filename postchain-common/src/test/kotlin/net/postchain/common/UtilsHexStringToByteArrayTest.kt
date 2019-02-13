@@ -1,7 +1,7 @@
 package net.postchain.common
 
 import assertk.assert
-import assertk.isСontentEqualTo
+import assertk.isContentEqualTo
 import org.junit.Test
 
 class UtilsHexStringToByteArrayTest {
@@ -11,7 +11,7 @@ class UtilsHexStringToByteArrayTest {
         val actual = "".hexStringToByteArray()
         val expected = ByteArray(0)
 
-        assert(actual).isСontentEqualTo(expected)
+        assert(actual).isContentEqualTo(expected)
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -24,7 +24,7 @@ class UtilsHexStringToByteArrayTest {
         val actual = "0123456708090A0B0C0D0E0F".hexStringToByteArray()
         val expected = byteArrayOf(0x01, 0x23, 0x45, 0x67, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F)
 
-        assert(actual).isСontentEqualTo(expected)
+        assert(actual).isContentEqualTo(expected)
     }
 
     @Test
@@ -32,7 +32,7 @@ class UtilsHexStringToByteArrayTest {
         val actual = "FF88".hexStringToByteArray()
         val expected = byteArrayOf(0xFF.toByte(), 0x88.toByte())
 
-        assert(actual).isСontentEqualTo(expected)
+        assert(actual).isContentEqualTo(expected)
     }
 
     @Test
@@ -40,7 +40,7 @@ class UtilsHexStringToByteArrayTest {
         val actual = "0a0B0C0d0E0F".hexStringToByteArray()
         val expected = byteArrayOf(0x0A, 0x0b, 0x0C, 0x0D, 0x0e, 0x0F)
 
-        assert(actual).isСontentEqualTo(expected)
+        assert(actual).isContentEqualTo(expected)
     }
 
     @Test(expected = IllegalArgumentException::class)

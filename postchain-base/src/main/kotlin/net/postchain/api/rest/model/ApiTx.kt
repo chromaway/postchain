@@ -3,6 +3,7 @@ package net.postchain.api.rest.model
 import net.postchain.common.hexStringToByteArray
 
 class ApiTx(val tx: String) {
+
     val bytes: ByteArray
         get() {
             return tx.hexStringToByteArray()

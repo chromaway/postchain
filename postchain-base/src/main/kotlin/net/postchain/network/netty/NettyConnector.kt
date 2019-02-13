@@ -11,7 +11,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import net.postchain.base.CryptoSystem
 import net.postchain.base.PeerInfo
-import net.postchain.network.*
+import net.postchain.network.IdentPacketConverter
 import net.postchain.network.x.XConnector
 import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPeerConnectionDescriptor
@@ -20,14 +20,15 @@ class NettyConnector(private val myPeerInfo: PeerInfo,
                      private val eventReceiver: XConnectorEvents,
                      private val identPacketConverter: IdentPacketConverter,
                      private val cryptoSystem: CryptoSystem,
-                     private val enabledEncryption: Boolean = true): XConnector {
+                     private val enabledEncryption: Boolean = true) : XConnector {
 
     val serverEventLoopGroup: EventLoopGroup
     val clientEventLoopGroup: EventLoopGroup
     val serverChannel: Class<ServerSocketChannel>
     val clientChannel: Class<SocketChannel>
+
     init {
-        if(System.getProperty("os.name").toLowerCase().contains("linux")) {
+        if (System.getProperty("os.name").toLowerCase().contains("linux")) {
             serverEventLoopGroup = EpollEventLoopGroup()
             clientEventLoopGroup = EpollEventLoopGroup()
             serverChannel = EpollServerSocketChannel::class.java as Class<ServerSocketChannel>
@@ -39,6 +40,10 @@ class NettyConnector(private val myPeerInfo: PeerInfo,
             clientChannel = NioSocketChannel::class.java as Class<SocketChannel>
         }
         NettyPassivePeerConnection(myPeerInfo, identPacketConverter, eventReceiver, serverChannel, serverEventLoopGroup, cryptoSystem, enabledEncryption)
+    }
+
+    override fun init(peerInfo: PeerInfo) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun connectPeer(descriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo) {

@@ -228,8 +228,8 @@
                         <configuration>
                             <includes>
                                 <include>**/*Test.java</include>
+                                <include>**/*IT.java</include>
                                 <include>**/*Nightly.java</include>
-
                                 <!--<include>**/DefaultXConnectionManagerTest.java</include>-->
                             </includes>
                         </configuration>

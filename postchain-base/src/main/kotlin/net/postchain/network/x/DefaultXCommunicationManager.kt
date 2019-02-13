@@ -3,6 +3,7 @@ package net.postchain.network.x
 import mu.KLogging
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerInfo
+import net.postchain.core.NODE_ID_READ_ONLY
 import net.postchain.core.Shutdownable
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.network.CommunicationManager
@@ -21,9 +22,9 @@ class DefaultXCommunicationManager<PacketType>(
 
     companion object : KLogging()
 
-    var inboundPackets = mutableListOf<Pair<XPeerID, PacketType>>()
+    private var inboundPackets = mutableListOf<Pair<XPeerID, PacketType>>()
 
-    init {
+    override fun init() {
         val peerConfig = XChainPeerConfiguration(
                 chainID,
                 config,
@@ -43,7 +44,18 @@ class DefaultXCommunicationManager<PacketType>(
     }
 
     override fun sendPacket(packet: PacketType, recipients: Set<Int>) {
-        assert(recipients.size == 1)
+        require(recipients.size == 1) {
+            "CommunicationManager.sendPacket(): multiple recipients are not allowed"
+        }
+
+        require(recipients.first() in config.peerInfo.indices) {
+            "CommunicationManager.sendPacket(): recipient must be in range ${config.peerInfo.indices}"
+        }
+
+        require(recipients.first() != config.myIndex) {
+            "CommunicationManager.sendPacket(): recipient must not be equal to myIndex ${config.myIndex}"
+        }
+
         val peerIdx = recipients.first()
         connectionManager.sendPacket(
                 { packetConverter.encodePacket(packet) },

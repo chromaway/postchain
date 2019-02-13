@@ -49,7 +49,7 @@ class NettyConnectorTest {
         }
 
         override fun onPeerDisconnected(descriptor: XPeerConnectionDescriptor) {
-            receivedErrors.add(String(descriptor.peerID.byteArray))
+            receivedErrors.add(String(descriptor.peerId.byteArray))
         }
     }
 
@@ -60,7 +60,7 @@ class NettyConnectorTest {
         }
 
         override fun onPeerDisconnected(descriptor: XPeerConnectionDescriptor) {
-            receivedErrors.add(String(descriptor.peerID.byteArray))
+            receivedErrors.add(String(descriptor.peerId.byteArray))
         }
     }
 

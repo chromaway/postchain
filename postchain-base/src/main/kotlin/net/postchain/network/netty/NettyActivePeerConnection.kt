@@ -9,12 +9,10 @@ import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.channel.socket.SocketChannel
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 import net.postchain.base.*
-import net.postchain.network.*
+import net.postchain.network.IdentPacketConverter
+import net.postchain.network.MAX_PAYLOAD_SIZE
 import net.postchain.network.netty.bc.SymmetricEncryptorUtil
 import net.postchain.network.x.*
-import net.postchain.network.x.XConnectorEvents
-import net.postchain.network.x.XPeerConnection
-import net.postchain.network.x.XPeerConnectionDescriptor
 import java.net.InetSocketAddress
 
 class NettyActivePeerConnection(private val peerInfo: PeerInfo,
@@ -24,7 +22,7 @@ class NettyActivePeerConnection(private val peerInfo: PeerInfo,
                                 private val channelClass: Class<SocketChannel>,
                                 eventLoopGroup: EventLoopGroup,
                                 cryptoSystem: CryptoSystem,
-                                private val enabledEncryption: Boolean): NettyIO(eventLoopGroup, cryptoSystem) {
+                                private val enabledEncryption: Boolean) : NettyIO(eventLoopGroup, cryptoSystem) {
 
     override fun startSocket() {
         try {
@@ -54,7 +52,7 @@ class NettyActivePeerConnection(private val peerInfo: PeerInfo,
         private lateinit var sessionKey: ByteArray
         private lateinit var ctx: ChannelHandlerContext
         var messagesSent = 0L
-        private set
+            private set
 
         override fun close() {
             ctx?.close()
@@ -65,15 +63,15 @@ class NettyActivePeerConnection(private val peerInfo: PeerInfo,
         }
 
         override fun sendPacket(packet: LazyPacket) {
-            if(ctx != null) {
-                val message = if(enabledEncryption) SymmetricEncryptorUtil.encrypt(packet.invoke(), sessionKey, ++messagesSent)
-                                    else packet.invoke()
+            if (ctx != null) {
+                val message = if (enabledEncryption) SymmetricEncryptorUtil.encrypt(packet.invoke(), sessionKey, ++messagesSent)
+                else packet.invoke()
                 ctx!!.writeAndFlush(Unpooled.wrappedBuffer(message), ctx!!.voidPromise())
             }
         }
 
         fun sendIdentPacket(packet: LazyPacket) {
-            if(ctx != null) {
+            if (ctx != null) {
                 ctx!!.writeAndFlush(Unpooled.wrappedBuffer(packet.invoke()), ctx!!.voidPromise())
             }
         }
@@ -91,12 +89,14 @@ class NettyActivePeerConnection(private val peerInfo: PeerInfo,
             eventReceiver.onPeerDisconnected(descriptor)
             close()
         }
+
         fun readPacket(msg: Any) = NettyIO.readPacket(msg)
 
         @Volatile
         private var receivedPassivePublicKey = false
+
         override fun channelRead0(channelHandlerContext: ChannelHandlerContext, o: Any) {
-            if(!receivedPassivePublicKey) {
+            if (!receivedPassivePublicKey) {
                 synchronized(receivedPassivePublicKey) {
                     if (!receivedPassivePublicKey) {
                         val remotePubKey = readPacket(o)
@@ -121,16 +121,16 @@ class NettyActivePeerConnection(private val peerInfo: PeerInfo,
 
         fun readEncryptedPacket(msg: Any): ByteArray {
             val bytes = readPacket(msg)
-            return if(bytes.isEmpty()) bytes
-            else if(enabledEncryption) SymmetricEncryptorUtil.decrypt(bytes, sessionKey)!!.byteArray
-                 else bytes
+            return if (bytes.isEmpty()) bytes
+            else if (enabledEncryption) SymmetricEncryptorUtil.decrypt(bytes, sessionKey)!!.byteArray
+            else bytes
         }
 
         private fun handleInput(o: Any) {
-            if(handler != null) {
+            if (handler != null) {
                 val bytes = readEncryptedPacket(o)
-                if(bytes.isNotEmpty()) {
-                    handler!!.invoke(bytes, descriptor.peerID)
+                if (bytes.isNotEmpty()) {
+                    handler!!.invoke(bytes, descriptor.peerId)
                 }
             } else {
                 logger.error("${this::class.java.name}, handler is null")

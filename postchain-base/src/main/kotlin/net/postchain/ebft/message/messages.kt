@@ -9,6 +9,7 @@ import java.util.*
 
 
 class SignedMessage(val message: ByteArray, val pubKey: ByteArray, val signature: ByteArray) {
+
     companion object {
         fun decode(bytes: ByteArray): net.postchain.ebft.message.SignedMessage {
             val message = net.postchain.ebft.messages.SignedMessage.der_decode(bytes.inputStream())

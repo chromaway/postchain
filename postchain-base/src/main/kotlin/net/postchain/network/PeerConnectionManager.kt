@@ -2,9 +2,11 @@ package net.postchain.network
 
 import mu.KLogging
 import net.postchain.base.PeerInfo
+import net.postchain.base.peerId
 import net.postchain.common.toHex
 import net.postchain.core.ByteArrayKey
 import net.postchain.core.Shutdownable
+import net.postchain.core.byteArrayKeyOf
 import java.util.*
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.concurrent.thread

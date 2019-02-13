@@ -5,14 +5,18 @@ import net.postchain.core.BlockchainConfiguration
 import net.postchain.core.BlockchainEngine
 import net.postchain.core.NODE_ID_AUTO
 import net.postchain.core.RestartHandler
-import net.postchain.ebft.*
+import net.postchain.ebft.BaseBlockDatabase
+import net.postchain.ebft.BaseBlockManager
+import net.postchain.ebft.BaseStatusManager
+import net.postchain.ebft.BlockManager
 import net.postchain.ebft.message.EbftMessage
+import net.postchain.ebft.syncmanager.SyncManagerBase
 import net.postchain.ebft.syncmanager.ValidatorSyncManager
 import net.postchain.network.CommunicationManager
 import kotlin.concurrent.thread
 
 /**
- * A blockchain instance validator worker
+ * A blockchain instance worker
  *
  * @property updateLoop the main thread
  * @property blockManager manages intents and acts as a wrapper for [blockDatabase] and [statusManager]
@@ -22,19 +26,20 @@ class ValidatorWorker(
         private val engine: BlockchainEngine,
         nodeIndex: Int,
         communicationManager: CommunicationManager<EbftMessage>,
-        val restartHandler: RestartHandler
+        val restartHandler: RestartHandler // TODO: Maybe redesign this feature
 ) : WorkerBase {
 
     private lateinit var updateLoop: Thread
-    override val blockchainConfiguration: BlockchainConfiguration = engine.getConfiguration()
+    override val blockchainConfiguration: BlockchainConfiguration
     override val blockDatabase: BaseBlockDatabase
+    val blockManager: BlockManager
+    val statusManager: BaseStatusManager
     override val syncManager: ValidatorSyncManager
     override val networkAwareTxQueue: NetworkAwareTxQueue
 
-    private val blockManager: BlockManager
-    val statusManager: BaseStatusManager
-
     init {
+        blockchainConfiguration = engine.getConfiguration()
+
         val blockQueries = engine.getBlockQueries()
         val bestHeight = blockQueries.getBestHeight().get()
         statusManager = BaseStatusManager(
@@ -50,7 +55,7 @@ class ValidatorWorker(
                 statusManager,
                 engine.getBlockBuildingStrategy())
 
-        // Give the ValidatorSyncManager the BaseTransactionQueue and not the network-aware one,
+        // Give the SyncManager the BaseTransactionQueue and not the network-aware one,
         // because we don't want tx forwarding/broadcasting when received through p2p network
         syncManager = ValidatorSyncManager(
                 statusManager,
@@ -78,20 +83,13 @@ class ValidatorWorker(
      *
      * @param syncManager the syncronization manager
      */
-    private fun startUpdateLoop(syncManager: ValidatorSyncManager) {
+    private fun startUpdateLoop(syncManager: SyncManagerBase) {
         updateLoop = thread(name = "updateLoop") {
             while (!Thread.interrupted()) {
-                try {
-                    syncManager.update()
-                }
-                catch (e: Exception) {
-                    e.printStackTrace()
-                }
-
+                syncManager.update()
                 try {
                     Thread.sleep(50)
                 } catch (e: InterruptedException) {
-                    e.printStackTrace()
                     Thread.currentThread().interrupt()
                 }
             }

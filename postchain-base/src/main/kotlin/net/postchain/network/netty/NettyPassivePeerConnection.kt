@@ -6,8 +6,10 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.EventLoopGroup
+import io.netty.channel.socket.ServerSocketChannel
 import io.netty.channel.socket.SocketChannel
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder
+import io.netty.util.ReferenceCountUtil
 import net.postchain.base.CryptoSystem
 import net.postchain.base.DynamicPortPeerInfo
 import net.postchain.base.PeerInfo
@@ -18,10 +20,7 @@ import net.postchain.network.IdentPacketInfo
 import net.postchain.network.MAX_PAYLOAD_SIZE
 import net.postchain.network.netty.bc.SymmetricEncryptorUtil
 import net.postchain.network.x.*
-import java.lang.Exception
 import java.net.InetSocketAddress
-import io.netty.channel.socket.*
-import io.netty.util.ReferenceCountUtil
 
 /**
  * ruslan.klymenko@zorallabs.com 19.10.18
@@ -32,14 +31,14 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
                                  private val channelClass: Class<ServerSocketChannel>,
                                  eventLoopGroup: EventLoopGroup,
                                  cryptoSystem: CryptoSystem,
-                                 private val enabledEncryption: Boolean): NettyIO(eventLoopGroup, cryptoSystem) {
+                                 private val enabledEncryption: Boolean) : NettyIO(eventLoopGroup, cryptoSystem) {
 
     override fun startSocket() {
         try {
             val serverBootstrap = ServerBootstrap()
             serverBootstrap.group(group)
             serverBootstrap.channel(channelClass)
-            if(peerInfo is DynamicPortPeerInfo) {
+            if (peerInfo is DynamicPortPeerInfo) {
                 serverBootstrap.localAddress(InetSocketAddress(peerInfo.host, 0))
             } else {
                 serverBootstrap.localAddress(InetSocketAddress(peerInfo.host, peerInfo.port))
@@ -59,18 +58,18 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
         }
     }
 
-    inner class ServerHandler: ChannelInboundHandlerAdapter(), XPeerConnection {
+    inner class ServerHandler : ChannelInboundHandlerAdapter(), XPeerConnection {
         private lateinit var handler: XPacketHandler
         private lateinit var ctx: ChannelHandlerContext
         private lateinit var sessionKey: ByteArray
         private var connectionDescriptor: XPeerConnectionDescriptor? = null
         var messagesSent = 0L
-        private set
+            private set
 
         override fun sendPacket(packet: LazyPacket) {
-            if(ctx != null) {
-                val message = if(enabledEncryption) SymmetricEncryptorUtil.encrypt(packet.invoke(), sessionKey, ++messagesSent)
-                                        else packet.invoke()
+            if (ctx != null) {
+                val message = if (enabledEncryption) SymmetricEncryptorUtil.encrypt(packet.invoke(), sessionKey, ++messagesSent)
+                else packet.invoke()
                 ctx!!.writeAndFlush(Unpooled.wrappedBuffer(message), ctx!!.voidPromise())
             }
         }
@@ -78,20 +77,22 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
         override fun close() {
             ctx?.close()
         }
+
         override fun accept(handler: XPacketHandler) {
             this.handler = handler
         }
 
         fun sendIdentPacket(packet: LazyPacket) {
-        if(ctx != null) {
-            ctx!!.writeAndFlush(Unpooled.wrappedBuffer(packet.invoke()), ctx!!.voidPromise())
+            if (ctx != null) {
+                ctx!!.writeAndFlush(Unpooled.wrappedBuffer(packet.invoke()), ctx!!.voidPromise())
+            }
         }
-    }
 
         @Volatile
         private var receivedPassivePublicKey = false
+
         override fun channelRead(context: ChannelHandlerContext, msg: Any) {
-            if(!receivedPassivePublicKey) {
+            if (!receivedPassivePublicKey) {
                 synchronized(receivedPassivePublicKey) {
                     if (!receivedPassivePublicKey) {
                         ctx = context
@@ -122,26 +123,29 @@ class NettyPassivePeerConnection(private val peerInfo: PeerInfo,
             val digest = cryptoSystem.digest(ecdh1 + ecdh2)
             sessionKey = digest
         }
+
         fun readPacket(msg: Any) = NettyIO.readPacket(msg)
 
         fun readEncryptedPacket(msg: Any): ByteArray {
             val bytes = readPacket(msg)
-            return if(bytes.isEmpty()) bytes
-            else if(enabledEncryption) SymmetricEncryptorUtil.decrypt(bytes, sessionKey!!)!!.byteArray
-                 else bytes
+            return if (bytes.isEmpty()) bytes
+            else if (enabledEncryption) SymmetricEncryptorUtil.decrypt(bytes, sessionKey!!)!!.byteArray
+            else bytes
         }
 
         private fun readAndHandleInput(msg: Any) {
-            if(handler != null) {
+            if (handler != null) {
                 val bytes = readEncryptedPacket(msg)
-                handler!!.invoke(bytes, connectionDescriptor!!.peerID)
+                handler!!.invoke(bytes, connectionDescriptor!!.peerId)
             } else {
                 logger.error("${this::class.java.name}, handler is null")
             }
         }
+
         override fun channelReadComplete(ctx: ChannelHandlerContext) {
             ctx.writeAndFlush(Unpooled.EMPTY_BUFFER, ctx.voidPromise())
         }
+
         override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
             eventReceiver.onPeerDisconnected(connectionDescriptor!!)
             close()
