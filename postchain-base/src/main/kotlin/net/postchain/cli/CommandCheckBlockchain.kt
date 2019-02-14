@@ -41,34 +41,33 @@ class CommandCheckBlockchain : Command {
 
     override fun key(): String = "check-blockchain"
 
-    override fun execute() {
+    override fun execute(): CliResult {
         println("check-blockchain will be executed with options: " +
                 toStringExclude(this, "dbAccess", ToStringStyle.SHORT_PREFIX_STYLE))
 
-        runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
-            val chainIdBlockchainRid = dbAccess.getBlockchainRID(ctx)
-
-            when {
-                chainIdBlockchainRid == null -> {
-                    println("Unknown chain-id: $chainId")
-                }
-
-                !blockchainRID.equals(chainIdBlockchainRid.toHex(), true) -> {
-                    println("""
-                        BlockchainRids are not equal:
-                            expected: $blockchainRID
-                            actual: ${chainIdBlockchainRid.toHex()}
-                    """.trimIndent())
-                }
-
-                BaseConfigurationDataStore.findConfiguration(ctx, 0) == null -> {
-                    println("No configuration found")
-                }
-
-                else -> {
-                    println("Okay")
+        return try {
+            runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
+                val chainIdBlockchainRid = dbAccess.getBlockchainRID(ctx)
+                when {
+                    chainIdBlockchainRid == null -> {
+                        throw CliError.Companion.CliException("Unknown chain-id: $chainId")
+                    }
+                    !blockchainRID.equals(chainIdBlockchainRid.toHex(), true) -> {
+                        throw CliError.Companion.CliException("""
+                            BlockchainRids are not equal:
+                                expected: $blockchainRID
+                                actual: ${chainIdBlockchainRid.toHex()}
+                        """.trimIndent())
+                    }
+                    BaseConfigurationDataStore.findConfiguration(ctx, 0) == null -> {
+                        throw CliError.Companion.CliException("No configuration found")
+                    }
+                    else -> {}
                 }
             }
+            Ok("Okay")
+        } catch (e: CliError.Companion.CliException) {
+            CliError.CheckBlockChain(message = e.message)
         }
     }
 
