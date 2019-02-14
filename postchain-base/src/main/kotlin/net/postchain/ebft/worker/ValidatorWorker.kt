@@ -30,15 +30,14 @@ class ValidatorWorker(
 ) : WorkerBase {
 
     private lateinit var updateLoop: Thread
-    override val blockchainConfiguration: BlockchainConfiguration
+    override val blockchainConfiguration: BlockchainConfiguration = engine.getConfiguration()
     override val blockDatabase: BaseBlockDatabase
-    val blockManager: BlockManager
+    private val blockManager: BlockManager
     val statusManager: BaseStatusManager
     override val syncManager: ValidatorSyncManager
     override val networkAwareTxQueue: NetworkAwareTxQueue
 
     init {
-        blockchainConfiguration = engine.getConfiguration()
 
         val blockQueries = engine.getBlockQueries()
         val bestHeight = blockQueries.getBestHeight().get()
@@ -86,10 +85,17 @@ class ValidatorWorker(
     private fun startUpdateLoop(syncManager: SyncManagerBase) {
         updateLoop = thread(name = "updateLoop") {
             while (!Thread.interrupted()) {
-                syncManager.update()
+                try {
+                    syncManager.update()
+                }
+                catch (e: Exception) {
+                    e.printStackTrace()
+                }
+
                 try {
                     Thread.sleep(50)
                 } catch (e: InterruptedException) {
+                    e.printStackTrace()
                     Thread.currentThread().interrupt()
                 }
             }
