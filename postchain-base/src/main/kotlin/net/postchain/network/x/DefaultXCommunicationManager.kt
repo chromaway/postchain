@@ -3,7 +3,7 @@ package net.postchain.network.x
 import mu.KLogging
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerInfo
-import net.postchain.core.NODE_ID_READ_ONLY
+import net.postchain.base.peerId
 import net.postchain.core.Shutdownable
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.network.CommunicationManager
@@ -41,6 +41,22 @@ class DefaultXCommunicationManager<PacketType>(
         val currentQueue = inboundPackets
         inboundPackets = mutableListOf()
         return currentQueue
+    }
+
+    override fun sendPacket(packet: PacketType, recipient: XPeerID) {
+        val peers : List<XPeerID> = config.peerInfo.map(PeerInfo::peerId)
+        require(recipient in peers) {
+            "CommunicationManager.sendPacket(): recipient not found among peers"
+        }
+
+        require(config.myIndex != getPeerIndex(recipient)) {
+            "CommunicationManager.sendPacket(): recipient must not be equal to myIndex ${config.myIndex}"
+        }
+
+        connectionManager.sendPacket(
+                { packetConverter.encodePacket(packet) },
+                chainID,
+                recipient)
     }
 
     override fun sendPacket(packet: PacketType, recipients: Set<Int>) {

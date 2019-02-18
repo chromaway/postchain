@@ -9,6 +9,7 @@ import net.postchain.ebft.*
 import net.postchain.ebft.message.*
 import net.postchain.ebft.message.Transaction
 import net.postchain.network.CommunicationManager
+import net.postchain.network.x.XPeerID
 import java.util.*
 
 fun decodeBlockDataWithWitness(block: CompleteBlock, bc: BlockchainConfiguration)
@@ -81,41 +82,47 @@ class ValidatorSyncManager(
             val message = packet.second
             logger.debug { "Received message type ${message.getBackingInstance().choiceID} from $nodeIndex" }
             try {
-                if(nodeIndex != NODE_ID_READ_ONLY) {
-                    when (message) {
-                        is Status -> {
-                            val nodeStatus = NodeStatus(message.height, message.serial)
-                            nodeStatus.blockRID = message.blockRId
-                            nodeStatus.revolting = message.revolting
-                            nodeStatus.round = message.round
-                            nodeStatus.state = NodeState.values()[message.state]
-                            statusManager.onStatusUpdate(nodeIndex, nodeStatus)
-                        }
-                        is BlockSignature -> {
-                            val signature = Signature(message.signature.subjectID, message.signature.data)
-                            val smBlockRID = this.statusManager.myStatus.blockRID
-                            if (smBlockRID == null) {
-                                logger.info("Received signature not needed")
-                            } else if (!smBlockRID.contentEquals(message.blockRID)) {
-                                logger.info("Receive signature for a different block")
-                            } else if (this.blockDatabase.verifyBlockSignature(signature)) {
-                                this.statusManager.onCommitSignature(nodeIndex, message.blockRID, signature)
+                when (message) {
+                    // same case for replica and validator node
+                    is GetBlockAtHeight -> sendBlockAtHeight(xPeerId, message.height)
+                    else -> {
+                        if(nodeIndex != NODE_ID_READ_ONLY) {
+                            // validator consensus logic
+                            when (message) {
+                                is Status -> {
+                                    val nodeStatus = NodeStatus(message.height, message.serial)
+                                    nodeStatus.blockRID = message.blockRId
+                                    nodeStatus.revolting = message.revolting
+                                    nodeStatus.round = message.round
+                                    nodeStatus.state = NodeState.values()[message.state]
+                                    statusManager.onStatusUpdate(nodeIndex, nodeStatus)
+                                }
+                                is BlockSignature -> {
+                                    val signature = Signature(message.signature.subjectID, message.signature.data)
+                                    val smBlockRID = this.statusManager.myStatus.blockRID
+                                    if (smBlockRID == null) {
+                                        logger.info("Received signature not needed")
+                                    } else if (!smBlockRID.contentEquals(message.blockRID)) {
+                                        logger.info("Receive signature for a different block")
+                                    } else if (this.blockDatabase.verifyBlockSignature(signature)) {
+                                        this.statusManager.onCommitSignature(nodeIndex, message.blockRID, signature)
+                                    }
+                                }
+                                is CompleteBlock -> {
+                                    blockManager.onReceivedBlockAtHeight(
+                                            decodeBlockDataWithWitness(message, blockchainConfiguration),
+                                            message.height
+                                    )
+                                }
+                                is UnfinishedBlock -> {
+                                    blockManager.onReceivedUnfinishedBlock(decodeBlockData(message, blockchainConfiguration))
+                                }
+                                is GetUnfinishedBlock -> sendUnfinishedBlock(nodeIndex)
+                                is GetBlockSignature -> sendBlockSignature(nodeIndex, message.blockRID)
+                                is Transaction -> handleTransaction(nodeIndex, message)
+                                else -> throw ProgrammerMistake("Unhandled type ${message::class}")
                             }
                         }
-                        is CompleteBlock -> {
-                            blockManager.onReceivedBlockAtHeight(
-                                    decodeBlockDataWithWitness(message, blockchainConfiguration),
-                                    message.height
-                            )
-                        }
-                        is UnfinishedBlock -> {
-                            blockManager.onReceivedUnfinishedBlock(decodeBlockData(message, blockchainConfiguration))
-                        }
-                        is GetUnfinishedBlock -> sendUnfinishedBlock(nodeIndex)
-                        is GetBlockAtHeight -> sendBlockAtHeight(nodeIndex, message.height)
-                        is GetBlockSignature -> sendBlockSignature(nodeIndex, message.blockRID)
-                        is Transaction -> handleTransaction(nodeIndex, message)
-                        else -> throw ProgrammerMistake("Unhandled type ${message::class}")
                     }
                 }
             } catch (e: Exception) {
@@ -166,15 +173,15 @@ class ValidatorSyncManager(
     /**
      * Send message to node including the block at [height]. This is a response to the [fetchBlockAtHeight] request.
      *
-     * @param nodeIndex index of receiving node
+     * @param xPeerId XPeerID of receiving node
      * @param height requested block height
      */
-    private fun sendBlockAtHeight(nodeIndex: Int, height: Long) {
+    private fun sendBlockAtHeight(xPeerId: XPeerID, height: Long) {
         val blockAtHeight = blockDatabase.getBlockAtHeight(height)
         blockAtHeight success {
             val packet = CompleteBlock(it.header.rawData, it.transactions.toList(),
                     height, it.witness!!.getRawData())
-            communicationManager.sendPacket(packet, setOf(nodeIndex))
+            communicationManager.sendPacket(packet, xPeerId)
         } fail { logger.debug("Error sending CompleteBlock", it) }
     }
 
@@ -213,7 +220,7 @@ class ValidatorSyncManager(
      */
     private fun fetchBlockAtHeight(height: Long) {
         val nodeIndex = selectRandomNode { it.height > height } ?: return
-        logger.debug("Fetching block at height ${height} from node ${nodeIndex}")
+        logger.debug("Fetching block at height $height from node $nodeIndex")
         communicationManager.sendPacket(GetBlockAtHeight(height), setOf(nodeIndex))
     }
 
