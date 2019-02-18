@@ -6,7 +6,7 @@ import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import junitparams.naming.TestCaseName
 import mu.KLogging
-import net.postchain.devtools.EbftIntegrationTest
+import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.SingleChainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
@@ -16,7 +16,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(JUnitParamsRunner::class)
-class FullEbftTestNightly : EbftIntegrationTest() {
+class FullEbftTestNightly : IntegrationTest() {
 
     companion object : KLogging()
 
@@ -41,14 +41,15 @@ class FullEbftTestNightly : EbftIntegrationTest() {
                     "nodesCount: $nodesCount, blockCount: $blockCount, txPerBlock: $txPerBlock"
         }
 
-        configOverrides.setProperty("blockchain.1.blockstrategy", OnDemandBlockBuildingStrategy::class.qualifiedName)
-        createEbftNodes(nodesCount)
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+        createNodes(nodesCount, "/net/postchain/full_ebft/blockchain_config_$nodesCount.xml")
+
         var txId = 0
-        ebftNodes[0].getBlockchainInstance().statusManager
+        nodes[0].getBlockchainInstance().statusManager
         for (i in 0 until blockCount) {
             for (tx in 0 until txPerBlock) {
                 val currentTxId = txId++
-                ebftNodes.forEach {
+                nodes.forEach {
                     it.getBlockchainInstance()
                             .getEngine()
                             .getTransactionQueue()
@@ -56,15 +57,15 @@ class FullEbftTestNightly : EbftIntegrationTest() {
                 }
             }
             logger.info { "Trigger block" }
-            ebftNodes.forEach { strategy(it).buildBlocksUpTo(i.toLong()) }
+            nodes.forEach { strategy(it).buildBlocksUpTo(i.toLong()) }
             logger.info { "Await committed" }
-            ebftNodes.forEach { strategy(it).awaitCommitted(i) }
+            nodes.forEach { strategy(it).awaitCommitted(i) }
         }
 
-        val queries = ebftNodes[0].getBlockchainInstance().getEngine().getBlockQueries()
+        val queries = nodes[0].getBlockchainInstance().getEngine().getBlockQueries()
         val referenceHeight = queries.getBestHeight().get()
         logger.info { "$blockCount, refHe: $referenceHeight" }
-        ebftNodes.forEach { node ->
+        nodes.forEach { node ->
             val queries = node.getBlockchainInstance().getEngine().getBlockQueries()
             assertEquals(referenceHeight, queries.getBestHeight().get())
 

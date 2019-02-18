@@ -1,7 +1,8 @@
 package net.postchain.cli
 
 import com.beust.jcommander.JCommander
-import com.beust.jcommander.MissingCommandException
+import com.beust.jcommander.ParameterException
+import java.sql.SQLException
 
 class Cli {
 
@@ -9,6 +10,7 @@ class Cli {
     private val commands: Map<String, Command> = listOf(
             CommandKeygen()
 
+            , CommandWaitDb()
             , CommandCheckBlockchain()
             , CommandAddBlockchain()
             , CommandAddConfiguration()
@@ -26,13 +28,18 @@ class Cli {
         }
     }
 
-    fun parse(args: Array<String>) {
-        jCommander.parse(*args)
-
-        if (jCommander.parsedCommand == null) {
-            throw MissingCommandException("Expected a command, got <no-command>", "<no-command>")
-        } else {
-            commands[jCommander.parsedCommand]?.execute()
+    fun parse(args: Array<String>): CliResult {
+        return try {
+            jCommander.parse(*args)
+            if (jCommander.parsedCommand == null) {
+                CliError.MissingCommand(message = "Expected a command, got <no-command>")
+            } else {
+                commands[jCommander.parsedCommand]?.execute()?: CliError.CommandNotFound(command = jCommander.parsedCommand)
+            }
+        } catch (e: ParameterException){
+            CliError.CommandNotFound(command = jCommander.parsedCommand)
+        } catch (e: SQLException){
+            CliError.DatabaseOffline()
         }
     }
 

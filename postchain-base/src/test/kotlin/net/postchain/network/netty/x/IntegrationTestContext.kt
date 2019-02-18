@@ -8,7 +8,7 @@ import net.postchain.network.PacketConverter
 import net.postchain.devtools.KeyPairHelper
 
 class IntegrationTestContext2(
-        connectorFactory: XConnectorFactory,
+        connectorFactory: XConnectorFactory<PacketConverter<Int>>,
         blockchainRid: ByteArray,
         peerInfos: Array<PeerInfo>,
         myIndex: Int,

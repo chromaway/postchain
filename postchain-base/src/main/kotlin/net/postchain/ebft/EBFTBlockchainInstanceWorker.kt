@@ -6,7 +6,7 @@ import net.postchain.core.BlockchainEngine
 import net.postchain.core.NODE_ID_AUTO
 import net.postchain.core.RestartHandler
 import net.postchain.ebft.message.EbftMessage
-import net.postchain.network.CommManager
+import net.postchain.network.CommunicationManager
 import kotlin.concurrent.thread
 
 /**
@@ -18,8 +18,8 @@ import kotlin.concurrent.thread
 open class EBFTBlockchainInstanceWorker(
         private val engine: BlockchainEngine,
         nodeIndex: Int,
-        communicationManager: CommManager<EbftMessage>,
-        val restartHandler: RestartHandler
+        communicationManager: CommunicationManager<EbftMessage>,
+        val restartHandler: RestartHandler // TODO: Maybe redesign this feature
 ) : BlockchainInstanceModel {
 
     private lateinit var updateLoop: Thread
@@ -79,10 +79,17 @@ open class EBFTBlockchainInstanceWorker(
     private fun startUpdateLoop(syncManager: SyncManager) {
         updateLoop = thread(name = "updateLoop") {
             while (!Thread.interrupted()) {
-                syncManager.update()
+                try {
+                    syncManager.update()
+                }
+                catch (e: Exception) {
+                    e.printStackTrace()
+                }
+
                 try {
                     Thread.sleep(50)
                 } catch (e: InterruptedException) {
+                    e.printStackTrace()
                     Thread.currentThread().interrupt()
                 }
             }

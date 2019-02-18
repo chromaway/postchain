@@ -2,7 +2,7 @@ package net.postchain.network.x
 
 import assertk.assert
 import assertk.assertions.isEmpty
-import assertk.isСontentEqualTo
+import assertk.isContentEqualTo
 import com.nhaarman.mockitokotlin2.*
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerInfo
@@ -20,9 +20,8 @@ import kotlin.test.assertTrue
 class DefaultXConnectionManagerTest {
 
     private val blockchainRid = byteArrayOf(0x01)
-    private val defaultConnectorFactory = DefaultXConnectorFactory()
-
     private val cryptoSystem = SECP256K1CryptoSystem()
+    private lateinit var connectorFactory: XConnectorFactory<PacketConverter<Int>>
 
     private lateinit var peerInfo1: PeerInfo
     private lateinit var peerConnectionDescriptor1: XPeerConnectionDescriptor
@@ -46,6 +45,13 @@ class DefaultXConnectionManagerTest {
 
         packetConverter1 = mock()
         packetConverter2 = mock()
+
+        val connector: XConnector = mock {
+            on { connectPeer(any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
+        }
+        connectorFactory = mock {
+            on { createConnector(any(), any(), any(), any()) } doReturn connector
+        }
     }
 
     @Test
@@ -60,18 +66,20 @@ class DefaultXConnectionManagerTest {
         }
 
         // When
-        DefaultXConnectionManager(defaultConnectorFactory, peerInfo1, packetConverter1, cryptoSystem)
-                .connectChain(chainPeerConfig, false)
+        val connectionManager = DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem)
+                .also { it.connectChain(chainPeerConfig, false) }
 
         // Then
-        verify(chainPeerConfig, times(3)).chainID
+        verify(chainPeerConfig, times(5)).chainID
         verify(chainPeerConfig).commConfiguration
         verify(communicationConfig).blockchainRID
-        verify(communicationConfig, never()).othersPeerInfo()
+        verify(communicationConfig, never()).peerInfo
+
+        connectionManager.shutdown()
     }
 
     @Test
-    fun connectChain_with_autoConnect_without_any_peers() {
+    fun connectChain_with_autoConnect_without_any_peers_will_result_in_exception() {
         // Given
         val communicationConfig: PeerCommConfiguration = mock {
             on { blockchainRID } doReturn blockchainRid
@@ -83,32 +91,30 @@ class DefaultXConnectionManagerTest {
         }
 
         // When
-        DefaultXConnectionManager(defaultConnectorFactory, peerInfo1, packetConverter1, cryptoSystem)
-                .connectChain(chainPeerConfig, true)
+        val connectionManager = DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem)
+        try {
+            connectionManager.also { it.connectChain(chainPeerConfig, true) }
+        } catch (e: IllegalArgumentException) {
+        }
 
         // Then
-        verify(chainPeerConfig, times(3)).chainID
+        verify(chainPeerConfig, times(4)).chainID
         verify(chainPeerConfig, times(2)).commConfiguration
         verify(communicationConfig).blockchainRID
-        verify(communicationConfig).othersPeerInfo()
+        verify(communicationConfig).peerInfo
+
+        connectionManager.shutdown()
     }
 
     @Test
     fun connectChain_with_autoConnect_with_two_peers() {
         // TODO: [et]: Maybe use arg captor here
-
         // Given
-        val connector: XConnector = mock {
-            on { connectPeer(any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
-        }
-        val connectorFactory: XConnectorFactory = mock {
-            on { createConnector(any(), any(), any(), any()) } doReturn connector
-        }
         val communicationConfig: PeerCommConfiguration = mock {
             on { blockchainRID } doReturn blockchainRid
-            on { myIndex } doReturn 0
-            on { othersPeerInfo() } doReturn listOf(/*peerInfo1, */peerInfo2)
-            on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
+            on { myIndex } doReturn 1 // See DefaultPeersConnectionStrategy
+            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+            on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {
             on { chainID } doReturn 1L
@@ -116,19 +122,21 @@ class DefaultXConnectionManagerTest {
         }
 
         // When
-        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem)
-                .connectChain(chainPeerConfig, true)
+        val connectionManager = DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem)
+                .also { it.connectChain(chainPeerConfig, true) }
 
         // Then
-        verify(chainPeerConfig, times(3)).chainID
+        verify(chainPeerConfig, times(6)).chainID
         verify(chainPeerConfig, times(1 + 1 + 1 * 2)).commConfiguration
         verify(communicationConfig, times(1 + 1 * 1)).blockchainRID
-        verify(communicationConfig).othersPeerInfo()
+        verify(communicationConfig, times(2 + 2)).peerInfo
+
+        connectionManager.shutdown()
     }
 
     @Test(expected = ProgrammerMistake::class)
     fun connectChainPeer_will_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(defaultConnectorFactory, peerInfo1, packetConverter1, cryptoSystem)
+        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem)
                 .connectChainPeer(1, peerInfo1.peerId())
     }
 
@@ -144,7 +152,7 @@ class DefaultXConnectionManagerTest {
         }
 
         // When / Then exception
-        DefaultXConnectionManager(defaultConnectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
+        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
             connectChain(chainPeerConfig, false) // Without connecting to peers
             connectChainPeer(1, unknownPeerInfo.peerId())
         }
@@ -153,16 +161,10 @@ class DefaultXConnectionManagerTest {
     @Test
     fun connectChainPeer_connects_peer_successfully() {
         // Given
-        val connector: XConnector = mock {
-            on { connectPeer(any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
-        }
-        val connectorFactory: XConnectorFactory = mock {
-            on { createConnector(any(), any(), any(), any()) } doReturn connector
-        }
         val communicationConfig: PeerCommConfiguration = mock {
             on { blockchainRID } doReturn blockchainRid
             on { myIndex } doReturn 0
-            on { othersPeerInfo() } doReturn listOf(/*peerInfo1, */peerInfo2)
+            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
             on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {
@@ -171,31 +173,28 @@ class DefaultXConnectionManagerTest {
         }
 
         // When
-        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
-            connectChain(chainPeerConfig, false) // Without connecting to peers
-            connectChainPeer(1, peerInfo2.peerId())
-        }
+        val connectionManager = DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem)
+                .apply {
+                    connectChain(chainPeerConfig, false) // Without connecting to peers
+                    connectChainPeer(1, peerInfo2.peerId())
+                }
 
         // Then
-        verify(chainPeerConfig, times(3)).chainID
+        verify(chainPeerConfig, atLeast(6)).chainID
         verify(chainPeerConfig, times(1 + 1 + 1)).commConfiguration
         verify(communicationConfig, times(1 + 1)).blockchainRID
+
+        connectionManager.shutdown()
     }
 
     @Test
     fun connectChainPeer_connects_already_connected_peer_and_nothing_happens() {
         // Given
-        val connector: XConnector = mock {
-            on { connectPeer(any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
-        }
-        val connectorFactory: XConnectorFactory = mock {
-            on { createConnector(any(), any(), any(), any()) } doReturn connector
-        }
         val communicationConfig: PeerCommConfiguration = mock {
             on { blockchainRID } doReturn blockchainRid
-            on { myIndex } doReturn 0
-            on { othersPeerInfo() } doReturn listOf(/*peerInfo1, */peerInfo2)
-            on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
+            on { myIndex } doReturn 1 // See DefaultPeersConnectionStrategy
+            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+            on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {
             on { chainID } doReturn 1L
@@ -203,7 +202,7 @@ class DefaultXConnectionManagerTest {
         }
 
         // When
-        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
+        val connectionManager = DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
             connectChain(chainPeerConfig, true) // Auto connect all peers
 
             // Emulates call of onPeerConnected() by XConnector
@@ -213,50 +212,46 @@ class DefaultXConnectionManagerTest {
         }
 
         // Then
-        verify(chainPeerConfig, times(3)).chainID
+        verify(chainPeerConfig, atLeast(6)).chainID
         verify(chainPeerConfig, times(1 + 1 + 1 * 2)).commConfiguration
         verify(communicationConfig, times(1 + 1 * 1)).blockchainRID
-        verify(communicationConfig).othersPeerInfo()
+        verify(communicationConfig, times(2 + 2)).peerInfo
+
+        connectionManager.shutdown()
     }
 
     @Test(expected = ProgrammerMistake::class)
     fun disconnectChainPeer_will_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(defaultConnectorFactory, peerInfo1, packetConverter1, cryptoSystem)
+        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem)
                 .disconnectChainPeer(1L, peerInfo1.peerId())
     }
 
     @Test
     fun disconnectChain_wont_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(defaultConnectorFactory, peerInfo1, packetConverter1, cryptoSystem)
+        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem)
                 .disconnectChain(1)
     }
 
     @Test(expected = ProgrammerMistake::class)
     fun isPeerConnected_will_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(defaultConnectorFactory, peerInfo1, packetConverter1, cryptoSystem)
+        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem)
                 .isPeerConnected(1, peerInfo1.peerId())
     }
 
     @Test(expected = ProgrammerMistake::class)
     fun getConnectedPeers_will_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(defaultConnectorFactory, peerInfo1, packetConverter1, cryptoSystem)
+        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem)
                 .getConnectedPeers(1)
     }
 
     @Test
     fun isPeerConnected_and_getConnectedPeers_are_succeeded() {
         // Given
-        val connector: XConnector = mock {
-            on { connectPeer(any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
-        }
-        val connectorFactory: XConnectorFactory = mock {
-            on { createConnector(any(), any(), any(), any()) } doReturn connector
-        }
         val communicationConfig: PeerCommConfiguration = mock {
             on { blockchainRID } doReturn blockchainRid
-            on { myIndex } doReturn 0
-            on { othersPeerInfo() } doReturn listOf(/*peerInfo1, */peerInfo2)
-            on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
+            on { myIndex } doReturn 1 // See DefaultPeersConnectionStrategy
+            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+            on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {
             on { chainID } doReturn 1L
@@ -264,7 +259,7 @@ class DefaultXConnectionManagerTest {
         }
 
         // When
-        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
+        val connectionManager = DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
             connectChain(chainPeerConfig, true) // With autoConnect
 
             // Then / before peers connected
@@ -285,7 +280,7 @@ class DefaultXConnectionManagerTest {
             assertTrue { isPeerConnected(1L, peerInfo2.peerId()) }
             assertFalse { isPeerConnected(1L, unknownPeerInfo.peerId()) }
             // - getConnectedPeers
-            assert(getConnectedPeers(1L).toTypedArray()).isСontentEqualTo(
+            assert(getConnectedPeers(1L).toTypedArray()).isContentEqualTo(
                     arrayOf(peerInfo1.peerId(), peerInfo2.peerId()))
 
 
@@ -297,7 +292,7 @@ class DefaultXConnectionManagerTest {
             assertTrue { isPeerConnected(1L, peerInfo2.peerId()) }
             assertFalse { isPeerConnected(1L, unknownPeerInfo.peerId()) }
             // - getConnectedPeers
-            assert(getConnectedPeers(1L).toTypedArray()).isСontentEqualTo(
+            assert(getConnectedPeers(1L).toTypedArray()).isContentEqualTo(
                     arrayOf(peerInfo2.peerId()))
 
 
@@ -307,28 +302,24 @@ class DefaultXConnectionManagerTest {
             val internalChains = FieldUtils.readField(this, "chains", true) as Map<*, *>
             assertTrue { internalChains.isEmpty() }
         }
+
+        connectionManager.shutdown()
     }
 
     @Test(expected = ProgrammerMistake::class)
     fun sendPacket_will_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(defaultConnectorFactory, peerInfo1, packetConverter1, cryptoSystem)
+        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem)
                 .sendPacket({ byteArrayOf() }, 1, peerInfo2.peerId())
     }
 
     @Test
     fun sendPacket_sends_packet_to_receiver_via_connection_successfully() {
         // Given
-        val connector: XConnector = mock {
-            on { connectPeer(any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
-        }
-        val connectorFactory: XConnectorFactory = mock {
-            on { createConnector(any(), any(), any(), any()) } doReturn connector
-        }
         val communicationConfig: PeerCommConfiguration = mock {
             on { blockchainRID } doReturn blockchainRid
-            on { myIndex } doReturn 0
-            on { othersPeerInfo() } doReturn listOf(/*peerInfo1, */peerInfo2)
-            on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
+            on { myIndex } doReturn 1 // See DefaultPeersConnectionStrategy
+            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+            on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {
             on { chainID } doReturn 1L
@@ -338,7 +329,7 @@ class DefaultXConnectionManagerTest {
         val connection2: XPeerConnection = mock()
 
         // When
-        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
+        val connectionManager = DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
             connectChain(chainPeerConfig, true) // With autoConnect
 
             // Emulates call of onPeerConnected() by XConnector
@@ -352,29 +343,25 @@ class DefaultXConnectionManagerTest {
         verify(connection1, times(0)).sendPacket(any())
         argumentCaptor<LazyPacket>().apply {
             verify(connection2, times(1)).sendPacket(capture())
-            assert(firstValue()).isСontentEqualTo(byteArrayOf(0x04, 0x02))
+            assert(firstValue()).isContentEqualTo(byteArrayOf(0x04, 0x02))
         }
+
+        connectionManager.shutdown()
     }
 
     @Test(expected = ProgrammerMistake::class)
     fun broadcastPacket_will_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(defaultConnectorFactory, peerInfo1, packetConverter1, cryptoSystem)
+        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem)
                 .broadcastPacket({ byteArrayOf() }, 1)
     }
 
     @Test
     fun broadcastPacket_sends_packet_to_all_receivers_successfully() {
         // Given
-        val connector: XConnector = mock {
-            on { connectPeer(any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
-        }
-        val connectorFactory: XConnectorFactory = mock {
-            on { createConnector(any(), any(), any(), any()) } doReturn connector
-        }
         val communicationConfig: PeerCommConfiguration = mock {
             on { blockchainRID } doReturn blockchainRid
             on { myIndex } doReturn 0
-            on { othersPeerInfo() } doReturn listOf(/*peerInfo1, */peerInfo2)
+            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
             on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {
@@ -385,7 +372,7 @@ class DefaultXConnectionManagerTest {
         val connection2: XPeerConnection = mock()
 
         // When
-        DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
+        val connectionManager = DefaultXConnectionManager(connectorFactory, peerInfo1, packetConverter1, cryptoSystem).apply {
             connectChain(chainPeerConfig, true) // With autoConnect
 
             // Emulates call of onPeerConnected() by XConnector
@@ -398,12 +385,14 @@ class DefaultXConnectionManagerTest {
         // Then / verify and assert
         argumentCaptor<LazyPacket>().apply {
             verify(connection1, times(1)).sendPacket(capture())
-            assert(firstValue()).isСontentEqualTo(byteArrayOf(0x04, 0x02))
+            assert(firstValue()).isContentEqualTo(byteArrayOf(0x04, 0x02))
         }
         argumentCaptor<LazyPacket>().apply {
             verify(connection2, times(1)).sendPacket(capture())
-            assert(firstValue()).isСontentEqualTo(byteArrayOf(0x04, 0x02))
+            assert(firstValue()).isContentEqualTo(byteArrayOf(0x04, 0x02))
         }
+
+        connectionManager.shutdown()
     }
 
 }

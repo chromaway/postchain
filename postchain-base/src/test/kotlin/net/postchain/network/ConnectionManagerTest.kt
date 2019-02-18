@@ -82,6 +82,10 @@ class ConnectionManagerTest {
         // Then / Verify
         verify(packetConverter1)
         verify(packetConverter2)
+
+        // tearDown
+        connectionManager1.shutdown()
+        connectionManager2.shutdown()
     }
 
 }

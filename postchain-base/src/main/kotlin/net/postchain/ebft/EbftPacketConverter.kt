@@ -9,8 +9,8 @@ import net.postchain.ebft.message.SignedMessage
 import net.postchain.network.IdentPacketInfo
 import net.postchain.network.PacketConverter
 
+// TODO: [et]: Redesign ident stage
 class EbftPacketConverter(val config: PeerCommConfiguration) : PacketConverter<EbftMessage> {
-
     override fun makeIdentPacket(forPeer: ByteArray): ByteArray {
         val bytes = Identification(forPeer, config.blockchainRID, System.currentTimeMillis()).encode()
         val signature = config.signer()(bytes)
@@ -19,7 +19,6 @@ class EbftPacketConverter(val config: PeerCommConfiguration) : PacketConverter<E
 
     override fun parseIdentPacket(bytes: ByteArray): IdentPacketInfo {
         val signedMessage = decodeSignedMessage(bytes)
-
         val message = decodeAndVerify(bytes, signedMessage.pubKey, config.verifier())
 
         if (message !is Identification) {
@@ -37,7 +36,16 @@ class EbftPacketConverter(val config: PeerCommConfiguration) : PacketConverter<E
         return decodeAndVerify(bytes, pubKey, config.verifier())
     }
 
+    override fun decodePacket(bytes: ByteArray): EbftMessage? {
+        return decodeAndVerify(bytes, config.verifier())
+    }
+
     override fun encodePacket(packet: EbftMessage): ByteArray {
         return encodeAndSign(packet, config.signer())
+    }
+
+    // TODO: [et]: Improve the design
+    override fun isIdentPacket(bytes: ByteArray): Boolean {
+        return decodePacket(bytes) is Identification
     }
 }

@@ -3,15 +3,15 @@ package net.postchain.devtools.modules.esplix
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
+import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.KeyPairHelper.privKey
+import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.gtx.GTXBlockchainConfigurationFactory
 import net.postchain.gtx.GTXDataBuilder
 import net.postchain.gtx.gtx
 import net.postchain.modules.esplix_r4.BaseEsplixModuleFactory
 import net.postchain.modules.esplix_r4.computeChainID
 import net.postchain.modules.esplix_r4.computeMessageID
-import net.postchain.devtools.IntegrationTest
-import net.postchain.devtools.KeyPairHelper.privKey
-import net.postchain.devtools.KeyPairHelper.pubKey
 import org.junit.Assert
 import org.junit.Test
 
@@ -43,14 +43,9 @@ class EsplixIntegrationTest : IntegrationTest() {
 
     @Test
     fun testEsplix() {
-        configOverrides.setProperty("blockchain.1.configurationfactory",
-                GTXBlockchainConfigurationFactory::class.qualifiedName)
-        configOverrides.setProperty("blockchain.1.gtx.modules",
-                BaseEsplixModuleFactory::class.qualifiedName)
-
         val creator = 0
         val user = 1
-        val node = createNode(0)
+        val node = createNode(0, "/net/postchain/esplix/blockchain_config.xml")
         var currentBlockHeight = -1L
 
         fun buildBlockAndCommitWithTx(data: ByteArray, fail: Boolean = false) {

@@ -51,22 +51,26 @@ class CommandAddBlockchain : Command {
 
     override fun key(): String = "add-blockchain"
 
-    override fun execute() {
+    override fun execute(): CliResult {
         println("add-blockchain will be executed with options: " +
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
         val gtxValue = GTXMLValueParser.parseGTXMLValue(
                 File(blockchainConfigFile).readText())
         val encodedGtxValue = encodeGTXValue(gtxValue)
-
-        runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
-            if (force || SQLDatabaseAccess().getBlockchainRID(ctx) == null) {
-                BaseBlockStore().initialize(ctx, blockchainRID.hexStringToByteArray())
-                BaseConfigurationDataStore.addConfigurationData(ctx, 0, encodedGtxValue)
-                println("Configuration has been added successfully")
-            } else {
-                println("Blockchain with chainId $chainId already exists. Use -f flag to force addition.")
+        return try {
+            runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
+                if (force || SQLDatabaseAccess().getBlockchainRID(ctx) == null) {
+                    BaseBlockStore().initialize(ctx, blockchainRID.hexStringToByteArray())
+                    BaseConfigurationDataStore.addConfigurationData(ctx, 0, encodedGtxValue)
+                } else {
+                    throw CliError.Companion.CliException(
+                            "Blockchain with chainId $chainId already exists. Use -f flag to force addition.")
+                }
             }
+            Ok("Configuration has been added successfully")
+        } catch (e: CliError.Companion.CliException) {
+            CliError.CommandNotAllowed(message = e.message)
         }
     }
 }

@@ -4,11 +4,11 @@ import com.nhaarman.mockitokotlin2.mock
 import net.postchain.base.BasePeerCommConfiguration
 import net.postchain.base.PeerInfo
 import net.postchain.base.SECP256K1CryptoSystem
-import net.postchain.network.PacketConverter
 import net.postchain.devtools.KeyPairHelper
+import net.postchain.network.PacketConverter
 
 class IntegrationTestContext(
-        connectorFactory: XConnectorFactory,
+        connectorFactory: XConnectorFactory<PacketConverter<Int>>,
         blockchainRid: ByteArray,
         peerInfos: Array<PeerInfo>,
         myIndex: Int,
@@ -17,4 +17,9 @@ class IntegrationTestContext(
     val peerCommunicationConfig = BasePeerCommConfiguration(peerInfos, blockchainRid, myIndex, mock(), KeyPairHelper.privKey(myIndex))
     val connectionManager = DefaultXConnectionManager(connectorFactory, peerInfos[myIndex], packetConverter, SECP256K1CryptoSystem())
     val communicationManager = DefaultXCommunicationManager(connectionManager, peerCommunicationConfig, 1L, packetConverter)
+
+    fun shutdown() {
+        communicationManager.shutdown()
+        connectionManager.shutdown()
+    }
 }
