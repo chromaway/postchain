@@ -1,10 +1,12 @@
 package net.postchain.gtv.merkle.proof
 
 import net.postchain.base.merkle.MerkleBasics.UNKNOWN_SIZE_IN_BYTE
+import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.base.merkle.proof.*
 import net.postchain.gtv.merkle.GtvMerkleBasics.HASH_PREFIX_NODE_GTV_ARRAY
 import net.postchain.gtv.merkle.GtvMerkleBasics.HASH_PREFIX_NODE_GTV_DICT
 import net.postchain.gtv.*
+import net.postchain.gtv.merkle.GtvMerkleBasics
 
 
 const val SERIALIZATION_ARRAY_TYPE: Long = 103
@@ -45,7 +47,6 @@ class GtvMerkleProofTree(root: MerkleProofElement, totalNrOfBytes: Int = UNKNOWN
      * (we can add more in sub classes)
      */
     fun serializeToGtv(): GtvArray {
-
         return serializeToGtvInternal(this.root)
     }
 
@@ -99,4 +100,17 @@ class GtvMerkleProofTree(root: MerkleProofElement, totalNrOfBytes: Int = UNKNOWN
             else -> throw IllegalStateException("This type should have been taken care of: $currentElement")
         }
     }
+}
+
+
+/**
+ * Calculates the merkle root hash of the proof structure.
+ *
+ * @param calculator describes the method we use for hashing and serialization
+ * @return the merkle root hash summary
+ */
+fun GtvMerkleProofTree.merkleHashSummary(calculator: MerkleHashCalculator<Gtv>): MerkleHashSummary {
+
+    val summaryFactory = GtvMerkleBasics.getGtvMerkleHashSummaryFactory()
+    return summaryFactory.calculateMerkleRoot(this, calculator)
 }

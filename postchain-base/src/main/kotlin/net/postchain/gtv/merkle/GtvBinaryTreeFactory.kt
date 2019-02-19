@@ -13,14 +13,14 @@ import net.postchain.gtv.merkle.factory.GtvBinaryTreeFactoryDict
  * 2. Same as above, but we also marked each Gtv sub structure that should be a path leaf.
  *    If you want this option (2) you have to provide a list of [GtvPath]
  */
-class GtvBinaryTreeFactory : BinaryTreeFactory<Gtv, GtvPathSet>() {
+class GtvBinaryTreeFactory() : BinaryTreeFactory<Gtv, GtvPathSet>() {
 
     /**
      * Generic builder.
      * @param Gtv will take any damn thing
      */
-    fun buildFromGtv(gtv: Gtv): GtvBinaryTree {
-        return buildFromGtvAndPath(gtv, GtvPath.NO_PATHS)
+    fun buildFromGtv(gtv: Gtv, memoization: MerkleHashMemoization<Gtv>): GtvBinaryTree {
+        return buildFromGtvAndPath(gtv, GtvPath.NO_PATHS, memoization)
     }
 
     /**
@@ -28,8 +28,8 @@ class GtvBinaryTreeFactory : BinaryTreeFactory<Gtv, GtvPathSet>() {
      * @param Gtv will take any damn thing
      * @param GtvPathList will tell us what element that are path leafs
      */
-    fun buildFromGtvAndPath(gtv: Gtv, GtvPaths: GtvPathSet): GtvBinaryTree {
-        val result = handleLeaf(gtv, GtvPaths)
+    fun buildFromGtvAndPath(gtv: Gtv, GtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): GtvBinaryTree {
+        val result = handleLeaf(gtv, GtvPaths, memoization)
         return GtvBinaryTree(result)
     }
 
@@ -43,7 +43,7 @@ class GtvBinaryTreeFactory : BinaryTreeFactory<Gtv, GtvPathSet>() {
      * @return an array of all the leafs as [BinaryTreeElement] s. Note that some leafs might not be primitive values
      *   but some sort of collection with their own leafs (recursivly)
      */
-    fun buildLeafElements(leafList: List<Gtv>, GtvPaths: GtvPathSet): ArrayList<BinaryTreeElement> {
+    fun buildLeafElements(leafList: List<Gtv>, GtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): ArrayList<BinaryTreeElement> {
         val leafArray = arrayListOf<BinaryTreeElement>()
 
         val onlyArrayPaths = GtvPaths.keepOnlyArrayPaths() // For performance, since we will loop soon
@@ -52,27 +52,28 @@ class GtvBinaryTreeFactory : BinaryTreeFactory<Gtv, GtvPathSet>() {
             val pathsRelevantForThisLeaf = onlyArrayPaths.getTailIfFirstElementIsArrayOfThisIndexFromList(i)
             //println("New paths, (size: ${pathsRelevantForThisLeaf.size} ) list: " + GtvPath.debugRerpresentation(pathsRelevantForThisLeaf))
             val leaf = leafList[i]
-            val binaryTreeElement = handleLeaf(leaf, pathsRelevantForThisLeaf)
+            val binaryTreeElement = handleLeaf(leaf, pathsRelevantForThisLeaf, memoization)
             leafArray.add(binaryTreeElement)
         }
         return leafArray
     }
 
-    /**
-     * Handles different types of [Gtv] values
-     */
-    override fun handleLeaf(leaf: Gtv, GtvPathSet: GtvPathSet?): BinaryTreeElement {
-        val gtvPaths = if (GtvPathSet == null) {
-            GtvPath.NO_PATHS
-        } else {
-            GtvPathSet
-        }
+    override fun getEmptyPathSet(): GtvPathSet = GtvPath.NO_PATHS
 
+    /**
+     * At this point we should have looked in cache.
+     *
+     * @param leaf we should turn into a tree element
+     * @param gtvPaths
+     * @param memoization is not used for this leaf (since we know it's not in cache) but might be used below
+     * @return the tree element we created.
+     */
+    override fun innerHandleLeaf(leaf: Gtv, gtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): BinaryTreeElement {
         //println("handleLeaf, Proof path (size: ${GtvPaths.size} ) list: " + GtvPath.debugRerpresentation(GtvPaths))
         return when (leaf) {
             is GtvPrimitive  -> handlePrimitiveLeaf(leaf, gtvPaths)
-            is GtvArray      -> GtvBinaryTreeFactoryArray.buildFromGtvArray(leaf, gtvPaths)
-            is GtvDictionary -> GtvBinaryTreeFactoryDict.buildFromGtvDictionary(leaf, gtvPaths)
+            is GtvArray      -> GtvBinaryTreeFactoryArray.buildFromGtvArray(leaf, gtvPaths, memoization)
+            is GtvDictionary -> GtvBinaryTreeFactoryDict.buildFromGtvDictionary(leaf, gtvPaths, memoization)
             is GtvCollection -> throw IllegalStateException("Programmer should have dealt with this container type: ${leaf.type}")
             else ->             throw IllegalStateException("What is this? Not container and not primitive? type: ${leaf.type}")
         }

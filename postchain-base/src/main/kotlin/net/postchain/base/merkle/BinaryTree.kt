@@ -2,6 +2,7 @@ package net.postchain.base.merkle
 
 import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_LEAF
 import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_NODE
+import net.postchain.base.merkle.proof.MerkleHashSummary
 
 
 /**
@@ -96,6 +97,22 @@ data class Leaf<T>(val content: T, val leafIsPathLeaf: Boolean = false, val size
     override fun getPrefixByte(): Byte = HASH_PREFIX_LEAF
 
     override fun getNrOfBytes(): Int = sizeInBytes
+}
+
+
+/**
+ *  Holds the merkle root of the structure (from the cache)
+ *
+ *  Note: we can ONLY use this type if there is no path leading in here.
+ */
+data class CachedLeaf(val cachedSummary: MerkleHashSummary): BinaryTreeElement() {
+    init {
+        setPathLeaf(false) // We cannot use
+    }
+
+    override fun getPrefixByte(): Byte = cachedSummary.merkleHashCarrier.prefix
+
+    override fun getNrOfBytes(): Int = cachedSummary.nrOfBytes
 }
 
 /**

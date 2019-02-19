@@ -166,19 +166,19 @@ class TreePrinter {
     var buf: StringBuffer = StringBuffer()
 
     fun printNode(treePrintable: PrintableBinaryTree): String {
-        println("begin -----------------")
+        //println("begin -----------------")
         buf = StringBuffer()
         val root = treePrintable.root
         val maxLevel: Int = maxLevel(root)
 
         val tmpList = arrayListOf(root)
         printNodeInternal(tmpList, 1, maxLevel, 0)
-        println("end -----------------")
+        //println("end -----------------")
         return buf.toString()
     }
 
     private fun printNodeInternal(nodes: ArrayList<PTreeElement>, level: Int, maxLevel: Int, compensateFirstSpaces: Int) {
-        println("Internal -----------------")
+        //println("Internal -----------------")
         if (nodes.isEmpty())
             return
 
@@ -189,7 +189,7 @@ class TreePrinter {
         val betweenSpaces: Int = (numberTwo.pow(floor+1) - 1).toInt()
 
         // Debugging, probably won't need it
-        println("nodes.size ${nodes.size}, level: $level , floor: $floor , endgeLines: $endgeLines , betweenSpaces: $betweenSpaces , firstSpaces: $firstSpaces , compenstation: $compensateFirstSpaces")
+        //println("nodes.size ${nodes.size}, level: $level , floor: $floor , endgeLines: $endgeLines , betweenSpaces: $betweenSpaces , firstSpaces: $firstSpaces , compenstation: $compensateFirstSpaces")
 
         printWhitespaces(firstSpaces)
 
@@ -245,7 +245,7 @@ class TreePrinter {
 
         for (i in 1..endgeLines) {
             for (j in 0..(nodes.size - 1)) {
-                println("edgeLine: $i ,node: $j, firstpaces: $firstSpaces")
+                //println("edgeLine: $i ,node: $j, firstpaces: $firstSpaces")
                 printWhitespaces(firstSpaces - i)
                 val tmpNode = nodes.get(j)
 

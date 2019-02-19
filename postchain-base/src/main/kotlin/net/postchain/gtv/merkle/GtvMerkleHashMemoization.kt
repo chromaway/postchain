@@ -2,74 +2,9 @@ package net.postchain.gtv.merkle
 
 import mu.KLogging
 import net.postchain.base.merkle.MerkleHashCalculator
+import net.postchain.base.merkle.MerkleHashMemoization
 import net.postchain.base.merkle.proof.MerkleHashSummary
 import net.postchain.gtv.Gtv
-import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
-
-
-data class CacheElement(val orgGtv: Gtv, val merkleHashSummary: MerkleHashSummary, var age: Long) {
-
-    /**
-     * Use when you want the time to be "now"
-     */
-    constructor(orgGtv: Gtv, merkleHashSummary: MerkleHashSummary): this(orgGtv, merkleHashSummary, System.currentTimeMillis() )
-}
-
-/**
- * A set of Merkle Hashes that share the property that the corresponding [Gtv] generates the same (Java) hash code
- */
-data class MerkleHashSetWithSameGtvJavaHashCode(val internalSet: MutableSet<CacheElement>) {
-
-    companion object {
-
-        /**
-         * @return a new [MerkleHashSetWithSameGtvJavaHashCode] set with one element in it.
-         */
-        fun build(gtvSrc: Gtv, merkleHashSummary: MerkleHashSummary): MerkleHashSetWithSameGtvJavaHashCode {
-            val newElement = CacheElement(gtvSrc, merkleHashSummary)
-            val mutSet = mutableSetOf(newElement)
-            return MerkleHashSetWithSameGtvJavaHashCode(mutSet)
-        }
-    }
-
-    /**
-     * @return first entry that equals the given [Gtv] structure
-     */
-    fun findFromGtv(gtvSrc: Gtv): MerkleHashSummary? {
-        for (cacheElement in internalSet) {
-            if (cacheElement.orgGtv == gtvSrc) {
-                // Found it!
-                cacheElement.age = System.currentTimeMillis() // Update the age, so it won't get pruned
-                return cacheElement.merkleHashSummary
-            }
-        }
-        return null
-    }
-
-    /**
-     * Will add a new [CacheElement] to the set
-     */
-    fun addToSet(gtvSrc: Gtv, merkleHashSummary: MerkleHashSummary) {
-        val newElement = CacheElement(gtvSrc, merkleHashSummary)
-        this.internalSet.add(newElement)
-    }
-
-    /**
-     * Remove the [CacheElement] with the corresponding timestamp
-     *
-     * @return the pruned object
-     */
-    fun prune(elementToRemove: CacheElement): CacheElement? {
-        if (internalSet.remove(elementToRemove)) {
-            // Found
-            return elementToRemove
-        } else {
-            // Not found
-            return null
-        }
-    }
-
-}
 
 /**
  * To improve performance, we will cache the hash of a given [Gtv] object.
@@ -80,7 +15,6 @@ data class MerkleHashSetWithSameGtvJavaHashCode(val internalSet: MutableSet<Cach
  *
  *
  */
-
 object GtvMerkleHashCache {
 
     val defaultSizeOf100MB = 100000000 // TODO: Make this configerable
@@ -88,8 +22,8 @@ object GtvMerkleHashCache {
 
     val gtvMerkleHashMemoization = GtvMerkleHashMemoization(defaultNumberOfLookupsBeforePrune, defaultSizeOf100MB)
 
-    fun findOrCalculateMerkleHash(gtvSrc: Gtv, calculator: MerkleHashCalculator<Gtv>): MerkleHashSummary {
-        return gtvMerkleHashMemoization.findOrCalculateMerkleHash(gtvSrc, calculator)
+    fun findOrCalculateMerkleHash(gtvSrc: Gtv, calculator: MerkleHashCalculator<Gtv>): MerkleHashSummary? {
+        return gtvMerkleHashMemoization.findMerkleHash(gtvSrc)
     }
 }
 
@@ -103,44 +37,79 @@ object GtvMerkleHashCache {
  *                  of the tree many times over. Too hard to calculate real memory consumption, and don't want to
  *                  use java.lang.instrumentation (b/c probably too heavy)
  */
-class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val MAX_CACHE_SIZE_BYTES: Int) {
+class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val MAX_CACHE_SIZE_BYTES: Int): MerkleHashMemoization<Gtv>() {
 
     companion object : KLogging()
 
     private val javaHashCodeToGtvSet_Map = HashMap<Int, MerkleHashSetWithSameGtvJavaHashCode>()
 
-    private var totalSizeInBytes = 0
+    // Some statistics (Not private due to testing)
+    var localCacheHits = 0L // How many times the local cache was successful
+    var globalCacheHits = 0L // How many times the global cache was successful
+    var cacheMisses = 0L // How many times no cached value was found
 
-    // Some statistics
-    private var cacheHits = 0L
-    private var cacheMisses = 0L
+
+
+    private var totalSizeInBytes = 0 // Keeps track of how much space the cache consumes. This is not exact, but gives worst case!
 
     /**
-     * @param gtvSrc the [Gtv] structure we need to get a merkle hash out of
-     * @param calculator
-     * @return the merkle root hash we need (either fetched from cache or calculated)
+     * Use this method so cannot modify the value from outside (since Kotlin does a copy)
      */
-    fun findOrCalculateMerkleHash(gtvSrc: Gtv, calculator: MerkleHashCalculator<Gtv>): MerkleHashSummary {
+    fun getTotalSizeInBytes() = totalSizeInBytes
 
-        var retMerkleHashSummary: MerkleHashSummary? = null
-        val gtvSrcHashCode = gtvSrc.hashCode()
-
-        val foundGtvSet = javaHashCodeToGtvSet_Map[gtvSrcHashCode]
-        if (foundGtvSet != null) {
-            retMerkleHashSummary = foundGtvSet.findFromGtv(gtvSrc)
+    /**
+     * The cache will consume more than just the memory of the [Gtv] object, i.e. the "overhead"
+     */
+    private fun increaseTotalMem(increaseBytes: Int) {
+        val addedNrOfBytes = (increaseBytes + MerkleHashSetWithSameGtvJavaHashCode.OVERHEAD_SIZE_BYTES)
+        if (logger.isDebugEnabled) {
+            logger.debug("add to cache: $addedNrOfBytes, (= bytes: ${increaseBytes} + overhead: ${MerkleHashSetWithSameGtvJavaHashCode.OVERHEAD_SIZE_BYTES}) ")
         }
+        totalSizeInBytes += addedNrOfBytes
+    }
 
-        if (retMerkleHashSummary != null) {
+    /**
+     * The cache will consume more than just the memory of the [Gtv] object, i.e. the "overhead"
+     */
+    private fun decreaseTotalMem(decreaseBytes: Int, timestamp: Long) {
+        val nrOfBytesToDecrease = decreaseBytes +  MerkleHashSetWithSameGtvJavaHashCode.OVERHEAD_SIZE_BYTES
+        if (logger.isDebugEnabled) {
+            logger.debug("Cache item pruned! timestamp: $timestamp : $nrOfBytesToDecrease bytes ")
+        }
+        totalSizeInBytes -= nrOfBytesToDecrease
+    }
+
+    /**
+     * Will look in the local cache of the [Gtv] instance before looking in the global cache.
+     *
+     * @param src the [Gtv] structure we need to get a merkle hash out of
+     * @return the merkle root hash we for the given src
+     */
+    override fun findMerkleHash(src: Gtv): MerkleHashSummary? {
+        var retMerkleHashSummary: MerkleHashSummary? = null
+
+        val localCachedVal = src.getCachedMerkleHash()
+        if (localCachedVal != null) {
+            // Found in Local cache
             synchronized(this) {
-                cacheHits++
+                localCacheHits++
             }
+            retMerkleHashSummary = localCachedVal  // Return immediately (no pruning etc.)
         } else {
-            // This should NOT be synchronized
-            val calculatedMerkleHashSummary = calculateMerkleHash(gtvSrc, calculator)
+            // Nope, look in Global cache
+            val gtvSrcHashCode = src.hashCode()
+            retMerkleHashSummary = lookForSrcInInternalMap(src, gtvSrcHashCode)
+            if (retMerkleHashSummary != null) {
+                src.setCachedMerkleHash(retMerkleHashSummary)
 
-            addToChache(gtvSrc, calculatedMerkleHashSummary, foundGtvSet, gtvSrcHashCode)
-
-            retMerkleHashSummary = calculatedMerkleHashSummary
+                synchronized(this) {
+                    globalCacheHits++
+                }
+            } else {
+                synchronized(this) {
+                    cacheMisses++
+                }
+            }
         }
 
         maybePrune()
@@ -148,20 +117,43 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
         return retMerkleHashSummary
     }
 
+    private fun lookForSrcInInternalMap(src: Gtv, gtvSrcHashCode: Int): MerkleHashSummary? {
+        val foundGtvSet = javaHashCodeToGtvSet_Map[gtvSrcHashCode]
+        return if (foundGtvSet != null) {
+            foundGtvSet.findFromGtv(src)
+        } else {
+            null
+        }
+    }
 
+    /**
+     * Will add the [MerkleHashSummary] to the cache (both local cache and global cache)
+     * Note: We assume that the "src" should not exist in any cache (or else it would have been found already).
+     *
+     * @param src is the [Gtv] source we should map the summary to
+     * @param newSummary is the value we need to cache
+     */
+    @Synchronized
+    override fun add(src: Gtv, newSummary: MerkleHashSummary) {
+        // Add 2 Local
+        if (src.getCachedMerkleHash() == null) {
+            src.setCachedMerkleHash(newSummary)
+        }else {
+            logger.warn("Why do we need to add to cache when local cache has a value? ")
+        }
 
-    private fun calculateMerkleHash(gtvSrc: Gtv, calculator: MerkleHashCalculator<Gtv>): MerkleHashSummary {
-        val factory = GtvBinaryTreeFactory()
-        val proofFactory = GtvMerkleProofTreeFactory(calculator)
+        // Add 2 Global
+        val gtvSrcHashCode = src.hashCode()
 
-        // 1. Build Binary tree out of the Gtv object
-        val binaryTree = factory.buildFromGtv(gtvSrc)
+        val foundGtvSet = javaHashCodeToGtvSet_Map[gtvSrcHashCode]
+        if (foundGtvSet != null) {
+            val summaryAlreadyAdded = foundGtvSet.findFromGtv(src)
+            if (summaryAlreadyAdded != null) {
+                logger.warn("Why do we need to add to cache when global cache has a value? ")
+            }
+        }
 
-        // 2. Build ProofTree (in this case there is just 1 element in the tree)
-        val proofTree = proofFactory.buildFromBinaryTree(binaryTree)
-
-        // 3. Pick the root element (in this case no calculation needed here)
-        return proofTree.calculateMerkleRoot(calculator)
+        addToChache(src, newSummary, foundGtvSet, gtvSrcHashCode)
     }
 
     /**
@@ -169,16 +161,15 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
      */
     @Synchronized
     private fun addToChache(gtvSrc: Gtv, calculatedMerkleHashSummary: MerkleHashSummary, foundGtvSet: MerkleHashSetWithSameGtvJavaHashCode?, javaHashCode: Int) {
-        cacheMisses++
         if (foundGtvSet != null) {
             foundGtvSet.addToSet(gtvSrc, calculatedMerkleHashSummary)
         } else {
             val newSet = MerkleHashSetWithSameGtvJavaHashCode.build(gtvSrc, calculatedMerkleHashSummary)
             javaHashCodeToGtvSet_Map[javaHashCode] = newSet
         }
-        totalSizeInBytes += calculatedMerkleHashSummary.nrOfBytes
-    }
+        increaseTotalMem(calculatedMerkleHashSummary.nrOfBytes)
 
+    }
 
     /**
      * We check for pruning every [TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS] lookup.
@@ -189,27 +180,40 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
      */
     @Synchronized
     private fun maybePrune() {
-        var countGtvs = 0
         var didPrune = false
         try {
-            if ((cacheHits + cacheMisses).rem(TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS) == 0L) {
+            val allInteraction = localCacheHits + globalCacheHits + cacheMisses
+            if (allInteraction.rem(TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS) == 0L) {
                 logger.debug("Time to check if cache is too big.")
 
                 // Let's see if we should prune
                 if (totalSizeInBytes > MAX_CACHE_SIZE_BYTES) {
                     // 0. Begin
                     logger.info("----------------------------------------------------------------------------------")
-                    logger.info("Begin pruning GtvMerkleHashMemoization")
+                    logger.info("Begin pruning GtvMerkleHashMemoization, size: ${totalSizeInBytes} bytes (interactions: $allInteraction)")
                     logger.info("----------------------------------------------------------------------------------")
                     val begin = System.currentTimeMillis()
                     didPrune = true // Do this now, we might crash later
 
                     // 1. Build a structure where timestamp is key
-                    val timeStampToHashMap = HashMap<Long, Pair<Int, CacheElement>>()
+                    // (We use a set inside the hash map for the off chance of two cached items get the same timestamp)
+                    val timeStampToHashMap = HashMap<Long, MutableSet<Pair<Int, CacheElement>>>()
                     for (key in javaHashCodeToGtvSet_Map.keys) {
                         val tmpSet = javaHashCodeToGtvSet_Map[key]!!
                         for (element in tmpSet.internalSet) {
-                            timeStampToHashMap[element.age] = Pair(key, element)
+                            val currentTimestamp = element.age
+                            val foundSet = timeStampToHashMap[currentTimestamp]
+                            if (foundSet != null) {
+                                // Add a pair to set
+                                foundSet.add(Pair(key, element))
+                                if (logger.isDebugEnabled) {
+                                    logger.debug("${foundSet.size} objects (java hash code=$key) with the same creation timestamp ($currentTimestamp) ? Unusual! ")
+                                }
+                            } else {
+                                // Create a set and add the element
+                                val newSet = mutableSetOf(Pair(key, element))
+                                timeStampToHashMap[currentTimestamp] = newSet
+                            }
                         }
                     }
 
@@ -220,27 +224,37 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
                     var pruned = 0
                     while (totalSizeInBytes > idealSizeInBytes) {
                         val timestampToRemove = allTimestamps[pruned]
-                        removeFromSet(timestampToRemove, timeStampToHashMap)
+                        // Remove ALL objects with this timestamp
+                        val setToRemove = timeStampToHashMap[timestampToRemove]
+                        for (pair in setToRemove!!) {
+                            removeFromSet(timestampToRemove, pair)
+                        }
                         pruned++
                     }
 
-                    // 3. Done
+                    // 3. Done. Print and erase stats
+                    val hitrateLocal: Double = 100.0 * (localCacheHits.toDouble() / allInteraction)
+                    val hitrateGlobal: Double = 100.0 * ((localCacheHits.toDouble() + globalCacheHits.toDouble()) / allInteraction)
+                    val localHitrateStr = "%.2f".format(hitrateLocal)
+                    val globalHitrateStr = "%.2f".format(hitrateGlobal)
                     val end = System.currentTimeMillis()
                     val duration = end - begin
                     logger.info("----------------------------------------------------------------------------------")
-                    logger.info("Cache pruned successfully down to size: $totalSizeInBytes , objects pruned: $pruned  in $duration ms.")
+                    logger.info("Cache pruned successfully down to size: $totalSizeInBytes (objects pruned: $pruned) in $duration ms. Local Hitrate = $localHitrateStr% Global Hitrate = $globalHitrateStr% (local hits: $localCacheHits, global hits: $globalCacheHits, misses: $cacheMisses)")
                     logger.info("----------------------------------------------------------------------------------")
+                    localCacheHits = 0
+                    globalCacheHits = 0
+                    cacheMisses = 0
                 }
             }
         } catch (e: Exception) {
             // Shouldn't let the failed pruning ruin everything, let's log it and move on
-            logger.error ("Pruning (size: $countGtvs) failed with error: ", e)
+            logger.error ("Pruning failed with error: ", e)
         } finally {
             if (didPrune) {
                 System.gc()
             }
         }
-
     }
 
     /**
@@ -249,8 +263,7 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
      * (Remember to adjust the total size of the cache)
      */
     @Synchronized
-    private fun removeFromSet(timestampToRemove: Long, timeStampToHashMap: HashMap<Long, Pair<Int, CacheElement>>)  {
-        val tmpHashCodeAndHashPair = timeStampToHashMap[timestampToRemove]!!
+    private fun removeFromSet(timestampToRemove: Long,tmpHashCodeAndHashPair: Pair<Int, CacheElement>)  {
         val javaHashCode = tmpHashCodeAndHashPair.first
         val elementToRemove =  tmpHashCodeAndHashPair.second
 
@@ -258,11 +271,7 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
 
         val removedElem = tmpSet.prune(elementToRemove)
         if (removedElem != null) {
-            val nrOfBytes = removedElem.merkleHashSummary.nrOfBytes
-            totalSizeInBytes -= nrOfBytes
-            if (logger.isDebugEnabled) {
-                logger.debug("Cache item pruned! timestamp: $timestampToRemove : $nrOfBytes bytes ")
-            }
+            decreaseTotalMem(removedElem.merkleHashSummary.nrOfBytes, timestampToRemove)
         } else {
             logger.warn("Why didn't we find the element in the set? hashCode: $javaHashCode timestamp: $timestampToRemove ")
         }
@@ -270,6 +279,5 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
             javaHashCodeToGtvSet_Map.remove(javaHashCode)
         }
     }
-
 
 }

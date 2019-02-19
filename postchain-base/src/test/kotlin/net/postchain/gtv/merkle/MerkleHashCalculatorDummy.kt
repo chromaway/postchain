@@ -56,16 +56,12 @@ fun dummyAddOneHashFun(bArr: ByteArray, cryptoSystem: CryptoSystem?): Hash {
 /**
  * The "dummy" version is a real calculator, but it uses simplified versions of
  * serializations and hashing
+ *
+ * @property memoization is possible to override with some other version (for example that prunes more often)
  */
-class MerkleHashCalculatorDummy: MerkleHashCalculator<Gtv>(null) {
-    val treeFactory =GtvBinaryTreeFactory()
+class MerkleHashCalculatorDummy(memoization: GtvMerkleHashMemoization): MerkleHashCalculator<Gtv>(null, memoization) {
 
-    var proofTreeFactory: GtvMerkleProofTreeFactory
-    var baseCalc: BinaryNodeHashCalculator
-    init {
-        proofTreeFactory =GtvMerkleProofTreeFactory(this)
-        baseCalc = BinaryNodeHashCalculatorBase(cryptoSystem)
-    }
+    constructor(): this(GtvMerkleHashMemoization(100, 10))
 
     override fun calculateLeafHash(value: Gtv): MerkleHashCarrier {
         val hash = calculateHashOfValueInternal(value, ::dummySerializatorFun, ::dummyAddOneHashFun)
@@ -83,11 +79,6 @@ class MerkleHashCalculatorDummy: MerkleHashCalculator<Gtv>(null) {
             is GtvPrimitive -> false
             else -> throw IllegalStateException("The type is neither collection or primitive. type: ${value.type} ")
         }
-    }
-
-    override fun buildTreeFromContainerValue(value: Gtv):GtvMerkleProofTree {
-        val root:GtvBinaryTree = treeFactory.buildFromGtv(value)
-        return proofTreeFactory.buildFromBinaryTree(root)
     }
 
 }

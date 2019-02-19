@@ -34,19 +34,11 @@ fun serializeGtvToByteArary(gtv: Gtv): ByteArray {
 /**
  * The calculator intended to be used is production for trees that hold [Gtv]
  */
-class GtvMerkleHashCalculator(cryptoSystem: CryptoSystem): MerkleHashCalculator<Gtv>(cryptoSystem) {
-
-    val treeFactory = GtvBinaryTreeFactory()
-
-    var proofTreeFactory: GtvMerkleProofTreeFactory
-    var baseCalc: BinaryNodeHashCalculator
-    init {
-        proofTreeFactory = GtvMerkleProofTreeFactory(this)
-        baseCalc = BinaryNodeHashCalculatorBase(cryptoSystem)
-    }
+class GtvMerkleHashCalculator(cryptoSystem: CryptoSystem):
+        MerkleHashCalculator<Gtv>(cryptoSystem, GtvMerkleHashCache.gtvMerkleHashMemoization) {
 
     override fun calculateNodeHash(prefix: Byte, hashLeft: MerkleHashCarrier, hashRight: MerkleHashCarrier): MerkleHashCarrier {
-        return baseCalc.calculateNodeHash(prefix, hashLeft, hashRight)
+        return MerkleHashCarrier(prefix, calculateNodeHashNoPrefixInternal(hashLeft.getHashWithPrefix(), hashRight.getHashWithPrefix(), MerkleBasics::hashingFun))
     }
 
     /**
@@ -65,11 +57,6 @@ class GtvMerkleHashCalculator(cryptoSystem: CryptoSystem): MerkleHashCalculator<
             is GtvPrimitive -> false
             else -> throw IllegalStateException("The type is neither collection or primitive. type: ${value.type} ")
         }
-    }
-
-    override fun buildTreeFromContainerValue(value: Gtv): GtvMerkleProofTree {
-        val root: GtvBinaryTree = treeFactory.buildFromGtv(value)
-        return proofTreeFactory.buildFromBinaryTree(root)
     }
 
 }

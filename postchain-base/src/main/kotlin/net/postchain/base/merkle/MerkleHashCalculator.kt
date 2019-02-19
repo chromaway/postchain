@@ -2,7 +2,6 @@ package net.postchain.base.merkle
 
 import net.postchain.base.CryptoSystem
 import net.postchain.base.merkle.proof.MerkleHashCarrier
-import net.postchain.base.merkle.proof.MerkleProofTree
 
 
 /**
@@ -11,7 +10,7 @@ import net.postchain.base.merkle.proof.MerkleProofTree
  *
  * Note: We make this class abstract so we can use a dummy version during test (this makes tests easier to understand).
  */
-abstract class MerkleHashCalculator<T>(cryptoSystem: CryptoSystem?): BinaryNodeHashCalculator(cryptoSystem) {
+abstract class MerkleHashCalculator<T>(cryptoSystem: CryptoSystem?, val memoization: MerkleHashMemoization<T>): BinaryNodeHashCalculator(cryptoSystem) {
 
     /**
      * Leaf hashes are prefixed to tell them apart from internal nodes.
@@ -28,25 +27,20 @@ abstract class MerkleHashCalculator<T>(cryptoSystem: CryptoSystem?): BinaryNodeH
      * @param hashFun The only reason we pass the function as a parameter is to simplify testing.
      * @return the hash of the valueToHash.
      */
-    protected fun calculateHashOfValueInternal(valueToHash: T, serializeFun: (T) -> ByteArray, hashFun: (ByteArray, CryptoSystem?) -> Hash): MerkleHashCarrier {
+    protected fun calculateHashOfValueInternal(
+            valueToHash: T,
+            serializeFun: (T) -> ByteArray,
+            hashFun: (ByteArray, CryptoSystem?) -> Hash
+    ): MerkleHashCarrier {
         val byteArr: ByteArray = serializeFun(valueToHash)
         return MerkleHashCarrier(MerkleBasics.HASH_PREFIX_LEAF, hashFun(byteArr, cryptoSystem))
     }
 
     /**
-     * Note: We must override this method if the value can be a container.
+     * Note: We must override this method if the value can be a container (as in the case with GTV).
      *
      * @return True if the value can hold other values (i.e. if it is a container of sorts).
      */
     open fun isContainerProofValueLeaf(value: T): Boolean = false
-
-    /**
-     * Note; We must override this method if a value can be a container
-     *
-     * @return a sub root of a [MerkleProofTree] built from the value (where the value is expected to be a container)
-     */
-    open fun buildTreeFromContainerValue(value: T): MerkleProofTree<T> {
-        throw IllegalStateException("A value $value cannot be a container")
-    }
 
 }

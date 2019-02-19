@@ -2,6 +2,7 @@ package net.postchain.gtv.merkle.factory
 
 import net.postchain.base.merkle.BinaryTreeElement
 import net.postchain.base.merkle.EmptyLeaf
+import net.postchain.base.merkle.MerkleHashMemoization
 import net.postchain.base.merkle.Node
 import net.postchain.gtv.*
 import net.postchain.gtv.merkle.GtvBinaryTreeFactory
@@ -20,7 +21,7 @@ object GtvBinaryTreeFactoryDict {
      * There is an edge cases here:
      * - When the dict is empty. -> We return a top node with two empty leafs
      */
-    fun buildFromGtvDictionary(GtvDictionary: GtvDictionary, GtvPaths: GtvPathSet): GtvDictHeadNode {
+    fun buildFromGtvDictionary(GtvDictionary: GtvDictionary, GtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): GtvDictHeadNode {
         val isThisAProofLeaf = GtvPaths.isThisAProofLeaf() // Will tell us if any of the paths points to this element
         //println("Dict,(is proof? $isThisAProofLeaf) Proof path (size: ${GtvPathList.size} ) list: " + GtvPath.debugRerpresentation(GtvPathList))
         val keys: SortedSet<String> = GtvDictionary.dict.keys.toSortedSet() // Needs to be sorted, or else the order is undefined
@@ -30,7 +31,7 @@ object GtvBinaryTreeFactoryDict {
         }
 
         // 1. Build first (leaf) layer
-        val leafArray = buildLeafElementFromDict(keys, GtvDictionary, GtvPaths)
+        val leafArray = buildLeafElementFromDict(keys, GtvDictionary, GtvPaths, memoization)
         val sumNrOfBytes = leafArray.sumBy { it.getNrOfBytes() }
 
         // 2. Build all higher layers
@@ -54,10 +55,15 @@ object GtvBinaryTreeFactoryDict {
      * @return an array of all the leafs as [BinaryTreeElement] s. Note that some leafs might not be primitive values
      *   but some sort of collection with their own leafs (recursivly)
      */
-    private fun buildLeafElementFromDict(keys: SortedSet<String>, GtvDictionary: GtvDictionary, GtvPaths: GtvPathSet): ArrayList<BinaryTreeElement> {
+    private fun buildLeafElementFromDict(
+            keys: SortedSet<String>,
+            gtvDictionary: GtvDictionary,
+            gtvPaths: GtvPathSet,
+            memoization: MerkleHashMemoization<Gtv>
+    ): ArrayList<BinaryTreeElement> {
         val leafArray = arrayListOf<BinaryTreeElement>()
 
-        val onlyDictPaths = GtvPaths.keepOnlyDictPaths() // For performance, since we will loop soon
+        val onlyDictPaths = gtvPaths.keepOnlyDictPaths() // For performance, since we will loop soon
 
         for (key in keys) {
 
@@ -65,13 +71,13 @@ object GtvBinaryTreeFactoryDict {
 
             // 1.a Fix the key
             val keyGtvString: Gtv = GtvString(key)
-            val keyElement = mainFactory.handlePrimitiveLeaf(keyGtvString, GtvPath.NO_PATHS) // The key cannot not be proved, so NO_PATHS
+            val keyElement = mainFactory.handleLeaf(keyGtvString, GtvPath.NO_PATHS, memoization) // The key cannot not be proved, so NO_PATHS
             leafArray.add(keyElement)
 
             // 1.b Fix the value/content
             val pathsRelevantForThisLeaf = onlyDictPaths.getTailIfFirstElementIsDictOfThisKeyFromList(key)
-            val content: Gtv = GtvDictionary.get(key)!!  // TODO: Is it ok to bang here if the dict is broken?
-            val contentElement = mainFactory.handleLeaf(content, pathsRelevantForThisLeaf)
+            val content: Gtv = gtvDictionary.get(key)!!  // TODO: Is it ok to bang here if the dict is broken?
+            val contentElement = mainFactory.handleLeaf(content, pathsRelevantForThisLeaf, memoization)
             leafArray.add(contentElement)
         }
         return leafArray

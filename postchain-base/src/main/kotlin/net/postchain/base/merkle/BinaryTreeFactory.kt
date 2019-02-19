@@ -9,7 +9,7 @@ import net.postchain.gtv.Gtv
  *
  * Note: The idea is that you should sub class for each type of element (for example [Gtv]) you want to build.
  */
-abstract class BinaryTreeFactory<T,TPathSet: MerklePathSet> : KLogging() {
+abstract class BinaryTreeFactory<T,TPathSet: MerklePathSet>() : KLogging() {
 
     /**
      * Builds the (sub?)tree from a list. We do this is in parts:
@@ -22,7 +22,7 @@ abstract class BinaryTreeFactory<T,TPathSet: MerklePathSet> : KLogging() {
      * @param leafList the list of leafs we should build a sub tree from
      * @return Root [BinaryTreeElement] node of the generated sub tree
      */
-    protected fun buildSubTreeFromLeafList(leafList: List<T>): BinaryTreeElement {
+    protected fun buildSubTreeFromLeafList(leafList: List<T>, memoization: MerkleHashMemoization<T>): BinaryTreeElement {
 
         val leafArray = arrayListOf<BinaryTreeElement>()
 
@@ -30,7 +30,7 @@ abstract class BinaryTreeFactory<T,TPathSet: MerklePathSet> : KLogging() {
         for (i in 0..(leafList.size - 1)) {
             //val pathsRelevantForThisLeaf = keepOnlyRelevantPathsFun(i, pathList)
             val leaf = leafList[i]
-            val btElement = handleLeaf(leaf, null)
+            val btElement = handleLeaf(leaf, getEmptyPathSet(), memoization)
             leafArray.add(btElement)
         }
 
@@ -44,11 +44,40 @@ abstract class BinaryTreeFactory<T,TPathSet: MerklePathSet> : KLogging() {
      * Transforms the incoming leaf into an [BinaryTreeElement]
      * The idea with this function is that it can be recursive (if the leaf in turn is complex object with sub objects).
      *
+     * Note: If we don't have a path here we can try to find the leaf in the cache.
+     *
      * @param leaf the raw data we should wrap in a leaf
      * @param paths a collection of proof paths that might point to this leaf
+     * @param memoization is the cache we can use to find pre-calculated values
      * @return the resulting [BinaryTreeElement] the leaf got converted to
      */
-    abstract fun handleLeaf(leaf: T, paths: TPathSet?): BinaryTreeElement
+    fun handleLeaf(leaf: T, paths: TPathSet, memoization: MerkleHashMemoization<T>): BinaryTreeElement {
+        return if (paths.isEmpty()) {
+            // We don't have paths, so we are free to look in cache
+            val cachedSummary = memoization.findMerkleHash(leaf)
+            if (cachedSummary != null) {
+                CachedLeaf(cachedSummary)
+            } else {
+                innerHandleLeaf(leaf, getEmptyPathSet(), memoization)
+            }
+        } else {
+            // No cache
+            innerHandleLeaf(leaf, paths, memoization)
+        }
+    }
+
+    protected abstract fun getEmptyPathSet(): TPathSet
+
+    /**
+     * At this point we should have looked in cache.
+     *
+     * @param leaf we should turn into a tree element
+     * @param gtvPaths
+     * @param memoization is not used for this leaf (since we know it's not in cache) but might be used below
+     * @return the tree element we created.
+     */
+    protected abstract fun innerHandleLeaf(leaf: T, paths: TPathSet, memoization: MerkleHashMemoization<T>): BinaryTreeElement
+
 
     /**
      * Just like [handleLeaf] but we know that this leaf should not be a complex type, but something we can

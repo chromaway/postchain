@@ -3,9 +3,8 @@ package net.postchain.gtv
 import net.postchain.base.merkle.Hash
 import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.base.merkle.proof.MerkleHashSummary
-import net.postchain.gtv.merkle.GtvBinaryTreeFactory
+import net.postchain.gtv.merkle.GtvMerkleBasics
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
-import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
 import net.postchain.gtv.messages.Gtv as RawGtv
 
 /**
@@ -39,6 +38,10 @@ interface Gtv {
     fun getRawGtv(): RawGtv
 
     fun nrOfBytes(): Int
+
+    // Caching
+    fun getCachedMerkleHash(): MerkleHashSummary?
+    fun setCachedMerkleHash(summary: MerkleHashSummary)
 }
 
 
@@ -69,21 +72,33 @@ fun Gtv.merkleHashWithoutPrefix(calculator: MerkleHashCalculator<Gtv>): Hash {
 /**
  * Calculates the merkle root hash of the structure.
  *
- * Note: if the hash is present in the cache, the cached value will be returned instead.
+ * 1. We will begin by looking in the [Gtv] 's local cache
+ * 2. If not found, we look in the global cache
+ * 3. If not found, we need to calculate it
+ * 4. Remember to update both caches if they were empty
  *
  * @param calculator describes the method we use for hashing and serialization
  * @return the merkle root hash summary
  */
-private fun Gtv.merkleHashSummary(calculator: MerkleHashCalculator<Gtv>): MerkleHashSummary {
-    val factory = GtvBinaryTreeFactory()
-    val proofFactory = GtvMerkleProofTreeFactory(calculator)
+fun Gtv.merkleHashSummary(calculator: MerkleHashCalculator<Gtv>): MerkleHashSummary {
+    var foundInCache = false
+    val cachedSummary = calculator.memoization.findMerkleHash(this)
 
-    val binaryTree = factory.buildFromGtv(this)
+    val newSummary = if (cachedSummary != null) {
+        foundInCache = true
+        cachedSummary
+    } else {
+        // Need to calculate hash
+        val summaryFactory = GtvMerkleBasics.getGtvMerkleHashSummaryFactory()
+        summaryFactory.calculateMerkleRoot(this, calculator)
+    }
 
-    val proofTree = proofFactory.buildFromBinaryTree(binaryTree)
+    // Update cache
+    if (!foundInCache) {
+        calculator.memoization.add(this, newSummary)
+    }
 
-    // Pick the root element (no calculation needed here, proof tree holds only one element since we don't have a path)
-    return proofTree.calculateMerkleRoot(calculator)
+    return newSummary
 }
 
 /**
@@ -108,11 +123,11 @@ fun Gtv.generateProof(indexOfElementsToProve: List<Int>, calculator: MerkleHashC
  * @return the created proof tree
  */
 fun Gtv.generateProof(gtvPaths: GtvPathSet, calculator: MerkleHashCalculator<Gtv>): GtvMerkleProofTree {
-    val factory = GtvBinaryTreeFactory()
-    val proofFactory = GtvMerkleProofTreeFactory(calculator)
+    val factory = GtvMerkleBasics.getGtvBinaryTreeFactory()
+    val proofFactory = GtvMerkleBasics.getGtvMerkleProofTreeFactory()
 
-    val binaryTree = factory.buildFromGtvAndPath(this ,gtvPaths)
+    val binaryTree = factory.buildFromGtvAndPath(this ,gtvPaths, calculator.memoization)
 
-    return proofFactory.buildFromBinaryTree(binaryTree)
+    return proofFactory.buildFromBinaryTree(binaryTree, calculator)
 }
 

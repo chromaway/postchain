@@ -3,9 +3,7 @@ package net.postchain.gtv.merkle.proof
 import net.postchain.base.merkle.*
 import net.postchain.base.merkle.proof.*
 import net.postchain.gtv.*
-import net.postchain.gtv.merkle.GtvArrayHeadNode
-import net.postchain.gtv.merkle.GtvBinaryTree
-import net.postchain.gtv.merkle.GtvDictHeadNode
+import net.postchain.gtv.merkle.*
 
 
 /**
@@ -14,8 +12,9 @@ import net.postchain.gtv.merkle.GtvDictHeadNode
  * Can build from:
  * 1. A binary tree
  * 2. The serialized format
+ *
  */
-class GtvMerkleProofTreeFactory(calculator: MerkleHashCalculator<Gtv>): MerkleProofTreeFactory<Gtv>(calculator)  {
+class GtvMerkleProofTreeFactory(): MerkleProofTreeFactory<Gtv>()  {
 
     /**
      * Builds the [MerkleProofTree] from the [GtvBinaryTree]
@@ -25,17 +24,25 @@ class GtvMerkleProofTreeFactory(calculator: MerkleHashCalculator<Gtv>): MerklePr
      * @param orginalTree is the tree we will use
      * @param calculator is the class we use for hash calculation
      */
-    fun buildFromBinaryTree(orginalTree: GtvBinaryTree): GtvMerkleProofTree {
+    fun buildFromBinaryTree(
+            orginalTree: GtvBinaryTree,
+            calculator: MerkleHashCalculator<Gtv>
+    ): GtvMerkleProofTree {
 
         val rootElement = buildFromBinaryTreeSub(orginalTree.root, calculator)
         return GtvMerkleProofTree(rootElement, orginalTree.root.getNrOfBytes())
     }
 
-    override fun buildFromBinaryTreeSub(currentElement: BinaryTreeElement,
-                               calculator: MerkleHashCalculator<Gtv>): MerkleProofElement {
+    override fun buildFromBinaryTreeSub(
+            currentElement: BinaryTreeElement,
+            calculator: MerkleHashCalculator<Gtv>
+    ): MerkleProofElement {
         return when (currentElement) {
             is EmptyLeaf -> {
                 ProofHashedLeaf(MerkleBasics.EMPTY_HASH) // Just zeros
+            }
+            is CachedLeaf -> {
+                ProofHashedLeaf(currentElement.cachedSummary.merkleHashCarrier)
             }
             is Leaf<*> -> {
                 val content: Gtv = currentElement.content as Gtv // Have to convert here
@@ -43,11 +50,14 @@ class GtvMerkleProofTreeFactory(calculator: MerkleHashCalculator<Gtv>): MerklePr
                 if (currentElement.isPathLeaf()) {
                     // Don't convert it
                     println("Prove the leaf with content: $content")
-                    ProofValueLeaf(content)
+                    ProofValueLeaf(content, currentElement.sizeInBytes)
                 } else {
                     // Make it a hash
                     println("Hash the leaf with content: $content")
-                    ProofHashedLeaf(calculator.calculateLeafHash(content))
+                    val hashCarrier = calculator.calculateLeafHash(content)
+                    val summary = MerkleHashSummary(hashCarrier, currentElement.getNrOfBytes())
+                    calculator.memoization.add(content, summary)
+                    ProofHashedLeaf(hashCarrier)
                 }
             }
             is SubTreeRootNode<*> ->  {
@@ -56,7 +66,7 @@ class GtvMerkleProofTreeFactory(calculator: MerkleHashCalculator<Gtv>): MerklePr
                 if (currentElement.isPathLeaf()) {
                     // Don't convert it
                     println("Prove the node with content: $content")
-                    ProofValueLeaf(content)
+                    ProofValueLeaf(content, currentElement.getNrOfBytes())
                 } else {
                     // Convert
                     println("Convert node ")
@@ -78,6 +88,7 @@ class GtvMerkleProofTreeFactory(calculator: MerkleHashCalculator<Gtv>): MerklePr
             else -> throw IllegalStateException("Should have taken care of this node type: $currentNode")
         }
     }
+
 
     // ---------- Deserialization -----
     /**
@@ -103,7 +114,7 @@ class GtvMerkleProofTreeFactory(calculator: MerkleHashCalculator<Gtv>): MerklePr
                 val merkleHashCarrier = MerkleHashCarrier.build( byteArray.bytearray ) // TODO: Q77: Should we really smack on prefix upon serialization?
                 ProofHashedLeaf(merkleHashCarrier)
             }
-            SERIALIZATION_VALUE_LEAF_TYPE -> ProofValueLeaf(secondElement)
+            SERIALIZATION_VALUE_LEAF_TYPE -> ProofValueLeaf(secondElement, secondElement.nrOfBytes())
             SERIALIZATION_NODE_TYPE -> {
                 val left: MerkleProofElement = deserializeSub(secondElement as GtvArray)
                 val right: MerkleProofElement = deserializeSub(currentSerializedArrayGtv[2] as GtvArray)

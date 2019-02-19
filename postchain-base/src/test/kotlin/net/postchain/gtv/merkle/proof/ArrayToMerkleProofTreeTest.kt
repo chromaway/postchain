@@ -1,16 +1,17 @@
 package net.postchain.base.merkle.proof
 
 import net.postchain.base.merkle.*
-import net.postchain.gtv.merkle.*
 import net.postchain.base.merkle.TreeHelper.stripWhite
-import net.postchain.gtv.GtvArray
-import net.postchain.gtv.GtvPath
-import net.postchain.gtv.GtvPathFactory
-import net.postchain.gtv.GtvPathSet
+import net.postchain.gtv.*
 import net.postchain.gtv.merkle.ArrayToGtvBinaryTreeHelper
+import net.postchain.gtv.merkle.ArrayToGtvBinaryTreeHelper.expected1ElementArrayMerkleRoot
+import net.postchain.gtv.merkle.ArrayToGtvBinaryTreeHelper.expected4ElementArrayMerkleRoot
+import net.postchain.gtv.merkle.ArrayToGtvBinaryTreeHelper.expected7ElementArrayMerkleRoot
+import net.postchain.gtv.merkle.ArrayToGtvBinaryTreeHelper.expectet7and3ElementArrayMerkleRoot
 import net.postchain.gtv.merkle.MerkleHashCalculatorDummy
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
+import net.postchain.gtv.merkle.proof.merkleHashSummary
 import org.junit.Assert
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -39,34 +40,35 @@ import kotlin.test.assertEquals
  *   12 -> 0C
  *
  * -----------------
- * Note: The testing of the exact serialization format is not very important and can be removed. The only important
+ * Note1: The testing of the exact serialization format is not very important and can be removed. The only important
  * thing is that we keep testing after deserialization.
+ *
+ * Note2: We are not testing the cache, so every test begins with a fresh Calculator (and therefore a fresh cache).
  */
 class ArrayToMerkleProofTreeTest {
 
-    val calculator = MerkleHashCalculatorDummy()
-    val factory =GtvMerkleProofTreeFactory(calculator)
-
-    val expected1ElementArrayMerkleRoot = "070203010101010101010101010101010101010101010101010101010101010101010101"
-    val expected4ElementArrayMerkleRoot = "0701030403050103060307"
-    val expectet7and3ElementArrayMerkleRoot = "070102040504060204070A040607060F050801020409040A030A"
-
+    val proofFactory =GtvMerkleProofTreeFactory()
 
     // ---------------------
     // 1. First we test to build a proof where the value-to-be-proved a primitive type value in the array.
     // ---------------------
+    // -------------- Size 1 ------------
+
     @Test
-    fun test_tree_of1() {
+    fun test_ArrOf1_proof() {
+        val calculator = MerkleHashCalculatorDummy()
+
         val path: Array<Any> = arrayOf(0)
         val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
-        val treeHolder = ArrayToGtvBinaryTreeHelper.buildTreeOf1(gtvPath)
+        val gtvPaths = GtvPathSet(setOf(gtvPath))
+        val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf1()
 
         val expectedTree =
                 " +   \n" +
                 "/ \\ \n" +
                 "*1 000000000000000000000000000000000000000000000000000000000000000000"
 
-        val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
+        val merkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -75,6 +77,10 @@ class ArrayToMerkleProofTreeTest {
         //println(resultPrintout)
 
         Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
+
+        // Make sure the merkle root stays the same as without proof
+        val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
+        assertEquals(expected1ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
 
         // Proof -> Serialize
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
@@ -95,7 +101,7 @@ class ArrayToMerkleProofTreeTest {
         Assert.assertEquals(stripWhite(expectedSerialization), stripWhite(serialize.toString())) // Not really needed, Can be removed
 
         // Serialize -> deserialize
-        val deserialized = factory.deserialize(serialize)
+        val deserialized = proofFactory.deserialize(serialize)
 
 
         // Print the result tree
@@ -104,27 +110,18 @@ class ArrayToMerkleProofTreeTest {
         //println(deserializedPrintout)
 
         Assert.assertEquals(expectedTree.trim(), deserializedPrintout.trim())
-
-
     }
 
-    @Test
-    fun test_tree_of1_merkle_root() {
-        val path: Array<Any> = arrayOf(0)
-        val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
-        val treeHolder = ArrayToGtvBinaryTreeHelper.buildTreeOf1(gtvPath)
-
-        val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
-
-        val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
-        assertEquals(expected1ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
-    }
+    // -------------- Size 4 ------------
 
     @Test
-    fun test_tree_of4() {
+    fun test_Arrof4_proof() {
+        val calculator = MerkleHashCalculatorDummy()
+
         val path: Array<Any> = arrayOf(0)
-        val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
-        val treeHolder = ArrayToGtvBinaryTreeHelper.buildTreeOf4(gtvPath)
+        val gtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
+        val gtvPaths = GtvPathSet(setOf(gtvPath))
+        val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf4()
 
         // This is how the (dummy = +1) hash calculation works done for the right side of the path:
         //
@@ -143,8 +140,7 @@ class ArrayToMerkleProofTreeTest {
                 "/ \\     \n" +
                 "*1 0103 - - "
 
-
-        val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
+        val merkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -153,6 +149,10 @@ class ArrayToMerkleProofTreeTest {
         //println(resultPrintout)
 
         Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
+
+        // Make sure the merkle root stays the same as without proof
+        val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
+        assertEquals(expected4ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
 
         // Proof -> Serialize
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
@@ -181,7 +181,7 @@ class ArrayToMerkleProofTreeTest {
         Assert.assertEquals(stripWhite(expectedSerialization), stripWhite(serialize.toString())) // Not really needed, Can be removed
 
         // Serialize -> deserialize
-        val deserialized = factory.deserialize(serialize)
+        val deserialized = proofFactory.deserialize(serialize)
 
 
         // Print the result tree
@@ -193,39 +193,16 @@ class ArrayToMerkleProofTreeTest {
 
     }
 
-    @Test
-    fun test_tree_of4_merkle_root() {
-        val path: Array<Any> = arrayOf(0)
-        val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
-        val treeHolder = ArrayToGtvBinaryTreeHelper.buildTreeOf4(gtvPath)
-
-        // How to calculate the root of the proof above:
-        // (see the test above for where we get these numbers)
-        // 07 + [
-        //       00 [(01 + [<1>]) + 0103] +
-        //       0002050206
-        //      ] ->
-        // 07 + [
-        //       00 [0102 + 0103] +
-        //       0002050206
-        //      ] ->
-        // 07 + [ 0002030204 + 0002050206 ] ->
-        // 07     0103040305 + 0103060307 ->
-        // 0701030403050103060307
-
-        val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
-
-        val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
-        assertEquals(expected4ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
-    }
-
-
+    // -------------- Size 7 ------------
 
     @Test
-    fun test_tree_of7() {
+    fun test_ArrOf7_proof() {
+        val calculator = MerkleHashCalculatorDummy()
+
         val path: Array<Any> = arrayOf(3)
         val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
-        val treeHolder: TreeHolderFromArray = ArrayToGtvBinaryTreeHelper.buildTreeOf7(gtvPath)
+        val gtvPaths = GtvPathSet(setOf(gtvPath))
+        val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf7()
 
         // This is how the (dummy = +1) hash calculation works done for the right side of the path:
         //
@@ -251,7 +228,7 @@ class ArrayToMerkleProofTreeTest {
                 "    / \\         \n" +
                 "- - 0104 *4 - - - - "
 
-        val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
+        val merkleProofTree:GtvMerkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -260,6 +237,10 @@ class ArrayToMerkleProofTreeTest {
         //println(resultPrintout)
 
         Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
+
+        // Make sure the merkle root stays the same as without proof
+        val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
+        assertEquals(expected7ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
 
         // Proof -> Serialize
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
@@ -294,7 +275,7 @@ class ArrayToMerkleProofTreeTest {
         Assert.assertEquals(stripWhite(expectedSerialization), stripWhite(serialize.toString())) // Not really needed, Can be removed
 
         // Serialize -> deserialize
-        val deserialized = factory.deserialize(serialize)
+        val deserialized = proofFactory.deserialize(serialize)
 
         // Print the result tree
         val pbtDes = PrintableTreeFactory.buildPrintableTreeFromProofTree(deserialized)
@@ -302,7 +283,6 @@ class ArrayToMerkleProofTreeTest {
         //println(deserializedPrintout)
 
         Assert.assertEquals(expectedTree.trim(), deserializedPrintout.trim())
-
     }
 
     // ---------------------
@@ -311,13 +291,14 @@ class ArrayToMerkleProofTreeTest {
 
     @Test
     fun test_tree_of7_with_double_proof() {
+        val calculator = MerkleHashCalculatorDummy()
+
         val path1: Array<Any> = arrayOf(3)
         val path2: Array<Any> = arrayOf(6)
         val gtvPath1:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path1)
         val gtvPath2:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path2)
-        val treeHolder: TreeHolderFromArray = ArrayToGtvBinaryTreeHelper.buildTreeOf7(GtvPathSet(setOf(gtvPath1,gtvPath2)))
-
-        //Assert.assertEquals(treeHolder.expectedPrintout.trim(), treeHolder.treePrintout.trim())
+        val gtvPaths = GtvPathSet(setOf(gtvPath1, gtvPath2))
+        val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf7()
 
         val expectedTree =
                 "       +               \n" +
@@ -332,7 +313,7 @@ class ArrayToMerkleProofTreeTest {
                 "    / \\         \n" +
                 "- - 0104 *4 - - - - "
 
-        val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
+        val merkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -342,16 +323,24 @@ class ArrayToMerkleProofTreeTest {
 
         Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
 
+        // Make sure the merkle root stays the same as without proof
+        val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
+        assertEquals(expected7ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
     }
 
     // ---------------------
     // 3. Then we test to build a proof where the value-to-be-proved is a primitive value located in a sub-array.
     // ---------------------
+    // -------------- Size 7 with inner 3 ------------
+
     @Test
     fun test_ArrayLength7_withInnerLength3Array_path2nine() {
+        val calculator = MerkleHashCalculatorDummy()
+
         val path: Array<Any> = arrayOf(3,1)
-        val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
-        val treeHolder = ArrayToGtvBinaryTreeHelper.buildTreeOf7WithSubTree(gtvPath)
+        val gtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
+        val gtvPaths = GtvPathSet(setOf(gtvPath))
+        val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrOf7WithInner3()
 
 
         val expectedTree =
@@ -394,7 +383,7 @@ class ArrayToMerkleProofTreeTest {
                 "- - - - - - - - - - - - 0102 *9 - - - - - - - - - - - - - - - - - - "
 
 
-        val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
+        val merkleProofTree:GtvMerkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -403,24 +392,21 @@ class ArrayToMerkleProofTreeTest {
         //println(resultPrintout)
 
         Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
-    }
 
-    @Test
-    fun test_ArrayLength7_withInnerLength3Array_path2nine_proof() {
-        val path: Array<Any> = arrayOf(3,1)
-        val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
-        val treeHolder = ArrayToGtvBinaryTreeHelper.buildTreeOf7WithSubTree(gtvPath)
-
-        val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
-        val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
+        // Make sure the merkle root stays the same as without proof
+        val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
         assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
     }
 
+
     @Test
     fun test_ArrayLength7_withInnerLength3Array_path2three() {
+        val calculator = MerkleHashCalculatorDummy()
+
         val path: Array<Any> = arrayOf(2)
         val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
-        val treeHolder = ArrayToGtvBinaryTreeHelper.buildTreeOf7WithSubTree(gtvPath)
+        val gtvPaths = GtvPathSet(setOf(gtvPath))
+        val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrOf7WithInner3()
 
         // How to calculate the hash of the sub tree?
         // 07 + [
@@ -454,7 +440,7 @@ class ArrayToMerkleProofTreeTest {
                 "- - *3 07010304030C0205 - - - - "
 
 
-        val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
+        val merkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -463,31 +449,25 @@ class ArrayToMerkleProofTreeTest {
         //println(resultPrintout)
 
         Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
-    }
 
-    @Test
-    fun test_ArrayLength7_withInnerLength3Array_path2three_proof() {
-        val path: Array<Any> = arrayOf(2)
-        val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
-        val treeHolder = ArrayToGtvBinaryTreeHelper.buildTreeOf7WithSubTree(gtvPath)
-
-        val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
-        val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
+        // Make sure the merkle root stays the same as without proof
+        val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
         assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
     }
+
 
     // ---------------------
     // 4. Later we test to build a proof where the value-to-be-proved is a complex type (another array)
     // ---------------------
 
-    /**
-     * Note: This test depend on the auto-generated output of toString() of the "data class" of theGtv array.
-     */
     @Test
     fun test_ArrayLength7_withInnerLength3Array_path2subArray() {
+        val calculator = MerkleHashCalculatorDummy()
+
         val path: Array<Any> = arrayOf(3)
         val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
-        val treeHolder = ArrayToGtvBinaryTreeHelper.buildTreeOf7WithSubTree(gtvPath)
+        val gtvPaths = GtvPathSet(setOf(gtvPath))
+        val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrOf7WithInner3()
 
         val expectedTree ="       +               \n" +
                 "      / \\       \n" +
@@ -502,7 +482,7 @@ class ArrayToMerkleProofTreeTest {
                 "- - 0104 *GtvArray(array=[GtvInteger(integer=1), GtvInteger(integer=9), GtvInteger(integer=3)]) - - - - "
 
 
-        val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
+        val merkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
 
         // Print the result tree
         val printer = TreePrinter()
@@ -511,6 +491,10 @@ class ArrayToMerkleProofTreeTest {
         //println(resultPrintout)
 
         Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
+
+        // Make sure the merkle root stays the same as without proof
+        val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
+        assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
 
         // Proof -> Serialize
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
@@ -550,7 +534,7 @@ class ArrayToMerkleProofTreeTest {
         Assert.assertEquals(stripWhite(expectedSerialization), stripWhite(serialize.toString())) // Not really needed, Can be removed
 
         // Serialize -> deserialize
-        val deserialized = factory.deserialize(serialize)
+        val deserialized = proofFactory.deserialize(serialize)
 
 
         // Print the result tree
@@ -560,16 +544,5 @@ class ArrayToMerkleProofTreeTest {
 
         Assert.assertEquals(expectedTree.trim(), deserializedPrintout.trim())
 
-    }
-
-    @Test
-    fun test_ArrayLength7_withInnerLength3Array_path2subArray_proof() {
-        val path: Array<Any> = arrayOf(3)
-        val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
-        val treeHolder = ArrayToGtvBinaryTreeHelper.buildTreeOf7WithSubTree(gtvPath)
-
-        val merkleProofTree:GtvMerkleProofTree = factory.buildFromBinaryTree(treeHolder.clfbTree)
-        val merkleProofRoot = merkleProofTree.calculateMerkleRoot(calculator)
-        assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
     }
 }

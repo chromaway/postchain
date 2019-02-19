@@ -1,230 +1,70 @@
 package net.postchain.gtv.merkle
 
-import net.postchain.base.merkle.*
 import net.postchain.gtv.GtvArray
-import net.postchain.gtv.GtvPath
-import net.postchain.gtv.GtvPathSet
 import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvFactory.gtv
 
 object ArrayToGtvBinaryTreeHelper {
 
+    const val expected1ElementArrayMerkleRoot = "070203010101010101010101010101010101010101010101010101010101010101010101"
+    const val expected4ElementArrayMerkleRoot = "0701030403050103060307"
+    const val expected7ElementArrayMerkleRoot = "07010204050406020407040801020409040A030A"
+    const val expectet7and3ElementArrayMerkleRoot = "070102040504060204070A040607060F050801020409040A030A"
 
-    private val factory =GtvBinaryTreeFactory()
+    // ----------------- 1 -----------------------------
+    fun intArrOf1() = intArrayOf(1)
 
-
-    /**
-     * Use this if you don't have a path to prove
-     */
-    fun buildTreeOf1(): TreeHolderFromArray {
-        return buildTreeOf1(null)
-    }
-
-    fun buildTreeOf1(gtvPath: GtvPath?): TreeHolderFromArray {
-        val intArray = intArrayOf(1)
-        val expectedTree =
-                " +   \n" +
-                "/ \\ \n" +
-                "1 - "
-
+    fun buildGtvArrayOf1(): GtvArray {
+        val intArray = intArrOf1()
         val gtvArrayList = GtvTreeHelper.transformIntToGtv(intArray.toCollection(ArrayList()))
-        val gtvArr: Array<Gtv> = gtvArrayList.toTypedArray()
-
-        val fullBinaryTree: GtvBinaryTree = if (gtvPath != null) {
-            factory.buildFromGtvAndPath(GtvArray(gtvArr), GtvPathSet(setOf(gtvPath)))
-        } else {
-            factory.buildFromGtv(GtvArray(gtvArr))
-        }
-
-        val printer = TreePrinter()
-        val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
-        val treePrintout = printer.printNode(printableBinaryTree)
-        //println(treePrintout)
-
-        return TreeHolderFromArray(intArray, fullBinaryTree, treePrintout, expectedTree, gtvArrayList)
+        return gtv(gtvArrayList)
     }
 
+    // ----------------- 4 -----------------------------
+    fun intArrOf4() = intArrayOf(1,2,3,4)
 
-    fun buildTreeOf4(): TreeHolderFromArray {
-        return buildTreeOf4(null)
-    }
-
-    fun buildTreeOf4(gtvPath: GtvPath?): TreeHolderFromArray {
-        val intArray = intArrayOf(1,2,3,4)
-        val expectedTree =
-                "   +       \n" +
-                        "  / \\   \n" +
-                        " /   \\  \n" +
-                        " +   +   \n" +
-                        "/ \\ / \\ \n" +
-                        "1 2 3 4 \n"
-
+    fun buildGtvArrayOf4(): GtvArray {
+        val intArray = intArrOf4()
         val gtvArrayList =GtvTreeHelper.transformIntToGtv(intArray.toCollection(ArrayList()))
-        val gtvArr: Array<Gtv> = gtvArrayList.toTypedArray()
-        val fullBinaryTree:GtvBinaryTree = if (gtvPath != null) {
-            factory.buildFromGtvAndPath(GtvArray(gtvArr), GtvPathSet(setOf((gtvPath))))
-        } else {
-            factory.buildFromGtv(GtvArray(gtvArr))
-        }
-
-        val printer = TreePrinter()
-        val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
-        val treePrintout = printer.printNode(printableBinaryTree)
-        //println(treePrintout)
-
-        return TreeHolderFromArray(intArray, fullBinaryTree, treePrintout, expectedTree, gtvArrayList)
+        return gtv(gtvArrayList)
     }
 
-    fun buildTreeOf7(): TreeHolderFromArray {
-        return buildTreeOf7(null)
-    }
+    // ----------------- 7 -----------------------------
+    fun intArrOf7() = intArrayOf(1, 2, 3, 4, 5, 6, 7)
 
-    fun buildTreeOf7(gtvPath: GtvPath?): TreeHolderFromArray {
-        return if (gtvPath == null) {
-            buildTreeOf7(GtvPathSet(setOf()))
-        } else {
-            buildTreeOf7(GtvPathSet(setOf(gtvPath)))
-        }
-    }
-
-    fun buildTreeOf7(gtvPaths: GtvPathSet): TreeHolderFromArray {
-        val intArray = intArrayOf(1, 2, 3, 4, 5, 6, 7)
-
-        val expectedTree =
-                "       +               \n" +
-                        "      / \\       \n" +
-                        "     /   \\      \n" +
-                        "    /     \\     \n" +
-                        "   /       \\    \n" +
-                        "   +       +       \n" +
-                        "  / \\     / \\   \n" +
-                        " /   \\   /   \\  \n" +
-                        " +   +   +   7   \n" +
-                        "/ \\ / \\ / \\     \n" +
-                        "1 2 3 4 5 6 - - "
-
-
-
+    fun buildGtvArrayOf7(): GtvArray {
+        val intArray = intArrOf7()
         val gtvList: List<Gtv> =GtvTreeHelper.transformIntToGtv(intArray.toCollection(ArrayList()))
-        val gtvArr: Array<Gtv> =gtvList.toTypedArray()
-
-        val fullBinaryTree = factory.buildFromGtvAndPath(GtvArray(gtvArr),gtvPaths)
-
-        val printer = TreePrinter()
-        val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
-        val treePrintout = printer.printNode(printableBinaryTree)
-        //println(treePrintout)
-
-        return TreeHolderFromArray(intArray, fullBinaryTree, treePrintout, expectedTree,gtvList)
-
+        return gtv(gtvList)
     }
 
-    fun buildTreeOf9(): TreeHolderFromArray {
-        val intArray = intArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9)
+    // ----------------- 9 -----------------------------
+    fun intArrOf9() = intArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9)
 
-        val expectedTree = "               +                               \n" +
-                "              / \\               \n" +
-                "             /   \\              \n" +
-                "            /     \\             \n" +
-                "           /       \\            \n" +
-                "          /         \\           \n" +
-                "         /           \\          \n" +
-                "        /             \\         \n" +
-                "       /               \\        \n" +
-                "       +               9               \n" +
-                "      / \\                       \n" +
-                "     /   \\                      \n" +
-                "    /     \\                     \n" +
-                "   /       \\                    \n" +
-                "   +       +       .       .       \n" +
-                "  / \\     / \\                   \n" +
-                " /   \\   /   \\                  \n" +
-                " +   +   +   +   .   .   .   .   \n" +
-                "/ \\ / \\ / \\ / \\                 \n" +
-                "1 2 3 4 5 6 7 8 - - - - - - - - "
-
-
+    fun buildGtvArrayOf9(): GtvArray {
+        val intArray = intArrOf9()
         val gtvList: List<Gtv> =GtvTreeHelper.transformIntToGtv(intArray.toCollection(ArrayList()))
-
-        val fullBinaryTree: GtvBinaryTree = factory.buildFromGtv(GtvTreeHelper.transformGtvsToGtvArray(gtvList))
-
-        val printer = TreePrinter()
-        val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
-        val treePrintout = printer.printNode(printableBinaryTree)
-        //println(treePrintout)
-
-        return TreeHolderFromArray(intArray, fullBinaryTree, treePrintout, expectedTree, gtvList)
-
+        return gtv(gtvList)
     }
 
-    fun buildTreeOf7WithSubTree(): TreeHolderFromArray {
-        return buildTreeOf7(null)
+    // ----------------- 7 with 3-----------------------------
+    private fun intArrOfInner3() = intArrayOf(1,9,3)
+
+    private fun buildGtvArrInnerOf3(): GtvArray {
+        val innerIntArray = intArrOfInner3()
+        val innerIntArrayList =GtvTreeHelper.transformIntToGtv(innerIntArray.toCollection(ArrayList()))
+        return gtv(innerIntArrayList)
     }
 
-    fun buildTreeOf7WithSubTree(gtvPath: GtvPath): TreeHolderSubTree {
-        val intArray = intArrayOf(1,2,3,4,5,6,7)
-        val expectedTree =
-                "                               +                                                               \n" +
-                        "                              / \\                               \n" +
-                        "                             /   \\                              \n" +
-                        "                            /     \\                             \n" +
-                        "                           /       \\                            \n" +
-                        "                          /         \\                           \n" +
-                        "                         /           \\                          \n" +
-                        "                        /             \\                         \n" +
-                        "                       /               \\                        \n" +
-                        "                      /                 \\                       \n" +
-                        "                     /                   \\                      \n" +
-                        "                    /                     \\                     \n" +
-                        "                   /                       \\                    \n" +
-                        "                  /                         \\                   \n" +
-                        "                 /                           \\                  \n" +
-                        "                /                             \\                 \n" +
-                        "               /                               \\                \n" +
-                        "               +                               +                               \n" +
-                        "              / \\                             / \\               \n" +
-                        "             /   \\                           /   \\              \n" +
-                        "            /     \\                         /     \\             \n" +
-                        "           /       \\                       /       \\            \n" +
-                        "          /         \\                     /         \\           \n" +
-                        "         /           \\                   /           \\          \n" +
-                        "        /             \\                 /             \\         \n" +
-                        "       /               \\               /               \\        \n" +
-                        "       +               +               +               7               \n" +
-                        "      / \\             / \\             / \\                       \n" +
-                        "     /   \\           /   \\           /   \\                      \n" +
-                        "    /     \\         /     \\         /     \\                     \n" +
-                        "   /       \\       /       \\       /       \\                    \n" +
-                        "   1       2       3       +       5       6       .       .       \n" +
-                        "                          / \\                                   \n" +
-                        "                         /   \\                                  \n" +
-                        " .   .   .   .   .   .   +   3   .   .   .   .   .   .   .   .   \n" +
-                        "                        / \\                                     \n" +
-                        "- - - - - - - - - - - - 1 9 - - - - - - - - - - - - - - - - - - "
-
-
+    fun buildGtvArrOf7WithInner3(): GtvArray {
+        val intArray = intArrOf7()
         val gtvArrayList =GtvTreeHelper.transformIntToGtv(intArray.toCollection(ArrayList()))
 
         // Add the inner GtvArray
-        val innerIntArray = intArrayOf(1,9,3)
-        val innerIntArrayList =GtvTreeHelper.transformIntToGtv(innerIntArray.toCollection(ArrayList()))
-        val innerGtvIntArray: Array<Gtv> = innerIntArrayList.toTypedArray()
-        val innerGtvArray = GtvArray(innerGtvIntArray)
+        val innerGtvArray = buildGtvArrInnerOf3()
         gtvArrayList.set(3, innerGtvArray)
 
-        val gtvArr: Array<Gtv> = gtvArrayList.toTypedArray()
-
-        val fullBinaryTree: GtvBinaryTree = if (gtvPath != null) {
-            factory.buildFromGtvAndPath(GtvArray(gtvArr), GtvPathSet(setOf(gtvPath)))
-        } else {
-            factory.buildFromGtv(GtvArray(gtvArr))
-        }
-
-        val printer = TreePrinter()
-        val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
-        val treePrintout = printer.printNode(printableBinaryTree)
-        //println(treePrintout)
-
-        return TreeHolderSubTree(intArray, fullBinaryTree, treePrintout, expectedTree, gtvArrayList, innerGtvIntArray)
+        return gtv(gtvArrayList)
     }
 
 

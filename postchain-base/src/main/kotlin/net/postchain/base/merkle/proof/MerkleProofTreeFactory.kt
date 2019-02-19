@@ -1,9 +1,6 @@
 package net.postchain.base.merkle.proof
 
-import net.postchain.base.merkle.BinaryTree
-import net.postchain.base.merkle.BinaryTreeElement
-import net.postchain.base.merkle.MerkleHashCalculator
-import net.postchain.base.merkle.Node
+import net.postchain.base.merkle.*
 
 /**
  * Base class for building [MerkleProofTree] (but needs to be overridden to actually do something)
@@ -13,7 +10,7 @@ import net.postchain.base.merkle.Node
  *     see [BinaryTreeFactory] )
  * 2. The serialized format
  */
-abstract class MerkleProofTreeFactory<T>(val calculator: MerkleHashCalculator<T>) {
+abstract class MerkleProofTreeFactory<T>() {
 
     /**
      * Converts [BinaryTreeElement] into a [MerkleProofElement].
@@ -29,6 +26,9 @@ abstract class MerkleProofTreeFactory<T>(val calculator: MerkleHashCalculator<T>
             MerkleProofElement
 
 
+    /**
+     * Note: we cannot add to the cache, since a node does not map one-to-one to a source element.
+     */
     protected fun convertNode(currentNode: Node, calculator: MerkleHashCalculator<T>): MerkleProofElement {
         val left = buildFromBinaryTreeSub(currentNode.left, calculator)
         val right = buildFromBinaryTreeSub(currentNode.right, calculator)
@@ -42,7 +42,6 @@ abstract class MerkleProofTreeFactory<T>(val calculator: MerkleHashCalculator<T>
             ProofHashedLeaf(addedHash)
         } else {
             buildNodeOfCorrectType(currentNode, left, right)
-
         }
     }
 
@@ -55,5 +54,6 @@ abstract class MerkleProofTreeFactory<T>(val calculator: MerkleHashCalculator<T>
     open fun buildNodeOfCorrectType(currentNode: Node, left: MerkleProofElement, right: MerkleProofElement): ProofNode {
         return ProofNode(currentNode.getPrefixByte(), left, right)
     }
+
 
 }

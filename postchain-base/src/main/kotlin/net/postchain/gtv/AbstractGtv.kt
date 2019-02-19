@@ -1,11 +1,14 @@
 package net.postchain.gtv
 
+import net.postchain.base.merkle.proof.MerkleHashSummary
 import net.postchain.core.UserMistake
 
 /**
  * Just a base class for all GTVs.
  */
 abstract class AbstractGtv : Gtv {
+
+    private var merkleHashSummary: MerkleHashSummary? = null
 
     override operator fun get(index: Int): Gtv {
         throw UserMistake("Type error: array expected")
@@ -41,6 +44,14 @@ abstract class AbstractGtv : Gtv {
 
     override fun nrOfBytes(): Int {
         throw UserMistake("Implementation expected")
+    }
+
+    override fun getCachedMerkleHash(): MerkleHashSummary? {
+        return merkleHashSummary
+    }
+
+    override fun setCachedMerkleHash(summary: MerkleHashSummary) {
+        merkleHashSummary =  summary
     }
 
 }

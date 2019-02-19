@@ -1,7 +1,9 @@
 package net.postchain.gtv.merkle
 
 import net.postchain.base.merkle.TreeHolder
+import net.postchain.base.merkle.TreeHolderWithIntArray
 import net.postchain.gtv.GtvDictionary
+import net.postchain.gtv.GtvArray
 import net.postchain.gtv.Gtv
 
 
@@ -9,22 +11,21 @@ open class TreeHolderFromArray(orgIntArray: IntArray,
                                clfbTree:GtvBinaryTree,
                                treePrintout: String,
                                expectedPrintout: String,
-                               val orgGtvList: List<Gtv> ):
-        TreeHolder(orgIntArray, clfbTree, treePrintout, expectedPrintout)
+                               val orgGtvArray: GtvArray  ):
+        TreeHolderWithIntArray(orgIntArray, clfbTree, treePrintout, expectedPrintout)
 
 class TreeHolderSubTree(orgIntArray: IntArray,
                         clfbTree:GtvBinaryTree,
                         treePrintout: String,
                         expectedPrintout: String,
-                        orgGtvList: List<Gtv>,
-                        val orgGtvSubArray: Array<Gtv>):
-        TreeHolderFromArray (orgIntArray,  clfbTree, treePrintout, expectedPrintout, orgGtvList)
+                        orgSubGtvArray: GtvArray,
+                        val orgGtvList: MutableList<Gtv>):
+        TreeHolderFromArray (orgIntArray,  clfbTree, treePrintout, expectedPrintout, orgSubGtvArray)
 
 
-class TreeHolderFromDict(orgIntArray: IntArray,
-                         clfbTree:GtvBinaryTree,
+class TreeHolderFromDict( clfbTree:GtvBinaryTree,
                          treePrintout: String,
                          expectedPrintout: String,
                          val orgGtvDict: GtvDictionary):
-        TreeHolder(orgIntArray, clfbTree, treePrintout, expectedPrintout)
+        TreeHolder(clfbTree, treePrintout, expectedPrintout)
 

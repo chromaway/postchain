@@ -72,7 +72,7 @@ class ProofNodeSimple(left: MerkleProofElement, right: MerkleProofElement): Proo
  * Note: We allow for many [ProofValueLeaf] in the same proof
  * (although proofs of one value will probably be the most common case)
  */
-data class ProofValueLeaf<T>(val content: T): MerkleProofElement()
+data class ProofValueLeaf<T>(val content: T, val sizeInBytes: Int): MerkleProofElement()
 
 /**
  * The hash in this leaf is a hash of an entire sub tree of the original Merkle tree
@@ -101,45 +101,6 @@ data class ProofHashedLeaf(val merkleHashCarrier: MerkleHashCarrier): MerkleProo
  */
 abstract class MerkleProofTree<T>(val root: MerkleProofElement, val totalNrOfBytes: Int = UNKNOWN_SIZE_IN_BYTE ) {
 
-
-    /**
-     * Note: When calculating the merkle root of a proof of a complicated structure (args or dict)
-     *       means that the value-to-be-proved (i.e. args/dict) must be transformed to a binary tree
-     *       before we can calculate it's hash.
-     *
-     * @return the calculated merkle root of the proof. For the proof to be valid, this [Hash] should equal the
-     *          merkle root of the block.
-     */
-    fun calculateMerkleRoot(calculator: MerkleHashCalculator<T>): MerkleHashSummary {
-        val calculatedSummary = calculateMerkleRootInternal(root, calculator)
-        return MerkleHashSummary(calculatedSummary, totalNrOfBytes)
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun calculateMerkleRootInternal(currentElement: MerkleProofElement, calculator: MerkleHashCalculator<T>): MerkleHashCarrier {
-        return when (currentElement) {
-            is ProofHashedLeaf -> currentElement.merkleHashCarrier
-            is ProofValueLeaf<*> -> {
-                val value = currentElement.content as T // Compiler "unchecked cast" warning here, but this is actually safe.
-                if (calculator.isContainerProofValueLeaf(value)) {
-                    // We have a container value to prove, so need to convert the value to a binary tree, and THEN hash it
-                    val merkleProofTree: MerkleProofTree<T> = calculator.buildTreeFromContainerValue(value)
-                    calculateMerkleRootInternal(merkleProofTree.root, calculator)
-                } else {
-                    // This is a primitive value, just hash it
-                    calculator.calculateLeafHash(value)
-                }
-            }
-            is ProofNode -> {
-                val left = calculateMerkleRootInternal(currentElement.left, calculator)
-                val right = calculateMerkleRootInternal(currentElement.right, calculator)
-                calculator.calculateNodeHash(currentElement.prefix ,left, right)
-            }
-            else -> {
-                throw IllegalStateException("Should have handled this type: $currentElement")
-            }
-        }
-    }
 
     /**
      * Mostly for debugging

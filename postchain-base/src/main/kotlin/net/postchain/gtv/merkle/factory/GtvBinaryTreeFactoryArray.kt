@@ -1,9 +1,6 @@
 package net.postchain.gtv.merkle.factory
 
-import net.postchain.base.merkle.BinaryTreeElement
-import net.postchain.base.merkle.EmptyLeaf
-import net.postchain.base.merkle.Leaf
-import net.postchain.base.merkle.Node
+import net.postchain.base.merkle.*
 import net.postchain.gtv.GtvArray
 import net.postchain.gtv.GtvPathSet
 import net.postchain.gtv.Gtv
@@ -19,7 +16,7 @@ object GtvBinaryTreeFactoryArray {
      * - When the args is empty. -> We return a top node with two empty leafs
      * - When there is only one element. -> We set the right element as empty
      */
-    fun buildFromGtvArray(GtvArray: GtvArray, GtvPaths: GtvPathSet): BinaryTreeElement {
+    fun buildFromGtvArray(GtvArray: GtvArray, GtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): BinaryTreeElement {
         val isThisAProofLeaf = GtvPaths.isThisAProofLeaf() // Will tell us if any of the paths points to this element
         //println("Arr,(is proof? $isThisAProofLeaf) Proof path (size: ${GtvPathList.size} ) list: " + GtvPath.debugRerpresentation(GtvPathList))
 
@@ -29,7 +26,7 @@ object GtvBinaryTreeFactoryArray {
             return GtvArrayHeadNode(EmptyLeaf, EmptyLeaf, isThisAProofLeaf, GtvArray, 0, 0)
         }
 
-        val leafArray = mainFactory.buildLeafElements(leafList, GtvPaths)
+        val leafArray = mainFactory.buildLeafElements(leafList, GtvPaths, memoization)
         val sumNrOfBytes = leafArray.sumBy { it.getNrOfBytes() }
 
         // 2. Build all higher layers
