@@ -10,6 +10,18 @@ open class BlockData(
         val header: BlockHeader,
         val transactions: List<ByteArray>)
 
+
+/**
+ * BlockDetail returns a more in deep block overview
+ * ATM it is mainly used to reply to explorer's queries
+ */
+open class BlockDetail (
+        val header: ByteArray,
+        val transactions: List<ByteArray>,
+        val witness: ByteArray,
+        val timestamp: Long
+)
+
 data class ValidationResult(
         val result: Boolean,
         val message: String? = null)

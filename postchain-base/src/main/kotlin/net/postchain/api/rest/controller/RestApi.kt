@@ -10,6 +10,8 @@ import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_REQ
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_REQUEST_METHOD
 import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_BLOCKCHAIN_RID
 import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_HASH_HEX
+import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_LIMIT
+import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_UP_TO
 import net.postchain.api.rest.json.JsonFactory
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
@@ -147,6 +149,15 @@ class RestApi(private val listenPort: Int, private val basePath: String,
                 }
             }, gson::toJson)
 
+            http.get("/query/$PARAM_BLOCKCHAIN_RID/blocks/latest/$PARAM_UP_TO/limit/$PARAM_LIMIT", { request, _ ->
+
+                takeInputs(request) { upTo, n ->
+                    runTxActionOnModel(request) {model, txRID ->
+                        model.getLatestBlocksUpTo(upTo, n)
+                    }
+                }
+            }, gson::toJson)
+
             http.post("/query/$PARAM_BLOCKCHAIN_RID") { request, _ ->
                 handleQuery(request)
             }
@@ -213,6 +224,12 @@ class RestApi(private val listenPort: Int, private val basePath: String,
         // Ugly hack to workaround that there is no blocking stop.
         // Test cases won't work correctly without it
         Thread.sleep(100)
+    }
+
+    private fun takeInputs(request: Request, inputActions: (Long, Int) -> Any?): Any? {
+        val upTo = request.params(PARAM_UP_TO).toLongOrNull()
+        val limit = request.params(PARAM_LIMIT).toIntOrNull()
+        return if (upTo != null && limit != null) inputActions(upTo, limit) else throw BadFormatError("Format is not correct (Long, Int)")
     }
 
     private fun runTxActionOnModel(request: Request, txAction: (Model, TxRID) -> Any?): Any? {

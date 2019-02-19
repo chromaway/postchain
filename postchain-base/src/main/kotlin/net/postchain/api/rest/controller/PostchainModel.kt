@@ -8,8 +8,10 @@ import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
 import net.postchain.base.BaseBlockQueries
 import net.postchain.base.ConfirmationProof
+import net.postchain.base.data.DatabaseAccess
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
+import net.postchain.core.BlockDetail
 import net.postchain.core.TransactionFactory
 import net.postchain.core.TransactionQueue
 import net.postchain.core.TransactionStatus.CONFIRMED
@@ -44,6 +46,10 @@ open class PostchainModel(
         return blockQueries.getTransaction(txRID.bytes).get()
                 .takeIf { it != null }
                 ?.let { ApiTx(it.getRawData().toHex()) }
+    }
+
+    override fun getLatestBlocksUpTo(upTo: Long, limit: Int): List<BlockDetail> {
+        return blockQueries.getLatestBlocksUpTo(upTo, limit).get()
     }
 
     override fun getConfirmationProof(txRID: TxRID): ConfirmationProof? {

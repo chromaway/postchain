@@ -11,6 +11,7 @@ import java.sql.Connection
 
 interface DatabaseAccess {
     class BlockInfo(val blockIid: Long, val blockHeader: ByteArray, val witness: ByteArray)
+    class BlockInfoExt(val blockRid: ByteArray, val blockHeight: Long, val blockHeader: ByteArray, val witness: ByteArray, val timestamp: Long)
 
     fun initialize(connection: Connection, expectedDbVersion: Int)
     fun checkBlockchainRID(ctx: EContext, blockchainRID: ByteArray)
@@ -35,6 +36,7 @@ interface DatabaseAccess {
     fun getBlockTxHashes(ctx: EContext, blokcIid: Long): List<ByteArray>
     fun getTxBytes(ctx: EContext, txRID: ByteArray): ByteArray?
     fun isTransactionConfirmed(ctx: EContext, txRID: ByteArray): Boolean
+    fun getLatestBlocksUpTo(ctx: EContext, upTo: Long, n: Int): List<BlockInfoExt>
 
     // Configurations
 
@@ -140,7 +142,7 @@ class SQLDatabaseAccess : DatabaseAccess {
     override fun getBlockInfo(ctx: EContext, txRID: ByteArray): DatabaseAccess.BlockInfo {
         val block = queryRunner.query(ctx.conn,
                 """
-                    SELECT b.block_iid, b.block_header_data, b.block_witness
+                    SELECT b.block_iid, b.block_height, b.block_header_data, b.block_witness, b.timestamp
                     FROM blocks b JOIN transactions t ON b.block_iid=t.block_iid
                     WHERE t.chain_id=? and t.tx_rid=?
                     """, mapListHandler, ctx.chainID, txRID)!!
@@ -291,6 +293,23 @@ class SQLDatabaseAccess : DatabaseAccess {
         } else if (!rid.contentEquals(blockchainRID)) {
             throw UserMistake("The blockchainRID in db for chainId ${ctx.chainID} " +
                     "is ${rid.toHex()}, but the expected rid is ${blockchainRID.toHex()}")
+        }
+    }
+
+    override fun getLatestBlocksUpTo(context: EContext, upTo: Long, n: Int): List<DatabaseAccess.BlockInfoExt> {
+        if(n > 50) throw UserMistake("cannot retrive more than 50 blocks per query")
+        val blocksInfo = queryRunner.query(context.conn,
+                "SELECT block_iid, block_height, block_header_data, block_witness, timestamp FROM blocks WHERE timestamp < ? SORT timestamp DESC LIMIT ?",
+                mapListHandler,
+                upTo,
+                n)
+        return blocksInfo.map { blockInfo ->
+            val blockRid = blockInfo.get("block_rid") as ByteArray
+            val blockHeight = blockInfo.get("block_height") as Long
+            val blockHeader = blockInfo.get("block_header_date") as ByteArray
+            val blockWitness = blockInfo.get("block_witness") as ByteArray
+            val timestamp = blockInfo.get("timestamp") as Long
+            DatabaseAccess.BlockInfoExt(blockRid, blockHeight, blockHeader, blockWitness, timestamp)
         }
     }
 

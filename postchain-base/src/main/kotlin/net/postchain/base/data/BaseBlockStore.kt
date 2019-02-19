@@ -80,6 +80,14 @@ class BaseBlockStore : BlockStore {
         return db.getWitnessData(ctx, blockRID)
     }
 
+    override fun getLatestBlocksUpTo(ctx: EContext, upTo: Long, n: Int): List<BlockDetail> {
+        val blocksInfo = db.getLatestBlocksUpTo(ctx, upTo, n)
+        return blocksInfo.map { blockInfo ->
+            val transactions = db.getBlockTransactions(ctx, blockInfo.blockRid)
+            BlockDetail(blockInfo.blockHeader, transactions, blockInfo.witness, blockInfo.timestamp)
+        }
+    }
+
     override fun getLastBlockHeight(ctx: EContext): Long {
         return db.getLastBlockHeight(ctx)
     }
