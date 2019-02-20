@@ -45,6 +45,7 @@ import kotlin.test.assertEquals
  *
  * Note2: We are not testing the cache, so every test begins with a fresh Calculator (and therefore a fresh cache).
  */
+
 class ArrayToMerkleProofTreeTest {
 
     val proofFactory =GtvMerkleProofTreeFactory()
@@ -66,7 +67,7 @@ class ArrayToMerkleProofTreeTest {
         val expectedTree =
                 " +   \n" +
                 "/ \\ \n" +
-                "*1 000000000000000000000000000000000000000000000000000000000000000000"
+                "*1 0000000000000000000000000000000000000000000000000000000000000000"
 
         val merkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
 
@@ -80,7 +81,7 @@ class ArrayToMerkleProofTreeTest {
 
         // Make sure the merkle root stays the same as without proof
         val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(expected1ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(expected1ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
 
         // Proof -> Serialize
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
@@ -95,7 +96,7 @@ class ArrayToMerkleProofTreeTest {
                 "  ]), \n" +
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100), \n" + // 100 = hash
-                "    GtvByteArray(bytearray=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])\n" +
+                "    GtvByteArray(bytearray=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])\n" +
                 "  ])\n" +
                 "])\n"
         Assert.assertEquals(stripWhite(expectedSerialization), stripWhite(serialize.toString())) // Not really needed, Can be removed
@@ -136,9 +137,9 @@ class ArrayToMerkleProofTreeTest {
                 "   +       \n" +
                 "  / \\   \n" +
                 " /   \\  \n" +
-                " +   0002050206   \n" +
+                " +   0103050306   \n" +
                 "/ \\     \n" +
-                "*1 0103 - - "
+                "*1 0203 - - "
 
         val merkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
 
@@ -152,7 +153,7 @@ class ArrayToMerkleProofTreeTest {
 
         // Make sure the merkle root stays the same as without proof
         val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(expected4ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(expected4ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
 
         // Proof -> Serialize
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
@@ -169,12 +170,12 @@ class ArrayToMerkleProofTreeTest {
                 "    ]), \n" +
                 "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=100), \n" +// 100 = hash
-                "      GtvByteArray(bytearray=[1, 3])\n" +
+                "      GtvByteArray(bytearray=[2, 3])\n" +
                 "    ])\n" +
                 "  ]), \n" +
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100), \n" +// 100 = hash
-                "    GtvByteArray(bytearray=[0, 2, 5, 2, 6])\n" +
+                "    GtvByteArray(bytearray=[1, 3, 5, 3, 6])\n" +
                 "  ])\n" +
                 "])\n"
 
@@ -221,12 +222,12 @@ class ArrayToMerkleProofTreeTest {
                 "     /   \\      \n" +
                 "    /     \\     \n" +
                 "   /       \\    \n" +
-                "   +       0001030803090209       \n" +
+                "   +       0102040804090309       \n" +
                 "  / \\           \n" +
                 " /   \\          \n" +
-                " 0002030204   +   .   .   \n" +
+                " 0103030304   +   .   .   \n" +
                 "    / \\         \n" +
-                "- - 0104 *4 - - - - "
+                "- - 0204 *4 - - - - "
 
         val merkleProofTree:GtvMerkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
 
@@ -240,7 +241,7 @@ class ArrayToMerkleProofTreeTest {
 
         // Make sure the merkle root stays the same as without proof
         val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(expected7ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(expected7ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
 
         // Proof -> Serialize
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
@@ -253,12 +254,12 @@ class ArrayToMerkleProofTreeTest {
                 "    GtvInteger(integer=102),\n" + // 102 = dummy node
                 "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=100),\n" + // 100 = hash
-                "      GtvByteArray(bytearray=[0, 2, 3, 2, 4])]),\n" +
+                "      GtvByteArray(bytearray=[1, 3, 3, 3, 4])]),\n" +
                 "      GtvArray(array=[\n" +
                 "        GtvInteger(integer=102),\n" + // 102 = dummy node
                 "        GtvArray(array=[\n" +
                 "          GtvInteger(integer=100),\n" +  // 100 = hash
-                "          GtvByteArray(bytearray=[1, 4])\n" +
+                "          GtvByteArray(bytearray=[2, 4])\n" +
                 "        ]),\n" +
                 "        GtvArray(array=[\n" +
                 "          GtvInteger(integer=101),\n" + // 101 = value to prove
@@ -268,7 +269,7 @@ class ArrayToMerkleProofTreeTest {
                 "    ]),\n" +
                 "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=100),\n" + // 100 = hash
-                "      GtvByteArray(bytearray=[0, 1, 3, 8, 3, 9, 2, 9])\n" +
+                "      GtvByteArray(bytearray=[1, 2, 4, 8, 4, 9, 3, 9])\n" +
                 "    ])\n" +
                 "  ])\n"
 
@@ -309,9 +310,9 @@ class ArrayToMerkleProofTreeTest {
                 "   +       +       \n" +
                 "  / \\     / \\   \n" +
                 " /   \\   /   \\  \n" +
-                " 0002030204   +   0002070208   *7   \n" +
+                " 0103030304   +   0103070308   *7   \n" +
                 "    / \\         \n" +
-                "- - 0104 *4 - - - - "
+                "- - 0204 *4 - - - - "
 
         val merkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
 
@@ -325,7 +326,7 @@ class ArrayToMerkleProofTreeTest {
 
         // Make sure the merkle root stays the same as without proof
         val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(expected7ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(expected7ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
     }
 
     // ---------------------
@@ -361,7 +362,7 @@ class ArrayToMerkleProofTreeTest {
                 "                 /                           \\                  \n" +
                 "                /                             \\                 \n" +
                 "               /                               \\                \n" +
-                "               +                               0001030803090209                               \n" +
+                "               +                               0102040804090309                               \n" +
                 "              / \\                                               \n" +
                 "             /   \\                                              \n" +
                 "            /     \\                                             \n" +
@@ -370,17 +371,17 @@ class ArrayToMerkleProofTreeTest {
                 "         /           \\                                          \n" +
                 "        /             \\                                         \n" +
                 "       /               \\                                        \n" +
-                "       0002030204               +               .               .               \n" +
+                "       0103030304               +               .               .               \n" +
                 "                      / \\                                       \n" +
                 "                     /   \\                                      \n" +
                 "                    /     \\                                     \n" +
                 "                   /       \\                                    \n" +
-                "   .       .       0104       +       .       .       .       .       \n" +
+                "   .       .       0204       +       .       .       .       .       \n" +
                 "                          / \\                                   \n" +
                 "                         /   \\                                  \n" +
-                " .   .   .   .   .   .   +   0104   .   .   .   .   .   .   .   .   \n" +
+                " .   .   .   .   .   .   +   0204   .   .   .   .   .   .   .   .   \n" +
                 "                        / \\                                     \n" +
-                "- - - - - - - - - - - - 0102 *9 - - - - - - - - - - - - - - - - - - "
+                "- - - - - - - - - - - - 0202 *9 - - - - - - - - - - - - - - - - - - "
 
 
         val merkleProofTree:GtvMerkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
@@ -395,7 +396,7 @@ class ArrayToMerkleProofTreeTest {
 
         // Make sure the merkle root stays the same as without proof
         val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
     }
 
 
@@ -409,35 +410,21 @@ class ArrayToMerkleProofTreeTest {
         val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrOf7WithInner3()
 
         // How to calculate the hash of the sub tree?
-        // 07 + [
-        //        (00 + [(01 + [01]) + (01 + [09])] )
-        //         +
-        //        (01 + [03])
-        //      ] ->
-        // 07 + [
-        //        (00 + [0102 + 010A] )
-        //         +
-        //        (01 + [03])
-        //      ] ->
-        // 07 + [
-        //        (00 + 0203020B)
-        //         +
-        //        (01 + 04)
-        //      ] ->
-        // 07 + [ 000203020B0104 ] ->
-        // 07 +   010304030C0205
+        // see test_ArrayLength7_withInnerLength3Array_root
+        // == 08020404040C0305
+
         val expectedTree =
                 "       +               \n" +
                 "      / \\       \n" +
                 "     /   \\      \n" +
                 "    /     \\     \n" +
                 "   /       \\    \n" +
-                "   +       0001030803090209       \n" +
+                "   +       0102040804090309       \n" +
                 "  / \\           \n" +
                 " /   \\          \n" +
-                " 0002030204   +   .   .   \n" +
+                " 0103030304   +   .   .   \n" +
                 "    / \\         \n" +
-                "- - *3 07010304030C0205 - - - - "
+                "- - *3 08020404040C0305 - - - - "
 
 
         val merkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
@@ -452,7 +439,7 @@ class ArrayToMerkleProofTreeTest {
 
         // Make sure the merkle root stays the same as without proof
         val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
     }
 
 
@@ -474,12 +461,12 @@ class ArrayToMerkleProofTreeTest {
                 "     /   \\      \n" +
                 "    /     \\     \n" +
                 "   /       \\    \n" +
-                "   +       0001030803090209       \n" +
+                "   +       0102040804090309       \n" +
                 "  / \\           \n" +
                 " /   \\          \n" +
-                " 0002030204   +   .   .   \n" +
+                " 0103030304   +   .   .   \n" +
                 "    / \\         \n" +
-                "- - 0104 *GtvArray(array=[GtvInteger(integer=1), GtvInteger(integer=9), GtvInteger(integer=3)]) - - - - "
+                "- - 0204 *GtvArray(array=[GtvInteger(integer=1), GtvInteger(integer=9), GtvInteger(integer=3)]) - - - - "
 
 
         val merkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
@@ -494,7 +481,7 @@ class ArrayToMerkleProofTreeTest {
 
         // Make sure the merkle root stays the same as without proof
         val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
 
         // Proof -> Serialize
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
@@ -507,13 +494,13 @@ class ArrayToMerkleProofTreeTest {
                 "    GtvInteger(integer=102), \n" + // 102 = dummy node
                 "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=100), \n" + // 100 = hash
-                "      GtvByteArray(bytearray=[0, 2, 3, 2, 4])\n" +
+                "      GtvByteArray(bytearray=[1, 3, 3, 3, 4])\n" +
                 "    ]),\n" +
                 "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=102), \n" + // 102 = dummy node
                 "      GtvArray(array=[\n" +
                 "        GtvInteger(integer=100), \n" + // 100 = hash
-                "        GtvByteArray(bytearray=[1, 4])\n" +
+                "        GtvByteArray(bytearray=[2, 4])\n" +
                 "      ]), \n" +
                 "      GtvArray(array=[\n" +
                 "        GtvInteger(integer=101), \n" + // 101 = value to prove
@@ -527,7 +514,7 @@ class ArrayToMerkleProofTreeTest {
                 "  ]), \n" +
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100), \n" + // 100 = hash
-                "    GtvByteArray(bytearray=[0, 1, 3, 8, 3, 9, 2, 9])\n" +
+                "    GtvByteArray(bytearray=[1, 2, 4, 8, 4, 9, 3, 9])\n" +
                 "  ])\n" +
                 "])\n"
 

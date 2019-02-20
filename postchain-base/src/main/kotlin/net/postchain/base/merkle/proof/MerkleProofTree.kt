@@ -3,6 +3,7 @@ package net.postchain.base.merkle.proof
 import net.postchain.base.merkle.*
 import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_NODE
 import net.postchain.base.merkle.MerkleBasics.UNKNOWN_SIZE_IN_BYTE
+import java.util.*
 
 const val SERIALIZATION_HASH_LEAF_TYPE: Long = 100
 const val SERIALIZATION_VALUE_LEAF_TYPE: Long = 101
@@ -77,19 +78,19 @@ data class ProofValueLeaf<T>(val content: T, val sizeInBytes: Int): MerkleProofE
 /**
  * The hash in this leaf is a hash of an entire sub tree of the original Merkle tree
  */
-data class ProofHashedLeaf(val merkleHashCarrier: MerkleHashCarrier): MerkleProofElement() {
+data class ProofHashedLeaf(val merkleHash: Hash): MerkleProofElement() {
 
     // (Probably not needed but I implement equals to get rid of the warning)
     override fun equals(other: Any?): Boolean {
         return if (other is ProofHashedLeaf) {
-            this.merkleHashCarrier.equals(other.merkleHashCarrier)
+            Arrays.equals(this.merkleHash, other.merkleHash)
         } else {
             false
         }
     }
 
     override fun hashCode(): Int {
-        return merkleHashCarrier.hashCode()
+        return Arrays.hashCode(merkleHash)
     }
 }
 

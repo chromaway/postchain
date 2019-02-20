@@ -5,7 +5,7 @@ package net.postchain.base
 import org.junit.Assert.*
 import net.postchain.gtv.GtvFactory
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
-import net.postchain.gtv.merkleHashWithPrefix
+import net.postchain.gtv.merkleHash
 
 val cryptoSystem = SECP256K1CryptoSystem()
 val calculator = GtvMerkleHashCalculator(cryptoSystem)
@@ -24,7 +24,7 @@ class MerkleTest {
     fun merkleRoot(stringList: Array<String>): ByteArray {
         val hashList = hashList(stringList).toList()
         val gtvArr = GtvFactory.gtv(hashList.map { GtvFactory.gtv(it) })
-        return gtvArr.merkleHashWithPrefix(calculator)
+        return gtvArr.merkleHash(calculator)
 
         //return computeMerkleRootHash(cryptoSystem, hashList(stringList))
     }

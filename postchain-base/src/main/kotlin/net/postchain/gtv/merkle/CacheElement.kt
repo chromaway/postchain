@@ -20,14 +20,14 @@ data class CacheElement(val orgGtv: Gtv, val merkleHashSummary: MerkleHashSummar
 
         other as CacheElement
 
-        if (!Arrays.equals(merkleHashSummary.getHashWithPrefix(), other.merkleHashSummary.getHashWithPrefix())) return false
+        if (!Arrays.equals(merkleHashSummary.merkleHash, other.merkleHashSummary.merkleHash)) return false
 
         return true
     }
 
     // We have the merkle hash (which is unique) so we only have to look at that
     override fun hashCode(): Int {
-        return Arrays.hashCode(merkleHashSummary.getHashWithPrefix())
+        return Arrays.hashCode(merkleHashSummary.merkleHash)
     }
 
 }

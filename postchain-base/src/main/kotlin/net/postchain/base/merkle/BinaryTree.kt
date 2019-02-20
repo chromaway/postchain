@@ -110,7 +110,9 @@ data class CachedLeaf(val cachedSummary: MerkleHashSummary): BinaryTreeElement()
         setPathLeaf(false) // We cannot use
     }
 
-    override fun getPrefixByte(): Byte = cachedSummary.merkleHashCarrier.prefix
+    override fun getPrefixByte(): Byte {
+        throw IllegalStateException("Why are we asking for a prefix on a hash we found in the cache?")
+    }
 
     override fun getNrOfBytes(): Int = cachedSummary.nrOfBytes
 }

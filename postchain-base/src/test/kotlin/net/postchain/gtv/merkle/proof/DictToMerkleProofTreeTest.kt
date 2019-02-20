@@ -68,7 +68,7 @@ class DictToMerkleProofTreeTest {
         // 01706F66 ->
         val expectedTree =" +   \n" +
                 "/ \\ \n" +
-                "01706F66 *1 "
+                "02706F66 *1 "
 
         val merkleProofTree = orgGtvDict.generateProof(gtvPaths, calculator)
 
@@ -82,7 +82,7 @@ class DictToMerkleProofTreeTest {
 
         // Make sure the merkle root stays the same as without proof
         val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(expectedMerkleRoot1, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(expectedMerkleRoot1, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
 
         // Proof -> Serialize
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
@@ -93,7 +93,7 @@ class DictToMerkleProofTreeTest {
                 "  GtvInteger(integer=1),\n" + // length of dict
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100),\n" + // 100 = hash
-                "    GtvByteArray(bytearray=[1, 112, 111, 102])\n" +
+                "    GtvByteArray(bytearray=[2, 112, 111, 102])\n" +
                 "  ]),\n" +
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=101),  \n" + // 101 = value to prove
@@ -168,12 +168,12 @@ class DictToMerkleProofTreeTest {
                         "     /   \\      \n" +
                         "    /     \\     \n" +
                         "   /       \\    \n" +
-                        "   +       000103776B75686803060103777A720305       \n" +
+                        "   +       010204776B75686804060204777A720405       \n" +
                         "  / \\           \n" +
                         " /   \\          \n" +
-                        " +   00027170670203   .   .   \n" +
+                        " +   01037170670303   .   .   \n" +
                         "/ \\             \n" +
-                        "0167707673 *4 - - - - - - "
+                        "0267707673 *4 - - - - - - "
 
         val merkleProofTree = orgGtvPath.generateProof(gtvPaths, calculator)
 
@@ -187,7 +187,7 @@ class DictToMerkleProofTreeTest {
 
         // Make sure the merkle root stays the same as without proof
         val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(expectedMerkleRoot4, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(expectedMerkleRoot4, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
 
         // Proof -> Serialize
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
@@ -202,7 +202,7 @@ class DictToMerkleProofTreeTest {
                 "      GtvInteger(integer=102), \n" + // 102 = dummy node
                 "      GtvArray(array=[\n" +
                 "        GtvInteger(integer=100), \n" + // 100 = hash
-                "        GtvByteArray(bytearray=[1, 103, 112, 118, 115])\n" +
+                "        GtvByteArray(bytearray=[2, 103, 112, 118, 115])\n" +
                 "      ]),\n" +
                 "      GtvArray(array=[\n" +
                 "        GtvInteger(integer=101),   \n" + // 101 = value to prove
@@ -211,12 +211,12 @@ class DictToMerkleProofTreeTest {
                 "    ]),  \n" +
                 "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=100),   \n" + // 100 = hash
-                "      GtvByteArray(bytearray=[0, 2, 113, 112, 103, 2, 3])\n" +
+                "      GtvByteArray(bytearray=[1, 3, 113, 112, 103, 3, 3])\n" +
                 "    ])\n" +
                 "  ]),   \n" +
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100),   \n" + // 100 = hash
-                "    GtvByteArray(bytearray=[0, 1, 3, 119, 107, 117, 104, 104, 3, 6, 1, 3, 119, 122, 114, 3, 5])\n" +
+                "    GtvByteArray(bytearray=[1, 2, 4, 119, 107, 117, 104, 104, 4, 6, 2, 4, 119, 122, 114, 4, 5])\n" +
                 "  ])\n" +
                 "])\n"
 
@@ -253,12 +253,12 @@ class DictToMerkleProofTreeTest {
                 "     /   \\      \n" +
                 "    /     \\     \n" +
                 "   /       \\    \n" +
-                "   01706F66       +       \n" +
+                "   02706F66       +       \n" +
                 "          / \\   \n" +
                 "         /   \\  \n" +
-                " .   .   0002676B696A76020A   +   \n" +
+                " .   .   0103676B696A76030A   +   \n" +
                 "            / \\ \n" +
-                "- - - - - - 01746677666F *7 "
+                "- - - - - - 02746677666F *7 "
 
         val merkleProofTree = orgGtvDict.generateProof(gtvPaths, calculator)
 
@@ -272,7 +272,7 @@ class DictToMerkleProofTreeTest {
 
         // Make sure the merkle root stays the same as without proof
         val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
 
         // Proof -> Serialize
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
@@ -283,20 +283,20 @@ class DictToMerkleProofTreeTest {
                 "  GtvInteger(integer=1), \n" + // length of the dict
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100),\n" +
-                "    GtvByteArray(bytearray=[1, 112, 111, 102])\n" +
+                "    GtvByteArray(bytearray=[2, 112, 111, 102])\n" +
                 "  ]),\n" +
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=104), \n" + // 104 = dict head node type
                 "    GtvInteger(integer=2), \n" + // length of the dict
                 "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=100), \n" + // 100 = hash
-                "      GtvByteArray(bytearray=[0, 2, 103, 107, 105, 106, 118, 2, 10])\n" +
+                "      GtvByteArray(bytearray=[1, 3, 103, 107, 105, 106, 118, 3, 10])\n" +
                 "    ]), \n" +
                 "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=102), \n" + // 102 = dummy node
                 "      GtvArray(array=[\n" +
                 "        GtvInteger(integer=100), \n" + // 100 = hash
-                "        GtvByteArray(bytearray=[1, 116, 102, 119, 102, 111])\n" +
+                "        GtvByteArray(bytearray=[2, 116, 102, 119, 102, 111])\n" +
                 "      ]), \n" +
                 "      GtvArray(array=[\n" +
                 "        GtvInteger(integer=101), \n" + // 101 = value to prove
@@ -340,7 +340,7 @@ class DictToMerkleProofTreeTest {
 
         val expectedTree = " +   \n" +
                 "/ \\ \n" +
-                "01706F66 *GtvDictionary(dict={seven=GtvInteger(integer=7), eight=GtvInteger(integer=8)}) "
+                "02706F66 *GtvDictionary(dict={seven=GtvInteger(integer=7), eight=GtvInteger(integer=8)}) "
 
 
         val merkleProofTree = orgGtvDict.generateProof(gtvPaths, calculator)
@@ -355,7 +355,7 @@ class DictToMerkleProofTreeTest {
 
         // Make sure the merkle root stays the same as without proof
         val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
 
         // Proof -> Serialize
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
@@ -366,7 +366,7 @@ class DictToMerkleProofTreeTest {
                 "  GtvInteger(integer=1),\n" + // lenght of the dict
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100),\n" + // 100 = Hash
-                "    GtvByteArray(bytearray=[1, 112, 111, 102])\n" +
+                "    GtvByteArray(bytearray=[2, 112, 111, 102])\n" +
                 "  ]),\n" +
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=101), \n" + // 101 = value to be proved (in this case an entire dict)

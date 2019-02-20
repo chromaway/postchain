@@ -7,8 +7,7 @@ import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
-import net.postchain.gtv.merkleHashWithPrefix
-import net.postchain.gtv.merkleHashWithoutPrefix
+import net.postchain.gtv.merkleHash
 import java.util.*
 
 /**
@@ -38,7 +37,7 @@ open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, 
 
         val gtvArr = gtv(digests.map {gtv(it)})
 
-        return gtvArr.merkleHashWithoutPrefix(calc)
+        return gtvArr.merkleHash(calc)
     }
 
     /**

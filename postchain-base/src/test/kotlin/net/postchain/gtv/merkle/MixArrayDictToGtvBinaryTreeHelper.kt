@@ -13,7 +13,7 @@ object MixArrayDictToGtvBinaryTreeHelper {
 
 
 
-    const val expecedMerkleRoot_dict1_array4 = "08027170670802040504060204070408"
+    const val expecedMerkleRoot_dict1_array4 = "09037170670903050505060305070508"
 
     fun buildGtvDictWithSubArray4(): GtvDictionary {
         // Add the inner GtvArray

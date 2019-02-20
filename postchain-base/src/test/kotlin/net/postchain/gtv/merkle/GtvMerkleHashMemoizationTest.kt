@@ -1,7 +1,6 @@
 package net.postchain.gtv.merkle
 
 import net.postchain.base.merkle.Hash
-import net.postchain.base.merkle.proof.MerkleHashCarrier
 import net.postchain.base.merkle.proof.MerkleHashSummary
 import org.junit.Assert
 import org.junit.Test
@@ -18,6 +17,12 @@ class GtvMerkleHashMemoizationTest {
     val overheadSize = MerkleHashSetWithSameGtvJavaHashCode.OVERHEAD_SIZE_BYTES
 
     val dummyHash: Hash = ByteArray(32)
+
+    private fun buildDummyHash(seed: Byte): Hash {
+        val clone = dummyHash.clone()
+        clone[0] = seed
+        return clone
+    }
 
     fun checkStats(localHits: Int, globalHits: Int, misses: Int) {
         Assert.assertEquals(localHits.toLong(), memoization.localCacheHits)
@@ -49,7 +54,7 @@ class GtvMerkleHashMemoizationTest {
         checkSize(0)
 
         // Not found, so realistically the user will add the summary to the cache here
-        val dummyHashSummary1 = MerkleHashSummary(MerkleHashCarrier(1, dummyHash), sizeOf1Longs)
+        val dummyHashSummary1 = MerkleHashSummary(buildDummyHash(1.toByte()) , sizeOf1Longs)
         memoization.add(gtvArr1, dummyHashSummary1)
 
         checkStats(0,0,1)
@@ -73,7 +78,7 @@ class GtvMerkleHashMemoizationTest {
         checkSize(expectedSizeOf1Longs)
 
         // Not found, so realistically the user will add the summary to the cache here
-        val dummyHashSummary7 = MerkleHashSummary(MerkleHashCarrier(7, dummyHash), sizeOf7Longs)
+        val dummyHashSummary7 = MerkleHashSummary(buildDummyHash(7.toByte()), sizeOf7Longs)
         memoization.add(gtvArr7, dummyHashSummary7)
 
         checkStats(1,0,2)
@@ -90,7 +95,7 @@ class GtvMerkleHashMemoizationTest {
         checkSize((expectedSizeOf7Longs + expectedSizeOf1Longs))
 
         // Not found, so the summary should be added to the cache here
-        val dummyHashSummary9 = MerkleHashSummary(MerkleHashCarrier(9, dummyHash), sizeOf9Longs)
+        val dummyHashSummary9 = MerkleHashSummary(buildDummyHash(9.toByte()), sizeOf9Longs)
         memoization.add(gtvArr9, dummyHashSummary9)
 
         checkStats(1,0,3)

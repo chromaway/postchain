@@ -2,10 +2,7 @@ package net.postchain.gtv.merkle
 
 import net.postchain.base.CryptoSystem
 import net.postchain.base.merkle.*
-import net.postchain.base.merkle.proof.MerkleHashCarrier
 import net.postchain.gtv.*
-import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
-import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
 import java.nio.charset.Charset
 
 
@@ -63,14 +60,14 @@ class MerkleHashCalculatorDummy(memoization: GtvMerkleHashMemoization): MerkleHa
 
     constructor(): this(GtvMerkleHashMemoization(100, 10))
 
-    override fun calculateLeafHash(value: Gtv): MerkleHashCarrier {
+    override fun calculateLeafHash(value: Gtv): Hash {
         val hash = calculateHashOfValueInternal(value, ::dummySerializatorFun, ::dummyAddOneHashFun)
         //println("Hex: " + TreeHelper.convertToHex(hash))
         return hash
     }
 
-    override fun calculateNodeHash(prefix: Byte, hashLeft: MerkleHashCarrier, hashRight: MerkleHashCarrier): MerkleHashCarrier {
-        return MerkleHashCarrier(prefix ,calculateNodeHashNoPrefixInternal(hashLeft.getHashWithPrefix(), hashRight.getHashWithPrefix(), ::dummyAddOneHashFun))
+    override fun calculateNodeHash(prefix: Byte, hashLeft: Hash, hashRight: Hash): Hash {
+        return calculateNodeHashInternal(prefix ,hashLeft, hashRight, ::dummyAddOneHashFun)
     }
 
     override fun isContainerProofValueLeaf(value: Gtv): Boolean {

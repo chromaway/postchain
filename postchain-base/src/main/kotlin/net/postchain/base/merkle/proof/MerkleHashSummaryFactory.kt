@@ -1,6 +1,7 @@
 package net.postchain.base.merkle.proof
 
 import net.postchain.base.merkle.BinaryTreeFactory
+import net.postchain.base.merkle.Hash
 import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.base.merkle.MerklePathSet
 import net.postchain.gtv.Gtv
@@ -46,9 +47,9 @@ abstract class MerkleHashSummaryFactory<T, TPathSet: MerklePathSet>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun calculateMerkleRootInternal(currentElement: MerkleProofElement, calculator: MerkleHashCalculator<T>): MerkleHashCarrier {
+    private fun calculateMerkleRootInternal(currentElement: MerkleProofElement, calculator: MerkleHashCalculator<T>): Hash {
         return when (currentElement) {
-            is ProofHashedLeaf -> currentElement.merkleHashCarrier
+            is ProofHashedLeaf -> currentElement.merkleHash
             is ProofValueLeaf<*> -> {
                 val value = currentElement.content as T // Compiler "unchecked cast" warning here, but this is actually safe.
                 if (calculator.isContainerProofValueLeaf(value)) {
@@ -59,7 +60,7 @@ abstract class MerkleHashSummaryFactory<T, TPathSet: MerklePathSet>(
                     // This is a primitive value, just hash it
                     val foundInCache = calculator.memoization.findMerkleHash(value)
                     if (foundInCache != null) {
-                        foundInCache.merkleHashCarrier
+                        foundInCache.merkleHash
                     } else {
                         val hash = calculator.calculateLeafHash(value)
                         calculator.memoization.add(value, MerkleHashSummary(hash, currentElement.sizeInBytes))

@@ -9,9 +9,9 @@ import net.postchain.gtv.Gtv
 
 object DictToGtvBinaryTreeHelper {
 
-    const val expectedMerkleRoot1 = "08027170670203"
-    const val expectedMerkleRoot4 = "080102046A737976040802047372690405010204786C76696904070204787B730406"
-    const val expectedMerkleRootDictInDict = "0802717067090204696D6B6C78040C020477697A6972040B"
+    const val expectedMerkleRoot1 = "09037170670303"
+    const val expectedMerkleRoot4 = "090203056A737976050803057372690505020305786C76696905070305787B730506"
+    const val expectedMerkleRootDictInDict = "09037170670A0305696D6B6C78050C030577697A6972050B"
 
     // ----------------- 1 -----------------------------
     /**

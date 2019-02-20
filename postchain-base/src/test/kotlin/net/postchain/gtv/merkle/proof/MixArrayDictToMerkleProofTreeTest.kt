@@ -34,12 +34,12 @@ class MixArrayDictToMerkleProofTreeTest {
                 "     /   \\      \n" +
                 "    /     \\     \n" +
                 "   /       \\    \n" +
-                "   01706F66       +       \n" +
+                "   02706F66       +       \n" +
                 "          / \\   \n" +
                 "         /   \\  \n" +
-                " .   .   0002030204   +   \n" +
+                " .   .   0103030304   +   \n" +
                 "            / \\ \n" +
-                "- - - - - - 0104 *4 "
+                "- - - - - - 0204 *4 "
 
         val merkleProofTree = gtvDict.generateProof(gtvPaths, calculator)
 
@@ -53,7 +53,7 @@ class MixArrayDictToMerkleProofTreeTest {
 
         // Make sure the merkle root stays the same as without proof
         val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(MixArrayDictToGtvBinaryTreeHelper.expecedMerkleRoot_dict1_array4, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(MixArrayDictToGtvBinaryTreeHelper.expecedMerkleRoot_dict1_array4, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
     }
 
     /**
@@ -70,7 +70,7 @@ class MixArrayDictToMerkleProofTreeTest {
 
         val expectedTree = " +   \n" +
                 "/ \\ \n" +
-                "01706F66 *GtvArray(array=[GtvInteger(integer=1), GtvInteger(integer=2), GtvInteger(integer=3), GtvInteger(integer=4)])"
+                "02706F66 *GtvArray(array=[GtvInteger(integer=1), GtvInteger(integer=2), GtvInteger(integer=3), GtvInteger(integer=4)])"
 
         val merkleProofTree = gtvDict.generateProof(gtvPaths, calculator)
 
@@ -84,6 +84,6 @@ class MixArrayDictToMerkleProofTreeTest {
 
         // Make sure the merkle root stays the same as without proof
         val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(MixArrayDictToGtvBinaryTreeHelper.expecedMerkleRoot_dict1_array4, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(MixArrayDictToGtvBinaryTreeHelper.expecedMerkleRoot_dict1_array4, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
     }
 }

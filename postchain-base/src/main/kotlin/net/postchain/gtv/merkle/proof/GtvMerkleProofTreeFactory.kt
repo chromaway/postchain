@@ -42,7 +42,7 @@ class GtvMerkleProofTreeFactory(): MerkleProofTreeFactory<Gtv>()  {
                 ProofHashedLeaf(MerkleBasics.EMPTY_HASH) // Just zeros
             }
             is CachedLeaf -> {
-                ProofHashedLeaf(currentElement.cachedSummary.merkleHashCarrier)
+                ProofHashedLeaf(currentElement.cachedSummary.merkleHash)
             }
             is Leaf<*> -> {
                 val content: Gtv = currentElement.content as Gtv // Have to convert here
@@ -111,8 +111,7 @@ class GtvMerkleProofTreeFactory(): MerkleProofTreeFactory<Gtv>()  {
         return when (typeCode) {
             SERIALIZATION_HASH_LEAF_TYPE -> {
                 val byteArray = secondElement as GtvByteArray
-                val merkleHashCarrier = MerkleHashCarrier.build( byteArray.bytearray ) // TODO: Q77: Should we really smack on prefix upon serialization?
-                ProofHashedLeaf(merkleHashCarrier)
+                ProofHashedLeaf(byteArray.bytearray)
             }
             SERIALIZATION_VALUE_LEAF_TYPE -> ProofValueLeaf(secondElement, secondElement.nrOfBytes())
             SERIALIZATION_NODE_TYPE -> {

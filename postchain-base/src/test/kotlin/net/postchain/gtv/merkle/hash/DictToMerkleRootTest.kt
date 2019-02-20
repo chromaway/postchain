@@ -38,12 +38,14 @@ class DictToMerkleRootTest {
         val calculator = MerkleHashCalculatorDummy()
 
         val orgGtvDict = DictToGtvBinaryTreeHelper.buildGtvDictOf1()
-        // 08 + [01706F66 + (01 + [01])
-        // 08 + [01706F66 + 0102]
-        // 08 + 02717067 + 0203
+        // one =   6F6E65
+        // ---------------
+        // [08 + [01 <one>] + [01 + <1>]
+        // [08 + 02706F66 +  0202]
+        //  09 + 03717067 +  0303
 
         val merkleProofRoot = orgGtvDict.merkleHashSummary(calculator)
-        assertEquals(DictToGtvBinaryTreeHelper.expectedMerkleRoot1, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(DictToGtvBinaryTreeHelper.expectedMerkleRoot1, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
     }
 
     @Test
@@ -52,38 +54,56 @@ class DictToMerkleRootTest {
 
         val orgGtvDict = DictToGtvBinaryTreeHelper.buildGtvDictOf4()
 
-        // 08 + [
-        //        (00 + [
-        //                (00 + [0167707673 + 0105]
+        // four =  666F7572
+        // one =   6F6E65
+        // three = 7468726565
+        // two =   74776F
+        // ---------------
+        // [08 +
+        //        [00 +
+        //                [00 + [01 +<four>] + [01 +<4>]]
         //                +
-        //                00027170670203
-        //              ])
+        //                [00 + [01 +<one>]  + [01 +<1>]]
+        //        ]
         //        +
-        //        000103776B75686803060103777A720305
-        //       ] ->
-        // 08 + [
-        //        (00 + [
-        //                (00 + 02687177740206)
+        //        [00 +
+        //                [00 + [01 +<three>] + [01 +<3>]]
         //                +
-        //                00027170670203
-        //              ])
+        //                [00 + [01 +<two>]   + [01 +<2>]]
+        //        ]
+        //    ] ->
+        // [08 +
+        //        [00 +
+        //                [00 + 02 67707673 + 0205]
+        //                +
+        //                [00 + 02 706F66   + 0202]
+        //              ]
         //        +
-        //        000103776B75686803060103777A720305
+        //        [00 +
+        //                [00 + 02 7569736666 + 0204]
+        //                +
+        //                [00 + 02 757870     + 0203]
         //       ] ->
-        // 08 + [
-        //        (00 + [ 000268717774020600027170670203 ])
+        // [08 +
+        //        [00 +    01 + 0368717774 + 0306   + 01 + 03717067 + 0303 ]
         //        +
-        //        000103776B75686803060103777A720305
+        //        [00 +    01 + 03766A746767 + 0305 + 01 + 03767971 + 0304 ]
         //       ] ->
-        // 08 + [
-        //        (00 + 010369727875030701037271680304)
+        // [08 +
+        //        01 +    02 + 0469727875 + 0407   + 02 + 04727168 + 0404
         //        +
-        //        000103776B75686803060103777A720305
+        //        01 +    02 + 04776B756868 + 0406 + 02 + 04777A72 + 0405
         //       ] ->
-        //  080102046A737976040802047372690405010204786C76696904070204787B730406
+        //  09 +
+        //        02 +    03 + 056A737976 + 0508   + 03 + 05737269 + 0505
+        //        +
+        //        02 +    03 + 05786C766969 + 0507 + 03 + 05787B73 + 0506
+        //        ->
+        //  090203056A737976050803057372690505020305786C76696905070305787B730506
+        //        ->
 
         val merkleProofRoot = orgGtvDict.merkleHashSummary(calculator)
-        assertEquals(DictToGtvBinaryTreeHelper.expectedMerkleRoot4, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(DictToGtvBinaryTreeHelper.expectedMerkleRoot4, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
     }
 
     @Test
@@ -92,47 +112,79 @@ class DictToMerkleRootTest {
 
         val orgGtvDict = DictToGtvBinaryTreeHelper.buildGtvDictOf1WithSubDictOf2()
 
-        // 08 + [ (01 + [<one>])
+        // [08 +  [01 + <one>]
         //      +
-        //      (08 + [
-        //            (00 + [
-        //                 (01 + [<eight>]) +  <--- "e" (Eight) is before "s" (Seven)
-        //                 (01 + [<8>])
-        //                  ])
+        //      [08 +
+        //            [00 +
+        //                 [01 + <eight>] +  <--- "e" (Eight) is before "s" (Seven)
+        //                 [01 + <8>]
+        //                  ]
         //             +
-        //            (00 + [
-        //                 (01 + [<seven>]) +
-        //                 (01 + [<7>])
-        //                  ])
-        //            ])
-        //      ] ->
-        // <eight> = <6569676874> = 666A686975
-        // <seven> = <736576656E> = 746677666F
-        // 08 + [ 01 + [6F6E65]
+        //            [00 +
+        //                 [01 + <seven>] +
+        //                 [01 + <7>]
+        //                  ]
+        //      ]
+        // ] ->
+        // -----------------
+        // one     = 6F6E65
+        // <eight> =
+        //           6569676874
+        // <seven> =
+        //           736576656E
+        // -----------------
+        // [08 +  [01 + 6F6E65]
         //      +
-        //      (08 + [
-        //            (00 + [01666A686975 + 0109])
+        //      [08 +
+        //            [00 +
+        //                 [01 + 6569676874] +
+        //                 [01 + 08]
+        //                  ]
         //             +
-        //            (00 + [01746677666F + 0108])
-        //            ])
-        //      ] ->
+        //            [00 +
+        //                 [01 + 736576656E] +
+        //                 [01 + 07]
+        //                  ]
+        //      ]
+        // ] ->
         //
-        // 08 + [ 01 + 706F66
-        //        +
-        //       (08 + [ 0002676B696A76020A + 000275677867700209])
-        //      ] ->
+        // [08 + 02706F66
+        //      +
+        //      [08 +
+        //            [00 + 02 + 666A686975  + 0209]
+        //             +
+        //            [00 + 02 + 746677666F  + 0208]
+        //      ]
+        // ] ->
         //
-        // 08 + [ 01706F66
-        //        +
-        //       (08 +0103686C6A6B77030B + 01037668796871030A)
-        //      ] ->
+        // [08 + 02706F66
+        //      +
+        //      [08 +
+        //            01 + 03 + 676B696A76  + 030A
+        //             +
+        //            01 + 03 + 7567786770  + 0309
+        //            ]
+        // ] ->
         //
-        // 08 + [ 01706F66+ 08 + 0103686C6A6B77030B + 01037668796871030A] ->
+        // [08 + 02706F66
+        //      +
+        //      09 +  02 + 04 + 686C6A6B77  + 040B +
+        //            02 + 04 + 7668796871  + 040A
+        // ] ->
         //
-        // 08 02717067 09 0204696D6B6C78040C 020477697A6972040B
+        //  09 + 03717067
+        //      +
+        //      0A +  03 + 05 + 696D6B6C78 + 050C +
+        //            03 + 05 + 77697A6972 + 050B
+        //  ->
+        //
+        //  09037170670A0305696D6B6C78050C030577697A6972050B
+        //  ->
+        //
+        //
 
         val merkleProofRoot = orgGtvDict.merkleHashSummary(calculator)
-        assertEquals(DictToGtvBinaryTreeHelper.expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(DictToGtvBinaryTreeHelper.expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
     }
 
 

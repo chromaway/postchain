@@ -63,7 +63,7 @@ class GtvMerkleProofTree(root: MerkleProofElement, totalNrOfBytes: Int = UNKNOWN
     fun serializeToGtvInternal(currentElement: MerkleProofElement): GtvArray {
         return when (currentElement) {
             is ProofHashedLeaf -> {
-                val tail = GtvByteArray(currentElement.merkleHashCarrier.getHashWithPrefix()) // TODO: Q77: Should we really smack on prefix upon serialization?
+                val tail = GtvByteArray(currentElement.merkleHash)
                 val head = GtvInteger(SERIALIZATION_HASH_LEAF_TYPE)
                 val arr: Array<Gtv> = arrayOf(head, tail)
                 GtvArray(arr)

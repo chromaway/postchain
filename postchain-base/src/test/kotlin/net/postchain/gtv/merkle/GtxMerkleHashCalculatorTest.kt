@@ -17,13 +17,13 @@ class GtvMerkleHashCalculatorTest {
         val iGtv = GtvInteger(7)
         // The "7" is expected to serialize to "07" (in hex)
         // The expected resulting leaf hash will be:
-        val expectedResultAfterAddOneHash = "0108"
+        val expectedResultAfterAddOneHash = "0208"
         // This expected result is two parts:
         // 1. "01" (= signals leaf) and
         // 2. the add-one-hashed value
 
         val result = calculator.calculateLeafHash(iGtv)
-        Assert.assertEquals(expectedResultAfterAddOneHash, TreeHelper.convertToHex(result.getHashWithPrefix()))
+        Assert.assertEquals(expectedResultAfterAddOneHash, TreeHelper.convertToHex(result))
     }
 
 
@@ -35,12 +35,12 @@ class GtvMerkleHashCalculatorTest {
         val iGtv = GtvInteger(7)
         // The "7" is expected to serialize to "A303020107" (in hex)
         // The expected resulting leaf hash will be:
-        val expectedResultAfterAddOneHash = "01616B6CDFF1A56CF63A0F04151C409B15941D5816D50DC739DBB4795D7BB97B6E"
+        val expectedResultAfterAddOneHash = "0140C7F79E11092AF89407F8F9A2A3230E3B92BE8398200AC00E8757BF1B9009"
         // This expected result is two parts:
         // 1. "01" (= signals leaf) and
         // 2. the 32 byte hashed value
 
         val result = calculator.calculateLeafHash(iGtv)
-        Assert.assertEquals(expectedResultAfterAddOneHash, TreeHelper.convertToHex(result.getHashWithPrefix()))
+        Assert.assertEquals(expectedResultAfterAddOneHash, TreeHelper.convertToHex(result))
     }
 }

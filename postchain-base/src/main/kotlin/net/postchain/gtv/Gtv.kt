@@ -46,27 +46,15 @@ interface Gtv {
 
 
 /**
- * Calculates the merkle root hash (with prefix) of the structure.
+ * Calculates the merkle root hash of the structure.
  *
  * Note: if the hash is present in the cache, the cached value will be returned instead.
  *
  * @param calculator describes the method we use for hashing and serialization
- * @return the merkle root hash (with prefix = 33 bytes) of the [Gtv] structure.
+ * @return the merkle root hash (32 bytes) of the [Gtv] structure.
  */
-fun Gtv.merkleHashWithPrefix(calculator: MerkleHashCalculator<Gtv>): Hash {
-    return merkleHashSummary(calculator).getHashWithPrefix()
-}
-
-/**
- * Calculates the merkle root hash (without prefix) of the structure.
- *
- * Note: if the hash is present in the cache, the cached value will be returned instead.
- *
- * @param calculator describes the method we use for hashing and serialization
- * @return the merkle root hash (without prefix = 32 bytes) of the [Gtv] structure.
- */
-fun Gtv.merkleHashWithoutPrefix(calculator: MerkleHashCalculator<Gtv>): Hash {
-    return merkleHashSummary(calculator).getHashWithoutPrefix()
+fun Gtv.merkleHash(calculator: MerkleHashCalculator<Gtv>): Hash {
+    return merkleHashSummary(calculator).merkleHash
 }
 
 /**

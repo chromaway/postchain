@@ -27,8 +27,8 @@ class BaseBlockBuilderValidationTest {
     val tf = BaseTransactionFactory()
     val myBlockchainRid = "bcRid".toByteArray()
     val empty32Bytes = ByteArray(32, { 0 })
-    val rootHash =    "EFBB03B7A7F6FD3C29391D4D0281E1830A85CAADD831C3F04716FACA4107A42E".hexStringToByteArray()
-    val badRootHash = "EFBB03B7FFFFFFFFFFFFFF4D0281E1830A85CAADD831C3F04716FACA4107A42E".hexStringToByteArray()
+    val rootHash =    "46AF9064F12528CAD6A7C377204ACD0AC38CDC6912903E7DAB3703764C8DD5E5".hexStringToByteArray()
+    val badRootHash = "46AF9064F12FFFFFFFFFFFFFF04ACD0AC38CDC6912903E7DAB3703764C8DD5E5".hexStringToByteArray()
     val subjects = arrayOf("test".toByteArray())
     val signer = cryptoSystem.makeSigner(pubKey(0), privKey(0))
 

@@ -56,7 +56,7 @@ class DictToMerkleProofTreeWithCacheTest {
 
         // Make sure the cached values give the correct root
         val root = proof2.merkleHashSummary(calculator)
-        Assert.assertEquals(expectedMerkleRoot4 , root.getHashWithPrefix().toHex())
+        Assert.assertEquals(expectedMerkleRoot4 , root.merkleHash.toHex())
 
         val cacheLocalHist3 = cacheLocalHist2
         val cacheGlobalHits3 = cacheGlobalHits2
@@ -104,7 +104,7 @@ class DictToMerkleProofTreeWithCacheTest {
 
         // Make sure the cached values give the correct root
         val root = proof2.merkleHashSummary(calculator)
-        Assert.assertEquals(expectedMerkleRoot4 , root.getHashWithPrefix().toHex())
+        Assert.assertEquals(expectedMerkleRoot4 , root.merkleHash.toHex())
 
         val cacheLocalHist3 = cacheLocalHist2 + 1 // We tried to get the "2" from the cache, and it was stored previously
         val cacheGlobalHits3 = cacheGlobalHits2

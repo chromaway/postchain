@@ -6,10 +6,15 @@ import net.postchain.gtv.GtvFactory.gtv
 
 object ArrayToGtvBinaryTreeHelper {
 
-    const val expected1ElementArrayMerkleRoot = "070203010101010101010101010101010101010101010101010101010101010101010101"
-    const val expected4ElementArrayMerkleRoot = "0701030403050103060307"
-    const val expected7ElementArrayMerkleRoot = "07010204050406020407040801020409040A030A"
-    const val expectet7and3ElementArrayMerkleRoot = "070102040504060204070A040607060F050801020409040A030A"
+    const val empty32bytesHex = "0101010101010101010101010101010101010101010101010101010101010101"
+    const val expected1ElementArrayMerkleRoot = "080303" + empty32bytesHex
+    const val expected4ElementArrayMerkleRoot = "0802040404050204060407"
+    const val expected7ElementArrayMerkleRoot = "08020305050506030507050802030509050A040A"
+
+    const val inner3arrayHash = "0B050707070F0608"
+    const val arr7Part1Hash = "08020305050506030507"
+    const val arr7Part2Hash = "02030509050A040A"
+    const val expectet7and3ElementArrayMerkleRoot = arr7Part1Hash + inner3arrayHash + arr7Part2Hash
 
     // ----------------- 1 -----------------------------
     fun intArrOf1() = intArrayOf(1)

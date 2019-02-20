@@ -17,20 +17,20 @@ class MixArrayDictToMerkleRootTest {
 
         val orgGtvDict = MixArrayDictToGtvBinaryTreeHelper.buildGtvDictWithSubArray4()
 
-        // 08 + [ (01 + [<one>])
+        // [08 +  [01 + <one>]
         //      +
-        //      (0701030403050103060307) <-- Stole this from test "test_tree_of4_merkle_root()"
+        //      (0802040404050204060407) <-- Stole this from ArrayToGtvBinaryTreeHelper
         //      ] ->
-        // 08 + [ 01 + [6F6E65]
+        // [08 +  [01 + 6F6E65]
         //      +
-        //      (0701030403050103060307)
+        //      (0802040404050204060407)
         //      ] ->
-        // 08 + [ 01 + 706F66 + 0701030403050103060307] ->
-        // 08 + 02 + 717067 + 0802040504060204070408 ->
-        // 08027170670802040504060204070408
+        // [08 +  02706F66 + 0802040404050204060407] ->
+        //  09 +  03717067 + 0903050505060305070508 ->
+        //  09037170670903050505060305070508 ->
 
         val root = orgGtvDict.merkleHashSummary(calculator)
-        assertEquals(expecedMerkleRoot_dict1_array4, TreeHelper.convertToHex(root.getHashWithPrefix()))
+        assertEquals(expecedMerkleRoot_dict1_array4, TreeHelper.convertToHex(root.merkleHash))
     }
 
 }

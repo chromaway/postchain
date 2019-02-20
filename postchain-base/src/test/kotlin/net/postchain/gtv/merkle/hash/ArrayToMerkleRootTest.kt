@@ -40,7 +40,7 @@ class ArrayToMerkleRootTest {
         val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf1()
 
         val merkleProofRoot = orgGtvArr.merkleHashSummary(calculator)
-        assertEquals(ArrayToGtvBinaryTreeHelper.expected1ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(ArrayToGtvBinaryTreeHelper.expected1ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
     }
 
     @Test
@@ -50,20 +50,20 @@ class ArrayToMerkleRootTest {
         val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf4()
 
         // (see the test above for where we get these numbers)
-        // 07 + [
-        //       00 [(01 + [<1>]) + 0103] +
-        //       0002050206
+        // [07 +
+        //       [00 [01 + <1>] + 0203] +
+        //       0103050306
         //      ] ->
-        // 07 + [
-        //       00 [0102 + 0103] +
-        //       0002050206
+        // [07 +
+        //       [00 0202 + 0203] +
+        //       0103050306
         //      ] ->
-        // 07 + [ 0002030204 + 0002050206 ] ->
-        // 07     0103040305 + 0103060307 ->
-        // 0701030403050103060307
+        // [07 +  0103030304 + 0103050306 ] ->
+        // 08     0204040405 + 0204060407 ->
+        // 0802040404050204060407
 
         val merkleProofRoot = orgGtvArr.merkleHashSummary(calculator)
-        assertEquals(ArrayToGtvBinaryTreeHelper.expected4ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(ArrayToGtvBinaryTreeHelper.expected4ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
     }
 
     @Test
@@ -72,33 +72,63 @@ class ArrayToMerkleRootTest {
 
         val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf7()
 
-        // 07 + [
-        //      00 [
-        //         00 [<1>  <2>]
-        //       + 00 [<3>  <4>]
-        //    + 00 [
-        //         00 [<5>  <6>]
-        //       + <7>]
+        // [07 +
+        //      [00
+        //         [00 [01 <1>]  [01 <2>]]
+        //       + [00 [01 <3>]  [01 <4>]]
+        //    + [00
+        //         [00 [01 <5>]  [01 <6>]]
+        //       +               [01 <7>]  ]
         //     ]
-        // 07 + [00 [00 [0102 + 0103] + 00 [0104 + 0105]]
-        //     + 00 [00 [0106 + 0107] + 0108] ]
-        // 07 + [00 [0002030204 + 0002050206]
-        //     + 00 [0002070208 + 0108] ]
-        // 07 + [00 + 0103040305 + 0103060307 + 00 + 0103080309 + 0209]
-        // 07 0102040504060204070408 + 01020409040A030A
-        // 07010204050406020407040801020409040A030A
+        // [07 + [00 [00 + 0202 + 0203] + [00 + 0204 + 0205]]
+        //     + [00 [00 + 0206 + 0207] +              0208 ] ]
+        // [07 + [00+ 0103030304        +         0103050306]
+        //     + [00+ 0103070308        +              0208 ] ]
+        // [07 +  01+ 0204040405        +         0204060407
+        //     +  01+ 0204080409 +                     0309   ]
+        // 08     02  0305050506                  0305070508
+        //     +  02  030509050A                       040A
+        // 08020305050506030507050802030509050A040A
 
         val merkleProofRoot = orgGtvArr.merkleHashSummary(calculator)
-        assertEquals(ArrayToGtvBinaryTreeHelper.expected7ElementArrayMerkleRoot , TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(ArrayToGtvBinaryTreeHelper.expected7ElementArrayMerkleRoot , TreeHelper.convertToHex(merkleProofRoot.merkleHash))
     }
 
     @Test
     fun test_ArrayLength7_withInnerLength3Array_root() {
+
+        // Inner array
+        //"   / \    \n" +
+        //"  /   \   \n" +
+        //"  +   3   \n" +
+        //" / \      \n" +
+        //" 1 9        "
+
+        // [07 +
+        //       [00 [01 + <1>] + [01 + <9>]]
+        //     +     [01 + <3>]
+        //      ] ->
+        // [07 +
+        //       [00 0202 + 020A]
+        //     +     0204
+        //      ] ->
+        // [07 + 01 0303 + 030B
+        //     +     0204 ] ->
+        // 08 + 02 0404 + 040C  + 0305  ->
+        // 08020404040C0305
+
+        // We have to hash this inner array 3 times
+        // [[[08020404040C0305]]]
+        // [[ 09030505050D0406 ]]
+        // [  0A040606060E0507  ]
+        //    0B050707070F0608 <- this is what we call "inner3arrayHash" in the helper
+
+
         val calculator = MerkleHashCalculatorDummy()
 
         val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrOf7WithInner3()
 
         val merkleProofRoot = orgGtvArr.merkleHashSummary(calculator)
-        assertEquals(ArrayToGtvBinaryTreeHelper.expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.getHashWithPrefix()))
+        assertEquals(ArrayToGtvBinaryTreeHelper.expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
     }
 }

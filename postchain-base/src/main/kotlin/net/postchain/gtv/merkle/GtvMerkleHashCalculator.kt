@@ -2,9 +2,6 @@ package net.postchain.gtv.merkle
 
 import net.postchain.base.CryptoSystem
 import net.postchain.base.merkle.*
-import net.postchain.base.merkle.proof.MerkleHashCarrier
-import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
-import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
 import net.postchain.core.ProgrammerMistake
 
 import net.postchain.gtv.*
@@ -37,8 +34,8 @@ fun serializeGtvToByteArary(gtv: Gtv): ByteArray {
 class GtvMerkleHashCalculator(cryptoSystem: CryptoSystem):
         MerkleHashCalculator<Gtv>(cryptoSystem, GtvMerkleHashCache.gtvMerkleHashMemoization) {
 
-    override fun calculateNodeHash(prefix: Byte, hashLeft: MerkleHashCarrier, hashRight: MerkleHashCarrier): MerkleHashCarrier {
-        return MerkleHashCarrier(prefix, calculateNodeHashNoPrefixInternal(hashLeft.getHashWithPrefix(), hashRight.getHashWithPrefix(), MerkleBasics::hashingFun))
+    override fun calculateNodeHash(prefix: Byte, hashLeft: Hash, hashRight: Hash): Hash {
+        return calculateNodeHashInternal(prefix, hashLeft, hashRight, MerkleBasics::hashingFun)
     }
 
     /**
@@ -47,7 +44,7 @@ class GtvMerkleHashCalculator(cryptoSystem: CryptoSystem):
      * @param value The leaf
      * @return Returns the hash of the leaf.
      */
-    override fun calculateLeafHash(value: Gtv): MerkleHashCarrier {
+    override fun calculateLeafHash(value: Gtv): Hash {
         return calculateHashOfValueInternal(value, ::serializeGtvToByteArary, MerkleBasics::hashingFun)
     }
 
