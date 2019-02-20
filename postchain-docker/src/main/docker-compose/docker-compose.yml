@@ -4,7 +4,7 @@ version: '3.1'
 services:
 
   postgres:
-    image: chromaway/postgres:2.4.0-beta
+    image: chromaway/postgres:2.4.3-beta
     restart: always
     ports:
       - 5432:5432
@@ -14,11 +14,11 @@ services:
       POSTGRES_PASSWORD: postchain
 
   postchain:
-    image: chromaway/postchain:2.4.3
+    image: chromaway/postchain:2.4.3-beta
     ports:
       - 7740:7740
     volumes:
-      - $PWD/postchain_config:/postchain-node/external_config
+      - ./postchain_config:/postchain-node/external_config
     environment:
       - ENV_NODE_CONFIG=./external_config/config.0.properties
       - ENV_BLOCKCHAIN_CONFIG=./external_config/blockchain_config.xml

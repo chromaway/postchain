@@ -32,7 +32,8 @@ class RunTestCommand : CliktCommand(name = "run-test", help = "Tests gtxml file"
         val result = TestLauncher().runXMLGTXTests(
                 File(filename).readText(),
                 blockchainRID,
-                (context.parent?.command as? Cli)?.config
+                (context.parent?.command as? Cli)?.nodeConfig,
+                (context.parent?.command as? Cli)?.blockchainConfig
         )
 
         if (testOutputFileName != null) {
