@@ -23,6 +23,7 @@ import kotlin.concurrent.thread
  * @property statusManager manages the status of the consensus protocol
  */
 class ValidatorWorker(
+        private val signers: List<ByteArray>,
         private val engine: BlockchainEngine,
         nodeIndex: Int,
         communicationManager: CommunicationManager<EbftMessage>,
@@ -42,7 +43,7 @@ class ValidatorWorker(
         val blockQueries = engine.getBlockQueries()
         val bestHeight = blockQueries.getBestHeight().get()
         statusManager = BaseStatusManager(
-                communicationManager.peers().size,
+                signers.size,
                 nodeIndex,
                 bestHeight + 1)
 
@@ -57,6 +58,7 @@ class ValidatorWorker(
         // Give the SyncManager the BaseTransactionQueue and not the network-aware one,
         // because we don't want tx forwarding/broadcasting when received through p2p network
         syncManager = ValidatorSyncManager(
+                signers,
                 statusManager,
                 blockManager,
                 blockDatabase,

@@ -16,10 +16,6 @@ class DefaultXCommunicationManager<PacketType>(
         val packetConverter: PacketConverter<PacketType>
 ) : CommunicationManager<PacketType>, Shutdownable {
 
-    override fun getPeerIndex(peerID: XPeerID): Int {
-        return config.peerInfo.map { XPeerID(it.pubKey) }.indexOf(peerID)
-    }
-
     companion object : KLogging()
 
     private var inboundPackets = mutableListOf<Pair<XPeerID, PacketType>>()
@@ -49,7 +45,7 @@ class DefaultXCommunicationManager<PacketType>(
             "CommunicationManager.sendPacket(): recipient not found among peers"
         }
 
-        require(config.myIndex != getPeerIndex(recipient)) {
+        require(XPeerID(config.peerInfo[config.myIndex].pubKey) != recipient) {
             "CommunicationManager.sendPacket(): recipient must not be equal to myIndex ${config.myIndex}"
         }
 
@@ -57,26 +53,6 @@ class DefaultXCommunicationManager<PacketType>(
                 { packetConverter.encodePacket(packet) },
                 chainID,
                 recipient)
-    }
-
-    override fun sendPacket(packet: PacketType, recipients: Set<Int>) {
-        require(recipients.size == 1) {
-            "CommunicationManager.sendPacket(): multiple recipients are not allowed"
-        }
-
-        require(recipients.first() in config.peerInfo.indices) {
-            "CommunicationManager.sendPacket(): recipient must be in range ${config.peerInfo.indices}"
-        }
-
-        require(recipients.first() != config.myIndex) {
-            "CommunicationManager.sendPacket(): recipient must not be equal to myIndex ${config.myIndex}"
-        }
-
-        val peerIdx = recipients.first()
-        connectionManager.sendPacket(
-                { packetConverter.encodePacket(packet) },
-                chainID,
-                config.peerInfo[peerIdx].pubKey.byteArrayKeyOf())
     }
 
     override fun broadcastPacket(packet: PacketType) {

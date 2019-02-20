@@ -55,6 +55,7 @@ const val StatusLogInterval = 10000L
  * The ValidatorSyncManager handles communications with our peers.
  */
 class ValidatorSyncManager(
+        private val signers: List<ByteArray>,
         private val statusManager: StatusManager,
         private val blockManager: BlockManager,
         private val blockDatabase: BlockDatabase,
@@ -72,13 +73,24 @@ class ValidatorSyncManager(
 
     companion object : KLogging()
 
+    private val nodes = communicationManager.peers().map { XPeerID(it.pubKey) }
+
+    private fun getPeerIndex(peerID: XPeerID): Int {
+        return nodes.indexOf(peerID)
+    }
+
+    // get n-th validator node XPeerID
+    private fun validatorAtIndex(n: Int): XPeerID {
+        return XPeerID(signers[n])
+    }
+
     /**
      * Handle incoming messages
      */
     fun dispatchMessages() {
         for (packet in communicationManager.getPackets()) {
             val xPeerId = packet.first
-            val nodeIndex = communicationManager.getPeerIndex(xPeerId)
+            val nodeIndex = getPeerIndex(xPeerId)
             val message = packet.second
             logger.debug { "Received message type ${message.getBackingInstance().choiceID} from $nodeIndex" }
             try {
@@ -157,14 +169,14 @@ class ValidatorSyncManager(
             assert(statusManager.myStatus.blockRID!!.contentEquals(currentBlock.header.blockRID))
             val signature = statusManager.getCommitSignature()
             if (signature != null) {
-                communicationManager.sendPacket(BlockSignature(blockRID, signature), setOf(nodeIndex))
+                communicationManager.sendPacket(BlockSignature(blockRID, signature), validatorAtIndex(nodeIndex))
             }
             return
         }
         val blockSignature = blockDatabase.getBlockSignature(blockRID)
         blockSignature success {
             val packet = BlockSignature(blockRID, it)
-            communicationManager.sendPacket(packet, setOf(nodeIndex))
+            communicationManager.sendPacket(packet, validatorAtIndex(nodeIndex))
         } fail {
             logger.debug("Error sending BlockSignature", it)
         }
@@ -193,7 +205,8 @@ class ValidatorSyncManager(
     private fun sendUnfinishedBlock(nodeIndex: Int) {
         val currentBlock = blockManager.currentBlock
         if (currentBlock != null) {
-            communicationManager.sendPacket(UnfinishedBlock(currentBlock.header.rawData, currentBlock.transactions.toList()), setOf(nodeIndex))
+            communicationManager.sendPacket(UnfinishedBlock(currentBlock.header.rawData, currentBlock.transactions.toList()),
+                    validatorAtIndex(nodeIndex))
         }
     }
 
@@ -221,7 +234,7 @@ class ValidatorSyncManager(
     private fun fetchBlockAtHeight(height: Long) {
         val nodeIndex = selectRandomNode { it.height > height } ?: return
         logger.debug("Fetching block at height $height from node $nodeIndex")
-        communicationManager.sendPacket(GetBlockAtHeight(height), setOf(nodeIndex))
+        communicationManager.sendPacket(GetBlockAtHeight(height), validatorAtIndex(nodeIndex))
     }
 
     /**
@@ -234,7 +247,7 @@ class ValidatorSyncManager(
         val message = GetBlockSignature(blockRID)
         logger.debug("Fetching commit signature for block with RID ${blockRID.toHex()} from nodes ${Arrays.toString(nodes)}")
         nodes.forEach {
-            communicationManager.sendPacket(message, setOf(it))
+            communicationManager.sendPacket(message, validatorAtIndex(it))
         }
     }
 
@@ -249,7 +262,7 @@ class ValidatorSyncManager(
             it.height == height && (it.blockRID?.contentEquals(blockRID) ?: false)
         } ?: return
         logger.debug("Fetching unfinished block with RID ${blockRID.toHex()} from node $nodeIndex ")
-        communicationManager.sendPacket(GetUnfinishedBlock(blockRID), setOf(nodeIndex))
+        communicationManager.sendPacket(GetUnfinishedBlock(blockRID), validatorAtIndex(nodeIndex))
     }
 
     /**

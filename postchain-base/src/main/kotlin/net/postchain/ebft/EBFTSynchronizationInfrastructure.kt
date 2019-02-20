@@ -32,7 +32,9 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
 
     override fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
+        val signers = blockchainConfig.signers
         return ValidatorWorker(
+                signers,
                 engine,
                 blockchainConfig.configData.context.nodeID,
 //                buildCommunicationManager(blockchainConfig),
