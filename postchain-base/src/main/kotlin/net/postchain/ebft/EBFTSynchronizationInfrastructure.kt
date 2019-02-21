@@ -12,7 +12,6 @@ import net.postchain.core.SynchronizationInfrastructure
 import net.postchain.ebft.message.EbftMessage
 import net.postchain.ebft.worker.ValidatorWorker
 import net.postchain.network.CommunicationManager
-import net.postchain.network.PeerConnectionManager
 import net.postchain.network.netty2.NettyConnectorFactory
 import net.postchain.network.x.DefaultXCommunicationManager
 import net.postchain.network.x.DefaultXConnectionManager
@@ -22,22 +21,17 @@ import org.apache.commons.configuration2.Configuration
 class EBFTSynchronizationInfrastructure(val config: Configuration) : SynchronizationInfrastructure {
 
     private val connectionManagers = mutableListOf<XConnectionManager>()
-    @Deprecated("See XCommunicationManager")
-    private val connectionManagersDeprecated = mutableListOf<PeerConnectionManager<*>>()
 
     override fun shutdown() {
         connectionManagers.forEach { it.shutdown() }
-        connectionManagersDeprecated.forEach { it.shutdown() }
     }
 
     override fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
-        val signers = blockchainConfig.signers
         return ValidatorWorker(
-                signers,
+                blockchainConfig.signers,
                 engine,
                 blockchainConfig.configData.context.nodeID,
-//                buildCommunicationManager(blockchainConfig),
                 buildXCommunicationManager(blockchainConfig),
                 restartHandler)
     }

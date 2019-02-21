@@ -89,14 +89,11 @@ class DefaultXCommunicationManagerTest {
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun sendPacket_will_result_in_exception_if_no_recipients_was_given() {
+    fun sendPacket_will_result_in_exception_if_empty_XPeerID_was_given() {
         // Given
         val connectionManager: XConnectionManager = mock()
         val peerCommunicationConfig: PeerCommConfiguration = mock {
-            on { blockchainRID } doReturn blockchainRid
             on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
-            on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
-            on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
         }
         val packetConverter: PacketConverter<Int> = mock()
 
@@ -109,14 +106,11 @@ class DefaultXCommunicationManagerTest {
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun sendPacket_will_result_in_exception_if_too_big_recipient_index_was_given() {
+    fun sendPacket_will_result_in_exception_if_unknown_recipient_was_given() {
         // Given
         val connectionManager: XConnectionManager = mock()
         val peerCommunicationConfig: PeerCommConfiguration = mock {
-            on { blockchainRID } doReturn blockchainRid
             on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
-            on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
-            on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
         }
         val packetConverter: PacketConverter<Int> = mock()
 
@@ -129,12 +123,11 @@ class DefaultXCommunicationManagerTest {
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun sendPacket_will_result_in_exception_if_myIndex_was_given() {
+    fun sendPacket_will_result_in_exception_if_my_XPeerID_was_given() {
         // Given
         val peersConfig: PeerCommConfiguration = mock {
             on { myIndex } doReturn 1
             on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
-            on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
         }
 
         // When / Then exception
