@@ -11,13 +11,14 @@ import org.junit.Assert
 import org.junit.Test
 
 /**
- * Aim of these tests are to test that the cache is used properly
+ * Aim of these tests are to test that the cache is used properly when doing proofs on Dict structures.
  */
 class DictToMerkleProofTreeWithCacheTest {
 
     val calculator = MerkleHashCalculatorDummy()
 
     fun checkStats(localHits: Int, globalHits: Int, misses: Int, memoization: GtvMerkleHashMemoization) {
+        //println("Cache content! local hits: ${memoization.localCacheHits}, global hits: ${memoization.globalCacheHits}, cacheMisses: ${memoization.cacheMisses}")
         Assert.assertEquals(localHits.toLong(), memoization.localCacheHits)
         Assert.assertEquals(globalHits.toLong(), memoization.globalCacheHits)
         Assert.assertEquals(misses.toLong(), memoization.cacheMisses)

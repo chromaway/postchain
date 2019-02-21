@@ -58,7 +58,7 @@ fun Gtv.merkleHash(calculator: MerkleHashCalculator<Gtv>): Hash {
 }
 
 /**
- * Calculates the merkle root hash of the structure.
+ * Calculates the merkle root hash of the structure OR fetches it from the cache.
  *
  * 1. We will begin by looking in the [Gtv] 's local cache
  * 2. If not found, we look in the global cache

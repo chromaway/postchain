@@ -21,7 +21,9 @@ abstract class MerkleHashSummaryFactory<T, TPathSet: MerklePathSet>(
         val proofFactory: MerkleProofTreeFactory<T>) {
 
     /**
-     * Calculates all the way from source type to merkle hash
+     * Calculates all the way from source type to merkle hash.
+     *
+     * Note: should have looked in cache before this, because here we will do the calculation no matter what.
      *
      * @param value is the source
      * @param calculator holds the function we'll use to hash & serialize

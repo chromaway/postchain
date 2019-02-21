@@ -29,7 +29,7 @@ class GtvBinaryTreeFactory() : BinaryTreeFactory<Gtv, GtvPathSet>() {
      * @param GtvPathList will tell us what element that are path leafs
      */
     fun buildFromGtvAndPath(gtv: Gtv, GtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): GtvBinaryTree {
-        val result = handleLeaf(gtv, GtvPaths, memoization)
+        val result = handleLeaf(gtv, GtvPaths, memoization, true)
         return GtvBinaryTree(result)
     }
 

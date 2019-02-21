@@ -49,11 +49,12 @@ abstract class BinaryTreeFactory<T,TPathSet: MerklePathSet>() : KLogging() {
      * @param leaf the raw data we should wrap in a leaf
      * @param paths a collection of proof paths that might point to this leaf
      * @param memoization is the cache we can use to find pre-calculated values
+     * @param isRoot tells us if this is the top element (we should not search for top element in cache)
      * @return the resulting [BinaryTreeElement] the leaf got converted to
      */
-    fun handleLeaf(leaf: T, paths: TPathSet, memoization: MerkleHashMemoization<T>): BinaryTreeElement {
-        return if (paths.isEmpty()) {
-            // We don't have paths, so we are free to look in cache
+    fun handleLeaf(leaf: T, paths: TPathSet, memoization: MerkleHashMemoization<T>, isRoot: Boolean = false): BinaryTreeElement {
+        return if (paths.isEmpty() && !isRoot) {
+            // We don't have paths and we are not in the root element, so we are free to look in cache
             val cachedSummary = memoization.findMerkleHash(leaf)
             if (cachedSummary != null) {
                 CachedLeaf(cachedSummary)

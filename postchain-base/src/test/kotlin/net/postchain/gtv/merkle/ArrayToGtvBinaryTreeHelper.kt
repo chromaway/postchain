@@ -55,7 +55,7 @@ object ArrayToGtvBinaryTreeHelper {
     // ----------------- 7 with 3-----------------------------
     private fun intArrOfInner3() = intArrayOf(1,9,3)
 
-    private fun buildGtvArrInnerOf3(): GtvArray {
+    fun buildGtvArrInnerOf3(): GtvArray {
         val innerIntArray = intArrOfInner3()
         val innerIntArrayList =GtvTreeHelper.transformIntToGtv(innerIntArray.toCollection(ArrayList()))
         return gtv(innerIntArrayList)
