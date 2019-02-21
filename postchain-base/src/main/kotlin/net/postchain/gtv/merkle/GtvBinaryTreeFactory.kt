@@ -28,8 +28,8 @@ class GtvBinaryTreeFactory() : BinaryTreeFactory<Gtv, GtvPathSet>() {
      * @param Gtv will take any damn thing
      * @param GtvPathList will tell us what element that are path leafs
      */
-    fun buildFromGtvAndPath(gtv: Gtv, GtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): GtvBinaryTree {
-        val result = handleLeaf(gtv, GtvPaths, memoization, true)
+    fun buildFromGtvAndPath(gtv: Gtv, gtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): GtvBinaryTree {
+        val result = handleLeaf(gtv, gtvPaths, memoization, true)
         return GtvBinaryTree(result)
     }
 
@@ -43,10 +43,10 @@ class GtvBinaryTreeFactory() : BinaryTreeFactory<Gtv, GtvPathSet>() {
      * @return an array of all the leafs as [BinaryTreeElement] s. Note that some leafs might not be primitive values
      *   but some sort of collection with their own leafs (recursivly)
      */
-    fun buildLeafElements(leafList: List<Gtv>, GtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): ArrayList<BinaryTreeElement> {
+    fun buildLeafElements(leafList: List<Gtv>, gtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): ArrayList<BinaryTreeElement> {
         val leafArray = arrayListOf<BinaryTreeElement>()
 
-        val onlyArrayPaths = GtvPaths.keepOnlyArrayPaths() // For performance, since we will loop soon
+        val onlyArrayPaths = gtvPaths.keepOnlyArrayPaths() // For performance, since we will loop soon
 
         for (i in 0..(leafList.size - 1)) {
             val pathsRelevantForThisLeaf = onlyArrayPaths.getTailIfFirstElementIsArrayOfThisIndexFromList(i)

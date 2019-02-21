@@ -11,34 +11,6 @@ import net.postchain.gtv.Gtv
  */
 abstract class BinaryTreeFactory<T,TPathSet: MerklePathSet>() : KLogging() {
 
-    /**
-     * Builds the (sub?)tree from a list. We do this is in parts:
-     *
-     * 1. Transform each leaf in the list into a [Leaf]
-     * 2. Create the nodes that exist above the leaf, all the way to the root.
-     *
-     * Note: this implementation cannot do proof trees, have to be overridden for that.
-     *
-     * @param leafList the list of leafs we should build a sub tree from
-     * @return Root [BinaryTreeElement] node of the generated sub tree
-     */
-    protected fun buildSubTreeFromLeafList(leafList: List<T>, memoization: MerkleHashMemoization<T>): BinaryTreeElement {
-
-        val leafArray = arrayListOf<BinaryTreeElement>()
-
-        // 1. Build first (leaf) layer
-        for (i in 0..(leafList.size - 1)) {
-            //val pathsRelevantForThisLeaf = keepOnlyRelevantPathsFun(i, pathList)
-            val leaf = leafList[i]
-            val btElement = handleLeaf(leaf, getEmptyPathSet(), memoization)
-            leafArray.add(btElement)
-        }
-
-        // 2. Build all higher layers
-        val result = buildHigherLayer(1, leafArray)
-
-        return result.get(0)
-    }
 
     /**
      * Transforms the incoming leaf into an [BinaryTreeElement]

@@ -48,8 +48,6 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
     var globalCacheHits = 0L // How many times the global cache was successful
     var cacheMisses = 0L // How many times no cached value was found
 
-
-
     private var totalSizeInBytes = 0 // Keeps track of how much space the cache consumes. This is not exact, but gives worst case!
 
     /**
