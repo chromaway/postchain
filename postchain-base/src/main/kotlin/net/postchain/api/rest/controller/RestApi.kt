@@ -150,11 +150,13 @@ class RestApi(private val listenPort: Int, private val basePath: String,
             }, gson::toJson)
 
             http.get("/query/$PARAM_BLOCKCHAIN_RID/blocks/latest/$PARAM_UP_TO/limit/$PARAM_LIMIT", { request, _ ->
-
-                takeInputs(request) { upTo, n ->
-                    runTxActionOnModel(request) {model, txRID ->
-                        model.getLatestBlocksUpTo(upTo, n)
-                    }
+                val model = model(request)
+                try {
+                    val upTo = request.params(PARAM_UP_TO).toLong()
+                    val limit = request.params(PARAM_LIMIT).toInt()
+                    model.getLatestBlocksUpTo(upTo, limit)
+                } catch (e: NumberFormatException) {
+                    throw BadFormatError("Format is not correct (Long, Int)")
                 }
             }, gson::toJson)
 
@@ -224,12 +226,6 @@ class RestApi(private val listenPort: Int, private val basePath: String,
         // Ugly hack to workaround that there is no blocking stop.
         // Test cases won't work correctly without it
         Thread.sleep(100)
-    }
-
-    private fun takeInputs(request: Request, inputActions: (Long, Int) -> Any?): Any? {
-        val upTo = request.params(PARAM_UP_TO).toLongOrNull()
-        val limit = request.params(PARAM_LIMIT).toIntOrNull()
-        return if (upTo != null && limit != null) inputActions(upTo, limit) else throw BadFormatError("Format is not correct (Long, Int)")
     }
 
     private fun runTxActionOnModel(request: Request, txAction: (Model, TxRID) -> Any?): Any? {

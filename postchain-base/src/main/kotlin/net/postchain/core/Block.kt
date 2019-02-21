@@ -1,5 +1,7 @@
 package net.postchain.core
 
+import net.postchain.common.toHex
+
 interface BlockHeader {
     val prevBlockRID: ByteArray
     val rawData: ByteArray
@@ -17,10 +19,25 @@ open class BlockData(
  */
 open class BlockDetail (
         val header: ByteArray,
+        val height: Long,
         val transactions: List<ByteArray>,
         val witness: ByteArray,
         val timestamp: Long
-)
+) {
+    fun equals(other: BlockDetail): Boolean {
+        if (this.height != other.height) return false
+        if (this.witness.toHex() == other.witness.toHex()) return false
+
+        if (this.transactions.size != other.transactions.size) return false
+
+        val thisTransactionsToHex = transactions.map{ transaction -> transaction.toHex()}
+        for (transaction in  other.transactions) {
+            if (!thisTransactionsToHex.contains(transaction.toHex())) return false
+        }
+
+        return true
+    }
+}
 
 data class ValidationResult(
         val result: Boolean,

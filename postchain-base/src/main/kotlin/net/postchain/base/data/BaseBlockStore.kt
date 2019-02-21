@@ -84,7 +84,7 @@ class BaseBlockStore : BlockStore {
         val blocksInfo = db.getLatestBlocksUpTo(ctx, upTo, n)
         return blocksInfo.map { blockInfo ->
             val transactions = db.getBlockTransactions(ctx, blockInfo.blockRid)
-            BlockDetail(blockInfo.blockHeader, transactions, blockInfo.witness, blockInfo.timestamp)
+            BlockDetail(blockInfo.blockHeader, blockInfo.blockHeight, transactions, blockInfo.witness, blockInfo.timestamp)
         }
     }
 

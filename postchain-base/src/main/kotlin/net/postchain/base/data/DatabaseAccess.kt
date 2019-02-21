@@ -299,14 +299,17 @@ class SQLDatabaseAccess : DatabaseAccess {
     override fun getLatestBlocksUpTo(context: EContext, upTo: Long, n: Int): List<DatabaseAccess.BlockInfoExt> {
         if(n > 50) throw UserMistake("cannot retrive more than 50 blocks per query")
         val blocksInfo = queryRunner.query(context.conn,
-                "SELECT block_iid, block_height, block_header_data, block_witness, timestamp FROM blocks WHERE timestamp < ? SORT timestamp DESC LIMIT ?",
+                "SELECT block_rid, block_height, block_header_data, block_witness, timestamp " +
+                        "FROM blocks WHERE timestamp < ? " +
+                        "ORDER BY timestamp DESC " +
+                        "LIMIT ?",
                 mapListHandler,
                 upTo,
                 n)
         return blocksInfo.map { blockInfo ->
             val blockRid = blockInfo.get("block_rid") as ByteArray
             val blockHeight = blockInfo.get("block_height") as Long
-            val blockHeader = blockInfo.get("block_header_date") as ByteArray
+            val blockHeader = blockInfo.get("block_header_data") as ByteArray
             val blockWitness = blockInfo.get("block_witness") as ByteArray
             val timestamp = blockInfo.get("timestamp") as Long
             DatabaseAccess.BlockInfoExt(blockRid, blockHeight, blockHeader, blockWitness, timestamp)
