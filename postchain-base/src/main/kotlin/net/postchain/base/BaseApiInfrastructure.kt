@@ -6,7 +6,7 @@ import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.common.toHex
 import net.postchain.core.ApiInfrastructure
 import net.postchain.core.BlockchainProcess
-import net.postchain.ebft.BlockchainInstanceModel
+import net.postchain.ebft.worker.WorkerBase
 import org.apache.commons.configuration2.Configuration
 
 class BaseApiInfrastructure(val config: Configuration) : ApiInfrastructure {
@@ -16,7 +16,13 @@ class BaseApiInfrastructure(val config: Configuration) : ApiInfrastructure {
     init {
         val basePath = config.getString("api.basepath", "")
         val port = config.getInt("api.port", 7740)
-        restApi = if (port != -1) RestApi(port, basePath) else null
+        val enableSsl = config.getBoolean("api.enable_ssl", false)
+        val sslCertificate = config.getString("api.ssl_certificate", "")
+        val sslCertificatePassword = config.getString("api.ssl_certificate.password", "")
+        restApi = if (port != -1)
+            if(enableSsl) RestApi(port, basePath, sslCertificate, sslCertificatePassword)
+            else RestApi(port, basePath)
+        else null
     }
 
     override fun connectProcess(process: BlockchainProcess) {
@@ -24,7 +30,7 @@ class BaseApiInfrastructure(val config: Configuration) : ApiInfrastructure {
             val engine = process.getEngine()
 
             val apiModel = PostchainModel(
-                    (process as BlockchainInstanceModel).networkAwareTxQueue,
+                    (process as WorkerBase).networkAwareTxQueue,
                     engine.getConfiguration().getTransactionFactory(),
                     engine.getBlockQueries() as BaseBlockQueries) // TODO: [et]: Resolve type cast
 

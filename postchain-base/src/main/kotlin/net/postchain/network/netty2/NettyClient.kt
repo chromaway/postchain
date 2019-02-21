@@ -7,6 +7,7 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import net.postchain.core.Shutdownable
 import java.net.SocketAddress
+import java.util.concurrent.TimeUnit
 
 class NettyClient : Shutdownable {
 
@@ -44,6 +45,6 @@ class NettyClient : Shutdownable {
     override fun shutdown() {
         connectFuture.channel().close()
         connectFuture.channel().closeFuture().sync()
-        group.shutdownGracefully().sync()
+        group.shutdownGracefully(2, 2, TimeUnit.SECONDS).sync()
     }
 }

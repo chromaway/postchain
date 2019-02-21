@@ -18,11 +18,14 @@ class DefaultXCommunicationManagerTest {
     private lateinit var peerInfo1: PeerInfo
     private lateinit var peerInfo2: PeerInfo
 
+    private val pubKey1 = byteArrayOf(0x01)
+    private val pubKey2 = byteArrayOf(0x02)
+
     @Before
     fun setUp() {
         // TODO: [et]: Make dynamic ports
-        peerInfo1 = PeerInfo("localhost", 3331, byteArrayOf(0x01))
-        peerInfo2 = PeerInfo("localhost", 3332, byteArrayOf(0x02))
+        peerInfo1 = PeerInfo("localhost", 3331, pubKey1)
+        peerInfo2 = PeerInfo("localhost", 3332, pubKey2)
     }
 
     @Test
@@ -86,53 +89,41 @@ class DefaultXCommunicationManagerTest {
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun sendPacket_will_result_in_exception_if_no_recipients_was_given() {
-        // When / Then exception
-        DefaultXCommunicationManager(mock(), mock(), CHAIN_ID, mock<PacketConverter<Int>>())
-                .apply {
-                    sendPacket(0, setOf())
-                }
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun sendPacket_will_result_in_exception_if_more_then_one_recipients_was_given() {
-        // When / Then exception
-        DefaultXCommunicationManager(mock(), mock(), CHAIN_ID, mock<PacketConverter<Int>>())
-                .apply {
-                    sendPacket(0, setOf(0, 42))
-                }
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun sendPacket_will_result_in_exception_if_too_big_recipient_index_was_given() {
+    fun sendPacket_will_result_in_exception_if_empty_XPeerID_was_given() {
         // Given
-        val peersConfig: PeerCommConfiguration = mock {
+        val connectionManager: XConnectionManager = mock()
+        val peerCommunicationConfig: PeerCommConfiguration = mock {
             on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
         }
+        val packetConverter: PacketConverter<Int> = mock()
 
-        // When / Then exception
-        DefaultXCommunicationManager(mock(), peersConfig, CHAIN_ID, mock<PacketConverter<Int>>())
-                .apply {
-                    sendPacket(0, setOf(42))
-                }
+        // When
+        val communicationManager = DefaultXCommunicationManager(
+                connectionManager, peerCommunicationConfig, CHAIN_ID, packetConverter)
+        communicationManager.init()
+        communicationManager.sendPacket(0, XPeerID(byteArrayOf()))
+        communicationManager.shutdown()
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun sendPacket_will_result_in_exception_if_negative_recipient_index_was_given() {
+    fun sendPacket_will_result_in_exception_if_unknown_recipient_was_given() {
         // Given
-        val peersConfig: PeerCommConfiguration = mock {
+        val connectionManager: XConnectionManager = mock()
+        val peerCommunicationConfig: PeerCommConfiguration = mock {
             on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
         }
+        val packetConverter: PacketConverter<Int> = mock()
 
-        // When / Then exception
-        DefaultXCommunicationManager(mock(), peersConfig, CHAIN_ID, mock<PacketConverter<Int>>())
-                .apply {
-                    sendPacket(0, setOf(-1))
-                }
+        // When
+        val communicationManager = DefaultXCommunicationManager(
+                connectionManager, peerCommunicationConfig, CHAIN_ID, packetConverter)
+        communicationManager.init()
+        communicationManager.sendPacket(0, XPeerID(byteArrayOf(0x42)))
+        communicationManager.shutdown()
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun sendPacket_will_result_in_exception_if_myIndex_was_given() {
+    fun sendPacket_will_result_in_exception_if_my_XPeerID_was_given() {
         // Given
         val peersConfig: PeerCommConfiguration = mock {
             on { myIndex } doReturn 1
@@ -142,7 +133,7 @@ class DefaultXCommunicationManagerTest {
         // When / Then exception
         DefaultXCommunicationManager(mock(), peersConfig, CHAIN_ID, mock<PacketConverter<Int>>())
                 .apply {
-                    sendPacket(0, setOf(1))
+                    sendPacket(0, XPeerID(pubKey2))
                 }
     }
 
@@ -165,7 +156,7 @@ class DefaultXCommunicationManagerTest {
                 mock<PacketConverter<Int>>())
                 .apply {
                     init()
-                    sendPacket(0, setOf(0))
+                    sendPacket(0, XPeerID(pubKey1))
                 }
 
         // Then

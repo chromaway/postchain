@@ -7,7 +7,7 @@ class CommandConfigureNode : Command {
 
     override fun key(): String = "configure-node"
 
-    override fun execute() {
-        println("configure-node command not implemented yet")
+    override fun execute(): CliResult {
+        return CliError.NotImplemented(message = "configure-node command not implemented yet")
     }
 }

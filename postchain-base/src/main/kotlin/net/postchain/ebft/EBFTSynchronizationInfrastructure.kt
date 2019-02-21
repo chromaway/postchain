@@ -10,9 +10,8 @@ import net.postchain.core.BlockchainProcess
 import net.postchain.core.RestartHandler
 import net.postchain.core.SynchronizationInfrastructure
 import net.postchain.ebft.message.EbftMessage
-import net.postchain.network.CommManager
+import net.postchain.ebft.worker.ValidatorWorker
 import net.postchain.network.CommunicationManager
-import net.postchain.network.PeerConnectionManager
 import net.postchain.network.netty2.NettyConnectorFactory
 import net.postchain.network.x.DefaultXCommunicationManager
 import net.postchain.network.x.DefaultXConnectionManager
@@ -22,20 +21,17 @@ import org.apache.commons.configuration2.Configuration
 class EBFTSynchronizationInfrastructure(val config: Configuration) : SynchronizationInfrastructure {
 
     private val connectionManagers = mutableListOf<XConnectionManager>()
-    @Deprecated("See XCommunicationManager")
-    private val connectionManagersDeprecated = mutableListOf<PeerConnectionManager<*>>()
 
     override fun shutdown() {
         connectionManagers.forEach { it.shutdown() }
-        connectionManagersDeprecated.forEach { it.shutdown() }
     }
 
     override fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
-        return EBFTBlockchainInstanceWorker(
+        return ValidatorWorker(
+                blockchainConfig.signers,
                 engine,
                 blockchainConfig.configData.context.nodeID,
-//                buildCommunicationManager(blockchainConfig),
                 buildXCommunicationManager(blockchainConfig),
                 restartHandler)
     }
@@ -62,20 +58,6 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
                 communicationConfig,
                 blockchainConfig.chainID,
                 packetConverter).apply { init() }
-    }
-
-    @Deprecated("See XCommunicationManager")
-    private fun buildCommunicationManager(blockchainConfig: BaseBlockchainConfiguration): CommManager<EbftMessage> {
-        val communicationConfig = BasePeerCommConfiguration(
-                PeerInfoCollectionFactory.createPeerInfoCollection(config),
-                blockchainConfig.blockchainRID,
-                blockchainConfig.configData.context.nodeID,
-                SECP256K1CryptoSystem(),
-                privKey())
-
-        val connectionManager = EbftPeerManagerFactory.createConnectionManager(communicationConfig)
-        connectionManagersDeprecated.add(connectionManager)
-        return CommManager(communicationConfig, connectionManager)
     }
 
     private fun privKey(): ByteArray =

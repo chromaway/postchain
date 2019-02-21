@@ -3,7 +3,7 @@ package net.postchain.network.x
 import mu.KLogging
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerInfo
-import net.postchain.core.NODE_ID_READ_ONLY
+import net.postchain.base.peerId
 import net.postchain.core.Shutdownable
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.network.CommunicationManager
@@ -18,7 +18,7 @@ class DefaultXCommunicationManager<PacketType>(
 
     companion object : KLogging()
 
-    private var inboundPackets = mutableListOf<Pair<Int, PacketType>>()
+    private var inboundPackets = mutableListOf<Pair<XPeerID, PacketType>>()
 
     override fun init() {
         val peerConfig = XChainPeerConfiguration(
@@ -33,30 +33,26 @@ class DefaultXCommunicationManager<PacketType>(
     override fun peers(): Array<PeerInfo> = config.peerInfo
 
     @Synchronized
-    override fun getPackets(): MutableList<Pair<Int, PacketType>> {
+    override fun getPackets(): MutableList<Pair<XPeerID, PacketType>> {
         val currentQueue = inboundPackets
         inboundPackets = mutableListOf()
         return currentQueue
     }
 
-    override fun sendPacket(packet: PacketType, recipients: Set<Int>) {
-        require(recipients.size == 1) {
-            "CommunicationManager.sendPacket(): multiple recipients are not allowed"
+    override fun sendPacket(packet: PacketType, recipient: XPeerID) {
+        val peers : List<XPeerID> = config.peerInfo.map(PeerInfo::peerId)
+        require(recipient in peers) {
+            "CommunicationManager.sendPacket(): recipient not found among peers"
         }
 
-        require(recipients.first() in config.peerInfo.indices) {
-            "CommunicationManager.sendPacket(): recipient must be in range ${config.peerInfo.indices}"
-        }
-
-        require(recipients.first() != config.myIndex) {
+        require(XPeerID(config.peerInfo[config.myIndex].pubKey) != recipient) {
             "CommunicationManager.sendPacket(): recipient must not be equal to myIndex ${config.myIndex}"
         }
 
-        val peerIdx = recipients.first()
         connectionManager.sendPacket(
                 { packetConverter.encodePacket(packet) },
                 chainID,
-                config.peerInfo[peerIdx].pubKey.byteArrayKeyOf())
+                recipient)
     }
 
     override fun broadcastPacket(packet: PacketType) {
@@ -74,17 +70,7 @@ class DefaultXCommunicationManager<PacketType>(
         // use of parallel processing in different threads
         val decodedPacket = packetConverter.decodePacket(peerID.byteArray, packet)
         synchronized(this) {
-            inboundPackets.add(
-                    getPeerIndex(peerID) to decodedPacket)
+            inboundPackets.add(peerID to decodedPacket)
         }
-    }
-
-    private fun getPeerIndex(peerID: XPeerID): Int {
-        for (pi in config.peerInfo.withIndex()) {
-            if (pi.value.pubKey.contentEquals(peerID.byteArray)) {
-                return pi.index
-            }
-        }
-        return NODE_ID_READ_ONLY
     }
 }

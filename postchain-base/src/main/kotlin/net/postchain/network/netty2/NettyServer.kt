@@ -9,6 +9,7 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import net.postchain.core.Shutdownable
+import java.util.concurrent.TimeUnit
 
 class NettyServer : Shutdownable {
 
@@ -49,7 +50,7 @@ class NettyServer : Shutdownable {
     override fun shutdown() {
         bindFuture.channel().close()
         bindFuture.channel().closeFuture().sync()
-        parentGroup.shutdownGracefully().sync()
-        childGroup.shutdownGracefully().sync()
+        parentGroup.shutdownGracefully(2, 2, TimeUnit.SECONDS).sync()
+        childGroup.shutdownGracefully(2, 2, TimeUnit.SECONDS).sync()
     }
 }

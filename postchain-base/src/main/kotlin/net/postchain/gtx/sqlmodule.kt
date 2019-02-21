@@ -233,7 +233,7 @@ class SQLGTXModule(private val moduleFiles: Array<String>) : GTXModule {
 
     private fun readModuleFileContent(filename: String): String {
         /*
-        * We use Spring convention here when files under resources are labeled with prefix 'classpath:'.
+        * FYI: We use Spring convention here when files under resources are labeled with prefix 'classpath:'.
         * */
         val resourcePrefix = "classpath:"
         return if (filename.startsWith(resourcePrefix)) {

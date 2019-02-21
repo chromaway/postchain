@@ -12,6 +12,7 @@ import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.SingleChainTestNode
+import net.postchain.ebft.worker.ValidatorWorker
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -113,7 +114,7 @@ class GTXPerformanceTestNightly : IntegrationTest() {
         createNodes(nodeCount, "/net/postchain/performance/blockchain_config_$nodeCount.xml")
 
         var txId = 0
-        val statusManager = nodes[0].getBlockchainInstance().statusManager
+        val statusManager = (nodes[0].getBlockchainInstance() as ValidatorWorker).statusManager
         for (i in 0 until blockCount) {
             for (tx in 0 until txPerBlock) {
                 val txFactory = nodes[statusManager.primaryIndex()]

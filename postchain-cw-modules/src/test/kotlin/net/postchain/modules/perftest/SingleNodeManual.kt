@@ -1,11 +1,8 @@
 package net.postchain.modules.perftest
 
 import net.postchain.common.TimeLog
-import net.postchain.configurations.GTXTestModule
 import net.postchain.devtools.IntegrationTest
-import net.postchain.devtools.KeyPairHelper.pubKeyHex
 import net.postchain.devtools.SingleChainTestNode
-import net.postchain.modules.ft.BaseFTModuleFactory
 import org.junit.Test
 
 /**
@@ -28,27 +25,17 @@ import org.junit.Test
  */
 class SingleNodeManual : IntegrationTest() {
 
-    private val assetID = "TST"
-
     @Test
     fun runSingleFTNode() {
-//        configOverrides.setProperty("blockchain.1.gtx.modules", BaseFTModuleFactory::class.qualifiedName)
-//        configOverrides.setProperty("blockchain.1.gtx.ft.assets", assetID)
-//        configOverrides.setProperty("blockchain.1.gtx.ft.asset.$assetID.issuers", pubKeyHex(0))
-//        configOverrides.setProperty("blockchain.1.gtx.ft.openRegistration", true)
         runSingleNode("FT", "/net/postchain/single_ft_node/blockchain_config.xml")
     }
 
     @Test
     fun runSingleGtxTestNode() {
-//        configOverrides.setProperty("blockchain.1.gtx.modules", GTXTestModule::class.qualifiedName)
         runSingleNode("GtxTest", "/net/postchain/single_gtx_node/blockchain_config.xml")
     }
 
     private fun runSingleNode(name: String, blockchainConfig: String) {
-//        configOverrides.setProperty("blockchain.1.configurationfactory", GTXBlockchainConfigurationFactory::class.qualifiedName)
-//        configOverrides.setProperty("blockchain.1.basestrategy.maxblocktransactions", 1000)
-//        configOverrides.setProperty("blockchain.1.queuecapacity", 100000)
         val node = createNode(0, blockchainConfig)
 
         // warm up

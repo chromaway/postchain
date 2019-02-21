@@ -13,8 +13,8 @@ import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.BlockchainProcess
 import net.postchain.core.NODE_ID_TODO
-import net.postchain.ebft.BlockchainInstanceModel
 import net.postchain.gtx.GTXValue
+import net.postchain.ebft.worker.WorkerBase
 import net.postchain.gtx.encodeGTXValue
 import org.apache.commons.configuration2.Configuration
 
@@ -39,17 +39,6 @@ class SingleChainTestNode(nodeConfig: Configuration, blockchainConfig: GTXValue)
             true
         }
 
-        /*
-        val configData = BaseBlockchainConfigurationData.readFromCommonsConfiguration(
-                nodeConfig, chainId, blockchainRID, NODE_ID_TODO)
-        val factoryClass = Class.forName(configData.data["configurationfactory"]!!.asString())
-        val factory = (factoryClass.newInstance() as BlockchainConfigurationFactory)
-
-        val blockchainConfiguration = factory.makeBlockchainConfiguration(configData)
-        val configAsByteArray = encodeGTXValue(
-                (blockchainConfiguration as BaseBlockchainConfiguration).configData.data)
-*/
-
         withWriteConnection(storage, chainId) { eContext ->
             BaseConfigurationDataStore.addConfigurationData(
                     eContext, 0, encodeGTXValue(blockchainConfig))
@@ -72,8 +61,8 @@ class SingleChainTestNode(nodeConfig: Configuration, blockchainConfig: GTXValue)
                 .restApi?.actualPort() ?: 0
     }
 
-    fun getBlockchainInstance(): BlockchainInstanceModel {
-        return processManager.retrieveBlockchain(chainId) as BlockchainInstanceModel
+    fun getBlockchainInstance(): WorkerBase {
+        return processManager.retrieveBlockchain(chainId) as WorkerBase
     }
 
     private fun blockchainRID(process: BlockchainProcess): String {

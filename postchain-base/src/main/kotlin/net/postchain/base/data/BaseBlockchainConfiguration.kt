@@ -13,6 +13,7 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
     val blockStore = BaseBlockStore()
     override val chainID = configData.context.chainID
     val blockchainRID = configData.context.blockchainRID
+    val signers = configData.getSigners()
 
     override fun decodeBlockHeader(rawBlockHeader: ByteArray): BlockHeader {
         return BaseBlockHeader(rawBlockHeader, cryptoSystem)
@@ -27,13 +28,12 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
     }
 
     override fun makeBlockBuilder(ctx: EContext): BlockBuilder {
-        val signerPubKeys = configData.getSigners()
         return createBlockBuilderInstance(
                 cryptoSystem,
                 ctx,
                 blockStore,
                 getTransactionFactory(),
-                signerPubKeys.toTypedArray(),
+                signers.toTypedArray(),
                 configData.blockSigner)
     }
 
