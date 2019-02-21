@@ -16,7 +16,13 @@ class BaseApiInfrastructure(val config: Configuration) : ApiInfrastructure {
     init {
         val basePath = config.getString("api.basepath", "")
         val port = config.getInt("api.port", 7740)
-        restApi = if (port != -1) RestApi(port, basePath) else null
+        val enableSsl = config.getBoolean("api.enable_ssl", false)
+        val sslCertificate = config.getString("api.ssl_certificate", "")
+        val sslCertificatePassword = config.getString("api.ssl_certificate.password", "")
+        restApi = if (port != -1)
+            if(enableSsl) RestApi(port, basePath, sslCertificate, sslCertificatePassword)
+            else RestApi(port, basePath)
+        else null
     }
 
     override fun connectProcess(process: BlockchainProcess) {

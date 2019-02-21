@@ -2,7 +2,7 @@
 # Postchain Node Docker file
 FROM openjdk:8-jre-alpine
 
-ADD ./postchain-base-2.4.0-SNAPSHOT-jar-with-dependencies.jar /opt/chromaway/postchain-2.4.0-SNAPSHOT-jwd.jar
+ADD ./postchain-base-2.4.3-SNAPSHOT-jar-with-dependencies.jar /opt/chromaway/postchain-2.4.3-SNAPSHOT-jwd.jar
 ADD ./entrypoint.sh /opt/chromaway/entrypoint.sh
 
 WORKDIR /postchain-node

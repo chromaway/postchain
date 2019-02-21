@@ -50,7 +50,7 @@ class CommandAddConfiguration : Command {
 
     override fun key(): String = "add-configuration"
 
-    override fun execute() {
+    override fun execute(): CliResult {
         println("add-configuration will be executed with options: " +
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
@@ -58,16 +58,20 @@ class CommandAddConfiguration : Command {
                 File(blockchainConfigFile).readText())
         val encodedGtv = encodeGtv(gtv)
 
-        var result = false
-        runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
-            if (force || BaseConfigurationDataStore.getConfigurationData(ctx, height) == null) {
-                result = BaseConfigurationDataStore.addConfigurationData(ctx, height, encodedGtv) > 0
-            } else {
-                println("Blockchain configuration of chainId $chainId at height $height " +
-                        "already exists. Use -f flag to force addition.")
+        return try {
+            var result = false
+            runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
+                if (force || BaseConfigurationDataStore.getConfigurationData(ctx, height) == null) {
+                    result = BaseConfigurationDataStore.addConfigurationData(ctx, height, encodedGtv) > 0
+                } else {
+                    throw CliError.Companion.CliException("Blockchain configuration of chainId $chainId at " +
+                            "height $height already exists. Use -f flag to force addition.")
+                }
             }
+            Ok(reportMessage(result))
+        } catch (e: CliError.Companion.CliException) {
+            CliError.CommandNotAllowed(message = e.message)
         }
-        println(reportMessage(result))
     }
 
     private fun reportMessage(result: Boolean): String {

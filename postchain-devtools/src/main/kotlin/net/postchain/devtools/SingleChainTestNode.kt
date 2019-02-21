@@ -39,17 +39,6 @@ class SingleChainTestNode(nodeConfig: Configuration, blockchainConfig: Gtv) : Po
             true
         }
 
-        /*
-        val configData = BaseBlockchainConfigurationData.readFromCommonsConfiguration(
-                nodeConfig, chainId, blockchainRID, NODE_ID_TODO)
-        val factoryClass = Class.forName(configData.data["configurationfactory"]!!.asString())
-        val factory = (factoryClass.newInstance() as BlockchainConfigurationFactory)
-
-        val blockchainConfiguration = factory.makeBlockchainConfiguration(configData)
-        val configAsByteArray = encodeGtv(
-                (blockchainConfiguration as BaseBlockchainConfiguration).configData.data)
-*/
-
         withWriteConnection(storage, chainId) { eContext ->
             BaseConfigurationDataStore.addConfigurationData(
                     eContext, 0, encodeGtv(blockchainConfig))

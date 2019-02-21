@@ -1,31 +1,32 @@
 package net.postchain
 
-import com.beust.jcommander.MissingCommandException
-import com.beust.jcommander.ParameterException
 import net.postchain.cli.Cli
+import net.postchain.cli.CliError
+import net.postchain.cli.Ok
 import java.io.File
 import java.lang.management.ManagementFactory
 
-
 fun main(args: Array<String>) {
     dumpPid()
-
-    with(Cli()) {
-        try {
-            parse(args)
-        } catch (e: MissingCommandException) {
-            println(e.message)
-            usage()
-        } catch (e: ParameterException) {
-            println(e.message)
-            usage(e.jCommander.parsedCommand)
-        } catch (e: Exception) {
-            if (!e.toString().isNullOrEmpty()) {
-                println(e.toString())
-            } else {
-                e.printStackTrace()
+    val cliResult = Cli().parse(args)
+    when(cliResult){
+        is CliError -> {
+            when(cliResult) {
+                is CliError.MissingCommand -> {
+                    Cli().usage()
+                }
+                is CliError.CommandNotFound -> {
+                    Cli().usage(cliResult.command)
+                }
+                else -> cliResult.message?.let { println(it) }
             }
-            System.exit(-1)
+            System.exit(cliResult.code)
+        }
+        is Ok -> {
+            cliResult.info?.also { println(it) }
+            if(!cliResult.isLongRunning){
+                System.exit(cliResult.code)
+            }
         }
     }
 }

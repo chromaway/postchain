@@ -79,10 +79,17 @@ open class EBFTBlockchainInstanceWorker(
     private fun startUpdateLoop(syncManager: SyncManager) {
         updateLoop = thread(name = "updateLoop") {
             while (!Thread.interrupted()) {
-                syncManager.update()
+                try {
+                    syncManager.update()
+                }
+                catch (e: Exception) {
+                    e.printStackTrace()
+                }
+
                 try {
                     Thread.sleep(50)
                 } catch (e: InterruptedException) {
+                    e.printStackTrace()
                     Thread.currentThread().interrupt()
                 }
             }
