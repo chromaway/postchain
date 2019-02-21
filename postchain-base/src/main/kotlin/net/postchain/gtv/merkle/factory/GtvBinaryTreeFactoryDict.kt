@@ -21,17 +21,17 @@ object GtvBinaryTreeFactoryDict {
      * There is an edge cases here:
      * - When the dict is empty. -> We return a top node with two empty leafs
      */
-    fun buildFromGtvDictionary(GtvDictionary: GtvDictionary, GtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): GtvDictHeadNode {
-        val isThisAProofLeaf = GtvPaths.isThisAProofLeaf() // Will tell us if any of the paths points to this element
+    fun buildFromGtvDictionary(gtvDictionary: GtvDictionary, gtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): GtvDictHeadNode {
+        val isThisAProofLeaf = gtvPaths.isThisAProofLeaf() // Will tell us if any of the paths points to this element
         //println("Dict,(is proof? $isThisAProofLeaf) Proof path (size: ${GtvPathList.size} ) list: " + GtvPath.debugRerpresentation(GtvPathList))
-        val keys: SortedSet<String> = GtvDictionary.dict.keys.toSortedSet() // Needs to be sorted, or else the order is undefined
+        val keys: SortedSet<String> = gtvDictionary.dict.keys.toSortedSet() // Needs to be sorted, or else the order is undefined
 
         if (keys.isEmpty()) {
-            return GtvDictHeadNode(EmptyLeaf, EmptyLeaf, isThisAProofLeaf, GtvDictionary, keys.size, 0)
+            return GtvDictHeadNode(EmptyLeaf, EmptyLeaf, isThisAProofLeaf, gtvDictionary, keys.size, 0)
         }
 
         // 1. Build first (leaf) layer
-        val leafArray = buildLeafElementFromDict(keys, GtvDictionary, GtvPaths, memoization)
+        val leafArray = buildLeafElementFromDict(keys, gtvDictionary, gtvPaths, memoization)
         val sumNrOfBytes = leafArray.sumBy { it.getNrOfBytes() }
 
         // 2. Build all higher layers
@@ -40,7 +40,7 @@ object GtvBinaryTreeFactoryDict {
         // 3. Fix and return the root node
         val orgRoot = result.get(0)
         return when (orgRoot) {
-            is Node -> GtvDictHeadNode(orgRoot.left, orgRoot.right, isThisAProofLeaf, GtvDictionary, keys.size, sumNrOfBytes)
+            is Node -> GtvDictHeadNode(orgRoot.left, orgRoot.right, isThisAProofLeaf, gtvDictionary, keys.size, sumNrOfBytes)
             else -> throw IllegalStateException("Should not find element of this type here: $orgRoot")
         }
     }

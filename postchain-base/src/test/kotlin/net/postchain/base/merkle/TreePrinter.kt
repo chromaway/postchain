@@ -1,6 +1,7 @@
 package net.postchain.base.merkle
 
 import net.postchain.base.merkle.proof.*
+import net.postchain.common.toHex
 import net.postchain.gtv.merkle.GtvBinaryTree
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 import net.postchain.gtv.*
@@ -101,6 +102,21 @@ object PrintableTreeFactory {
                     // Normal leaf
                     val content = toStr(inElement.content as T)
                     //println("Normal leaf $content at level: $currentLevel")
+                    PLeaf(content, inElement.isPathLeaf())
+                }
+            }
+            is CachedLeaf -> {
+                if (currentLevel < maxLevel) {
+                    // Create node instead of leaf
+                    val content: String = "(" + inElement.cachedSummary.merkleHash.toHex() + ")"
+                    //println("Early cached leaf $content at level: $currentLevel")
+                    val emptyLeft: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
+                    val emptyRight: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
+                    PContentNode(content, emptyLeft, emptyRight, inElement.isPathLeaf())
+                } else {
+                    // Normal leaf
+                    val content: String = "(" + inElement.cachedSummary.merkleHash.toHex() + ")"
+                    //println("Normal cached leaf $content at level: $currentLevel")
                     PLeaf(content, inElement.isPathLeaf())
                 }
             }

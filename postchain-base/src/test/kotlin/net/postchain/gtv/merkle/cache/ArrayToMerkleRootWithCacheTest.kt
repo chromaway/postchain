@@ -12,7 +12,6 @@ import org.junit.Test
  */
 class ArrayToMerkleRootWithCacheTest {
 
-    val calculator = MerkleHashCalculatorDummy()
 
     fun checkStats(localHits: Int, globalHits: Int, misses: Int, memoization: GtvMerkleHashMemoization) {
         //println("Cache content! local hits: ${memoization.localCacheHits}, global hits: ${memoization.globalCacheHits}, cacheMisses: ${memoization.cacheMisses}")
@@ -25,12 +24,12 @@ class ArrayToMerkleRootWithCacheTest {
      * The idea with this test is that the entire inner array should be cached and found in cache when we calculate the
      * array in array (7 with inner 3).
      */
-
     @Test
     fun calculate_inner_array_and_then_arrayInArray() {
+        val calculator = MerkleHashCalculatorDummy()
         val memoization = calculator.memoization as GtvMerkleHashMemoization
 
-        // -------------------  Calculate inner array of 3 ---------------------
+        // -------------------  Calculate inner array of 3 (just to get it into cache) ---------------------
         val gtvInnerArr = ArrayToGtvBinaryTreeHelper.buildGtvArrInnerOf3()
         val root1 = gtvInnerArr.merkleHash(calculator)
 
@@ -88,7 +87,7 @@ class ArrayToMerkleRootWithCacheTest {
         val cacheLocalHist2 = 0 // We are not re-using the instances
         val cacheGlobalHits2 = realTotalHits - cacheLocalHist2
         val cacheMisses2 = cacheMisses1 + newMisses  // 4 + 5
-        checkStats(cacheLocalHist2, cacheGlobalHits2, cacheMisses2, memoization) // 3, 0, 9
+        checkStats(cacheLocalHist2, cacheGlobalHits2, cacheMisses2, memoization) // 0, 3, 9
 
 
     }

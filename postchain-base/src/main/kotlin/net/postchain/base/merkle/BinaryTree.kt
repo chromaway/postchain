@@ -141,6 +141,7 @@ open class BinaryTree<T>(val root: BinaryTreeElement) {
         return when (node) {
             is EmptyLeaf -> 0 // Doesn't count
             is Leaf<*> -> 1
+            is CachedLeaf -> 1
             is Node -> maxOf(maxLevelInternal(node.left), maxLevelInternal(node.right)) + 1
             else -> throw IllegalStateException("What is this type? $node")
         }
