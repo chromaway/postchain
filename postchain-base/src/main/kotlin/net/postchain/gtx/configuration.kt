@@ -36,6 +36,13 @@ open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationDat
                     gtxToJSON(queryResult, gson)
                 }
             }
+
+            override fun query(name: String, args: GTXValue): Promise<GTXValue, Exception> {
+                return runOp {
+                    module.query(it, name, args)
+                }
+            }
+
         }
     }
 }
