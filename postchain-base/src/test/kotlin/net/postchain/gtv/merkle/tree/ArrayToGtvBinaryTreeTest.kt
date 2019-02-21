@@ -186,7 +186,7 @@ class ArrayToGtvBinaryTreeTest {
 
         val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
         val treePrintout = buildTreeOf7(gtvPath)
-        //println(treeHolder.treePrintout)
+        //println(treePrintout)
         assertEquals(expectedTree.trim(), treePrintout.trim())
     }
 
