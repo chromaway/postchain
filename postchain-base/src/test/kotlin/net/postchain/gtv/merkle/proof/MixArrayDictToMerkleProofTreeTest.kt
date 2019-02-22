@@ -6,8 +6,7 @@ import net.postchain.gtv.GtvPathFactory
 import net.postchain.gtv.GtvPathSet
 import net.postchain.gtv.generateProof
 import net.postchain.gtv.merkle.*
-import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
-import net.postchain.gtv.merkle.proof.merkleHashSummary
+import net.postchain.gtv.merkle.proof.merkleHash
 import org.junit.Assert
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -52,8 +51,8 @@ class MixArrayDictToMerkleProofTreeTest {
         Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
 
         // Make sure the merkle root stays the same as without proof
-        val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(MixArrayDictToGtvBinaryTreeHelper.expecedMerkleRoot_dict1_array4, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
+        val merkleProofRoot = merkleProofTree.merkleHash(calculator)
+        assertEquals(MixArrayDictToGtvBinaryTreeHelper.expecedMerkleRoot_dict1_array4, TreeHelper.convertToHex(merkleProofRoot))
     }
 
     /**
@@ -83,7 +82,7 @@ class MixArrayDictToMerkleProofTreeTest {
         Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
 
         // Make sure the merkle root stays the same as without proof
-        val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(MixArrayDictToGtvBinaryTreeHelper.expecedMerkleRoot_dict1_array4, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
+        val merkleProofRoot = merkleProofTree.merkleHash(calculator)
+        assertEquals(MixArrayDictToGtvBinaryTreeHelper.expecedMerkleRoot_dict1_array4, TreeHelper.convertToHex(merkleProofRoot))
     }
 }

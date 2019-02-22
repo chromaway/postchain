@@ -4,9 +4,7 @@ import net.postchain.common.toHex
 import net.postchain.gtv.*
 import net.postchain.gtv.merkle.*
 import net.postchain.gtv.merkle.DictToGtvBinaryTreeHelper.expectedMerkleRoot4
-import net.postchain.gtv.merkle.proof.GtvMerkleHashSummaryFactory
-import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
-import net.postchain.gtv.merkle.proof.merkleHashSummary
+import net.postchain.gtv.merkle.proof.merkleHash
 import org.junit.Assert
 import org.junit.Test
 
@@ -56,8 +54,8 @@ class DictToMerkleProofTreeWithCacheTest {
         // ----------------- Calculate the hash using cached values ---------------------
 
         // Make sure the cached values give the correct root
-        val root = proof2.merkleHashSummary(calculator)
-        Assert.assertEquals(expectedMerkleRoot4 , root.merkleHash.toHex())
+        val root = proof2.merkleHash(calculator)
+        Assert.assertEquals(expectedMerkleRoot4 , root.toHex())
 
         val cacheLocalHist3 = cacheLocalHist2
         val cacheGlobalHits3 = cacheGlobalHits2
@@ -104,8 +102,8 @@ class DictToMerkleProofTreeWithCacheTest {
         // ----------------- Calculate the hash using cached values ---------------------
 
         // Make sure the cached values give the correct root
-        val root = proof2.merkleHashSummary(calculator)
-        Assert.assertEquals(expectedMerkleRoot4 , root.merkleHash.toHex())
+        val root = proof2.merkleHash(calculator)
+        Assert.assertEquals(expectedMerkleRoot4 , root.toHex())
 
         val cacheLocalHist3 = cacheLocalHist2 + 1 // We tried to get the "2" from the cache, and it was stored previously
         val cacheGlobalHits3 = cacheGlobalHits2

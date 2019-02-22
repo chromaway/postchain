@@ -8,7 +8,7 @@ import net.postchain.gtv.merkle.DictToGtvBinaryTreeHelper.expectedMerkleRoot4
 import net.postchain.gtv.merkle.DictToGtvBinaryTreeHelper.expectedMerkleRootDictInDict
 import net.postchain.gtv.merkle.MerkleHashCalculatorDummy
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
-import net.postchain.gtv.merkle.proof.merkleHashSummary
+import net.postchain.gtv.merkle.proof.merkleHash
 import org.junit.Assert
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -81,8 +81,8 @@ class DictToMerkleProofTreeTest {
         Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
 
         // Make sure the merkle root stays the same as without proof
-        val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(expectedMerkleRoot1, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
+        val merkleProofRoot = merkleProofTree.merkleHash(calculator)
+        assertEquals(expectedMerkleRoot1, TreeHelper.convertToHex(merkleProofRoot))
 
         // Proof -> Serialize
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
@@ -186,8 +186,8 @@ class DictToMerkleProofTreeTest {
         Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
 
         // Make sure the merkle root stays the same as without proof
-        val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(expectedMerkleRoot4, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
+        val merkleProofRoot = merkleProofTree.merkleHash(calculator)
+        assertEquals(expectedMerkleRoot4, TreeHelper.convertToHex(merkleProofRoot))
 
         // Proof -> Serialize
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
@@ -271,8 +271,8 @@ class DictToMerkleProofTreeTest {
         Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
 
         // Make sure the merkle root stays the same as without proof
-        val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
+        val merkleProofRoot = merkleProofTree.merkleHash(calculator)
+        assertEquals(expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleProofRoot))
 
         // Proof -> Serialize
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
@@ -354,8 +354,8 @@ class DictToMerkleProofTreeTest {
         Assert.assertEquals(expectedTree.trim(), resultPrintout.trim())
 
         // Make sure the merkle root stays the same as without proof
-        val merkleProofRoot = merkleProofTree.merkleHashSummary(calculator)
-        assertEquals(expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleProofRoot.merkleHash))
+        val merkleProofRoot = merkleProofTree.merkleHash(calculator)
+        assertEquals(expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleProofRoot))
 
         // Proof -> Serialize
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
