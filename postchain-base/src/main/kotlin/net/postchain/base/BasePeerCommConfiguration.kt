@@ -10,7 +10,7 @@ class BasePeerCommConfiguration(override val peerInfo: Array<PeerInfo>,
 ) : PeerCommConfiguration {
 
     override fun resolvePeer(peerID: ByteArray): PeerInfo? {
-        return peerInfo.find { it.pubKey.contentEquals(peerID) }
+        return DefaultPeerResolver.resolvePeer(peerID, peerInfo)
     }
 
     override fun myPeerInfo(): PeerInfo = peerInfo[myIndex]

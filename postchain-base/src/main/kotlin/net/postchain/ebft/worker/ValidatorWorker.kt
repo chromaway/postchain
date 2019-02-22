@@ -26,7 +26,7 @@ class ValidatorWorker(
         private val signers: List<ByteArray>,
         private val engine: BlockchainEngine,
         nodeIndex: Int,
-        communicationManager: CommunicationManager<EbftMessage>,
+        private val communicationManager: CommunicationManager<EbftMessage>,
         val restartHandler: RestartHandler // TODO: Maybe redesign this feature
 ) : WorkerBase {
 
@@ -89,8 +89,7 @@ class ValidatorWorker(
             while (!Thread.interrupted()) {
                 try {
                     syncManager.update()
-                }
-                catch (e: Exception) {
+                } catch (e: Exception) {
                     e.printStackTrace()
                 }
 
@@ -112,5 +111,6 @@ class ValidatorWorker(
         updateLoop.join()
         engine.shutdown()
         blockDatabase.stop()
+        communicationManager.shutdown()
     }
 }

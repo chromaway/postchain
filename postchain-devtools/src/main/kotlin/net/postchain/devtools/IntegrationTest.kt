@@ -130,6 +130,7 @@ open class IntegrationTest {
         }
 
         configOverrides.setProperty("messaging.privkey", privKeyHex(nodeIndex))
+        configOverrides.setProperty("messaging.pubkey", pubKeyHex(nodeIndex))
 
         return CompositeConfiguration().apply {
             addConfiguration(configOverrides)

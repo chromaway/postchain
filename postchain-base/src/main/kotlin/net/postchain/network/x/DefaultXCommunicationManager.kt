@@ -4,7 +4,6 @@ import mu.KLogging
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerInfo
 import net.postchain.base.peerId
-import net.postchain.core.Shutdownable
 import net.postchain.network.CommunicationManager
 import net.postchain.network.XPacketDecoder
 import net.postchain.network.XPacketEncoder
@@ -15,7 +14,7 @@ class DefaultXCommunicationManager<PacketType>(
         val chainID: Long,
         private val packetEncoder: XPacketEncoder<PacketType>,
         private val packetDecoder: XPacketDecoder<PacketType>
-) : CommunicationManager<PacketType>, Shutdownable {
+) : CommunicationManager<PacketType> {
 
     companion object : KLogging()
 
