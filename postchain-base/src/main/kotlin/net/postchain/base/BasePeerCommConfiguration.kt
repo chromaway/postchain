@@ -3,7 +3,7 @@
 package net.postchain.base
 
 class BasePeerCommConfiguration(override val peerInfo: Array<PeerInfo>,
-                                override val blockchainRID: ByteArray,
+                                override val blockchainRID: ByteArray, // Remove this
                                 override val myIndex: Int,
                                 private val cryptoSystem: CryptoSystem,
                                 private val privKey: ByteArray
@@ -13,11 +13,9 @@ class BasePeerCommConfiguration(override val peerInfo: Array<PeerInfo>,
         return peerInfo.find { it.pubKey.contentEquals(peerID) }
     }
 
-    override fun signer(): Signer {
-        return cryptoSystem.makeSigner(peerInfo[myIndex].pubKey, privKey)
-    }
+    override fun myPeerInfo(): PeerInfo = peerInfo[myIndex]
 
-    override fun verifier(): Verifier {
-        return cryptoSystem.makeVerifier()
-    }
+    override fun signer(): Signer = cryptoSystem.makeSigner(myPeerInfo().pubKey, privKey)
+
+    override fun verifier(): Verifier = cryptoSystem.makeVerifier()
 }

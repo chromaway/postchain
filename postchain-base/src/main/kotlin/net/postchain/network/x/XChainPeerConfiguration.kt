@@ -1,17 +1,14 @@
 package net.postchain.network.x
 
 import net.postchain.base.PeerCommConfiguration
-import net.postchain.network.IdentPacketConverter
+import net.postchain.network.XPacketDecoder
+import net.postchain.network.XPacketEncoder
 
 /* TODO: merge with PeerCommConfiguration */
 open class XChainPeerConfiguration(
         val chainID: Long,
-        val commConfiguration: PeerCommConfiguration,
+        val commConfiguration: PeerCommConfiguration, // TODO: Rename it
         val packetHandler: XPacketHandler,
-        /* this implies that conn manager handles authentication in
-        a particular way and puts the burden of authentication into higher
-        level protocols. this is not good, and in future we will make
-        conn manager fully responsible for authentication process
-        */
-        val identPacketConverter: IdentPacketConverter
+        val packetEncoder: XPacketEncoder<*>,
+        val packetDecoder: XPacketDecoder<*>
 )

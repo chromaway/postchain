@@ -1,9 +1,9 @@
 package net.postchain.network.x
 
-import net.postchain.base.CryptoSystem
 import net.postchain.base.PeerInfo
 import net.postchain.core.Shutdownable
-import net.postchain.network.PacketConverter
+import net.postchain.network.XPacketDecoder
+import net.postchain.network.XPacketEncoder
 
 interface XPeerConnection {
     fun accept(handler: XPacketHandler)
@@ -18,15 +18,14 @@ interface XConnectorEvents {
     fun onPeerDisconnected(descriptor: XPeerConnectionDescriptor)
 }
 
-interface XConnector : Shutdownable {
-    fun init(peerInfo: PeerInfo)
+interface XConnector<PacketType> : Shutdownable {
+    fun init(peerInfo: PeerInfo, packetDecoder: XPacketDecoder<PacketType>)
     // TODO: [et]: Two different structures for one thing
-    fun connectPeer(peerConnectionDescriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo)
+    fun connectPeer(peerConnectionDescriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo, packetEncoder: XPacketEncoder<PacketType>)
 }
 
-interface XConnectorFactory<PC : PacketConverter<*>> {
+interface XConnectorFactory<PacketType> {
     fun createConnector(myPeerInfo: PeerInfo,
-                        packetConverter: PC,
-                        eventReceiver: XConnectorEvents,
-                        cryptoSystem: CryptoSystem? = null): XConnector
+                        packetDecoder: XPacketDecoder<PacketType>,
+                        eventReceiver: XConnectorEvents): XConnector<PacketType>
 }

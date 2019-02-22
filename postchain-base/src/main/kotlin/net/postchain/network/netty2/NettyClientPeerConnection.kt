@@ -5,7 +5,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import net.postchain.base.PeerInfo
 import net.postchain.base.peerId
-import net.postchain.network.IdentPacketConverter
+import net.postchain.network.XPacketEncoder
 import net.postchain.network.x.LazyPacket
 import net.postchain.network.x.XPacketHandler
 import net.postchain.network.x.XPeerConnection
@@ -13,9 +13,9 @@ import nl.komponents.kovenant.task
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 
-class NettyClientPeerConnection(
+class NettyClientPeerConnection<PacketType>(
         val peerInfo: PeerInfo,
-        val identPacketConverter: IdentPacketConverter
+        private val packetEncoder: XPacketEncoder<PacketType>
 ) : ChannelInboundHandlerAdapter(), XPeerConnection {
 
     private val nettyClient = NettyClient()
@@ -72,6 +72,6 @@ class NettyClientPeerConnection(
 
     private fun buildIdentPacket(): ByteBuf {
         return Transport.wrapMessage(
-                identPacketConverter.makeIdentPacket(peerInfo.pubKey))
+                packetEncoder.makeIdentPacket(peerInfo.pubKey))
     }
 }

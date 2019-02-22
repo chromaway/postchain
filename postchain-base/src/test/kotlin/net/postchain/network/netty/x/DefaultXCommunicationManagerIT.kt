@@ -80,8 +80,8 @@ class DefaultXCommunicationManager2IT {
         }
 
         // When
-        val context1 = IntegrationTestContext(connectorFactory, blockchainRid, peerInfos, 0, packetConverter1)
-        val context2 = IntegrationTestContext(connectorFactory, blockchainRid, peerInfos, 1, packetConverter2)
+        val context1 = IntegrationTestContext(mock()/*connectorFactory*/, blockchainRid, peerInfos, 0)
+        val context2 = IntegrationTestContext(mock()/*connectorFactory*/, blockchainRid, peerInfos, 1)
 
         // TODO: [et]: Fix two-connected-nodes problem
         await().atMost(FIVE_SECONDS)

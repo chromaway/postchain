@@ -7,19 +7,23 @@ import com.nhaarman.mockitokotlin2.*
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerInfo
 import net.postchain.base.peerId
-import net.postchain.network.PacketConverter
+import net.postchain.network.XPacketDecoder
+import net.postchain.network.XPacketEncoder
 import org.junit.Before
 import org.junit.Test
 
 class DefaultXCommunicationManagerTest {
 
-    private val CHAIN_ID = 1L
     private val blockchainRid = byteArrayOf(0x01)
     private lateinit var peerInfo1: PeerInfo
     private lateinit var peerInfo2: PeerInfo
 
     private val pubKey1 = byteArrayOf(0x01)
     private val pubKey2 = byteArrayOf(0x02)
+
+    companion object {
+        private val CHAIN_ID = 1L
+    }
 
     @Before
     fun setUp() {
@@ -36,11 +40,12 @@ class DefaultXCommunicationManagerTest {
             on { blockchainRID } doReturn blockchainRid
             on { peerInfo } doReturn arrayOf()
         }
-        val packetConverter: PacketConverter<Int> = mock()
+        val packetEncoder: XPacketEncoder<Int> = mock()
+        val packetDecoder: XPacketDecoder<Int> = mock()
 
         // When
         val communicationManager = DefaultXCommunicationManager(
-                connectionManager, peerCommunicationConfig, CHAIN_ID, packetConverter)
+                connectionManager, peerCommunicationConfig, CHAIN_ID, packetEncoder, packetDecoder)
         communicationManager.init()
 
         // Then
@@ -51,7 +56,7 @@ class DefaultXCommunicationManagerTest {
             assert(firstValue.commConfiguration).isSameAs(peerCommunicationConfig)
 //            val f: XPacketHandler = { _, _ -> ; } // TODO: Assert function types
 //            assert(firstValue.packetHandler).isInstanceOf(f.javaClass)
-            assert(firstValue.identPacketConverter).isSameAs(packetConverter)
+//            assert(firstValue.identPacketConverter).isSameAs(packetConverter)
         }
 
         communicationManager.shutdown()
@@ -67,11 +72,12 @@ class DefaultXCommunicationManagerTest {
             on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
             on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
         }
-        val packetConverter: PacketConverter<Int> = mock()
+        val packetEncoder: XPacketEncoder<Int> = mock()
+        val packetDecoder: XPacketDecoder<Int> = mock()
 
         // When
         val communicationManager = DefaultXCommunicationManager(
-                connectionManager, peerCommunicationConfig, CHAIN_ID, packetConverter)
+                connectionManager, peerCommunicationConfig, CHAIN_ID, packetEncoder, packetDecoder)
         communicationManager.init()
 
         // Then
@@ -82,7 +88,7 @@ class DefaultXCommunicationManagerTest {
             assert(firstValue.commConfiguration).isSameAs(peerCommunicationConfig)
 //            val f: XPacketHandler = { _, _ -> ; } // TODO: Assert function types
 //            assert(firstValue.packetHandler).isInstanceOf(f.javaClass)
-            assert(firstValue.identPacketConverter).isSameAs(packetConverter)
+//            assert(firstValue.identPacketConverter).isSameAs(packetConverter)
         }
 
         communicationManager.shutdown()
@@ -95,11 +101,10 @@ class DefaultXCommunicationManagerTest {
         val peerCommunicationConfig: PeerCommConfiguration = mock {
             on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
         }
-        val packetConverter: PacketConverter<Int> = mock()
 
         // When
-        val communicationManager = DefaultXCommunicationManager(
-                connectionManager, peerCommunicationConfig, CHAIN_ID, packetConverter)
+        val communicationManager = DefaultXCommunicationManager<Int>(
+                connectionManager, peerCommunicationConfig, CHAIN_ID, mock(), mock())
         communicationManager.init()
         communicationManager.sendPacket(0, XPeerID(byteArrayOf()))
         communicationManager.shutdown()
@@ -112,11 +117,10 @@ class DefaultXCommunicationManagerTest {
         val peerCommunicationConfig: PeerCommConfiguration = mock {
             on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
         }
-        val packetConverter: PacketConverter<Int> = mock()
 
         // When
-        val communicationManager = DefaultXCommunicationManager(
-                connectionManager, peerCommunicationConfig, CHAIN_ID, packetConverter)
+        val communicationManager = DefaultXCommunicationManager<Int>(
+                connectionManager, peerCommunicationConfig, CHAIN_ID, mock(), mock())
         communicationManager.init()
         communicationManager.sendPacket(0, XPeerID(byteArrayOf(0x42)))
         communicationManager.shutdown()
@@ -131,7 +135,7 @@ class DefaultXCommunicationManagerTest {
         }
 
         // When / Then exception
-        DefaultXCommunicationManager(mock(), peersConfig, CHAIN_ID, mock<PacketConverter<Int>>())
+        DefaultXCommunicationManager<Int>(mock(), peersConfig, CHAIN_ID, mock(), mock())
                 .apply {
                     sendPacket(0, XPeerID(pubKey2))
                 }
@@ -149,11 +153,9 @@ class DefaultXCommunicationManagerTest {
         }
 
         // When
-        val communicationManager = DefaultXCommunicationManager(
-                connectionManager,
-                peerCommunicationConfig,
-                CHAIN_ID,
-                mock<PacketConverter<Int>>())
+        val communicationManager = DefaultXCommunicationManager<Int>(
+                connectionManager, peerCommunicationConfig, CHAIN_ID, mock(), mock()
+        )
                 .apply {
                     init()
                     sendPacket(0, XPeerID(pubKey1))
@@ -173,7 +175,9 @@ class DefaultXCommunicationManagerTest {
         val connectionManager: XConnectionManager = mock()
 
         // When
-        val communicationManager = DefaultXCommunicationManager(connectionManager, mock(), CHAIN_ID, mock<PacketConverter<Int>>())
+        val communicationManager = DefaultXCommunicationManager<Int>(
+                connectionManager, mock(), CHAIN_ID, mock(), mock()
+        )
                 .apply {
                     init()
                     broadcastPacket(42)
@@ -191,7 +195,9 @@ class DefaultXCommunicationManagerTest {
         val connectionManager: XConnectionManager = mock()
 
         // When
-        val communicationManager = DefaultXCommunicationManager(connectionManager, mock(), CHAIN_ID, mock<PacketConverter<Int>>())
+        val communicationManager = DefaultXCommunicationManager<Int>(
+                connectionManager, mock(), CHAIN_ID, mock(), mock()
+        )
                 .apply {
                     init()
                     shutdown()

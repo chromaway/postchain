@@ -5,15 +5,16 @@ import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerInfo
 import net.postchain.base.peerId
 import net.postchain.core.Shutdownable
-import net.postchain.core.byteArrayKeyOf
 import net.postchain.network.CommunicationManager
-import net.postchain.network.PacketConverter
+import net.postchain.network.XPacketDecoder
+import net.postchain.network.XPacketEncoder
 
 class DefaultXCommunicationManager<PacketType>(
         val connectionManager: XConnectionManager,
         val config: PeerCommConfiguration,
         val chainID: Long,
-        val packetConverter: PacketConverter<PacketType>
+        private val packetEncoder: XPacketEncoder<PacketType>,
+        private val packetDecoder: XPacketDecoder<PacketType>
 ) : CommunicationManager<PacketType>, Shutdownable {
 
     companion object : KLogging()
@@ -25,7 +26,9 @@ class DefaultXCommunicationManager<PacketType>(
                 chainID,
                 config,
                 { data: ByteArray, peerID: XPeerID -> decodeAndEnqueue(peerID, data) },
-                packetConverter)
+                packetEncoder,
+                packetDecoder
+        )
 
         connectionManager.connectChain(peerConfig, true)
     }
@@ -40,7 +43,7 @@ class DefaultXCommunicationManager<PacketType>(
     }
 
     override fun sendPacket(packet: PacketType, recipient: XPeerID) {
-        val peers : List<XPeerID> = config.peerInfo.map(PeerInfo::peerId)
+        val peers: List<XPeerID> = config.peerInfo.map(PeerInfo::peerId)
         require(recipient in peers) {
             "CommunicationManager.sendPacket(): recipient not found among peers"
         }
@@ -50,14 +53,14 @@ class DefaultXCommunicationManager<PacketType>(
         }
 
         connectionManager.sendPacket(
-                { packetConverter.encodePacket(packet) },
+                { packetEncoder.encodePacket(packet) },
                 chainID,
                 recipient)
     }
 
     override fun broadcastPacket(packet: PacketType) {
         connectionManager.broadcastPacket(
-                { packetConverter.encodePacket(packet) },
+                { packetEncoder.encodePacket(packet) },
                 chainID)
     }
 
@@ -68,7 +71,7 @@ class DefaultXCommunicationManager<PacketType>(
     private fun decodeAndEnqueue(peerID: XPeerID, packet: ByteArray) {
         // packet decoding should not be synchronized so we can make
         // use of parallel processing in different threads
-        val decodedPacket = packetConverter.decodePacket(peerID.byteArray, packet)
+        val decodedPacket = packetDecoder.decodePacket(peerID.byteArray, packet)
         synchronized(this) {
             inboundPackets.add(peerID to decodedPacket)
         }

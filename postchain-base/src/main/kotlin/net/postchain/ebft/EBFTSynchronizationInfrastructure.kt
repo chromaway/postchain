@@ -44,12 +44,14 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
                 SECP256K1CryptoSystem(),
                 privKey())
 
-        val packetConverter = EbftPacketConverter(communicationConfig)
+        val packetEncoder = EbftPacketEncoder(communicationConfig, blockchainConfig.blockchainRID)
+        val packetDecoder = EbftPacketDecoder(communicationConfig)
 
         val connectionManager = DefaultXConnectionManager(
                 NettyConnectorFactory(),
-                communicationConfig.peerInfo[communicationConfig.myIndex],
-                packetConverter,
+                communicationConfig,
+                EbftPacketEncoderFactory(),
+                EbftPacketDecoderFactory(),
                 SECP256K1CryptoSystem()
         ).also { connectionManagers.add(it) }
 
@@ -57,7 +59,9 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
                 connectionManager,
                 communicationConfig,
                 blockchainConfig.chainID,
-                packetConverter).apply { init() }
+                packetEncoder,
+                packetDecoder
+        ).apply { init() }
     }
 
     private fun privKey(): ByteArray =

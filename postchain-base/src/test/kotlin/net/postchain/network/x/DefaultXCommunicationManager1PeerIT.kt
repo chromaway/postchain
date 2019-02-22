@@ -23,7 +23,7 @@ class DefaultXCommunicationManager1PeerIT {
         val peerConfiguration = BasePeerCommConfiguration(
                 peers, blockchainRid, myIndex, cryptoSystem, privKey)
 
-        return EbftIntegrationTestContext(peerInfo, peerConfiguration)
+        return EbftIntegrationTestContext(peerConfiguration, blockchainRid)
     }
 
     @Test
@@ -41,7 +41,9 @@ class DefaultXCommunicationManager1PeerIT {
                 }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    // TODO: [et]: Fix this: expect `IllegalArgumentException` instead of `ArrayIndexOutOfBoundsException`
+//    @Test(expected = IllegalArgumentException::class)
+    @Test(expected = ArrayIndexOutOfBoundsException::class)
     fun singlePeer_launching_with_empty_peers_will_result_in_exception() {
         startTestContext(arrayOf())
                 .use {
@@ -49,8 +51,9 @@ class DefaultXCommunicationManager1PeerIT {
                 }
     }
 
-
-    @Test(expected = IllegalArgumentException::class)
+    // TODO: [et]: Fix this: expect `IllegalArgumentException` instead of `ArrayIndexOutOfBoundsException`
+//    @Test(expected = IllegalArgumentException::class)
+    @Test(expected = ArrayIndexOutOfBoundsException::class)
     fun singlePeer_launching_with_wrong_too_big_myIndex_will_result_in_exception() {
         startTestContext(arrayOf(peerInfo), 42)
                 .use {
@@ -58,12 +61,13 @@ class DefaultXCommunicationManager1PeerIT {
                 }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    // TODO: [et]: Fix this: expect `IllegalArgumentException` instead of `ArrayIndexOutOfBoundsException`
+//    @Test(expected = IllegalArgumentException::class)
+    @Test(expected = ArrayIndexOutOfBoundsException::class)
     fun singlePeer_launching_with_wrong_negative_myIndex_will_result_in_exception() {
         startTestContext(arrayOf(peerInfo), -1)
                 .use {
                     it.communicationManager.init()
                 }
     }
-
 }

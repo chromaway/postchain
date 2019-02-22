@@ -6,6 +6,7 @@ import net.postchain.network.IdentPacketInfo
 import net.postchain.network.PacketConverter
 import java.nio.ByteBuffer
 
+@Deprecated("Delete it")
 class IntMockIntegerPacketConverter(
         private val ownerPeerInfo: PeerInfo,
         private val peerInfos: Array<PeerInfo>

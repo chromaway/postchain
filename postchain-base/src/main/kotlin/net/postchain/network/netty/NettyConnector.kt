@@ -11,16 +11,24 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import net.postchain.base.CryptoSystem
 import net.postchain.base.PeerInfo
+import net.postchain.core.Shutdownable
 import net.postchain.network.IdentPacketConverter
 import net.postchain.network.x.XConnector
 import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPeerConnectionDescriptor
 
+// TODO: Remove it. For temporarily purpose only.
+interface XConnectorOld : Shutdownable {
+    fun init(peerInfo: PeerInfo)
+    // TODO: [et]: Two different structures for one thing
+    fun connectPeer(peerConnectionDescriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo)
+}
+
 class NettyConnector(private val myPeerInfo: PeerInfo,
                      private val eventReceiver: XConnectorEvents,
                      private val identPacketConverter: IdentPacketConverter,
                      private val cryptoSystem: CryptoSystem,
-                     private val enabledEncryption: Boolean = true) : XConnector {
+                     private val enabledEncryption: Boolean = true) : XConnectorOld {
 
     val serverEventLoopGroup: EventLoopGroup
     val clientEventLoopGroup: EventLoopGroup
