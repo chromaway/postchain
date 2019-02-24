@@ -16,6 +16,7 @@ import net.postchain.common.toHex
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.TransactionStatus
 import net.postchain.core.UserMistake
+import net.postchain.gtx.GTXValue
 import org.junit.After
 import org.junit.Test
 
@@ -92,6 +93,10 @@ class RestApiMockForClientManual {
                 """{"a":"programmermistake","c":3}""" -> throw ProgrammerMistake("expected error")
                 else -> throw ProgrammerMistake("unexpected error")
             })
+        }
+
+        override fun query(query: GTXValue): GTXValue {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
     }
 }
