@@ -54,7 +54,7 @@ class CommandRunNodeAuto : Command {
                             if (height.toInt() == 0) {
                                 cliExecution.addBlockchain(nodeConfigFile, chainId, brid, blockchainConfigFile)
                             } else {
-                                cliExecution.addConfiguration(nodeConfigFile, blockchainConfigFile, chainId, brid, height)
+                                cliExecution.addConfiguration(nodeConfigFile, blockchainConfigFile, chainId, height)
                             }
                         }
                     }

@@ -44,15 +44,14 @@ class CliExecution {
         }
     }
 
-    fun addConfiguration(nodeConfigFile: String, blockchainConfigFile: String, chainId: Long, blockchainRID: String, height: Long, mode: AlreadyExistMode = AlreadyExistMode.IGNORE) {
+    fun addConfiguration(nodeConfigFile: String, blockchainConfigFile: String, chainId: Long, height: Long, mode: AlreadyExistMode = AlreadyExistMode.IGNORE) : Boolean {
         val encodedGtxValue = getEncodedGtxValueFromFile(blockchainConfigFile)
+        var result = false
         runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
 
-
             var init = {
-                BaseConfigurationDataStore.addConfigurationData(ctx, height, encodedGtxValue)
+                result = BaseConfigurationDataStore.addConfigurationData(ctx, height, encodedGtxValue) > 0
             }
-
 
             when (mode) {
                 AlreadyExistMode.ERROR -> {
@@ -77,6 +76,7 @@ class CliExecution {
                 }
             }
         }
+        return result
     }
 
     fun runNode(nodeConfigFile: String, chainIDs: List<Long>) {
