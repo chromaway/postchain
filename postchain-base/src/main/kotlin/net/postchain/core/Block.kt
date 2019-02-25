@@ -25,10 +25,9 @@ open class BlockDetail (
         val timestamp: Long
 ) {
     fun equals(other: BlockDetail): Boolean {
-        if (this.height != other.height) return false
-        if (this.witness.toHex() == other.witness.toHex()) return false
-
-        if (this.transactions.size != other.transactions.size) return false
+        if ((this.height != other.height) ||
+            (this.witness.toHex() == other.witness.toHex()) ||
+            (this.transactions.size != other.transactions.size)) return false
 
         val thisTransactionsToHex = transactions.map{ transaction -> transaction.toHex()}
         for (transaction in  other.transactions) {
