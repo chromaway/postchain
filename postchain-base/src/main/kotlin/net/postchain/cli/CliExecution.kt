@@ -16,7 +16,7 @@ class CliExecution {
         val encodedGtxValue = getEncodedGtxValueFromFile(blockchainConfigFile)
         runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
 
-            var init = {
+            fun init() {
                 BaseBlockStore().initialize(ctx, blockchainRID.hexStringToByteArray())
                 BaseConfigurationDataStore.addConfigurationData(ctx, 0, encodedGtxValue)
             }
@@ -49,7 +49,7 @@ class CliExecution {
         var result = false
         runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
 
-            var init = {
+            fun init() {
                 result = BaseConfigurationDataStore.addConfigurationData(ctx, height, encodedGtxValue) > 0
             }
 
