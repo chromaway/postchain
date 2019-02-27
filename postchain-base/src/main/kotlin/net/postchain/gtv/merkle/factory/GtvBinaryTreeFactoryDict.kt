@@ -7,6 +7,8 @@ import net.postchain.base.merkle.Node
 import net.postchain.gtv.*
 import net.postchain.gtv.merkle.GtvBinaryTreeFactory
 import net.postchain.gtv.merkle.GtvDictHeadNode
+import net.postchain.gtv.path.GtvPath
+import net.postchain.gtv.path.GtvPathSet
 import java.util.SortedSet
 
 object GtvBinaryTreeFactoryDict {
@@ -22,12 +24,12 @@ object GtvBinaryTreeFactoryDict {
      * - When the dict is empty. -> We return a top node with two empty leafs
      */
     fun buildFromGtvDictionary(gtvDictionary: GtvDictionary, gtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): GtvDictHeadNode {
-        val isThisAProofLeaf = gtvPaths.isThisAProofLeaf() // Will tell us if any of the paths points to this element
+        val pathElem = gtvPaths.getPathLeafOrElseAnyCurrentPathElement()
         //println("Dict,(is proof? $isThisAProofLeaf) Proof path (size: ${GtvPathList.size} ) list: " + GtvPath.debugRerpresentation(GtvPathList))
         val keys: SortedSet<String> = gtvDictionary.dict.keys.toSortedSet() // Needs to be sorted, or else the order is undefined
 
         if (keys.isEmpty()) {
-            return GtvDictHeadNode(EmptyLeaf, EmptyLeaf, isThisAProofLeaf, gtvDictionary, keys.size, 0)
+            return GtvDictHeadNode(EmptyLeaf, EmptyLeaf, gtvDictionary, keys.size, 0, pathElem)
         }
 
         // 1. Build first (leaf) layer
@@ -40,7 +42,7 @@ object GtvBinaryTreeFactoryDict {
         // 3. Fix and return the root node
         val orgRoot = result.get(0)
         return when (orgRoot) {
-            is Node -> GtvDictHeadNode(orgRoot.left, orgRoot.right, isThisAProofLeaf, gtvDictionary, keys.size, sumNrOfBytes)
+            is Node -> GtvDictHeadNode(orgRoot.left, orgRoot.right, gtvDictionary, keys.size, sumNrOfBytes, pathElem)
             else -> throw IllegalStateException("Should not find element of this type here: $orgRoot")
         }
     }

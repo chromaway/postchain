@@ -3,7 +3,7 @@ package net.postchain.base.merkle.proof
 import net.postchain.base.merkle.BinaryTreeFactory
 import net.postchain.base.merkle.Hash
 import net.postchain.base.merkle.MerkleHashCalculator
-import net.postchain.base.merkle.MerklePathSet
+import net.postchain.base.path.PathSet
 import net.postchain.gtv.Gtv
 
 
@@ -16,7 +16,7 @@ import net.postchain.gtv.Gtv
  *       before we can calculate it's hash.
  *       (This is why we place this code in a separate factory instead of in the [MerkleProofTree] itself)
  */
-abstract class MerkleHashSummaryFactory<T, TPathSet: MerklePathSet>(
+abstract class MerkleHashSummaryFactory<T, TPathSet: PathSet>(
         val treeFactory: BinaryTreeFactory<T, TPathSet>,
         val proofFactory: MerkleProofTreeFactory<T>) {
 

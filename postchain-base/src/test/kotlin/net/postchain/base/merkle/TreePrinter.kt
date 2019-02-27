@@ -5,6 +5,9 @@ import net.postchain.common.toHex
 import net.postchain.gtv.merkle.GtvBinaryTree
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 import net.postchain.gtv.*
+import net.postchain.gtv.merkle.GtvArrayHeadNode
+import net.postchain.gtv.merkle.proof.ProofNodeGtvArrayHead
+import net.postchain.gtv.merkle.proof.ProofNodeGtvDictHead
 import kotlin.math.pow
 
 
@@ -18,11 +21,11 @@ import kotlin.math.pow
  */
 open class PTreeElement
 
-class PNode(val left: PTreeElement, val right: PTreeElement, val pathLeaf: Boolean): PTreeElement()
+class PNode(val left: PTreeElement, val right: PTreeElement, val pathLeaf: Boolean, val isPath: Boolean): PTreeElement()
 /**
  * [PContentNode] represents a hanging leaf that is not at max level depth
  */
-class PContentNode(val content: String, val left: PTreeElement, val right: PTreeElement, val pathLeaf: Boolean): PTreeElement()
+class PContentNode(val content: String, val left: PTreeElement, val right: PTreeElement, val pathLeaf: Boolean, isPath: Boolean): PTreeElement()
 class PLeaf(val content: String, val pathLeaf: Boolean): PTreeElement()
 
 /**
@@ -97,7 +100,7 @@ object PrintableTreeFactory {
                     //println("Early leaf $content at level: $currentLevel")
                     val emptyLeft: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     val emptyRight: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
-                    PContentNode(content, emptyLeft, emptyRight, inElement.isPathLeaf())
+                    PContentNode(content, emptyLeft, emptyRight, inElement.isPathLeaf(), inElement.isPath())
                 } else {
                     // Normal leaf
                     val content = toStr(inElement.content as T)
@@ -112,7 +115,7 @@ object PrintableTreeFactory {
                     //println("Early cached leaf $content at level: $currentLevel")
                     val emptyLeft: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     val emptyRight: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
-                    PContentNode(content, emptyLeft, emptyRight, inElement.isPathLeaf())
+                    PContentNode(content, emptyLeft, emptyRight, inElement.isPathLeaf(), inElement.isPath())
                 } else {
                     // Normal leaf
                     val content: String = "(" + inElement.cachedSummary.merkleHash.toHex() + ")"
@@ -123,7 +126,7 @@ object PrintableTreeFactory {
             is Node -> {
                 val left = genericTreeInternal(currentLevel + 1, maxLevel, inElement.left, toStr)
                 val right = genericTreeInternal(currentLevel + 1, maxLevel, inElement.right, toStr)
-                PNode(left, right, inElement.isPathLeaf())
+                PNode(left, right, inElement.isPathLeaf(), inElement.isPath())
             }
             else -> throw IllegalStateException("Not handling this $inElement")
         }
@@ -138,7 +141,7 @@ object PrintableTreeFactory {
                     //println("Early leaf $content at level: $currentLevel")
                     val emptyLeft: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     val emptyRight: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
-                    PContentNode(content, emptyLeft, emptyRight, true)
+                    PContentNode(content, emptyLeft, emptyRight, true, true)
                 } else {
                     // Normal leaf
                     val content = convertGtxToString(inElement.content as Gtv)
@@ -153,7 +156,7 @@ object PrintableTreeFactory {
                     //println("Early hash leaf $content at level: $currentLevel")
                     val emptyLeft: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
                     val emptyRight: PEmptyElement = createEmptyInternal(currentLevel + 1, maxLevel)
-                    PContentNode(content, emptyLeft, emptyRight, false)
+                    PContentNode(content, emptyLeft, emptyRight, false, false)
                 } else {
                     // Normal leaf
                     val content = TreeHelper.convertToHex(inElement.merkleHash)
@@ -164,7 +167,18 @@ object PrintableTreeFactory {
             is ProofNode -> {
                 val left = fromProofTreeInternal(currentLevel + 1, maxLevel, inElement.left)
                 val right = fromProofTreeInternal(currentLevel + 1, maxLevel, inElement.right)
-                PNode(left, right, false)
+                val isPath = when (inElement) {
+                    is ProofNodeGtvDictHead -> {
+                        inElement.pathElem != null
+                    }
+                    is ProofNodeGtvArrayHead -> {
+                        inElement.pathElem != null
+                    }
+                    else -> {
+                        false
+                    }
+                }
+                PNode(left, right, false, isPath)
             }
             else -> throw IllegalStateException("Should have handled this element type: $inElement")
         }
@@ -216,10 +230,12 @@ class TreePrinter {
         for (node in nodes) {
             when (node) {
                 is PNode -> {
-                    if (node.pathLeaf){
+                    if (node.pathLeaf) {
                         buf.append("#") // This is a proof leaf
+                    } else if (node.isPath) {
+                        buf.append("*") // This is a node part of a path
                     } else {
-                        buf.append("+") // Not a proof leaf
+                        buf.append("+") // Non path node
                     }
                     newNodes.add(node.left)
                     newNodes.add(node.right)

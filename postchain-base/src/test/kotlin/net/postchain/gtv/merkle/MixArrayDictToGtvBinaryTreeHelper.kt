@@ -1,10 +1,6 @@
 package net.postchain.gtv.merkle
 
-import net.postchain.base.merkle.PrintableTreeFactory
-import net.postchain.base.merkle.TreePrinter
-import net.postchain.gtv.GtvPath
 import net.postchain.gtv.*
-import net.postchain.gtv.GtvPathSet
 
 /**
  * Used for the case when we are mixing dicts and arrays in the same test

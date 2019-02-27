@@ -2,9 +2,9 @@ package net.postchain.gtv.merkle.tree
 
 import net.postchain.base.merkle.PrintableTreeFactory
 import net.postchain.base.merkle.TreePrinter
-import net.postchain.gtv.GtvPath
-import net.postchain.gtv.GtvPathFactory
-import net.postchain.gtv.GtvPathSet
+import net.postchain.gtv.path.GtvPath
+import net.postchain.gtv.path.GtvPathFactory
+import net.postchain.gtv.path.GtvPathSet
 import net.postchain.gtv.merkle.*
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -56,7 +56,7 @@ class ArrayToGtvBinaryTreeTest {
         val path: Array<Any> = arrayOf(0)
 
         val expectedTreeWithPath =
-                " +   \n" +
+                " *   \n" +
                 "/ \\ \n" +
                 "*1 - "
 
@@ -110,14 +110,14 @@ class ArrayToGtvBinaryTreeTest {
     fun testIntArrayLength4_withPath() {
         val path: Array<Any> = arrayOf(3)
 
-        val expected = "   +       \n" +
+        val expected = "   *       \n" +
                 "  / \\   \n" +
                 " /   \\  \n" +
                 " +   +   \n" +
                 "/ \\ / \\ \n" +
                 "1 2 3 *4 "
 
-        val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
+        val gtvPath: GtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
         val treePrintout = buildTreeOf4(gtvPath)
         //println(treeHolder.treePrintout)
         assertEquals(expected.trim(), treePrintout.trim())
@@ -172,7 +172,7 @@ class ArrayToGtvBinaryTreeTest {
     fun testIntArrayLength7_withPath() {
         val path: Array<Any> = arrayOf(6)
         val expectedTree =
-                "       +               \n" +
+                "       *               \n" +
                         "      / \\       \n" +
                         "     /   \\      \n" +
                         "    /     \\     \n" +
@@ -184,7 +184,7 @@ class ArrayToGtvBinaryTreeTest {
                         "/ \\ / \\ / \\     \n" +
                         "1 2 3 4 5 6 - - "
 
-        val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
+        val gtvPath: GtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
         val treePrintout = buildTreeOf7(gtvPath)
         //println(treePrintout)
         assertEquals(expectedTree.trim(), treePrintout.trim())
@@ -349,4 +349,51 @@ class ArrayToGtvBinaryTreeTest {
         assertEquals(expectedTree.trim(), treePrintout.trim())
     }
 
+    @Test
+    fun testIntArrayLength7withInnerLength3Array_withPath() {
+        val arr: Array<Any> = arrayOf(3, 0)
+        val expectedTree = "                               *                                                               \n" +
+                "                              / \\                               \n" +
+                "                             /   \\                              \n" +
+                "                            /     \\                             \n" +
+                "                           /       \\                            \n" +
+                "                          /         \\                           \n" +
+                "                         /           \\                          \n" +
+                "                        /             \\                         \n" +
+                "                       /               \\                        \n" +
+                "                      /                 \\                       \n" +
+                "                     /                   \\                      \n" +
+                "                    /                     \\                     \n" +
+                "                   /                       \\                    \n" +
+                "                  /                         \\                   \n" +
+                "                 /                           \\                  \n" +
+                "                /                             \\                 \n" +
+                "               /                               \\                \n" +
+                "               +                               +                               \n" +
+                "              / \\                             / \\               \n" +
+                "             /   \\                           /   \\              \n" +
+                "            /     \\                         /     \\             \n" +
+                "           /       \\                       /       \\            \n" +
+                "          /         \\                     /         \\           \n" +
+                "         /           \\                   /           \\          \n" +
+                "        /             \\                 /             \\         \n" +
+                "       /               \\               /               \\        \n" +
+                "       +               +               +               7               \n" +
+                "      / \\             / \\             / \\                       \n" +
+                "     /   \\           /   \\           /   \\                      \n" +
+                "    /     \\         /     \\         /     \\                     \n" +
+                "   /       \\       /       \\       /       \\                    \n" +
+                "   1       2       3       *       5       6       .       .       \n" +
+                "                          / \\                                   \n" +
+                "                         /   \\                                  \n" +
+                " .   .   .   .   .   .   +   3   .   .   .   .   .   .   .   .   \n" +
+                "                        / \\                                     \n" +
+                "- - - - - - - - - - - - *1 9 - - - - - - - - - - - - - - - - - - "
+
+
+        val gtvPath: GtvPath = GtvPathFactory.buildFromArrayOfPointers(arr)
+        val treePrintout = buildTreeOf7WithSubTree(gtvPath)
+        //println(treeHolder.treePrintout)
+        assertEquals(expectedTree.trim(), treePrintout.trim())
+    }
 }

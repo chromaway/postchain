@@ -5,6 +5,9 @@ import net.postchain.gtv.*
 import net.postchain.gtv.merkle.*
 import net.postchain.gtv.merkle.DictToGtvBinaryTreeHelper.expectedMerkleRoot4
 import net.postchain.gtv.merkle.proof.merkleHash
+import net.postchain.gtv.path.GtvPath
+import net.postchain.gtv.path.GtvPathFactory
+import net.postchain.gtv.path.GtvPathSet
 import org.junit.Assert
 import org.junit.Test
 

@@ -12,6 +12,9 @@ import net.postchain.gtv.merkle.MerkleHashCalculatorDummy
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
 import net.postchain.gtv.merkle.proof.merkleHash
+import net.postchain.gtv.path.GtvPath
+import net.postchain.gtv.path.GtvPathFactory
+import net.postchain.gtv.path.GtvPathSet
 import org.junit.Assert
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -60,7 +63,7 @@ class ArrayToMerkleProofTreeTest {
         val calculator = MerkleHashCalculatorDummy()
 
         val path: Array<Any> = arrayOf(0)
-        val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
+        val gtvPath: GtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
         val gtvPaths = GtvPathSet(setOf(gtvPath))
         val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf1()
 
@@ -90,9 +93,11 @@ class ArrayToMerkleProofTreeTest {
         val expectedSerialization = "GtvArray(array=[\n" +
                 "  GtvInteger(integer=103), \n" +  // 103 =  node type is array
                 "  GtvInteger(integer=1), \n" +  // lenght of array
+                "  GtvInteger(integer=-10),\n" + // (no path/position given)
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=101), \n" + // 101 = value to prove
-                "    GtvInteger(integer=1)\n" +
+                "    GtvInteger(integer=0), \n" + //path/position = 0
+                "    GtvInteger(integer=1)\n" + // Actual value
                 "  ]), \n" +
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100), \n" + // 100 = hash
@@ -120,7 +125,7 @@ class ArrayToMerkleProofTreeTest {
         val calculator = MerkleHashCalculatorDummy()
 
         val path: Array<Any> = arrayOf(0)
-        val gtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
+        val gtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
         val gtvPaths = GtvPathSet(setOf(gtvPath))
         val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf4()
 
@@ -162,10 +167,12 @@ class ArrayToMerkleProofTreeTest {
         val expectedSerialization = "GtvArray(array=[\n" +
                 "  GtvInteger(integer=103), \n" +// 103 = array head node type
                 "  GtvInteger(integer=4), \n" + // length of array
+                "  GtvInteger(integer=-10), \n" + // no path elem
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=102), \n" +
                 "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=101), \n" +// 101 = value to prove
+                "      GtvInteger(integer=0), \n" + // path elem = 0
                 "      GtvInteger(integer=1)\n" +
                 "    ]), \n" +
                 "    GtvArray(array=[\n" +
@@ -201,7 +208,7 @@ class ArrayToMerkleProofTreeTest {
         val calculator = MerkleHashCalculatorDummy()
 
         val path: Array<Any> = arrayOf(3)
-        val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
+        val gtvPath: GtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
         val gtvPaths = GtvPathSet(setOf(gtvPath))
         val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf7()
 
@@ -250,6 +257,7 @@ class ArrayToMerkleProofTreeTest {
         val expectedSerialization = "GtvArray(array=[\n" +
                 "  GtvInteger(integer=103),\n" + // 103 = array head node type
                 "  GtvInteger(integer=7),\n" + // length of array
+                "  GtvInteger(integer=-10),\n" + // no path elem
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=102),\n" + // 102 = dummy node
                 "    GtvArray(array=[\n" +
@@ -263,6 +271,7 @@ class ArrayToMerkleProofTreeTest {
                 "        ]),\n" +
                 "        GtvArray(array=[\n" +
                 "          GtvInteger(integer=101),\n" + // 101 = value to prove
+                "          GtvInteger(integer=3),\n" + // path elem = 3
                 "          GtvInteger(integer=4)\n" +
                 "        ])\n" +
                 "      ])\n" +
@@ -296,8 +305,8 @@ class ArrayToMerkleProofTreeTest {
 
         val path1: Array<Any> = arrayOf(3)
         val path2: Array<Any> = arrayOf(6)
-        val gtvPath1:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path1)
-        val gtvPath2:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path2)
+        val gtvPath1: GtvPath = GtvPathFactory.buildFromArrayOfPointers(path1)
+        val gtvPath2: GtvPath = GtvPathFactory.buildFromArrayOfPointers(path2)
         val gtvPaths = GtvPathSet(setOf(gtvPath1, gtvPath2))
         val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf7()
 
@@ -376,7 +385,7 @@ class ArrayToMerkleProofTreeTest {
                 "                     /   \\                                      \n" +
                 "                    /     \\                                     \n" +
                 "                   /       \\                                    \n" +
-                "   .       .       0204       +       .       .       .       .       \n" +
+                "   .       .       0204       *       .       .       .       .       \n" +
                 "                          / \\                                   \n" +
                 "                         /   \\                                  \n" +
                 " .   .   .   .   .   .   +   0204   .   .   .   .   .   .   .   .   \n" +
@@ -405,7 +414,7 @@ class ArrayToMerkleProofTreeTest {
         val calculator = MerkleHashCalculatorDummy()
 
         val path: Array<Any> = arrayOf(2)
-        val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
+        val gtvPath: GtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
         val gtvPaths = GtvPathSet(setOf(gtvPath))
         val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrOf7WithInner3()
 
@@ -452,7 +461,7 @@ class ArrayToMerkleProofTreeTest {
         val calculator = MerkleHashCalculatorDummy()
 
         val path: Array<Any> = arrayOf(3)
-        val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
+        val gtvPath: GtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
         val gtvPaths = GtvPathSet(setOf(gtvPath))
         val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrOf7WithInner3()
 
@@ -490,6 +499,7 @@ class ArrayToMerkleProofTreeTest {
         val expectedSerialization = "GtvArray(array=[\n" +
                 "  GtvInteger(integer=103), \n" + // 103 = array head node type
                 "  GtvInteger(integer=7), \n" + // length of array
+                "  GtvInteger(integer=-10), \n" + // no path elem
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=102), \n" + // 102 = dummy node
                 "    GtvArray(array=[\n" +
@@ -504,6 +514,7 @@ class ArrayToMerkleProofTreeTest {
                 "      ]), \n" +
                 "      GtvArray(array=[\n" +
                 "        GtvInteger(integer=101), \n" + // 101 = value to prove
+                "        GtvInteger(integer=3), \n" + // path elem = 2
                 "        GtvArray(array=[\n" +  // Here the value to prove is a regular GtvArray. Interesting to see that this is deserialized propely (i.e. kept)
                 "          GtvInteger(integer=1), \n" +
                 "          GtvInteger(integer=9), \n" +

@@ -1,9 +1,9 @@
 package net.postchain.base.merkle.proof
 
 import net.postchain.base.merkle.*
-import net.postchain.gtv.GtvPath
-import net.postchain.gtv.GtvPathFactory
-import net.postchain.gtv.GtvPathSet
+import net.postchain.gtv.path.GtvPath
+import net.postchain.gtv.path.GtvPathFactory
+import net.postchain.gtv.path.GtvPathSet
 import net.postchain.gtv.generateProof
 import net.postchain.gtv.merkle.*
 import net.postchain.gtv.merkle.proof.merkleHash
@@ -24,7 +24,7 @@ class MixArrayDictToMerkleProofTreeTest {
         val calculator = MerkleHashCalculatorDummy()
 
         val path: Array<Any> = arrayOf("one", 3)
-        val gtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
+        val gtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
         val gtvPaths = GtvPathSet(setOf(gtvPath))
         val gtvDict = MixArrayDictToGtvBinaryTreeHelper.buildGtvDictWithSubArray4()
 
@@ -33,7 +33,7 @@ class MixArrayDictToMerkleProofTreeTest {
                 "     /   \\      \n" +
                 "    /     \\     \n" +
                 "   /       \\    \n" +
-                "   02706F66       +       \n" +
+                "   02706F66       *       \n" +
                 "          / \\   \n" +
                 "         /   \\  \n" +
                 " .   .   0103030304   +   \n" +
@@ -63,7 +63,7 @@ class MixArrayDictToMerkleProofTreeTest {
         val calculator = MerkleHashCalculatorDummy()
 
         val path: Array<Any> = arrayOf("one")
-        val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
+        val gtvPath: GtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
         val gtvPaths = GtvPathSet(setOf(gtvPath))
         val gtvDict = MixArrayDictToGtvBinaryTreeHelper.buildGtvDictWithSubArray4()
 

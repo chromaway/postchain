@@ -1,10 +1,13 @@
 package net.postchain.gtv.merkle
 
 import net.postchain.base.merkle.*
+import net.postchain.base.merkle.proof.MerkleProofTreeFactory
 
 import net.postchain.gtv.*
 import net.postchain.gtv.merkle.factory.GtvBinaryTreeFactoryArray
 import net.postchain.gtv.merkle.factory.GtvBinaryTreeFactoryDict
+import net.postchain.gtv.path.GtvPath
+import net.postchain.gtv.path.GtvPathSet
 
 
 /**
@@ -29,7 +32,17 @@ class GtvBinaryTreeFactory() : BinaryTreeFactory<Gtv, GtvPathSet>() {
      * @param GtvPathList will tell us what element that are path leafs
      */
     fun buildFromGtvAndPath(gtv: Gtv, gtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): GtvBinaryTree {
+        if (MerkleProofTreeFactory.logger.isDebugEnabled) {
+            MerkleProofTreeFactory.logger.debug("--------------------------------------------")
+            MerkleProofTreeFactory.logger.debug("--- Converting GTV to binary tree ----------")
+            MerkleProofTreeFactory.logger.debug("--------------------------------------------")
+        }
         val result = handleLeaf(gtv, gtvPaths, memoization, true)
+        if (MerkleProofTreeFactory.logger.isDebugEnabled) {
+            MerkleProofTreeFactory.logger.debug("--------------------------------------------")
+            MerkleProofTreeFactory.logger.debug("--- /Converting GTV to binary tree ---------")
+            MerkleProofTreeFactory.logger.debug("--------------------------------------------")
+        }
         return GtvBinaryTree(result)
     }
 

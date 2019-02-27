@@ -1,5 +1,6 @@
 package net.postchain.base.merkle.proof
 
+import mu.KLogging
 import net.postchain.base.merkle.*
 
 /**
@@ -10,7 +11,9 @@ import net.postchain.base.merkle.*
  *     see [BinaryTreeFactory] )
  * 2. The serialized format
  */
-abstract class MerkleProofTreeFactory<T>() {
+abstract class MerkleProofTreeFactory<T> {
+
+    companion object: KLogging()
 
     /**
      * Converts [BinaryTreeElement] into a [MerkleProofElement].
@@ -22,7 +25,7 @@ abstract class MerkleProofTreeFactory<T>() {
      * @param calculator is the class we use for hash calculation
      * @return the [MerkleProofElement] we have built.
      */
-    abstract fun buildFromBinaryTreeSub(currentElement: BinaryTreeElement, calculator: MerkleHashCalculator<T>):
+    abstract fun buildFromBinaryTreeInternal(currentElement: BinaryTreeElement, calculator: MerkleHashCalculator<T>):
             MerkleProofElement
 
 
@@ -30,8 +33,8 @@ abstract class MerkleProofTreeFactory<T>() {
      * Note: we cannot add to the cache, since a node does not map one-to-one to a source element.
      */
     protected fun convertNode(currentNode: Node, calculator: MerkleHashCalculator<T>): MerkleProofElement {
-        val left = buildFromBinaryTreeSub(currentNode.left, calculator)
-        val right = buildFromBinaryTreeSub(currentNode.right, calculator)
+        val left = buildFromBinaryTreeInternal(currentNode.left, calculator)
+        val right = buildFromBinaryTreeInternal(currentNode.right, calculator)
         return if (left is ProofHashedLeaf && right is ProofHashedLeaf) {
             // If both children are hashes, then
             // we must reduce them to a new (combined) hash.

@@ -9,6 +9,9 @@ import net.postchain.gtv.merkle.DictToGtvBinaryTreeHelper.expectedMerkleRootDict
 import net.postchain.gtv.merkle.MerkleHashCalculatorDummy
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
 import net.postchain.gtv.merkle.proof.merkleHash
+import net.postchain.gtv.path.GtvPath
+import net.postchain.gtv.path.GtvPathFactory
+import net.postchain.gtv.path.GtvPathSet
 import org.junit.Assert
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -91,12 +94,14 @@ class DictToMerkleProofTreeTest {
         val expectedSerialization = "GtvArray(array=[\n" +
                 "  GtvInteger(integer=104),\n" + // 104 = dict head node type
                 "  GtvInteger(integer=1),\n" + // length of dict
+                "  GtvInteger(integer=-10),\n" + // no path elem
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100),\n" + // 100 = hash
                 "    GtvByteArray(bytearray=[2, 112, 111, 102])\n" +
                 "  ]),\n" +
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=101),  \n" + // 101 = value to prove
+                "    GtvString(string=one), \n" + // path elem = 1
                 "    GtvInteger(integer=1)\n" +
                 "  ])\n" +
                 "])\n"
@@ -122,7 +127,7 @@ class DictToMerkleProofTreeTest {
         val calculator = MerkleHashCalculatorDummy()
 
         val path: Array<Any> = arrayOf("four")
-        val gtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
+        val gtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
         val gtvPaths = GtvPathSet(setOf(gtvPath))
         val orgGtvPath = DictToGtvBinaryTreeHelper.buildGtvDictOf4()
 
@@ -196,6 +201,7 @@ class DictToMerkleProofTreeTest {
         val expectedSerialization = "GtvArray(array=[\n" +
                 "  GtvInteger(integer=104), \n" + // 104 = dict head node type
                 "  GtvInteger(integer=4), \n" + // length of the dict
+                "  GtvInteger(integer=-10), \n" + // no path elem
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=102), \n" + // 102 = dummy node
                 "    GtvArray(array=[\n" +
@@ -206,6 +212,7 @@ class DictToMerkleProofTreeTest {
                 "      ]),\n" +
                 "      GtvArray(array=[\n" +
                 "        GtvInteger(integer=101),   \n" + // 101 = value to prove
+                "        GtvString(string=four), \n" +  // path elem "four"
                 "        GtvInteger(integer=4)\n" +
                 "      ])\n" +
                 "    ]),  \n" +
@@ -244,7 +251,7 @@ class DictToMerkleProofTreeTest {
         val calculator = MerkleHashCalculatorDummy()
 
         val path: Array<Any> = arrayOf("one", "seven")
-        val gtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
+        val gtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
         val gtvPaths = GtvPathSet(setOf(gtvPath))
         val orgGtvDict = DictToGtvBinaryTreeHelper.buildGtvDictOf1WithSubDictOf2()
 
@@ -253,7 +260,7 @@ class DictToMerkleProofTreeTest {
                 "     /   \\      \n" +
                 "    /     \\     \n" +
                 "   /       \\    \n" +
-                "   02706F66       +       \n" +
+                "   02706F66       *       \n" +
                 "          / \\   \n" +
                 "         /   \\  \n" +
                 " .   .   0103676B696A76030A   +   \n" +
@@ -281,6 +288,7 @@ class DictToMerkleProofTreeTest {
         val expectedSerialization =  "GtvArray(array=[\n" +
                 "  GtvInteger(integer=104), \n" + // 104 = dict head node type
                 "  GtvInteger(integer=1), \n" + // length of the dict
+                "  GtvInteger(integer=-10), \n" + // no path elem
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100),\n" +
                 "    GtvByteArray(bytearray=[2, 112, 111, 102])\n" +
@@ -288,6 +296,7 @@ class DictToMerkleProofTreeTest {
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=104), \n" + // 104 = dict head node type
                 "    GtvInteger(integer=2), \n" + // length of the dict
+                "    GtvString(string=one), \n" + // path elem "one"
                 "    GtvArray(array=[\n" +
                 "      GtvInteger(integer=100), \n" + // 100 = hash
                 "      GtvByteArray(bytearray=[1, 3, 103, 107, 105, 106, 118, 3, 10])\n" +
@@ -300,6 +309,7 @@ class DictToMerkleProofTreeTest {
                 "      ]), \n" +
                 "      GtvArray(array=[\n" +
                 "        GtvInteger(integer=101), \n" + // 101 = value to prove
+                "        GtvString(string=seven), \n" + // path elem "seven"
                 "        GtvInteger(integer=7)\n" +
                 "      ])\n" +
                 "    ])\n" +
@@ -334,7 +344,7 @@ class DictToMerkleProofTreeTest {
         val calculator = MerkleHashCalculatorDummy()
 
         val path: Array<Any> = arrayOf("one")
-        val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
+        val gtvPath: GtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
         val gtvPaths = GtvPathSet(setOf(gtvPath))
         val orgGtvDict = DictToGtvBinaryTreeHelper.buildGtvDictOf1WithSubDictOf2()
 
@@ -364,12 +374,14 @@ class DictToMerkleProofTreeTest {
         val expectedSerialization = "GtvArray(array=[\n" +
                 "  GtvInteger(integer=104),\n" +  // 104 = dict head node type
                 "  GtvInteger(integer=1),\n" + // lenght of the dict
+                "  GtvInteger(integer=-10),\n" + // no path elem
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=100),\n" + // 100 = Hash
                 "    GtvByteArray(bytearray=[2, 112, 111, 102])\n" +
                 "  ]),\n" +
                 "  GtvArray(array=[\n" +
                 "    GtvInteger(integer=101), \n" + // 101 = value to be proved (in this case an entire dict)
+                "    GtvString(string=one), \n" + // path elem "one"
                 "    GtvDictionary(dict={\n" +  // The value is a GtvDictionary, in it's raw form
                 "      seven=GtvInteger(integer=7), \n" +
                 "      eight=GtvInteger(integer=8)\n" +

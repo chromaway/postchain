@@ -24,7 +24,7 @@ fun dummySerializatorFun(iGtv: Gtv): ByteArray {
         is GtvString -> {
             val str = iGtv.string
             val byteArr = str.toByteArray(Charset.defaultCharset()) // TODO: Do we need to think about charset?
-            println("leaf of string: $str becomes bytes: " + TreeHelper.convertToHex(byteArr))
+            println("Dummy serializer:  string: $str becomes bytes: " + TreeHelper.convertToHex(byteArr))
             return byteArr
         }
         is GtvByteArray -> {

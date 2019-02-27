@@ -1,6 +1,9 @@
 package net.postchain.base.merkle
 
 import mu.KLogging
+import net.postchain.base.path.PathLeafElement
+import net.postchain.base.path.PathSet
+import net.postchain.core.UserMistake
 import net.postchain.gtv.Gtv
 
 
@@ -9,7 +12,7 @@ import net.postchain.gtv.Gtv
  *
  * Note: The idea is that you should sub class for each type of element (for example [Gtv]) you want to build.
  */
-abstract class BinaryTreeFactory<T,TPathSet: MerklePathSet>() : KLogging() {
+abstract class BinaryTreeFactory<T,TPathSet: PathSet>() : KLogging() {
 
 
     /**
@@ -57,7 +60,11 @@ abstract class BinaryTreeFactory<T,TPathSet: MerklePathSet>() : KLogging() {
      * immediately wrap
      */
     fun handlePrimitiveLeaf(leaf: T, paths: TPathSet): BinaryTreeElement {
-        return Leaf(leaf, paths.isThisAProofLeaf(), getNrOfBytes(leaf))
+        val pathElem = paths.getPathLeafOrElseAnyCurrentPathElement()
+        if (pathElem != null && pathElem !is PathLeafElement) {
+            throw UserMistake("Path does not match the tree structure. We are at a leaf $leaf but found path element $pathElem")
+        }
+        return Leaf(leaf, getNrOfBytes(leaf), pathElem)
     }
 
     /**

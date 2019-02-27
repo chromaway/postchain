@@ -2,9 +2,9 @@ package net.postchain.gtv.merkle.tree
 
 import net.postchain.base.merkle.PrintableTreeFactory
 import net.postchain.base.merkle.TreePrinter
-import net.postchain.gtv.GtvPath
-import net.postchain.gtv.GtvPathFactory
-import net.postchain.gtv.GtvPathSet
+import net.postchain.gtv.path.GtvPath
+import net.postchain.gtv.path.GtvPathFactory
+import net.postchain.gtv.path.GtvPathSet
 import net.postchain.gtv.merkle.*
 import org.junit.Assert
 import org.junit.Test
@@ -18,7 +18,7 @@ class DictToGtvBinaryTreeTest {
         return buildThreeOf1_fromDict(null)
     }
 
-    private fun buildThreeOf1_fromDict(gtvPath:GtvPath?): String {
+    private fun buildThreeOf1_fromDict(gtvPath: GtvPath?): String {
 
         val gtvDict = DictToGtvBinaryTreeHelper.buildGtvDictOf1()
 
@@ -51,11 +51,11 @@ class DictToGtvBinaryTreeTest {
     fun testIntDictLength1_withPath() {
         val path: Array<Any> = arrayOf("one")
 
-        val expectedTreeWithPath = " +   \n" +
+        val expectedTreeWithPath = " *   \n" +
                 "/ \\ \n" +
                 "one *1 "
 
-        val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
+        val gtvPath: GtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
         val treePrintout = buildThreeOf1_fromDict(gtvPath)
         //println(treeHolder.treePrintout)
 
@@ -67,12 +67,12 @@ class DictToGtvBinaryTreeTest {
         return buildThreeOf4_fromDict(null)
     }
 
-    private fun buildThreeOf4_fromDict(gtvPath:GtvPath?): String {
+    private fun buildThreeOf4_fromDict(gtvPath: GtvPath?): String {
         val gtvDict = DictToGtvBinaryTreeHelper.buildGtvDictOf4()
 
         val newMemoization = GtvMerkleHashMemoization(100, 100)
         val fullBinaryTree:GtvBinaryTree = if (gtvPath != null) {
-            factory.buildFromGtvAndPath(gtvDict,GtvPathSet(setOf(gtvPath)), newMemoization)
+            factory.buildFromGtvAndPath(gtvDict, GtvPathSet(setOf(gtvPath)), newMemoization)
         } else {
             factory.buildFromGtv(gtvDict, newMemoization)
         }
@@ -108,22 +108,21 @@ class DictToGtvBinaryTreeTest {
     fun testIntDictLength4_withPath() {
         val path: Array<Any> = arrayOf("one")
 
-        val expectedTreeWithPath =
-                "       +               \n" +
-                        "      / \\       \n" +
-                        "     /   \\      \n" +
-                        "    /     \\     \n" +
-                        "   /       \\    \n" +
-                        "   +       +       \n" +
-                        "  / \\     / \\   \n" +
-                        " /   \\   /   \\  \n" +
-                        " +   +   +   +   \n" +
-                        "/ \\ / \\ / \\ / \\ \n" +
-                        "four 4 one *1 three 3 two 2 "
+        val expectedTreeWithPath = "       *               \n" +
+                "      / \\       \n" +
+                "     /   \\      \n" +
+                "    /     \\     \n" +
+                "   /       \\    \n" +
+                "   +       +       \n" +
+                "  / \\     / \\   \n" +
+                " /   \\   /   \\  \n" +
+                " +   +   +   +   \n" +
+                "/ \\ / \\ / \\ / \\ \n" +
+                "four 4 one *1 three 3 two 2 "
 
-        val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
+        val gtvPath: GtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
         val treePrintout = buildThreeOf4_fromDict(gtvPath)
-        //println(treeHolder.treePrintout)
+        println(treePrintout)
 
         Assert.assertEquals(expectedTreeWithPath.trim(), treePrintout.trim())
     }
@@ -137,12 +136,12 @@ class DictToGtvBinaryTreeTest {
         return buildTreeOf1WithSubTree(null)
     }
 
-    fun buildTreeOf1WithSubTree(gtvPath:GtvPath?): String {
+    fun buildTreeOf1WithSubTree(gtvPath: GtvPath?): String {
         val gtvDict = DictToGtvBinaryTreeHelper.buildGtvDictOf1WithSubDictOf2()
 
         val newMemoization = GtvMerkleHashMemoization(100, 100)
         val fullBinaryTree:GtvBinaryTree = if (gtvPath != null) {
-            factory.buildFromGtvAndPath(gtvDict,GtvPathSet(setOf(gtvPath)), newMemoization)
+            factory.buildFromGtvAndPath(gtvDict, GtvPathSet(setOf(gtvPath)), newMemoization)
         } else {
             factory.buildFromGtv(gtvDict, newMemoization)
         }
@@ -177,19 +176,19 @@ class DictToGtvBinaryTreeTest {
     fun testIntDictLength1withInnerLength2Dict_withPath() {
         val path: Array<Any> = arrayOf("one", "seven")
 
-        val expectedTreeWithPath = "       +               \n" +
+        val expectedTreeWithPath = "       *               \n" +
                 "      / \\       \n" +
                 "     /   \\      \n" +
                 "    /     \\     \n" +
                 "   /       \\    \n" +
-                "   one       +       \n" +
+                "   one       *       \n" +
                 "          / \\   \n" +
                 "         /   \\  \n" +
                 " .   .   +   +   \n" +
                 "        / \\ / \\ \n" +
                 "- - - - eight 8 seven *7 "
 
-        val gtvPath:GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
+        val gtvPath: GtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
         val treePrintout = buildTreeOf1WithSubTree(gtvPath)
         //println(treeHolder.treePrintout)
 

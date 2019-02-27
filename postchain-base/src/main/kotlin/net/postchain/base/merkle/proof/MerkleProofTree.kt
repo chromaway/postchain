@@ -55,16 +55,23 @@ const val SERIALIZATION_NODE_TYPE: Long = 102
  *
  */
 
-open class MerkleProofElement
+interface MerkleProofElement
 
 /**
  * Base class for nodes
+ *
+ * @property prefix is the prefix to add during merkle root hash calculation
+ * @property left is the left sub tree
+ * @property right is the right sub tree
  */
-open class ProofNode(val prefix: Byte, val left: MerkleProofElement, val right: MerkleProofElement): MerkleProofElement()
+open class ProofNode(val prefix: Byte, val left: MerkleProofElement, val right: MerkleProofElement): MerkleProofElement
 
 /**
  * A dummy node that does not represent anything in the original structure.
  * Usually one of the sides (left or right) holds a [ProofHashedLeaf] and the other side holds a [ProofValueLeaf] or [ProofNode].
+ *
+ * @property left (see super)
+ * @property right (see super)
  */
 class ProofNodeSimple(left: MerkleProofElement, right: MerkleProofElement): ProofNode(HASH_PREFIX_NODE, left, right)
 
@@ -72,13 +79,19 @@ class ProofNodeSimple(left: MerkleProofElement, right: MerkleProofElement): Proo
  * The data we want to prove exists in the Merkle Tree
  * Note: We allow for many [ProofValueLeaf] in the same proof
  * (although proofs of one value will probably be the most common case)
+ *
+ * @property content is the value to be proven (in its raw form)
+ * @property sizeInBytes is the nr of bytes the original object takes up
+ * @property pathElem is the path element that tells us how to find this element in the surrounding collection
  */
-data class ProofValueLeaf<T>(val content: T, val sizeInBytes: Int): MerkleProofElement()
+open class ProofValueLeaf<T>(val content: T, val sizeInBytes: Int): MerkleProofElement
 
 /**
  * The hash in this leaf is a hash of an entire sub tree of the original Merkle tree
+ *
+ * @property merkleHash is the hash of the sub tree that isn't interesting for this proof
  */
-data class ProofHashedLeaf(val merkleHash: Hash): MerkleProofElement() {
+data class ProofHashedLeaf(val merkleHash: Hash): MerkleProofElement {
 
     // (Probably not needed but I implement equals to get rid of the warning)
     override fun equals(other: Any?): Boolean {

@@ -4,7 +4,7 @@ import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.base.merkle.proof.MerkleHashSummary
 import net.postchain.base.merkle.proof.MerkleHashSummaryFactory
 import net.postchain.gtv.Gtv
-import net.postchain.gtv.GtvPathSet
+import net.postchain.gtv.path.GtvPathSet
 import net.postchain.gtv.merkle.GtvBinaryTree
 import net.postchain.gtv.merkle.GtvBinaryTreeFactory
 

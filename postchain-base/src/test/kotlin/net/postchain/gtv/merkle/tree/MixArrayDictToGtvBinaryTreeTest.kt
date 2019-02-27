@@ -2,9 +2,9 @@ package net.postchain.gtv.merkle.tree
 
 import net.postchain.base.merkle.PrintableTreeFactory
 import net.postchain.base.merkle.TreePrinter
-import net.postchain.gtv.GtvPath
-import net.postchain.gtv.GtvPathFactory
-import net.postchain.gtv.GtvPathSet
+import net.postchain.gtv.path.GtvPath
+import net.postchain.gtv.path.GtvPathFactory
+import net.postchain.gtv.path.GtvPathSet
 import net.postchain.gtv.merkle.*
 import org.junit.Assert
 import org.junit.Test
@@ -20,7 +20,7 @@ class MixArrayDictToGtvBinaryTreeTest {
         return buildTreeOfDict1WithSubArray4(null)
     }
 
-    private fun buildTreeOfDict1WithSubArray4(gtvPath:GtvPath?): String {
+    private fun buildTreeOfDict1WithSubArray4(gtvPath: GtvPath?): String {
         val gtvDict = MixArrayDictToGtvBinaryTreeHelper.buildGtvDictWithSubArray4()
 
         val newMemoization = GtvMerkleHashMemoization(100, 100)
@@ -62,19 +62,19 @@ class MixArrayDictToGtvBinaryTreeTest {
     fun testIntDictLength1withInnerLength4Array_withPath() {
         val path: Array<Any> = arrayOf("one", 3)
 
-        val expectedTreeWithPath = "       +               \n" +
+        val expectedTreeWithPath = "       *               \n" +
                 "      / \\       \n" +
                 "     /   \\      \n" +
                 "    /     \\     \n" +
                 "   /       \\    \n" +
-                "   one       +       \n" +
+                "   one       *       \n" +
                 "          / \\   \n" +
                 "         /   \\  \n" +
                 " .   .   +   +   \n" +
                 "        / \\ / \\ \n" +
                 "- - - - 1 2 3 *4 "
 
-        val gtvPath: GtvPath =GtvPathFactory.buildFromArrayOfPointers(path)
+        val gtvPath: GtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
         val treePrintout = buildTreeOfDict1WithSubArray4(gtvPath)
         //println(treeHolder.treePrintout)
 

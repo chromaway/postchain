@@ -5,6 +5,9 @@ import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.base.merkle.proof.MerkleHashSummary
 import net.postchain.gtv.merkle.GtvMerkleBasics
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
+import net.postchain.gtv.path.GtvPath
+import net.postchain.gtv.path.GtvPathFactory
+import net.postchain.gtv.path.GtvPathSet
 import net.postchain.gtv.messages.Gtv as RawGtv
 
 /**

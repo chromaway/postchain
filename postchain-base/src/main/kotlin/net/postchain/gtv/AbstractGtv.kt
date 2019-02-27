@@ -8,7 +8,8 @@ import net.postchain.core.UserMistake
  */
 abstract class AbstractGtv : Gtv {
 
-    private var merkleHashSummary: MerkleHashSummary? = null
+    // This a locally cached object. If it's null it will be calculated.
+    private var cachedMerkleHashSummary: MerkleHashSummary? = null
 
     override operator fun get(index: Int): Gtv {
         throw UserMistake("Type error: array expected")
@@ -47,11 +48,11 @@ abstract class AbstractGtv : Gtv {
     }
 
     override fun getCachedMerkleHash(): MerkleHashSummary? {
-        return merkleHashSummary
+        return cachedMerkleHashSummary
     }
 
     override fun setCachedMerkleHash(summary: MerkleHashSummary) {
-        merkleHashSummary =  summary
+        cachedMerkleHashSummary =  summary
     }
 
 }

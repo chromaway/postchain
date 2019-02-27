@@ -1,8 +1,9 @@
 package net.postchain.gtv.merkle.factory
 
 import net.postchain.base.merkle.*
+import net.postchain.base.path.PathElement
 import net.postchain.gtv.GtvArray
-import net.postchain.gtv.GtvPathSet
+import net.postchain.gtv.path.GtvPathSet
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.merkle.GtvArrayHeadNode
 import net.postchain.gtv.merkle.GtvBinaryTreeFactory
@@ -17,13 +18,13 @@ object GtvBinaryTreeFactoryArray {
      * - When there is only one element. -> We set the right element as empty
      */
     fun buildFromGtvArray(gtvArray: GtvArray, gtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): BinaryTreeElement {
-        val isThisAProofLeaf = gtvPaths.isThisAProofLeaf() // Will tell us if any of the paths points to this element
-        //println("Arr,(is proof? $isThisAProofLeaf) Proof path (size: ${GtvPathList.size} ) list: " + GtvPath.debugRerpresentation(GtvPathList))
+        val pathElem: PathElement? =  gtvPaths.getPathLeafOrElseAnyCurrentPathElement()
+        //println("Arr,(is proof? $pathElem) Proof path (size: ${GtvPathList.size} ) list: " + GtvPath.debugRerpresentation(GtvPathList))
 
         // 1. Build leaf layer
         val leafList: List<Gtv> = gtvArray.array.map {it}
         if (leafList.isEmpty()) {
-            return GtvArrayHeadNode(EmptyLeaf, EmptyLeaf, isThisAProofLeaf, gtvArray, 0, 0)
+            return GtvArrayHeadNode(EmptyLeaf, EmptyLeaf, gtvArray, 0, 0, pathElem)
         }
 
         val leafArray = mainFactory.buildLeafElements(leafList, gtvPaths, memoization)
@@ -36,23 +37,23 @@ object GtvBinaryTreeFactoryArray {
         val orgRoot = result.get(0)
         return when (orgRoot) {
             is Node -> {
-                GtvArrayHeadNode(orgRoot.left, orgRoot.right, isThisAProofLeaf, gtvArray, leafList.size, sumNrOfBytes)
+                GtvArrayHeadNode(orgRoot.left, orgRoot.right, gtvArray, leafList.size, sumNrOfBytes, pathElem)
             }
             is Leaf<*> -> {
-                buildFromOneLeaf(leafList, orgRoot, isThisAProofLeaf, gtvArray, sumNrOfBytes)
+                buildFromOneLeaf(leafList, orgRoot, gtvArray, sumNrOfBytes, pathElem)
             }
             is CachedLeaf -> {
-                buildFromOneLeaf(leafList, orgRoot, isThisAProofLeaf, gtvArray, sumNrOfBytes)
+                buildFromOneLeaf(leafList, orgRoot, gtvArray, sumNrOfBytes, pathElem)
             }
             else -> throw IllegalStateException("Should not find element of this type here: $orgRoot")
         }
     }
 
-    private fun buildFromOneLeaf(leafList: List<Gtv>, orgRoot: BinaryTreeElement, isThisAProofLeaf: Boolean, gtvArray: GtvArray, sumNrOfBytes: Int): GtvArrayHeadNode {
+    private fun buildFromOneLeaf(leafList: List<Gtv>, orgRoot: BinaryTreeElement, gtvArray: GtvArray, sumNrOfBytes: Int, pathElem: PathElement?): GtvArrayHeadNode {
         return if (leafList.size > 1) {
             throw IllegalStateException("How come we got a leaf returned when we had ${leafList.size} elements is the args?")
         } else {
-            GtvArrayHeadNode(orgRoot, EmptyLeaf, isThisAProofLeaf, gtvArray, leafList.size, sumNrOfBytes)
+            GtvArrayHeadNode(orgRoot, EmptyLeaf, gtvArray, leafList.size, sumNrOfBytes, pathElem)
         }
     }
 

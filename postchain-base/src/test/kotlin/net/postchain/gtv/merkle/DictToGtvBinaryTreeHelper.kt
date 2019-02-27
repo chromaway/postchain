@@ -1,10 +1,6 @@
 package net.postchain.gtv.merkle
 
-import net.postchain.base.merkle.PrintableTreeFactory
-import net.postchain.base.merkle.TreePrinter
 import net.postchain.gtv.GtvDictionary
-import net.postchain.gtv.GtvPath
-import net.postchain.gtv.GtvPathSet
 import net.postchain.gtv.Gtv
 
 object DictToGtvBinaryTreeHelper {

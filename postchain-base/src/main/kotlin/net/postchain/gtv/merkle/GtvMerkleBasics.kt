@@ -1,5 +1,6 @@
 package net.postchain.gtv.merkle
 
+import net.postchain.gtv.GtvInteger
 import net.postchain.gtv.merkle.proof.GtvMerkleHashSummaryFactory
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
 
@@ -7,6 +8,7 @@ object GtvMerkleBasics {
     const val HASH_PREFIX_NODE_GTV_ARRAY: Byte = 7
     const val HASH_PREFIX_NODE_GTV_DICT: Byte = 8
 
+    const val UNKNOWN_COLLECTION_POSITION =-10L
     // --------------------------------------------------------------
     // Fetch factory instances from here (no need to create new instances over and over)
     //
