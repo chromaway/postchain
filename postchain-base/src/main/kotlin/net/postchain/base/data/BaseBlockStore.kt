@@ -2,7 +2,9 @@
 
 package net.postchain.base.data
 
+import net.postchain.base.BaseBlockHeader
 import net.postchain.base.ConfirmationProofMaterial
+import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.core.*
 
 /**
@@ -84,7 +86,10 @@ class BaseBlockStore : BlockStore {
         val blocksInfo = db.getLatestBlocksUpTo(ctx, upTo, n)
         return blocksInfo.map { blockInfo ->
             val transactions = db.getBlockTransactions(ctx, blockInfo.blockRid)
-            BlockDetail(blockInfo.blockHeader, blockInfo.blockHeight, transactions, blockInfo.witness, blockInfo.timestamp)
+
+            // Decode block header
+            val blockHeaderDecoded = BaseBlockHeader(blockInfo.blockHeader, SECP256K1CryptoSystem())
+            BlockDetail(blockInfo.blockRid, blockHeaderDecoded.prevBlockRID, blockInfo.blockHeader, blockInfo.blockHeight, transactions, blockInfo.witness, blockInfo.timestamp)
         }
     }
 

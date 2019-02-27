@@ -18,6 +18,8 @@ open class BlockData(
  * ATM it is mainly used to reply to explorer's queries
  */
 open class BlockDetail (
+        val rid: ByteArray,
+        val prevBlockRID: ByteArray,
         val header: ByteArray,
         val height: Long,
         val transactions: List<ByteArray>,
@@ -25,7 +27,8 @@ open class BlockDetail (
         val timestamp: Long
 ) {
     fun equals(other: BlockDetail): Boolean {
-        if ((this.height != other.height) ||
+        if (//(this.prevBlockRID.toHex() != other.prevBlockRID.toHex()) || BlockRID differs per each node.
+            (this.height != other.height) ||
             (this.witness.toHex() == other.witness.toHex()) ||
             (this.transactions.size != other.transactions.size)) return false
 
