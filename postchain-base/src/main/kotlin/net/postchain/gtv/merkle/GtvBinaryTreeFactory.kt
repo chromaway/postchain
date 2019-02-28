@@ -32,16 +32,16 @@ class GtvBinaryTreeFactory() : BinaryTreeFactory<Gtv, GtvPathSet>() {
      * @param GtvPathList will tell us what element that are path leafs
      */
     fun buildFromGtvAndPath(gtv: Gtv, gtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): GtvBinaryTree {
-        if (MerkleProofTreeFactory.logger.isDebugEnabled) {
-            MerkleProofTreeFactory.logger.debug("--------------------------------------------")
-            MerkleProofTreeFactory.logger.debug("--- Converting GTV to binary tree ----------")
-            MerkleProofTreeFactory.logger.debug("--------------------------------------------")
+        if (logger.isDebugEnabled) {
+            logger.debug("--------------------------------------------")
+            logger.debug("--- Converting GTV to binary tree ----------")
+            logger.debug("--------------------------------------------")
         }
         val result = handleLeaf(gtv, gtvPaths, memoization, true)
-        if (MerkleProofTreeFactory.logger.isDebugEnabled) {
-            MerkleProofTreeFactory.logger.debug("--------------------------------------------")
-            MerkleProofTreeFactory.logger.debug("--- /Converting GTV to binary tree ---------")
-            MerkleProofTreeFactory.logger.debug("--------------------------------------------")
+        if (logger.isDebugEnabled) {
+            logger.debug("--------------------------------------------")
+            logger.debug("--- /Converting GTV to binary tree ---------")
+            logger.debug("--------------------------------------------")
         }
         return GtvBinaryTree(result)
     }

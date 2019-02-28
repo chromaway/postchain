@@ -171,3 +171,12 @@ fun GtvMerkleProofTree.merkleHashSummary(calculator: MerkleHashCalculator<Gtv>):
     val summaryFactory = GtvMerkleBasics.getGtvMerkleHashSummaryFactory()
     return summaryFactory.calculateMerkleRoot(this, calculator)
 }
+
+/**
+ * @return a virtual GTV version of the original [Gtv] (based only on the info we could find in the proof,
+ *        so all hashed values will be "null")
+ */
+fun GtvMerkleProofTree.toGtvVirtual(): GtvVirtual {
+    val virtualFactory = GtvMerkleBasics.getGtvVirtualFactory()
+    return virtualFactory.buildGtvVirtual(this)
+}

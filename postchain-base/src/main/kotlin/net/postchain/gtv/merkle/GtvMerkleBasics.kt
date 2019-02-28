@@ -3,6 +3,7 @@ package net.postchain.gtv.merkle
 import net.postchain.gtv.GtvInteger
 import net.postchain.gtv.merkle.proof.GtvMerkleHashSummaryFactory
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
+import net.postchain.gtv.merkle.virtual.GtvVirtualFactory
 
 object GtvMerkleBasics {
     const val HASH_PREFIX_NODE_GTV_ARRAY: Byte = 7
@@ -18,9 +19,11 @@ object GtvMerkleBasics {
     private val treeFactory = GtvBinaryTreeFactory()
     private val proofFactory = GtvMerkleProofTreeFactory()
     private val summaryFactory = GtvMerkleHashSummaryFactory(treeFactory, proofFactory)
+    private val virtualFactory = GtvVirtualFactory
 
     fun getGtvBinaryTreeFactory() = treeFactory
     fun getGtvMerkleProofTreeFactory() = proofFactory
     fun getGtvMerkleHashSummaryFactory() = summaryFactory
+    fun getGtvVirtualFactory() = virtualFactory
 
 }

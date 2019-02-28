@@ -2,7 +2,6 @@ package net.postchain.gtv.merkle.virtual
 
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvVirtualArray
-import kotlin.math.roundToInt
 
 /**
  * @property index is the
@@ -26,19 +25,19 @@ data class ArrayIndexAndGtv(var index: Int, val value: Gtv) {
 }
 
 
-data class ArrayIndexAndGtvSet(val innerSet: MutableSet<ArrayIndexAndGtv>) {
+data class ArrayIndexAndGtvList(val innerSet: MutableList<ArrayIndexAndGtv>) {
 
     /**
-     * Sometimes we need an empty set
+     * Sometimes we need an empty list
      */
-    constructor(): this(mutableSetOf())
+    constructor(): this(mutableListOf())
 
     /**
-     * Usually we begin with a set of only one value
+     * Usually we begin with a list of only one value
      */
-    constructor(value: Gtv): this(mutableSetOf(ArrayIndexAndGtv(0, value)))
+    constructor(index: Int, value: Gtv): this(mutableListOf(ArrayIndexAndGtv(index, value)))
 
-    fun addAll(otherSet: ArrayIndexAndGtvSet) {
+    fun addAll(otherSet: ArrayIndexAndGtvList) {
         innerSet.addAll(otherSet.innerSet)
     }
 
@@ -50,7 +49,6 @@ data class ArrayIndexAndGtvSet(val innerSet: MutableSet<ArrayIndexAndGtv>) {
         for (element in innerSet) {
             retArr[element.index] = element.value
         }
-        println("Virtual array: $retArr")
         return GtvVirtualArray(retArr)
     }
 
