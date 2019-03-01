@@ -15,7 +15,7 @@ import net.postchain.network.XPacketEncoder
 @Deprecated("TODO: [et]: Remove it. Was replaced by pair Encoder/Decoder")
 class EbftPacketConverter(val config: PeerCommConfiguration) : PacketConverter<EbftMessage> {
     override fun makeIdentPacket(forPeer: ByteArray): ByteArray {
-        val bytes = Identification(forPeer, config.blockchainRID, System.currentTimeMillis()).encode()
+        val bytes = Identification(forPeer, byteArrayOf()/*config.blockchainRID*/, System.currentTimeMillis()).encode()
         val signature = config.signer()(bytes)
         return SignedMessage(bytes, config.peerInfo[config.myIndex].pubKey, signature.data).encode()
     }

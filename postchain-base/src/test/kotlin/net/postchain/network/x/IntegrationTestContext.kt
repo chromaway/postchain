@@ -8,18 +8,17 @@ import net.postchain.devtools.KeyPairHelper
 
 class IntegrationTestContext(
         connectorFactory: XConnectorFactory<Int>,
-        blockchainRid: ByteArray,
         peerInfos: Array<PeerInfo>,
         myIndex: Int
 ) {
     val peerCommunicationConfig = BasePeerCommConfiguration(
-            peerInfos, blockchainRid, myIndex, mock(), KeyPairHelper.privKey(myIndex))
+            peerInfos, myIndex, mock(), KeyPairHelper.privKey(myIndex))
 
     val connectionManager = DefaultXConnectionManager(
             connectorFactory, mock(), mock(), mock(), SECP256K1CryptoSystem())
 
     val communicationManager = DefaultXCommunicationManager<Int>(
-            connectionManager, peerCommunicationConfig, 1L, mock(), mock())
+            connectionManager, peerCommunicationConfig, 1L, mock(), mock(), mock())
 
     fun shutdown() {
         communicationManager.shutdown()

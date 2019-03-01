@@ -64,7 +64,7 @@ class DefaultXConnectionManager<PacketType>(
             ok = false
         }
         chains[peerConfig.chainID] = Chain(peerConfig, autoConnectAll)
-        chainIDforBlockchainRID[peerConfig.commConfiguration.blockchainRID.byteArrayKeyOf()] =
+        chainIDforBlockchainRID[peerConfig.blockchainRID.byteArrayKeyOf()] =
                 peerConfig.chainID
 
         if (autoConnectAll) {
@@ -83,14 +83,14 @@ class DefaultXConnectionManager<PacketType>(
 
         val peerConnectionDescriptor = XPeerConnectionDescriptor(
                 peerId,
-                peerConfig.commConfiguration.blockchainRID.byteArrayKeyOf())
+                peerConfig.blockchainRID.byteArrayKeyOf())
 
         val peerInfo = peerConfig.commConfiguration.resolvePeer(peerId.byteArray)
                 ?: throw ProgrammerMistake("Peer ID not found: ${peerId.byteArray.toHex()}")
 
         val packetEncoder = packetEncoderFactory.create(
                 peerConfig.commConfiguration,
-                peerConfig.commConfiguration.blockchainRID)
+                peerConfig.blockchainRID)
 
         task {
             connector.connectPeer(peerConnectionDescriptor, peerInfo, packetEncoder)

@@ -29,6 +29,7 @@ class EbftIntegrationTestContext(
             connectionManager,
             config,
             chainId,
+            blockchainRid,
             EbftPacketEncoder(config, blockchainRid),
             EbftPacketDecoder(config))
 

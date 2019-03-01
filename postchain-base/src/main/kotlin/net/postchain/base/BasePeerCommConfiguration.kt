@@ -3,7 +3,6 @@
 package net.postchain.base
 
 class BasePeerCommConfiguration(override val peerInfo: Array<PeerInfo>,
-                                override val blockchainRID: ByteArray, // Remove this
                                 override val myIndex: Int,
                                 private val cryptoSystem: CryptoSystem,
                                 private val privKey: ByteArray

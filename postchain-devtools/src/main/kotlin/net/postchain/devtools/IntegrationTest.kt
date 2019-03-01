@@ -22,6 +22,7 @@ import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder
 import org.apache.commons.configuration2.builder.fluent.Parameters
 import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler
+import org.apache.commons.configuration2.io.ClasspathLocationStrategy
 import org.junit.After
 import org.junit.Assert.*
 import java.io.File

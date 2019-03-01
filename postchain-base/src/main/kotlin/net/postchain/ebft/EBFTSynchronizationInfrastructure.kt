@@ -48,7 +48,6 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
     private fun buildXCommunicationManager(blockchainConfig: BaseBlockchainConfiguration): CommunicationManager<EbftMessage> {
         val communicationConfig = BasePeerCommConfiguration(
                 PeerInfoCollectionFactory.createPeerInfoCollection(config),
-                blockchainConfig.blockchainRID,
                 blockchainConfig.configData.context.nodeID,
                 SECP256K1CryptoSystem(),
                 privKey())
@@ -60,6 +59,7 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
                 connectionManager,
                 communicationConfig,
                 blockchainConfig.chainID,
+                blockchainConfig.blockchainRID,
                 packetEncoder,
                 packetDecoder
         ).apply { init() }
@@ -74,7 +74,6 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
     private fun buildPeerCommConfiguration(peers: Array<PeerInfo>): PeerCommConfiguration {
         return BasePeerCommConfiguration(
                 peers,
-                byteArrayOf(),
                 DefaultPeerResolver.resolvePeerIndex(pubKey(), peers),
                 SECP256K1CryptoSystem(),
                 privKey())

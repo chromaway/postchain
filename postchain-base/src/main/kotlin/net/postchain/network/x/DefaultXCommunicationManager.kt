@@ -12,6 +12,7 @@ class DefaultXCommunicationManager<PacketType>(
         val connectionManager: XConnectionManager,
         val config: PeerCommConfiguration,
         val chainID: Long,
+        val blockchainRID: ByteArray,
         private val packetEncoder: XPacketEncoder<PacketType>,
         private val packetDecoder: XPacketDecoder<PacketType>
 ) : CommunicationManager<PacketType> {
@@ -23,6 +24,7 @@ class DefaultXCommunicationManager<PacketType>(
     override fun init() {
         val peerConfig = XChainPeerConfiguration(
                 chainID,
+                blockchainRID,
                 config,
                 { data: ByteArray, peerID: XPeerID -> decodeAndEnqueue(peerID, data) },
                 packetEncoder,

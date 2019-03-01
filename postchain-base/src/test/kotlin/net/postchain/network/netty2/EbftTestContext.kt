@@ -10,7 +10,7 @@ import net.postchain.ebft.message.EbftMessage
 import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPacketHandler
 
-class EbftTestContext(val config: PeerCommConfiguration) {
+class EbftTestContext(val config: PeerCommConfiguration, val blockchainRid: ByteArray) {
 
     val packets: XPacketHandler = mock()
 
@@ -22,7 +22,7 @@ class EbftTestContext(val config: PeerCommConfiguration) {
 
     fun init() = peer.init(config.myPeerInfo(), EbftPacketDecoder(config))
 
-    fun buildPacketEncoder(): EbftPacketEncoder = EbftPacketEncoder(config, config.blockchainRID)
+    fun buildPacketEncoder(): EbftPacketEncoder = EbftPacketEncoder(config, blockchainRid)
 
     fun buildPacketDecoder(): EbftPacketDecoder = EbftPacketDecoder(config)
 
