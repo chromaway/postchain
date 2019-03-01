@@ -5,28 +5,34 @@ package net.postchain.ebft
 import mu.KLogging
 import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.core.Signature
 import net.postchain.ebft.message.*
+import net.postchain.ebft.message.BlockData
 import net.postchain.ebft.message.Transaction
+import net.postchain.gtv.GtvArray
+import net.postchain.gtv.GtvBoolean
+import net.postchain.gtv.GtvByteArray
+import net.postchain.gtv.GtvInteger
 import net.postchain.network.CommunicationManager
 import java.util.*
 
 fun decodeBlockDataWithWitness(block: CompleteBlock, bc: BlockchainConfiguration)
         : BlockDataWithWitness {
-    val header = bc.decodeBlockHeader(block.header)
+    val header = bc.decodeBlockHeader(block.data.header)
     val witness = bc.decodeWitness(block.witness)
-    return BlockDataWithWitness(header, block.transactions, witness)
+    return BlockDataWithWitness(header, block.data.transactions, witness)
 }
 
-fun decodeBlockData(block: UnfinishedBlock, bc: BlockchainConfiguration)
-        : BlockData {
+fun decodeBlockData(block: BlockData, bc: BlockchainConfiguration)
+        : net.postchain.core.BlockData {
     val header = bc.decodeBlockHeader(block.header)
-    return BlockData(header, block.transactions)
+    return net.postchain.core.BlockData(header, block.transactions)
 }
 
 class RevoltTracker(private val revoltTimeout: Int, private val statusManager: StatusManager) {
-    var deadLine = newDeadLine()
-    var prevHeight = statusManager.myStatus.height
-    var prevRound = statusManager.myStatus.round
+    private var deadLine = newDeadLine()
+    private var prevHeight = statusManager.myStatus.height
+    private var prevRound = statusManager.myStatus.round
 
     /**
      * Set new deadline for the revolt tracker
@@ -57,7 +63,7 @@ class RevoltTracker(private val revoltTimeout: Int, private val statusManager: S
 private class StatusSender(
         private val maxStatusInterval: Int,
         private val statusManager: StatusManager,
-        private val communicationManager: CommunicationManager<EbftMessage>
+        private val communicationManager: CommunicationManager<Message>
 ) {
     var lastSerial: Long = -1
     var lastSentTime: Long = Date(0L).time
@@ -71,56 +77,53 @@ private class StatusSender(
         if (isNewState || timeoutExpired) {
             this.lastSentTime = Date().time
             this.lastSerial = myStatus.serial
-            val statusMessage = Status(myStatus.blockRID, myStatus.height, myStatus.revolting,
-                    myStatus.round, myStatus.serial, myStatus.state.ordinal)
+            val statusMessage = Status(myStatus.blockRID!!, myStatus.height,
+                    myStatus.revolting, myStatus.round, myStatus.serial,
+                    myStatus.state.ordinal)
             communicationManager.broadcastPacket(statusMessage)
         }
     }
 }
 
-val StatusLogInterval = 10000L
+const val StatusLogInterval = 10000L
 
 /**
  * The SyncManager handles communications with our peers.
  */
-class SyncManager(
-        val statusManager: StatusManager,
-        val blockManager: BlockManager,
-        val blockDatabase: BlockDatabase,
-        val communicationManager: CommunicationManager<EbftMessage>,
-        private val txQueue: TransactionQueue,
-        val blockchainConfiguration: BlockchainConfiguration
-) {
-    private val revoltTracker = RevoltTracker(10000, statusManager)
-    private val statusSender = StatusSender(1000, statusManager, communicationManager)
+class SyncManager(private val statusManager: StatusManager, private val blockManager: BlockManager,
+                  private val blockDatabase: BlockDatabase, private val communicationManager: CommunicationManager<Message>,
+                  private val txQueue: TransactionQueue, val blockchainConfiguration: BlockchainConfiguration) {
+
+    private val revoltTracker: RevoltTracker = RevoltTracker(10000, statusManager)
+    private val statusSender: StatusSender = StatusSender(1000, statusManager, communicationManager)
     private val defaultTimeout = 1000
-    private var currentTimeout = defaultTimeout
-    private var processingIntent: BlockIntent = DoNothingIntent
+    private var currentTimeout: Int
+    private var processingIntent: BlockIntent
     private var processingIntentDeadline = 0L
-    private var lastStatusLogged = Date().time
+    private var lastStatusLogged: Long
 
     companion object : KLogging()
 
     /**
      * Handle incoming messages
      */
-    fun dispatchMessages() {
+    private fun dispatchMessages() {
         for (packet in communicationManager.getPackets()) {
             val nodeIndex = packet.first
             val message = packet.second
-            logger.debug { "Received message type ${message.getBackingInstance().choiceID} from ${nodeIndex}" }
+            logger.debug { "Received message type ${message::class.java.simpleName} from $nodeIndex" }
             try {
                 when (message) {
                     is Status -> {
                         val nodeStatus = NodeStatus(message.height, message.serial)
-                        nodeStatus.blockRID = message.blockRId
+                        nodeStatus.blockRID = message.blockRID
                         nodeStatus.revolting = message.revolting
                         nodeStatus.round = message.round
                         nodeStatus.state = NodeState.values()[message.state]
                         statusManager.onStatusUpdate(nodeIndex, nodeStatus)
                     }
                     is BlockSignature -> {
-                        val signature = Signature(message.signature.subjectID, message.signature.data)
+                        val signature = Signature(message.sig.subjectID, message.sig.data)
                         val smBlockRID = this.statusManager.myStatus.blockRID
                         if (smBlockRID == null) {
                             logger.info("Received signature not needed")
@@ -132,12 +135,12 @@ class SyncManager(
                     }
                     is CompleteBlock -> {
                         blockManager.onReceivedBlockAtHeight(
-                                decodeBlockDataWithWitness(message, blockchainConfiguration),
-                                message.height
+                                decodeBlockDataWithWitness(message, blockchainConfiguration), message.height
                         )
                     }
                     is UnfinishedBlock -> {
-                        blockManager.onReceivedUnfinishedBlock(decodeBlockData(message, blockchainConfiguration))
+                        blockManager.onReceivedUnfinishedBlock(decodeBlockData(BlockData(message.header, message.transactions),
+                                blockchainConfiguration))
                     }
                     is GetUnfinishedBlock -> sendUnfinishedBlock(nodeIndex)
                     is GetBlockAtHeight -> sendBlockAtHeight(nodeIndex, message.height)
@@ -177,13 +180,14 @@ class SyncManager(
             assert(statusManager.myStatus.blockRID!!.contentEquals(currentBlock.header.blockRID))
             val signature = statusManager.getCommitSignature()
             if (signature != null) {
-                communicationManager.sendPacket(BlockSignature(blockRID, signature), setOf(nodeIndex))
+                communicationManager.sendPacket(BlockSignature(blockRID,
+                        net.postchain.ebft.message.Signature(signature.subjectID, signature.data)), setOf(nodeIndex))
             }
             return
         }
         val blockSignature = blockDatabase.getBlockSignature(blockRID)
         blockSignature success {
-            val packet = BlockSignature(blockRID, it)
+            val packet = BlockSignature(blockRID, net.postchain.ebft.message.Signature(it.subjectID, it.data))
             communicationManager.sendPacket(packet, setOf(nodeIndex))
         } fail {
             logger.debug("Error sending BlockSignature", it)
@@ -199,8 +203,7 @@ class SyncManager(
     private fun sendBlockAtHeight(nodeIndex: Int, height: Long) {
         val blockAtHeight = blockDatabase.getBlockAtHeight(height)
         blockAtHeight success {
-            val packet = CompleteBlock(it.header.rawData, it.transactions.toList(),
-                    height, it.witness!!.getRawData())
+            val packet = CompleteBlock(BlockData(it.header.rawData, it.transactions), height, it.witness!!.getRawData())
             communicationManager.sendPacket(packet, setOf(nodeIndex))
         } fail { logger.debug("Error sending CompleteBlock", it) }
     }
@@ -225,9 +228,9 @@ class SyncManager(
      */
     private fun selectRandomNode(match: (NodeStatus) -> Boolean): Int? {
         val matchingIndexes = mutableListOf<Int>()
-        statusManager.nodeStatuses.forEachIndexed({ index, status ->
+        statusManager.nodeStatuses.forEachIndexed{ index, status ->
             if (match(status)) matchingIndexes.add(index)
-        })
+        }
         if (matchingIndexes.isEmpty()) return null
         if (matchingIndexes.size == 1) return matchingIndexes[0]
         return matchingIndexes[Math.floor(Math.random() * matchingIndexes.size).toInt()]
@@ -240,7 +243,7 @@ class SyncManager(
      */
     private fun fetchBlockAtHeight(height: Long) {
         val nodeIndex = selectRandomNode { it.height > height } ?: return
-        logger.debug("Fetching block at height ${height} from node ${nodeIndex}")
+        logger.debug("Fetching block at height $height from node $nodeIndex")
         communicationManager.sendPacket(GetBlockAtHeight(height), setOf(nodeIndex))
     }
 
@@ -344,5 +347,11 @@ class SyncManager(
             logStatus()
             lastStatusLogged = Date().time
         }
+    }
+
+    init {
+        this.currentTimeout = defaultTimeout
+        this.processingIntent = DoNothingIntent
+        this.lastStatusLogged = Date().time
     }
 }

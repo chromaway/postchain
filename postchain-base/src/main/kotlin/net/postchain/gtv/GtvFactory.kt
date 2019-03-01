@@ -31,6 +31,10 @@ object GtvFactory {
         return GtvInteger(i)
     }
 
+    fun gtv(b: Boolean): GtvBoolean {
+        return GtvBoolean(b)
+    }
+
     fun gtv(s: String): GtvString {
         return GtvString(s)
     }

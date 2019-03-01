@@ -9,7 +9,7 @@ import net.postchain.core.BlockchainEngine
 import net.postchain.core.BlockchainProcess
 import net.postchain.core.RestartHandler
 import net.postchain.core.SynchronizationInfrastructure
-import net.postchain.ebft.message.EbftMessage
+import net.postchain.ebft.message.Message
 import net.postchain.network.CommManager
 import net.postchain.network.CommunicationManager
 import net.postchain.network.PeerConnectionManager
@@ -40,7 +40,7 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
                 restartHandler)
     }
 
-    private fun buildXCommunicationManager(blockchainConfig: BaseBlockchainConfiguration): CommunicationManager<EbftMessage> {
+    private fun buildXCommunicationManager(blockchainConfig: BaseBlockchainConfiguration): CommunicationManager<Message> {
         val communicationConfig = BasePeerCommConfiguration(
                 PeerInfoCollectionFactory.createPeerInfoCollection(config),
                 blockchainConfig.blockchainRID,
@@ -65,7 +65,7 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
     }
 
     @Deprecated("See XCommunicationManager")
-    private fun buildCommunicationManager(blockchainConfig: BaseBlockchainConfiguration): CommManager<EbftMessage> {
+    private fun buildCommunicationManager(blockchainConfig: BaseBlockchainConfiguration): CommManager<Message> {
         val communicationConfig = BasePeerCommConfiguration(
                 PeerInfoCollectionFactory.createPeerInfoCollection(config),
                 blockchainConfig.blockchainRID,

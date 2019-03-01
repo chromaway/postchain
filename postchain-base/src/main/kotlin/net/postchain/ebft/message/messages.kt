@@ -2,156 +2,159 @@
 
 package net.postchain.ebft.message
 
+import net.postchain.common.toHex
 import net.postchain.core.ProgrammerMistake
-import net.postchain.core.Signature
-import java.io.ByteArrayOutputStream
-import java.util.*
-
+import net.postchain.core.UserMistake
+import net.postchain.gtv.*
 
 class SignedMessage(val message: ByteArray, val pubKey: ByteArray, val signature: ByteArray) {
 
     companion object {
-        fun decode(bytes: ByteArray): net.postchain.ebft.message.SignedMessage {
-            val message = net.postchain.ebft.messages.SignedMessage.der_decode(bytes.inputStream())
-            return SignedMessage(message.message, message.pubkey, message.signature)
+        fun decode(bytes: ByteArray): SignedMessage {
+            try {
+                val gtvArray = GtvFactory.decodeGtv(bytes) as GtvArray
+
+                return SignedMessage(gtvArray[0].asByteArray(), gtvArray[1].asByteArray(), gtvArray[2].asByteArray())
+            } catch (e: Exception) {
+                throw UserMistake("bytes ${bytes.toHex()} cannot be decoded", e)
+            }
         }
     }
 
     fun encode(): ByteArray {
-        val result = net.postchain.ebft.messages.SignedMessage()
-        result.message = message
-        result.pubkey = pubKey
-        result.signature = signature
-        val out = ByteArrayOutputStream()
-        result.der_encode(out)
-        return out.toByteArray()
+        return GtvEncoder.encodeGtv(toGtv())
+    }
+
+    fun toGtv(): Gtv {
+        return GtvFactory.gtv(GtvFactory.gtv(message), GtvFactory.gtv(pubKey), GtvFactory.gtv(signature))
     }
 }
 
-sealed class EbftMessage {
-    companion object {
-        fun decode(bytes: ByteArray): EbftMessage {
-            val message = net.postchain.ebft.messages.Message.der_decode(bytes.inputStream())
-            return when (message.choiceID) {
-                net.postchain.ebft.messages.Message.getBlockAtHeightChosen -> GetBlockAtHeight(message.getBlockAtHeight.height)
-                net.postchain.ebft.messages.Message.identificationChosen ->
-                    Identification(message.identification.yourPubKey, message.identification.blockchainRID, message.identification.timestamp)
-                net.postchain.ebft.messages.Message.statusChosen -> {
-                    val s = message.status
-                    net.postchain.ebft.message.Status(s.blockRID, s.height, s.revolting, s.round, s.serial, s.state.toInt())
-                }
-                net.postchain.ebft.messages.Message.getUnfinishedBlockChosen -> GetUnfinishedBlock(message.getUnfinishedBlock.blockRID)
-                net.postchain.ebft.messages.Message.unfinishedBlockChosen -> UnfinishedBlock(message.unfinishedBlock.header, message.unfinishedBlock.transactions)
-                net.postchain.ebft.messages.Message.getBlockSignatureChosen -> GetBlockSignature(message.getBlockSignature.blockRID)
-                net.postchain.ebft.messages.Message.blockSignatureChosen -> BlockSignature(message.blockSignature.blockRID, Signature(message.blockSignature.signature.subjectID, message.blockSignature.signature.data))
-                net.postchain.ebft.messages.Message.completeBlockChosen -> CompleteBlock(message.completeBlock.blockData.header, message.completeBlock.blockData.transactions, message.completeBlock.height, message.completeBlock.witness)
-                net.postchain.ebft.messages.Message.transactionChosen -> Transaction(message.transaction.data)
-                else -> throw ProgrammerMistake("Message type ${message.choiceID} is not handeled")
-            }
+enum class MessageType {
+    ID, STATUS, TX, SIG, BLOCKSIG, BLOCKDATA, UNFINISHEDBLOCK,
+    GETBLOCKSIG, COMPLETEBLOCK, GETBLOCKATHEIGHT, GETUNFINISHEDBLOCK
+}
 
+abstract class Message(val type: Int) {
+
+    companion object {
+        fun decode(bytes: ByteArray): Message {
+            val data =  GtvFactory.decodeGtv(bytes) as GtvArray
+            val type = data[0].asInteger().toInt()
+            return when (type) {
+                MessageType.ID.ordinal -> Identification(data[1].asByteArray(), data[2].asByteArray(), data[3].asInteger())
+                MessageType.STATUS.ordinal -> Status(data[1].asByteArray(), data[2].asInteger(), data[3].asBoolean(), data[4].asInteger(), data[5].asInteger(), data[6].asInteger().toInt())
+                MessageType.TX.ordinal -> Transaction(data[1].asByteArray())
+                MessageType.SIG.ordinal -> Signature(data[1].asByteArray(), data[2].asByteArray())
+                MessageType.BLOCKSIG.ordinal -> BlockSignature(data[1].asByteArray(), Signature(data[2].asByteArray(), data[3].asByteArray()))
+                MessageType.GETBLOCKSIG.ordinal -> GetBlockSignature(data[1].asByteArray())
+                MessageType.BLOCKDATA.ordinal -> BlockData(data[1].asByteArray(), data[2].asArray().map { it.asByteArray() })
+                MessageType.COMPLETEBLOCK.ordinal -> CompleteBlock(BlockData(data[1].asByteArray(), data[2].asArray().map { it.asByteArray() }), data[3].asInteger(), data[4].asByteArray())
+                MessageType.GETBLOCKATHEIGHT.ordinal -> GetBlockAtHeight(data[1].asInteger())
+                MessageType.GETUNFINISHEDBLOCK.ordinal -> GetUnfinishedBlock(data[1].asByteArray())
+                MessageType.UNFINISHEDBLOCK.ordinal -> UnfinishedBlock(data[1].asByteArray(), data[2].asArray().map { it.asByteArray() })
+                else -> throw ProgrammerMistake("Message type $type is not handled")
+            }
         }
     }
 
-    open fun encode(): ByteArray {
-        val out = ByteArrayOutputStream()
-        getBackingInstance().der_encode(out)
-        return out.toByteArray()
-    }
+    abstract fun toGtv(): Gtv
 
-    abstract fun getBackingInstance(): net.postchain.ebft.messages.Message
+    fun encode(): ByteArray {
+        return GtvEncoder.encodeGtv(toGtv())
+    }
 
     override fun toString(): String {
         return this::class.simpleName!!
     }
 }
 
-class BlockSignature(val blockRID: ByteArray, val signature: net.postchain.core.Signature) : EbftMessage() {
-    override fun getBackingInstance(): net.postchain.ebft.messages.Message {
-        val result = net.postchain.ebft.messages.BlockSignature()
-        result.blockRID = blockRID
-        val sig = net.postchain.ebft.messages.Signature()
-        sig.data = signature.data
-        sig.subjectID = signature.subjectID
-        result.signature = sig
-        return net.postchain.ebft.messages.Message.blockSignature(result)
+class Transaction(val data: ByteArray): Message(MessageType.TX.ordinal) {
+
+    override fun toGtv(): Gtv {
+        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), GtvFactory.gtv(data))
     }
 }
 
-class CompleteBlock(val header: ByteArray, val transactions: List<ByteArray>, val height: Long, val witness: ByteArray) : EbftMessage() {
-    override fun getBackingInstance(): net.postchain.ebft.messages.Message {
-        val result = net.postchain.ebft.messages.CompleteBlock()
-        result.blockData = net.postchain.ebft.messages.BlockData()
-        result.blockData.header = header
-        result.blockData.transactions = Vector(transactions)
-        result.height = height
-        result.witness = witness
-        return net.postchain.ebft.messages.Message.completeBlock(result)
+class Signature(val subjectID: ByteArray, val data: ByteArray): Message(MessageType.SIG.ordinal) {
+
+    override fun toGtv(): Gtv {
+        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), GtvFactory.gtv(subjectID), GtvFactory.gtv(data))
+    }
+}
+
+class BlockSignature(val blockRID: ByteArray, val sig: Signature): Message(MessageType.BLOCKSIG.ordinal) {
+
+    override fun toGtv(): GtvArray {
+        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), GtvFactory.gtv(blockRID),
+                GtvFactory.gtv(sig.subjectID), GtvFactory.gtv(sig.data))
+    }
+}
+
+class GetBlockSignature(val blockRID: ByteArray): Message(MessageType.GETBLOCKSIG.ordinal) {
+
+    override fun toGtv(): Gtv {
+        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), GtvFactory.gtv(blockRID))
+    }
+}
+
+class BlockData(val header: ByteArray, val transactions: List<ByteArray>): Message(MessageType.BLOCKDATA.ordinal) {
+
+    override fun toGtv(): Gtv {
+        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), GtvFactory.gtv(header),
+                GtvFactory.gtv(transactions.map { GtvFactory.gtv(it) }))
+    }
+}
+
+class CompleteBlock(val data: BlockData, val height: Long, val witness: ByteArray): Message(MessageType.COMPLETEBLOCK.ordinal) {
+
+    override fun toGtv(): Gtv {
+        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()),
+                GtvFactory.gtv(data.header), GtvFactory.gtv(data.transactions.map { GtvFactory.gtv(it) }),
+                GtvFactory.gtv(height), GtvFactory.gtv(witness))
+    }
+}
+
+class GetBlockAtHeight(val height: Long): Message(MessageType.GETBLOCKATHEIGHT.ordinal) {
+
+    override fun toGtv(): Gtv {
+        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), GtvFactory.gtv(height))
+    }
+}
+
+class GetUnfinishedBlock(val blockRID: ByteArray): Message(MessageType.GETUNFINISHEDBLOCK.ordinal) {
+
+    override fun toGtv(): Gtv {
+        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), GtvFactory.gtv(blockRID))
+    }
+}
+
+class UnfinishedBlock(val header: ByteArray, val transactions: List<ByteArray>): Message(MessageType.UNFINISHEDBLOCK.ordinal) {
+
+    override fun toGtv(): Gtv {
+        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), GtvFactory.gtv(header),
+                GtvFactory.gtv(transactions.map { GtvFactory.gtv(it) }))
+    }
+}
+
+class Identification(val pubKey: ByteArray, val blockchainRID: ByteArray, val timestamp: Long): Message(MessageType.ID.ordinal) {
+
+    override fun toGtv(): Gtv {
+        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), GtvFactory.gtv(pubKey),
+                GtvFactory.gtv(blockchainRID), GtvFactory.gtv(timestamp))
+    }
+}
+
+class Status(val blockRID: ByteArray, val height: Long, val revolting: Boolean, val round: Long,
+                  val serial: Long, val state: Int): Message(MessageType.STATUS.ordinal) {
+
+
+    override fun toGtv(): Gtv {
+        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), GtvFactory.gtv(blockRID), GtvFactory.gtv(height),
+                GtvFactory.gtv(revolting), GtvFactory.gtv(round), GtvFactory.gtv(serial), GtvFactory.gtv(state.toLong()))
     }
 }
 
 
-class GetBlockAtHeight(val height: Long) : EbftMessage() {
-    override fun getBackingInstance(): net.postchain.ebft.messages.Message {
-        val result = net.postchain.ebft.messages.GetBlockAtHeight()
-        result.height = height
-        return net.postchain.ebft.messages.Message.getBlockAtHeight(result)
-    }
-}
 
-class GetBlockSignature(val blockRID: ByteArray) : EbftMessage() {
-    override fun getBackingInstance(): net.postchain.ebft.messages.Message {
-        val result = net.postchain.ebft.messages.GetBlockSignature()
-        result.blockRID = blockRID
-        return net.postchain.ebft.messages.Message.getBlockSignature(result)
-    }
-}
-
-class GetUnfinishedBlock(val blockRID: ByteArray) : EbftMessage() {
-    override fun getBackingInstance(): net.postchain.ebft.messages.Message {
-        val result = net.postchain.ebft.messages.GetUnfinishedBlock()
-        result.blockRID = blockRID
-        return net.postchain.ebft.messages.Message.getUnfinishedBlock(result)
-    }
-}
-
-class Identification(val yourPubKey: ByteArray, val blockchainRID: ByteArray, val timestamp: Long) : EbftMessage() {
-    override fun getBackingInstance(): net.postchain.ebft.messages.Message {
-        val result = net.postchain.ebft.messages.Identification()
-        result.yourPubKey = yourPubKey
-        result.blockchainRID = blockchainRID
-        result.timestamp = timestamp
-        return net.postchain.ebft.messages.Message.identification(result)
-    }
-}
-
-class Status(val blockRId: ByteArray?, val height: Long, val revolting: Boolean, val round: Long, val serial: Long, val state: Int) : EbftMessage() {
-    override fun getBackingInstance(): net.postchain.ebft.messages.Message {
-        val result = net.postchain.ebft.messages.Status()
-        result.blockRID = blockRId
-        result.height = height
-        result.revolting = revolting
-        result.round = round
-        result.serial = serial
-        result.state = state.toLong()
-        return net.postchain.ebft.messages.Message.status(result)
-    }
-
-}
-
-class UnfinishedBlock(val header: ByteArray, val transactions: List<ByteArray>) : EbftMessage() {
-    override fun getBackingInstance(): net.postchain.ebft.messages.Message {
-        val result = net.postchain.ebft.messages.UnfinishedBlock()
-        result.header = header
-        result.transactions = Vector(transactions)
-        return net.postchain.ebft.messages.Message.unfinishedBlock(result)
-    }
-}
-
-class Transaction(val data: ByteArray) : EbftMessage() {
-    override fun getBackingInstance(): net.postchain.ebft.messages.Message {
-        val result = net.postchain.ebft.messages.Transaction()
-        result.data = data
-        return net.postchain.ebft.messages.Message.transaction(result)
-    }
-}
 

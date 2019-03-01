@@ -15,7 +15,7 @@ import net.postchain.gtv.messages.Gtv as RawGtv
  * Note: order is same as in ASN.1, thus we can use same integer ids.
  */
 enum class GtvType {
-    NULL, BYTEARRAY, STRING, INTEGER, DICT, ARRAY
+    NULL, BOOLEAN, BYTEARRAY, STRING, INTEGER, DICT, ARRAY
 }
 
 /**
@@ -34,6 +34,7 @@ interface Gtv {
     fun isNull(): Boolean
     fun asDict(): Map<String, Gtv>
     fun asInteger(): Long
+    fun asBoolean(): Boolean
     fun asByteArray(convert: Boolean = false): ByteArray
 
     // Other conversions
