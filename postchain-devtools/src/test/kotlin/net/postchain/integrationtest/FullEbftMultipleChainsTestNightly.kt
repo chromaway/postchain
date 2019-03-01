@@ -38,11 +38,11 @@ class FullEbftMultipleChainsTestNightly : IntegrationTest() {
                 blocksCount,
                 txPerBlock,
                 arrayOf(
-                        "classpath:/net/postchain/multiple_chains/single_node/node0.properties"
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/single_node/node0.properties"
                 ),
                 arrayOf(
-                        "/net/postchain/multiple_chains/single_node/blockchain_config_1.xml",
-                        "/net/postchain/multiple_chains/single_node/blockchain_config_2.xml"
+                        "/net/postchain/multiple_chains/ebft_nightly/single_node/blockchain_config_1.xml",
+                        "/net/postchain/multiple_chains/ebft_nightly/single_node/blockchain_config_2.xml"
                 ))
     }
 
@@ -59,12 +59,12 @@ class FullEbftMultipleChainsTestNightly : IntegrationTest() {
                 blocksCount,
                 txPerBlock,
                 arrayOf(
-                        "classpath:/net/postchain/multiple_chains/two_nodes/node0.properties",
-                        "classpath:/net/postchain/multiple_chains/two_nodes/node1.properties"
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/two_nodes/node0.properties",
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/two_nodes/node1.properties"
                 ),
                 arrayOf(
-                        "/net/postchain/multiple_chains/two_nodes/blockchain_config_1.xml",
-                        "/net/postchain/multiple_chains/two_nodes/blockchain_config_2.xml"
+                        "/net/postchain/multiple_chains/ebft_nightly/two_nodes/blockchain_config_1.xml",
+                        "/net/postchain/multiple_chains/ebft_nightly/two_nodes/blockchain_config_2.xml"
                 ))
     }
 
@@ -81,15 +81,15 @@ class FullEbftMultipleChainsTestNightly : IntegrationTest() {
                 blocksCount,
                 txPerBlock,
                 arrayOf(
-                        "classpath:/net/postchain/multiple_chains/five_nodes/node0.properties",
-                        "classpath:/net/postchain/multiple_chains/five_nodes/node1.properties",
-                        "classpath:/net/postchain/multiple_chains/five_nodes/node2.properties",
-                        "classpath:/net/postchain/multiple_chains/five_nodes/node3.properties",
-                        "classpath:/net/postchain/multiple_chains/five_nodes/node4.properties"
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node0.properties",
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node1.properties",
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node2.properties",
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node3.properties",
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node4.properties"
                 ),
                 arrayOf(
-                        "/net/postchain/multiple_chains/five_nodes/blockchain_config_1.xml",
-                        "/net/postchain/multiple_chains/five_nodes/blockchain_config_2.xml"
+                        "/net/postchain/multiple_chains/ebft_nightly/five_nodes/blockchain_config_1.xml",
+                        "/net/postchain/multiple_chains/ebft_nightly/five_nodes/blockchain_config_2.xml"
                 ))
     }
 
