@@ -2,7 +2,7 @@ package net.postchain.modules.perftest
 
 import net.postchain.common.TimeLog
 import net.postchain.devtools.IntegrationTest
-import net.postchain.devtools.SingleChainTestNode
+import net.postchain.devtools.PostchainTestNode
 import org.junit.Test
 
 /**
@@ -72,7 +72,7 @@ class SingleNodeManual : IntegrationTest() {
         println("buildBlock tps: ${txCount * 1000 / TimeLog.getValue("BaseBlockchainEngine.buildBlock().buildBlock")}")
     }
 
-    private fun txCount(node: SingleChainTestNode): Pair<Long, Int> {
+    private fun txCount(node: PostchainTestNode): Pair<Long, Int> {
         return node.getBlockchainInstance().getEngine().getBlockQueries().let { blockQueries ->
             val bestHeight = blockQueries.getBestHeight().get()
             var txCount = (0..bestHeight).fold(0) { count, height ->

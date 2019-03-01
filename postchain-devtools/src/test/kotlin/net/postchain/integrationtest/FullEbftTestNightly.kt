@@ -8,7 +8,7 @@ import junitparams.naming.TestCaseName
 import mu.KLogging
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
-import net.postchain.devtools.SingleChainTestNode
+import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -20,7 +20,7 @@ class FullEbftTestNightly : IntegrationTest() {
 
     companion object : KLogging()
 
-    private fun strategy(node: SingleChainTestNode): OnDemandBlockBuildingStrategy {
+    private fun strategy(node: PostchainTestNode): OnDemandBlockBuildingStrategy {
         return node
                 .getBlockchainInstance()
                 .getEngine()

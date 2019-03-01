@@ -11,7 +11,7 @@ import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
-import net.postchain.devtools.SingleChainTestNode
+import net.postchain.devtools.PostchainTestNode
 import net.postchain.ebft.worker.ValidatorWorker
 import org.junit.Assert
 import org.junit.Test
@@ -23,7 +23,7 @@ class GTXPerformanceTestNightly : IntegrationTest() {
 
     companion object : KLogging()
 
-    private fun strategy(node: SingleChainTestNode): OnDemandBlockBuildingStrategy {
+    private fun strategy(node: PostchainTestNode): OnDemandBlockBuildingStrategy {
         return node
                 .getBlockchainInstance()
                 .getEngine()

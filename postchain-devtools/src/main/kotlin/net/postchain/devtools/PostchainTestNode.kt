@@ -17,7 +17,7 @@ import net.postchain.gtx.GTXValue
 import net.postchain.gtx.encodeGTXValue
 import org.apache.commons.configuration2.Configuration
 
-class SingleChainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
+class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
 
     private val storage = StorageBuilder.buildStorage(nodeConfig, NODE_ID_TODO, true)
 

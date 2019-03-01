@@ -43,7 +43,7 @@ class TestLauncher : IntegrationTest() {
         }
     }
 
-    private fun createTestNode(configFile: String, blockchainRid: ByteArray, blockchainConfigFile: String): SingleChainTestNode {
+    private fun createTestNode(configFile: String, blockchainRid: ByteArray, blockchainConfigFile: String): PostchainTestNode {
         val nodeConfig = CommonsConfigurationFactory.readFromFile(configFile)
         // TODO: Fix this hack
         nodeConfig.setProperty("api.port", -1) // FYI: Disabling Rest API in test mode
@@ -58,7 +58,7 @@ class TestLauncher : IntegrationTest() {
 
         val chainId = nodeConfig.getLong("activechainids")
 
-        return SingleChainTestNode(nodeConfig).apply {
+        return PostchainTestNode(nodeConfig).apply {
             addBlockchain(chainId, blockchainRid, blockchainConfig)
             startBlockchain()
             nodes.add(this)
@@ -88,7 +88,7 @@ class TestLauncher : IntegrationTest() {
                                 nodeConfigFile: String? = null,
                                 blockchainConfigFile: String? = null
     ): TestOutput {
-        val node: SingleChainTestNode
+        val node: PostchainTestNode
         val testType: TestType
         try {
             // TODO: Resolve nullability here and above: !! vs ?.
