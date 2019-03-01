@@ -93,15 +93,10 @@ open class IntegrationTest {
             Array(count) { createSingleNode(it, count, blockchainConfigFilename) }
 
     private fun createSingleNode(nodeIndex: Int, totalNodesCount: Int, blockchainConfigFilename: String): PostchainTestNode {
-        val nodeConfig = createConfig(
-                nodeIndex, totalNodesCount, DEFAULT_CONFIG_FILE)
-
-        val blockchainConfig = GTXMLValueParser.parseGTXMLValue(
-                javaClass.getResource(blockchainConfigFilename).readText())
-
+        val nodeConfig = createConfig(nodeIndex, totalNodesCount, DEFAULT_CONFIG_FILE)
+        val blockchainConfig = readBlockchainConfig(blockchainConfigFilename)
         val chainId = nodeConfig.getLong("activechainids")
-        val blockchainRid = nodeConfig.getString("test.blockchain.$chainId.blockchainrid")
-                .hexStringToByteArray()
+        val blockchainRid = readBlockchainRid(nodeConfig, chainId)
 
         return PostchainTestNode(nodeConfig)
                 .apply {
@@ -130,25 +125,30 @@ open class IntegrationTest {
             nodeConfigFilename: String = DEFAULT_CONFIG_FILE,
             vararg blockchainConfigFilenames: String): PostchainTestNode {
 
-        val nodeConfig = createConfig(
-                nodeIndex, nodeCount, nodeConfigFilename)
+        val nodeConfig = createConfig(nodeIndex, nodeCount, nodeConfigFilename)
 
         val node = PostchainTestNode(nodeConfig)
                 .also { nodes.add(it) }
 
         val chainIds = nodeConfig.getStringArray("activechainids")
-        chainIds.forEachIndexed { i, chainId ->
-            val blockchainConfig = GTXMLValueParser.parseGTXMLValue(
-                    javaClass.getResource(blockchainConfigFilenames[i]).readText())
-
-            val blockchainRid = nodeConfig.getString("test.blockchain.$chainId.blockchainrid")
-                    .hexStringToByteArray()
-
+        chainIds.filter(String::isNotEmpty).forEachIndexed { i, chainId ->
+            val blockchainRid = readBlockchainRid(nodeConfig, chainId.toLong())
+            val blockchainConfig = readBlockchainConfig(blockchainConfigFilenames[i])
             node.addBlockchain(chainId.toLong(), blockchainRid, blockchainConfig)
             node.startBlockchain(chainId.toLong())
         }
 
         return node
+    }
+
+    protected fun readBlockchainConfig(blockchainConfigFilename: String): GTXValue {
+        return GTXMLValueParser.parseGTXMLValue(
+                javaClass.getResource(blockchainConfigFilename).readText())
+    }
+
+    protected fun readBlockchainRid(nodeConfig: Configuration, chainId: Long): ByteArray {
+        return nodeConfig.getString("test.blockchain.$chainId.blockchainrid")
+                .hexStringToByteArray()
     }
 
     private fun createConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)

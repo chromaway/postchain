@@ -22,7 +22,7 @@ class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
     private val storage = StorageBuilder.buildStorage(nodeConfig, NODE_ID_TODO, true)
 
     companion object : KLogging() {
-        const val DEFAULT_CHAIN_ID = 1
+        const val DEFAULT_CHAIN_ID = 1L
     }
 
     fun addBlockchain(chainId: Long, blockchainRid: ByteArray, blockchainConfig: GTXValue) {
@@ -43,7 +43,7 @@ class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
     }
 
     fun startBlockchain() {
-        startBlockchain(DEFAULT_CHAIN_ID.toLong())
+        startBlockchain(DEFAULT_CHAIN_ID)
     }
 
     fun shutdown() {
@@ -52,7 +52,7 @@ class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
     }
 
     fun getRestApiModel(): Model {
-        val blockchainProcess = processManager.retrieveBlockchain(DEFAULT_CHAIN_ID.toLong())!!
+        val blockchainProcess = processManager.retrieveBlockchain(DEFAULT_CHAIN_ID)!!
         return ((blockchainInfrastructure as BaseBlockchainInfrastructure).apiInfrastructure as BaseApiInfrastructure)
                 .restApi?.retrieveModel(blockchainRID(blockchainProcess))!!
     }
@@ -62,23 +62,23 @@ class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
                 .restApi?.actualPort() ?: 0
     }
 
-    fun getBlockchainInstance(chainId: Int = DEFAULT_CHAIN_ID): WorkerBase {
-        return processManager.retrieveBlockchain(chainId.toLong()) as WorkerBase
+    fun getBlockchainInstance(chainId: Long = DEFAULT_CHAIN_ID): WorkerBase {
+        return processManager.retrieveBlockchain(chainId) as WorkerBase
     }
 
-    fun retrieveBlockchain(chainId: Int = DEFAULT_CHAIN_ID): WorkerBase? {
-        return processManager.retrieveBlockchain(chainId.toLong()) as? WorkerBase
+    fun retrieveBlockchain(chainId: Long = DEFAULT_CHAIN_ID): WorkerBase? {
+        return processManager.retrieveBlockchain(chainId) as? WorkerBase
     }
 
-    fun transactionQueue(chainId: Int = DEFAULT_CHAIN_ID): TransactionQueue {
+    fun transactionQueue(chainId: Long = DEFAULT_CHAIN_ID): TransactionQueue {
         return getBlockchainInstance(chainId).getEngine().getTransactionQueue()
     }
 
-    fun blockQueries(chainId: Int = DEFAULT_CHAIN_ID): BlockQueries {
+    fun blockQueries(chainId: Long = DEFAULT_CHAIN_ID): BlockQueries {
         return getBlockchainInstance(chainId).getEngine().getBlockQueries()
     }
 
-    fun blockBuildingStrategy(chainId: Int = DEFAULT_CHAIN_ID): BlockBuildingStrategy {
+    fun blockBuildingStrategy(chainId: Long = DEFAULT_CHAIN_ID): BlockBuildingStrategy {
         return getBlockchainInstance(chainId).getEngine().getBlockBuildingStrategy()
     }
 

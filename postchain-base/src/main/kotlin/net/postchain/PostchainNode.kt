@@ -29,6 +29,10 @@ open class PostchainNode(nodeConfig: Configuration) {
         processManager.startBlockchain(chainID)
     }
 
+    fun stopBlockchain(chainID: Long) {
+        processManager.stopBlockchain(chainID)
+    }
+
     fun stopAllBlockchain() {
         processManager.shutdown()
     }

@@ -21,7 +21,7 @@ class FullEbftMultipleChainsTestNightly : IntegrationTest() {
 
     companion object : KLogging()
 
-    private fun strategyOf(nodeId: Int, chainId: Int): OnDemandBlockBuildingStrategy {
+    private fun strategyOf(nodeId: Int, chainId: Long): OnDemandBlockBuildingStrategy {
         return nodes[nodeId].blockBuildingStrategy(chainId) as OnDemandBlockBuildingStrategy
     }
 
@@ -106,7 +106,7 @@ class FullEbftMultipleChainsTestNightly : IntegrationTest() {
                     "nodesCount: $nodesCount, blocksCount: $blocksCount, txPerBlock: $txPerBlock"
         }
 
-        val chains = arrayOf(1, 2)
+        val chains = arrayOf(1L, 2L)
 
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
 
