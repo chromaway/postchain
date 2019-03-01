@@ -5,11 +5,13 @@ package net.postchain.devtools
 import mu.KLogging
 import net.postchain.base.PeerInfo
 import net.postchain.base.SECP256K1CryptoSystem
+import net.postchain.common.hexStringToByteArray
 import net.postchain.core.*
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.privKeyHex
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.KeyPairHelper.pubKeyHex
+import net.postchain.devtools.utils.configuration.UniversalFileLocationStrategy
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.gtx
 import net.postchain.gtx.gtxml.GTXMLValueParser
@@ -20,7 +22,6 @@ import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder
 import org.apache.commons.configuration2.builder.fluent.Parameters
 import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler
-import org.apache.commons.configuration2.io.ClasspathLocationStrategy
 import org.junit.After
 import org.junit.Assert.*
 import java.io.File
@@ -47,7 +48,7 @@ open class IntegrationTest {
 
     @After
     fun tearDown() {
-        nodes.forEach { it.stopAllBlockchain() }
+        nodes.forEach { it.shutdown() }
         nodes.clear()
         logger.debug("Closed nodes")
         peerInfos = null
@@ -98,9 +99,56 @@ open class IntegrationTest {
         val blockchainConfig = GTXMLValueParser.parseGTXMLValue(
                 javaClass.getResource(blockchainConfigFilename).readText())
 
-        return SingleChainTestNode(nodeConfig, blockchainConfig)
-                .apply { startBlockchain() }
+        val chainId = nodeConfig.getLong("activechainids")
+        val blockchainRid = nodeConfig.getString("test.blockchain.$chainId.blockchainrid")
+                .hexStringToByteArray()
+
+        return SingleChainTestNode(nodeConfig)
+                .apply {
+                    addBlockchain(chainId, blockchainRid, blockchainConfig)
+                    startBlockchain()
+                }
+                .also {
+                    nodes.add(it)
+                }
+    }
+
+    protected fun createMultipleChainNodes(
+            count: Int,
+            nodeConfigsFilenames: Array<String>,
+            blockchainConfigsFilenames: Array<String>
+    ): Array<SingleChainTestNode> {
+
+        return Array(count) {
+            createMultipleChainNode(it, count, nodeConfigsFilenames[it], *blockchainConfigsFilenames)
+        }
+    }
+
+    private fun createMultipleChainNode(
+            nodeIndex: Int,
+            nodeCount: Int,
+            nodeConfigFilename: String = DEFAULT_CONFIG_FILE,
+            vararg blockchainConfigFilenames: String): SingleChainTestNode {
+
+        val nodeConfig = createConfig(
+                nodeIndex, nodeCount, nodeConfigFilename)
+
+        val node = SingleChainTestNode(nodeConfig)
                 .also { nodes.add(it) }
+
+        val chainIds = nodeConfig.getStringArray("activechainids")
+        chainIds.forEachIndexed { i, chainId ->
+            val blockchainConfig = GTXMLValueParser.parseGTXMLValue(
+                    javaClass.getResource(blockchainConfigFilenames[i]).readText())
+
+            val blockchainRid = nodeConfig.getString("test.blockchain.$chainId.blockchainrid")
+                    .hexStringToByteArray()
+
+            node.addBlockchain(chainId.toLong(), blockchainRid, blockchainConfig)
+            node.startBlockchain(chainId.toLong())
+        }
+
+        return node
     }
 
     private fun createConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
@@ -109,7 +157,8 @@ open class IntegrationTest {
         // Read first file directly via the builder
         val params = Parameters()
                 .fileBased()
-                .setLocationStrategy(ClasspathLocationStrategy())
+//                .setLocationStrategy(ClasspathLocationStrategy())
+                .setLocationStrategy(UniversalFileLocationStrategy())
                 .setListDelimiterHandler(DefaultListDelimiterHandler(','))
                 .setFile(File(configFile))
 
@@ -118,7 +167,7 @@ open class IntegrationTest {
                 .configuration
 
         // append nodeIndex to schema name
-        baseConfig.setProperty("database.schema", baseConfig.getString("database.schema") + nodeIndex)
+        baseConfig.setProperty("database.schema", baseConfig.getString("database.schema") + "_" + nodeIndex)
 
         // peers
         var port = (baseConfig.getProperty("node.0.port") as String).toInt()

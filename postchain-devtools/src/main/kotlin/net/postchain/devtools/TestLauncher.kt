@@ -43,7 +43,7 @@ class TestLauncher : IntegrationTest() {
         }
     }
 
-    private fun createTestNode(configFile: String, blockchainConfigFile: String): SingleChainTestNode {
+    private fun createTestNode(configFile: String, blockchainRid: ByteArray, blockchainConfigFile: String): SingleChainTestNode {
         val nodeConfig = CommonsConfigurationFactory.readFromFile(configFile)
         // TODO: Fix this hack
         nodeConfig.setProperty("api.port", -1) // FYI: Disabling Rest API in test mode
@@ -56,7 +56,10 @@ class TestLauncher : IntegrationTest() {
         val blockchainConfig = GTXMLValueParser.parseGTXMLValue(
                 File(blockchainConfigFile).readText())
 
-        return SingleChainTestNode(nodeConfig, blockchainConfig).apply {
+        val chainId = nodeConfig.getLong("activechainids")
+
+        return SingleChainTestNode(nodeConfig).apply {
+            addBlockchain(chainId, blockchainRid, blockchainConfig)
             startBlockchain()
             nodes.add(this)
         }
@@ -69,7 +72,7 @@ class TestLauncher : IntegrationTest() {
     )
 
     fun runXMLGTXTests(xml: String,
-                       blockchainRID: String?,
+                       blockchainRID: String,
                        nodeConfigFile: String? = null,
                        blockchainConfigFile: String? = null
     ): TestOutput {
@@ -81,14 +84,15 @@ class TestLauncher : IntegrationTest() {
     }
 
     private fun _runXMLGTXTests(xml: String,
-                                blockchainRID: String?,
+                                blockchainRID: String,
                                 nodeConfigFile: String? = null,
                                 blockchainConfigFile: String? = null
     ): TestOutput {
         val node: SingleChainTestNode
         val testType: TestType
         try {
-            node = createTestNode(nodeConfigFile!!, blockchainConfigFile!!)
+            // TODO: Resolve nullability here and above: !! vs ?.
+            node = createTestNode(nodeConfigFile!!, blockchainRID.hexStringToByteArray(), blockchainConfigFile!!)
         } catch (e: Exception) {
             return TestOutput(false, false, e, listOf())
         }

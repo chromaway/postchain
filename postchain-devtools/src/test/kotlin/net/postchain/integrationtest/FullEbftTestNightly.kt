@@ -10,7 +10,6 @@ import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.SingleChainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
-import net.postchain.ebft.worker.ValidatorWorker
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -35,19 +34,18 @@ class FullEbftTestNightly : IntegrationTest() {
             , "8, 1, 0", "8, 2, 0", "8, 10, 0", "8, 1, 10", "8, 2, 10", "8, 10, 10"
 //            , "25, 100, 0"
     )
-    @TestCaseName("[{index}] nodesCount: {0}, blockCount: {1}, txPerBlock: {2}")
-    fun runXNodesWithYTxPerBlock(nodesCount: Int, blockCount: Int, txPerBlock: Int) {
+    @TestCaseName("[{index}] nodesCount: {0}, blocksCount: {1}, txPerBlock: {2}")
+    fun runXNodesWithYTxPerBlock(nodesCount: Int, blocksCount: Int, txPerBlock: Int) {
         logger.info {
             "runXNodesWithYTxPerBlock(): " +
-                    "nodesCount: $nodesCount, blockCount: $blockCount, txPerBlock: $txPerBlock"
+                    "nodesCount: $nodesCount, blocksCount: $blocksCount, txPerBlock: $txPerBlock"
         }
 
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         createNodes(nodesCount, "/net/postchain/full_ebft/blockchain_config_$nodesCount.xml")
 
         var txId = 0
-        (nodes[0].getBlockchainInstance() as ValidatorWorker).statusManager
-        for (i in 0 until blockCount) {
+        for (i in 0 until blocksCount) {
             for (tx in 0 until txPerBlock) {
                 val currentTxId = txId++
                 nodes.forEach {
@@ -65,7 +63,7 @@ class FullEbftTestNightly : IntegrationTest() {
 
         val queries = nodes[0].getBlockchainInstance().getEngine().getBlockQueries()
         val referenceHeight = queries.getBestHeight().get()
-        logger.info { "$blockCount, refHe: $referenceHeight" }
+        logger.info { "$blocksCount, refHe: $referenceHeight" }
         nodes.forEach { node ->
             val queries = node.getBlockchainInstance().getEngine().getBlockQueries()
             assertEquals(referenceHeight, queries.getBestHeight().get())

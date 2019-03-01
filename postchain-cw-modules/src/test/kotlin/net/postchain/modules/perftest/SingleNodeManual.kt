@@ -57,7 +57,7 @@ class SingleNodeManual : IntegrationTest() {
         }
 
         val pair = txCount(node)
-        val blockCount = pair.first - warmupHeight
+        val blocksCount = pair.first - warmupHeight
         var txCount = pair.second - warmupTxCount
 
         println("==================================================")
@@ -65,9 +65,9 @@ class SingleNodeManual : IntegrationTest() {
 
         println(TimeLog.toString())
 
-        println("Total blocks: ${blockCount}")
+        println("Total blocks: $blocksCount")
         println("Total transaction count: $txCount")
-        println("Avg tx/block: ${txCount / (blockCount)}")
+        println("Avg tx/block: ${txCount / (blocksCount)}")
         println("node tps: ${txCount * 1000 / testDuration}")
         println("buildBlock tps: ${txCount * 1000 / TimeLog.getValue("BaseBlockchainEngine.buildBlock().buildBlock")}")
     }
