@@ -7,6 +7,7 @@ import net.postchain.cli.CliExecution
 import net.postchain.config.CommonsConfigurationFactory
 import net.postchain.core.BlockQueries
 import net.postchain.core.NODE_ID_NA
+import org.junit.Assert
 import org.junit.Test
 import java.io.File
 import java.nio.file.Paths
@@ -17,7 +18,7 @@ class CliIntegrationTest {
         return Paths.get(javaClass.getResource("/net/postchain/cli/${name}").toURI()).toString()
     }
 
-//    @Test
+    @Test
     fun testModule() {
         val nodeConfigPath = fullPath("node-config.properties")
         val nodeConfig = CommonsConfigurationFactory.readFromFile(nodeConfigPath)
@@ -48,8 +49,8 @@ class CliIntegrationTest {
     }
 
     @Test
-    fun testAddConfigurationSingleNode() {
-        val nodeConfigPath = fullPath("node-config.properties")
+    fun testAddConfigurationSingleNodeOneSigner() {
+        val nodeConfigPath = fullPath("node-config1.properties")
         val nodeConfig = CommonsConfigurationFactory.readFromFile(nodeConfigPath)
 
         // this wipes the data base!
@@ -59,15 +60,19 @@ class CliIntegrationTest {
         val chainId : Long = 1;
         val blockChainConfig = fullPath("blockchain_config.xml")
         val height = 1L
+
         CliExecution().addConfiguration(nodeConfigPath, blockChainConfig, chainId,  height , AlreadyExistMode.FORCE)
 
-//        val node = PostchainNode(nodeConfig)
-//        node.startBlockchain(chainId)
-//        val chain = node.processManager.retrieveBlockchain(chainId)
-//        val queries = chain!!.getEngine().getBlockQueries()
-//        waitUntilBlock(queries, 1, 100)
-//        Assert.assertTrue(queries.getBestHeight().get() >= 1) // make sure it built at least one block
+        val node = PostchainNode(nodeConfig)
+        node.startBlockchain(chainId)
+        val chain = node.processManager.retrieveBlockchain(chainId)
+        val queries = chain!!.getEngine().getBlockQueries()
+        waitUntilBlock(queries, 1, 100)
+        Assert.assertTrue(queries.getBestHeight().get() >= 1) // make sure it built at least one block
+
+        node.stopAllBlockchain()
     }
+
 
     fun waitUntilBlock(queries: BlockQueries, height: Int, maxWaitTime: Int) {
         var sleepInMilliseconds : Int = 10;
