@@ -5,6 +5,7 @@ import net.postchain.StorageBuilder
 import net.postchain.cli.AlreadyExistMode
 import net.postchain.cli.CliExecution
 import net.postchain.config.CommonsConfigurationFactory
+import net.postchain.core.BlockQueries
 import net.postchain.core.NODE_ID_NA
 import org.junit.Test
 import java.io.File
@@ -16,7 +17,7 @@ class CliIntegrationTest {
         return Paths.get(javaClass.getResource("/net/postchain/cli/${name}").toURI()).toString()
     }
 
-    @Test
+//    @Test
     fun testModule() {
         val nodeConfigPath = fullPath("node-config.properties")
         val nodeConfig = CommonsConfigurationFactory.readFromFile(nodeConfigPath)
@@ -44,5 +45,38 @@ class CliIntegrationTest {
 
         println("Stop all blockchain")
         node.stopAllBlockchain()
+    }
+
+    @Test
+    fun testAddConfigurationSingleNode() {
+        val nodeConfigPath = fullPath("node-config.properties")
+        val nodeConfig = CommonsConfigurationFactory.readFromFile(nodeConfigPath)
+
+        // this wipes the data base!
+        StorageBuilder.buildStorage(nodeConfig, NODE_ID_NA, true)
+
+        // add-blockchain goes here
+        val chainId : Long = 1;
+        val blockChainConfig = fullPath("blockchain_config.xml")
+        val height = 1L
+        CliExecution().addConfiguration(nodeConfigPath, blockChainConfig, chainId,  height , AlreadyExistMode.FORCE)
+
+//        val node = PostchainNode(nodeConfig)
+//        node.startBlockchain(chainId)
+//        val chain = node.processManager.retrieveBlockchain(chainId)
+//        val queries = chain!!.getEngine().getBlockQueries()
+//        waitUntilBlock(queries, 1, 100)
+//        Assert.assertTrue(queries.getBestHeight().get() >= 1) // make sure it built at least one block
+    }
+
+    fun waitUntilBlock(queries: BlockQueries, height: Int, maxWaitTime: Int) {
+        var sleepInMilliseconds : Int = 10;
+        while(sleepInMilliseconds < maxWaitTime) {
+            Thread.sleep(10)
+            if (queries.getBestHeight().get() > height) {
+                break;
+            }
+            sleepInMilliseconds += 10;
+        }
     }
 }
