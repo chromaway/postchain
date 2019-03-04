@@ -9,7 +9,7 @@ object BaseConfigurationDataStore : ConfigurationDataStore {
 
     private val db: DatabaseAccess = SQLDatabaseAccess()
 
-    override fun findConfiguration(context: EContext, height: Long): ByteArray? {
+    override fun findConfiguration(context: EContext, height: Long): Long? {
         return db.findConfiguration(context, height)
     }
 

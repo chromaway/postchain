@@ -62,7 +62,8 @@ class CommandCheckBlockchain : Command {
                     BaseConfigurationDataStore.findConfiguration(ctx, 0) == null -> {
                         throw CliError.Companion.CliException("No configuration found")
                     }
-                    else -> {}
+                    else -> {
+                    }
                 }
             }
             Ok("Okay")

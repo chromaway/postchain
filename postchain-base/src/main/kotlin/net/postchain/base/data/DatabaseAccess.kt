@@ -38,7 +38,7 @@ interface DatabaseAccess {
 
     // Configurations
 
-    fun findConfiguration(context: EContext, height: Long): ByteArray?
+    fun findConfiguration(context: EContext, height: Long): Long?
     fun getConfigurationData(context: EContext, height: Long): ByteArray?
     fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long
 }
@@ -294,11 +294,11 @@ class SQLDatabaseAccess : DatabaseAccess {
         }
     }
 
-    override fun findConfiguration(context: EContext, height: Long): ByteArray? {
+    override fun findConfiguration(context: EContext, height: Long): Long? {
         return queryRunner.query(context.conn,
-                "SELECT configuration_data FROM configurations WHERE chain_id = ? AND height <= ? " +
+                "SELECT height FROM configurations WHERE chain_id = ? AND height <= ? " +
                         "ORDER BY height DESC LIMIT 1",
-                nullableByteArrayRes, context.chainID, height)
+                nullableLongRes, context.chainID, height)
     }
 
     override fun getConfigurationData(context: EContext, height: Long): ByteArray? {
