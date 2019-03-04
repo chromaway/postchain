@@ -10,6 +10,8 @@
             <entry key="name">
                 <string>net.postchain.base.BaseBlockBuildingStrategy</string>
             </entry>
+            <entry key="maxblocktime"><int>10</int></entry>
+            <entry key="blockdelay"><int>10</int></entry>
         </dict>
     </entry>
     <entry key="configurationfactory">
@@ -39,7 +41,7 @@
         <dict>
             <entry key="modules">
                 <array>
-                        <string>net.postchain.configurations.GTXTestModule</string>
+                    <string>net.postchain.configurations.GTXTestModule</string>
                 </array>
             </entry>
         </dict>

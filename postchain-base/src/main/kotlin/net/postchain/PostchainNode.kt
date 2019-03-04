@@ -11,7 +11,7 @@ import org.apache.commons.configuration2.Configuration
 
 open class PostchainNode(nodeConfig: Configuration) {
 
-    protected val processManager: BaseBlockchainProcessManager
+    val processManager: BaseBlockchainProcessManager
     protected val blockchainInfrastructure: BlockchainInfrastructure
 
     init {
