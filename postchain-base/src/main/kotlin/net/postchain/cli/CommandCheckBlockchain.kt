@@ -2,16 +2,11 @@ package net.postchain.cli
 
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
-import net.postchain.base.BaseConfigurationDataStore
-import net.postchain.base.data.SQLDatabaseAccess
-import net.postchain.common.toHex
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
 
 @Parameters(commandDescription = "Checks blockchain")
 class CommandCheckBlockchain : Command {
-
-    private val dbAccess = SQLDatabaseAccess()
 
     // TODO: Eliminate it later or reduce to DbConfig only
     @Parameter(
@@ -46,26 +41,7 @@ class CommandCheckBlockchain : Command {
                 toStringExclude(this, "dbAccess", ToStringStyle.SHORT_PREFIX_STYLE))
 
         return try {
-            runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
-                val chainIdBlockchainRid = dbAccess.getBlockchainRID(ctx)
-                when {
-                    chainIdBlockchainRid == null -> {
-                        throw CliError.Companion.CliException("Unknown chain-id: $chainId")
-                    }
-                    !blockchainRID.equals(chainIdBlockchainRid.toHex(), true) -> {
-                        throw CliError.Companion.CliException("""
-                            BlockchainRids are not equal:
-                                expected: $blockchainRID
-                                actual: ${chainIdBlockchainRid.toHex()}
-                        """.trimIndent())
-                    }
-                    BaseConfigurationDataStore.findConfiguration(ctx, 0) == null -> {
-                        throw CliError.Companion.CliException("No configuration found")
-                    }
-                    else -> {
-                    }
-                }
-            }
+            CliExecution().checkBlockchain(nodeConfigFile, chainId, blockchainRID)
             Ok("Okay")
         } catch (e: CliError.Companion.CliException) {
             CliError.CheckBlockChain(message = e.message)

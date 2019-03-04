@@ -2,8 +2,6 @@ package net.postchain.cli
 
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
-import net.postchain.PostchainNode
-import net.postchain.config.CommonsConfigurationFactory
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
 
@@ -34,10 +32,8 @@ class CommandRunNode : Command {
         nodeConfigFile = nodeConfigFile.takeIf { it != "" }
                 ?: "config/config.$nodeIndex.properties"
 
-        val node = PostchainNode(
-                CommonsConfigurationFactory.readFromFile(nodeConfigFile))
-
-        chainIDs.forEach(node::startBlockchain)
+        val cliExecution = CliExecution()
+        cliExecution.runNode(nodeConfigFile, chainIDs)
         return Ok("Postchain node launching is done", isLongRunning = true)
     }
 }
