@@ -61,6 +61,6 @@ class NettyConnector<PacketType>(
 
     override fun shutdown() {
         server.shutdown()
-        eventGroup.shutdownGracefully(2, 2, TimeUnit.SECONDS).sync()
+        eventGroup.shutdownGracefully(250, 2000, TimeUnit.MILLISECONDS).sync()
     }
 }
