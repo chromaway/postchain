@@ -28,6 +28,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
     fun testMixedAPICalls() {
         val nodeCount = 3
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
+        configOverrides.setProperty("api.port", 0)
         createNodes(nodeCount, "/net/postchain/api/blockchain_config.xml")
 
         testStatusGet("/tx/$blockchainRID/$txHashHex", 404)
@@ -53,6 +54,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         val nodeCount = 3
 //        createEbftNodes(nodeCount)
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
+        configOverrides.setProperty("api.port", 0)
         createNodes(nodeCount, "/net/postchain/api/blockchain_config.xml")
 
         var blockHeight = 0
