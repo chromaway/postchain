@@ -13,6 +13,7 @@ import org.awaitility.Awaitility.await
 import org.awaitility.Duration.TEN_SECONDS
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -68,6 +69,7 @@ class FullEbftMultipleChainsTestNightly : IntegrationTest() {
                 ))
     }
 
+    @Ignore
     @Test
     @Parameters(
             "1, 0", "2, 0", "10, 0"
