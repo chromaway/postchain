@@ -11,12 +11,10 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import net.postchain.core.Shutdownable
 import java.util.concurrent.TimeUnit
 
-class NettyServer : Shutdownable {
+class NettyServer(val childGroup: EventLoopGroup) : Shutdownable {
 
     private lateinit var server: ServerBootstrap
     private lateinit var bindFuture: ChannelFuture
-    private lateinit var parentGroup: EventLoopGroup
-    private lateinit var childGroup: EventLoopGroup
     private lateinit var createChannelHandler: () -> ChannelHandler
 
     fun setChannelHandler(handlerFactory: () -> ChannelHandler) {
@@ -24,11 +22,8 @@ class NettyServer : Shutdownable {
     }
 
     fun run(port: Int) {
-        parentGroup = NioEventLoopGroup(1)
-        childGroup = NioEventLoopGroup()
-
         server = ServerBootstrap()
-                .group(parentGroup, childGroup)
+                .group(childGroup)
                 .channel(NioServerSocketChannel::class.java)
 //                .option(ChannelOption.SO_BACKLOG, 10)
 //                .handler(LoggingHandler(LogLevel.INFO))
@@ -50,7 +45,5 @@ class NettyServer : Shutdownable {
     override fun shutdown() {
         bindFuture.channel().close()
         bindFuture.channel().closeFuture().sync()
-        parentGroup.shutdownGracefully(2, 2, TimeUnit.SECONDS).sync()
-        childGroup.shutdownGracefully(2, 2, TimeUnit.SECONDS).sync()
     }
 }

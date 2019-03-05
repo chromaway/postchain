@@ -15,6 +15,8 @@ import net.postchain.devtools.utils.configuration.UniversalFileLocationStrategy
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.gtx
 import net.postchain.gtx.gtxml.GTXMLValueParser
+import nl.komponents.kovenant.all
+import nl.komponents.kovenant.task
 import org.apache.commons.configuration2.CompositeConfiguration
 import org.apache.commons.configuration2.Configuration
 import org.apache.commons.configuration2.MapConfiguration
@@ -49,12 +51,14 @@ open class IntegrationTest {
 
     @After
     fun tearDown() {
+        logger.debug("Integration test -- TEARDOWN")
         nodes.forEach { it.shutdown() }
         nodes.clear()
         logger.debug("Closed nodes")
         peerInfos = null
         expectedSuccessRids = mutableMapOf()
         configOverrides.clear()
+        System.runFinalization()
     }
 
     // TODO: [et]: Check out nullability for return value
