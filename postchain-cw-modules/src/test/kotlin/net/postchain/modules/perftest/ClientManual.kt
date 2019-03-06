@@ -22,7 +22,7 @@ class ClientManual : FTIntegrationTest() {
     fun postTx(bytes: ByteArray) {
         given().port(8383)
                 .body("{tx: ${bytes.toHex()}}")
-                .post("/tx")
+                .post("/tx/78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3")
     }
 
     fun makeTestTx(id: Long, value: String): ByteArray {
