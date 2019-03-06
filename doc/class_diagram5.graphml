@@ -5088,7 +5088,7 @@ fun buildGtv(): Gtv</y:MethodLabel>
             <y:MethodLabel>The purpose of this proxy 
 is to reduce the number 
 of references (arrows) 
-the Gtv interface.
+to the Gtv interface.
 (Maybe we don't need it? 
 All classes that depend 
 on Gtv have Gtv in their 
