@@ -74,7 +74,7 @@ class FullEbftMultipleChainsTestNightly : IntegrationTest() {
     @Parameters(
             "1, 0", "2, 0", "10, 0"
             , "1, 1", "2, 1", "10, 1"
-//            , "1, 10", "2, 10", "10, 10"
+            , "1, 10", "2, 10", "10, 10"
     )
     @TestCaseName("[{index}] nodesCount: 5, blocksCount: {0}, txPerBlock: {1}")
     fun runFiveNodesWithYTxPerBlock(blocksCount: Int, txPerBlock: Int) {
