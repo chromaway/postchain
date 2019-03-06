@@ -16,7 +16,7 @@ class MessagesTest {
         val mess = GetBlockAtHeight(29)
         val encoded = mess.encode()
 
-        val result = Message.decode(encoded) as net.postchain.ebft.message.GetBlockAtHeight
+        val result = Message.decode<GetBlockAtHeight>(encoded)
         assertEquals(mess.height, result.height)
     }
 
@@ -29,7 +29,7 @@ class MessagesTest {
         val mess = BlockSignature(blockRID, sig)
         val encoded = mess.encode()
 
-        val result = Message.decode(encoded) as BlockSignature
+        val result = Message.decode<BlockSignature>(encoded)
         assertArrayEquals(mess.blockRID, result.blockRID)
         assertArrayEquals(mess.sig.subjectID, result.sig.subjectID)
         assertArrayEquals(mess.sig.data, result.sig.data)

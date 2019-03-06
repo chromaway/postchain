@@ -38,21 +38,21 @@ enum class MessageType {
 abstract class Message(val type: Int) {
 
     companion object {
-        fun decode(bytes: ByteArray): Message {
+        inline fun <reified T:  Message> decode(bytes: ByteArray): T {
             val data =  GtvFactory.decodeGtv(bytes) as GtvArray
             val type = data[0].asInteger().toInt()
             return when (type) {
-                MessageType.ID.ordinal -> Identification(data[1].asByteArray(), data[2].asByteArray(), data[3].asInteger())
-                MessageType.STATUS.ordinal -> Status(data[1].asByteArray(), data[2].asInteger(), data[3].asBoolean(), data[4].asInteger(), data[5].asInteger(), data[6].asInteger().toInt())
-                MessageType.TX.ordinal -> Transaction(data[1].asByteArray())
-                MessageType.SIG.ordinal -> Signature(data[1].asByteArray(), data[2].asByteArray())
-                MessageType.BLOCKSIG.ordinal -> BlockSignature(data[1].asByteArray(), Signature(data[2].asByteArray(), data[3].asByteArray()))
-                MessageType.GETBLOCKSIG.ordinal -> GetBlockSignature(data[1].asByteArray())
-                MessageType.BLOCKDATA.ordinal -> BlockData(data[1].asByteArray(), data[2].asArray().map { it.asByteArray() })
-                MessageType.COMPLETEBLOCK.ordinal -> CompleteBlock(BlockData(data[1].asByteArray(), data[2].asArray().map { it.asByteArray() }), data[3].asInteger(), data[4].asByteArray())
-                MessageType.GETBLOCKATHEIGHT.ordinal -> GetBlockAtHeight(data[1].asInteger())
-                MessageType.GETUNFINISHEDBLOCK.ordinal -> GetUnfinishedBlock(data[1].asByteArray())
-                MessageType.UNFINISHEDBLOCK.ordinal -> UnfinishedBlock(data[1].asByteArray(), data[2].asArray().map { it.asByteArray() })
+                MessageType.ID.ordinal -> Identification(data[1].asByteArray(), data[2].asByteArray(), data[3].asInteger()) as T
+                MessageType.STATUS.ordinal -> Status(data[1].asByteArray(), data[2].asInteger(), data[3].asBoolean(), data[4].asInteger(), data[5].asInteger(), data[6].asInteger().toInt()) as T
+                MessageType.TX.ordinal -> Transaction(data[1].asByteArray()) as T
+                MessageType.SIG.ordinal -> Signature(data[1].asByteArray(), data[2].asByteArray()) as T
+                MessageType.BLOCKSIG.ordinal -> BlockSignature(data[1].asByteArray(), Signature(data[2].asByteArray(), data[3].asByteArray())) as T
+                MessageType.GETBLOCKSIG.ordinal -> GetBlockSignature(data[1].asByteArray()) as T
+                MessageType.BLOCKDATA.ordinal -> BlockData(data[1].asByteArray(), data[2].asArray().map { it.asByteArray() }) as T
+                MessageType.COMPLETEBLOCK.ordinal -> CompleteBlock(BlockData(data[1].asByteArray(), data[2].asArray().map { it.asByteArray() }), data[3].asInteger(), data[4].asByteArray()) as T
+                MessageType.GETBLOCKATHEIGHT.ordinal -> GetBlockAtHeight(data[1].asInteger()) as T
+                MessageType.GETUNFINISHEDBLOCK.ordinal -> GetUnfinishedBlock(data[1].asByteArray()) as T
+                MessageType.UNFINISHEDBLOCK.ordinal -> UnfinishedBlock(data[1].asByteArray(), data[2].asArray().map { it.asByteArray() }) as T
                 else -> throw ProgrammerMistake("Message type $type is not handled")
             }
         }
