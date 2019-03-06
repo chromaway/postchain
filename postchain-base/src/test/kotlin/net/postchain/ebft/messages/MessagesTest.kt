@@ -6,6 +6,7 @@ import net.postchain.ebft.message.BlockSignature
 import net.postchain.ebft.message.GetBlockAtHeight
 import net.postchain.ebft.message.Message
 import net.postchain.ebft.message.Signature
+import net.postchain.ebft.message.Status
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -33,5 +34,26 @@ class MessagesTest {
         assertArrayEquals(mess.blockRID, result.blockRID)
         assertArrayEquals(mess.sig.subjectID, result.sig.subjectID)
         assertArrayEquals(mess.sig.data, result.sig.data)
+    }
+
+    @Test
+    fun testStatus() {
+        val blockRID = ByteArray(32){it.toByte()}
+        val height = 123321L
+        val revolting = true
+        val round = 1L
+        val serial = 123456L
+        val state = 123
+
+        val status = Status(blockRID, height, revolting, round, serial, state)
+        val encoded = status.encode()
+        val expected = Message.decode<Status>(encoded)
+
+        assertArrayEquals(status.blockRID, expected.blockRID)
+        assertEquals(status.height, expected.height)
+        assertEquals(status.revolting, expected.revolting)
+        assertEquals(status.round, expected.round)
+        assertEquals(status.serial, expected.serial)
+        assertEquals(status.state, expected.state)
     }
 }

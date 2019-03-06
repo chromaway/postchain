@@ -5,6 +5,10 @@ import net.postchain.gtv.messages.DictPair
 import java.io.ByteArrayInputStream
 import net.postchain.gtv.messages.Gtv as RawGtv
 
+fun Boolean.toLong() = if (this) 1L else 0L
+
+fun Long.toBoolean() = this != 0L
+
 /**
  * Responsible for creating various forms of GTV objects.
  */
@@ -31,8 +35,8 @@ object GtvFactory {
         return GtvInteger(i)
     }
 
-    fun gtv(b: Boolean): GtvBoolean {
-        return GtvBoolean(b)
+    fun gtv(b: Boolean): GtvInteger {
+        return GtvInteger(b.toLong())
     }
 
     fun gtv(s: String): GtvString {

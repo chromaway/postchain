@@ -9,10 +9,6 @@ import net.postchain.core.Signature
 import net.postchain.ebft.message.*
 import net.postchain.ebft.message.BlockData
 import net.postchain.ebft.message.Transaction
-import net.postchain.gtv.GtvArray
-import net.postchain.gtv.GtvBoolean
-import net.postchain.gtv.GtvByteArray
-import net.postchain.gtv.GtvInteger
 import net.postchain.network.CommunicationManager
 import java.util.*
 

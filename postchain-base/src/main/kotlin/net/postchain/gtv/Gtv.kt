@@ -15,7 +15,7 @@ import net.postchain.gtv.messages.Gtv as RawGtv
  * Note: order is same as in ASN.1, thus we can use same integer ids.
  */
 enum class GtvType {
-    NULL, BOOLEAN, BYTEARRAY, STRING, INTEGER, DICT, ARRAY
+    NULL, BYTEARRAY, STRING, INTEGER, DICT, ARRAY
 }
 
 /**
