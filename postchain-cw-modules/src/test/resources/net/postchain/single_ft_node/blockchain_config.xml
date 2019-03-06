@@ -10,9 +10,9 @@
             <entry key="name">
                 <string>net.postchain.base.BaseBlockBuildingStrategy</string>
             </entry>
-            <entry key="blockdelay"><int>100</int></entry>
+            <entry key="blockdelay"><int>50</int></entry>
             <entry key="maxblocktransactions">
-                <int>1000</int>
+                <int>100</int>
             </entry>
             <!-- TODO: [et]: Maybe move this somewhere -->
             <entry key="queuecapacity">

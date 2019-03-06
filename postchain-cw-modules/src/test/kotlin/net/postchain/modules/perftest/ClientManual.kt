@@ -55,6 +55,7 @@ class ClientManual : FTIntegrationTest() {
         while (endTime > System.currentTimeMillis()) {
             postTx(makeTransferTx(alicePubKey, alicePrivKey, aliceAccountID, assetID, 10, bobAccountID, "A->B ${i}"))
             postTx(makeTransferTx(bobPubKey, bobPrivKey, bobAccountID, assetID, 10, aliceAccountID, memo1 = "B->A ${i++}"))
+            Thread.sleep(2)
             println("$i")
         }
     }

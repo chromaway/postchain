@@ -40,7 +40,7 @@ class SingleNodeManual : IntegrationTest() {
         val node = createNode(0, blockchainConfig)
 
         // warm up
-        val warmupDuration = 20000
+        val warmupDuration = 30000
         var warmupEndTime = System.currentTimeMillis() + warmupDuration
         while (warmupEndTime > System.currentTimeMillis()) {
             Thread.sleep(100)
