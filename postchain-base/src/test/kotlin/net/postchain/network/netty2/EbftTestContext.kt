@@ -5,7 +5,7 @@ import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.ebft.EbftPacketConverter
-import net.postchain.ebft.message.EbftMessage
+import net.postchain.ebft.message.Message
 import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPacketHandler
 
@@ -19,7 +19,7 @@ class EbftTestContext(config: PeerCommConfiguration) {
 
     val peer = NettyConnector(EbftPacketConverter(config), events)
 
-    fun encodePacket(message: EbftMessage): ByteArray = peer.packetConverter.encodePacket(message)
+    fun encodePacket(message: Message): ByteArray = peer.packetConverter.encodePacket(message)
 
-    fun decodePacket(bytes: ByteArray): EbftMessage = peer.packetConverter.decodePacket(bytes)!!
+    fun decodePacket(bytes: ByteArray): Message = peer.packetConverter.decodePacket(bytes)!!
 }

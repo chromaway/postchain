@@ -39,6 +39,10 @@ abstract class AbstractGtv : Gtv {
         throw UserMistake("Type error: integer expected")
     }
 
+    override fun asBoolean(): Boolean {
+        throw UserMistake("Type error: boolean expected")
+    }
+
     override fun asByteArray(convert: Boolean): ByteArray {
         throw UserMistake("Type error: byte args expected")
     }

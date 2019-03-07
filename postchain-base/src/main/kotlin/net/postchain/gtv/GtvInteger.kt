@@ -10,6 +10,10 @@ data class GtvInteger(val integer: Long) : GtvPrimitive() {
         return integer
     }
 
+    override fun asBoolean(): Boolean {
+        return integer.toBoolean()
+    }
+
     override fun getRawGtv(): RawGtv {
         return RawGtv.integer(integer)
     }

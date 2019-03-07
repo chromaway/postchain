@@ -34,6 +34,7 @@ interface Gtv {
     fun isNull(): Boolean
     fun asDict(): Map<String, Gtv>
     fun asInteger(): Long
+    fun asBoolean(): Boolean
     fun asByteArray(convert: Boolean = false): ByteArray
 
     // Other conversions
