@@ -4,9 +4,15 @@ package net.postchain.base
 
 import net.postchain.base.gtv.BlockHeaderData
 import net.postchain.base.gtv.BlockHeaderDataFactory
+import net.postchain.common.toHex
 import net.postchain.core.BlockHeader
 import net.postchain.core.InitialBlockData
+import net.postchain.core.UserMistake
 import net.postchain.gtv.GtvEncoder
+import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtv.generateProof
+import net.postchain.gtv.merkle.GtvMerkleHashCalculator
+import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 
 /**
  * BaseBlockHeader implements elements and functionality that are necessary to describe and operate on a block header
@@ -47,14 +53,21 @@ class BaseBlockHeader(override val rawData: ByteArray, private val cryptoSystem:
     }
 
     /**
-     * Return a Merkle path of a hash in a Merkle tree
+     * Return a Merkle proof tree of a hash in a Merkle tree
      *
      * @param txHash Target hash for which the Merkle path is wanted
      * @param txHashes All hashes are the leaves part of this Merkle tree
-     * @return The Merkle path for [txHash]
+     * @return The Merkle proof tree for [txHash]
      */
-    fun merklePath(txHash: ByteArray, txHashes: Array<ByteArray>): MerklePath {
-        return merklePath(cryptoSystem, txHashes, txHash)
+    fun merklePath(txHash: ByteArray, txHashes: Array<ByteArray>): GtvMerkleProofTree {
+        //return merklePath(cryptoSystem, txHashes, txHash)
+        val positionOfOurTxToProve = txHashes.indexOf(txHash)
+        if (positionOfOurTxToProve < 0) {
+            throw UserMistake("We cannot prove this transaction (hash: ${txHash.toHex()}), because it is not in the block")
+        }
+        val gtvArray = gtv(txHashes.map { gtv(it)})
+        val calculator = GtvMerkleHashCalculator(cryptoSystem)
+        return gtvArray.generateProof(listOf(positionOfOurTxToProve), calculator)
     }
 
     /**

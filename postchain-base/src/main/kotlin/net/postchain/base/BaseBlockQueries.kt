@@ -4,6 +4,7 @@ package net.postchain.base
 
 import mu.KLogging
 import net.postchain.core.*
+import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.task
 
@@ -15,7 +16,7 @@ import nl.komponents.kovenant.task
  * @param witness The block witness
  * @param merklePath A Merkle path describing the branch from [txHash] to the root hash of the Merkle tree located in [header]
  */
-class ConfirmationProof(val txHash: ByteArray, val header: ByteArray, val witness: BlockWitness, val merklePath: MerklePath)
+class ConfirmationProof(val txHash: ByteArray, val header: ByteArray, val witness: BlockWitness, val proof: GtvMerkleProofTree)
 
 /**
  * A collection of methods for various blockchain-related queries. Each query is called with the wrapping method [runOp]
@@ -115,8 +116,8 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
             val decodedWitness = blockchainConfiguration.decodeWitness(material.witness)
             val decodedBlockHeader = blockchainConfiguration.decodeBlockHeader(material.header) as BaseBlockHeader
 
-            val merklePath = decodedBlockHeader.merklePath(material.txHash, material.txHashes)
-            ConfirmationProof(material.txHash, material.header, decodedWitness, merklePath)
+            val merkleProofTree = decodedBlockHeader.merklePath(material.txHash, material.txHashes)
+            ConfirmationProof(material.txHash, material.header, decodedWitness, merkleProofTree)
         }
     }
 
