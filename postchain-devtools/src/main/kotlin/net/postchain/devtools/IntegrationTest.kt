@@ -15,8 +15,6 @@ import net.postchain.devtools.utils.configuration.UniversalFileLocationStrategy
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.gtx
 import net.postchain.gtx.gtxml.GTXMLValueParser
-import nl.komponents.kovenant.all
-import nl.komponents.kovenant.task
 import org.apache.commons.configuration2.CompositeConfiguration
 import org.apache.commons.configuration2.Configuration
 import org.apache.commons.configuration2.MapConfiguration
@@ -24,7 +22,6 @@ import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder
 import org.apache.commons.configuration2.builder.fluent.Parameters
 import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler
-import org.apache.commons.configuration2.io.ClasspathLocationStrategy
 import org.junit.After
 import org.junit.Assert.*
 import java.io.File
@@ -63,9 +60,9 @@ open class IntegrationTest {
 
     // TODO: [et]: Check out nullability for return value
     protected fun enqueueTx(node: PostchainTestNode, data: ByteArray, expectedConfirmationHeight: Long): Transaction? {
-        val blockchain = node.getBlockchainInstance()
-        val tx = blockchain.blockchainConfiguration.getTransactionFactory().decodeTransaction(data)
-        blockchain.getEngine().getTransactionQueue().enqueue(tx)
+        val blockchainEngine = node.getBlockchainInstance().getEngine()
+        val tx = blockchainEngine.getConfiguration().getTransactionFactory().decodeTransaction(data)
+        blockchainEngine.getTransactionQueue().enqueue(tx)
 
         if (expectedConfirmationHeight >= 0) {
             expectedSuccessRids.getOrPut(expectedConfirmationHeight) { mutableListOf() }

@@ -117,7 +117,8 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                 // Assert Merkle Path
                 val header = nodes[0]
                         .getBlockchainInstance()
-                        .blockchainConfiguration
+                        .getEngine()
+                        .getConfiguration()
                         .decodeBlockHeader(blockHeader) as BaseBlockHeader
                 assertTrue(header.validateMerklePath(path, tx.getHash()))
             }

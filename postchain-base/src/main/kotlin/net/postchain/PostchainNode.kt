@@ -2,27 +2,41 @@
 
 package net.postchain
 
-import net.postchain.base.BaseApiInfrastructure
-import net.postchain.base.BaseBlockchainInfrastructure
-import net.postchain.base.BaseBlockchainProcessManager
 import net.postchain.core.BlockchainInfrastructure
-import net.postchain.ebft.EBFTSynchronizationInfrastructure
+import net.postchain.core.BlockchainProcessManager
+import net.postchain.core.InfrastructureFactory
+import net.postchain.core.Shutdownable
 import org.apache.commons.configuration2.Configuration
 
-open class PostchainNode(nodeConfig: Configuration) {
+/*
+    Postchain node instantiates infrastructure and blockchain
+    process manager.
+ */
 
-    val processManager: BaseBlockchainProcessManager
+open class PostchainNode(nodeConfig: Configuration): Shutdownable {
+
+    val processManager: BlockchainProcessManager
     protected val blockchainInfrastructure: BlockchainInfrastructure
 
     init {
-        blockchainInfrastructure = BaseBlockchainInfrastructure(
-                nodeConfig,
-                EBFTSynchronizationInfrastructure(nodeConfig),
-                BaseApiInfrastructure(nodeConfig))
+        var infrastructureFactoryName = nodeConfig.getString("infrastructure",
+                net.postchain.ebft.BaseEBFTInfrastructureFactory::class.qualifiedName)
+        when (infrastructureFactoryName) {
+            "base/ebft" ->
+                infrastructureFactoryName = net.postchain.ebft.BaseEBFTInfrastructureFactory::class.qualifiedName
+            "base/test" ->
+                infrastructureFactoryName = net.postchain.base.BaseTestInfrastructureFactory::class.qualifiedName
+        }
 
-        processManager = BaseBlockchainProcessManager(
-                blockchainInfrastructure,
-                nodeConfig)
+        val infrastructureFactoryClass = Class.forName(infrastructureFactoryName)
+        val factory = (infrastructureFactoryClass.newInstance() as InfrastructureFactory)
+
+        blockchainInfrastructure = factory.makeBlockchainInfrastructure(nodeConfig)
+
+        processManager = factory.makeProcessManager(
+                nodeConfig,
+                blockchainInfrastructure
+        )
     }
 
     fun startBlockchain(chainID: Long) {
@@ -33,7 +47,7 @@ open class PostchainNode(nodeConfig: Configuration) {
         processManager.stopBlockchain(chainID)
     }
 
-    fun stopAllBlockchain() {
+    override fun shutdown() {
         processManager.shutdown()
     }
 }

@@ -119,7 +119,8 @@ class GTXPerformanceTestNightly : IntegrationTest() {
             for (tx in 0 until txPerBlock) {
                 val txFactory = nodes[statusManager.primaryIndex()]
                         .getBlockchainInstance()
-                        .blockchainConfiguration
+                        .getEngine()
+                        .getConfiguration()
                         .getTransactionFactory()
 
                 val tx = makeTestTx(1, (txId++).toString())

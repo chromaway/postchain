@@ -47,7 +47,7 @@ class CliIntegrationTest {
         }
 
         println("Stop all blockchain")
-        node.stopAllBlockchain()
+        node.shutdown()
     }
 
     @Test
@@ -87,7 +87,7 @@ class CliIntegrationTest {
         waitUntilBlock(queries,11, 200) // this should exit after 200 milliseconds
         Assert.assertTrue(queries.getBestHeight().get() == 10L)
 
-        node.stopAllBlockchain()
+        node.shutdown()
     }
 
 
