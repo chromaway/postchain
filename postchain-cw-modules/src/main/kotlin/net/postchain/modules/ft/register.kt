@@ -5,9 +5,8 @@ package net.postchain.modules.ft
 import net.postchain.core.TxEContext
 import net.postchain.gtx.ExtOpData
 import net.postchain.gtx.GTXOperation
-import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvArray
-import net.postchain.gtv.GtvFactory.decodeGtv
+import net.postchain.gtv.GtvDecoder.decodeGtv
 
 /**
  * Collection of information relevant to the register operation

@@ -2,6 +2,7 @@ package net.postchain.gtv
 
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.UserMistake
+import org.openmuc.jasn1.ber.types.string.BerUTF8String
 import net.postchain.gtv.messages.Gtv as RawGtv
 
 data class GtvString(val string: String) : GtvPrimitive() {
@@ -13,7 +14,7 @@ data class GtvString(val string: String) : GtvPrimitive() {
     }
 
     override fun getRawGtv(): RawGtv {
-        return RawGtv.string(string)
+        return RawGtv(null, null, BerUTF8String(string), null, null, null)
     }
 
     override fun asByteArray(convert: Boolean): ByteArray {

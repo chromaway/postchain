@@ -12,7 +12,7 @@ class SignedMessage(val message: ByteArray, val pubKey: ByteArray, val signature
     companion object {
         fun decode(bytes: ByteArray): SignedMessage {
             try {
-                val gtvArray = GtvFactory.decodeGtv(bytes) as GtvArray
+                val gtvArray = GtvDecoder.decodeGtv(bytes) as GtvArray
 
                 return SignedMessage(gtvArray[0].asByteArray(), gtvArray[1].asByteArray(), gtvArray[2].asByteArray())
             } catch (e: Exception) {
@@ -39,7 +39,7 @@ abstract class Message(val type: Int) {
 
     companion object {
         inline fun <reified T:  Message> decode(bytes: ByteArray): T {
-            val data =  GtvFactory.decodeGtv(bytes) as GtvArray
+            val data =  GtvDecoder.decodeGtv(bytes) as GtvArray
             val type = data[0].asInteger().toInt()
             return when (type) {
                 MessageType.ID.ordinal -> Identification(data[1].asByteArray(), data[2].asByteArray(), data[3].asInteger()) as T

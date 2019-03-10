@@ -21,13 +21,11 @@ data class GtvArray(val array: Array<out Gtv>) : GtvCollection() {
     }
 
     override fun getRawGtv(): net.postchain.gtv.messages.Gtv {
-        return RawGtv.array(Vector<RawGtv>(
-                array.map { it.getRawGtv() }
-        ))
+        return RawGtv(null, null, null, null, null, RawGtv.Array(array.map { it.getRawGtv() }))
     }
 
     override fun asPrimitive(): Any? {
-        return array.map({ it.asPrimitive() }).toTypedArray()
+        return array.map{ it.asPrimitive() }.toTypedArray()
     }
 
     override fun nrOfBytes(): Int {

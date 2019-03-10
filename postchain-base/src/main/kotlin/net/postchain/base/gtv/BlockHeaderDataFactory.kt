@@ -7,7 +7,7 @@ import net.postchain.gtv.GtvFactory.gtv
 object BlockHeaderDataFactory {
 
     fun buildFromBinary(rawData: ByteArray): BlockHeaderData {
-        val gtv: Gtv = GtvFactory.decodeGtv(rawData)
+        val gtv: Gtv = GtvDecoder.decodeGtv(rawData)
         return buildFromGtv(gtv)
     }
 

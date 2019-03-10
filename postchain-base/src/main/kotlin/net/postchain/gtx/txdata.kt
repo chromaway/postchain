@@ -112,7 +112,7 @@ data class GTXData(
 
 fun decodeGTXData(_rawData: ByteArray): GTXData {
     // Decode to RawGTV
-    val gtv: Gtv = GtvFactory.decodeGtv(_rawData)
+    val gtv: Gtv = GtvDecoder.decodeGtv(_rawData)
 
     // GTV -> GTXData
     return GtxDataFactory.deserializeFromGtv(gtv)

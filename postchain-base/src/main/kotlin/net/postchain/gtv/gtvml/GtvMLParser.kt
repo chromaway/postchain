@@ -35,7 +35,7 @@ object GtvMLParser {
             when (GtvTypeOf(qName)) {
                 NULL -> GtvNull
                 STRING -> GtvString(value as String)
-                INTEGER -> GtvInteger((value as BigInteger).longValueExact())
+                INTEGER -> GtvInteger(value as BigInteger)
                 BYTEARRAY -> GtvByteArray(value as ByteArray)
                 ARRAY -> parseArrayGtvML(value as ArrayType, params)
                 DICT -> parseDictGtvML(value as DictType, params)

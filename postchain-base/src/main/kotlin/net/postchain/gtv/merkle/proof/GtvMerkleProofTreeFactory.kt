@@ -138,7 +138,7 @@ class GtvMerkleProofTreeFactory: MerkleProofTreeFactory<Gtv>()   {
     private fun deserializeSub(currentSerializedArrayGtv: GtvArray): MerkleProofElement {
 
         val head = currentSerializedArrayGtv[0]
-        val typeCode = (head as GtvInteger).integer
+        val typeCode = (head as GtvInteger).asInteger()
         val secondElement = currentSerializedArrayGtv[1]
         return when (typeCode) {
             SERIALIZATION_HASH_LEAF_TYPE -> {
@@ -184,7 +184,7 @@ class GtvMerkleProofTreeFactory: MerkleProofTreeFactory<Gtv>()   {
                 DictGtvPathElement(null, src.string)
             }
             is GtvInteger -> {
-                val l = src.integer
+                val l = src.integer.toLong()
                 if (l != GtvMerkleBasics.UNKNOWN_COLLECTION_POSITION) {
                     if (logger.isDebugEnabled) { logger.debug("Deserialize proof path array path index : $l") }
                     ArrayGtvPathElement(null, l.toInt())

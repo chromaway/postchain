@@ -1,6 +1,7 @@
 package net.postchain.gtv
 
 import java.util.*
+import org.openmuc.jasn1.ber.types.BerOctetString
 import net.postchain.gtv.messages.Gtv as RawGtv
 
 
@@ -13,7 +14,7 @@ data class GtvByteArray(val bytearray: ByteArray) : GtvPrimitive() {
     }
 
     override fun getRawGtv(): RawGtv {
-        return RawGtv.byteArray(bytearray)
+        return RawGtv(null, BerOctetString(bytearray), null, null, null, null)
     }
 
     override fun asPrimitive(): Any? {

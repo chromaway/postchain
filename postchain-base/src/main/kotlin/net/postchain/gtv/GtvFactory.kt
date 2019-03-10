@@ -1,8 +1,8 @@
 package net.postchain.gtv
 
-import net.postchain.core.ProgrammerMistake
 import net.postchain.gtv.messages.DictPair
-import java.io.ByteArrayInputStream
+import org.openmuc.jasn1.ber.types.string.BerUTF8String
+import java.math.BigInteger
 import net.postchain.gtv.messages.Gtv as RawGtv
 
 fun Boolean.toLong() = if (this) 1L else 0L
@@ -14,29 +14,17 @@ fun Long.toBoolean() = this != 0L
  */
 object GtvFactory {
 
-    fun wrapValue(r: RawGtv): Gtv {
-        when (r.choiceID) {
-            RawGtv.null_Chosen -> return GtvNull
-            RawGtv.byteArrayChosen -> return GtvByteArray(r.byteArray)
-            RawGtv.stringChosen -> return GtvString(r.string)
-            RawGtv.integerChosen -> return GtvInteger(r.integer)
-            RawGtv.dictChosen -> return GtvDictionary(r.dict.associateBy({ it.name }, { wrapValue(it.value) }))
-            RawGtv.arrayChosen -> return GtvArray(r.array.map { wrapValue(it) }.toTypedArray())
-        }
-        throw ProgrammerMistake("Unknown type identifier")
-    }
-
-    fun decodeGtv(bytes: ByteArray): Gtv {
-        return wrapValue(RawGtv.der_decode(ByteArrayInputStream(bytes)))
-    }
-
     // helper methods:
-    fun gtv(i: Long): GtvInteger {
+    fun gtv(l: Long): GtvInteger {
+        return GtvInteger(BigInteger.valueOf(l))
+    }
+
+    fun gtv(i: BigInteger): GtvInteger {
         return GtvInteger(i)
     }
 
     fun gtv(b: Boolean): GtvInteger {
-        return GtvInteger(b.toLong())
+        return GtvInteger(BigInteger.valueOf(b.toLong()))
     }
 
     fun gtv(s: String): GtvString {
@@ -66,7 +54,7 @@ object GtvFactory {
 
     fun makeDictPair(name: String, value: RawGtv): DictPair {
         val dp = DictPair()
-        dp.name = name
+        dp.name = BerUTF8String(name)
         dp.value = value
         return dp
     }

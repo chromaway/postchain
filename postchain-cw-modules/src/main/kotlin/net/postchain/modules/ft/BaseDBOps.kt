@@ -4,7 +4,7 @@ package net.postchain.modules.ft
 
 import net.postchain.core.EContext
 import net.postchain.gtv.Gtv
-import net.postchain.gtv.GtvFactory.decodeGtv
+import net.postchain.gtv.GtvDecoder.decodeGtv
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.MapListHandler
 import org.apache.commons.dbutils.handlers.ScalarHandler

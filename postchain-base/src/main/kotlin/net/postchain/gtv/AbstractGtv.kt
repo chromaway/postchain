@@ -2,6 +2,7 @@ package net.postchain.gtv
 
 import net.postchain.base.merkle.proof.MerkleHashSummary
 import net.postchain.core.UserMistake
+import java.math.BigInteger
 
 /**
  * Just a base class for all GTVs.
@@ -37,6 +38,10 @@ abstract class AbstractGtv : Gtv {
 
     override fun asInteger(): Long {
         throw UserMistake("Type error: integer expected")
+    }
+
+    override fun asBigInteger(): BigInteger {
+        throw UserMistake("Type error: big integer expected")
     }
 
     override fun asBoolean(): Boolean {

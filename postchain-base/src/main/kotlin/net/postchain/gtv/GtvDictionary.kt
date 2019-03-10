@@ -1,8 +1,8 @@
 package net.postchain.gtv
 
 import net.postchain.gtv.messages.DictPair
+import org.openmuc.jasn1.ber.types.string.BerUTF8String
 import net.postchain.gtv.messages.Gtv as RawGtv
-import java.util.*
 
 data class GtvDictionary(val dict: Map<String, Gtv>) : GtvCollection() {
 
@@ -21,10 +21,10 @@ data class GtvDictionary(val dict: Map<String, Gtv>) : GtvCollection() {
     }
 
     override fun getRawGtv(): net.postchain.gtv.messages.Gtv {
-        return RawGtv.dict(
-                Vector<DictPair>(
-                        dict.entries.map { GtvFactory.makeDictPair(it.key, it.value.getRawGtv()) }
-                ))
+        return RawGtv(null, null, null, null,
+                RawGtv.Dict(dict.entries.map {
+                    DictPair(BerUTF8String(it.key), it.value.getRawGtv())
+                }), null)
     }
 
     override fun asPrimitive(): Any? {
@@ -38,7 +38,7 @@ data class GtvDictionary(val dict: Map<String, Gtv>) : GtvCollection() {
         var sumNrOfBytes =0
         for (key in dict.keys) {
             sumNrOfBytes += (key.length * 2)
-            sumNrOfBytes += dict[key]!!.nrOfBytes()
+            sumNrOfBytes += dict.getValue(key).nrOfBytes()
         }
         return sumNrOfBytes
     }

@@ -35,11 +35,11 @@ data class BlockHeaderData(
     }
 
     fun getTimestamp(): Long {
-        return gtvTimestamp.integer
+        return gtvTimestamp.integer.toLong()
     }
 
     fun getHeight(): Long {
-        return gtvHeight.integer
+        return gtvHeight.integer.toLong()
     }
 
     fun getExtra(): Map<String, String> {

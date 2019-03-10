@@ -8,6 +8,7 @@ import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 import net.postchain.gtv.path.GtvPath
 import net.postchain.gtv.path.GtvPathFactory
 import net.postchain.gtv.path.GtvPathSet
+import java.math.BigInteger
 import net.postchain.gtv.messages.Gtv as RawGtv
 
 /**
@@ -34,6 +35,7 @@ interface Gtv {
     fun isNull(): Boolean
     fun asDict(): Map<String, Gtv>
     fun asInteger(): Long
+    fun asBigInteger(): BigInteger
     fun asBoolean(): Boolean
     fun asByteArray(convert: Boolean = false): ByteArray
 

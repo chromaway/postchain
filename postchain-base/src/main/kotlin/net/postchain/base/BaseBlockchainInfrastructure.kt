@@ -5,8 +5,8 @@ import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.base.data.BaseTransactionQueue
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.*
+import net.postchain.gtv.GtvDecoder
 import net.postchain.gtv.GtvDictionary
-import net.postchain.gtv.GtvFactory
 import org.apache.commons.configuration2.Configuration
 
 class BaseBlockchainInfrastructure(
@@ -42,7 +42,7 @@ class BaseBlockchainInfrastructure(
             context
         }
 
-        val gtxData = GtvFactory.decodeGtv(rawConfigurationData)
+        val gtxData = GtvDecoder.decodeGtv(rawConfigurationData)
         val confData = BaseBlockchainConfigurationData(gtxData as GtvDictionary, actualContext, blockSigner)
 
         val bcfClass = Class.forName(confData.data["configurationfactory"]!!.asString())
