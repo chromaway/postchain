@@ -20,12 +20,13 @@ import org.apache.commons.configuration2.Configuration
 class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
 
     private val storage = StorageBuilder.buildStorage(nodeConfig, NODE_ID_TODO, true)
+    private var isInitialized = false
 
     companion object : KLogging() {
         const val DEFAULT_CHAIN_ID = 1L
     }
 
-    fun addBlockchain(chainId: Long, blockchainRid: ByteArray, blockchainConfig: GTXValue) {
+    private fun initDb(chainId: Long, blockchainRid: ByteArray) {
         // TODO: [et]: Is it necessary here after StorageBuilder.buildStorage() redesign?
         withWriteConnection(storage, chainId) { eContext ->
             with(SQLDatabaseAccess()) {
@@ -35,9 +36,21 @@ class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
             true
         }
 
+        isInitialized = true
+    }
+
+    fun addBlockchain(chainId: Long, blockchainRid: ByteArray, blockchainConfig: GTXValue) {
+        initDb(chainId, blockchainRid)
+        addConfiguration(chainId, 0, blockchainConfig)
+    }
+
+
+    fun addConfiguration(chainId: Long, height: Long, blockchainConfig: GTXValue) {
+        check(isInitialized) { "PostchainNode is not initialized" }
+
         withWriteConnection(storage, chainId) { eContext ->
             BaseConfigurationDataStore.addConfigurationData(
-                    eContext, 0, encodeGTXValue(blockchainConfig))
+                    eContext, height, encodeGTXValue(blockchainConfig))
             true
         }
     }

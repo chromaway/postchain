@@ -152,7 +152,7 @@ open class IntegrationTest {
                 .hexStringToByteArray()
     }
 
-    private fun createConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
+    protected fun createConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
             : Configuration {
 
         // Read first file directly via the builder
