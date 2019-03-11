@@ -21,7 +21,7 @@ class DefaultXCommunicationManager1PeerIT {
 
     private fun startTestContext(peers: Array<PeerInfo>, myIndex: Int = 0): EbftIntegrationTestContext {
         val peerConfiguration = BasePeerCommConfiguration(
-                peers, myIndex, cryptoSystem, privKey)
+                peers, cryptoSystem, privKey, pubKey)
 
         return EbftIntegrationTestContext(peerConfiguration, blockchainRid)
     }

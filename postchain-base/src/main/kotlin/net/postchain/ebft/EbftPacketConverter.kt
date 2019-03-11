@@ -17,7 +17,7 @@ class EbftPacketConverter(val config: PeerCommConfiguration) : PacketConverter<E
     override fun makeIdentPacket(forPeer: ByteArray): ByteArray {
         val bytes = Identification(forPeer, byteArrayOf()/*config.blockchainRID*/, System.currentTimeMillis()).encode()
         val signature = config.signer()(bytes)
-        return SignedMessage(bytes, config.peerInfo[config.myIndex].pubKey, signature.data).encode()
+        return SignedMessage(bytes, config.pubKey, signature.data).encode()
     }
 
     override fun parseIdentPacket(bytes: ByteArray): IdentPacketInfo {
@@ -28,7 +28,7 @@ class EbftPacketConverter(val config: PeerCommConfiguration) : PacketConverter<E
             throw UserMistake("Packet was not an Identification. Got ${message::class}")
         }
 
-        if (!config.peerInfo[config.myIndex].pubKey.contentEquals(message.yourPubKey)) {
+        if (!config.pubKey.contentEquals(message.yourPubKey)) {
             throw UserMistake("'yourPubKey' ${message.yourPubKey.toHex()} of Identification is not mine")
         }
 

@@ -3,10 +3,7 @@
 package net.postchain.ebft.worker
 
 import net.postchain.base.NetworkAwareTxQueue
-import net.postchain.core.BlockchainConfiguration
-import net.postchain.core.BlockchainEngine
-import net.postchain.core.NODE_ID_AUTO
-import net.postchain.core.RestartHandler
+import net.postchain.core.*
 import net.postchain.ebft.BaseBlockDatabase
 import net.postchain.ebft.message.EbftMessage
 import net.postchain.ebft.syncmanager.ReplicaSyncManager
@@ -19,8 +16,8 @@ import kotlin.concurrent.thread
  * @property updateLoop the main thread
  */
 class ReadOnlyWorker(
+        signers: List<ByteArray>,
         private val engine: BlockchainEngine,
-        nodeIndex: Int,
         communicationManager: CommunicationManager<EbftMessage>,
         val restartHandler: RestartHandler
 ) : WorkerBase {
@@ -34,9 +31,9 @@ class ReadOnlyWorker(
     init {
         val blockQueries = engine.getBlockQueries()
 
-        blockDatabase = BaseBlockDatabase(engine, blockQueries, nodeIndex)
+        blockDatabase = BaseBlockDatabase(engine, blockQueries, NODE_ID_READ_ONLY)
 
-        syncManager = ReplicaSyncManager()
+        syncManager = ReplicaSyncManager(signers, communicationManager, blockDatabase, blockQueries, blockchainConfiguration)
 
         networkAwareTxQueue = NetworkAwareTxQueue(
                 engine.getTransactionQueue(),

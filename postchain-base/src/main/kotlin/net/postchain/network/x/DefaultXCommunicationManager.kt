@@ -4,6 +4,7 @@ import mu.KLogging
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerInfo
 import net.postchain.base.peerId
+import net.postchain.common.toHex
 import net.postchain.network.CommunicationManager
 import net.postchain.network.XPacketDecoder
 import net.postchain.network.XPacketEncoder
@@ -49,8 +50,8 @@ class DefaultXCommunicationManager<PacketType>(
             "CommunicationManager.sendPacket(): recipient not found among peers"
         }
 
-        require(XPeerID(config.peerInfo[config.myIndex].pubKey) != recipient) {
-            "CommunicationManager.sendPacket(): recipient must not be equal to myIndex ${config.myIndex}"
+        require(XPeerID(config.pubKey) != recipient) {
+            "CommunicationManager.sendPacket(): recipient must not be equal to pubKey ${config.pubKey.toHex()}"
         }
 
         connectionManager.sendPacket(
