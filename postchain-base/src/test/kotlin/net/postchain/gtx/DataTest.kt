@@ -70,27 +70,29 @@ class GTXDataTest {
 
         assertTrue(b2.isFullySigned())
 
-        val d = decodeGTXData(b2.serialize())
+        //val d = decodeGTXData(b2.serialize())
+        val d: GTXTransactionData = decodeGTXTransactionData(b2.serialize())
+        val body = d.transactionBodyData
 
-        assertTrue(d.signers.contentDeepEquals(
+        assertTrue(body.signers.contentDeepEquals(
                 signerPub.slice(0..2).toTypedArray()
         ))
         assertEquals(3, d.signatures.size)
-        assertEquals(4, d.operations.size)
-        assertEquals("bro", d.operations[1].opName)
-        val op0 = d.operations[0]
+        assertEquals(4, body.operations.size)
+        assertEquals("bro", body.operations[1].opName)
+        val op0 = body.operations[0]
         assertTrue(op0.args[0].isNull())
         assertEquals(42, op0.args[1].asInteger())
         assertEquals("Wow", op0.args[2].asString())
         assertTrue(op0.args[3].asByteArray().contentEquals(signerPub[0]))
-        val op1 = d.operations[1]
+        val op1 = body.operations[1]
         assertEquals("Nope", op1.args[0][2].asString())
-        val dict2 = d.operations[2].args[0]
+        val dict2 = body.operations[2].args[0]
         assertEquals(2, dict2["two"]!!.asInteger())
         assertNull(dict2["six"])
-        val mapWithArray = d.operations[3].args[0]
+        val mapWithArray = body.operations[3].args[0]
         assertEquals(2, mapWithArray["array"]!![1].asInteger())
-        val arrayWithMap = d.operations[3].args[1]
+        val arrayWithMap = body.operations[3].args[1]
         assertEquals("space", arrayWithMap[0]["inner"]!!.asString())
     }
 }

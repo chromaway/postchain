@@ -6,7 +6,7 @@ import net.postchain.base.gtxml.SignaturesType
 import net.postchain.base.gtxml.SignersType
 import net.postchain.common.toHex
 import net.postchain.gtv.gtvml.GtvMLEncoder
-import net.postchain.gtx.GTXData
+import net.postchain.gtx.GTXTransactionData
 import net.postchain.gtx.OpData
 import java.io.StringWriter
 import javax.xml.bind.JAXB
@@ -19,12 +19,12 @@ object GTXMLTransactionEncoder {
     /**
      * Encodes [GTXData] into XML format
      */
-    fun encodeXMLGTXTransaction(gtxData: GTXData): String {
+    fun encodeXMLGTXTransaction(gtxTxData: GTXTransactionData): String {
         val transactionType = objectFactory.createTransactionType()
-        transactionType.blockchainRID = gtxData.blockchainRID.toHex()
-        transactionType.signers = encodeSigners(gtxData.signers)
-        transactionType.operations = encodeOperations(gtxData.operations)
-        transactionType.signatures = encodeSignature(gtxData.signatures)
+        transactionType.blockchainRID = gtxTxData.transactionBodyData.blockchainRID.toHex()
+        transactionType.signers = encodeSigners(gtxTxData.transactionBodyData.signers)
+        transactionType.operations = encodeOperations(gtxTxData.transactionBodyData.operations)
+        transactionType.signatures = encodeSignature(gtxTxData.signatures)
 
         val jaxbElement = objectFactory.createTransaction(transactionType)
 

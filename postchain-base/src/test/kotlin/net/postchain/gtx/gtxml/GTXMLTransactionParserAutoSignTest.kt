@@ -4,13 +4,14 @@ import assertk.assert
 import assertk.assertions.isEqualTo
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.byteArrayKeyOf
-import net.postchain.gtx.GTXData
 import net.postchain.gtv.GtvInteger
 import net.postchain.gtx.OpData
 import net.postchain.gtv.GtvString
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.MockCryptoSystem
+import net.postchain.gtx.GTXTransactionBodyData
+import net.postchain.gtx.GTXTransactionData
 import org.junit.Test
 
 class GTXMLTransactionParserAutoSignTest {
@@ -27,20 +28,8 @@ class GTXMLTransactionParserAutoSignTest {
         val privKey1 = privKey(1)
         val signer1 = MockCryptoSystem().makeSigner(pubKey1, privKey1)
 
-        val expected = GTXData(
+        val expectedBody = GTXTransactionBodyData(
                 "23213213".hexStringToByteArray(),
-                arrayOf(
-                        pubKey0,
-                        byteArrayOf(0x12, 0x38, 0x71, 0x23),
-                        byteArrayOf(0x12, 0x38, 0x71, 0x24),
-                        pubKey1
-                ),
-                arrayOf(
-                        byteArrayOf(), // empty signature, will calculated below
-                        byteArrayOf(0x34, 0x56, 0x78, 0x54),
-                        byteArrayOf(0x34, 0x56, 0x78, 0x55),
-                        byteArrayOf() // empty signature, will calculated below
-                ),
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
@@ -49,12 +38,27 @@ class GTXMLTransactionParserAutoSignTest {
                                         GtvString("hello3"),
                                         GtvInteger(42),
                                         GtvInteger(43)))
+                ),
+                arrayOf(
+                        pubKey0,
+                        byteArrayOf(0x12, 0x38, 0x71, 0x23),
+                        byteArrayOf(0x12, 0x38, 0x71, 0x24),
+                        pubKey1
+                )
+        )
+
+        val expectedTx = GTXTransactionData( expectedBody,
+                arrayOf(
+                        byteArrayOf(), // empty signature, will calculated below
+                        byteArrayOf(0x34, 0x56, 0x78, 0x54),
+                        byteArrayOf(0x34, 0x56, 0x78, 0x55),
+                        byteArrayOf() // empty signature, will calculated below
                 )
         )
 
         // Auto-signing
-        expected.signatures[0] = signer0(expected.serializeWithoutSignatures()).data
-        expected.signatures[3] = signer1(expected.serializeWithoutSignatures()).data
+        expectedTx.signatures[0] = signer0(expectedBody.serialize()).data
+        expectedTx.signatures[3] = signer1(expectedBody.serialize()).data
 
         val actual = GTXMLTransactionParser.parseGTXMLTransaction(
                 xml,
@@ -68,7 +72,7 @@ class GTXMLTransactionParserAutoSignTest {
                 )
         )
 
-        assert(actual).isEqualTo(expected)
+        assert(actual).isEqualTo(expectedTx)
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -86,20 +90,8 @@ class GTXMLTransactionParserAutoSignTest {
         val pubKey0 = pubKey(0)
         val pubKey1 = pubKey(1)
 
-        val expected = GTXData(
+        val expectedBody = GTXTransactionBodyData(
                 "23213213".hexStringToByteArray(),
-                arrayOf(
-                        pubKey0,
-                        byteArrayOf(0x12, 0x38, 0x71, 0x23),
-                        byteArrayOf(0x12, 0x38, 0x71, 0x24),
-                        pubKey1
-                ),
-                arrayOf(
-                        byteArrayOf(), // empty signature
-                        byteArrayOf(0x34, 0x56, 0x78, 0x54),
-                        byteArrayOf(0x34, 0x56, 0x78, 0x55),
-                        byteArrayOf() // empty signature
-                ),
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
@@ -108,13 +100,29 @@ class GTXMLTransactionParserAutoSignTest {
                                         GtvString("hello3"),
                                         GtvInteger(42),
                                         GtvInteger(43)))
+                ),
+                arrayOf(
+                        pubKey0,
+                        byteArrayOf(0x12, 0x38, 0x71, 0x23),
+                        byteArrayOf(0x12, 0x38, 0x71, 0x24),
+                        pubKey1
+                )
+        )
+
+        val expectedTx = GTXTransactionData(
+                expectedBody,
+                arrayOf(
+                        byteArrayOf(), // empty signature
+                        byteArrayOf(0x34, 0x56, 0x78, 0x54),
+                        byteArrayOf(0x34, 0x56, 0x78, 0x55),
+                        byteArrayOf() // empty signature
                 )
         )
 
         val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml,
                 TransactionContext(null, mapOf(), false, mapOf()))
 
-        assert(actual).isEqualTo(expected)
+        assert(actual).isEqualTo(expectedTx)
     }
 
     @Test
@@ -129,10 +137,8 @@ class GTXMLTransactionParserAutoSignTest {
         val privKey1 = privKey(1)
         val signer1 = MockCryptoSystem().makeSigner(pubKey1, privKey1)
 
-        val expected = GTXData(
+        val expectedBody = GTXTransactionBodyData(
                 "23213213".hexStringToByteArray(),
-                arrayOf(pubKey0, pubKey1),
-                arrayOf(byteArrayOf(), byteArrayOf()), // empty signatures, will calculated below
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
@@ -141,12 +147,17 @@ class GTXMLTransactionParserAutoSignTest {
                                         GtvString("hello3"),
                                         GtvInteger(42),
                                         GtvInteger(43)))
-                )
+                ),
+                arrayOf(pubKey0, pubKey1)
         )
 
+        val expectedTx = GTXTransactionData(expectedBody,
+                arrayOf(byteArrayOf(), byteArrayOf()) // empty signatures, will calculated below
+                )
+
         // Auto-signing
-        expected.signatures[0] = signer0(expected.serializeWithoutSignatures()).data
-        expected.signatures[1] = signer1(expected.serializeWithoutSignatures()).data
+        expectedTx.signatures[0] = signer0(expectedBody.serialize()).data
+        expectedTx.signatures[1] = signer1(expectedBody.serialize()).data
 
         val actual = GTXMLTransactionParser.parseGTXMLTransaction(
                 xml,
@@ -161,7 +172,7 @@ class GTXMLTransactionParserAutoSignTest {
                 )
         )
 
-        assert(actual).isEqualTo(expected)
+        assert(actual).isEqualTo(expectedTx)
     }
 
     private fun readResourceFile(filename: String): String {

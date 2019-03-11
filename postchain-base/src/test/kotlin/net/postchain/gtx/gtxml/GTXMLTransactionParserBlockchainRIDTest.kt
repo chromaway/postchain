@@ -2,7 +2,8 @@ package net.postchain.gtx.gtxml
 
 import assertk.assert
 import assertk.assertions.isEqualTo
-import net.postchain.gtx.GTXData
+import net.postchain.gtx.GTXTransactionBodyData
+import net.postchain.gtx.GTXTransactionData
 import org.junit.Test
 
 class GTXMLTransactionParserBlockchainRIDTest {
@@ -15,14 +16,17 @@ class GTXMLTransactionParserBlockchainRIDTest {
             </transaction>
         """.trimIndent()
 
-        val expected = GTXData(
+        val expectedBody= GTXTransactionBodyData(
                 byteArrayOf(0x0A, 0x0B, 0x0C),
-                arrayOf(), arrayOf(), arrayOf())
+                arrayOf(),
+                arrayOf())
+
+        val expectedTx = GTXTransactionData(expectedBody, arrayOf())
 
         val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml,
                 TransactionContext(byteArrayOf(0x0A, 0x0B, 0x0C)))
 
-        assert(actual).isEqualTo(expected)
+        assert(actual).isEqualTo(expectedTx)
     }
 
     @Test
@@ -33,14 +37,16 @@ class GTXMLTransactionParserBlockchainRIDTest {
             </transaction>
         """.trimIndent()
 
-        val expected = GTXData(
+        val expectedBody = GTXTransactionBodyData(
                 byteArrayOf(0x0A, 0x0B, 0x0C),
-                arrayOf(), arrayOf(), arrayOf())
+                arrayOf(), arrayOf())
+
+        val expectedTx = GTXTransactionData(expectedBody, arrayOf() )
 
         val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml,
                 TransactionContext(byteArrayOf(0x0A, 0x0B, 0x0C)))
 
-        assert(actual).isEqualTo(expected)
+        assert(actual).isEqualTo(expectedTx)
     }
 
     @Test
@@ -51,14 +57,16 @@ class GTXMLTransactionParserBlockchainRIDTest {
             </transaction>
         """.trimIndent()
 
-        val expected = GTXData(
+        val expectedBody = GTXTransactionBodyData(
                 byteArrayOf(),
-                arrayOf(), arrayOf(), arrayOf())
+                arrayOf(), arrayOf())
+
+        val expectedTx = GTXTransactionData(expectedBody, arrayOf())
 
         val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml,
                 TransactionContext(null))
 
-        assert(actual).isEqualTo(expected)
+        assert(actual).isEqualTo(expectedTx)
     }
 
     @Test
@@ -69,14 +77,16 @@ class GTXMLTransactionParserBlockchainRIDTest {
             </transaction>
         """.trimIndent()
 
-        val expected = GTXData(
+        val expectedBody = GTXTransactionBodyData(
                 byteArrayOf(0x0A, 0x0B, 0x0C),
-                arrayOf(), arrayOf(), arrayOf())
+                arrayOf(), arrayOf())
+
+        val expectedTx = GTXTransactionData(expectedBody, arrayOf() )
 
         val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml,
                 TransactionContext(null))
 
-        assert(actual).isEqualTo(expected)
+        assert(actual).isEqualTo(expectedTx)
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -87,13 +97,15 @@ class GTXMLTransactionParserBlockchainRIDTest {
             </transaction>
         """.trimIndent()
 
-        val expected = GTXData(
+        val expectedBody = GTXTransactionBodyData(
                 byteArrayOf(0x0A, 0x0B, 0x0C),
-                arrayOf(), arrayOf(), arrayOf())
+                arrayOf(), arrayOf())
+
+        val expectedTx = GTXTransactionData(expectedBody, arrayOf() )
 
         val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml,
                 TransactionContext(byteArrayOf(0x01, 0x02, 0x03)))
 
-        assert(actual).isEqualTo(expected)
+        assert(actual).isEqualTo(expectedTx)
     }
 }
