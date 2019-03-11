@@ -2,7 +2,7 @@ package net.postchain.gtv
 
 import org.openmuc.jasn1.ber.types.BerInteger
 import java.math.BigInteger
-import net.postchain.gtv.messages.Gtv as RawGtv
+import net.postchain.gtv.messages.RawGtv
 
 data class GtvInteger(val integer: BigInteger) : GtvPrimitive() {
 

@@ -1,7 +1,7 @@
 package net.postchain.gtv
 
 import net.postchain.core.UserMistake
-import java.util.*
+import net.postchain.gtv.messages.RawGtv
 
 /**
  * The virtual version of [GtvArray] only implements few of the methods defined in [Gtv].
@@ -35,7 +35,7 @@ data class GtvVirtualArray(val array: Array<out Gtv?>) : GtvVirtual() {
         throw UserMistake("Don't call this method on a virtual object")
     }
 
-    override fun getRawGtv(): net.postchain.gtv.messages.Gtv {
+    override fun getRawGtv(): RawGtv {
         throw UserMistake("Don't call this method on a virtual object")
     }
 

@@ -8,7 +8,6 @@ import net.postchain.core.ProgrammerMistake
 import net.postchain.core.Signature
 import net.postchain.core.UserMistake
 import java.util.*
-import net.postchain.gtv.messages.Gtv as RawGtv
 import net.postchain.gtv.*
 import net.postchain.gtx.factory.GtxDataFactory
 import net.postchain.gtx.serializer.GtxDataSerializer

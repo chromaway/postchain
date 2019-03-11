@@ -3,7 +3,7 @@ package net.postchain.gtv
 import net.postchain.gtv.messages.DictPair
 import org.openmuc.jasn1.ber.types.string.BerUTF8String
 import java.math.BigInteger
-import net.postchain.gtv.messages.Gtv as RawGtv
+import net.postchain.gtv.messages.RawGtv
 
 fun Boolean.toLong() = if (this) 1L else 0L
 

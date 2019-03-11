@@ -19,7 +19,7 @@ import org.openmuc.jasn1.ber.types.*;
 import org.openmuc.jasn1.ber.types.string.*;
 
 
-public class Gtv implements BerType, Serializable {
+public class RawGtv implements BerType, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -153,17 +153,17 @@ public class Gtv implements BerType, Serializable {
 
 		public static final BerTag tag = new BerTag(BerTag.UNIVERSAL_CLASS, BerTag.CONSTRUCTED, 16);
 		public byte[] code = null;
-		public List<Gtv> seqOf = null;
+		public List<RawGtv> seqOf = null;
 
 		public Array() {
-			seqOf = new ArrayList<Gtv>();
+			seqOf = new ArrayList<RawGtv>();
 		}
 
 		public Array(byte[] code) {
 			this.code = code;
 		}
 
-		public Array(List<Gtv> seqOf) {
+		public Array(List<RawGtv> seqOf) {
 			this.seqOf = seqOf;
 		}
 
@@ -213,7 +213,7 @@ public class Gtv implements BerType, Serializable {
 			int totalLength = length.val;
 
 			while (subCodeLength < totalLength) {
-				Gtv element = new Gtv();
+				RawGtv element = new RawGtv();
 				subCodeLength += element.decode(is, null);
 				seqOf.add(element);
 			}
@@ -248,7 +248,7 @@ public class Gtv implements BerType, Serializable {
 				sb.append("null");
 			}
 			else {
-				Iterator<Gtv> it = seqOf.iterator();
+				Iterator<RawGtv> it = seqOf.iterator();
 				if (it.hasNext()) {
 					it.next().appendAsString(sb, indentLevel + 1);
 					while (it.hasNext()) {
@@ -277,14 +277,14 @@ public class Gtv implements BerType, Serializable {
 	public Dict dict = null;
 	public Array array = null;
 	
-	public Gtv() {
+	public RawGtv() {
 	}
 
-	public Gtv(byte[] code) {
+	public RawGtv(byte[] code) {
 		this.code = code;
 	}
 
-	public Gtv(BerNull null_, BerOctetString byteArray, BerUTF8String string, BerInteger integer, Dict dict, Array array) {
+	public RawGtv(BerNull null_, BerOctetString byteArray, BerUTF8String string, BerInteger integer, Dict dict, Array array) {
 		this.null_ = null_;
 		this.byteArray = byteArray;
 		this.string = string;

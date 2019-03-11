@@ -2,7 +2,7 @@ package net.postchain.gtv
 
 import java.util.*
 import org.openmuc.jasn1.ber.types.BerOctetString
-import net.postchain.gtv.messages.Gtv as RawGtv
+import net.postchain.gtv.messages.RawGtv
 
 
 data class GtvByteArray(val bytearray: ByteArray) : GtvPrimitive() {

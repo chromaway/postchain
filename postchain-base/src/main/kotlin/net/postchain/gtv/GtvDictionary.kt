@@ -2,7 +2,7 @@ package net.postchain.gtv
 
 import net.postchain.gtv.messages.DictPair
 import org.openmuc.jasn1.ber.types.string.BerUTF8String
-import net.postchain.gtv.messages.Gtv as RawGtv
+import net.postchain.gtv.messages.RawGtv
 
 data class GtvDictionary(val dict: Map<String, Gtv>) : GtvCollection() {
 
@@ -20,7 +20,7 @@ data class GtvDictionary(val dict: Map<String, Gtv>) : GtvCollection() {
         return dict
     }
 
-    override fun getRawGtv(): net.postchain.gtv.messages.Gtv {
+    override fun getRawGtv(): RawGtv {
         return RawGtv(null, null, null, null,
                 RawGtv.Dict(dict.entries.map {
                     DictPair(BerUTF8String(it.key), it.value.getRawGtv())

@@ -9,7 +9,7 @@ import net.postchain.gtv.path.GtvPath
 import net.postchain.gtv.path.GtvPathFactory
 import net.postchain.gtv.path.GtvPathSet
 import java.math.BigInteger
-import net.postchain.gtv.messages.Gtv as RawGtv
+import net.postchain.gtv.messages.RawGtv
 
 /**
  * Enum class of GTXML types

@@ -1,6 +1,7 @@
 package net.postchain.gtv
 
 import net.postchain.core.UserMistake
+import net.postchain.gtv.messages.RawGtv
 
 /**
  * The virtual version of [GtvDictionary] only implements few of the methods defined in [Gtv].
@@ -43,7 +44,7 @@ data class GtvVirtualDictionary(val dict: Map<String, Gtv>, val size: Int? = nul
         throw UserMistake("Don't call this method on a virtual object")
     }
 
-    override fun getRawGtv(): net.postchain.gtv.messages.Gtv {
+    override fun getRawGtv(): RawGtv {
         throw UserMistake("Don't call this method on a virtual object")
     }
 

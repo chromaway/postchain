@@ -1,8 +1,8 @@
 package net.postchain.gtv
 
 import net.postchain.core.ProgrammerMistake
-import net.postchain.gtv.messages.Gtv as RawGtv
 import java.io.ByteArrayInputStream
+import net.postchain.gtv.messages.RawGtv
 
 object GtvDecoder {
 

@@ -3,7 +3,7 @@ package net.postchain.gtv
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.UserMistake
 import org.openmuc.jasn1.ber.types.string.BerUTF8String
-import net.postchain.gtv.messages.Gtv as RawGtv
+import net.postchain.gtv.messages.RawGtv
 
 data class GtvString(val string: String) : GtvPrimitive() {
 

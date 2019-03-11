@@ -5,7 +5,6 @@ import net.postchain.base.gtxml.DictType
 import net.postchain.base.gtxml.ObjectFactory
 import net.postchain.gtv.*
 import java.io.StringWriter
-import java.math.BigInteger
 import javax.xml.bind.JAXB
 import javax.xml.bind.JAXBElement
 

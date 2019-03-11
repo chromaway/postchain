@@ -1,7 +1,7 @@
 package net.postchain.gtv
 
 import java.util.*
-import net.postchain.gtv.messages.Gtv as RawGtv
+import net.postchain.gtv.messages.RawGtv
 
 
 data class GtvArray(val array: Array<out Gtv>) : GtvCollection() {
@@ -20,7 +20,7 @@ data class GtvArray(val array: Array<out Gtv>) : GtvCollection() {
         return array.size
     }
 
-    override fun getRawGtv(): net.postchain.gtv.messages.Gtv {
+    override fun getRawGtv(): RawGtv {
         return RawGtv(null, null, null, null, null, RawGtv.Array(array.map { it.getRawGtv() }))
     }
 

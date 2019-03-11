@@ -27,7 +27,7 @@ public class DictPair implements BerType, Serializable {
 
 	public byte[] code = null;
 	public BerUTF8String name = null;
-	public Gtv value = null;
+	public RawGtv value = null;
 	
 	public DictPair() {
 	}
@@ -36,7 +36,7 @@ public class DictPair implements BerType, Serializable {
 		this.code = code;
 	}
 
-	public DictPair(BerUTF8String name, Gtv value) {
+	public DictPair(BerUTF8String name, RawGtv value) {
 		this.name = name;
 		this.value = value;
 	}
@@ -101,7 +101,7 @@ public class DictPair implements BerType, Serializable {
 			throw new IOException("Tag does not match the mandatory sequence element tag.");
 		}
 		
-		value = new Gtv();
+		value = new RawGtv();
 		subCodeLength += value.decode(is, berTag);
 		if (subCodeLength == totalLength) {
 			return codeLength;
