@@ -3,8 +3,9 @@
 package net.postchain.gtx
 
 import net.postchain.base.CryptoSystem
-import net.postchain.base.Signer
+import net.postchain.base.SigMaker
 import net.postchain.base.merkle.Hash
+import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.Signature
 import net.postchain.core.UserMistake
@@ -56,6 +57,7 @@ data class GTXTransactionBodyData(
         val operations: Array<OpData>,
         val signers: Array<ByteArray>) {
 
+    private var cachedRid: Hash? = null
 
     fun getExtOpData(): Array<ExtOpData> {
         return operations.mapIndexed { idx, op ->
@@ -63,9 +65,13 @@ data class GTXTransactionBodyData(
         }.toTypedArray()
     }
 
-    fun calculateRID(calculator: GtvMerkleHashCalculator): Hash {
-        val txBodyGtvArr: GtvArray = GtxTransactionBodyDataSerializer.serializeToGtv(this)
-        return txBodyGtvArr.merkleHash(calculator)
+    fun calculateRID(calculator: MerkleHashCalculator<Gtv>): Hash {
+        if (cachedRid == null) {
+            val txBodyGtvArr: GtvArray = GtxTransactionBodyDataSerializer.serializeToGtv(this)
+            cachedRid = txBodyGtvArr.merkleHash(calculator)
+        }
+
+        return cachedRid!!
     }
 
     fun serialize(): ByteArray {
@@ -143,6 +149,8 @@ class GTXDataBuilder(val blockchainRID: ByteArray,
                      val operations: MutableList<OpData>,
                      private var finished: Boolean) {
 
+    val calculator = GtvMerkleHashCalculator(crypto)
+
     // construct empty builder
     constructor(blockchainRID: ByteArray,
                 signers: Array<ByteArray>,
@@ -205,25 +213,20 @@ class GTXDataBuilder(val blockchainRID: ByteArray,
     }
 
     /**
-     * @return Transaction body in binary format
-     */
-    fun getDataForSigning(): ByteArray {
-        if (!finished) throw ProgrammerMistake("Must be finished before signing")
-
-        return getGTXTransactionBodyData().serialize()
-    }
-
-    /**
      * @return Merkle root hash of transaction body
      */
     fun getDigestForSigning(): ByteArray {
         if (!finished) throw ProgrammerMistake("Must be finished before signing")
 
-        return getGTXTransactionBodyData().calculateRID(GtvMerkleHashCalculator(crypto))
+        return getGTXTransactionBodyData().calculateRID(calculator)
     }
 
-    fun sign(signer: Signer) {
-        addSignature(signer(getDataForSigning()), false)
+    /**
+     * @param sigMaker can create signatures
+     * @return a signed merkle root of the TX body
+     */
+    fun sign(sigMaker: SigMaker) {
+        addSignature(sigMaker.signDigest(getDigestForSigning()), false)
     }
 
     fun getGTXTransactionBodyData(): GTXTransactionBodyData {

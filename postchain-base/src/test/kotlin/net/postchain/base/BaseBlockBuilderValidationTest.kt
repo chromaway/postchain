@@ -30,12 +30,12 @@ class BaseBlockBuilderValidationTest {
     val rootHash =    "46AF9064F12528CAD6A7C377204ACD0AC38CDC6912903E7DAB3703764C8DD5E5".hexStringToByteArray()
     val badRootHash = "46AF9064F12FFFFFFFFFFFFFF04ACD0AC38CDC6912903E7DAB3703764C8DD5E5".hexStringToByteArray()
     val subjects = arrayOf("test".toByteArray())
-    val signer = cryptoSystem.makeSigner(pubKey(0), privKey(0))
+    val sigMaker = cryptoSystem.buildSigMaker(pubKey(0), privKey(0))
 
     // Objects using mocks
     val ctx = EContext(mockedConn, 2L, 0)
     val bctx = BlockEContext(mockedConn, 2, 0, 1, 10)
-    val bbb = BaseBlockBuilder(cryptoSystem, ctx, bbs, tf, subjects, signer)
+    val bbb = BaseBlockBuilder(cryptoSystem, ctx, bbs, tf, subjects, sigMaker)
 
     @Test
     fun validateBlokcHeader_valid() {

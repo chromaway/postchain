@@ -196,7 +196,8 @@ open class IntegrationTest {
         val blockHeader = blockData.header
         var i = 0
         while (!witnessBuilder.isComplete()) {
-            witnessBuilder.applySignature(cryptoSystem.makeSigner(pubKey(i), privKey(i))(blockHeader.rawData))
+            val sigMaker =cryptoSystem.buildSigMaker(pubKey(i), privKey(i))
+            witnessBuilder.applySignature(sigMaker.signDigest(blockHeader.blockRID))
             i++
         }
         val witness = witnessBuilder.getWitness()

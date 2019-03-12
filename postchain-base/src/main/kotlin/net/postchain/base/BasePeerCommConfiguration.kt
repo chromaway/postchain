@@ -13,8 +13,8 @@ class BasePeerCommConfiguration(override val peerInfo: Array<PeerInfo>,
         return peerInfo.find { it.pubKey.contentEquals(peerID) }
     }
 
-    override fun signer(): Signer {
-        return cryptoSystem.makeSigner(peerInfo[myIndex].pubKey, privKey)
+    override fun sigMaker(): SigMaker {
+        return cryptoSystem.buildSigMaker(peerInfo[myIndex].pubKey, privKey)
     }
 
     override fun verifier(): Verifier {

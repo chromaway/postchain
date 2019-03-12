@@ -10,9 +10,11 @@ import net.postchain.gtv.GtvString
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.MockCryptoSystem
+import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtx.GTXTransactionBodyData
 import net.postchain.gtx.GTXTransactionData
 import org.junit.Test
+import org.mockito.Mock
 
 class GTXMLTransactionParserAutoSignTest {
 
@@ -20,13 +22,15 @@ class GTXMLTransactionParserAutoSignTest {
     fun autoSign_autosigning_for_empty_signatures_successfully() {
         val xml = readResourceFile("tx_two_empty_signatures.xml")
 
+        val mockCalculator = GtvMerkleHashCalculator(MockCryptoSystem())  // TODO: POS-04_sig ??
+
         val pubKey0 = pubKey(0)
         val privKey0 = privKey(0)
-        val signer0 = MockCryptoSystem().makeSigner(pubKey0, privKey0)
+        val sigMaker0 = MockCryptoSystem().buildSigMaker(pubKey0, privKey0)
 
         val pubKey1 = pubKey(1)
         val privKey1 = privKey(1)
-        val signer1 = MockCryptoSystem().makeSigner(pubKey1, privKey1)
+        val sigMaker1 = MockCryptoSystem().buildSigMaker(pubKey1, privKey1)
 
         val expectedBody = GTXTransactionBodyData(
                 "23213213".hexStringToByteArray(),
@@ -57,8 +61,9 @@ class GTXMLTransactionParserAutoSignTest {
         )
 
         // Auto-signing
-        expectedTx.signatures[0] = signer0(expectedBody.serialize()).data
-        expectedTx.signatures[3] = signer1(expectedBody.serialize()).data
+        val merkleRoot = expectedBody.calculateRID(mockCalculator)
+        expectedTx.signatures[0] = sigMaker0.signDigest(merkleRoot).data
+        expectedTx.signatures[3] = sigMaker1.signDigest(merkleRoot).data
 
         val actual = GTXMLTransactionParser.parseGTXMLTransaction(
                 xml,
@@ -67,9 +72,10 @@ class GTXMLTransactionParserAutoSignTest {
                         mapOf(),
                         true,
                         mapOf(
-                                pubKey0.byteArrayKeyOf() to signer0,
-                                pubKey1.byteArrayKeyOf() to signer1)
-                )
+                                pubKey0.byteArrayKeyOf() to sigMaker0,
+                                pubKey1.byteArrayKeyOf() to sigMaker1)
+                ),
+                MockCryptoSystem()
         )
 
         assert(actual).isEqualTo(expectedTx)
@@ -80,7 +86,9 @@ class GTXMLTransactionParserAutoSignTest {
         val xml = readResourceFile("tx_no_signer.xml")
 
         GTXMLTransactionParser.parseGTXMLTransaction(xml,
-                TransactionContext(null, mapOf(), true, mapOf()))
+                TransactionContext(null, mapOf(), true, mapOf()),
+                MockCryptoSystem()
+                )
     }
 
     @Test
@@ -120,7 +128,9 @@ class GTXMLTransactionParserAutoSignTest {
         )
 
         val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml,
-                TransactionContext(null, mapOf(), false, mapOf()))
+                TransactionContext(null, mapOf(), false, mapOf()),
+                MockCryptoSystem()
+        )
 
         assert(actual).isEqualTo(expectedTx)
     }
@@ -129,13 +139,15 @@ class GTXMLTransactionParserAutoSignTest {
     fun autoSign_autosigning_no_signatures_element_successfully() {
         val xml = readResourceFile("tx_no_signatures_element.xml")
 
+        val mockCalculator = GtvMerkleHashCalculator(MockCryptoSystem())  // TODO: POS-04_sig ??
+
         val pubKey0 = pubKey(0)
         val privKey0 = privKey(0)
-        val signer0 = MockCryptoSystem().makeSigner(pubKey0, privKey0)
+        val sigMaker0 = MockCryptoSystem().buildSigMaker(pubKey0, privKey0)
 
         val pubKey1 = pubKey(1)
         val privKey1 = privKey(1)
-        val signer1 = MockCryptoSystem().makeSigner(pubKey1, privKey1)
+        val sigMaker1 = MockCryptoSystem().buildSigMaker(pubKey1, privKey1)
 
         val expectedBody = GTXTransactionBodyData(
                 "23213213".hexStringToByteArray(),
@@ -156,8 +168,9 @@ class GTXMLTransactionParserAutoSignTest {
                 )
 
         // Auto-signing
-        expectedTx.signatures[0] = signer0(expectedBody.serialize()).data
-        expectedTx.signatures[1] = signer1(expectedBody.serialize()).data
+        val merkleRoot = expectedBody.calculateRID(mockCalculator)
+        expectedTx.signatures[0] = sigMaker0.signDigest(merkleRoot).data
+        expectedTx.signatures[1] = sigMaker1.signDigest(merkleRoot).data
 
         val actual = GTXMLTransactionParser.parseGTXMLTransaction(
                 xml,
@@ -166,10 +179,11 @@ class GTXMLTransactionParserAutoSignTest {
                         mapOf(),
                         true,
                         mapOf(
-                                pubKey0.byteArrayKeyOf() to signer0,
-                                pubKey1.byteArrayKeyOf() to signer1
+                                pubKey0.byteArrayKeyOf() to sigMaker0,
+                                pubKey1.byteArrayKeyOf() to sigMaker1
                         )
-                )
+                ),
+                MockCryptoSystem()
         )
 
         assert(actual).isEqualTo(expectedTx)

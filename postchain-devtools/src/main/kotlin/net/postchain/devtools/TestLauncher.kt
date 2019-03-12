@@ -121,9 +121,9 @@ class TestLauncher : IntegrationTest() {
                 ),
                 true,
                 mapOf(
-                        pubKey(0).byteArrayKeyOf() to cryptoSystem.makeSigner(pubKey(0), privKey(0)),
-                        user2pub.byteArrayKeyOf() to cryptoSystem.makeSigner(user2pub, user2priv),
-                        user3pub.byteArrayKeyOf() to cryptoSystem.makeSigner(user3pub, user3priv)
+                        pubKey(0).byteArrayKeyOf() to cryptoSystem.buildSigMaker(pubKey(0), privKey(0)),
+                        user2pub.byteArrayKeyOf() to cryptoSystem.buildSigMaker(user2pub, user2priv),
+                        user3pub.byteArrayKeyOf() to cryptoSystem.buildSigMaker(user3pub, user3priv)
                 )
         )
 
@@ -136,7 +136,7 @@ class TestLauncher : IntegrationTest() {
             val enqueued = mutableListOf<EnqueuedTx>()
             for ((txIdx, txXml) in block.transaction.withIndex()) {
                 try {
-                    val gtxData = GTXMLTransactionParser.parseGTXMLTransaction(txXml, txContext)
+                    val gtxData = GTXMLTransactionParser.parseGTXMLTransaction(txXml, txContext, cryptoSystem)
                     val tx = enqueueTx(node, gtxData.serialize(), blockNum)
                     enqueued.add(EnqueuedTx(
                             txIdx.toLong(), tx!!.getRID(), txXml.isFailure

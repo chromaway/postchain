@@ -18,10 +18,15 @@ import java.util.*
  * @property store For database access
  * @property txFactory Used for serializing transaction data
  * @property subjects Public keys for nodes authorized to sign blocks
- * @property blockSigner Signing function for local node to sign block
+ * @property blockSigMaker used to produce signatures on blocks for local node
  */
-open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, store: BlockStore,
-                            txFactory: TransactionFactory, val subjects: Array<ByteArray>, val blockSigner: Signer)
+open class BaseBlockBuilder(
+        val cryptoSystem: CryptoSystem,
+        eContext: EContext,
+        store: BlockStore,
+        txFactory: TransactionFactory,
+        val subjects: Array<ByteArray>,
+        val blockSigMaker: SigMaker)
     : AbstractBlockBuilder(eContext, store, txFactory) {
 
 
@@ -121,7 +126,7 @@ open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, 
         }
 
         val witnessBuilder = BaseBlockWitnessBuilder(cryptoSystem, _blockData!!.header, subjects, getRequiredSigCount())
-        witnessBuilder.applySignature(blockSigner(_blockData!!.header.rawData))
+        witnessBuilder.applySignature(blockSigMaker.signDigest(_blockData!!.header.blockRID)) // TODO: POS-04_sig
         return witnessBuilder
     }
 

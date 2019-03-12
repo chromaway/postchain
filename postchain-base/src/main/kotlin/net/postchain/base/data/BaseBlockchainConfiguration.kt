@@ -34,7 +34,7 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
                 blockStore,
                 getTransactionFactory(),
                 signerPubKeys.toTypedArray(),
-                configData.blockSigner)
+                configData.blockSigMaker)
     }
 
     open fun createBlockBuilderInstance(cryptoSystem: CryptoSystem,
@@ -42,10 +42,10 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
                                         blockStore: BlockStore,
                                         transactionFactory: TransactionFactory,
                                         signers: Array<ByteArray>,
-                                        blockSigner: Signer
+                                        blockSigMaker: SigMaker
     ): BlockBuilder {
         return BaseBlockBuilder(
-                cryptoSystem, ctx, blockStore, getTransactionFactory(), signers, blockSigner)
+                cryptoSystem, ctx, blockStore, getTransactionFactory(), signers, blockSigMaker)
     }
 
     override fun makeBlockQueries(storage: Storage): BlockQueries {

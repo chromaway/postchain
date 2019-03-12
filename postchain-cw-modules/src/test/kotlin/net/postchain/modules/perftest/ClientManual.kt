@@ -29,7 +29,7 @@ class ClientManual : FTIntegrationTest() {
         val b = GTXDataBuilder(testBlockchainRID, arrayOf(alicePubKey), cryptoSystem)
         b.addOperation("gtx_test", arrayOf(gtv(id), gtv(value)))
         b.finish()
-        b.sign(cryptoSystem.makeSigner(alicePubKey, alicePrivKey))
+        b.sign(cryptoSystem.buildSigMaker(alicePubKey, alicePrivKey))
         return b.serialize()
     }
 

@@ -2,7 +2,7 @@
 
 package net.postchain.ebft
 
-import net.postchain.base.Signer
+import net.postchain.base.SigMaker
 import net.postchain.base.Verifier
 import net.postchain.common.toHex
 import net.postchain.core.Signature
@@ -11,9 +11,9 @@ import net.postchain.ebft.message.Message
 import net.postchain.ebft.message.SignedMessage
 import java.util.*
 
-fun encodeAndSign(message: Message, sign: Signer): ByteArray {
+fun encodeAndSign(message: Message, sigMaker: SigMaker): ByteArray {
     val signingBytes = message.encode()
-    val signature = sign(signingBytes)
+    val signature = sigMaker.signMessage(signingBytes) // TODO POS-04_sig I THINK this is one of the cases where we actually sign the data
 
     return SignedMessage(signingBytes, signature.subjectID, signature.data).encode()
 }

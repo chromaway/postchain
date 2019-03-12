@@ -2,17 +2,20 @@
 
 package net.postchain.gtx.gtxml
 
-import net.postchain.base.Signer
+import net.postchain.base.CryptoSystem
+import net.postchain.base.SigMaker
 import net.postchain.base.gtxml.OperationsType
 import net.postchain.base.gtxml.ParamType
 import net.postchain.base.gtxml.SignersType
 import net.postchain.base.gtxml.TransactionType
+import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.ByteArrayKey
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.gtvml.GtvMLParser
+import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtx.GTXTransactionBodyData
 import net.postchain.gtx.GTXTransactionData
 import net.postchain.gtx.OpData
@@ -23,7 +26,7 @@ import javax.xml.bind.JAXBElement
 class TransactionContext(val blockchainRID: ByteArray?,
                          val params: Map<String, Gtv> = mapOf(),
                          val autoSign: Boolean = false,
-                         val signers: Map<ByteArrayKey, Signer> = mapOf()) {
+                         val signers: Map<ByteArrayKey, SigMaker> = mapOf()) {
 
     companion object {
         fun empty() = TransactionContext(null)
@@ -36,10 +39,11 @@ object GTXMLTransactionParser {
     /**
      * Parses XML represented as string into [GTXTransactionData] within the [TransactionContext]
      */
-    fun parseGTXMLTransaction(xml: String, context: TransactionContext): GTXTransactionData {
+    fun parseGTXMLTransaction(xml: String, context: TransactionContext, cs: CryptoSystem): GTXTransactionData {
         return parseGTXMLTransaction(
                 JAXB.unmarshal(StringReader(xml), TransactionType::class.java),
-                context)
+                context,
+                cs)
     }
 
     /**
@@ -57,7 +61,7 @@ object GTXMLTransactionParser {
     /**
      * TODO: [et]: Parses XML represented as string into [GTXData] within the [TransactionContext]
      */
-    fun parseGTXMLTransaction(transaction: TransactionType, context: TransactionContext): GTXTransactionData {
+    fun parseGTXMLTransaction(transaction: TransactionType, context: TransactionContext, cs: CryptoSystem): GTXTransactionData {
         // Asserting count(signers) == count(signatures)
         requireSignaturesCorrespondsSigners(transaction)
 
@@ -70,7 +74,8 @@ object GTXMLTransactionParser {
         val tx = GTXTransactionData(txBody, signatures)
 
         if (context.autoSign) {
-            signTransaction(tx, context.signers)
+            val calculator = GtvMerkleHashCalculator(cs)
+            signTransaction(tx, context.signers, calculator)
         }
 
         return tx
@@ -137,15 +142,16 @@ object GTXMLTransactionParser {
      * Will provide all missing signatures
      *
      * @param tx is the transaction to sign
-     * @param signersMap is a map that tells us what [Signer] function should be usd for each signer
+     * @param signersMap is a map that tells us what [SigMaker] should be usd for each signer
      */
-    private fun signTransaction(tx: GTXTransactionData, signersMap: Map<ByteArrayKey, Signer>) {
+    private fun signTransaction(tx: GTXTransactionData, signersMap: Map<ByteArrayKey, SigMaker>, calculator: MerkleHashCalculator<Gtv> ) {
         val txSigners = tx.transactionBodyData.signers
+        val txBodyMerkleRoot = tx.transactionBodyData.calculateRID(calculator)
         for (i in 0 until txSigners.size) {
             if (tx.signatures[i].isEmpty()) {
                 val key = txSigners[i].byteArrayKeyOf()
-                val signer = signersMap[key] ?: throw IllegalArgumentException("Signer $key is absent")
-                tx.signatures[i] = signer(tx.transactionBodyData.serialize()).data
+                val sigMaker = signersMap[key] ?: throw IllegalArgumentException("Signer $key is absent")
+                tx.signatures[i] = sigMaker.signDigest(txBodyMerkleRoot).data
             }
         }
     }

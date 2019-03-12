@@ -4,6 +4,7 @@ import assertk.assert
 import assertk.assertions.isEqualTo
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.UserMistake
+import net.postchain.devtools.MockCryptoSystem
 import net.postchain.gtx.*
 import net.postchain.gtv.*
 import org.junit.Test
@@ -44,7 +45,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                 )
         )
 
-        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty())
+        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty(), MockCryptoSystem())
 
         assert(actual).isEqualTo(expectedTx)
     }
@@ -61,7 +62,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
 
         val expectedTx = GTXTransactionData(expectedBody, arrayOf())
 
-        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty())
+        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty(), MockCryptoSystem())
 
         assert(actual).isEqualTo(expectedTx)
     }
@@ -92,7 +93,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
 
         val expectedTx = GTXTransactionData(expectedBody, arrayOf())
 
-        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty())
+        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty(), MockCryptoSystem())
 
         assert(actual).isEqualTo(expectedTx)
     }
@@ -116,7 +117,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                 )
         )
 
-        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty())
+        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty(), MockCryptoSystem())
 
         assert(actual).isEqualTo(expectedTx)
     }
@@ -141,7 +142,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                 )
         )
 
-        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty())
+        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty(), MockCryptoSystem())
 
         assert(actual).isEqualTo(expectedTx)
     }
@@ -187,7 +188,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                 )
         )
 
-        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, context)
+        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, context, MockCryptoSystem())
 
         assert(actual).isEqualTo(expectedTx)
     }
@@ -197,7 +198,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
         val xml = javaClass.getResource("/net/postchain/gtx/gtxml/parse/tx_full_params_not_found.xml").readText()
 
         GTXMLTransactionParser.parseGTXMLTransaction(
-                xml, TransactionContext.empty())
+                xml, TransactionContext.empty(), MockCryptoSystem())
     }
 
     @Test(expected = UserMistake::class)
@@ -211,7 +212,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                 )
         )
 
-        GTXMLTransactionParser.parseGTXMLTransaction(xml, context)
+        GTXMLTransactionParser.parseGTXMLTransaction(xml, context, MockCryptoSystem())
     }
 
     @Test(expected = UserMistake::class)
@@ -225,7 +226,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                 )
         )
 
-        GTXMLTransactionParser.parseGTXMLTransaction(xml, context)
+        GTXMLTransactionParser.parseGTXMLTransaction(xml, context, MockCryptoSystem())
     }
 
     @Test
@@ -279,7 +280,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                 )
         )
 
-        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, context)
+        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, context, MockCryptoSystem())
 
         assert(actual).isEqualTo(expectedTx)
     }
@@ -290,7 +291,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                 "/net/postchain/gtx/gtxml/parse/tx_signers_and_signatures_incompatibility__signers_more_than_signatures.xml")
                 .readText()
 
-        GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty())
+        GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty(), MockCryptoSystem())
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -299,7 +300,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                 "/net/postchain/gtx/gtxml/parse/tx_signers_and_signatures_incompatibility__signers_less_than_signatures.xml")
                 .readText()
 
-        GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty())
+        GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty(), MockCryptoSystem())
     }
 
     @Test
@@ -326,7 +327,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                 )
         )
 
-        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty())
+        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty(), MockCryptoSystem())
 
         assert(actual).isEqualTo(expectedTx)
     }

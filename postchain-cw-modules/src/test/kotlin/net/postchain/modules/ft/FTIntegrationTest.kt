@@ -42,7 +42,7 @@ open class FTIntegrationTest : IntegrationTest() {
             b.addOperation("ft_register", arrayOf(gtv(desc)))
         }
         b.finish()
-        b.sign(myCS.makeSigner(pubKey(registrator), privKey(registrator)))
+        b.sign(myCS.buildSigMaker(pubKey(registrator), privKey(registrator)))
         return b.serialize()
     }
 
@@ -52,7 +52,7 @@ open class FTIntegrationTest : IntegrationTest() {
                 gtv(issuerID), gtv(assetID), gtv(amout), gtv(recipientID)
         ))
         b.finish()
-        b.sign(myCS.makeSigner(issuerPubKeys[issuerIdx], issuerPrivKeys[issuerIdx]))
+        b.sign(myCS.buildSigMaker(issuerPubKeys[issuerIdx], issuerPrivKeys[issuerIdx]))
         return b.serialize()
     }
 
@@ -87,7 +87,7 @@ open class FTIntegrationTest : IntegrationTest() {
         }
         b.addOperation("ft_transfer", args.toTypedArray())
         b.finish()
-        b.sign(myCS.makeSigner(senderPubKey, senderPrivKey))
+        b.sign(myCS.buildSigMaker(senderPubKey, senderPrivKey))
         return b.serialize()
     }
 

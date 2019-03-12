@@ -13,7 +13,8 @@ import net.postchain.network.PacketConverter
 class EbftPacketConverter(val config: PeerCommConfiguration) : PacketConverter<Message> {
     override fun makeIdentPacket(forPeer: ByteArray): ByteArray {
         val bytes = GtvEncoder.encodeGtv(Identification(forPeer, config.blockchainRID, System.currentTimeMillis()).toGtv())
-        val signature = config.signer()(bytes)
+        val sigMaker = config.sigMaker()
+        val signature = sigMaker.signMessage(bytes) // TODO POS-04_sig I THINK this is one of the cases where we actually sign the data
         return GtvEncoder.encodeGtv(GtvArray(arrayOf(GtvByteArray(bytes),
                 GtvByteArray(config.peerInfo[config.myIndex].pubKey), GtvByteArray(signature.data))))
     }
@@ -42,7 +43,7 @@ class EbftPacketConverter(val config: PeerCommConfiguration) : PacketConverter<M
     }
 
     override fun encodePacket(packet: Message): ByteArray {
-        return encodeAndSign(packet, config.signer())
+        return encodeAndSign(packet, config.sigMaker())
     }
 
     // TODO: [et]: Improve the design

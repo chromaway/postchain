@@ -15,7 +15,7 @@ fun makeNOPGTX(): ByteArray {
     val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(0)), myCS)
     b.addOperation("nop", arrayOf(gtv(42)))
     b.finish()
-    b.sign(myCS.makeSigner(pubKey(0), privKey(0)))
+    b.sign(myCS.buildSigMaker(pubKey(0), privKey(0)))
     return b.serialize()
 }
 
