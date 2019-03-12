@@ -15,12 +15,12 @@ import java.net.InetSocketAddress
 import java.net.SocketAddress
 
 class NettyClientPeerConnection<PacketType>(
-        eventGroupLoop: EventLoopGroup,
+        group: EventLoopGroup,
         val peerInfo: PeerInfo,
         private val packetEncoder: XPacketEncoder<PacketType>
 ) : ChannelInboundHandlerAdapter(), XPeerConnection {
 
-    private val nettyClient = NettyClient(eventGroupLoop)
+    private val nettyClient = NettyClient(group)
     private lateinit var context: ChannelHandlerContext
     private var packetHandler: XPacketHandler? = null
     private lateinit var onDisconnected: () -> Unit
