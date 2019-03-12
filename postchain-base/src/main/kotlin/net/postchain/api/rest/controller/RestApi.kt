@@ -2,6 +2,8 @@
 
 package net.postchain.api.rest.controller
 
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
 import mu.KLogging
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_HEADERS
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_METHODS
@@ -155,6 +157,10 @@ class RestApi(private val listenPort: Int, private val basePath: String,
                 handleQuery(request)
             }
 
+            http.post("/batch_query/$PARAM_BLOCKCHAIN_RID") { request, _ ->
+                handleQueries(request)
+            }
+
             http.post("/query_gtx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
                 handleGTXQuery(request)
             }
@@ -206,6 +212,22 @@ class RestApi(private val listenPort: Int, private val basePath: String,
         return model(request)
                 .query(Query(request.body()))
                 .json
+    }
+
+    private fun handleQueries(request: Request): String {
+        logger.debug("Request body: ${request.body()}")
+
+        val element : JsonElement = gson.fromJson(request.body(), JsonElement::class.java)
+        val jsonObject = element.asJsonObject
+        val queriesArray : JsonArray = jsonObject.get("queries").asJsonArray
+
+        var response : MutableList<String> = mutableListOf<String>()
+
+        queriesArray.forEach {
+            response.add(model(request).query(Query(it.asString)).json)
+        }
+
+        return gson.toJson(response)
     }
 
     private fun handleGTXQuery(request: Request): String {
