@@ -66,7 +66,7 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
 
     override fun shutdown() {
         closed = true
-        // storage.close()
+        storage.close()
     }
 
     private fun makeBlockBuilder(): ManagedBlockBuilder {
