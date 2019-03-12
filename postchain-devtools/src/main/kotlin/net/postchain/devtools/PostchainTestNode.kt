@@ -12,7 +12,6 @@ import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.base.withWriteConnection
 import net.postchain.common.toHex
 import net.postchain.core.*
-import net.postchain.ebft.worker.WorkerBase
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.encodeGTXValue
 import org.apache.commons.configuration2.Configuration
@@ -59,8 +58,8 @@ class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
         startBlockchain(DEFAULT_CHAIN_ID)
     }
 
-    fun shutdown() {
-        stopAllBlockchain()
+    override fun shutdown() {
+        super.shutdown()
         storage.close()
     }
 
@@ -75,12 +74,12 @@ class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
                 .restApi?.actualPort() ?: 0
     }
 
-    fun getBlockchainInstance(chainId: Long = DEFAULT_CHAIN_ID): WorkerBase {
-        return processManager.retrieveBlockchain(chainId) as WorkerBase
+    fun getBlockchainInstance(chainId: Long = DEFAULT_CHAIN_ID): BlockchainProcess {
+        return processManager.retrieveBlockchain(chainId) as BlockchainProcess
     }
 
-    fun retrieveBlockchain(chainId: Long = DEFAULT_CHAIN_ID): WorkerBase? {
-        return processManager.retrieveBlockchain(chainId) as? WorkerBase
+    fun retrieveBlockchain(chainId: Long = DEFAULT_CHAIN_ID): BlockchainProcess? {
+        return processManager.retrieveBlockchain(chainId)
     }
 
     fun transactionQueue(chainId: Long = DEFAULT_CHAIN_ID): TransactionQueue {

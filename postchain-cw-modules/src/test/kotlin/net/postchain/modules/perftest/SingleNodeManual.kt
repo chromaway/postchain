@@ -36,24 +36,27 @@ class SingleNodeManual : IntegrationTest() {
     }
 
     private fun runSingleNode(name: String, blockchainConfig: String) {
+        configOverrides.setProperty("api.port", 8383)
         val node = createNode(0, blockchainConfig)
 
         // warm up
-        val warmupDuration = 20000
+        val warmupDuration = 30000
         var warmupEndTime = System.currentTimeMillis() + warmupDuration
         while (warmupEndTime > System.currentTimeMillis()) {
-            buildBlockAndCommit(node)
+            Thread.sleep(100)
+            //buildBlockAndCommit(node)
         }
         val warmup = txCount(node)
         var warmupHeight = warmup.first
         var warmupTxCount = warmup.second
 
         // Now actual test
-        TimeLog.enable(true)
+        //TimeLog.enable(true)
         val testDuration = 60000
         var endTime = System.currentTimeMillis() + testDuration
         while (endTime > System.currentTimeMillis()) {
-            buildBlockAndCommit(node)
+            Thread.sleep(100)
+            //buildBlockAndCommit(node)
         }
 
         val pair = txCount(node)

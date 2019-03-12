@@ -59,7 +59,11 @@ class MultipleConfigurationsTest : IntegrationTest() {
     }
 
     private fun getModules(chainId: Long): Array<GTXModule> {
-        val configuration = nodes[0].retrieveBlockchain(chainId)?.blockchainConfiguration as? GTXBlockchainConfiguration
+        val configuration = nodes[0].retrieveBlockchain(chainId)
+                ?.getEngine()
+                ?.getConfiguration()
+                as? GTXBlockchainConfiguration
+
         return (configuration?.module as? CompositeGTXModule)?.modules ?: emptyArray()
     }
 

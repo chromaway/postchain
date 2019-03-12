@@ -98,7 +98,7 @@ class BlockchainEngineTest : IntegrationTest() {
 
         val blockData = createBlockWithTxAndCommit(node0, 2)
 
-        val bc = node1.getBlockchainInstance().blockchainConfiguration as TestBlockchainConfiguration
+        val bc = node1.getBlockchainInstance().getEngine().getConfiguration() as TestBlockchainConfiguration
         // Make the tx invalid on follower. Should discard whole block
         bc.transactionFactory.specialTxs[0] = ErrorTransaction(0, true, false)
         try {

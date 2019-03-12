@@ -1,5 +1,7 @@
 package net.postchain.network.netty2
 
+import io.netty.channel.EventLoopGroup
+import io.netty.channel.nio.NioEventLoopGroup
 import mu.KLogging
 import net.postchain.base.PeerInfo
 import net.postchain.core.byteArrayKeyOf
@@ -8,6 +10,7 @@ import net.postchain.network.XPacketEncoder
 import net.postchain.network.x.XConnector
 import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPeerConnectionDescriptor
+import java.util.concurrent.TimeUnit
 
 class NettyConnector<PacketType>(
         private val eventReceiver: XConnectorEvents
@@ -16,9 +19,12 @@ class NettyConnector<PacketType>(
     companion object : KLogging()
 
     private lateinit var server: NettyServer
+    private lateinit var eventGroup: EventLoopGroup
 
     override fun init(peerInfo: PeerInfo, packetDecoder: XPacketDecoder<PacketType>) {
-        server = NettyServer().apply {
+        eventGroup = NioEventLoopGroup()
+
+        server = NettyServer(eventGroup).apply {
             setChannelHandler {
                 NettyServerPeerConnection(packetDecoder).onConnected { connection, identPacketInfo ->
                     val descriptor = XPeerConnectionDescriptor(
@@ -35,7 +41,7 @@ class NettyConnector<PacketType>(
 
     override fun connectPeer(peerConnectionDescriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo, packetEncoder: XPacketEncoder<PacketType>) {
         try {
-            NettyClientPeerConnection(peerInfo, packetEncoder).also { connection ->
+            NettyClientPeerConnection(eventGroup, peerInfo, packetEncoder).also { connection ->
                 connection.open(
                         onConnected = {
                             eventReceiver.onPeerConnected(peerConnectionDescriptor, connection)
@@ -55,5 +61,6 @@ class NettyConnector<PacketType>(
 
     override fun shutdown() {
         server.shutdown()
+        eventGroup.shutdownGracefully(600, 2000, TimeUnit.MILLISECONDS).sync()
     }
 }

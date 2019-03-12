@@ -13,6 +13,7 @@ import org.awaitility.Awaitility.await
 import org.awaitility.Duration.TEN_SECONDS
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -68,11 +69,12 @@ class FullEbftMultipleChainsTestNightly : IntegrationTest() {
                 ))
     }
 
+    @Ignore
     @Test
     @Parameters(
             "1, 0", "2, 0", "10, 0"
             , "1, 1", "2, 1", "10, 1"
-//            , "1, 10", "2, 10", "10, 10"
+            , "1, 10", "2, 10", "10, 10"
     )
     @TestCaseName("[{index}] nodesCount: 5, blocksCount: {0}, txPerBlock: {1}")
     fun runFiveNodesWithYTxPerBlock(blocksCount: Int, txPerBlock: Int) {

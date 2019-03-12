@@ -97,7 +97,7 @@ class ValidatorWorker(
                 }
 
                 try {
-                    Thread.sleep(50)
+                    Thread.sleep(20)
                 } catch (e: InterruptedException) {
                     Thread.currentThread().interrupt()
                 }

@@ -3,6 +3,7 @@ package net.postchain.network.netty2
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
+import io.netty.channel.EventLoopGroup
 import net.postchain.base.PeerInfo
 import net.postchain.base.peerId
 import net.postchain.network.XPacketEncoder
@@ -14,11 +15,12 @@ import java.net.InetSocketAddress
 import java.net.SocketAddress
 
 class NettyClientPeerConnection<PacketType>(
+        group: EventLoopGroup,
         val peerInfo: PeerInfo,
         private val packetEncoder: XPacketEncoder<PacketType>
 ) : ChannelInboundHandlerAdapter(), XPeerConnection {
 
-    private val nettyClient = NettyClient()
+    private val nettyClient = NettyClient(group)
     private lateinit var context: ChannelHandlerContext
     private var packetHandler: XPacketHandler? = null
     private lateinit var onDisconnected: () -> Unit
