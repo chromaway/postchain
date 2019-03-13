@@ -224,7 +224,8 @@ class RestApi(private val listenPort: Int, private val basePath: String,
         var response : MutableList<String> = mutableListOf<String>()
 
         queriesArray.forEach {
-            response.add(model(request).query(Query(it.asString)).json)
+            var query = gson.toJson(it)
+            response.add(model(request).query(Query(query)).json)
         }
 
         return gson.toJson(response)
