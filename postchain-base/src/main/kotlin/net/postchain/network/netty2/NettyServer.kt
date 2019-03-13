@@ -5,13 +5,11 @@ import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelHandler
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.EventLoopGroup
-import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import net.postchain.core.Shutdownable
-import java.util.concurrent.TimeUnit
 
-class NettyServer(val childGroup: EventLoopGroup) : Shutdownable {
+class NettyServer(private val group: EventLoopGroup) : Shutdownable {
 
     private lateinit var server: ServerBootstrap
     private lateinit var bindFuture: ChannelFuture
@@ -23,7 +21,7 @@ class NettyServer(val childGroup: EventLoopGroup) : Shutdownable {
 
     fun run(port: Int) {
         server = ServerBootstrap()
-                .group(childGroup)
+                .group(group)
                 .channel(NioServerSocketChannel::class.java)
 //                .option(ChannelOption.SO_BACKLOG, 10)
 //                .handler(LoggingHandler(LogLevel.INFO))
