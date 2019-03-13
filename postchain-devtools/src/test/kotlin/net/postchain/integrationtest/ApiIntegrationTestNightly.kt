@@ -69,6 +69,26 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                 .body(IsEqual.equalTo("[\"null\",\"null\"]"))
     }
 
+    //@Test
+    fun testQueryGTXApi() {
+        val nodesCount = 1
+        val blocksCount = 1
+        val txPerBlock = 1
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+        configOverrides.setProperty("api.port", 0)
+        createNodes(nodesCount, "/net/postchain/api/blockchain_config_1.xml")
+
+        buildBlockAndCommit(nodes[0])
+        val query = """{"queries": [{"type"="gtx_test_get_value", "txRID"="abcd"},
+                                    {"type"="gtx_test_get_value", "txRID"="cdef"}]}""".trimMargin()
+        given().port(nodes[0].getRestApiHttpPort())
+                .body(query)
+                .post("/query_gtx/$blockchainRID")
+                .then()
+                .statusCode(200)
+                //.body(IsEqual.equalTo("[\"null\",\"null\"]"))
+    }
+
     @Test
     @Suppress("UNCHECKED_CAST")
     fun testConfirmationProof() {
