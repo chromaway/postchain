@@ -84,7 +84,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
         val gtxQuery1 = gtx( "type" to gtx("gtx_test_get_value"), "txRID" to gtx("abcd") )
         val gtxQuery2 = gtx( "type" to gtx("gtx_test_get_value"), "txRID" to gtx("cdef") )
-        val jsonQuery = """{"queries" : [{"hex" : "${encodeGTXValue(gtxQuery1).toHex()}"}, {"hex" : "${encodeGTXValue(gtxQuery2).toHex()}"}]}""".trimMargin()
+        val jsonQuery = """{"queries" : ["${encodeGTXValue(gtxQuery1).toHex()}", "${encodeGTXValue(gtxQuery2).toHex()}"]}""".trimMargin()
 
 
         given().port(nodes[0].getRestApiHttpPort())

@@ -237,9 +237,8 @@ class RestApi(private val listenPort: Int, private val basePath: String,
         val queriesArray : JsonArray = parseMultipleQueriesRequest(request)
 
         queriesArray.forEach {
-            val jsonQuery = gson.toJson(it)
-            val query = toGTXQuery(jsonQuery)
-            val gtxQuery = decodeGTXValue(query.bytes)
+            val hexQuery = it.asString
+            val gtxQuery = decodeGTXValue( hexQuery.hexStringToByteArray() )
             response.add(encodeGTXValue(model(request).query(gtxQuery)).toHex())
         }
 
