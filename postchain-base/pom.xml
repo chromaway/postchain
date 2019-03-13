@@ -21,7 +21,6 @@
         <commons-dbcp2.version>2.1.1</commons-dbcp2.version>
         <commons-configuration2.version>2.1.1</commons-configuration2.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
-        <asnrt.version>3.14.15</asnrt.version>
         <spark-core.version>2.6.0</spark-core.version>
         <easymock.version>3.6</easymock.version>
         <mockito.version>2.23.0</mockito.version>
@@ -73,11 +72,6 @@
             <groupId>com.madgag.spongycastle</groupId>
             <artifactId>prov</artifactId>
             <version>${spongycastle.core.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>asnrt</groupId>
-            <artifactId>asnrt</artifactId>
-            <version>${asnrt.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
