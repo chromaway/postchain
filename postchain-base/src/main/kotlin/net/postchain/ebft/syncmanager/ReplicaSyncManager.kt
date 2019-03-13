@@ -1,7 +1,6 @@
 package net.postchain.ebft.syncmanager
 
 import mu.KLogging
-import net.postchain.common.toHex
 import net.postchain.core.BlockDataWithWitness
 import net.postchain.core.BlockQueries
 import net.postchain.core.BlockchainConfiguration
@@ -14,6 +13,7 @@ import net.postchain.ebft.message.GetBlockAtHeight
 import net.postchain.ebft.message.Status
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
+import java.util.Date
 
 class ReplicaSyncManager(
         signers: List<ByteArray>,
@@ -26,16 +26,20 @@ class ReplicaSyncManager(
     companion object : KLogging()
 
     enum class ReplicaState {
+        Waiting,          // wait for validator nodes that has wanted block
         ReceivingBlocks,  // fetch blocks from Validator nodes
         ValidateBlocks,   // verify and save block
     }
 
     private val nodePoolCount = 2 // used to select 1 random node
-    private val waitMs = 500L
+    private val defaultBackoffDelta = 1000
+    private val maxBackoffDelta = 30 * defaultBackoffDelta
+    private var backoffDelta = defaultBackoffDelta
+    private var lastSentTimestamp: Long = Date().time
 
     private val validatorNodes: List<XPeerID> = signers.map { XPeerID(it) }
 
-    private var replicaState = ReplicaState.ReceivingBlocks
+    private var replicaState = ReplicaState.Waiting
     private var blockHeight: Long = blockQueries.getBestHeight().get()
 
     private var nodesWithWantedBlock = mutableSetOf<XPeerID>()
@@ -44,6 +48,7 @@ class ReplicaSyncManager(
         blockDatabase.addBlock(block)
                 .run {
                     always {
+                        backoffDelta = defaultBackoffDelta
                         nodesWithWantedBlock.clear()
                         replicaState = ReplicaState.ReceivingBlocks
                     }
@@ -51,16 +56,48 @@ class ReplicaSyncManager(
                         blockHeight += 1
                     }
                     fail {
-                        logger.error("[Replica] unable to add block: ${it.message}")
+                        logger.error("Failed to add block: ${it.message}")
                         it.printStackTrace()
                     }
                 }
     }
 
     override fun update() {
-        logger.debug("==== Current block height: $blockHeight | state: $replicaState === ")
+        if(System.currentTimeMillis() % 30 == 0L){
+            logger.debug("block height: $blockHeight")
+        }
+        processState()
         dispatchMessages()
-        Thread.sleep(waitMs)
+    }
+
+    private fun processState() {
+        if(nodesWithWantedBlock.size < nodePoolCount) {
+            replicaState = ReplicaState.Waiting
+        } else {
+            if(replicaState != ReplicaState.ValidateBlocks) {
+                askForBlock()
+            } else {
+                // retry if we don't have response lastSentTimestamp + backoffDelta
+                if(Date().time > lastSentTimestamp + backoffDelta){
+                    if(backoffDelta < maxBackoffDelta){
+                        backoffDelta = (backoffDelta.toDouble() * 1.1).toInt()
+                    }
+                    askForBlock()
+                }
+            }
+        }
+    }
+
+    private fun askForBlock() {
+        replicaState = ReplicaState.ReceivingBlocks
+        nodesWithWantedBlock
+            .toMutableList()
+            .also {
+                it.shuffle()
+                communicationManager.sendPacket(GetBlockAtHeight(blockHeight + 1), it.first())
+                lastSentTimestamp = Date().time
+                replicaState = ReplicaState.ValidateBlocks
+            }
     }
 
     private fun dispatchMessages() {
@@ -70,7 +107,6 @@ class ReplicaSyncManager(
             try {
                 when (message) {
                     is CompleteBlock -> {
-                        logger.debug("[Replica] Complete block: ${xPeerId.byteArray.toHex()}")
                         val blockDataWithWitness = decodeBlockDataWithWitness(message, blockchainConfiguration)
                         if (message.height == blockHeight + 1) {
                             commitBlockAndResetState(blockDataWithWitness)
@@ -83,21 +119,10 @@ class ReplicaSyncManager(
                             nodesWithWantedBlock.add(xPeerId)
                         }
                     }
-                    else -> throw ProgrammerMistake("[Replica] Unhandled type ${message::class}")
+                    else -> throw ProgrammerMistake("Unhandled type ${message::class}")
                 }
             } catch (e: Exception) {
-                logger.error("[Replica] Couldn't handle message $message. Ignoring and continuing", e)
-            }
-
-
-            if(nodesWithWantedBlock.size >= nodePoolCount && replicaState == ReplicaState.ReceivingBlocks) {
-                replicaState = ReplicaState.ValidateBlocks
-                nodesWithWantedBlock
-                        .toMutableList()
-                        .also {
-                            it.shuffle()
-                            communicationManager.sendPacket(GetBlockAtHeight(blockHeight + 1), it.first())
-                        }
+                logger.error("Couldn't handle message $message. Ignoring and continuing", e)
             }
         }
     }
