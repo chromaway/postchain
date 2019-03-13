@@ -2,6 +2,7 @@
 
 package net.postchain.api.rest.controller
 
+import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import mu.KLogging
@@ -195,16 +196,9 @@ class RestApi(private val listenPort: Int, private val basePath: String,
         return txRID
     }
 
-    private fun toGTXQuery(req: Request): GTXQuery {
-        try {
-            return gson.fromJson<GTXQuery>(req.body(), GTXQuery::class.java)
-        } catch (e: Exception) {
-            throw UserMistake("Could not parse json", e)
-        }
-    }
-
     private fun toGTXQuery(json : String) : GTXQuery {
         try {
+            val gson = Gson()
             return gson.fromJson<GTXQuery>(json, GTXQuery::class.java)
         } catch (e: Exception) {
             throw UserMistake("Could not parse json", e)
@@ -250,14 +244,6 @@ class RestApi(private val listenPort: Int, private val basePath: String,
         }
 
         return gson.toJson(response)
-    }
-
-    private fun handleGTXQuery(request: Request): String {
-        logger.debug("Request body: ${request.body()}")
-        val query = toGTXQuery(request)
-        val gtxQuery = decodeGTXValue(query.bytes)
-        return encodeGTXValue(model(request)
-                .query(gtxQuery)).toHex()
     }
 
     private fun checkTxHashHex(request: Request): String {

@@ -14,6 +14,8 @@ import net.postchain.core.Signature
 import net.postchain.core.Transaction
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.testinfra.TestTransaction
+import net.postchain.gtx.encodeGTXValue
+import net.postchain.gtx.gtx
 import net.postchain.integrationtest.JsonTools.jsonAsMap
 import org.hamcrest.core.IsEqual
 import org.junit.Assert.*
@@ -69,7 +71,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                 .body(IsEqual.equalTo("[\"null\",\"null\"]"))
     }
 
-    //@Test
+    @Test
     fun testQueryGTXApi() {
         val nodesCount = 1
         val blocksCount = 1
@@ -79,10 +81,14 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         createNodes(nodesCount, "/net/postchain/api/blockchain_config_1.xml")
 
         buildBlockAndCommit(nodes[0])
-        val query = """{"queries": [{"type"="gtx_test_get_value", "txRID"="abcd"},
-                                    {"type"="gtx_test_get_value", "txRID"="cdef"}]}""".trimMargin()
+
+        val gtxQuery1 = gtx( "type" to gtx("gtx_test_get_value"), "txRID" to gtx("abcd") )
+        val gtxQuery2 = gtx( "type" to gtx("gtx_test_get_value"), "txRID" to gtx("cdef") )
+        val jsonQuery = """{"queries" : [{"hex" : "${encodeGTXValue(gtxQuery1).toHex()}"}, {"hex" : "${encodeGTXValue(gtxQuery2).toHex()}"}]}""".trimMargin()
+
+
         given().port(nodes[0].getRestApiHttpPort())
-                .body(query)
+                .body(jsonQuery)
                 .post("/query_gtx/$blockchainRID")
                 .then()
                 .statusCode(200)
