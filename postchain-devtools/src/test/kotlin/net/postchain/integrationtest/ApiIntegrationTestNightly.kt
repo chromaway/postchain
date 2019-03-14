@@ -82,17 +82,18 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
         buildBlockAndCommit(nodes[0])
 
-        val gtxQuery1 = gtx( "type" to gtx("gtx_test_get_value"), "txRID" to gtx("abcd") )
-        val gtxQuery2 = gtx( "type" to gtx("gtx_test_get_value"), "txRID" to gtx("cdef") )
+        val gtxQuery1 = gtx( gtx("gtx_test_get_value"), gtx("txRID" to gtx("abcd")) )
+        val gtxQuery2 = gtx( gtx("gtx_test_get_value"), gtx("txRID" to gtx("cdef")) )
         val jsonQuery = """{"queries" : ["${encodeGTXValue(gtxQuery1).toHex()}", "${encodeGTXValue(gtxQuery2).toHex()}"]}""".trimMargin()
 
 
-        given().port(nodes[0].getRestApiHttpPort())
+        val response = given().port(nodes[0].getRestApiHttpPort())
                 .body(jsonQuery)
                 .post("/query_gtx/$blockchainRID")
                 .then()
                 .statusCode(200)
-                //.body(IsEqual.equalTo("[\"null\",\"null\"]"))
+                .body(IsEqual.equalTo("[\"A0020500\",\"A0020500\"]"))
+        
     }
 
     @Test
