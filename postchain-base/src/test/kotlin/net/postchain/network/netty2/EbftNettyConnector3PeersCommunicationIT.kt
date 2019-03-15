@@ -19,7 +19,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-class EbftNettyConnector3PeersTest {
+class EbftNettyConnector3PeersCommunicationIT {
 
     private val cryptoSystem = SECP256K1CryptoSystem()
     private val blockchainRid = ByteArray(64, Int::toByte)
@@ -86,7 +86,7 @@ class EbftNettyConnector3PeersTest {
         // * 3 -> 2
         context3.peer.connectPeer(peerDescriptor2, peerInfo2, context3.buildPacketEncoder())
 
-        // Waiting for all connections establishing
+        // Waiting for all connections to be established
         val (descriptor1, connection1) = argumentCaptor2<XPeerConnectionDescriptor, XPeerConnection>()
         val (descriptor2, connection2) = argumentCaptor2<XPeerConnectionDescriptor, XPeerConnection>()
         val (descriptor3, connection3) = argumentCaptor2<XPeerConnectionDescriptor, XPeerConnection>()

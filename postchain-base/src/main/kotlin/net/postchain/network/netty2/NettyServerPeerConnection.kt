@@ -1,17 +1,13 @@
 package net.postchain.network.netty2
 
 import io.netty.buffer.ByteBuf
-import io.netty.channel.ChannelHandler
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
-import net.postchain.base.PeerID
-import net.postchain.core.byteArrayKeyOf
-import net.postchain.network.IdentPacketInfo
-import net.postchain.network.PacketConverter
 import net.postchain.network.XPacketDecoder
 import net.postchain.network.x.LazyPacket
 import net.postchain.network.x.XPacketHandler
 import net.postchain.network.x.XPeerConnection
+import net.postchain.network.x.XPeerConnectionDescriptor
 
 class NettyServerPeerConnection<PacketType>(
         private val packetDecoder: XPacketDecoder<PacketType>
@@ -19,9 +15,10 @@ class NettyServerPeerConnection<PacketType>(
 
     private lateinit var context: ChannelHandlerContext
     private var packetHandler: XPacketHandler? = null
-    private var peerId: PeerID? = null
+    private var peerConnectionDescriptor: XPeerConnectionDescriptor? = null
 
-    private var onConnectedHandler: ((XPeerConnection, IdentPacketInfo) -> Unit)? = null
+    private var onConnectedHandler: ((XPeerConnectionDescriptor, XPeerConnection) -> Unit)? = null
+    private var onDisconnectedHandler: ((XPeerConnectionDescriptor) -> Unit)? = null
 
     override fun accept(handler: XPacketHandler) {
         this.packetHandler = handler
@@ -35,29 +32,37 @@ class NettyServerPeerConnection<PacketType>(
         context.close()
     }
 
-    fun onConnected(handler: (XPeerConnection, IdentPacketInfo) -> Unit): ChannelHandler {
+    fun onConnected(handler: (XPeerConnectionDescriptor, XPeerConnection) -> Unit): NettyServerPeerConnection<PacketType> {
         this.onConnectedHandler = handler
+        return this
+    }
+
+    fun onDisconnected(handler: (XPeerConnectionDescriptor) -> Unit): NettyServerPeerConnection<PacketType> {
+        this.onDisconnectedHandler = handler
         return this
     }
 
     override fun channelRead(ctx: ChannelHandlerContext?, msg: Any?) {
         val message = Transport.unwrapMessage(msg as ByteBuf)
         if (packetDecoder.isIdentPacket(message)) {
-            val identPacketInfo = packetDecoder.parseIdentPacket(
-                    Transport.unwrapMessage(msg))
-            peerId = identPacketInfo.peerID
-            onConnectedHandler?.invoke(this, identPacketInfo)
+            val identPacketInfo = packetDecoder.parseIdentPacket(Transport.unwrapMessage(msg))
+            peerConnectionDescriptor = XPeerConnectionDescriptor.createFromIdentPacketInfo(identPacketInfo)
+            onConnectedHandler?.invoke(peerConnectionDescriptor!!, this)
 
         } else {
-            if (peerId != null) {
-                packetHandler?.invoke(
-                        message,
-                        peerId!!.byteArrayKeyOf())
+            if (peerConnectionDescriptor != null) {
+                packetHandler?.invoke(message, peerConnectionDescriptor!!.peerId)
             }
         }
     }
 
     override fun channelActive(ctx: ChannelHandlerContext?) {
         ctx?.let { context = it }
+    }
+
+    override fun channelInactive(ctx: ChannelHandlerContext?) {
+        if (peerConnectionDescriptor != null) {
+            onDisconnectedHandler?.invoke(peerConnectionDescriptor!!)
+        }
     }
 }

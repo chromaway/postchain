@@ -20,7 +20,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-class IntNettyConnector2PeersTest {
+class IntNettyConnector2PeersCommunicationIT {
 
     private val blockchainRid = byteArrayOf(0x01)
     private lateinit var peerInfo1: PeerInfo
@@ -49,12 +49,12 @@ class IntNettyConnector2PeersTest {
     }
 
     @Test
-    fun twoPeers_ConnectAndCommunicate_Successfully() {
+    fun testConnectAndCommunicate() {
         // Connecting 1 -> 2
         val peerDescriptor2 = XPeerConnectionDescriptor(peerInfo2.peerId(), blockchainRid.byteArrayKeyOf())
         context1.peer.connectPeer(peerDescriptor2, peerInfo2, context1.packetEncoder)
 
-        // Waiting for all connections establishing
+        // Waiting for all connections to be established
         val (descriptor1, connection1) = argumentCaptor2<XPeerConnectionDescriptor, XPeerConnection>()
         val (descriptor2, connection2) = argumentCaptor2<XPeerConnectionDescriptor, XPeerConnection>()
         await().atMost(FIVE_SECONDS)

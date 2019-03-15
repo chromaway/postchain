@@ -19,7 +19,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-class IntNettyConnector3PeersTest {
+class IntNettyConnector3PeersCommunicationIT {
 
     private val blockchainRid = byteArrayOf(0x01)
     private lateinit var peerInfo1: PeerInfo
@@ -35,26 +35,32 @@ class IntNettyConnector3PeersTest {
         peerInfo2 = PeerInfo("localhost", 3332, byteArrayOf(0, 0, 0, 2))
         peerInfo3 = PeerInfo("localhost", 3333, byteArrayOf(0, 0, 0, 3))
 
-        // Creating
-        context1 = IntTestContext(peerInfo1, arrayOf(peerInfo1, peerInfo2, peerInfo3))
-        context2 = IntTestContext(peerInfo2, arrayOf(peerInfo1, peerInfo2, peerInfo3))
-        context3 = IntTestContext(peerInfo3, arrayOf(peerInfo1, peerInfo2, peerInfo3))
-
-        // Initializing
-        context1.peer.init(peerInfo1, context1.packetDecoder)
-        context2.peer.init(peerInfo2, context2.packetDecoder)
-        context3.peer.init(peerInfo3, context3.packetDecoder)
+        // Starting contexts
+        context1 = startContext(peerInfo1)
+        context2 = startContext(peerInfo2)
+        context3 = startContext(peerInfo3)
     }
 
     @After
     fun tearDown() {
-        context1.peer.shutdown()
-        context2.peer.shutdown()
-        context3.peer.shutdown()
+        stopContext(context1)
+        stopContext(context2)
+        stopContext(context3)
+    }
+
+    private fun startContext(peerInfo: PeerInfo): IntTestContext {
+        return IntTestContext(peerInfo, arrayOf(peerInfo1, peerInfo2, peerInfo3))
+                .also {
+                    it.peer.init(peerInfo, it.packetDecoder)
+                }
+    }
+
+    private fun stopContext(context: IntTestContext) {
+        context.shutdown()
     }
 
     @Test
-    fun threePeers_ConnectAndCommunicate_Successfully() {
+    fun testConnectAndCommunicate() {
         // Connecting
         // * 1 -> 2
         val peerDescriptor2 = XPeerConnectionDescriptor(peerInfo2.peerId(), blockchainRid.byteArrayKeyOf())
@@ -65,7 +71,7 @@ class IntNettyConnector3PeersTest {
         // * 3 -> 2
         context3.peer.connectPeer(peerDescriptor2, peerInfo2, context3.packetEncoder)
 
-        // Waiting for all connections establishing
+        // Waiting for all connections to be established
         val (descriptor1, connection1) = argumentCaptor2<XPeerConnectionDescriptor, XPeerConnection>()
         val (descriptor2, connection2) = argumentCaptor2<XPeerConnectionDescriptor, XPeerConnection>()
         val (descriptor3, connection3) = argumentCaptor2<XPeerConnectionDescriptor, XPeerConnection>()
@@ -99,7 +105,7 @@ class IntNettyConnector3PeersTest {
         val packet2 = byteArrayOf(1, 20, 3, 4)
         connection2.firstValue.sendPacket { packet2 }
         connection2.secondValue.sendPacket { packet2 }
-        // * 3 -> 1 and 3 -> 1
+        // * 3 -> 1 and 3 -> 2
         val packet3 = byteArrayOf(1, 2, 30, 4)
         connection3.firstValue.sendPacket { packet3 }
         connection3.secondValue.sendPacket { packet3 }

@@ -4,7 +4,6 @@ import io.netty.channel.EventLoopGroup
 import io.netty.channel.nio.NioEventLoopGroup
 import mu.KLogging
 import net.postchain.base.PeerInfo
-import net.postchain.core.byteArrayKeyOf
 import net.postchain.network.XPacketDecoder
 import net.postchain.network.XPacketEncoder
 import net.postchain.network.x.XConnector
@@ -26,20 +25,24 @@ class NettyConnector<PacketType>(
 
         server = NettyServer(eventGroup).apply {
             setChannelHandler {
-                NettyServerPeerConnection(packetDecoder).onConnected { connection, identPacketInfo ->
-                    val descriptor = XPeerConnectionDescriptor(
-                            identPacketInfo.peerID.byteArrayKeyOf(),
-                            identPacketInfo.blockchainRID.byteArrayKeyOf())
-                    eventReceiver.onPeerConnected(descriptor, connection)
-                            ?.also { connection.accept(it) }
+                NettyServerPeerConnection(packetDecoder)
+                        .onConnected { descriptor, connection ->
+                            eventReceiver.onPeerConnected(descriptor, connection)
+                                    ?.also { connection.accept(it) }
 //                            ?: connection.close()
-                }
+                        }
+                        .onDisconnected { }
             }
+
             run(peerInfo.port)
         }
     }
 
-    override fun connectPeer(peerConnectionDescriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo, packetEncoder: XPacketEncoder<PacketType>) {
+    override fun connectPeer(
+            peerConnectionDescriptor: XPeerConnectionDescriptor,
+            peerInfo: PeerInfo,
+            packetEncoder: XPacketEncoder<PacketType>
+    ) {
         try {
             NettyClientPeerConnection(eventGroup, peerInfo, packetEncoder).also { connection ->
                 connection.open(
