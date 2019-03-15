@@ -22,7 +22,7 @@ class NettyConnector<PacketType>(
     private lateinit var eventGroup: EventLoopGroup
 
     override fun init(peerInfo: PeerInfo, packetDecoder: XPacketDecoder<PacketType>) {
-        eventGroup = NioEventLoopGroup(3)
+        eventGroup = NioEventLoopGroup()
 
         server = NettyServer(eventGroup).apply {
             setChannelHandler {
