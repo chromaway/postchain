@@ -41,6 +41,13 @@ interface DatabaseAccess {
     fun findConfiguration(context: EContext, height: Long): Long?
     fun getConfigurationData(context: EContext, height: Long): ByteArray?
     fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long
+
+    companion object {
+        fun of(ctx: EContext): DatabaseAccess {
+            return ctx.getInterface(DatabaseAccess::class.java)
+                    ?: throw ProgrammerMistake("DatabaseAccess not accessible through EContext")
+        }
+    }
 }
 
 class SQLDatabaseAccess : DatabaseAccess {
