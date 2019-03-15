@@ -6,6 +6,7 @@ import net.postchain.base.BasePeerCommConfiguration
 import net.postchain.base.PeerInfo
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.base.secp256k1_derivePubKey
+import net.postchain.core.UserMistake
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.Test
@@ -17,11 +18,15 @@ class DefaultXCommunicationManager1PeerIT {
 
     private val privKey = cryptoSystem.getRandomBytes(32)
     private val pubKey = secp256k1_derivePubKey(privKey)
+
+    private val privKey2 = cryptoSystem.getRandomBytes(32)
+    private val pubKey2 = secp256k1_derivePubKey(privKey2)
+
     private val peerInfo = PeerInfo("localhost", 3331, pubKey)
 
-    private fun startTestContext(peers: Array<PeerInfo>, myIndex: Int = 0): EbftIntegrationTestContext {
+    private fun startTestContext(peers: Array<PeerInfo>, pkey: ByteArray = pubKey): EbftIntegrationTestContext {
         val peerConfiguration = BasePeerCommConfiguration(
-                peers, cryptoSystem, privKey, pubKey)
+                peers, cryptoSystem, privKey, pkey)
 
         return EbftIntegrationTestContext(peerConfiguration, blockchainRid)
     }
@@ -41,9 +46,7 @@ class DefaultXCommunicationManager1PeerIT {
                 }
     }
 
-    // TODO: [et]: Fix this: expect `IllegalArgumentException` instead of `ArrayIndexOutOfBoundsException`
-//    @Test(expected = IllegalArgumentException::class)
-    @Test(expected = ArrayIndexOutOfBoundsException::class)
+    @Test(expected = UserMistake::class)
     fun singlePeer_launching_with_empty_peers_will_result_in_exception() {
         startTestContext(arrayOf())
                 .use {
@@ -51,21 +54,9 @@ class DefaultXCommunicationManager1PeerIT {
                 }
     }
 
-    // TODO: [et]: Fix this: expect `IllegalArgumentException` instead of `ArrayIndexOutOfBoundsException`
-//    @Test(expected = IllegalArgumentException::class)
-    @Test(expected = ArrayIndexOutOfBoundsException::class)
-    fun singlePeer_launching_with_wrong_too_big_myIndex_will_result_in_exception() {
-        startTestContext(arrayOf(peerInfo), 42)
-                .use {
-                    it.communicationManager.init()
-                }
-    }
-
-    // TODO: [et]: Fix this: expect `IllegalArgumentException` instead of `ArrayIndexOutOfBoundsException`
-//    @Test(expected = IllegalArgumentException::class)
-    @Test(expected = ArrayIndexOutOfBoundsException::class)
-    fun singlePeer_launching_with_wrong_negative_myIndex_will_result_in_exception() {
-        startTestContext(arrayOf(peerInfo), -1)
+    @Test(expected = UserMistake::class)
+    fun singlePeer_launching_with_wrong_pubkey_will_result_in_exception() {
+        startTestContext(arrayOf(peerInfo), pubKey2)
                 .use {
                     it.communicationManager.init()
                 }
