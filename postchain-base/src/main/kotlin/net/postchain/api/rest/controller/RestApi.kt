@@ -2,6 +2,9 @@
 
 package net.postchain.api.rest.controller
 
+import com.google.gson.Gson
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
 import mu.KLogging
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_HEADERS
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_METHODS
@@ -155,8 +158,12 @@ class RestApi(private val listenPort: Int, private val basePath: String,
                 handleQuery(request)
             }
 
+            http.post("/batch_query/$PARAM_BLOCKCHAIN_RID") { request, _ ->
+                handleQueries(request)
+            }
+
             http.post("/query_gtx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
-                handleGTXQuery(request)
+                handleGTXQueries(request)
             }
         }
 
@@ -189,9 +196,10 @@ class RestApi(private val listenPort: Int, private val basePath: String,
         return txRID
     }
 
-    private fun toGTXQuery(req: Request): GTXQuery {
+    private fun toGTXQuery(json : String) : GTXQuery {
         try {
-            return gson.fromJson<GTXQuery>(req.body(), GTXQuery::class.java)
+            val gson = Gson()
+            return gson.fromJson<GTXQuery>(json, GTXQuery::class.java)
         } catch (e: Exception) {
             throw UserMistake("Could not parse json", e)
         }
@@ -208,12 +216,33 @@ class RestApi(private val listenPort: Int, private val basePath: String,
                 .json
     }
 
-    private fun handleGTXQuery(request: Request): String {
+    private fun handleQueries(request: Request): String {
         logger.debug("Request body: ${request.body()}")
-        val query = toGTXQuery(request)
-        val gtxQuery = decodeGTXValue(query.bytes)
-        return encodeGTXValue(model(request)
-                .query(gtxQuery)).toHex()
+
+        val queriesArray : JsonArray = parseMultipleQueriesRequest(request)
+
+        var response : MutableList<String> = mutableListOf<String>()
+
+        queriesArray.forEach {
+            var query = gson.toJson(it)
+            response.add(model(request).query(Query(query)).json)
+        }
+
+        return gson.toJson(response)
+    }
+
+    private fun handleGTXQueries(request: Request): String {
+        logger.debug("Request body: ${request.body()}")
+        var response : MutableList<String> = mutableListOf<String>()
+        val queriesArray : JsonArray = parseMultipleQueriesRequest(request)
+
+        queriesArray.forEach {
+            val hexQuery = it.asString
+            val gtxQuery = decodeGTXValue( hexQuery.hexStringToByteArray() )
+            response.add(encodeGTXValue(model(request).query(gtxQuery)).toHex())
+        }
+
+        return gson.toJson(response)
     }
 
     private fun checkTxHashHex(request: Request): String {
@@ -251,4 +280,11 @@ class RestApi(private val listenPort: Int, private val basePath: String,
         return models[blockchainRID.toUpperCase()]
                 ?: throw NotFoundError("Can't find blockchain with blockchainRID: $blockchainRID")
     }
+
+    private fun parseMultipleQueriesRequest(request: Request) : JsonArray {
+        val element : JsonElement = gson.fromJson(request.body(), JsonElement::class.java)
+        val jsonObject = element.asJsonObject
+        return jsonObject.get("queries").asJsonArray
+    }
+
 }
