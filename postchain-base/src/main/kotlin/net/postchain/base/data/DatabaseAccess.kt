@@ -50,7 +50,7 @@ interface DatabaseAccess {
     }
 }
 
-class SQLDatabaseAccess : DatabaseAccess {
+class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
     var queryRunner = QueryRunner()
     private val intRes = ScalarHandler<Int>()
     private val longRes = ScalarHandler<Long>()
@@ -63,6 +63,7 @@ class SQLDatabaseAccess : DatabaseAccess {
     private val byteArrayListRes = ColumnListHandler<ByteArray>()
     private val mapListHandler = MapListHandler()
     private val stringRes = ScalarHandler<String>()
+
 
     override fun insertBlock(ctx: EContext, height: Long): Long {
         return queryRunner.insert(ctx.conn,
@@ -243,17 +244,7 @@ class SQLDatabaseAccess : DatabaseAccess {
                     "CREATE TABLE blockchains " +
                             "(chain_id BIGINT PRIMARY KEY, blockchain_rid BYTEA NOT NULL)")
 
-            queryRunner.update(connection,
-                    "CREATE TABLE blocks" +
-                            " (block_iid BIGSERIAL PRIMARY KEY," +
-                            "  block_height BIGINT NOT NULL, " +
-                            "  block_rid BYTEA," +
-                            "  chain_id BIGINT NOT NULL," +
-                            "  block_header_data BYTEA," +
-                            "  block_witness BYTEA," +
-                            "  timestamp BIGINT," +
-                            "  UNIQUE (chain_id, block_rid)," +
-                            "  UNIQUE (chain_id, block_height))")
+            queryRunner.update(connection, sqlCommands.createTableBlocks)
 
             queryRunner.update(connection, "CREATE TABLE transactions (" +
                     "    tx_iid BIGSERIAL PRIMARY KEY, " +

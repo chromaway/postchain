@@ -4,6 +4,7 @@ package net.postchain
 
 import net.postchain.base.data.BaseStorage
 import net.postchain.base.data.SQLDatabaseAccess
+import net.postchain.config.CommonsConfigurationFactory
 import org.apache.commons.configuration2.Configuration
 import org.apache.commons.dbcp2.BasicDataSource
 import org.apache.commons.dbutils.QueryRunner
@@ -13,9 +14,11 @@ class StorageBuilder {
 
     companion object {
 
-        private val dbAccess = SQLDatabaseAccess()
-
         fun buildStorage(config: Configuration, nodeIndex: Int, wipeDatabase: Boolean = false): BaseStorage {
+
+            val sqlCommands = CommonsConfigurationFactory
+                    .getSQLCommandsImplementation(config.getString("database.driverclass"))
+
             // Read DataSource
             val readDataSource = createBasicDataSource(config).apply {
                 defaultAutoCommit = true
@@ -35,9 +38,9 @@ class StorageBuilder {
             }
 
             createSchemaIfNotExists(writeDataSource, config.getString("database.schema"))
-            createTablesIfNotExists(writeDataSource)
+            createTablesIfNotExists(writeDataSource, config)
 
-            return BaseStorage(readDataSource, writeDataSource, nodeIndex, SQLDatabaseAccess())
+            return BaseStorage(readDataSource, writeDataSource, nodeIndex, SQLDatabaseAccess(sqlCommands))
         }
 
         private fun createBasicDataSource(config: Configuration): BasicDataSource {
@@ -68,8 +71,11 @@ class StorageBuilder {
             }
         }
 
-        private fun createTablesIfNotExists(dataSource: DataSource) {
+        private fun createTablesIfNotExists(dataSource: DataSource, config: Configuration) {
             dataSource.connection.use { connection ->
+                val sqlCommands = CommonsConfigurationFactory
+                        .getSQLCommandsImplementation(config.getString("database.driverclass"))
+                val dbAccess = SQLDatabaseAccess(sqlCommands)
                 dbAccess.initialize(connection, expectedDbVersion = 1) // TODO: [et]: Extract version
                 connection.commit()
             }

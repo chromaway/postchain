@@ -2,6 +2,7 @@ package net.postchain.base
 
 import net.postchain.StorageBuilder
 import net.postchain.base.data.SQLDatabaseAccess
+import net.postchain.config.CommonsConfigurationFactory
 import net.postchain.core.*
 import org.apache.commons.configuration2.Configuration
 
@@ -11,7 +12,8 @@ class BaseBlockchainProcessManager(
 ) : BlockchainProcessManager {
 
     val storage = StorageBuilder.buildStorage(nodeConfig, NODE_ID_TODO)
-    private val dbAccess = SQLDatabaseAccess()
+    private val sqlCommands = CommonsConfigurationFactory.getSQLCommandsImplementation(nodeConfig.getString("database.driverclass"))
+    private val dbAccess = SQLDatabaseAccess(sqlCommands)
     private val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
 
     override fun startBlockchain(chainId: Long) {

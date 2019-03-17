@@ -4,6 +4,7 @@ package net.postchain.base.data
 
 import net.postchain.base.BaseTxEContext
 import net.postchain.base.ConfirmationProofMaterial
+import net.postchain.config.CommonsConfigurationFactory
 import net.postchain.core.*
 
 /**
@@ -12,8 +13,9 @@ import net.postchain.core.*
  *
  * @property db Object used to access the DBMS
  */
-class BaseBlockStore : BlockStore {
-    var db: DatabaseAccess = SQLDatabaseAccess()
+class BaseBlockStore(val driverClassName : String) : BlockStore {
+
+    var db: DatabaseAccess = SQLDatabaseAccess(CommonsConfigurationFactory.getSQLCommandsImplementation(driverClassName))
 
     /**
      * Get initial block data, i.e. data necessary for building the next block
