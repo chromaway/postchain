@@ -1,8 +1,7 @@
 package net.postchain.base
 
 import net.postchain.StorageBuilder
-import net.postchain.base.data.SQLDatabaseAccess
-import net.postchain.config.CommonsConfigurationFactory
+import net.postchain.base.data.DatabaseAccess
 import net.postchain.core.*
 import org.apache.commons.configuration2.Configuration
 
@@ -12,15 +11,13 @@ class BaseBlockchainProcessManager(
 ) : BlockchainProcessManager {
 
     val storage = StorageBuilder.buildStorage(nodeConfig, NODE_ID_TODO)
-    private val sqlCommands = CommonsConfigurationFactory.getSQLCommandsImplementation(nodeConfig.getString("database.driverclass"))
-    private val dbAccess = SQLDatabaseAccess(sqlCommands)
     private val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
 
     override fun startBlockchain(chainId: Long) {
         stopBlockchain(chainId)
 
         withReadConnection(storage, chainId) { eContext ->
-            val blockchainRID = dbAccess.getBlockchainRID(eContext)!! // TODO: [et]: Fix Kotlin NPE
+            val blockchainRID = DatabaseAccess.of(eContext).getBlockchainRID(eContext)!! // TODO: [et]: Fix Kotlin NPE
 
             // TODO: [et]: Starting with 0-height config
             val configurationData = BaseConfigurationDataStore.getConfigurationData(eContext, 0)
