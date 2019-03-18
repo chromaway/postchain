@@ -206,17 +206,17 @@ class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
          * We need to know whether it exists or not in order to
          * make decisions on upgrade
          */
-        val checkExists = """
-            SELECT 1
-            FROM   pg_catalog.pg_class c
-            JOIN   pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-            WHERE  n.nspname = ANY(current_schemas(FALSE))
-                    AND    n.nspname NOT LIKE 'pg_%'
-                    AND    c.relname = 'meta'
-                    AND    c.relkind = 'r'
-        """
-        val metaExists = queryRunner.query(connection, checkExists, ColumnListHandler<Int>())
-        if (metaExists.size == 1) {
+//        val checkExists = """
+//            SELECT 1
+//            FROM   pg_catalog.pg_class c
+//            JOIN   pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+//            WHERE  n.nspname = ANY(current_schemas(FALSE))
+//                    AND    n.nspname NOT LIKE 'pg_%'
+//                    AND    c.relname = 'meta'
+//                    AND    c.relkind = 'r'
+//        """
+        val metaExists : Boolean = isMetaExists(connection)
+        if (metaExists) {
             // meta table already exists. Check the version
             val versionString = queryRunner.query(connection, "SELECT value FROM meta WHERE key='version'", ScalarHandler<String>())
             val version = versionString.toInt()
@@ -291,5 +291,21 @@ class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
         return queryRunner.insert(context.conn,
                 sqlCommands.insertConfiguration,
                 longRes, context.chainID, height, data, data)
+    }
+
+    private fun isMetaExists(conn : Connection) :Boolean {
+        var types : Array<String> = arrayOf<String>("TABLE")
+        try {
+            val rs = conn.metaData.getTables(null, null, null, types)
+            while (rs.next()) {
+                val tableName = rs.getString(3)
+                if (tableName == "meta") {
+                    return true
+                }
+            }
+        } catch (e :Exception) {
+            return false
+        }
+        return false
     }
 }
