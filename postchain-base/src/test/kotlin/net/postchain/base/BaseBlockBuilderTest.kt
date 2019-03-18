@@ -5,7 +5,7 @@ package net.postchain.base
 import net.postchain.base.data.BaseBlockBuilder
 import net.postchain.base.data.BaseBlockStore
 import net.postchain.base.data.BaseTransactionFactory
-import net.postchain.base.data.SQLDatabaseAccess
+import net.postchain.base.data.DatabaseAccess
 import net.postchain.core.InitialBlockData
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
@@ -18,7 +18,8 @@ class BaseBlockBuilderTest {
     val cryptoSystem = MockCryptoSystem()
     var bbs = BaseBlockStore()
     val tf = BaseTransactionFactory()
-    val ctx = BaseEContext(mock(Connection::class.java), 2L, 0, SQLDatabaseAccess())
+    val db = mock(DatabaseAccess::class.java)
+    val ctx = BaseEContext(mock(Connection::class.java), 2L, 0, db)
     val bctx = BaseBlockEContext(ctx, 1, 10)
     val dummy = ByteArray(32, { 0 })
     val subjects = arrayOf("test".toByteArray())

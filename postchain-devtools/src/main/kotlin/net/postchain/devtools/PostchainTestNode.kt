@@ -8,7 +8,7 @@ import net.postchain.base.BaseApiInfrastructure
 import net.postchain.base.BaseBlockchainInfrastructure
 import net.postchain.base.BaseConfigurationDataStore
 import net.postchain.base.data.BaseBlockchainConfiguration
-import net.postchain.base.data.SQLDatabaseAccess
+import net.postchain.base.data.DatabaseAccess
 import net.postchain.base.withWriteConnection
 import net.postchain.common.toHex
 import net.postchain.core.*
@@ -27,7 +27,7 @@ class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
     fun addBlockchain(chainId: Long, blockchainRid: ByteArray, blockchainConfig: GTXValue) {
         // TODO: [et]: Is it necessary here after StorageBuilder.buildStorage() redesign?
         withWriteConnection(storage, chainId) { eContext ->
-            with(SQLDatabaseAccess()) {
+            with(DatabaseAccess.of(eContext)) {
                 initialize(eContext.conn, expectedDbVersion = 1)
                 checkBlockchainRID(eContext, blockchainRid)
             }
