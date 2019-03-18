@@ -3,7 +3,7 @@ package net.postchain.cli
 import net.postchain.PostchainNode
 import net.postchain.base.BaseConfigurationDataStore
 import net.postchain.base.data.BaseBlockStore
-import net.postchain.base.data.SQLDatabaseAccess
+import net.postchain.base.data.DatabaseAccess
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.config.CommonsConfigurationFactory
@@ -17,10 +17,11 @@ import java.sql.SQLException
 
 class CliExecution {
 
-    private val dbAccess = SQLDatabaseAccess()
+    //private val dbAccess = SQLDatabaseAccess()
 
     fun addBlockchain(nodeConfigFile: String, chainId: Long, blockchainRID: String, blockchainConfigFile: String, mode: AlreadyExistMode =  AlreadyExistMode.IGNORE) {
         val encodedGtxValue = getEncodedGtxValueFromFile(blockchainConfigFile)
+
         runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
 
             fun init() {
@@ -28,10 +29,11 @@ class CliExecution {
                 BaseConfigurationDataStore.addConfigurationData(ctx, 0, encodedGtxValue)
             }
 
+            val db = DatabaseAccess.of(ctx)
 
             when (mode) {
                 AlreadyExistMode.ERROR -> {
-                    if (SQLDatabaseAccess().getBlockchainRID(ctx) == null) {
+                    if (db.getBlockchainRID(ctx) == null) {
                         init()
                     } else {
                         throw CliError.Companion.CliException("Blockchain with chainId $chainId already exists. Use -f flag to force addition.")
@@ -43,7 +45,7 @@ class CliExecution {
                 }
 
                 else -> {
-                    if (SQLDatabaseAccess().getBlockchainRID(ctx) == null) {
+                    if (db.getBlockchainRID(ctx) == null) {
                         init()
                     }
                 }
@@ -93,7 +95,7 @@ class CliExecution {
 
     fun checkBlockchain(nodeConfigFile: String, chainId: Long, blockchainRID: String) {
         runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
-            val chainIdBlockchainRid = dbAccess.getBlockchainRID(ctx)
+            val chainIdBlockchainRid = DatabaseAccess.of(ctx).getBlockchainRID(ctx)
             when {
                 chainIdBlockchainRid == null -> {
                     throw CliError.Companion.CliException("Unknown chain-id: $chainId")
