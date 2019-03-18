@@ -66,15 +66,12 @@ class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
 
 
     override fun insertBlock(ctx: EContext, height: Long): Long {
-        return queryRunner.insert(ctx.conn,
-                "INSERT INTO blocks (chain_id, block_height) VALUES (?, ?) RETURNING block_iid",
-                longRes, ctx.chainID, height)
+        return queryRunner.insert(ctx.conn, sqlCommands.insertBlocks, longRes, ctx.chainID, height)
     }
 
     override fun insertTransaction(ctx: BlockEContext, tx: Transaction): Long {
         return queryRunner.insert(ctx.conn,
-                "INSERT INTO transactions (chain_id, tx_rid, tx_data, tx_hash, block_iid)" +
-                        "VALUES (?, ?, ?, ?, ?) RETURNING tx_iid",
+                sqlCommands.insertTransactions,
                 longRes,
                 ctx.chainID, tx.getRID(), tx.getRawData(), tx.getHash(), ctx.blockIID)
     }
@@ -229,7 +226,7 @@ class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
 
         } else {
             // meta table does not exist! Assume database does not exist.
-            queryRunner.update(connection, """CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)""")
+            queryRunner.update(connection, sqlCommands.createTableMeta)
             queryRunner.update(
                     connection,
                     "INSERT INTO meta (key, value) values ('version', ?)",
@@ -239,29 +236,14 @@ class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
             // Don't use "CREATE TABLE IF NOT EXISTS" because if they do exist
             // we must throw an error. If these tables exists but meta did not exist,
             // there is some serious problem that needs manual work
-            queryRunner.update(
-                    connection,
-                    "CREATE TABLE blockchains " +
-                            "(chain_id BIGINT PRIMARY KEY, blockchain_rid BYTEA NOT NULL)")
+            queryRunner.update(connection, sqlCommands.createTableBlockChains)
 
             queryRunner.update(connection, sqlCommands.createTableBlocks)
 
-            queryRunner.update(connection, "CREATE TABLE transactions (" +
-                    "    tx_iid BIGSERIAL PRIMARY KEY, " +
-                    "    chain_id bigint NOT NULL," +
-                    "    tx_rid bytea NOT NULL," +
-                    "    tx_data bytea NOT NULL," +
-                    "    tx_hash bytea NOT NULL," +
-                    "    block_iid bigint NOT NULL REFERENCES blocks(block_iid)," +
-                    "    UNIQUE (chain_id, tx_rid))")
+            queryRunner.update(connection, sqlCommands.createTableTransactions)
 
             // Configurations
-            queryRunner.update(connection, "CREATE TABLE configurations (" +
-                    " chain_id bigint NOT NULL" +
-                    ", height BIGINT NOT NULL" +
-                    ", configuration_data bytea NOT NULL" +
-                    ", PRIMARY KEY (chain_id, height)" +
-                    ")")
+            queryRunner.update(connection, sqlCommands.createTableConfiguration)
 
             queryRunner.update(connection, """CREATE INDEX transactions_block_iid_idx ON transactions(block_iid)""")
             queryRunner.update(connection, """CREATE INDEX blocks_chain_id_timestamp ON blocks(chain_id, timestamp)""")
@@ -307,8 +289,7 @@ class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
 
     override fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long {
         return queryRunner.insert(context.conn,
-                "INSERT INTO configurations (chain_id, height, configuration_data) VALUES (?, ?, ?) " +
-                        "ON CONFLICT (chain_id, height) DO UPDATE SET configuration_data = ?",
+                sqlCommands.insertConfiguration,
                 longRes, context.chainID, height, data, data)
     }
 }
