@@ -1,6 +1,8 @@
-package net.postchain.base.data.postgresql
+package net.postchain.base.data
 
-import net.postchain.base.data.SQLCommands
+/**
+ * Implementation for PostgresSQL
+ */
 
 object PostgreSQLCommands : SQLCommands {
     override val createTableBlocks: String = "CREATE TABLE blocks" +
@@ -34,16 +36,6 @@ object PostgreSQLCommands : SQLCommands {
                                             ")"
 
     override val createTableMeta : String = "CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)"
-
-    override val checkMetaExists: String = """
-            SELECT 1
-            FROM   pg_catalog.pg_class c
-            JOIN   pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-            WHERE  n.nspname = ANY(current_schemas(FALSE))
-                    AND    n.nspname NOT LIKE 'pg_%'
-                    AND    c.relname = 'meta'
-                    AND    c.relkind = 'r'
-        """
 
     override val insertBlocks: String = "INSERT INTO blocks (chain_id, block_height) VALUES (?, ?) RETURNING block_iid"
 
