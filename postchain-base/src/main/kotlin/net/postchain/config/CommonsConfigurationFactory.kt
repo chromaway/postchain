@@ -1,5 +1,6 @@
 package net.postchain.config
 
+import net.postchain.base.data.H2SQLCommands
 import net.postchain.base.data.PostgreSQLCommands
 import net.postchain.base.data.SQLCommands
 import org.apache.commons.configuration2.Configuration
@@ -10,7 +11,8 @@ import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler
 
 object CommonsConfigurationFactory {
 
-    val POSTGRE_DRIVER_CLASS = "database.driverclass"
+    val POSTGRE_DRIVER_CLASS = "org.postgresql.Driver"
+    val H2_DRIVER_CLASS = "org.h2.Driver"
 
     fun readFromFile(configFile: String): Configuration {
         val params = Parameters().properties()
@@ -26,7 +28,7 @@ object CommonsConfigurationFactory {
         if (driverClassName == POSTGRE_DRIVER_CLASS) {
             return PostgreSQLCommands
         } else {
-            return PostgreSQLCommands
+            return H2SQLCommands
         }
     }
 }

@@ -51,6 +51,36 @@ class CliIntegrationTest {
     }
 
     @Test
+    fun testModuleWithH2Database() {
+        val nodeConfigPath = fullPath("node-config-h2.properties")
+        val nodeConfig = CommonsConfigurationFactory.readFromFile(nodeConfigPath)
+
+        // this wipes the data base!
+        StorageBuilder.buildStorage(nodeConfig, NODE_ID_NA, true)
+
+        // add-blockchain goes here
+        val chainId : Long = 1;
+        val brid = File(fullPath("brid.txt")).readText()
+        val blockChainConfig = fullPath("blockchain_config_4_signers.xml")
+        CliExecution().addBlockchain(nodeConfigPath, chainId, brid, blockChainConfig, AlreadyExistMode.FORCE)
+
+        val node = PostchainNode(nodeConfig)
+        node.startBlockchain(chainId)
+        val chain = node.processManager.retrieveBlockchain(chainId)
+        val queries = chain!!.getEngine().getBlockQueries()
+
+        for (x in 0..1000) {
+            Thread.sleep(10)
+            if (queries.getBestHeight().get() > 5)  {
+                break
+            };
+        }
+
+        println("Stop all blockchain")
+        node.shutdown()
+    }
+
+    @Test
     fun testAddConfiguration() {
         val nodeConfigPath = fullPath("node-config.properties")
         val nodeConfig = CommonsConfigurationFactory.readFromFile(nodeConfigPath)

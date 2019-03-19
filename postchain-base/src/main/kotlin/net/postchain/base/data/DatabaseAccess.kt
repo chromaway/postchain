@@ -206,7 +206,7 @@ class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
          * We need to know whether it exists or not in order to
          * make decisions on upgrade
          */
-        
+
         if (isMetaExists(connection)) {
             // meta table already exists. Check the version
             val versionString = queryRunner.query(connection, "SELECT value FROM meta WHERE key='version'", ScalarHandler<String>())
@@ -290,7 +290,7 @@ class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
             val rs = conn.metaData.getTables(null, conn.schema, null, types)
             while (rs.next()) {
                 val tableName = rs.getString(3)
-                if (tableName == "meta") {
+                if (tableName == "meta" || tableName == "META") {
                     return true
                 }
             }

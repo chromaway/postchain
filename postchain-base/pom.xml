@@ -17,6 +17,7 @@
 
         <commons-dbutils.version>1.6</commons-dbutils.version>
         <postgresql.version>42.1.4</postgresql.version>
+        <h2database.version>1.4.199</h2database.version>
         <spongycastle.core.version>1.56.0.0</spongycastle.core.version>
         <commons-dbcp2.version>2.1.1</commons-dbcp2.version>
         <commons-configuration2.version>2.1.1</commons-configuration2.version>
@@ -64,6 +65,13 @@
             <artifactId>postgresql</artifactId>
             <version>${postgresql.version}</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.h2database/h2 -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>${h2database.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>com.madgag.spongycastle</groupId>
             <artifactId>core</artifactId>
