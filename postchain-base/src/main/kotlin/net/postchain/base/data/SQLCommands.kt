@@ -7,6 +7,8 @@ interface SQLCommands {
     val createTableConfiguration : String
     val createTableMeta : String
     val insertBlocks: String
+    val checkMetaExists : String
     val insertTransactions : String
     val insertConfiguration : String
+
 }

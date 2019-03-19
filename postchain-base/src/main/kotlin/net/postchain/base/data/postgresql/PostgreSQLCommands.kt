@@ -35,6 +35,16 @@ object PostgreSQLCommands : SQLCommands {
 
     override val createTableMeta : String = "CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)"
 
+    override val checkMetaExists: String = """
+            SELECT 1
+            FROM   pg_catalog.pg_class c
+            JOIN   pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+            WHERE  n.nspname = ANY(current_schemas(FALSE))
+                    AND    n.nspname NOT LIKE 'pg_%'
+                    AND    c.relname = 'meta'
+                    AND    c.relkind = 'r'
+        """
+
     override val insertBlocks: String = "INSERT INTO blocks (chain_id, block_height) VALUES (?, ?) RETURNING block_iid"
 
     override val insertTransactions : String = "INSERT INTO transactions (chain_id, tx_rid, tx_data, tx_hash, block_iid) " +
