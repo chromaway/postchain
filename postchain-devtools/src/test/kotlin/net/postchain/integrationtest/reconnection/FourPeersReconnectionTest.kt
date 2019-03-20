@@ -23,7 +23,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
                 "classpath:/net/postchain/stability/node3.properties"
         )
 
-        // Creating all nodes
+        // Creating all peers
         nodeConfigsFilenames.forEachIndexed { i, nodeConfig ->
             createSingleNode(i, nodesCount, nodeConfig, blockchainConfig)
         }
@@ -37,7 +37,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
                     assertk.assert(nodes[3].retrieveBlockchain(PostchainTestNode.DEFAULT_CHAIN_ID)).isNotNull()
                 }
 
-        // Asserting height is -1 for all nodes
+        // Asserting height is -1 for all peers
         Assert.assertEquals(-1, queries(nodes[0]) { it.getBestHeight() })
         Assert.assertEquals(-1, queries(nodes[1]) { it.getBestHeight() })
         Assert.assertEquals(-1, queries(nodes[2]) { it.getBestHeight() })
@@ -48,7 +48,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
             enqueueTransactions(it, tx0, tx1)
             awaitBuiltBlock(it, 0)
         }
-        // * Asserting height is 0 for all nodes
+        // * Asserting height is 0 for all peers
         Awaitility.await().atMost(Duration.FIVE_SECONDS)
                 .untilAsserted {
                     Assert.assertEquals(0, queries(nodes[0]) { it.getBestHeight() })
@@ -62,7 +62,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
             enqueueTransactions(it, tx10, tx11)
             awaitBuiltBlock(it, 1)
         }
-        // * Asserting height is 1 for all nodes
+        // * Asserting height is 1 for all peers
         Awaitility.await().atMost(Duration.FIVE_SECONDS)
                 .untilAsserted {
                     Assert.assertEquals(1, queries(nodes[0]) { it.getBestHeight() })
@@ -93,6 +93,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
                     //assertk.assert(nodes[3].networkTopology()).isEmpty() // No assertion because chain already disconnected
                 }
 
+        // Removing peer 3
         nodes.removeAt(3)
 
         println("Re-boring peer 3")
@@ -122,12 +123,12 @@ class FourPeersReconnectionTest : ReconnectionTest() {
         Assert.assertEquals(1, queries(nodes[2]) { it.getBestHeight() })
         Assert.assertEquals(-1, queries(nodes[3]) { it.getBestHeight() })
 
-        // Building a block 2 via peer 3
+        // Building a block 2 via newly connected peer 3
         nodes[3].let {
             enqueueTransactions(it, tx100, tx101)
             awaitBuiltBlock(it, 2)
         }
-        // * Asserting height is 0 for all nodes
+        // * Asserting height is 2 for all peers
         Awaitility.await().atMost(Duration.FIVE_SECONDS)
                 .untilAsserted {
                     Assert.assertEquals(2, queries(nodes[0]) { it.getBestHeight() })

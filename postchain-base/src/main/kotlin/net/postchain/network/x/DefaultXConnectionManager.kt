@@ -11,6 +11,8 @@ import net.postchain.network.XPacketDecoderFactory
 import net.postchain.network.XPacketEncoderFactory
 import net.postchain.network.netty2.NettyClientPeerConnection
 import nl.komponents.kovenant.task
+import java.util.*
+import kotlin.concurrent.schedule
 
 class DefaultXConnectionManager<PacketType>(
         connectorFactory: XConnectorFactory<PacketType>,
@@ -222,10 +224,10 @@ class DefaultXConnectionManager<PacketType>(
     }
 
     private fun reconnect(peerConfig: XChainPeerConfiguration, peerId: XPeerID) {
-        /*Timer("Reconnecting").schedule(5000) {
+        Timer("Reconnecting").schedule(5000) {
             logger.debug { "${myPeerId()}: Reconnecting to peer: peerId = $peerId" }
             connectorConnectPeer(peerConfig, peerId)
-        }*/
+        }
     }
 
     private fun myPeerId(): ByteArrayKey =

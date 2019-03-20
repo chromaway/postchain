@@ -16,7 +16,7 @@ class SinglePeerReconnectionTest : ReconnectionTest() {
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         val blockchainConfig = "/net/postchain/stability/blockchain_config_1.xml"
 
-        // Creating all nodes
+        // Creating all peers
         createSingleNode(0, nodesCount, "classpath:/net/postchain/stability/node0.properties", blockchainConfig)
 
         // Asserting that chain is started
@@ -25,7 +25,7 @@ class SinglePeerReconnectionTest : ReconnectionTest() {
                     assertk.assert(nodes[0].retrieveBlockchain(PostchainTestNode.DEFAULT_CHAIN_ID)).isNotNull()
                 }
 
-        // Asserting height is -1 for all nodes
+        // Asserting height is -1 for all peers
         Assert.assertEquals(-1, queries(nodes[0]) { it.getBestHeight() })
 
         // Building a block 0
@@ -33,7 +33,7 @@ class SinglePeerReconnectionTest : ReconnectionTest() {
             enqueueTransactions(it, tx0, tx1)
             awaitBuiltBlock(it, 0)
         }
-        // * Asserting height is 0 for all nodes
+        // * Asserting height is 0 for all peers
         Awaitility.await().atMost(Duration.FIVE_SECONDS)
                 .untilAsserted {
                     Assert.assertEquals(0, queries(nodes[0]) { it.getBestHeight() })
@@ -44,13 +44,13 @@ class SinglePeerReconnectionTest : ReconnectionTest() {
             enqueueTransactions(it, tx10, tx11)
             awaitBuiltBlock(it, 1)
         }
-        // * Asserting height is 1 for all nodes
+        // * Asserting height is 1 for all peers
         Awaitility.await().atMost(Duration.FIVE_SECONDS)
                 .untilAsserted {
                     Assert.assertEquals(1, queries(nodes[0]) { it.getBestHeight() })
                 }
 
-        // Shutting down node 0
+        // Shutting down peer 0
         nodes[0].shutdown()
 
         Awaitility.await().atMost(Duration.FIVE_SECONDS)

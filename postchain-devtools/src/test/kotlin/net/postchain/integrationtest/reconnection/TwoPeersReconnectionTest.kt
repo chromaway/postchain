@@ -21,7 +21,7 @@ class TwoPeersReconnectionTest : ReconnectionTest() {
                 "classpath:/net/postchain/stability/node1.properties"
         )
 
-        // Creating all nodes
+        // Creating all peers
         nodeConfigsFilenames.forEachIndexed { i, nodeConfig ->
             createSingleNode(i, nodesCount, nodeConfig, blockchainConfig)
         }
@@ -56,7 +56,7 @@ class TwoPeersReconnectionTest : ReconnectionTest() {
                     assertk.assert(nodes[0].networkTopology()).isEmpty()
                 }
 
-        // Removing node 1
+        // Removing peer 1
         nodes.removeAt(1)
 
         println("Re-boring peer 1")
