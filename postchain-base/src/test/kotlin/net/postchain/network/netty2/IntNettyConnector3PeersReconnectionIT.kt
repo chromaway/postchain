@@ -107,12 +107,12 @@ class IntNettyConnector3PeersReconnectionIT {
                 .untilAsserted {
                     // Asserting peer3 is disconnected from peer1
                     verify(context1.events, times(1))
-                            .onPeerDisconnected(disconnectPeerDescriptor1.capture())
+                            .onPeerDisconnected(disconnectPeerDescriptor1.capture(), any())
                     assert(disconnectPeerDescriptor1.firstValue.peerId).isEqualTo(peerInfo3.peerId())
 
                     // Asserting peer3 is disconnected from peer2
                     // never() -- because of peer2 is a server for peer3
-                    verify(context2.events, never()).onPeerDisconnected(any())
+                    verify(context2.events, never()).onPeerDisconnected(any(), any())
                 }
 
         // Sending packets

@@ -4,10 +4,7 @@ import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import net.postchain.network.XPacketDecoder
-import net.postchain.network.x.LazyPacket
-import net.postchain.network.x.XPacketHandler
-import net.postchain.network.x.XPeerConnection
-import net.postchain.network.x.XPeerConnectionDescriptor
+import net.postchain.network.x.*
 
 class NettyServerPeerConnection<PacketType>(
         private val packetDecoder: XPacketDecoder<PacketType>
@@ -18,7 +15,7 @@ class NettyServerPeerConnection<PacketType>(
     private var peerConnectionDescriptor: XPeerConnectionDescriptor? = null
 
     private var onConnectedHandler: ((XPeerConnectionDescriptor, XPeerConnection) -> Unit)? = null
-    private var onDisconnectedHandler: ((XPeerConnectionDescriptor) -> Unit)? = null
+    private var onDisconnectedHandler: ((XPeerConnectionDescriptor, XPeerConnection) -> Unit)? = null
 
     override fun accept(handler: XPacketHandler) {
         this.packetHandler = handler
@@ -37,7 +34,7 @@ class NettyServerPeerConnection<PacketType>(
         return this
     }
 
-    fun onDisconnected(handler: (XPeerConnectionDescriptor) -> Unit): NettyServerPeerConnection<PacketType> {
+    fun onDisconnected(handler: (XPeerConnectionDescriptor, XPeerConnection) -> Unit): NettyServerPeerConnection<PacketType> {
         this.onDisconnectedHandler = handler
         return this
     }
@@ -62,7 +59,7 @@ class NettyServerPeerConnection<PacketType>(
 
     override fun channelInactive(ctx: ChannelHandlerContext?) {
         if (peerConnectionDescriptor != null) {
-            onDisconnectedHandler?.invoke(peerConnectionDescriptor!!)
+            onDisconnectedHandler?.invoke(peerConnectionDescriptor!!, this)
         }
     }
 }

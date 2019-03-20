@@ -19,6 +19,14 @@ open class TestTransaction(val id: Int, val good: Boolean = true, val correct: B
         return bytes(40)
     }
 
+    override fun getRID(): ByteArray {
+        return bytes(32)
+    }
+
+    override fun getHash(): ByteArray {
+        return getRID().reversed().toByteArray()
+    }
+
     private fun bytes(length: Int): ByteArray {
         val byteStream = ByteArrayOutputStream(length)
         val out = DataOutputStream(byteStream)
@@ -27,13 +35,5 @@ open class TestTransaction(val id: Int, val good: Boolean = true, val correct: B
         }
         out.flush()
         return byteStream.toByteArray()
-    }
-
-    override fun getRID(): ByteArray {
-        return bytes(32)
-    }
-
-    override fun getHash(): ByteArray {
-        return getRID().reversed().toByteArray()
     }
 }

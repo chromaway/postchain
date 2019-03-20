@@ -9,9 +9,8 @@ import net.postchain.core.ProgrammerMistake
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.network.XPacketDecoderFactory
 import net.postchain.network.XPacketEncoderFactory
+import net.postchain.network.netty2.NettyClientPeerConnection
 import nl.komponents.kovenant.task
-import java.util.*
-import kotlin.concurrent.schedule
 
 class DefaultXConnectionManager<PacketType>(
         connectorFactory: XConnectorFactory<PacketType>,
@@ -20,7 +19,7 @@ class DefaultXConnectionManager<PacketType>(
         private val packetDecoderFactory: XPacketDecoderFactory<PacketType>,
         cryptoSystem: CryptoSystem,
         private val peersConnectionStrategy: PeersConnectionStrategy = DefaultPeersConnectionStrategy
-) : XConnectionManager, XConnectorEvents {
+) : XConnectionManager, NetworkTopology, XConnectorEvents {
 
     private val connector = connectorFactory.createConnector(
             peerCommConfiguration.myPeerInfo(),
@@ -163,7 +162,7 @@ class DefaultXConnectionManager<PacketType>(
 
     @Synchronized
     override fun onPeerConnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection): XPacketHandler? {
-        logger.debug { "${myPeerId()}: onPeerConnected: peerId = ${descriptor.peerId}, connection = $connection" }
+        logger.debug { "${myPeerId()}: onPeerConnected: peerId = ${descriptor.peerId}, connection = ${connection.javaClass.simpleName}" }
 
         val chainID = chainIDforBlockchainRID[descriptor.blockchainRID]
         val chain = if (chainID != null) chains[chainID] else null
@@ -185,7 +184,7 @@ class DefaultXConnectionManager<PacketType>(
     }
 
     @Synchronized
-    override fun onPeerDisconnected(descriptor: XPeerConnectionDescriptor) {
+    override fun onPeerDisconnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection) {
         logger.debug { "${myPeerId()}: onPeerDisconnected: peerId = ${descriptor.peerId}" }
 
         val chainID = chainIDforBlockchainRID[descriptor.blockchainRID]
@@ -201,19 +200,32 @@ class DefaultXConnectionManager<PacketType>(
             chain.connections.remove(descriptor.peerId)
         }
 
-        // Reconnecting
-        if (chain.connectAll || (descriptor.peerId in chain.neededConnections)) {
-            reconnect(chain.peerConfig, descriptor.peerId)
+        // Reconnecting if connectionType is CLIENT
+        if (connection is NettyClientPeerConnection<*>) {
+            if (chain.connectAll || (descriptor.peerId in chain.neededConnections)) {
+                reconnect(chain.peerConfig, descriptor.peerId)
+            }
         }
 
         logger.debug { "${myPeerId()}: Peer disconnected: peerId = ${descriptor.peerId}" }
     }
 
+    override fun getPeersTopology(chainID: Long): Map<XPeerID, String> {
+        val chain = chains[chainID] ?: throw ProgrammerMistake("Chain ID not found: $chainID")
+        return chain.connections
+                .mapValues { peerToConnection ->
+                    when (peerToConnection.value) {
+                        is NettyClientPeerConnection<*> -> "c>s" // TODO: Fix this
+                        else -> "s<c" // TODO: Fix this
+                    }
+                }
+    }
+
     private fun reconnect(peerConfig: XChainPeerConfiguration, peerId: XPeerID) {
-        Timer("Reconnecting").schedule(5000) {
+        /*Timer("Reconnecting").schedule(5000) {
             logger.debug { "${myPeerId()}: Reconnecting to peer: peerId = $peerId" }
             connectorConnectPeer(peerConfig, peerId)
-        }
+        }*/
     }
 
     private fun myPeerId(): ByteArrayKey =

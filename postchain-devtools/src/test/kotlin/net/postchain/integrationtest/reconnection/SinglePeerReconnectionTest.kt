@@ -1,0 +1,64 @@
+package net.postchain.integrationtest.reconnection
+
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import net.postchain.devtools.PostchainTestNode
+import org.awaitility.Awaitility
+import org.awaitility.Duration
+import org.junit.Assert
+import org.junit.Test
+
+class SinglePeerReconnectionTest : ReconnectionTest() {
+
+    @Test
+    fun testSinglePeer() {
+        val nodesCount = 1
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+        val blockchainConfig = "/net/postchain/stability/blockchain_config_1.xml"
+
+        // Creating all nodes
+        createSingleNode(0, nodesCount, "classpath:/net/postchain/stability/node0.properties", blockchainConfig)
+
+        // Asserting that chain is started
+        Awaitility.await().atMost(Duration.FIVE_SECONDS)
+                .untilAsserted {
+                    assertk.assert(nodes[0].retrieveBlockchain(PostchainTestNode.DEFAULT_CHAIN_ID)).isNotNull()
+                }
+
+        // Asserting height is -1 for all nodes
+        Assert.assertEquals(-1, queries(nodes[0]) { it.getBestHeight() })
+
+        // Building a block 0
+        nodes[0].let {
+            enqueueTransactions(it, tx0, tx1)
+            awaitBuiltBlock(it, 0)
+        }
+        // * Asserting height is 0 for all nodes
+        Awaitility.await().atMost(Duration.FIVE_SECONDS)
+                .untilAsserted {
+                    Assert.assertEquals(0, queries(nodes[0]) { it.getBestHeight() })
+                }
+
+        // Again: Building a block 1
+        nodes[0].let {
+            enqueueTransactions(it, tx10, tx11)
+            awaitBuiltBlock(it, 1)
+        }
+        // * Asserting height is 1 for all nodes
+        Awaitility.await().atMost(Duration.FIVE_SECONDS)
+                .untilAsserted {
+                    Assert.assertEquals(1, queries(nodes[0]) { it.getBestHeight() })
+                }
+
+        // Shutting down node 0
+        nodes[0].shutdown()
+
+        Awaitility.await().atMost(Duration.FIVE_SECONDS)
+                .untilAsserted {
+                    assertk.assert(nodes[0].retrieveBlockchain(1)).isNull()
+                }
+
+        nodes.removeAt(0)
+    }
+
+}

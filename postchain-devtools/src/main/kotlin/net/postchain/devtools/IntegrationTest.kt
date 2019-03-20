@@ -30,6 +30,7 @@ import java.io.File
 open class IntegrationTest {
 
     protected val nodes = mutableListOf<PostchainTestNode>()
+    protected val nodesNames = mutableMapOf<String, String>() // { pubKey -> Node${i} }
     val configOverrides = MapConfiguration(mutableMapOf<String, String>())
     val cryptoSystem = SECP256K1CryptoSystem()
     var gtxConfig: GTXValue? = null
@@ -51,11 +52,11 @@ open class IntegrationTest {
         logger.debug("Integration test -- TEARDOWN")
         nodes.forEach { it.shutdown() }
         nodes.clear()
+        nodesNames.clear()
         logger.debug("Closed nodes")
         peerInfos = null
         expectedSuccessRids = mutableMapOf()
         configOverrides.clear()
-        System.runFinalization()
     }
 
     // TODO: [et]: Check out nullability for return value
@@ -89,13 +90,20 @@ open class IntegrationTest {
     }
 
     protected fun createNode(nodeIndex: Int, blockchainConfigFilename: String): PostchainTestNode =
-            createSingleNode(nodeIndex, 1, blockchainConfigFilename)
+            createSingleNode(nodeIndex, 1, DEFAULT_CONFIG_FILE, blockchainConfigFilename)
 
     protected fun createNodes(count: Int, blockchainConfigFilename: String): Array<PostchainTestNode> =
-            Array(count) { createSingleNode(it, count, blockchainConfigFilename) }
+            Array(count) { createSingleNode(it, count, DEFAULT_CONFIG_FILE, blockchainConfigFilename) }
 
-    private fun createSingleNode(nodeIndex: Int, totalNodesCount: Int, blockchainConfigFilename: String): PostchainTestNode {
-        val nodeConfig = createConfig(nodeIndex, totalNodesCount, DEFAULT_CONFIG_FILE)
+    protected fun createSingleNode(
+            nodeIndex: Int,
+            totalNodesCount: Int,
+            nodeConfig: String,
+            blockchainConfigFilename: String
+    ): PostchainTestNode {
+
+        val nodeConfig = createConfig(nodeIndex, totalNodesCount, nodeConfig)
+        nodesNames[nodeConfig.getString("messaging.pubkey")] = "$nodeIndex"
         val blockchainConfig = readBlockchainConfig(blockchainConfigFilename)
         val chainId = nodeConfig.getLong("activechainids")
         val blockchainRid = readBlockchainRid(nodeConfig, chainId)
@@ -180,8 +188,8 @@ open class IntegrationTest {
             baseConfig.setProperty("node.$i.pubkey", pubKeyHex(i))
         }
 
-        configOverrides.setProperty("messaging.privkey", privKeyHex(nodeIndex))
-        configOverrides.setProperty("messaging.pubkey", pubKeyHex(nodeIndex))
+        baseConfig.setProperty("messaging.privkey", privKeyHex(nodeIndex))
+        baseConfig.setProperty("messaging.pubkey", pubKeyHex(nodeIndex))
 
         return CompositeConfiguration().apply {
             addConfiguration(configOverrides)

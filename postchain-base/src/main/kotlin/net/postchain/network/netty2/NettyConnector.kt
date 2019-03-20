@@ -1,7 +1,5 @@
 package net.postchain.network.netty2
 
-import io.netty.channel.EventLoopGroup
-import io.netty.channel.nio.NioEventLoopGroup
 import mu.KLogging
 import net.postchain.base.PeerInfo
 import net.postchain.network.XPacketDecoder
@@ -9,7 +7,6 @@ import net.postchain.network.XPacketEncoder
 import net.postchain.network.x.XConnector
 import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPeerConnectionDescriptor
-import java.util.concurrent.TimeUnit
 
 class NettyConnector<PacketType>(
         private val eventReceiver: XConnectorEvents
@@ -18,12 +15,9 @@ class NettyConnector<PacketType>(
     companion object : KLogging()
 
     private lateinit var server: NettyServer
-    private lateinit var eventGroup: EventLoopGroup
 
     override fun init(peerInfo: PeerInfo, packetDecoder: XPacketDecoder<PacketType>) {
-        eventGroup = NioEventLoopGroup()
-
-        server = NettyServer(eventGroup).apply {
+        server = NettyServer().apply {
             setChannelHandler {
                 NettyServerPeerConnection(packetDecoder)
                         .onConnected { descriptor, connection ->
@@ -31,7 +25,9 @@ class NettyConnector<PacketType>(
                                     ?.also { connection.accept(it) }
 //                            ?: connection.close()
                         }
-                        .onDisconnected { }
+                        .onDisconnected { descriptor, connection ->
+                            eventReceiver.onPeerDisconnected(descriptor, connection)
+                        }
             }
 
             run(peerInfo.port)
@@ -43,27 +39,25 @@ class NettyConnector<PacketType>(
             peerInfo: PeerInfo,
             packetEncoder: XPacketEncoder<PacketType>
     ) {
-        try {
-            NettyClientPeerConnection(eventGroup, peerInfo, packetEncoder).also { connection ->
-                connection.open(
+        with(NettyClientPeerConnection(peerInfo, packetEncoder)) {
+            try {
+                open(
                         onConnected = {
-                            eventReceiver.onPeerConnected(peerConnectionDescriptor, connection)
-                                    ?.also { connection.accept(it) }
+                            eventReceiver.onPeerConnected(peerConnectionDescriptor, this)
+                                    ?.also { this.accept(it) }
 //                                    ?: connection.close()
                         },
                         onDisconnected = {
-                            eventReceiver.onPeerDisconnected(peerConnectionDescriptor)
-                        }
-                )
+                            eventReceiver.onPeerDisconnected(peerConnectionDescriptor, this)
+                        })
+            } catch (e: Exception) {
+                logger.error { e.message }
+                eventReceiver.onPeerDisconnected(peerConnectionDescriptor, this) // TODO: [et]: Maybe create different event receiver.
             }
-        } catch (e: Exception) {
-            logger.error { e.message }
-            eventReceiver.onPeerDisconnected(peerConnectionDescriptor) // TODO: [et]: Maybe create different event receiver.
         }
     }
 
     override fun shutdown() {
         server.shutdown()
-        eventGroup.shutdownGracefully(600, 2000, TimeUnit.MILLISECONDS).sync()
     }
 }

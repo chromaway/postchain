@@ -56,6 +56,7 @@ class BaseBlockchainProcessManager(
         executor.shutdownNow()
         executor.awaitTermination(1000, TimeUnit.MILLISECONDS)
         blockchainProcesses.forEach { _, process -> process.shutdown() }
+        blockchainProcesses.clear()
         storage.close()
         blockchainInfrastructure.shutdown()
     }

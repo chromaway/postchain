@@ -12,11 +12,12 @@ import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.base.withWriteConnection
 import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.ebft.EBFTSynchronizationInfrastructure
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.encodeGTXValue
 import org.apache.commons.configuration2.Configuration
 
-class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
+class PostchainTestNode(private val nodeConfig: Configuration) : PostchainNode(nodeConfig) {
 
     private val storage = StorageBuilder.buildStorage(nodeConfig, NODE_ID_TODO, true)
     private var isInitialized = false
@@ -93,6 +94,18 @@ class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
     fun blockBuildingStrategy(chainId: Long = DEFAULT_CHAIN_ID): BlockBuildingStrategy {
         return getBlockchainInstance(chainId).getEngine().getBlockBuildingStrategy()
     }
+
+    fun networkTopology(): Map<String, String> {
+        // TODO: [et]: Fix type casting
+        return ((blockchainInfrastructure as BaseBlockchainInfrastructure)
+                .synchronizationInfrastructure as EBFTSynchronizationInfrastructure)
+                .connectionManager.getPeersTopology(DEFAULT_CHAIN_ID)
+                .mapKeys { pubKeyToConnection ->
+                    pubKeyToConnection.key.toString()
+                }
+    }
+
+    fun pubKey(): String = nodeConfig.getString("messaging.pubkey")
 
     private fun blockchainRID(process: BlockchainProcess): String {
         return (process.getEngine().getConfiguration() as BaseBlockchainConfiguration) // TODO: [et]: Resolve type cast
