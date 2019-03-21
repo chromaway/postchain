@@ -14,10 +14,14 @@ class SinglePeerReconnectionTest : ReconnectionTest() {
     fun testSinglePeer() {
         val nodesCount = 1
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-        val blockchainConfig = "/net/postchain/stability/blockchain_config_1.xml"
+        val blockchainConfig = "/net/postchain/reconnection/blockchain_config_1.xml"
 
         // Creating all peers
-        createSingleNode(0, nodesCount, "classpath:/net/postchain/stability/node0.properties", blockchainConfig)
+        createSingleNode(
+                0,
+                nodesCount,
+                "classpath:/net/postchain/reconnection/node0.properties",
+                blockchainConfig)
 
         // Asserting that chain is started
         Awaitility.await().atMost(Duration.FIVE_SECONDS)

@@ -15,12 +15,12 @@ class FourPeersReconnectionTest : ReconnectionTest() {
     fun test4Peers() {
         val nodesCount = 4
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-        val blockchainConfig = "/net/postchain/stability/blockchain_config_4.xml"
+        val blockchainConfig = "/net/postchain/reconnection/blockchain_config_4.xml"
         val nodeConfigsFilenames = arrayOf(
-                "classpath:/net/postchain/stability/node0.properties",
-                "classpath:/net/postchain/stability/node1.properties",
-                "classpath:/net/postchain/stability/node2.properties",
-                "classpath:/net/postchain/stability/node3.properties"
+                "classpath:/net/postchain/reconnection/node0.properties",
+                "classpath:/net/postchain/reconnection/node1.properties",
+                "classpath:/net/postchain/reconnection/node2.properties",
+                "classpath:/net/postchain/reconnection/node3.properties"
         )
 
         // Creating all peers

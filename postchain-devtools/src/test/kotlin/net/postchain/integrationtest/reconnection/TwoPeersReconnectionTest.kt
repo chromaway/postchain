@@ -15,10 +15,10 @@ class TwoPeersReconnectionTest : ReconnectionTest() {
     fun test2Peers() {
         val nodesCount = 2
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-        val blockchainConfig = "/net/postchain/stability/blockchain_config_2.xml"
+        val blockchainConfig = "/net/postchain/reconnection/blockchain_config_2.xml"
         val nodeConfigsFilenames = arrayOf(
-                "classpath:/net/postchain/stability/node0.properties",
-                "classpath:/net/postchain/stability/node1.properties"
+                "classpath:/net/postchain/reconnection/node0.properties",
+                "classpath:/net/postchain/reconnection/node1.properties"
         )
 
         // Creating all peers

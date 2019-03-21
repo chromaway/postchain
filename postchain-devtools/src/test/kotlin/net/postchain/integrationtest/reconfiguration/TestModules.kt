@@ -1,4 +1,4 @@
-package net.postchain.integrationtest.configurations
+package net.postchain.integrationtest.reconfiguration
 
 import net.postchain.core.EContext
 import net.postchain.core.Transactor
@@ -29,3 +29,5 @@ open class AbstractDummyModule : GTXModule {
 class DummyModule1 : AbstractDummyModule()
 
 class DummyModule2 : AbstractDummyModule()
+
+class DummyModule3 : AbstractDummyModule()
