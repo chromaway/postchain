@@ -95,11 +95,11 @@ class PostchainTestNode(private val nodeConfig: Configuration) : PostchainNode(n
         return getBlockchainInstance(chainId).getEngine().getBlockBuildingStrategy()
     }
 
-    fun networkTopology(): Map<String, String> {
+    fun networkTopology(chainId: Long = DEFAULT_CHAIN_ID): Map<String, String> {
         // TODO: [et]: Fix type casting
         return ((blockchainInfrastructure as BaseBlockchainInfrastructure)
                 .synchronizationInfrastructure as EBFTSynchronizationInfrastructure)
-                .connectionManager.getPeersTopology(DEFAULT_CHAIN_ID)
+                .connectionManager.getPeersTopology(chainId)
                 .mapKeys { pubKeyToConnection ->
                     pubKeyToConnection.key.toString()
                 }
