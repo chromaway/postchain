@@ -18,6 +18,7 @@ class StorageBuilder {
 
             val sqlCommands = CommonsConfigurationFactory
                     .getSQLCommandsImplementation(config.getString("database.driverclass"))
+            val db = SQLDatabaseAccess(sqlCommands)
 
             // Read DataSource
             val readDataSource = createBasicDataSource(config).apply {
@@ -38,9 +39,9 @@ class StorageBuilder {
             }
 
             createSchemaIfNotExists(writeDataSource, config.getString("database.schema"))
-            createTablesIfNotExists(writeDataSource, config)
+            createTablesIfNotExists(writeDataSource, db)
 
-            return BaseStorage(readDataSource, writeDataSource, nodeIndex, SQLDatabaseAccess(sqlCommands))
+            return BaseStorage(readDataSource, writeDataSource, nodeIndex, db)
         }
 
         private fun createBasicDataSource(config: Configuration): BasicDataSource {
@@ -71,11 +72,8 @@ class StorageBuilder {
             }
         }
 
-        private fun createTablesIfNotExists(dataSource: DataSource, config: Configuration) {
+        private fun createTablesIfNotExists(dataSource: DataSource, dbAccess: SQLDatabaseAccess) {
             dataSource.connection.use { connection ->
-                val sqlCommands = CommonsConfigurationFactory
-                        .getSQLCommandsImplementation(config.getString("database.driverclass"))
-                val dbAccess = SQLDatabaseAccess(sqlCommands)
                 dbAccess.initialize(connection, expectedDbVersion = 1) // TODO: [et]: Extract version
                 connection.commit()
             }
