@@ -51,8 +51,8 @@ class CliIntegrationTest {
     }
 
     @Test
-    fun testModuleWithH2Database() {
-        val nodeConfigPath = fullPath("node-config-h2.properties")
+    fun testModuleWithSAPDatabase() {
+        val nodeConfigPath = fullPath("node-config-saphana.properties")
         val nodeConfig = CommonsConfigurationFactory.readFromFile(nodeConfigPath)
 
         // this wipes the data base!
@@ -73,7 +73,7 @@ class CliIntegrationTest {
             Thread.sleep(10)
             if (queries.getBestHeight().get() > 5)  {
                 break
-            };
+            }
         }
 
         println("Stop all blockchain")
