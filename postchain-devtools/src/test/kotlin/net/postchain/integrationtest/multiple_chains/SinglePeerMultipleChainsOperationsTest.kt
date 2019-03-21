@@ -1,4 +1,4 @@
-package net.postchain.integrationtest
+package net.postchain.integrationtest.multiple_chains
 
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
@@ -9,12 +9,12 @@ import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.Test
 
-class MultipleChainsOperationsTest : IntegrationTest() {
+class SinglePeerMultipleChainsOperationsTest : IntegrationTest() {
 
     companion object : KLogging()
 
     @Test
-    fun chainStartingAndStoppingSuccessfully() {
+    fun startingAndStoppingSingleChainSuccessfully() {
         // Creating node w/o chains
         createMultipleChainNodes(
                 1,

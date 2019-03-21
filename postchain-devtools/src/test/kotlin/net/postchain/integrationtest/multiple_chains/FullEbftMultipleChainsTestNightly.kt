@@ -1,4 +1,4 @@
-package net.postchain.integrationtest
+package net.postchain.integrationtest.multiple_chains
 
 import assertk.assert
 import assertk.assertions.isNotNull
