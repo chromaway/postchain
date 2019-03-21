@@ -1,9 +1,8 @@
 package net.postchain.integrationtest.reconnection
 
-import assertk.assertions.isNotNull
-import assertk.assertions.isNull
-import net.postchain.devtools.PostchainTestNode
 import net.postchain.hasSize
+import net.postchain.integrationtest.assertChainNotStarted
+import net.postchain.integrationtest.assertChainStarted
 import net.postchain.isEmpty
 import org.awaitility.Awaitility
 import org.awaitility.Duration
@@ -29,8 +28,8 @@ class TwoPeersReconnectionTest : ReconnectionTest() {
         // Asserting that chain is started
         Awaitility.await().atMost(Duration.FIVE_SECONDS)
                 .untilAsserted {
-                    assertk.assert(nodes[0].retrieveBlockchain(PostchainTestNode.DEFAULT_CHAIN_ID)).isNotNull()
-                    assertk.assert(nodes[1].retrieveBlockchain(PostchainTestNode.DEFAULT_CHAIN_ID)).isNotNull()
+                    nodes[0].assertChainStarted()
+                    nodes[1].assertChainStarted()
                 }
 
         // Printing net networkTopology
@@ -49,8 +48,8 @@ class TwoPeersReconnectionTest : ReconnectionTest() {
                     //                    printPeers(0, 1)
 
                     // chain is active for peer 0 and is shutdown for peer 1
-                    assertk.assert(nodes[0].retrieveBlockchain(PostchainTestNode.DEFAULT_CHAIN_ID)).isNotNull()
-                    assertk.assert(nodes[1].retrieveBlockchain(PostchainTestNode.DEFAULT_CHAIN_ID)).isNull()
+                    nodes[0].assertChainStarted()
+                    nodes[1].assertChainNotStarted()
 
                     // network topology is pair of disconnected peers
                     assertk.assert(nodes[0].networkTopology()).isEmpty()
@@ -67,7 +66,7 @@ class TwoPeersReconnectionTest : ReconnectionTest() {
         Awaitility.await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
                     // Asserting that chain is started at peer 1
-                    assertk.assert(nodes[1].retrieveBlockchain(PostchainTestNode.DEFAULT_CHAIN_ID)).isNotNull()
+                    nodes[1].assertChainStarted()
 
                     // network topology is pair of connected peers
                     assertk.assert(nodes[0].networkTopology()).hasSize(1)

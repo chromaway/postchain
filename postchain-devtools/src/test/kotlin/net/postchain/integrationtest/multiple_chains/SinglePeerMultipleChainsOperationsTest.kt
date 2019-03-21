@@ -1,10 +1,11 @@
 package net.postchain.integrationtest.multiple_chains
 
-import assertk.assertions.isNotNull
-import assertk.assertions.isNull
 import mu.KLogging
 import net.postchain.common.hexStringToByteArray
 import net.postchain.devtools.IntegrationTest
+import net.postchain.integrationtest.addBlockchainAndStart
+import net.postchain.integrationtest.assertChainNotStarted
+import net.postchain.integrationtest.assertChainStarted
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.Test
@@ -28,16 +29,15 @@ class SinglePeerMultipleChainsOperationsTest : IntegrationTest() {
                 "/net/postchain/multiple_chains/chains_ops/single_peer/blockchain_config_1.xml")
 
         // Asserting that chain 1 is not started
-        assertk.assert(nodes[0].retrieveBlockchain(chainId1)).isNull()
+        nodes[0].assertChainNotStarted(chainId1)
 
         // Adding chain 1
-        nodes[0].addBlockchain(chainId1, blockchainRid1, blockchainConfig1)
-        nodes[0].startBlockchain(chainId1)
+        nodes[0].addBlockchainAndStart(chainId1, blockchainRid1, blockchainConfig1)
 
         // Asserting chain 1 is started
         await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
-                    assertk.assert(nodes[0].retrieveBlockchain(chainId1)).isNotNull()
+                    nodes[0].assertChainStarted(chainId1)
                 }
 
         // Stopping chain 1
@@ -46,7 +46,7 @@ class SinglePeerMultipleChainsOperationsTest : IntegrationTest() {
         // Asserting chain 1 is stopped
         await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
-                    assertk.assert(nodes[0].retrieveBlockchain(chainId1)).isNull()
+                    nodes[0].assertChainNotStarted(chainId1)
                 }
     }
 
@@ -71,27 +71,25 @@ class SinglePeerMultipleChainsOperationsTest : IntegrationTest() {
                 "/net/postchain/multiple_chains/chains_ops/single_peer/blockchain_config_2.xml")
 
         // Asserting that chain1 and chain2 Are not started
-        assertk.assert(nodes[0].retrieveBlockchain(chainId1)).isNull()
-        assertk.assert(nodes[0].retrieveBlockchain(chainId2)).isNull()
+        nodes[0].assertChainNotStarted(chainId1)
+        nodes[0].assertChainNotStarted(chainId2)
 
         // Adding chain 1
-        nodes[0].addBlockchain(chainId1, blockchainRid1, blockchainConfig1)
-        nodes[0].startBlockchain(chainId1)
+        nodes[0].addBlockchainAndStart(chainId1, blockchainRid1, blockchainConfig1)
         // Asserting chain 1 is started and chain 2 is not
         await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
-                    assertk.assert(nodes[0].retrieveBlockchain(chainId1)).isNotNull()
-                    assertk.assert(nodes[0].retrieveBlockchain(chainId2)).isNull()
+                    nodes[0].assertChainStarted(chainId1)
+                    nodes[0].assertChainNotStarted(chainId2)
                 }
 
         // Adding chain 2
-        nodes[0].addBlockchain(chainId2, blockchainRid2, blockchainConfig2)
-        nodes[0].startBlockchain(chainId2)
+        nodes[0].addBlockchainAndStart(chainId2, blockchainRid2, blockchainConfig2)
         // Asserting chain 2 is started too
         await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
-                    assertk.assert(nodes[0].retrieveBlockchain(chainId1)).isNotNull()
-                    assertk.assert(nodes[0].retrieveBlockchain(chainId2)).isNotNull()
+                    nodes[0].assertChainStarted(chainId1)
+                    nodes[0].assertChainStarted(chainId2)
                 }
 
         // Stopping chain 1
@@ -99,8 +97,8 @@ class SinglePeerMultipleChainsOperationsTest : IntegrationTest() {
         // Asserting chain 1 is stopped and chain 2 is not
         await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
-                    assertk.assert(nodes[0].retrieveBlockchain(chainId1)).isNull()
-                    assertk.assert(nodes[0].retrieveBlockchain(chainId2)).isNotNull()
+                    nodes[0].assertChainNotStarted(chainId1)
+                    nodes[0].assertChainStarted(chainId2)
                 }
 
         // Stopping chain 2
@@ -108,8 +106,8 @@ class SinglePeerMultipleChainsOperationsTest : IntegrationTest() {
         // Asserting chain 1 is stopped and chain 2 is not
         await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
-                    assertk.assert(nodes[0].retrieveBlockchain(chainId1)).isNull()
-                    assertk.assert(nodes[0].retrieveBlockchain(chainId2)).isNull()
+                    nodes[0].assertChainNotStarted(chainId1)
+                    nodes[0].assertChainNotStarted(chainId2)
                 }
     }
 

@@ -4,6 +4,7 @@ import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isNotNull
 import net.postchain.devtools.PostchainTestNode
+import net.postchain.integrationtest.assertChainStarted
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.Test
@@ -38,7 +39,7 @@ class SinglePeerReconfigurationTest : ReconfigurationTest() {
         // Asserting chain1 is started
         await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
-                    assertk.assert(nodes[0].retrieveBlockchain(chainId)).isNotNull()
+                    nodes[0].assertChainStarted(chainId)
                 }
 
         // Asserting blockchainConfig1 with DummyModule1 is loaded

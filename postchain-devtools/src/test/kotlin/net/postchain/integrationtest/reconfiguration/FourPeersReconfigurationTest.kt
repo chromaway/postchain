@@ -4,6 +4,8 @@ import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isNotNull
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_ID
+import net.postchain.integrationtest.assertChainNotStarted
+import net.postchain.integrationtest.assertChainStarted
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.Test
@@ -36,10 +38,7 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
         // Asserting chain 1 is started for all peers
         await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
-                    assertk.assert(nodes[0].retrieveBlockchain()).isNotNull()
-                    assertk.assert(nodes[1].retrieveBlockchain()).isNotNull()
-                    assertk.assert(nodes[2].retrieveBlockchain()).isNotNull()
-                    assertk.assert(nodes[3].retrieveBlockchain()).isNotNull()
+                    nodes.forEach { it.assertChainStarted() }
                 }
 
         // Asserting blockchainConfig1 with DummyModule1 is loaded y all peers

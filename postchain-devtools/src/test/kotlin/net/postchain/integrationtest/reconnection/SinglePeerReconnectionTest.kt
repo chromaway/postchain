@@ -3,6 +3,8 @@ package net.postchain.integrationtest.reconnection
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import net.postchain.devtools.PostchainTestNode
+import net.postchain.integrationtest.assertChainNotStarted
+import net.postchain.integrationtest.assertChainStarted
 import org.awaitility.Awaitility
 import org.awaitility.Duration
 import org.junit.Assert
@@ -26,7 +28,7 @@ class SinglePeerReconnectionTest : ReconnectionTest() {
         // Asserting that chain is started
         Awaitility.await().atMost(Duration.FIVE_SECONDS)
                 .untilAsserted {
-                    assertk.assert(nodes[0].retrieveBlockchain(PostchainTestNode.DEFAULT_CHAIN_ID)).isNotNull()
+                    nodes[0].assertChainStarted()
                 }
 
         // Asserting height is -1 for all peers
@@ -59,7 +61,7 @@ class SinglePeerReconnectionTest : ReconnectionTest() {
 
         Awaitility.await().atMost(Duration.FIVE_SECONDS)
                 .untilAsserted {
-                    assertk.assert(nodes[0].retrieveBlockchain(1)).isNull()
+                    nodes[0].assertChainNotStarted()
                 }
 
         nodes.removeAt(0)

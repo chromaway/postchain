@@ -1,13 +1,12 @@
 package net.postchain.integrationtest.multiple_chains
 
-import assertk.assertions.isNotNull
-import assertk.assertions.isNull
 import mu.KLogging
 import net.postchain.common.hexStringToByteArray
-import net.postchain.containsExactlyKeys
 import net.postchain.devtools.IntegrationTest
-import net.postchain.devtools.PostchainTestNode
-import net.postchain.gtx.GTXValue
+import net.postchain.integrationtest.addBlockchainAndStart
+import net.postchain.integrationtest.assertChainNotStarted
+import net.postchain.integrationtest.assertChainStarted
+import net.postchain.integrationtest.assertNodeConnectedWith
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.Test
@@ -206,30 +205,6 @@ class FourPeersMultipleChainsOperationsTest : IntegrationTest() {
                     nodes[1].assertNodeConnectedWith(chainId2, nodes[0], nodes[2])
                     nodes[2].assertNodeConnectedWith(chainId2, nodes[1], nodes[0])
                 }
-
-    }
-
-    // TODO: Move it to extension helper class
-    private fun PostchainTestNode.addBlockchainAndStart(chainId1: Long, blockchainRid: ByteArray, blockchainConfig: GTXValue) {
-        addBlockchain(chainId1, blockchainRid, blockchainConfig)
-        startBlockchain(chainId1)
-    }
-
-    // TODO: Move it to extension helper class
-    private fun PostchainTestNode.assertChainStarted(chainId: Long) {
-        assertk.assert(retrieveBlockchain(chainId)).isNotNull()
-    }
-
-    // TODO: Move it to extension helper class
-    private fun PostchainTestNode.assertChainNotStarted(chainId: Long) {
-        assertk.assert(retrieveBlockchain(chainId)).isNull()
-    }
-
-    // TODO: Move it to extension helper class
-    private fun PostchainTestNode.assertNodeConnectedWith(chainId: Long, vararg nodes: PostchainTestNode) {
-        assertk.assert(networkTopology(chainId)).containsExactlyKeys(
-                *nodes.map(PostchainTestNode::pubKey).toTypedArray()
-        )
     }
 
 }

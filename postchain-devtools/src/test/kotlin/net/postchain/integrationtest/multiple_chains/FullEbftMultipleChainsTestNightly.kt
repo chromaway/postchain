@@ -1,7 +1,5 @@
 package net.postchain.integrationtest.multiple_chains
 
-import assertk.assert
-import assertk.assertions.isNotNull
 import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import junitparams.naming.TestCaseName
@@ -9,6 +7,7 @@ import mu.KLogging
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.testinfra.TestTransaction
+import net.postchain.integrationtest.assertChainStarted
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration.TEN_SECONDS
 import org.junit.Assert.assertArrayEquals
@@ -119,9 +118,7 @@ class FullEbftMultipleChainsTestNightly : IntegrationTest() {
         await().atMost(TEN_SECONDS)
                 .untilAsserted {
                     nodes.forEach { node ->
-                        chains.forEach { chain ->
-                            assert(node.retrieveBlockchain(chain)).isNotNull()
-                        }
+                        chains.forEach(node::assertChainStarted)
                     }
                 }
 

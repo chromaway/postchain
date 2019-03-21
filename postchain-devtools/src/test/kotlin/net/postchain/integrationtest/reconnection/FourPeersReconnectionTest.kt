@@ -1,9 +1,9 @@
 package net.postchain.integrationtest.reconnection
 
-import assertk.assertions.isNotNull
-import assertk.assertions.isNull
-import net.postchain.containsExactlyKeys
-import net.postchain.devtools.PostchainTestNode
+import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_ID
+import net.postchain.integrationtest.assertChainNotStarted
+import net.postchain.integrationtest.assertChainStarted
+import net.postchain.integrationtest.assertNodeConnectedWith
 import org.awaitility.Awaitility
 import org.awaitility.Duration
 import org.junit.Assert
@@ -31,10 +31,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
         // Asserting that chain is started
         Awaitility.await().atMost(Duration.FIVE_SECONDS)
                 .untilAsserted {
-                    assertk.assert(nodes[0].retrieveBlockchain(PostchainTestNode.DEFAULT_CHAIN_ID)).isNotNull()
-                    assertk.assert(nodes[1].retrieveBlockchain(PostchainTestNode.DEFAULT_CHAIN_ID)).isNotNull()
-                    assertk.assert(nodes[2].retrieveBlockchain(PostchainTestNode.DEFAULT_CHAIN_ID)).isNotNull()
-                    assertk.assert(nodes[3].retrieveBlockchain(PostchainTestNode.DEFAULT_CHAIN_ID)).isNotNull()
+                    nodes.forEach { it.assertChainStarted() }
                 }
 
         // Asserting height is -1 for all peers
@@ -78,19 +75,16 @@ class FourPeersReconnectionTest : ReconnectionTest() {
         Awaitility.await().atMost(Duration.ONE_MINUTE)
                 .untilAsserted {
                     // chain is active for peer 0, 1, 2 and is shutdown for peer 3
-                    assertk.assert(nodes[0].retrieveBlockchain(PostchainTestNode.DEFAULT_CHAIN_ID)).isNotNull()
-                    assertk.assert(nodes[1].retrieveBlockchain(PostchainTestNode.DEFAULT_CHAIN_ID)).isNotNull()
-                    assertk.assert(nodes[2].retrieveBlockchain(PostchainTestNode.DEFAULT_CHAIN_ID)).isNotNull()
-                    assertk.assert(nodes[3].retrieveBlockchain(PostchainTestNode.DEFAULT_CHAIN_ID)).isNull()
+                    nodes[0].assertChainStarted()
+                    nodes[1].assertChainStarted()
+                    nodes[2].assertChainStarted()
+                    nodes[3].assertChainNotStarted()
 
                     // network topology is that peer 3 is disconnected from interconnected peers 0, 1, 2
-                    assertk.assert(nodes[0].networkTopology()).containsExactlyKeys(
-                            nodes[1].pubKey(), nodes[2].pubKey())
-                    assertk.assert(nodes[1].networkTopology()).containsExactlyKeys(
-                            nodes[0].pubKey(), nodes[2].pubKey())
-                    assertk.assert(nodes[2].networkTopology()).containsExactlyKeys(
-                            nodes[1].pubKey(), nodes[0].pubKey())
-                    //assertk.assert(nodes[3].networkTopology()).isEmpty() // No assertion because chain already disconnected
+                    nodes[0].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[1], nodes[2])
+                    nodes[1].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[0], nodes[2])
+                    nodes[2].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[1], nodes[0])
+//                    nodes[3].assertNodeConnectedWith(...) // No assertion because chain already disconnected
                 }
 
         // Removing peer 3
@@ -104,17 +98,13 @@ class FourPeersReconnectionTest : ReconnectionTest() {
         Awaitility.await().atMost(Duration.ONE_MINUTE)
                 .untilAsserted {
                     // chain is active for peer 3
-                    assertk.assert(nodes[3].retrieveBlockchain(PostchainTestNode.DEFAULT_CHAIN_ID)).isNotNull()
+                    nodes[3].assertChainStarted()
 
                     // network topology is that peers 0, 1, 2, 3 are interconnected
-                    assertk.assert(nodes[0].networkTopology()).containsExactlyKeys(
-                            nodes[1].pubKey(), nodes[2].pubKey(), nodes[3].pubKey())
-                    assertk.assert(nodes[1].networkTopology()).containsExactlyKeys(
-                            nodes[0].pubKey(), nodes[2].pubKey(), nodes[3].pubKey())
-                    assertk.assert(nodes[2].networkTopology()).containsExactlyKeys(
-                            nodes[1].pubKey(), nodes[0].pubKey(), nodes[3].pubKey())
-                    assertk.assert(nodes[3].networkTopology()).containsExactlyKeys(
-                            nodes[1].pubKey(), nodes[2].pubKey(), nodes[0].pubKey())
+                    nodes[0].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[1], nodes[2], nodes[3])
+                    nodes[1].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[0], nodes[2], nodes[3])
+                    nodes[2].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[1], nodes[0], nodes[3])
+                    nodes[3].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[1], nodes[2], nodes[0])
                 }
 
         // Asserting that height is
