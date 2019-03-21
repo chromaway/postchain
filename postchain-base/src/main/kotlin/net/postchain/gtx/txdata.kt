@@ -3,15 +3,19 @@
 package net.postchain.gtx
 
 import net.postchain.base.CryptoSystem
-import net.postchain.base.Signer
+import net.postchain.base.SigMaker
+import net.postchain.base.merkle.Hash
+import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.Signature
 import net.postchain.core.UserMistake
 import java.util.*
 import net.postchain.gtv.messages.Gtv as RawGtv
 import net.postchain.gtv.*
-import net.postchain.gtx.factory.GtxDataFactory
-import net.postchain.gtx.serializer.GtxDataSerializer
+import net.postchain.gtv.merkle.GtvMerkleHashCalculator
+import net.postchain.gtx.factory.GtxTransactionDataFactory
+import net.postchain.gtx.serializer.GtxTransactionBodyDataSerializer
+import net.postchain.gtx.serializer.GtxTransactionDataSerializer
 
 object GtxBase {
     const val NR_FIELDS_TRANSACTION = 2
@@ -51,50 +55,38 @@ val EMPTY_SIGNATURE: ByteArray = ByteArray(0)
 data class GTXTransactionBodyData(
         val blockchainRID: ByteArray,
         val operations: Array<OpData>,
-        val signers: Array<ByteArray>)
+        val signers: Array<ByteArray>) {
 
-data class GTXTransactionData(
-        val transactionBodyData: GTXTransactionBodyData,
-        val signatures: Array<ByteArray>)
-
-data class GTXData(
-        val blockchainRID: ByteArray,
-        val signers: Array<ByteArray>,
-        val signatures: Array<ByteArray>,
-        val operations: Array<OpData>) {
+    private var cachedRid: Hash? = null
 
     fun getExtOpData(): Array<ExtOpData> {
-        return operations.mapIndexed {
-            idx, op -> ExtOpData(op.opName, idx, blockchainRID, signers, op.args)
+        return operations.mapIndexed { idx, op ->
+            ExtOpData(op.opName, idx, blockchainRID, signers, op.args)
         }.toTypedArray()
     }
 
+    fun calculateRID(calculator: MerkleHashCalculator<Gtv>): Hash {
+        if (cachedRid == null) {
+            val txBodyGtvArr: GtvArray = GtxTransactionBodyDataSerializer.serializeToGtv(this)
+            cachedRid = txBodyGtvArr.merkleHash(calculator)
+        }
+
+        return cachedRid!!
+    }
+
     fun serialize(): ByteArray {
-        val gtvArray = GtxDataSerializer.serializeToGtv(this)
+        val gtvArray =  GtxTransactionBodyDataSerializer.serializeToGtv(this)
         return GtvEncoder.encodeGtv(gtvArray)
-    }
-
-    fun serializeWithoutSignatures(): ByteArray {
-        return GTXData(
-                blockchainRID,
-                signers,
-                arrayOf(),
-                operations).serialize()
-    }
-
-    fun getDigestForSigning(crypto: CryptoSystem): ByteArray {
-        return crypto.digest(serializeWithoutSignatures())
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as GTXData
+        other as GTXTransactionBodyData
 
         if (!Arrays.equals(blockchainRID, other.blockchainRID)) return false
         if (!Arrays.deepEquals(signers, other.signers)) return false
-        if (!Arrays.deepEquals(signatures, other.signatures)) return false
         if (!Arrays.equals(operations, other.operations)) return false
 
         return true
@@ -103,29 +95,61 @@ data class GTXData(
     override fun hashCode(): Int {
         var result = Arrays.hashCode(blockchainRID)
         result = 31 * result + Arrays.hashCode(signers)
-        result = 31 * result + Arrays.hashCode(signatures)
         result = 31 * result + Arrays.hashCode(operations)
         return result
     }
 }
 
+data class GTXTransactionData(
+        val transactionBodyData: GTXTransactionBodyData,
+        val signatures: Array<ByteArray>) {
 
-fun decodeGTXData(_rawData: ByteArray): GTXData {
+    fun serialize(): ByteArray {
+        val gtvArray = GtxTransactionDataSerializer.serializeToGtv(this)
+        return  GtvEncoder.encodeGtv(gtvArray)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as GTXTransactionData
+
+        if (transactionBodyData != other.transactionBodyData) return false
+        if (!Arrays.deepEquals(signatures, other.signatures)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = transactionBodyData.hashCode()
+        result = 31 * result + Arrays.hashCode(signatures)
+        return result
+    }
+}
+
+
+fun decodeGTXTransactionData(_rawData: ByteArray): GTXTransactionData {
     // Decode to RawGTV
     val gtv: Gtv = GtvFactory.decodeGtv(_rawData)
 
-    // GTV -> GTXData
-    return GtxDataFactory.deserializeFromGtv(gtv)
+    // GTV -> GTXTransactionData
+    return GtxTransactionDataFactory.deserializeFromGtv(gtv)
 }
 
 // TODO: cache data for signing and digest
 
+/**
+ * Used for signing
+ */
 class GTXDataBuilder(val blockchainRID: ByteArray,
                      val signers: Array<ByteArray>,
                      val crypto: CryptoSystem,
                      val signatures: Array<ByteArray>,
                      val operations: MutableList<OpData>,
                      private var finished: Boolean) {
+
+    val calculator = GtvMerkleHashCalculator(crypto)
 
     // construct empty builder
     constructor(blockchainRID: ByteArray,
@@ -141,11 +165,16 @@ class GTXDataBuilder(val blockchainRID: ByteArray,
 
     companion object {
         fun decode(bytes: ByteArray, crypto: CryptoSystem, finished: Boolean = true): GTXDataBuilder {
-            val data = decodeGTXData(bytes)
+            val gtvData = GtvFactory.decodeGtv(bytes)
+            val txData = GtxTransactionDataFactory.deserializeFromGtv(gtvData)
+            val txBody = txData.transactionBodyData
             return GTXDataBuilder(
-                    data.blockchainRID,
-                    data.signers, crypto, data.signatures,
-                    data.operations.toMutableList(), finished)
+                    txBody.blockchainRID,
+                    txBody.signers,
+                    crypto,
+                    txData.signatures,
+                    txBody.operations.toMutableList(),
+                    finished)
         }
     }
 
@@ -183,32 +212,36 @@ class GTXDataBuilder(val blockchainRID: ByteArray,
         } else throw UserMistake("Singer not found")
     }
 
-    fun getDataForSigning(): ByteArray {
-        if (!finished) throw ProgrammerMistake("Must be finished before signing")
-
-        return getGTXData().serializeWithoutSignatures()
-    }
-
+    /**
+     * @return Merkle root hash of transaction body
+     */
     fun getDigestForSigning(): ByteArray {
         if (!finished) throw ProgrammerMistake("Must be finished before signing")
 
-        return getGTXData().getDigestForSigning(crypto)
+        return getGTXTransactionBodyData().calculateRID(calculator)
     }
 
-    fun sign(signer: Signer) {
-        addSignature(signer(getDataForSigning()), false)
+    /**
+     * @param sigMaker can create signatures
+     * @return a signed merkle root of the TX body
+     */
+    fun sign(sigMaker: SigMaker) {
+        addSignature(sigMaker.signDigest(getDigestForSigning()), false)
     }
 
-    fun getGTXData(): GTXData {
-        return GTXData(
+    fun getGTXTransactionBodyData(): GTXTransactionBodyData {
+        return GTXTransactionBodyData(
                 blockchainRID,
-                signers,
-                signatures,
-                operations.toTypedArray()
-        )
+                operations.toTypedArray(),
+                signers)
+    }
+
+    fun getGTXTransactionData(): GTXTransactionData {
+        val body = getGTXTransactionBodyData()
+        return GTXTransactionData(body, signatures)
     }
 
     fun serialize(): ByteArray {
-        return getGTXData().serialize()
+        return getGTXTransactionData().serialize()
     }
 }

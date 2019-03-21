@@ -14,7 +14,7 @@ import nl.komponents.kovenant.task
  * @param txHash The transaction hash the proof applies to
  * @param header The block header the [txHash] is supposedly in
  * @param witness The block witness
- * @param merklePath A Merkle path describing the branch from [txHash] to the root hash of the Merkle tree located in [header]
+ * @param proof a proof including [txHash] (in its raw form)
  */
 class ConfirmationProof(val txHash: ByteArray, val header: ByteArray, val witness: BlockWitness, val proof: GtvMerkleProofTree)
 

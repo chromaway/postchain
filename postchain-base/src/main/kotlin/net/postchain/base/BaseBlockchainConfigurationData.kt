@@ -5,7 +5,6 @@ import net.postchain.core.BlockchainContext
 import net.postchain.core.NODE_ID_AUTO
 import net.postchain.core.NODE_ID_READ_ONLY
 import net.postchain.gtv.Gtv
-import net.postchain.gtv.GtvArray
 import net.postchain.gtv.GtvDictionary
 import net.postchain.gtv.GtvFactory.gtv
 import org.apache.commons.configuration2.Configuration
@@ -13,7 +12,7 @@ import org.apache.commons.configuration2.Configuration
 class BaseBlockchainConfigurationData(
         val data: GtvDictionary,
         partialContext: BlockchainContext,
-        val blockSigner: Signer
+        val blockSigMaker: SigMaker
 ) {
 
     val context: BlockchainContext
@@ -50,12 +49,12 @@ class BaseBlockchainConfigurationData(
             val cryptoSystem = SECP256K1CryptoSystem()
             val privKey = gtxConfig["blocksigningprivkey"]!!.asByteArray()
             val pubKey = secp256k1_derivePubKey(privKey)
-            val signer = cryptoSystem.makeSigner(pubKey, privKey) // TODO: maybe take it from somewhere?
+            val sigMaker = cryptoSystem.buildSigMaker(pubKey, privKey) // TODO: maybe take it from somewhere?
 
             return BaseBlockchainConfigurationData(
                     gtxConfig,
                     BaseBlockchainContext(blockchainRID, nodeID, chainId, pubKey),
-                    signer)
+                    sigMaker)
         }
 
         private fun convertGTXConfigToGtv(config: Configuration): Gtv {

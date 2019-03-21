@@ -26,7 +26,7 @@ class EsplixIntegrationTest : IntegrationTest() {
                 gtv(nonce),
                 gtv(payload)))
         b.finish()
-        b.sign(myCS.makeSigner(pubKey(creator), privKey(creator)))
+        b.sign(myCS.buildSigMaker(pubKey(creator), privKey(creator)))
         return b.serialize()
 
     }
@@ -37,7 +37,7 @@ class EsplixIntegrationTest : IntegrationTest() {
                 gtv(prevID),
                 gtv(payload)))
         b.finish()
-        b.sign(myCS.makeSigner(pubKey(poster), privKey(poster)))
+        b.sign(myCS.buildSigMaker(pubKey(poster), privKey(poster)))
         return b.serialize()
     }
 
