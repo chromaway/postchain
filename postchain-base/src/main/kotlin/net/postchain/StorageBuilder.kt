@@ -3,11 +3,13 @@
 package net.postchain
 
 import net.postchain.base.data.BaseStorage
+import net.postchain.base.data.SQLCommands
 import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.config.CommonsConfigurationFactory
 import org.apache.commons.configuration2.Configuration
 import org.apache.commons.dbcp2.BasicDataSource
 import org.apache.commons.dbutils.QueryRunner
+import java.sql.Connection
 import javax.sql.DataSource
 
 class StorageBuilder {
@@ -35,18 +37,19 @@ class StorageBuilder {
             }
 
             if (wipeDatabase) {
-                wipeDatabase(writeDataSource, config)
+                wipeDatabase(writeDataSource, config, sqlCommands)
             }
 
-            createSchemaIfNotExists(writeDataSource, config.getString("database.schema"))
+            createSchemaIfNotExists(writeDataSource, config.getString("database.schema"), sqlCommands)
             createTablesIfNotExists(writeDataSource, db)
+
+            writeDataSource.connection.schema = schema(config)
 
             return BaseStorage(readDataSource, writeDataSource, nodeIndex, db)
         }
 
         private fun createBasicDataSource(config: Configuration): BasicDataSource {
             return BasicDataSource().apply {
-                addConnectionProperty("currentSchema", schema(config))
                 driverClassName = config.getString("database.driverclass")
                 url = "${config.getString("database.url")}?loggerLevel=OFF"
                 username = config.getString("database.username")
@@ -55,20 +58,24 @@ class StorageBuilder {
             }
         }
 
-        private fun wipeDatabase(dataSource: DataSource, config: Configuration) {
+        private fun wipeDatabase(dataSource: DataSource, config: Configuration, sqlCommands: SQLCommands) {
             dataSource.connection.use { connection ->
                 QueryRunner().let { query ->
-                    query.update(connection, "DROP SCHEMA IF EXISTS ${schema(config)} CASCADE")
+                    if (isSchemaExists(connection, schema(config))) {
+                        query.update(connection, sqlCommands.createSchemaCascade(schema(config)))
+                    }
                     query.update(connection, "CREATE SCHEMA ${schema(config)}")
                 }
                 connection.commit()
             }
         }
 
-        private fun createSchemaIfNotExists(dataSource: DataSource, schema: String) {
+        private fun createSchemaIfNotExists(dataSource: DataSource, schema: String, sqlCommands: SQLCommands) {
             dataSource.connection.use { connection ->
-                QueryRunner().update(connection, "CREATE SCHEMA IF NOT EXISTS $schema")
-                connection.commit()
+                if (!isSchemaExists(connection, schema)) {
+                    QueryRunner().update(connection, sqlCommands.createSchema(schema))
+                    connection.commit()
+                }
             }
         }
 
@@ -83,5 +90,15 @@ class StorageBuilder {
             return config.getString("database.schema", "public")
         }
 
+        private fun isSchemaExists(conn: Connection, schema: String) : Boolean {
+            val rs = conn.metaData.schemas
+            while (rs.next()) {
+                //println(rs.getString(1))
+                if (rs.getString(1).toLowerCase() == schema.toLowerCase()) {
+                    return true
+                }
+            }
+            return false
+        }
     }
 }

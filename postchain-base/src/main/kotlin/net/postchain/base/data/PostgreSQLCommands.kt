@@ -44,4 +44,12 @@ object PostgreSQLCommands : SQLCommands {
 
     override val insertConfiguration : String = "INSERT INTO configurations (chain_id, height, configuration_data) VALUES (?, ?, ?) " +
                                                 "ON CONFLICT (chain_id, height) DO UPDATE SET configuration_data = ?"
+
+    override fun createSchemaCascade(schema: String) : String {
+        return "DROP SCHEMA IF EXISTS ${schema} CASCADE"
+    }
+
+    override fun createSchema(schema: String) : String {
+        return "CREATE SCHEMA IF NOT EXISTS ${schema}"
+    }
 }
