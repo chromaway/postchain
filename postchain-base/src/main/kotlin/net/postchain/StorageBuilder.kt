@@ -23,7 +23,7 @@ class StorageBuilder {
             val db = SQLDatabaseAccess(sqlCommands)
 
             // Read DataSource
-            val readDataSource = createBasicDataSource(config).apply {
+            var readDataSource = createBasicDataSource(config).apply {
                 defaultAutoCommit = true
                 maxTotal = 2
                 defaultReadOnly = true
@@ -41,10 +41,16 @@ class StorageBuilder {
             }
 
             createSchemaIfNotExists(writeDataSource, config.getString("database.schema"), sqlCommands)
-            setCurrentSchema(writeDataSource, config.getString("database.schema"), sqlCommands)
+//            setCurrentSchema(writeDataSource, config.getString("database.schema"), sqlCommands)
+            val read = createBasicDataSource(config).apply {
+                defaultAutoCommit = true
+                maxTotal = 2
+                defaultReadOnly = true
+                defaultSchema = schema(config)
+            }
             createTablesIfNotExists(writeDataSource, db)
 
-            return BaseStorage(readDataSource, writeDataSource, nodeIndex, db)
+            return BaseStorage(read, writeDataSource, nodeIndex, db)
         }
 
         private fun setCurrentSchema(dataSource: DataSource, schema: String, sqlCommands: SQLCommands) {
@@ -62,6 +68,7 @@ class StorageBuilder {
                 password = config.getString("database.password")
                 defaultAutoCommit = false
             }
+
         }
 
         private fun wipeDatabase(dataSource: DataSource, config: Configuration, sqlCommands: SQLCommands) {

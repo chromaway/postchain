@@ -238,7 +238,7 @@ class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
 
             queryRunner.update(connection, """CREATE INDEX transactions_block_iid_idx ON transactions(block_iid)""")
             queryRunner.update(connection, """CREATE INDEX blocks_chain_id_timestamp ON blocks(chain_id, timestamp)""")
-            queryRunner.update(connection, """CREATE INDEX configurations_chain_id_to_height ON configurations(chain_id, height)""")
+            //queryRunner.update(connection, """CREATE INDEX configurations_chain_id_to_height ON configurations(chain_id, height)""")
 
         }
     }

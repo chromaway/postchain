@@ -20,7 +20,7 @@
         <sap.version>2.3.62</sap.version>
         <h2database.version>1.4.199</h2database.version>
         <spongycastle.core.version>1.56.0.0</spongycastle.core.version>
-        <commons-dbcp2.version>2.1.1</commons-dbcp2.version>
+        <commons-dbcp2.version>2.6.0</commons-dbcp2.version>
         <commons-configuration2.version>2.1.1</commons-configuration2.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
         <asnrt.version>3.14.15</asnrt.version>
