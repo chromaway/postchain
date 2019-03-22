@@ -52,4 +52,8 @@ object PostgreSQLCommands : SQLCommands {
     override fun createSchema(schema: String) : String {
         return "CREATE SCHEMA IF NOT EXISTS ${schema}"
     }
+
+    override fun setCurrentSchema(schema: String) : String {
+        return "set search_path to $schema"
+    }
 }

@@ -17,7 +17,7 @@ object SAPHanaSQLCommands : SQLCommands {
             "  UNIQUE (chain_id, block_height))"
 
     override val createTableBlockChains: String = "CREATE TABLE blockchains " +
-            " (chain_id BIGINT PRIMARY KEY, blockchain_rid BYTEA NOT NULL)"
+            " (chain_id BIGINT PRIMARY KEY, blockchain_rid VARBINARY(1000) NOT NULL)"
 
     override val createTableTransactions: String = "CREATE TABLE transactions (" +
             "    tx_iid BIGSERIAL PRIMARY KEY, " +
@@ -35,7 +35,7 @@ object SAPHanaSQLCommands : SQLCommands {
             ", PRIMARY KEY (chain_id, height)" +
             ")"
 
-    override val createTableMeta : String = "CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)"
+    override val createTableMeta : String = "CREATE TABLE meta (key VARCHAR(255) PRIMARY KEY, value TEXT)"
 
     override val insertBlocks: String = "INSERT INTO blocks (chain_id, block_height) VALUES (?, ?) RETURNING block_iid"
 
@@ -51,5 +51,9 @@ object SAPHanaSQLCommands : SQLCommands {
 
     override fun createSchema(schema: String) : String {
         return "CREATE SCHEMA ${schema}"
+    }
+
+    override fun setCurrentSchema(schema: String) : String {
+        return "SET SCHEMA ${schema}"
     }
 }

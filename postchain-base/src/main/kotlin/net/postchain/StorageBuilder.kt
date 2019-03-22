@@ -41,11 +41,17 @@ class StorageBuilder {
             }
 
             createSchemaIfNotExists(writeDataSource, config.getString("database.schema"), sqlCommands)
+            setCurrentSchema(writeDataSource, config.getString("database.schema"), sqlCommands)
             createTablesIfNotExists(writeDataSource, db)
 
-            writeDataSource.connection.schema = schema(config)
-
             return BaseStorage(readDataSource, writeDataSource, nodeIndex, db)
+        }
+
+        private fun setCurrentSchema(dataSource: DataSource, schema: String, sqlCommands: SQLCommands) {
+            dataSource.connection.use { connection ->
+                QueryRunner().update(connection, sqlCommands.setCurrentSchema(schema))
+                connection.commit()
+            }
         }
 
         private fun createBasicDataSource(config: Configuration): BasicDataSource {
