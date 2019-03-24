@@ -26,9 +26,10 @@ class StorageBuilder {
 
             if (wipeDatabase) {
                 wipeDatabase(initSchemaWriteDataSource, config, sqlCommands)
+            } else {
+                createSchemaIfNotExists(initSchemaWriteDataSource,
+                        schema(config), sqlCommands)
             }
-            createSchemaIfNotExists(initSchemaWriteDataSource,
-                    schema(config), sqlCommands)
             initSchemaWriteDataSource.close()
 
             // Read DataSource
@@ -77,7 +78,7 @@ class StorageBuilder {
                     if (isSchemaExists(connection, schema(config))) {
                         query.update(connection, sqlCommands.dropSchemaCascade(schema(config)))
                     }
-                    query.update(connection, "CREATE SCHEMA ${schema(config)}")
+                    query.update(connection, sqlCommands.createSchema(schema(config)))
                 }
                 connection.commit()
             }
@@ -100,7 +101,7 @@ class StorageBuilder {
         }
 
         private fun schema(config: Configuration): String {
-            return config.getString("database.schema", "public").toUpperCase()
+            return config.getString("database.schema", "public")
         }
 
         private fun isSchemaExists(conn: Connection, schema: String) : Boolean {

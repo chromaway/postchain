@@ -284,7 +284,7 @@ class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
     }
 
     private fun isMetaExists(conn : Connection) :Boolean {
-        var types : Array<String> = arrayOf<String>("TABLE")
+        val types : Array<String> = arrayOf<String>("TABLE")
         try {
             val rs = conn.metaData.getTables(null, conn.schema, null, types)
             while (rs.next()) {
