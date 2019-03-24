@@ -252,10 +252,9 @@ class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
                 ctx.chainID)
 
         if (rid == null) {
-            queryRunner.insert(
+            queryRunner.update(
                     ctx.conn,
                     "INSERT INTO blockchains (chain_id, blockchain_rid) values (?, ?)",
-                    ScalarHandler<Unit>(),
                     ctx.chainID,
                     blockchainRID)
 

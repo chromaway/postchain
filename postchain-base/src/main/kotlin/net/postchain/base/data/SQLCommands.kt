@@ -10,7 +10,7 @@ interface SQLCommands {
     val insertTransactions : String
     val insertConfiguration : String
 
-    fun createSchemaCascade(schema : String) : String
+    fun dropSchemaCascade(schema: String): String
     fun createSchema(schema: String) : String
     fun setCurrentSchema(schema: String) : String
 }

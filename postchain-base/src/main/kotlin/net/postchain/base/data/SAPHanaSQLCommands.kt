@@ -44,7 +44,7 @@ object SAPHanaSQLCommands : SQLCommands {
 
     override val insertConfiguration : String = "UPSERT configurations (chain_id, height, configuration_data) VALUES (?, ?, ?) "
 
-    override  fun createSchemaCascade(schema : String) : String {
+    override fun dropSchemaCascade(schema: String): String {
         return "DROP SCHEMA ${schema} CASCADE"
     }
 

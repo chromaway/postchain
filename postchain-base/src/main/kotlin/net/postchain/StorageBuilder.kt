@@ -22,8 +22,17 @@ class StorageBuilder {
                     .getSQLCommandsImplementation(config.getString("database.driverclass"))
             val db = SQLDatabaseAccess(sqlCommands)
 
+            val initSchemaWriteDataSource = createBasicDataSource(config, false)
+
+            if (wipeDatabase) {
+                wipeDatabase(initSchemaWriteDataSource, config, sqlCommands)
+            }
+            createSchemaIfNotExists(initSchemaWriteDataSource,
+                    schema(config), sqlCommands)
+            initSchemaWriteDataSource.close()
+
             // Read DataSource
-            var readDataSource = createBasicDataSource(config).apply {
+            val readDataSource = createBasicDataSource(config).apply {
                 defaultAutoCommit = true
                 maxTotal = 2
                 defaultReadOnly = true
@@ -36,21 +45,8 @@ class StorageBuilder {
                 maxTotal = 1
             }
 
-            if (wipeDatabase) {
-                wipeDatabase(writeDataSource, config, sqlCommands)
-            }
-
-            createSchemaIfNotExists(writeDataSource, config.getString("database.schema"), sqlCommands)
-//            setCurrentSchema(writeDataSource, config.getString("database.schema"), sqlCommands)
-            val read = createBasicDataSource(config).apply {
-                defaultAutoCommit = true
-                maxTotal = 2
-                defaultReadOnly = true
-                defaultSchema = schema(config)
-            }
             createTablesIfNotExists(writeDataSource, db)
-
-            return BaseStorage(read, writeDataSource, nodeIndex, db)
+            return BaseStorage(readDataSource, writeDataSource, nodeIndex, db)
         }
 
         private fun setCurrentSchema(dataSource: DataSource, schema: String, sqlCommands: SQLCommands) {
@@ -60,13 +56,17 @@ class StorageBuilder {
             }
         }
 
-        private fun createBasicDataSource(config: Configuration): BasicDataSource {
+        private fun createBasicDataSource(config: Configuration, withSchema: Boolean = true): BasicDataSource {
             return BasicDataSource().apply {
                 driverClassName = config.getString("database.driverclass")
                 url = "${config.getString("database.url")}?loggerLevel=OFF"
                 username = config.getString("database.username")
                 password = config.getString("database.password")
                 defaultAutoCommit = false
+
+                if (withSchema) {
+                    defaultSchema = schema(config)
+                }
             }
 
         }
@@ -75,7 +75,7 @@ class StorageBuilder {
             dataSource.connection.use { connection ->
                 QueryRunner().let { query ->
                     if (isSchemaExists(connection, schema(config))) {
-                        query.update(connection, sqlCommands.createSchemaCascade(schema(config)))
+                        query.update(connection, sqlCommands.dropSchemaCascade(schema(config)))
                     }
                     query.update(connection, "CREATE SCHEMA ${schema(config)}")
                 }
@@ -100,7 +100,7 @@ class StorageBuilder {
         }
 
         private fun schema(config: Configuration): String {
-            return config.getString("database.schema", "public")
+            return config.getString("database.schema", "public").toUpperCase()
         }
 
         private fun isSchemaExists(conn: Connection, schema: String) : Boolean {
