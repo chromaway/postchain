@@ -40,7 +40,7 @@ interface DatabaseAccess {
 
     fun findConfiguration(context: EContext, height: Long): Long?
     fun getConfigurationData(context: EContext, height: Long): ByteArray?
-    fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long
+    fun addConfigurationData(context: EContext, height: Long, data: ByteArray)
 
     companion object {
         fun of(ctx: EContext): DatabaseAccess {
@@ -277,9 +277,8 @@ class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
                 nullableByteArrayRes, context.chainID, height)
     }
 
-    override fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long {
-        return queryRunner.insert(context.conn,
-                sqlCommands.insertConfiguration,
+    override fun addConfigurationData(context: EContext, height: Long, data: ByteArray) {
+        queryRunner.insert(context.conn, sqlCommands.insertConfiguration,
                 longRes, context.chainID, height, data, data)
     }
 

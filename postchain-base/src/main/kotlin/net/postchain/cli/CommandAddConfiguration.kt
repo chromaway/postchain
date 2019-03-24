@@ -52,15 +52,11 @@ class CommandAddConfiguration : Command {
 
         return try {
             val mode = if (force) AlreadyExistMode.FORCE else AlreadyExistMode.ERROR
-            val result = CliExecution().addConfiguration(nodeConfigFile, blockchainConfigFile, chainId, height, mode)
-            Ok(reportMessage(result))
+            CliExecution().addConfiguration(nodeConfigFile, blockchainConfigFile, chainId, height, mode)
+            Ok("Configuration has been added successfully")
         } catch (e: CliError.Companion.CliException) {
             CliError.CommandNotAllowed(message = e.message)
         }
     }
 
-    private fun reportMessage(result: Boolean): String {
-        return if (result) "Configuration has been added successfully"
-        else "Configuration has not been added"
-    }
 }
