@@ -43,7 +43,7 @@ class CliIntegrationTest {
             Thread.sleep(10)
             if (queries.getBestHeight().get() > 5)  {
                 break
-            };
+            }
         }
 
         println("Stop all blockchain")
@@ -71,7 +71,7 @@ class CliIntegrationTest {
 
         for (x in 0..1000) {
             Thread.sleep(10)
-            if (queries.getBestHeight().get() > 5)  {
+            if (queries.getBestHeight().get() > 1)  {
                 break
             }
         }

@@ -31,11 +31,13 @@ object SAPHanaSQLCommands : SQLCommands {
     override val createTableConfiguration = "CREATE TABLE configurations (" +
             " chain_id bigint NOT NULL" +
             ", height BIGINT NOT NULL" +
-            ", configuration_data BLOB NOT NULL" +
+            ", configuration_data VARBINARY(1000) NOT NULL" +
             ", PRIMARY KEY (chain_id, height)" +
             ")"
 
     override val createTableMeta : String = "CREATE TABLE meta (key VARCHAR(255) PRIMARY KEY, value VARCHAR(1000))"
+
+    override val createTableGtxModuleVersion: String = "CREATE TABLE gtx_module_version (module_name VARCHAR(1000) PRIMARY KEY, version BIGINT NOT NULL)"
 
     override val insertBlocks: String = "INSERT INTO blocks (chain_id, block_height) VALUES (?, ?) "
 

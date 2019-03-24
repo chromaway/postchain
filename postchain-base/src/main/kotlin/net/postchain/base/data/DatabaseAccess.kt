@@ -64,9 +64,13 @@ class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
     private val mapListHandler = MapListHandler()
     private val stringRes = ScalarHandler<String>()
 
-
     override fun insertBlock(ctx: EContext, height: Long): Long {
-        return queryRunner.insert(ctx.conn, sqlCommands.insertBlocks, longRes, ctx.chainID, height)
+        if (sqlCommands is PostgreSQLCommands) {
+            return queryRunner.insert(ctx.conn, sqlCommands.insertBlocks, longRes, ctx.chainID, height)
+        } else {
+            queryRunner.update(ctx.conn, sqlCommands.insertBlocks, ctx.chainID, height)
+            return queryRunner.query(ctx.conn, "SELECT block_iid FROM blocks WHERE chain_id = ? and block_height = ?", longRes, ctx.chainID, height)
+        }
     }
 
     override fun insertTransaction(ctx: BlockEContext, tx: Transaction): Long {
@@ -278,8 +282,13 @@ class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
     }
 
     override fun addConfigurationData(context: EContext, height: Long, data: ByteArray) {
-        queryRunner.insert(context.conn, sqlCommands.insertConfiguration,
-                longRes, context.chainID, height, data, data)
+        if (sqlCommands is PostgreSQLCommands) {
+            queryRunner.insert(context.conn, sqlCommands.insertConfiguration,
+                    longRes, context.chainID, height, data, data)
+        } else {
+            queryRunner.update(context.conn, sqlCommands.insertConfiguration, context.chainID, height, data)
+        }
+
     }
 
     private fun isMetaExists(conn : Connection) :Boolean {

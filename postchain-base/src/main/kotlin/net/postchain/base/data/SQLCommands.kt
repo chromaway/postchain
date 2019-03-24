@@ -9,6 +9,7 @@ interface SQLCommands {
     val insertBlocks: String
     val insertTransactions : String
     val insertConfiguration : String
+    val createTableGtxModuleVersion: String
 
     fun dropSchemaCascade(schema: String): String
     fun createSchema(schema: String) : String

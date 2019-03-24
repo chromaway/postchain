@@ -107,7 +107,6 @@ class StorageBuilder {
         private fun isSchemaExists(conn: Connection, schema: String) : Boolean {
             val rs = conn.metaData.schemas
             while (rs.next()) {
-                //println(rs.getString(1))
                 if (rs.getString(1).toLowerCase() == schema.toLowerCase()) {
                     return true
                 }

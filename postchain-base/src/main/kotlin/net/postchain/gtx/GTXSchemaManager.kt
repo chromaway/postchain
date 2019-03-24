@@ -2,6 +2,8 @@
 
 package net.postchain.gtx
 
+import net.postchain.base.data.DatabaseAccess
+import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.core.EContext
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.ScalarHandler
@@ -12,10 +14,14 @@ object GTXSchemaManager {
     private val nullableLongRes = ScalarHandler<Long?>()
 
     fun initializeDB(ctx: EContext) {
-        r.update(ctx.conn,
-                """CREATE TABLE IF NOT EXISTS gtx_module_version
-                        (module_name TEXT PRIMARY KEY,
-                         version BIGINT NOT NULL)""")
+        // if creating table has exception, it means table exists
+        try {
+            val db: SQLDatabaseAccess = DatabaseAccess.of(ctx) as SQLDatabaseAccess
+            val sqlCommands = db.sqlCommands
+            r.update(ctx.conn, sqlCommands.createTableGtxModuleVersion)
+        } catch (e : Exception) {
+
+        }
     }
 
     fun getModuleVersion(ctx: EContext, name: String): Long? {
