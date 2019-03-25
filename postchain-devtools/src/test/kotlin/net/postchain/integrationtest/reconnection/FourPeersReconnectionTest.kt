@@ -4,7 +4,7 @@ import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_ID
 import net.postchain.integrationtest.assertChainNotStarted
 import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.assertNodeConnectedWith
-import org.awaitility.Awaitility
+import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.Assert
 import org.junit.Test
@@ -29,7 +29,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
         }
 
         // Asserting that chain is started
-        Awaitility.await().atMost(Duration.FIVE_SECONDS)
+        await().atMost(Duration.FIVE_SECONDS)
                 .untilAsserted {
                     nodes.forEach { it.assertChainStarted() }
                 }
@@ -46,7 +46,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
             awaitBuiltBlock(it, 0)
         }
         // * Asserting height is 0 for all peers
-        Awaitility.await().atMost(Duration.FIVE_SECONDS)
+        await().atMost(Duration.FIVE_SECONDS)
                 .untilAsserted {
                     Assert.assertEquals(0, queries(nodes[0]) { it.getBestHeight() })
                     Assert.assertEquals(0, queries(nodes[1]) { it.getBestHeight() })
@@ -60,7 +60,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
             awaitBuiltBlock(it, 1)
         }
         // * Asserting height is 1 for all peers
-        Awaitility.await().atMost(Duration.FIVE_SECONDS)
+        await().atMost(Duration.FIVE_SECONDS)
                 .untilAsserted {
                     Assert.assertEquals(1, queries(nodes[0]) { it.getBestHeight() })
                     Assert.assertEquals(1, queries(nodes[1]) { it.getBestHeight() })
@@ -72,7 +72,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
         nodes[3].shutdown()
 
         // Asserting that
-        Awaitility.await().atMost(Duration.ONE_MINUTE)
+        await().atMost(Duration.ONE_MINUTE)
                 .untilAsserted {
                     // chain is active for peer 0, 1, 2 and is shutdown for peer 3
                     nodes[0].assertChainStarted()
@@ -95,7 +95,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
         createSingleNode(3, nodesCount, nodeConfigsFilenames[1], blockchainConfig)
 
         // Asserting that
-        Awaitility.await().atMost(Duration.ONE_MINUTE)
+        await().atMost(Duration.ONE_MINUTE)
                 .untilAsserted {
                     // chain is active for peer 3
                     nodes[3].assertChainStarted()
@@ -119,7 +119,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
             awaitBuiltBlock(it, 2)
         }
         // * Asserting height is 2 for all peers
-        Awaitility.await().atMost(Duration.FIVE_SECONDS)
+        await().atMost(Duration.FIVE_SECONDS)
                 .untilAsserted {
                     Assert.assertEquals(2, queries(nodes[0]) { it.getBestHeight() })
                     Assert.assertEquals(2, queries(nodes[1]) { it.getBestHeight() })
