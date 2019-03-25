@@ -14,7 +14,10 @@ import net.postchain.core.Signature
 import net.postchain.core.Transaction
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.testinfra.TestTransaction
+import net.postchain.gtx.encodeGTXValue
+import net.postchain.gtx.gtx
 import net.postchain.integrationtest.JsonTools.jsonAsMap
+import org.hamcrest.core.IsEqual
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -46,6 +49,51 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                 200)
 
         awaitConfirmed(blockchainRID, tx)
+    }
+
+    @Test
+    fun testBatchQueriesApi() {
+        val nodesCount = 1
+        val blocksCount = 1
+        val txPerBlock = 1
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+        configOverrides.setProperty("api.port", 0)
+        createNodes(nodesCount, "/net/postchain/api/blockchain_config_1.xml")
+
+        buildBlockAndCommit(nodes[0])
+        val query = """{"queries": [{"type"="gtx_test_get_value", "txRID"="abcd"},
+                                    {"type"="gtx_test_get_value", "txRID"="cdef"}]}""".trimMargin()
+        given().port(nodes[0].getRestApiHttpPort())
+                .body(query)
+                .post("/batch_query/$blockchainRID")
+                .then()
+                .statusCode(200)
+                .body(IsEqual.equalTo("[\"null\",\"null\"]"))
+    }
+
+    @Test
+    fun testQueryGTXApi() {
+        val nodesCount = 1
+        val blocksCount = 1
+        val txPerBlock = 1
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+        configOverrides.setProperty("api.port", 0)
+        createNodes(nodesCount, "/net/postchain/api/blockchain_config_1.xml")
+
+        buildBlockAndCommit(nodes[0])
+
+        val gtxQuery1 = gtx( gtx("gtx_test_get_value"), gtx("txRID" to gtx("abcd")) )
+        val gtxQuery2 = gtx( gtx("gtx_test_get_value"), gtx("txRID" to gtx("cdef")) )
+        val jsonQuery = """{"queries" : ["${encodeGTXValue(gtxQuery1).toHex()}", "${encodeGTXValue(gtxQuery2).toHex()}"]}""".trimMargin()
+
+
+        val response = given().port(nodes[0].getRestApiHttpPort())
+                .body(jsonQuery)
+                .post("/query_gtx/$blockchainRID")
+                .then()
+                .statusCode(200)
+                .body(IsEqual.equalTo("[\"A0020500\",\"A0020500\"]"))
+        
     }
 
     @Test

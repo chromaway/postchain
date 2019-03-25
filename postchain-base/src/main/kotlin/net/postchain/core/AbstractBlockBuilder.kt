@@ -2,6 +2,7 @@
 
 package net.postchain.core
 
+import net.postchain.base.BaseBlockEContext
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
 
@@ -42,7 +43,7 @@ abstract class AbstractBlockBuilder(
      */
     override fun begin() {
         initialBlockData = store.beginBlock(ectx)
-        bctx = BlockEContext(ectx.conn, ectx.chainID, ectx.nodeID, initialBlockData.blockIID, initialBlockData.timestamp)
+        bctx = BaseBlockEContext(ectx, initialBlockData.blockIID, initialBlockData.timestamp)
     }
 
     /**
