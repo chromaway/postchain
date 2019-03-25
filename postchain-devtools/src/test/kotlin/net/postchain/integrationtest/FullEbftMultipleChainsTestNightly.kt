@@ -50,6 +50,27 @@ class FullEbftMultipleChainsTestNightly : IntegrationTest() {
     @Test
     @Parameters(
             "1, 0", "2, 0", "10, 0"
+            //, "1, 1", "2, 1", "10, 1"
+            //, "1, 10", "2, 10", "10, 10"
+    )
+    @TestCaseName("[{index}] nodesCount: 1, blocksCount: {0}, txPerBlock: {1}")
+    fun runSingleNodeWithYTxPerBlockWithSAP(blocksCount: Int, txPerBlock: Int) {
+        runXNodesWithYTxPerBlock(
+                1,
+                blocksCount,
+                txPerBlock,
+                arrayOf(
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/single_node/node0-saphana.properties"
+                ),
+                arrayOf(
+                        "/net/postchain/multiple_chains/ebft_nightly/single_node/blockchain_config_1.xml",
+                        "/net/postchain/multiple_chains/ebft_nightly/single_node/blockchain_config_2.xml"
+                ))
+    }
+
+    @Test
+    @Parameters(
+            "1, 0", "2, 0", "10, 0"
             , "1, 1", "2, 1", "10, 1"
             , "1, 10", "2, 10", "10, 10"
     )

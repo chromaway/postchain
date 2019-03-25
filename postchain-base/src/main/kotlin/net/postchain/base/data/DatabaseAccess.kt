@@ -65,19 +65,13 @@ class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
     private val stringRes = ScalarHandler<String>()
 
     override fun insertBlock(ctx: EContext, height: Long): Long {
-        if (sqlCommands is PostgreSQLCommands) {
-            return queryRunner.insert(ctx.conn, sqlCommands.insertBlocks, longRes, ctx.chainID, height)
-        } else {
-            queryRunner.update(ctx.conn, sqlCommands.insertBlocks, ctx.chainID, height)
-            return queryRunner.query(ctx.conn, "SELECT block_iid FROM blocks WHERE chain_id = ? and block_height = ?", longRes, ctx.chainID, height)
-        }
+        queryRunner.update(ctx.conn, sqlCommands.insertBlocks, ctx.chainID, height)
+        return queryRunner.query(ctx.conn, "SELECT block_iid FROM blocks WHERE chain_id = ? and block_height = ?", longRes, ctx.chainID, height)
     }
 
     override fun insertTransaction(ctx: BlockEContext, tx: Transaction): Long {
-        return queryRunner.insert(ctx.conn,
-                sqlCommands.insertTransactions,
-                longRes,
-                ctx.chainID, tx.getRID(), tx.getRawData(), tx.getHash(), ctx.blockIID)
+        queryRunner.update(ctx.conn, sqlCommands.insertTransactions, ctx.chainID, tx.getRID(), tx.getRawData(), tx.getHash(), ctx.blockIID)
+        return queryRunner.query(ctx.conn, "SELECT tx_iid FROM transactions WHERE chain_id = ? and tx_rid = ?", longRes, ctx.chainID, tx.getRID())
     }
 
     override fun finalizeBlock(ctx: BlockEContext, header: BlockHeader) {
