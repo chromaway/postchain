@@ -82,7 +82,7 @@ class ReplicaSyncManager(
     private fun processState() {
         val maxElem = parallelRequestsState.maxBy { it.key }?.key ?: blockHeight
         val diff = parallelism - parallelRequestsState.count()
-        (maxElem + 1 until maxElem + diff + 1).map { askForBlock(it) }
+        (maxElem + 1 until maxElem + diff + 1).subtract(parallelRequestsState.keys).map { askForBlock(it) }
 
         parallelRequestsState.entries.associate {
             val state = IssuedRequestTimer(it.value.backoffDelta, it.value.lastSentTimestamp)
@@ -95,7 +95,7 @@ class ReplicaSyncManager(
 
     private fun askForBlock(height: Long) {
         nodesWithBlocks
-            .filter { it.value > height }
+            .filter { it.value >= height }
             .map { it.key }
             .toMutableList()
             .also {
@@ -105,7 +105,7 @@ class ReplicaSyncManager(
                     val timer = parallelRequestsState[height]?: IssuedRequestTimer(defaultBackoffDelta, Date().time)
                     val backoffDelta = min((timer.backoffDelta.toDouble() * 1.1).toInt(), maxBackoffDelta)
                     communicationManager.sendPacket(GetBlockAtHeight(height), it.first())
-                    parallelRequestsState[height] = timer.copy(backoffDelta = backoffDelta)
+                    parallelRequestsState[height] = timer.copy(backoffDelta = backoffDelta, lastSentTimestamp = Date().time)
                 }
             }
     }
