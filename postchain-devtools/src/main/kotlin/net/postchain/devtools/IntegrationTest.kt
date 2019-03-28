@@ -94,6 +94,11 @@ open class IntegrationTest {
     protected fun createNodes(count: Int, blockchainConfigFilename: String): Array<PostchainTestNode> =
             Array(count) { createSingleNode(it, count, blockchainConfigFilename) }
 
+    protected fun createNodesWithReplica(numberOfReplicas: Int, count: Int, blockchainConfigFilename: String): Array<PostchainTestNode> {
+        return Array(count) { createSingleNode(it, count, blockchainConfigFilename) }
+                .plus(Array(numberOfReplicas){ createSingleNode(- it - 1, count, blockchainConfigFilename) })
+    }
+
     private fun createSingleNode(nodeIndex: Int, totalNodesCount: Int, blockchainConfigFilename: String): PostchainTestNode {
         val nodeConfig = createConfig(nodeIndex, totalNodesCount, DEFAULT_CONFIG_FILE)
         val blockchainConfig = readBlockchainConfig(blockchainConfigFilename)
@@ -169,7 +174,8 @@ open class IntegrationTest {
                 .configuration
 
         // append nodeIndex to schema name
-        baseConfig.setProperty("database.schema", baseConfig.getString("database.schema") + "_" + nodeIndex)
+        val dbSchema = baseConfig.getString("database.schema") + "_" + nodeIndex
+        baseConfig.setProperty("database.schema", dbSchema.replace("-", "replica_"))
 
         // peers
         var port = (baseConfig.getProperty("node.0.port") as String).toInt()
@@ -194,16 +200,18 @@ open class IntegrationTest {
         return gtx(*Array(nodeCount) { gtx(pubKey(it)) })
     }
 
-    fun createPeerInfos(nodeCount: Int): Array<PeerInfo> {
+    fun createPeerInfosWithReplica(numberOfReplicas: Int, nodeCount: Int): Array<PeerInfo> {
         if (peerInfos == null) {
             peerInfos = Array(nodeCount) {
-                // TODO: Fix this hack
                 PeerInfo("localhost", BASE_PORT + it, pubKey(it))
-            }
+            }.plus(Array(numberOfReplicas) {
+                PeerInfo("localhost", BASE_PORT - it - 1, pubKey(- it - 1))
+            })
         }
-
         return peerInfos!!
     }
+
+    fun createPeerInfos(nodeCount: Int): Array<PeerInfo> = createPeerInfosWithReplica(0, nodeCount)
 
     protected fun buildBlockAndCommit(engine: BlockchainEngine) {
         val blockBuilder = engine.buildBlock()

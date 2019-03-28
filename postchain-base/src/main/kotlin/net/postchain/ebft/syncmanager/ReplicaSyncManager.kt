@@ -64,7 +64,6 @@ class ReplicaSyncManager(
     }
 
     override fun update() {
-        logger.debug("STATUS: blockCount: ${blocks.count()} | parallelRequestsState count: ${parallelRequestsState.count()} ")
         checkBlock()
         processState()
         dispatchMessages()
