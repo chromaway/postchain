@@ -2,9 +2,7 @@
 
 package net.postchain
 
-import net.postchain.base.data.BaseStorage
-import net.postchain.base.data.SQLCommands
-import net.postchain.base.data.SQLDatabaseAccess
+import net.postchain.base.data.*
 import net.postchain.config.CommonsConfigurationFactory
 import org.apache.commons.configuration2.Configuration
 import org.apache.commons.dbcp2.BasicDataSource
@@ -20,7 +18,11 @@ class StorageBuilder {
 
             val sqlCommands = CommonsConfigurationFactory
                     .getSQLCommandsImplementation(config.getString("database.driverclass"))
-            val db = SQLDatabaseAccess(sqlCommands)
+
+            var db = SQLDatabaseAccess(sqlCommands)
+            if (sqlCommands is PostgreSQLCommands) {
+               db = PostgreSQLDatabaseAccess(sqlCommands)
+            }
 
             val initSchemaWriteDataSource = createBasicDataSource(config, false)
 

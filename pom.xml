@@ -12,6 +12,7 @@
         <module>postchain-devtools</module>
         <module>postchain-cw-modules</module>
         <module>postchain-docker</module>
+        <module>postchain-hana</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -19,7 +20,6 @@
     <url>http://postchain.org</url>
     <properties>
         <doclint>none</doclint>
-
         <kotlin.version>1.2.21</kotlin.version>
         <json.version>20170516</json.version>
         <kovenant-core.version>3.3.0</kovenant-core.version>
@@ -106,7 +106,7 @@
                 <groupId>net.postchain</groupId>
                 <artifactId>postchain-base</artifactId>
                 <version>${project.version}</version>
-            </dependency>
+            </dependency>            
             <dependency>
                 <groupId>net.postchain</groupId>
                 <artifactId>postchain-common</artifactId>

@@ -50,10 +50,10 @@ interface DatabaseAccess {
     }
 }
 
-class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
+open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
     var queryRunner = QueryRunner()
     private val intRes = ScalarHandler<Int>()
-    private val longRes = ScalarHandler<Long>()
+    val longRes = ScalarHandler<Long>()
     private val signatureRes = BeanListHandler<Signature>(Signature::class.java)
     private val nullableByteArrayRes = ScalarHandler<ByteArray?>()
     private val nullableIntRes = ScalarHandler<Int?>()
