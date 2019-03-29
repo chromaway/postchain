@@ -14,6 +14,8 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
     override val chainID = configData.context.chainID
     val blockchainRID = configData.context.blockchainRID
 
+    val bcRelatedInfosDependencyList: List<BlockchainRelatedInfo> = configData.getDependenciesAsList()
+
     override fun decodeBlockHeader(rawBlockHeader: ByteArray): BlockHeader {
         return BaseBlockHeader(rawBlockHeader, cryptoSystem)
     }
@@ -44,8 +46,30 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
                                         signers: Array<ByteArray>,
                                         blockSigner: Signer
     ): BlockBuilder {
+        addChainIDToDependencies(ctx) // We wait until now with this, b/c now we have an EContext
         return BaseBlockBuilder(
-                cryptoSystem, ctx, blockStore, getTransactionFactory(), signers, blockSigner)
+                cryptoSystem, ctx, blockStore, getTransactionFactory(), signers, blockSigner, bcRelatedInfosDependencyList)
+    }
+
+    /**
+     * Will add ChainID to the dependency list, if needed.
+     */
+    @Synchronized
+    private fun addChainIDToDependencies(ctx: EContext) {
+        if (!bcRelatedInfosDependencyList.isEmpty()) {
+            // Check if we have added ChainId's already
+            val first = bcRelatedInfosDependencyList.first()
+            if (first.chainId == null) {
+                // We have to fill up the cache of ChainIDs
+                for (bcInfo in bcRelatedInfosDependencyList) {
+                    val depChainId = blockStore.getChainId(ctx, bcInfo.blockchainRid)
+                    bcInfo.chainId = depChainId ?:
+                            throw BadDataMistake(BadDataType.BAD_CONFIGURATION ,
+                                    "The blockchain configuration claims we depend on: $bcInfo so this BC must exist in DB"
+                                    + "(Order is wrong. It must have been configured BEFORE this point in time)")
+                }
+            }
+        }
     }
 
     override fun makeBlockQueries(storage: Storage): BlockQueries {
@@ -72,5 +96,6 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
 
         return ctor.newInstance(configData, this, blockQueries, txQueue) as BlockBuildingStrategy
     }
+
 }
 

@@ -34,7 +34,7 @@ class BaseBlockStoreTest {
         expect(db.insertBlock(ctx, 0)).andReturn(17)
         expect(db.getLastBlockTimestamp(ctx)).andReturn(1509606236)
         replay(db)
-        val initialBlockData = sut.beginBlock(ctx)
+        val initialBlockData = sut.beginBlock(ctx, null)
         assertArrayEquals(blockchainRID, initialBlockData.prevBlockRID)
     }
 
@@ -42,12 +42,12 @@ class BaseBlockStoreTest {
     fun beginBlockReturnsPrevBlockRIdOnSecondBlock() {
         val anotherRID = cryptoSystem.digest("A RID".toByteArray())
         expect(db.getLastBlockHeight(ctx)).andReturn(0)
-        expect(db.getBlockRIDs(ctx, 0)).andReturn(listOf(anotherRID))
+        expect(db.getBlockRID(ctx, 0)).andReturn(anotherRID)
         expect(db.getBlockchainRID(ctx)).andReturn(blockchainRID)
         expect(db.insertBlock(ctx, 1)).andReturn(17)
         expect(db.getLastBlockTimestamp(ctx)).andReturn(1509606236)
         replay(db)
-        val initialBlockData = sut.beginBlock(ctx)
+        val initialBlockData = sut.beginBlock(ctx, null)
         assertArrayEquals(anotherRID, initialBlockData.prevBlockRID)
     }
 
@@ -57,6 +57,6 @@ class BaseBlockStoreTest {
         expect(db.getBlockchainRID(ctx)).andReturn(null)
         expect(db.getLastBlockTimestamp(ctx)).andReturn(1509606236)
         replay(db)
-        sut.beginBlock(ctx)
+        sut.beginBlock(ctx, null)
     }
 }

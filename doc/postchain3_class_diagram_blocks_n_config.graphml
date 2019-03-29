@@ -20,7 +20,7 @@
           <y:Geometry height="759.9007736427395" width="987.4547439221263" x="608.539682502184" y="-338.9537253032605"/>
           <y:Fill color="#CCFFFF" transparent="false"/>
           <y:BorderStyle color="#999999" raised="false" type="dashed" width="3.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="4.0" x="491.7273719610631" y="377.95038682136976">
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="4.0" x="491.7273719610632" y="377.95038682136976">
             <y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
@@ -146,7 +146,7 @@
           <y:Geometry height="1566.37175308642" width="923.2522930041152" x="-2017.6073153126945" y="-937.8303273812135"/>
           <y:Fill color="#CCFFFF" transparent="false"/>
           <y:BorderStyle color="#999999" raised="false" type="dashed" width="3.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="4.0" x="459.62614650205774" y="781.18587654321">
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="4.0" x="459.6261465020575" y="781.18587654321">
             <y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
@@ -542,7 +542,7 @@ fun rollback()</y:MethodLabel>
           </y:NodeLabel>
           <y:UML clipContent="true" constraint="" hasDetailsColor="false" omitDetails="false" stereotype="" use3DEffect="true">
             <y:AttributeLabel/>
-            <y:MethodLabel>fun begin()
+            <y:MethodLabel>fun begin(partialBlockHeader: BlockHeader?)
 fun appendTransaction(tx: Transaction)
 fun finalizeBlock()
 fun finalizeAndValidate(blockHeader: BlockHeader)
@@ -1849,7 +1849,6 @@ fun buildFromDomainObjects(
     </node>
     <node id="n75">
       <data key="d4"/>
-      <data key="d5"/>
       <data key="d6">
         <y:UMLClassNode>
           <y:Geometry height="140.03773101045294" width="200.8978585431438" x="-1016.0067514991308" y="-606.4966714181244"/>
@@ -3038,7 +3037,6 @@ timestamp: Long</y:AttributeLabel>
       </data>
     </edge>
     <edge id="e89" source="n26" target="n74">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -3049,7 +3047,6 @@ timestamp: Long</y:AttributeLabel>
       </data>
     </edge>
     <edge id="e90" source="n74" target="n73">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -3060,7 +3057,6 @@ timestamp: Long</y:AttributeLabel>
       </data>
     </edge>
     <edge id="e91" source="n9" target="n33">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -3071,7 +3067,6 @@ timestamp: Long</y:AttributeLabel>
       </data>
     </edge>
     <edge id="e92" source="n8" target="n9">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -3084,7 +3079,6 @@ timestamp: Long</y:AttributeLabel>
       </data>
     </edge>
     <edge id="e93" source="n24" target="n10">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -3098,7 +3092,6 @@ timestamp: Long</y:AttributeLabel>
       </data>
     </edge>
     <edge id="e94" source="n8" target="n31">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -3109,7 +3102,6 @@ timestamp: Long</y:AttributeLabel>
       </data>
     </edge>
     <edge id="e95" source="n28" target="n75">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -3120,7 +3112,6 @@ timestamp: Long</y:AttributeLabel>
       </data>
     </edge>
     <edge id="e96" source="n30" target="n75">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -3131,7 +3122,6 @@ timestamp: Long</y:AttributeLabel>
       </data>
     </edge>
     <edge id="e97" source="n39" target="n25">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="-101.05970940948322" sy="0.0" tx="0.0" ty="0.0">
@@ -3145,7 +3135,6 @@ timestamp: Long</y:AttributeLabel>
       </data>
     </edge>
     <edge id="e98" source="n27" target="n67">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -3160,7 +3149,6 @@ timestamp: Long</y:AttributeLabel>
       </data>
     </edge>
     <edge id="e99" source="n73" target="n12">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -3174,7 +3162,6 @@ timestamp: Long</y:AttributeLabel>
       </data>
     </edge>
     <edge id="e100" source="n54" target="n25">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">

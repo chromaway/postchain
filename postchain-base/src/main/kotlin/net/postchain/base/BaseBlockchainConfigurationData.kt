@@ -1,12 +1,8 @@
 package net.postchain.base
 
 import net.postchain.common.hexStringToByteArray
-import net.postchain.core.BlockchainContext
-import net.postchain.core.NODE_ID_AUTO
-import net.postchain.core.NODE_ID_READ_ONLY
-import net.postchain.gtv.Gtv
-import net.postchain.gtv.GtvArray
-import net.postchain.gtv.GtvDictionary
+import net.postchain.core.*
+import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
 import org.apache.commons.configuration2.Configuration
 
@@ -40,6 +36,33 @@ class BaseBlockchainConfigurationData(
 
     fun getBlockBuildingStrategy(): Gtv? {
         return data["blockstrategy"]
+    }
+
+    fun getDependenciesAsList(): List<BlockchainRelatedInfo> {
+        val dep = data["dependencies"]
+        return if (dep != null) {
+            try {
+                // Should contain a map of String -> ByteArr
+                val gtvDepArray = dep!! as GtvArray
+                val depList = mutableListOf<BlockchainRelatedInfo>()
+                for (element in gtvDepArray.array) {
+                    val elemArr = element as GtvArray
+                    val nickname = elemArr[0] as GtvString
+                    val blockchainRid = elemArr[1] as GtvByteArray
+                    depList.add(
+                            BlockchainRelatedInfo(blockchainRid.bytearray, nickname.string, null)
+                    )
+
+                }
+                depList.toList()
+            } catch (e: Exception) {
+                throw BadDataMistake(BadDataType.BAD_CONFIGURATION,
+                        "Dependencies must be array of array and have two parts, one string (description) and one bytea (blokchain RID)", e)
+            }
+        } else {
+            // It is allowed to have no dependencies
+            listOf<BlockchainRelatedInfo>()
+        }
     }
 
     companion object {

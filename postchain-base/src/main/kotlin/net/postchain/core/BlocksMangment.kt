@@ -1,5 +1,6 @@
 package net.postchain.core
 
+import net.postchain.base.merkle.Hash
 import nl.komponents.kovenant.Promise
 
 interface BlockWitnessBuilder {
@@ -13,13 +14,15 @@ interface MultiSigBlockWitnessBuilder : BlockWitnessBuilder {
 }
 
 interface BlockStore {
-    fun beginBlock(ctx: EContext): InitialBlockData
+    fun beginBlock(ctx: EContext, blockHeightDependencies: Array<Hash?>?): InitialBlockData
     fun addTransaction(bctx: BlockEContext, tx: Transaction): TxEContext
     fun finalizeBlock(bctx: BlockEContext, bh: BlockHeader)
     fun commitBlock(bctx: BlockEContext, w: BlockWitness?)
     fun getBlockHeight(ctx: EContext, blockRID: ByteArray): Long? // returns null if not found
-    fun getBlockRIDs(ctx: EContext, height: Long): List<ByteArray> // returns null if height is out of range
+    fun getChainId(ctx: EContext, blockchainRID: ByteArray): Long? // returns null if not found
+    fun getBlockRID(ctx: EContext, height: Long): ByteArray? // returns null if height is out of range
     fun getLastBlockHeight(ctx: EContext): Long // height of the last block, first block has height 0
+    fun getBlockHeightInfo(ctx: EContext, blockchainRID: ByteArray): Pair<Long, Hash>?
     fun getLastBlockTimestamp(ctx: EContext): Long
     //    fun getBlockData(ctx: EContext, blockRID: ByteArray): BlockData
     fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray
@@ -40,7 +43,7 @@ interface BlockStore {
 interface BlockQueries {
     fun getBlockSignature(blockRID: ByteArray): Promise<Signature, Exception>
     fun getBestHeight(): Promise<Long, Exception>
-    fun getBlockRids(height: Long): Promise<List<ByteArray>, Exception>
+    fun getBlockRids(height: Long): Promise<ByteArray?, Exception>
     fun getBlockAtHeight(height: Long): Promise<BlockDataWithWitness, Exception>
     fun getBlockHeader(blockRID: ByteArray): Promise<BlockHeader, Exception>
 
@@ -50,8 +53,22 @@ interface BlockQueries {
     fun isTransactionConfirmed(txRID: ByteArray): Promise<Boolean, Exception>
 }
 
+/**
+ * Builds one block, either:
+ *  1. a block we define ourselves (we are the Primary Node = block builder) or
+ *  2. an externally produced block (we loading the finished block from the Primary Node).
+ *
+ * The life cycle of the [BlockBuilder] is:
+ * 1. begin()
+ * 2. appendTransaction() <- once per TX
+ * 3. finalizeBlock()
+ * 4. getBlockWitnessBuilder() <- Applies signatures
+ * 5. getBlockData()
+ *
+ * (For more documentation, see sub classes)
+ */
 interface BlockBuilder {
-    fun begin()
+    fun begin(partialBlockHeader: BlockHeader?)
     fun appendTransaction(tx: Transaction)
     fun finalizeBlock()
     fun finalizeAndValidate(blockHeader: BlockHeader)

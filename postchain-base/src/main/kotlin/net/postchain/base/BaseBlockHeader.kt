@@ -4,6 +4,7 @@ package net.postchain.base
 
 import net.postchain.base.gtv.BlockHeaderData
 import net.postchain.base.gtv.BlockHeaderDataFactory
+import net.postchain.base.merkle.Hash
 import net.postchain.common.toHex
 import net.postchain.core.BlockHeader
 import net.postchain.core.InitialBlockData
@@ -25,6 +26,7 @@ import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 class BaseBlockHeader(override val rawData: ByteArray, private val cryptoSystem: CryptoSystem) : BlockHeader {
     override val prevBlockRID: ByteArray
     override val blockRID: ByteArray
+    val blockHeightDependencyArray: Array<Hash?>
     val timestamp: Long get() = blockHeaderRec.getTimestamp()
     val blockHeaderRec: BlockHeaderData
 
@@ -32,6 +34,16 @@ class BaseBlockHeader(override val rawData: ByteArray, private val cryptoSystem:
         blockHeaderRec = BlockHeaderDataFactory.buildFromBinary(rawData)
         prevBlockRID = blockHeaderRec.getPreviousBlockRid()
         blockRID = cryptoSystem.digest(rawData)
+        blockHeightDependencyArray = blockHeaderRec.getBlockHeightDependencyArray()
+    }
+
+    /**
+     * @param depMap contains the Chain IDs we depend on
+     * @return true if there are the same number of elements in the block header as in the configuration
+     *          (it's lame, but it's the best we can do, since we allow "null")
+     */
+    fun checkIfAllBlockchainDependenciesArePresent(depRequired: List<BlockchainRelatedInfo>): Boolean {
+        return depRequired.size == blockHeightDependencyArray.size
     }
 
     companion object Factory {

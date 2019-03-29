@@ -94,9 +94,9 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
         }
     }
 
-    override fun getBlockRids(height: Long): Promise<List<ByteArray>, Exception> {
+    override fun getBlockRids(height: Long): Promise<ByteArray?, Exception> {
         return runOp {
-            blockStore.getBlockRIDs(it, height).toList()
+            blockStore.getBlockRID(it, height)
         }
     }
 
@@ -137,14 +137,7 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
      */
     override fun getBlockAtHeight(height: Long): Promise<BlockDataWithWitness, Exception> {
         return runOp {
-            val blockRIDs = blockStore.getBlockRIDs(it, height)
-            if (blockRIDs.size == 0) {
-                throw UserMistake("No block at height $height")
-            }
-            if (blockRIDs.size > 1) {
-                throw ProgrammerMistake("Multiple blocks at height $height found")
-            }
-            val blockRID = blockRIDs[0]
+            val blockRID = blockStore.getBlockRID(it, height) ?: throw UserMistake("No block at height $height")
             val headerBytes = blockStore.getBlockHeader(it, blockRID)
             val witnessBytes = blockStore.getWitnessData(it, blockRID)
             val txBytes = blockStore.getBlockTransactions(it, blockRID)

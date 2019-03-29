@@ -15,7 +15,6 @@
   <graph edgedefault="directed" id="G">
     <data key="d0"/>
     <node id="n0">
-      <data key="d5"/>
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="699.6333333333331" width="524.1833333333333" x="749.0" y="210.00000000000017"/>
@@ -34,13 +33,12 @@
       </data>
     </node>
     <node id="n1">
-      <data key="d5"/>
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="316.7999999999996" width="592.3333333333333" x="420.56666666666666" y="960.5999999999997"/>
           <y:Fill color="#FFFF99" transparent="false"/>
           <y:BorderStyle color="#999999" raised="false" type="dashed" width="3.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="4.0" x="294.16666666666663" y="156.39999999999986">
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="4.0" x="294.1666666666667" y="156.39999999999986">
             <y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
@@ -53,7 +51,6 @@
       </data>
     </node>
     <node id="n2">
-      <data key="d5"/>
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="720.5999999999996" width="652.9333333333333" x="53.56666666666672" y="210.00000000000017"/>
@@ -72,7 +69,6 @@
       </data>
     </node>
     <node id="n3">
-      <data key="d5"/>
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="580.3999999999996" width="959.3333333333333" x="53.56666666666672" y="1300.3333333333333"/>
@@ -132,9 +128,9 @@ WaitBlock<y:LabelModel>
           <y:Geometry height="78.0" width="158.0" x="731.4" y="988.5999999999998"/>
           <y:Fill color="#E8EEF7" color2="#B7C9E3" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="59.875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="103.310546875" x="27.3447265625" y="9.062500000000114">C.1: 
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="59.875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="116.482421875" x="20.7587890625" y="9.062500000000114">C.1: 
 (Primary??) &amp;
-DoNothingIntent
+DoNothingIntent &amp;
 HaveBlock<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
@@ -191,7 +187,7 @@ or Prepared state
           <y:Geometry height="115.20000000000005" width="258.2" x="374.90000000000003" y="771.0666666666666"/>
           <y:Fill color="#E8EEF7" color2="#B7C9E3" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="59.875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="179.875" x="39.16250000000002" y="27.662500000000023">Is the BlockRID 
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="59.875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="179.875" x="39.162499999999966" y="27.662500000000023">Is the BlockRID 
 we just received the same as
 the one we are supposed
 fetch ?<y:LabelModel>
@@ -319,7 +315,7 @@ block?<y:LabelModel>
           <y:Geometry height="115.20000000000005" width="194.40000000000003" x="713.1999999999999" y="1450.9859375"/>
           <y:Fill color="#E8EEF7" color2="#B7C9E3" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="59.875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="122.62890625" x="35.885546875000045" y="27.662500000000136">Do 2/3 of 
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="59.875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="122.62890625" x="35.885546875000045" y="27.66249999999991">Do 2/3 of 
 nodes have commit
 signature
 ? <y:LabelModel>
@@ -338,9 +334,9 @@ signature
           <y:Geometry height="90.40000000000003" width="194.40000000000003" x="406.79999999999995" y="375.1000000000001"/>
           <y:Fill color="#E8EEF7" color2="#B7C9E3" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="59.875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="93.765625" x="50.317187500000045" y="15.262499999999989">Does the 
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="59.875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="101.998046875" x="46.200976562500045" y="15.262499999999989">Does the 
 primary node 
-has a BlockRID
+have a BlockRID
 ?<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
@@ -357,8 +353,8 @@ has a BlockRID
           <y:Geometry height="115.20000000000005" width="227.0" x="79.59999999999997" y="1450.9859375"/>
           <y:Fill color="#E8EEF7" color2="#B7C9E3" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="73.84375" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="148.662109375" x="39.1689453125" y="20.678125000000136">Does any
-other node has state 
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="73.84375" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="148.662109375" x="39.1689453125" y="20.67812499999991">Does any
+other node have state 
 Prepared and the same 
 BlockRID as we
 ?<y:LabelModel>
@@ -372,7 +368,6 @@ BlockRID as we
       </data>
     </node>
     <node id="n19">
-      <data key="d5"/>
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.terminator">
           <y:Geometry height="78.0" width="180.20000000000005" x="720.3" y="1645.571875"/>
@@ -411,13 +406,12 @@ Prepared<y:LabelModel>
       </data>
     </node>
     <node id="n21">
-      <data key="d5"/>
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.decision">
           <y:Geometry height="115.20000000000005" width="208.0" x="377.19999999999993" y="1450.9859375"/>
           <y:Fill color="#E8EEF7" color2="#B7C9E3" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="59.875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="106.802734375" x="50.5986328125" y="27.662500000000136">Does any 
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="59.875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="106.802734375" x="50.5986328125" y="27.66249999999991">Does any 
 other node have 
 higher height
 ?  <y:LabelModel>
@@ -431,7 +425,6 @@ higher height
       </data>
     </node>
     <node id="n22">
-      <data key="d5"/>
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="64.0" width="158.0" x="398.4999999999999" y="1782.8359375"/>
@@ -451,7 +444,6 @@ the nodes<y:LabelModel>
     </node>
     <node id="n23">
       <data key="d4"/>
-      <data key="d5"/>
       <data key="d6">
         <y:UMLNoteNode>
           <y:Geometry height="96.0" width="232.0" x="1012.1439375000004" y="795.0000000000005"/>
@@ -472,7 +464,6 @@ ManagedBlockBuilder etc..) <y:LabelModel>
       </data>
     </node>
     <node id="n24">
-      <data key="d5"/>
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="60.0" width="225.79999999999995" x="91.0" y="390.30000000000007"/>
@@ -492,7 +483,6 @@ primary node<y:LabelModel>
     </node>
     <node id="n25">
       <data key="d4"/>
-      <data key="d5"/>
       <data key="d6">
         <y:UMLNoteNode>
           <y:Geometry height="45.599999999999966" width="166.40000000000003" x="95.39999999999998" y="230.79999999999995"/>
@@ -510,7 +500,6 @@ primary node<y:LabelModel>
     </node>
     <node id="n26">
       <data key="d4"/>
-      <data key="d5"/>
       <data key="d6">
         <y:UMLNoteNode>
           <y:Geometry height="45.599999999999966" width="166.40000000000003" x="85.59999999999991" y="1309.3333333333333"/>
@@ -528,13 +517,12 @@ primary node<y:LabelModel>
     </node>
     <node id="n27">
       <data key="d4"/>
-      <data key="d5"/>
       <data key="d6">
         <y:UMLNoteNode>
           <y:Geometry height="45.599999999999966" width="166.40000000000003" x="456.59999999999985" y="978.3333333333333"/>
           <y:Fill hasColor="false" transparent="false"/>
           <y:BorderStyle hasColor="false" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="30" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="38.921875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="177.1884765625" x="-5.394238281249983" y="3.3390624999999545">HaveBlock<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="30" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="38.921875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="177.1884765625" x="-5.394238281250011" y="3.3390624999999545">HaveBlock<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -545,7 +533,6 @@ primary node<y:LabelModel>
       </data>
     </node>
     <node id="n28">
-      <data key="d5"/>
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="70.19999999999993" width="202.0333333333333" x="402.98333333333335" y="652.3000000000001"/>
@@ -559,7 +546,7 @@ block from another node<y:LabelModel>
               <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
             </y:ModelParameter>
           </y:NodeLabel>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="4.0" x="99.01666666666665" y="33.09999999999991">
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="4.0" x="99.01666666666665" y="33.10000000000002">
             <y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
@@ -571,7 +558,6 @@ block from another node<y:LabelModel>
       </data>
     </node>
     <node id="n29">
-      <data key="d5"/>
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="78.0" width="187.29999999999995" x="720.3000000000001" y="1753.571875"/>
@@ -589,7 +575,6 @@ block from another node<y:LabelModel>
     </node>
     <node id="n30">
       <data key="d4"/>
-      <data key="d5"/>
       <data key="d6">
         <y:UMLNoteNode>
           <y:Geometry height="45.599999999999966" width="166.40000000000003" x="1077.7439375000004" y="226.25"/>
@@ -834,7 +819,6 @@ block from another node<y:LabelModel>
       </data>
     </edge>
     <edge id="e12" source="n7" target="n16">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -845,7 +829,6 @@ block from another node<y:LabelModel>
       </data>
     </edge>
     <edge id="e13" source="n4" target="n17">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -867,7 +850,6 @@ status)<y:LabelModel>
       </data>
     </edge>
     <edge id="e14" source="n17" target="n24">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="17.100000000000023" ty="2.0833333333332007">
@@ -889,7 +871,6 @@ status)<y:LabelModel>
       </data>
     </edge>
     <edge id="e15" source="n17" target="n4">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -912,7 +893,6 @@ status)<y:LabelModel>
       </data>
     </edge>
     <edge id="e16" source="n9" target="n6">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -934,7 +914,6 @@ status)<y:LabelModel>
       </data>
     </edge>
     <edge id="e17" source="n16" target="n19">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -953,7 +932,6 @@ status)<y:LabelModel>
       </data>
     </edge>
     <edge id="e18" source="n16" target="n21">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -976,7 +954,6 @@ status)<y:LabelModel>
       </data>
     </edge>
     <edge id="e19" source="n21" target="n20">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -995,7 +972,6 @@ status)<y:LabelModel>
       </data>
     </edge>
     <edge id="e20" source="n7" target="n16">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -1014,7 +990,6 @@ status)<y:LabelModel>
       </data>
     </edge>
     <edge id="e21" source="n22" target="n16">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -1037,7 +1012,6 @@ status)<y:LabelModel>
       </data>
     </edge>
     <edge id="e22" source="n21" target="n18">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -1057,7 +1031,6 @@ status)<y:LabelModel>
       </data>
     </edge>
     <edge id="e23" source="n18" target="n7">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -1078,7 +1051,6 @@ status)<y:LabelModel>
       </data>
     </edge>
     <edge id="e24" source="n18" target="n20">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -1099,7 +1071,6 @@ status)<y:LabelModel>
       </data>
     </edge>
     <edge id="e25" source="n20" target="n22">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -1110,7 +1081,6 @@ status)<y:LabelModel>
       </data>
     </edge>
     <edge id="e26" source="n23" target="n15">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -1121,7 +1091,6 @@ status)<y:LabelModel>
       </data>
     </edge>
     <edge id="e27" source="n24" target="n12">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -1144,7 +1113,6 @@ status)<y:LabelModel>
       </data>
     </edge>
     <edge id="e28" source="n12" target="n28">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -1155,7 +1123,6 @@ status)<y:LabelModel>
       </data>
     </edge>
     <edge id="e29" source="n28" target="n9">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -1166,7 +1133,6 @@ status)<y:LabelModel>
       </data>
     </edge>
     <edge id="e30" source="n19" target="n29">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -1177,7 +1143,6 @@ status)<y:LabelModel>
       </data>
     </edge>
     <edge id="e31" source="n29" target="n10">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">

@@ -5,3 +5,18 @@ package net.postchain.core
 open class ProgrammerMistake(message: String, cause: Exception? = null) : RuntimeException(message, cause)
 
 open class UserMistake(message: String, cause: Exception? = null) : RuntimeException(message, cause)
+
+/**
+ * Used when the format of some data is incorrect, see [BadDataType] for examples
+ */
+open class BadDataMistake(val type: BadDataType, message: String, cause: Exception? = null): RuntimeException(message, cause)
+
+
+enum class BadDataType (val type: Int) {
+    BAD_GTV(1), // Something wrong on GTV level, for example GtvDictionary is broken.
+    BAD_GTX(2), // A TX is incorrectly represented (even though the GTV itself is correct)
+    BAD_BLOCK(3), // The block's format is incorrect in some way (including header errors)
+    BAD_CONFIGURATION(4), // The blockchain configuration's format is not allowed.
+    MISSING_DEPENDENCY(5), // We don't have all dependencies required to process this block
+    OTHER(100) // Please don't use, consider adding a new type instead
+}

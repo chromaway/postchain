@@ -40,8 +40,21 @@ open class BlockEContext(
         chainID: Long,
         nodeID: Int,
         val blockIID: Long,
-        val timestamp: Long)
-    : EContext(conn, chainID, nodeID)
+        val timestamp: Long,
+        val dependencyHeightMap: Map<Long, Long>)
+    : EContext(conn, chainID, nodeID) {
+
+    /**
+     * @param chainID is the blockchain dependency we want to look at
+     * @return the required height of the blockchain (specificied by the chainID param)
+     *         or null if there is no such dependency.
+     *         (Note that Height = 0 is a dependency without any blocks, which is allowed)
+     */
+    fun getChainDependencyHeight(chainID:Long): Long? {
+        return dependencyHeightMap[chainID]
+    }
+}
+
 
 class TxEContext(
         conn: Connection,
@@ -49,6 +62,7 @@ class TxEContext(
         nodeID: Int,
         blockIID: Long,
         timestamp: Long,
+        dependencyHeightMap: Map<Long, Long>,
         val txIID: Long)
-    : BlockEContext(conn, chainID, nodeID, blockIID, timestamp)
+    : BlockEContext(conn, chainID, nodeID, blockIID, timestamp, dependencyHeightMap)
 

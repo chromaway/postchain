@@ -50,10 +50,10 @@ fun lastBlockInfoQuery(config: Unit, ctx: EContext, args: Gtv): Gtv {
     val prevTimestamp = dba.getLastBlockTimestamp(ctx)
     val prevBlockRID: ByteArray?
     if (prevHeight != -1L) {
-        val prevBlockRIDs = dba.getBlockRIDs(ctx, prevHeight)
-        prevBlockRID = prevBlockRIDs[0]
-    } else
+        prevBlockRID = dba.getBlockRID(ctx, prevHeight)!!
+    } else {
         prevBlockRID = null
+    }
     return gtv(
             "height" to gtv(prevHeight),
             "timestamp" to gtv(prevTimestamp),

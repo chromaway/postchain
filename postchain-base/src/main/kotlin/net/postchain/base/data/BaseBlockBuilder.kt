@@ -3,6 +3,7 @@
 package net.postchain.base.data
 
 import net.postchain.base.*
+import net.postchain.base.merkle.Hash
 import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.gtv.GtvFactory.gtv
@@ -19,10 +20,17 @@ import java.util.*
  * @property txFactory Used for serializing transaction data
  * @property subjects Public keys for nodes authorized to sign blocks
  * @property blockSigner Signing function for local node to sign block
+ * @property blockchainDependencies holds the blockchain RIDs this blockchain depends on
  */
-open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, store: BlockStore,
-                            txFactory: TransactionFactory, val subjects: Array<ByteArray>, val blockSigner: Signer)
-    : AbstractBlockBuilder(eContext, store, txFactory) {
+open class BaseBlockBuilder(
+        val cryptoSystem: CryptoSystem,
+        eContext: EContext,
+        store: BlockStore,
+        txFactory: TransactionFactory,
+        val subjects: Array<ByteArray>,
+        val blockSigner: Signer,
+        val blockchainRelatedInfoDependencyList: List<BlockchainRelatedInfo>
+): AbstractBlockBuilder(eContext, store, txFactory) {
 
 
     private val calc = GtvMerkleHashCalculator(cryptoSystem)
@@ -52,15 +60,16 @@ open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, 
             timestamp = initialBlockData.timestamp + 1
         }
 
-        return BaseBlockHeader.make(cryptoSystem, initialBlockData, computeRootHash(), timestamp)
+        return BaseBlockHeader.make(cryptoSystem, initialBlockData,  computeRootHash(), timestamp)
     }
 
     /**
      * Validate block header:
      * - check that previous block RID is used in this block
      * - check for correct height
-     * - check for correct root hash
      * - check that timestamp occurs after previous blocks timestamp
+     * - check if all required dependencies are present
+     * - check for correct root hash
      *
      * @param blockHeader The block header to validate
      */
@@ -80,6 +89,9 @@ open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, 
 
             bctx.timestamp >= header.timestamp ->
                 ValidationResult(false, "bctx.timestamp >= header.timestamp")
+
+            !header.checkIfAllBlockchainDependenciesArePresent(blockchainRelatedInfoDependencyList) ->
+                ValidationResult(false, "checkIfAllBlockchainDependenciesArePresent() is false")
 
             !Arrays.equals(header.blockHeaderRec.getMerkleRootHash(), computedMerkleRoot) -> // Do this last since most expensive check!
                 ValidationResult(false, "header.blockHeaderRec.rootHash != computeRootHash()")
@@ -106,6 +118,69 @@ open class BaseBlockBuilder(val cryptoSystem: CryptoSystem, eContext: EContext, 
             witnessBuilder.applySignature(signature)
         }
         return witnessBuilder.isComplete()
+    }
+
+    /**
+     * @param partialBlockHeader if this is given, we should get the dependency information from the header, else
+     *                           we should get the heights from the DB.
+     * @return all dependencies to other blockchains and their heights this block needs.
+     */
+    override fun buildBlockchainDependencies(partialBlockHeader: BlockHeader?): BlockchainDependencies {
+        return if (partialBlockHeader != null) {
+            buildBlockchainDependenciesFromHeader(partialBlockHeader)
+        } else {
+            buildBlockchainDependenciesFromDb()
+        }
+    }
+
+    private fun buildBlockchainDependenciesFromHeader(partialBlockHeader: BlockHeader): BlockchainDependencies {
+        return if (blockchainRelatedInfoDependencyList.size > 0) {
+
+            val baseBH = partialBlockHeader as BaseBlockHeader
+            val givenDependencies = baseBH.blockHeightDependencyArray
+            if (givenDependencies.size == blockchainRelatedInfoDependencyList.size) {
+
+                val resList = mutableListOf<BlockchainDependency>()
+                var i = 0
+                for (bcInfo in blockchainRelatedInfoDependencyList) {
+                    val blockRid = givenDependencies[i]
+                    val dep = if (blockRid != null) {
+                        val dbHeight = store.getBlockHeight(bctx, blockRid)
+                        if (dbHeight != null) {
+                            BlockchainDependency(bcInfo, HeightDependency(blockRid, dbHeight))
+                        } else {
+                            // TODO: Discussed this with Alex (2019-03-29) (A bit wasteful to abort rather than wait?)
+                            throw BadDataMistake(BadDataType.MISSING_DEPENDENCY,
+                                    "We are not ready to accept the block since block dependency (RID: ${blockRid.toHex()}) is missing. ")
+                        }
+                    } else {
+                        BlockchainDependency(bcInfo, null) // No blocks required -> allowed
+                    }
+                    resList.add(dep)
+                    i++
+                }
+                BlockchainDependencies(resList)
+            } else {
+                throw BadDataMistake(BadDataType.BAD_CONFIGURATION,
+                        "The given block header has ${givenDependencies.size} dependencies our configuration requires ${blockchainRelatedInfoDependencyList.size} ")
+            }
+        } else {
+            BlockchainDependencies(listOf()) // No dependencies
+        }
+    }
+
+    private fun buildBlockchainDependenciesFromDb(): BlockchainDependencies {
+        val resList = mutableListOf<BlockchainDependency>()
+        for (bcInfo in blockchainRelatedInfoDependencyList) {
+            val res: Pair<Long, Hash>? = store.getBlockHeightInfo(bctx, bcInfo.blockchainRid)
+            val dep = if (res != null) {
+                BlockchainDependency(bcInfo, HeightDependency(res.second, res.first))
+            } else {
+                BlockchainDependency(bcInfo, null) // No blocks yet, it's ok
+            }
+            resList.add(dep)
+        }
+        return BlockchainDependencies(resList)
     }
 
     /**

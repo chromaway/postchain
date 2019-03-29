@@ -117,7 +117,7 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
         }
 
         val blockBuilder = makeBlockBuilder()
-        blockBuilder.begin()
+        blockBuilder.begin(block.header)
 
         val tBegin = System.nanoTime()
         transactions.forEach { blockBuilder.appendTransaction(it.get()) }
@@ -142,7 +142,7 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
         val tStart = System.nanoTime()
         val blockBuilder = makeBlockBuilder()
         val factory = bc.getTransactionFactory()
-        blockBuilder.begin()
+        blockBuilder.begin(block.header)
 
         val tBegin = System.nanoTime()
         block.transactions.forEach { blockBuilder.appendTransaction(factory.decodeTransaction(it)) }
@@ -169,7 +169,7 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
 
         val blockBuilder = makeBlockBuilder()
         val abstractBlockBuilder = ((blockBuilder as BaseManagedBlockBuilder).bb as AbstractBlockBuilder)
-        blockBuilder.begin()
+        blockBuilder.begin(null)
         val tBegin = System.nanoTime()
 
         // TODO Potential problem: if the block fails for some reason,

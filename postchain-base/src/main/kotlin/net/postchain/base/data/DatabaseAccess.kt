@@ -13,6 +13,7 @@ interface DatabaseAccess {
     class BlockInfo(val blockIid: Long, val blockHeader: ByteArray, val witness: ByteArray)
 
     fun initialize(connection: Connection, expectedDbVersion: Int)
+    fun getChainId(ctx: EContext, blockchainRID: ByteArray): Long?
     fun checkBlockchainRID(ctx: EContext, blockchainRID: ByteArray)
 
     fun getBlockchainRID(ctx: EContext): ByteArray?
@@ -22,11 +23,13 @@ interface DatabaseAccess {
 
     fun commitBlock(bctx: BlockEContext, w: BlockWitness)
     fun getBlockHeight(ctx: EContext, blockRID: ByteArray): Long?
-    fun getBlockRIDs(ctx: EContext, height: Long): List<ByteArray>
+    fun getBlockRID(ctx: EContext, height: Long): ByteArray?
     fun getBlockHeader(ctx: EContext, blockRID: ByteArray): ByteArray
     fun getBlockTransactions(ctx: EContext, blockRID: ByteArray): List<ByteArray>
     fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray
     fun getLastBlockHeight(ctx: EContext): Long
+    fun getLastBlockRid(ctx: EContext, chainId: Long): ByteArray?
+    fun getBlockHeightInfo(ctx: EContext, bcRid: ByteArray): Pair<Long, ByteArray>?
     fun getLastBlockTimestamp(ctx: EContext): Long
     fun getTxRIDsAtHeight(ctx: EContext, height: Long): Array<ByteArray>
     fun getBlockInfo(ctx: EContext, txRID: ByteArray): BlockInfo
@@ -89,10 +92,11 @@ class SQLDatabaseAccess : DatabaseAccess {
                 nullableLongRes, ctx.chainID, blockRID)
     }
 
-    override fun getBlockRIDs(ctx: EContext, height: Long): List<ByteArray> {
+    // The combination of CHAIN_ID and BLOCK_HEIGHT is unique
+    override fun getBlockRID(ctx: EContext, height: Long): ByteArray? {
         return queryRunner.query(ctx.conn,
                 "SELECT block_rid FROM blocks WHERE chain_id = ? AND block_height = ?",
-                byteArrayListRes, ctx.chainID, height)
+                nullableByteArrayRes, ctx.chainID, height)
     }
 
     override fun getBlockHeader(ctx: EContext, blockRID: ByteArray): ByteArray {
@@ -122,6 +126,33 @@ class SQLDatabaseAccess : DatabaseAccess {
                 longRes, ctx.chainID) ?: -1L
     }
 
+    override fun getLastBlockRid(ctx: EContext, chainId: Long): ByteArray? {
+        return queryRunner.query(ctx.conn,
+                "SELECT block_height FROM blocks WHERE chain_id = ? ORDER BY block_height DESC LIMIT 1",
+                nullableByteArrayRes, chainId)
+    }
+
+    override fun getBlockHeightInfo(ctx: EContext, bcRid: ByteArray): Pair<Long, ByteArray>? {
+        val res = queryRunner.query(ctx.conn, """
+                    SELECT b.block_height, b.block_rid
+                         FROM blocks b
+                         JOIN blockchains bc ON bc.chain_id = b.chain_id
+                         WHERE bc.blockchain_rid = ?
+                         ORDER BY b.block_height DESC LIMIT 1
+                         """, mapListHandler, bcRid)
+
+        return if (res.size == 0) {
+            null // This is allowed, it (usually) means we don't have any blocks yet
+        } else if (res.size == 1) {
+            val r = res[0]
+            val height = r["block_height"] as Long
+            val blockRid = r["block_rid"] as ByteArray
+            Pair(height, blockRid)
+        } else {
+            throw ProgrammerMistake("Incorrect query getBlockHeightInfo got many lines (${res.size})")
+        }
+    }
+
     override fun getLastBlockTimestamp(ctx: EContext): Long {
         return queryRunner.query(ctx.conn,
                 "SELECT timestamp FROM blocks WHERE chain_id = ? ORDER BY timestamp DESC LIMIT 1",
@@ -141,14 +172,15 @@ class SQLDatabaseAccess : DatabaseAccess {
         val block = queryRunner.query(ctx.conn,
                 """
                     SELECT b.block_iid, b.block_header_data, b.block_witness
-                    FROM blocks b JOIN transactions t ON b.block_iid=t.block_iid
+                    FROM blocks b
+                    JOIN transactions t ON b.block_iid=t.block_iid
                     WHERE t.chain_id=? and t.tx_rid=?
                     """, mapListHandler, ctx.chainID, txRID)!!
         if (block.size < 1) throw UserMistake("Can't get confirmation proof for nonexistent tx")
         if (block.size > 1) throw ProgrammerMistake("Expected at most one hit")
-        val blockIid = block[0].get("block_iid") as Long
-        val blockHeader = block[0].get("block_header_data") as ByteArray
-        val witness = block[0].get("block_witness") as ByteArray
+        val blockIid = block[0]["block_iid"] as Long
+        val blockHeader = block[0]["block_header_data"] as ByteArray
+        val witness = block[0]["block_witness"] as ByteArray
         return DatabaseAccess.BlockInfo(blockIid, blockHeader, witness)
     }
 
@@ -270,6 +302,13 @@ class SQLDatabaseAccess : DatabaseAccess {
             queryRunner.update(connection, """CREATE INDEX configurations_chain_id_to_height ON configurations(chain_id, height)""")
 
         }
+    }
+
+    override fun getChainId(ctx: EContext, blockchainRID: ByteArray): Long? {
+        return queryRunner.query(ctx.conn,
+                "SELECT chain_id FROM blockchains WHERE blockchain_rid=?",
+                nullableLongRes,
+                blockchainRID)
     }
 
     override fun checkBlockchainRID(ctx: EContext, blockchainRID: ByteArray) {

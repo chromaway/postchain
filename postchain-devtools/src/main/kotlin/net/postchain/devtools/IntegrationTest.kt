@@ -206,8 +206,8 @@ open class IntegrationTest {
 
     protected fun getTxRidsAtHeight(node: SingleChainTestNode, height: Long): Array<ByteArray> {
         val blockQueries = node.getBlockchainInstance().getEngine().getBlockQueries()
-        val list = blockQueries.getBlockRids(height).get()
-        return blockQueries.getBlockTransactionRids(list[0]).get().toTypedArray()
+        val blockRid = blockQueries.getBlockRids(height).get()
+        return blockQueries.getBlockTransactionRids(blockRid!!).get().toTypedArray()
     }
 
     protected fun getBestHeight(node: SingleChainTestNode): Long {

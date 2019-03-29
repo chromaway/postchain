@@ -2,7 +2,11 @@
 
 package net.postchain.base.data
 
+import net.postchain.base.BlockchainDependencies
+import net.postchain.base.BlockchainDependency
 import net.postchain.base.ConfirmationProofMaterial
+import net.postchain.base.HeightDependency
+import net.postchain.base.merkle.Hash
 import net.postchain.core.*
 
 /**
@@ -20,7 +24,7 @@ class BaseBlockStore : BlockStore {
      * @param ctx Connection context
      * @returns Initial block data
      */
-    override fun beginBlock(ctx: EContext): InitialBlockData {
+    override fun beginBlock(ctx: EContext, blockHeightDependencies: Array<Hash?>?): InitialBlockData {
         if (ctx.chainID < 0) {
             throw UserMistake("ChainId must be >=0, got ${ctx.chainID}")
         }
@@ -31,20 +35,16 @@ class BaseBlockStore : BlockStore {
         val prevBlockRID = if (prevHeight == -1L) {
             blockchainRID
         } else {
-            val prevBlockRIDs = getBlockRIDs(ctx, prevHeight)
-            if (prevBlockRIDs.isEmpty()) {
-                throw ProgrammerMistake("Previous block had no RID. Check your block writing code!")
-            }
-            prevBlockRIDs[0]
+            getBlockRID(ctx, prevHeight) ?: throw ProgrammerMistake("Previous block had no RID. Check your block writing code!")
         }
 
         val blockIid = db.insertBlock(ctx, prevHeight + 1)
-        return InitialBlockData(blockchainRID, blockIid, ctx.chainID, prevBlockRID, prevHeight + 1, prevTimestamp)
+        return InitialBlockData(blockchainRID, blockIid, ctx.chainID, prevBlockRID, prevHeight + 1, prevTimestamp, blockHeightDependencies)
     }
 
     override fun addTransaction(bctx: BlockEContext, tx: Transaction): TxEContext {
         val txIid = db.insertTransaction(bctx, tx)
-        return TxEContext(bctx.conn, bctx.chainID, bctx.nodeID, bctx.blockIID, bctx.timestamp, txIid)
+        return TxEContext(bctx.conn, bctx.chainID, bctx.nodeID, bctx.blockIID, bctx.timestamp, bctx.dependencyHeightMap, txIid)
     }
 
     override fun finalizeBlock(bctx: BlockEContext, bh: BlockHeader) {
@@ -61,8 +61,12 @@ class BaseBlockStore : BlockStore {
         return db.getBlockHeight(ctx, blockRID)
     }
 
-    override fun getBlockRIDs(ctx: EContext, height: Long): List<ByteArray> {
-        return db.getBlockRIDs(ctx, height)
+    override fun getChainId(ctx: EContext, blockchainRID: ByteArray): Long? {
+        return db.getChainId(ctx, blockchainRID)
+    }
+
+    override fun getBlockRID(ctx: EContext, height: Long): ByteArray? {
+        return db.getBlockRID(ctx, height)
     }
 
     override fun getBlockHeader(ctx: EContext, blockRID: ByteArray): ByteArray {
@@ -83,6 +87,10 @@ class BaseBlockStore : BlockStore {
 
     override fun getLastBlockHeight(ctx: EContext): Long {
         return db.getLastBlockHeight(ctx)
+    }
+
+    override fun getBlockHeightInfo(ctx: EContext, blockchainRID: ByteArray): Pair<Long, Hash>? {
+        return db.getBlockHeightInfo(ctx, blockchainRID)
     }
 
     override fun getLastBlockTimestamp(ctx: EContext): Long {
