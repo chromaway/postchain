@@ -3,32 +3,29 @@
 package net.postchain
 
 import net.postchain.base.BaseTestInfrastructureFactory
+import net.postchain.config.blockchain.BlockchainConfigurationProviderFactory
+import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.BlockchainInfrastructure
 import net.postchain.core.BlockchainProcessManager
 import net.postchain.core.InfrastructureFactory
 import net.postchain.core.Shutdownable
 import net.postchain.ebft.BaseEBFTInfrastructureFactory
-import org.apache.commons.configuration2.Configuration
 
 /**
  * Postchain node instantiates infrastructure and blockchain
  * process manager.
  */
-open class PostchainNode(nodeConfig: Configuration) : Shutdownable {
+open class PostchainNode(nodeConfigProvider: NodeConfigurationProvider) : Shutdownable {
 
     val processManager: BlockchainProcessManager
     protected val blockchainInfrastructure: BlockchainInfrastructure
 
     init {
-        val factoryClass = when (nodeConfig.getString("infrastructure")) {
-            "base/ebft" -> BaseEBFTInfrastructureFactory::class.java
-            "base/test" -> BaseTestInfrastructureFactory::class.java
-            else -> BaseEBFTInfrastructureFactory::class.java
-        }
+        val blockchainConfig = BlockchainConfigurationProviderFactory.create(nodeConfigProvider)
+        val infrastructureFactory = buildInfrastructureFactory(nodeConfigProvider)
 
-        val factory: InfrastructureFactory = factoryClass.newInstance()
-        blockchainInfrastructure = factory.makeBlockchainInfrastructure(nodeConfig)
-        processManager = factory.makeProcessManager(nodeConfig, blockchainInfrastructure)
+        blockchainInfrastructure = infrastructureFactory.makeBlockchainInfrastructure(nodeConfigProvider)
+        processManager = infrastructureFactory.makeProcessManager(nodeConfigProvider, blockchainConfig, blockchainInfrastructure)
     }
 
     fun startBlockchain(chainID: Long) {
@@ -41,5 +38,15 @@ open class PostchainNode(nodeConfig: Configuration) : Shutdownable {
 
     override fun shutdown() {
         processManager.shutdown()
+    }
+
+    private fun buildInfrastructureFactory(nodeConfigProvider: NodeConfigurationProvider): InfrastructureFactory {
+        val factoryClass = when (nodeConfigProvider.getConfiguration().infrastructure) {
+            "base/ebft" -> BaseEBFTInfrastructureFactory::class.java
+            "base/test" -> BaseTestInfrastructureFactory::class.java
+            else -> BaseEBFTInfrastructureFactory::class.java
+        }
+
+        return factoryClass.newInstance()
     }
 }

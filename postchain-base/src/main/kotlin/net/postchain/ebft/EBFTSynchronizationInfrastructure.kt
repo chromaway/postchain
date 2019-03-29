@@ -2,8 +2,7 @@ package net.postchain.ebft
 
 import net.postchain.base.*
 import net.postchain.base.data.BaseBlockchainConfiguration
-import net.postchain.common.hexStringToByteArray
-import net.postchain.common.toHex
+import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.BlockchainEngine
 import net.postchain.core.BlockchainProcess
 import net.postchain.core.RestartHandler
@@ -15,17 +14,16 @@ import net.postchain.network.netty2.NettyConnectorFactory
 import net.postchain.network.x.DefaultXCommunicationManager
 import net.postchain.network.x.DefaultXConnectionManager
 import net.postchain.network.x.XConnectionManager
-import org.apache.commons.configuration2.Configuration
 
-class EBFTSynchronizationInfrastructure(val config: Configuration) : SynchronizationInfrastructure {
+class EBFTSynchronizationInfrastructure(nodeConfigProvider: NodeConfigurationProvider) : SynchronizationInfrastructure {
 
-    /*private */val connectionManager: XConnectionManager
-    private val peers = PeerInfoCollectionFactory.createPeerInfoCollection(config)
+    private val nodeConfig = nodeConfigProvider.getConfiguration()
+    val connectionManager: XConnectionManager
 
     init {
         connectionManager = DefaultXConnectionManager(
                 NettyConnectorFactory(),
-                buildPeerCommConfiguration(peers),
+                buildPeerCommConfiguration(nodeConfig.peerInfos),
                 EbftPacketEncoderFactory(),
                 EbftPacketDecoderFactory(),
                 SECP256K1CryptoSystem()
@@ -48,10 +46,10 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
 
     private fun buildXCommunicationManager(blockchainConfig: BaseBlockchainConfiguration): CommunicationManager<EbftMessage> {
         val communicationConfig = BasePeerCommConfiguration(
-                PeerInfoCollectionFactory.createPeerInfoCollection(config),
+                nodeConfig.peerInfos,
                 blockchainConfig.configData.context.nodeID,
                 SECP256K1CryptoSystem(),
-                privKey())
+                nodeConfig.privKeyByteArray)
 
         val packetEncoder = EbftPacketEncoder(communicationConfig, blockchainConfig.blockchainRID)
         val packetDecoder = EbftPacketDecoder(communicationConfig)
@@ -66,17 +64,11 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
         ).apply { init() }
     }
 
-    private fun privKey(): ByteArray =
-            config.getString("messaging.privkey").hexStringToByteArray()
-
-    private fun pubKey(): ByteArray =
-            config.getString("messaging.pubkey").hexStringToByteArray()
-
     private fun buildPeerCommConfiguration(peers: Array<PeerInfo>): PeerCommConfiguration {
         return BasePeerCommConfiguration(
                 peers,
-                DefaultPeerResolver.resolvePeerIndex(pubKey(), peers),
+                DefaultPeerResolver.resolvePeerIndex(nodeConfig.pubKeyByteArray, peers),
                 SECP256K1CryptoSystem(),
-                privKey())
+                nodeConfig.privKeyByteArray)
     }
 }

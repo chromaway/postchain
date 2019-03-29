@@ -6,6 +6,9 @@ import mu.KLogging
 import net.postchain.base.PeerInfo
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
+import net.postchain.config.app.AppConfig
+import net.postchain.config.node.NodeConfigurationProvider
+import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.core.*
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.privKeyHex
@@ -16,7 +19,6 @@ import net.postchain.gtx.GTXValue
 import net.postchain.gtx.gtx
 import net.postchain.gtx.gtxml.GTXMLValueParser
 import org.apache.commons.configuration2.CompositeConfiguration
-import org.apache.commons.configuration2.Configuration
 import org.apache.commons.configuration2.MapConfiguration
 import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder
@@ -34,6 +36,10 @@ open class IntegrationTest {
     val configOverrides = MapConfiguration(mutableMapOf<String, String>())
     val cryptoSystem = SECP256K1CryptoSystem()
     var gtxConfig: GTXValue? = null
+    protected val blockchainRids = mapOf(
+            1L to "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3",
+            2L to "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a4"
+    )
 
     // PeerInfos must be shared between all nodes because
     // a listening node will update the PeerInfo port after
@@ -102,13 +108,13 @@ open class IntegrationTest {
             blockchainConfigFilename: String
     ): PostchainTestNode {
 
-        val nodeConfig = createConfig(nodeIndex, totalNodesCount, nodeConfig)
-        nodesNames[nodeConfig.getString("messaging.pubkey")] = "$nodeIndex"
+        val nodeConfigProvider = createNodeConfig(nodeIndex, totalNodesCount, nodeConfig)
+        nodesNames[nodeConfigProvider.getConfiguration().pubKey] = "$nodeIndex"
         val blockchainConfig = readBlockchainConfig(blockchainConfigFilename)
-        val chainId = nodeConfig.getLong("activechainids")
-        val blockchainRid = readBlockchainRid(nodeConfig, chainId)
+        val chainId = nodeConfigProvider.getConfiguration().activeChainIds.first().toLong()
+        val blockchainRid = blockchainRids[chainId]!!.hexStringToByteArray()
 
-        return PostchainTestNode(nodeConfig)
+        return PostchainTestNode(nodeConfigProvider)
                 .apply {
                     addBlockchain(chainId, blockchainRid, blockchainConfig)
                     startBlockchain()
@@ -135,18 +141,19 @@ open class IntegrationTest {
             nodeConfigFilename: String = DEFAULT_CONFIG_FILE,
             vararg blockchainConfigFilenames: String): PostchainTestNode {
 
-        val nodeConfig = createConfig(nodeIndex, nodeCount, nodeConfigFilename)
+        val nodeConfigProvider = createNodeConfig(nodeIndex, nodeCount, nodeConfigFilename)
 
-        val node = PostchainTestNode(nodeConfig)
+        val node = PostchainTestNode(nodeConfigProvider)
                 .also { nodes.add(it) }
 
-        val chainIds = nodeConfig.getStringArray("activechainids")
-        chainIds.filter(String::isNotEmpty).forEachIndexed { i, chainId ->
-            val blockchainRid = readBlockchainRid(nodeConfig, chainId.toLong())
-            val blockchainConfig = readBlockchainConfig(blockchainConfigFilenames[i])
-            node.addBlockchain(chainId.toLong(), blockchainRid, blockchainConfig)
-            node.startBlockchain(chainId.toLong())
-        }
+        nodeConfigProvider.getConfiguration().activeChainIds
+                .filter(String::isNotEmpty)
+                .forEachIndexed { i, chainId ->
+                    val blockchainRid = blockchainRids[chainId.toLong()]!!.hexStringToByteArray()
+                    val blockchainConfig = readBlockchainConfig(blockchainConfigFilenames[i])
+                    node.addBlockchain(chainId.toLong(), blockchainRid, blockchainConfig)
+                    node.startBlockchain(chainId.toLong())
+                }
 
         return node
     }
@@ -156,13 +163,8 @@ open class IntegrationTest {
                 javaClass.getResource(blockchainConfigFilename).readText())
     }
 
-    protected fun readBlockchainRid(nodeConfig: Configuration, chainId: Long): ByteArray {
-        return nodeConfig.getString("test.blockchain.$chainId.blockchainrid")
-                .hexStringToByteArray()
-    }
-
-    protected fun createConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
-            : Configuration {
+    protected fun createNodeConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
+            : NodeConfigurationProvider {
 
         // Read first file directly via the builder
         val params = Parameters()
@@ -191,11 +193,12 @@ open class IntegrationTest {
         baseConfig.setProperty("messaging.privkey", privKeyHex(nodeIndex))
         baseConfig.setProperty("messaging.pubkey", pubKeyHex(nodeIndex))
 
-        return CompositeConfiguration().apply {
+        val appConfig = CompositeConfiguration().apply {
             addConfiguration(configOverrides)
             addConfiguration(baseConfig)
-
         }
+
+        return NodeConfigurationProviderFactory.create(AppConfig(appConfig))
     }
 
     protected fun gtxConfigSigners(nodeCount: Int = 1): GTXValue {

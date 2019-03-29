@@ -3,13 +3,12 @@ package net.postchain.base
 import net.postchain.StorageBuilder
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.base.data.BaseTransactionQueue
-import net.postchain.common.hexStringToByteArray
+import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
 import net.postchain.gtx.decodeGTXValue
-import org.apache.commons.configuration2.Configuration
 
 class BaseBlockchainInfrastructure(
-        val config: Configuration,
+        private val nodeConfigProvider: NodeConfigurationProvider,
         val synchronizationInfrastructure: SynchronizationInfrastructure,
         val apiInfrastructure: ApiInfrastructure
 ) : BlockchainInfrastructure {
@@ -19,7 +18,7 @@ class BaseBlockchainInfrastructure(
     val subjectID: ByteArray
 
     init {
-        val privKey = config.getString("messaging.privkey").hexStringToByteArray()
+        val privKey = nodeConfigProvider.getConfiguration().privKeyByteArray
         val pubKey = secp256k1_derivePubKey(privKey)
         blockSigner = cryptoSystem.makeSigner(pubKey, privKey)
         subjectID = pubKey
@@ -51,7 +50,7 @@ class BaseBlockchainInfrastructure(
     }
 
     override fun makeBlockchainEngine(configuration: BlockchainConfiguration): BaseBlockchainEngine {
-        val storage = StorageBuilder.buildStorage(config, -1) // TODO: nodeID
+        val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration(), -1) // TODO: nodeID
         // TODO: [et]: Maybe extract 'queuecapacity' param from ''
         val tq = BaseTransactionQueue(
                 (configuration as BaseBlockchainConfiguration)

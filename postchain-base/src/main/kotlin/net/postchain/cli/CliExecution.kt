@@ -6,7 +6,8 @@ import net.postchain.base.data.BaseBlockStore
 import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
-import net.postchain.config.CommonsConfigurationFactory
+import net.postchain.config.app.AppConfig
+import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.gtx.encodeGTXValue
 import net.postchain.gtx.gtxml.GTXMLValueParser
 import org.apache.commons.configuration2.ex.ConfigurationException
@@ -19,19 +20,19 @@ class CliExecution {
 
     private val dbAccess = SQLDatabaseAccess()
 
-    fun addBlockchain(nodeConfigFile: String, chainId: Long, blockchainRID: String, blockchainConfigFile: String, mode: AlreadyExistMode =  AlreadyExistMode.IGNORE) {
+    fun addBlockchain(nodeConfigFile: String, chainId: Long, blockchainRID: String, blockchainConfigFile: String, mode: AlreadyExistMode = AlreadyExistMode.IGNORE) {
         val encodedGtxValue = getEncodedGtxValueFromFile(blockchainConfigFile)
-        runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
+        runDBCommandBody(nodeConfigFile, chainId) { eContext ->
 
             fun init() {
-                BaseBlockStore().initialize(ctx, blockchainRID.hexStringToByteArray())
-                BaseConfigurationDataStore.addConfigurationData(ctx, 0, encodedGtxValue)
+                BaseBlockStore().initialize(eContext, blockchainRID.hexStringToByteArray())
+                BaseConfigurationDataStore.addConfigurationData(eContext, 0, encodedGtxValue)
             }
 
 
             when (mode) {
                 AlreadyExistMode.ERROR -> {
-                    if (SQLDatabaseAccess().getBlockchainRID(ctx) == null) {
+                    if (SQLDatabaseAccess().getBlockchainRID(eContext) == null) {
                         init()
                     } else {
                         throw CliError.Companion.CliException("Blockchain with chainId $chainId already exists. Use -f flag to force addition.")
@@ -43,7 +44,7 @@ class CliExecution {
                 }
 
                 else -> {
-                    if (SQLDatabaseAccess().getBlockchainRID(ctx) == null) {
+                    if (SQLDatabaseAccess().getBlockchainRID(eContext) == null) {
                         init()
                     }
                 }
@@ -51,18 +52,18 @@ class CliExecution {
         }
     }
 
-    fun addConfiguration(nodeConfigFile: String, blockchainConfigFile: String, chainId: Long, height: Long, mode: AlreadyExistMode = AlreadyExistMode.IGNORE) : Boolean {
+    fun addConfiguration(nodeConfigFile: String, blockchainConfigFile: String, chainId: Long, height: Long, mode: AlreadyExistMode = AlreadyExistMode.IGNORE): Boolean {
         val encodedGtxValue = getEncodedGtxValueFromFile(blockchainConfigFile)
         var result = false
-        runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
+        runDBCommandBody(nodeConfigFile, chainId) { eContext ->
 
             fun init() {
-                result = BaseConfigurationDataStore.addConfigurationData(ctx, height, encodedGtxValue) > 0
+                result = BaseConfigurationDataStore.addConfigurationData(eContext, height, encodedGtxValue) > 0
             }
 
             when (mode) {
                 AlreadyExistMode.ERROR -> {
-                    if (BaseConfigurationDataStore.getConfigurationData(ctx, height) == null) {
+                    if (BaseConfigurationDataStore.getConfigurationData(eContext, height) == null) {
                         init()
                     } else {
                         throw CliError.Companion.CliException("Blockchain configuration of chainId $chainId at " +
@@ -75,7 +76,7 @@ class CliExecution {
                 }
 
                 else -> {
-                    if (BaseConfigurationDataStore.getConfigurationData(ctx, height) == null) {
+                    if (BaseConfigurationDataStore.getConfigurationData(eContext, height) == null) {
                         init()
                     } else {
                         println("Blockchain configuration of chainId $chainId at height $height already exists")
@@ -87,13 +88,15 @@ class CliExecution {
     }
 
     fun runNode(nodeConfigFile: String, chainIDs: List<Long>) {
-        val node = PostchainNode(CommonsConfigurationFactory.readFromFile(nodeConfigFile))
+        val nodeConfigProvider = NodeConfigurationProviderFactory.create(
+                AppConfig.fromPropertiesFile(nodeConfigFile))
+        val node = PostchainNode(nodeConfigProvider)
         chainIDs.forEach(node::startBlockchain)
     }
 
     fun checkBlockchain(nodeConfigFile: String, chainId: Long, blockchainRID: String) {
-        runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
-            val chainIdBlockchainRid = dbAccess.getBlockchainRID(ctx)
+        runDBCommandBody(nodeConfigFile, chainId) { eContext ->
+            val chainIdBlockchainRid = dbAccess.getBlockchainRID(eContext)
             when {
                 chainIdBlockchainRid == null -> {
                     throw CliError.Companion.CliException("Unknown chain-id: $chainId")
@@ -105,7 +108,7 @@ class CliExecution {
                             actual: ${chainIdBlockchainRid.toHex()}
                     """.trimIndent())
                 }
-                BaseConfigurationDataStore.findConfiguration(ctx, 0) == null -> {
+                BaseConfigurationDataStore.findConfiguration(eContext, 0) == null -> {
                     throw CliError.Companion.CliException("No configuration found")
                 }
                 else -> {
@@ -115,8 +118,7 @@ class CliExecution {
     }
 
     fun waitDb(retryTimes: Int, retryInterval: Long, nodeConfigFile: String): CliResult {
-        return tryCreateBasicDataSource(nodeConfigFile)?.let { Ok() }?:
-        if(retryTimes > 0) {
+        return tryCreateBasicDataSource(nodeConfigFile)?.let { Ok() } ?: if (retryTimes > 0) {
             Thread.sleep(retryInterval)
             waitDb(retryTimes - 1, retryInterval, nodeConfigFile)
         } else CliError.DatabaseOffline()
@@ -124,13 +126,16 @@ class CliExecution {
 
     private fun tryCreateBasicDataSource(nodeConfigFile: String): Connection? {
         return try {
-            val config = CommonsConfigurationFactory.readFromFile(nodeConfigFile)
+            val nodeConfig = NodeConfigurationProviderFactory.create(
+                    AppConfig.fromPropertiesFile(nodeConfigFile)
+            ).getConfiguration()
+
             BasicDataSource().apply {
-                addConnectionProperty("currentSchema", config.getString("database.schema", "public"))
-                driverClassName = config.getString("database.driverclass")
-                url = "${config.getString("database.url")}?loggerLevel=OFF"
-                username = config.getString("database.username")
-                password = config.getString("database.password")
+                addConnectionProperty("currentSchema", nodeConfig.databaseSchema)
+                driverClassName = nodeConfig.databaseDriverclass
+                url = "${nodeConfig.databaseUrl}?loggerLevel=OFF"
+                username = nodeConfig.databaseUsername
+                password = nodeConfig.databasePassword
                 defaultAutoCommit = false
             }.connection
         } catch (e: SQLException) {
@@ -140,7 +145,7 @@ class CliExecution {
         }
     }
 
-    private fun getEncodedGtxValueFromFile(blockchainConfigFile: String) :ByteArray {
+    private fun getEncodedGtxValueFromFile(blockchainConfigFile: String): ByteArray {
         val gtxValue = GTXMLValueParser.parseGTXMLValue(File(blockchainConfigFile).readText())
         return encodeGTXValue(gtxValue)
     }
