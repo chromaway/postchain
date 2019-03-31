@@ -36,11 +36,33 @@ class SAPFullEbftMultipleChainsTestNightly : IntegrationTest() {
                 blocksCount,
                 txPerBlock,
                 arrayOf(
-                        "classpath:/net/postchain/multiple_chains/ebft_nightly/single_node/node-sap0.properties"
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/single_node/node0.properties"
                 ),
                 arrayOf(
                         "/net/postchain/multiple_chains/ebft_nightly/single_node/blockchain_config_1.xml",
                         "/net/postchain/multiple_chains/ebft_nightly/single_node/blockchain_config_2.xml"
+                ))
+    }
+
+    @Test
+    @Parameters(
+            "1, 0", "2, 0", "10, 0"
+            , "1, 1", "2, 1", "10, 1"
+            , "1, 10", "2, 10", "10, 10"
+    )
+    @TestCaseName("[{index}] nodesCount: 2, blocksCount: {0}, txPerBlock: {1}")
+    fun runTwoNodesWithYTxPerBlock(blocksCount: Int, txPerBlock: Int) {
+        runXNodesWithYTxPerBlock(
+                2,
+                blocksCount,
+                txPerBlock,
+                arrayOf(
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/two_nodes/node0.properties",
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/two_nodes/node1.properties"
+                ),
+                arrayOf(
+                        "/net/postchain/multiple_chains/ebft_nightly/two_nodes/blockchain_config_1.xml",
+                        "/net/postchain/multiple_chains/ebft_nightly/two_nodes/blockchain_config_2.xml"
                 ))
     }
 
