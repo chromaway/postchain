@@ -16,4 +16,8 @@ class PostgreSQLDatabaseAccess(sqlCommands: PostgreSQLCommands) : SQLDatabaseAcc
                 longRes,
                 ctx.chainID, tx.getRID(), tx.getRawData(), tx.getHash(), ctx.blockIID)
     }
+
+    override fun addConfigurationData(context: EContext, height: Long, data: ByteArray) {
+        queryRunner.insert(context.conn, sqlCommands.insertConfiguration, longRes, context.chainID, height, data, data)
+    }
 }

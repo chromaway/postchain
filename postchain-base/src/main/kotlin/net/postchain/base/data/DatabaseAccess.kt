@@ -276,13 +276,7 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
     }
 
     override fun addConfigurationData(context: EContext, height: Long, data: ByteArray) {
-        if (sqlCommands is PostgreSQLCommands) {
-            queryRunner.insert(context.conn, sqlCommands.insertConfiguration,
-                    longRes, context.chainID, height, data, data)
-        } else {
-            queryRunner.update(context.conn, sqlCommands.insertConfiguration, context.chainID, height, data)
-        }
-
+        queryRunner.update(context.conn, sqlCommands.insertConfiguration, context.chainID, height, data)
     }
 
     private fun isMetaExists(conn : Connection) :Boolean {
