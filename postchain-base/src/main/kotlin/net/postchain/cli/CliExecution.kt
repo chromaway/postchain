@@ -17,8 +17,6 @@ import java.sql.SQLException
 
 class CliExecution {
 
-    //private val dbAccess = SQLDatabaseAccess()
-
     fun addBlockchain(nodeConfigFile: String, chainId: Long, blockchainRID: String, blockchainConfigFile: String, mode: AlreadyExistMode =  AlreadyExistMode.IGNORE) {
         val encodedGtxValue = getEncodedGtxValueFromFile(blockchainConfigFile)
 
