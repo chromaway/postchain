@@ -12,7 +12,6 @@
         <module>postchain-devtools</module>
         <module>postchain-cw-modules</module>
         <module>postchain-docker</module>
-        <module>postchain-hana</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -231,6 +230,27 @@
                                 <include>**/*IT.java</include>
                                 <include>**/*Nightly.java</include>
                                 <!--<include>**/DefaultXConnectionManagerTest.java</include>-->
+                            </includes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>sap-hana</id>
+            <modules>
+                <module>postchain-hana</module>
+            </modules>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>2.22.0</version>
+                        <configuration>
+                            <includes>
+                                <include>**/*SAP*.java</include>
                             </includes>
                         </configuration>
                     </plugin>
