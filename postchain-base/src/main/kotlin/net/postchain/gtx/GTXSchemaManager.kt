@@ -14,13 +14,10 @@ object GTXSchemaManager {
     private val nullableLongRes = ScalarHandler<Long?>()
 
     fun initializeDB(ctx: EContext) {
-        // if creating table has exception, it means table exists
-        try {
-            val db: SQLDatabaseAccess = DatabaseAccess.of(ctx) as SQLDatabaseAccess
+        val db: SQLDatabaseAccess = DatabaseAccess.of(ctx) as SQLDatabaseAccess
+        if (!db.tableExists(ctx.conn, "gtx_module_version")) {
             val sqlCommands = db.sqlCommands
             r.update(ctx.conn, sqlCommands.createTableGtxModuleVersion)
-        } catch (e : Exception) {
-
         }
     }
 

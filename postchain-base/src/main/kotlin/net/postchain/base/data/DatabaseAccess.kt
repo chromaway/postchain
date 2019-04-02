@@ -205,7 +205,7 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
          * make decisions on upgrade
          */
 
-        if (isMetaExists(connection)) {
+        if (tableExists(connection, "meta")) {
             // meta table already exists. Check the version
             val versionString = queryRunner.query(connection, "SELECT value FROM meta WHERE key='version'", ScalarHandler<String>())
             val version = versionString.toInt()
@@ -279,18 +279,15 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
         queryRunner.update(context.conn, sqlCommands.insertConfiguration, context.chainID, height, data)
     }
 
-    private fun isMetaExists(conn : Connection) :Boolean {
+    fun tableExists(connection: Connection, tableName : String) : Boolean {
         val types : Array<String> = arrayOf<String>("TABLE")
-        try {
-            val rs = conn.metaData.getTables(null, conn.schema, null, types)
-            while (rs.next()) {
-                val tableName = rs.getString(3)
-                if (tableName == "meta" || tableName == "META") {
-                    return true
-                }
+        val rs = connection.metaData.getTables(null, null, tableName, types)
+        while (rs.next()) {
+            // avoid wildcard '_' in SQL. Eg: if you pass "employee_salary" that should return something employeesalary which we don't expect
+            if (rs.getString(2).toLowerCase() == connection.schema.toLowerCase()
+                    && rs.getString(3).toLowerCase() == tableName.toLowerCase()) {
+                return true
             }
-        } catch (e :Exception) {
-            return false
         }
         return false
     }
