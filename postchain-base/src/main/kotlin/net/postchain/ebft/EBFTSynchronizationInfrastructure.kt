@@ -3,6 +3,11 @@ package net.postchain.ebft
 import net.postchain.base.*
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.common.hexStringToByteArray
+import net.postchain.common.toHex
+import net.postchain.core.BlockchainEngine
+import net.postchain.core.BlockchainProcess
+import net.postchain.core.RestartHandler
+import net.postchain.core.SynchronizationInfrastructure
 import net.postchain.core.*
 import net.postchain.ebft.message.EbftMessage
 import net.postchain.ebft.worker.ReadOnlyWorker
@@ -16,7 +21,7 @@ import org.apache.commons.configuration2.Configuration
 
 class EBFTSynchronizationInfrastructure(val config: Configuration) : SynchronizationInfrastructure {
 
-    private val connectionManager: XConnectionManager
+    /*private */val connectionManager: XConnectionManager
     private val peers = PeerInfoCollectionFactory.createPeerInfoCollection(config)
 
     init {

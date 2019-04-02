@@ -37,7 +37,7 @@ class DefaultXCommunicationManager1PeerIT {
                 .use { context ->
                     context.communicationManager.init()
 
-                    // Waiting for all connections establishing
+                    // Waiting for all connections to be established
                     await().atMost(Duration.FIVE_SECONDS)
                             .untilAsserted {
                                 val actual = context.connectionManager.getConnectedPeers(context.chainId)

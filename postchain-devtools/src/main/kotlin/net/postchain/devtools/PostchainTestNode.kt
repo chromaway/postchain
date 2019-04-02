@@ -12,19 +12,21 @@ import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.base.withWriteConnection
 import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.ebft.EBFTSynchronizationInfrastructure
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.encodeGTXValue
 import org.apache.commons.configuration2.Configuration
 
-class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
+class PostchainTestNode(private val nodeConfig: Configuration) : PostchainNode(nodeConfig) {
 
     private val storage = StorageBuilder.buildStorage(nodeConfig, NODE_ID_TODO, true)
+    private var isInitialized = false
 
     companion object : KLogging() {
         const val DEFAULT_CHAIN_ID = 1L
     }
 
-    fun addBlockchain(chainId: Long, blockchainRid: ByteArray, blockchainConfig: GTXValue) {
+    private fun initDb(chainId: Long, blockchainRid: ByteArray) {
         // TODO: [et]: Is it necessary here after StorageBuilder.buildStorage() redesign?
         withWriteConnection(storage, chainId) { eContext ->
             with(SQLDatabaseAccess()) {
@@ -34,9 +36,21 @@ class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
             true
         }
 
+        isInitialized = true
+    }
+
+    fun addBlockchain(chainId: Long, blockchainRid: ByteArray, blockchainConfig: GTXValue) {
+        initDb(chainId, blockchainRid)
+        addConfiguration(chainId, 0, blockchainConfig)
+    }
+
+
+    fun addConfiguration(chainId: Long, height: Long, blockchainConfig: GTXValue) {
+        check(isInitialized) { "PostchainNode is not initialized" }
+
         withWriteConnection(storage, chainId) { eContext ->
             BaseConfigurationDataStore.addConfigurationData(
-                    eContext, 0, encodeGTXValue(blockchainConfig))
+                    eContext, height, encodeGTXValue(blockchainConfig))
             true
         }
     }
@@ -80,6 +94,18 @@ class PostchainTestNode(nodeConfig: Configuration) : PostchainNode(nodeConfig) {
     fun blockBuildingStrategy(chainId: Long = DEFAULT_CHAIN_ID): BlockBuildingStrategy {
         return getBlockchainInstance(chainId).getEngine().getBlockBuildingStrategy()
     }
+
+    fun networkTopology(chainId: Long = DEFAULT_CHAIN_ID): Map<String, String> {
+        // TODO: [et]: Fix type casting
+        return ((blockchainInfrastructure as BaseBlockchainInfrastructure)
+                .synchronizationInfrastructure as EBFTSynchronizationInfrastructure)
+                .connectionManager.getPeersTopology(chainId)
+                .mapKeys { pubKeyToConnection ->
+                    pubKeyToConnection.key.toString()
+                }
+    }
+
+    fun pubKey(): String = nodeConfig.getString("messaging.pubkey")
 
     private fun blockchainRID(process: BlockchainProcess): String {
         return (process.getEngine().getConfiguration() as BaseBlockchainConfiguration) // TODO: [et]: Resolve type cast
