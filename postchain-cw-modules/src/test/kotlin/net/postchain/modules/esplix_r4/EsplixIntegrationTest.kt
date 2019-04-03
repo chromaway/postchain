@@ -6,7 +6,6 @@ import net.postchain.common.toHex
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
-import net.postchain.gtx.GTXBlockchainConfigurationFactory
 import net.postchain.gtx.GTXDataBuilder
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.modules.esplix_r4.BaseEsplixModuleFactory
@@ -51,7 +50,7 @@ class EsplixIntegrationTest : IntegrationTest() {
         fun buildBlockAndCommitWithTx(data: ByteArray, fail: Boolean = false) {
             currentBlockHeight += 1
             try {
-                val tx = node.getBlockchainInstance().blockchainConfiguration.getTransactionFactory().decodeTransaction(data)
+                val tx = node.getBlockchainInstance().getEngine().getConfiguration().getTransactionFactory().decodeTransaction(data)
                 node.getBlockchainInstance().getEngine().getTransactionQueue().enqueue(tx)
                 buildBlockAndCommit(node.getBlockchainInstance().getEngine())
                 Assert.assertEquals(currentBlockHeight, getBestHeight(node))

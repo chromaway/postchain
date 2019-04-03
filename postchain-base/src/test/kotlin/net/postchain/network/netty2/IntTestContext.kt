@@ -4,7 +4,6 @@ import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import net.postchain.base.PeerInfo
-import net.postchain.network.PacketConverter
 import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPacketHandler
 
@@ -19,7 +18,11 @@ class IntTestContext(
         on { onPeerConnected(any(), any()) } doReturn packets
     }
 
-    val peer = NettyConnector<PacketConverter<Int>>(
-            IntMockIntegerPacketConverter(ownerPeerInfo, peerInfos),
+    val peer = NettyConnector<Int>(
+//            IntMockIntegerPacketConverter(ownerPeerInfo, peerInfos),
             events)
+
+    val packetEncoder = IntMockPacketEncoder(ownerPeerInfo)
+
+    val packetDecoder = IntMockPacketDecoder(peerInfos)
 }

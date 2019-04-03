@@ -38,8 +38,8 @@ class IntNettyConnector2PeersTest {
         context2 = IntTestContext(peerInfo2, arrayOf(peerInfo1, peerInfo2))
 
         // Initializing
-        context1.peer.init(peerInfo1)
-        context2.peer.init(peerInfo2)
+        context1.peer.init(peerInfo1, context1.packetDecoder)
+        context2.peer.init(peerInfo2, context2.packetDecoder)
     }
 
     @After
@@ -52,7 +52,7 @@ class IntNettyConnector2PeersTest {
     fun twoPeers_ConnectAndCommunicate_Successfully() {
         // Connecting 1 -> 2
         val peerDescriptor2 = XPeerConnectionDescriptor(peerInfo2.peerId(), blockchainRid.byteArrayKeyOf())
-        context1.peer.connectPeer(peerDescriptor2, peerInfo2)
+        context1.peer.connectPeer(peerDescriptor2, peerInfo2, context1.packetEncoder)
 
         // Waiting for all connections establishing
         val (descriptor1, connection1) = argumentCaptor2<XPeerConnectionDescriptor, XPeerConnection>()

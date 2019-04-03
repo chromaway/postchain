@@ -31,3 +31,14 @@ class DynamicPortPeerInfo(host: String, pubKey: ByteArray, privateKey: ByteArray
  */
 fun PeerInfo.peerId() = ByteArrayKey(this.pubKey)
 
+/**
+ * Resolves peer by pubKey and returns [PeerInfo]? object
+ */
+object DefaultPeerResolver {
+
+    fun resolvePeer(peerPubKey: ByteArray, peerInfos: Array<PeerInfo>): PeerInfo? =
+            peerInfos.find { it.pubKey.contentEquals(peerPubKey) }
+
+    fun resolvePeerIndex(peerPubKey: ByteArray, peerInfos: Array<PeerInfo>): Int =
+            peerInfos.indexOfFirst { it.pubKey.contentEquals(peerPubKey) }
+}

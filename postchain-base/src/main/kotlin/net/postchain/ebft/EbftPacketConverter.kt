@@ -8,11 +8,15 @@ import net.postchain.ebft.message.Message
 import net.postchain.gtv.*
 import net.postchain.network.IdentPacketInfo
 import net.postchain.network.PacketConverter
+import net.postchain.network.XPacketDecoder
+import net.postchain.network.XPacketEncoder
 
 // TODO: [et]: Redesign ident stage
-class EbftPacketConverter(val config: PeerCommConfiguration) : PacketConverter<Message> {
+@Deprecated("TODO: [et]: Remove it. Was replaced by pair Encoder/Decoder")
+class EbftPacketConverter(val config: PeerCommConfiguration) : PacketConverter<EbftMessage> {
     override fun makeIdentPacket(forPeer: ByteArray): ByteArray {
-        val bytes = GtvEncoder.encodeGtv(Identification(forPeer, config.blockchainRID, System.currentTimeMillis()).toGtv())
+        val bytes = GtvEncoder.encodeGtv(Identification(forPeer, config.blockchainRID,
+                System.currentTimeMillis()).toGtv())
         val sigMaker = config.sigMaker()
         val signature = sigMaker.signMessage(bytes) // TODO POS-04_sig I THINK this is one of the cases where we actually sign the data
         return GtvEncoder.encodeGtv(GtvArray(arrayOf(GtvByteArray(bytes),
@@ -34,15 +38,15 @@ class EbftPacketConverter(val config: PeerCommConfiguration) : PacketConverter<M
         return IdentPacketInfo(signedMessage.pubKey, message.blockchainRID, null)
     }
 
-    override fun decodePacket(pubKey: ByteArray, bytes: ByteArray): Message {
+    override fun decodePacket(pubKey: ByteArray, bytes: ByteArray): EbftMessage {
         return decodeAndVerify(bytes, pubKey, config.verifier())
     }
 
-    override fun decodePacket(bytes: ByteArray): Message? {
+    override fun decodePacket(bytes: ByteArray): EbftMessage? {
         return decodeAndVerify(bytes, config.verifier())
     }
 
-    override fun encodePacket(packet: Message): ByteArray {
+    override fun encodePacket(packet: EbftMessage): ByteArray {
         return encodeAndSign(packet, config.sigMaker())
     }
 

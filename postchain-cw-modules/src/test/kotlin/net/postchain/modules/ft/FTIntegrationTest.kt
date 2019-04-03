@@ -13,7 +13,7 @@ import net.postchain.modules.ft.BasicAccount
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
-import net.postchain.devtools.SingleChainTestNode
+import net.postchain.devtools.PostchainTestNode
 
 val testBlockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3".hexStringToByteArray()
 val myCS = SECP256K1CryptoSystem()
@@ -91,7 +91,7 @@ open class FTIntegrationTest : IntegrationTest() {
         return b.serialize()
     }
 
-    fun enqueueTx(node: SingleChainTestNode, data: ByteArray): Transaction? {
+    fun enqueueTx(node: PostchainTestNode, data: ByteArray): Transaction? {
         return enqueueTx(node, data, -1)
     }
 

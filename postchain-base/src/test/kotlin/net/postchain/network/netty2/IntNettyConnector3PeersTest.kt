@@ -41,9 +41,9 @@ class IntNettyConnector3PeersTest {
         context3 = IntTestContext(peerInfo3, arrayOf(peerInfo1, peerInfo2, peerInfo3))
 
         // Initializing
-        context1.peer.init(peerInfo1)
-        context2.peer.init(peerInfo2)
-        context3.peer.init(peerInfo3)
+        context1.peer.init(peerInfo1, context1.packetDecoder)
+        context2.peer.init(peerInfo2, context2.packetDecoder)
+        context3.peer.init(peerInfo3, context3.packetDecoder)
     }
 
     @After
@@ -58,12 +58,12 @@ class IntNettyConnector3PeersTest {
         // Connecting
         // * 1 -> 2
         val peerDescriptor2 = XPeerConnectionDescriptor(peerInfo2.peerId(), blockchainRid.byteArrayKeyOf())
-        context1.peer.connectPeer(peerDescriptor2, peerInfo2)
+        context1.peer.connectPeer(peerDescriptor2, peerInfo2, context1.packetEncoder)
         // * 1 -> 3
         val peerDescriptor3 = XPeerConnectionDescriptor(peerInfo3.peerId(), blockchainRid.byteArrayKeyOf())
-        context1.peer.connectPeer(peerDescriptor3, peerInfo3)
+        context1.peer.connectPeer(peerDescriptor3, peerInfo3, context1.packetEncoder)
         // * 3 -> 2
-        context3.peer.connectPeer(peerDescriptor2, peerInfo2)
+        context3.peer.connectPeer(peerDescriptor2, peerInfo2, context3.packetEncoder)
 
         // Waiting for all connections establishing
         val (descriptor1, connection1) = argumentCaptor2<XPeerConnectionDescriptor, XPeerConnection>()

@@ -2,26 +2,30 @@ package net.postchain.network.x
 
 import mu.KLogging
 import net.postchain.base.CryptoSystem
-import net.postchain.base.PeerInfo
+import net.postchain.base.PeerCommConfiguration
 import net.postchain.common.toHex
 import net.postchain.core.ByteArrayKey
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.byteArrayKeyOf
-import net.postchain.network.PacketConverter
+import net.postchain.network.XPacketDecoderFactory
+import net.postchain.network.XPacketEncoderFactory
 import nl.komponents.kovenant.task
 import java.util.*
 import kotlin.concurrent.schedule
 
-class DefaultXConnectionManager<PC : PacketConverter<*>>(
-        connectorFactory: XConnectorFactory<PC>,
-        private val myPeerInfo: PeerInfo,
-        packetConverter: PC,
+class DefaultXConnectionManager<PacketType>(
+        connectorFactory: XConnectorFactory<PacketType>,
+        val peerCommConfiguration: PeerCommConfiguration,
+        private val packetEncoderFactory: XPacketEncoderFactory<PacketType>,
+        private val packetDecoderFactory: XPacketDecoderFactory<PacketType>,
         cryptoSystem: CryptoSystem,
         private val peersConnectionStrategy: PeersConnectionStrategy = DefaultPeersConnectionStrategy
 ) : XConnectionManager, XConnectorEvents {
 
     private val connector = connectorFactory.createConnector(
-            myPeerInfo, packetConverter, this, cryptoSystem)
+            peerCommConfiguration.myPeerInfo(),
+            packetDecoderFactory.create(peerCommConfiguration),
+            this)
 
     companion object : KLogging()
 
@@ -60,7 +64,7 @@ class DefaultXConnectionManager<PC : PacketConverter<*>>(
             ok = false
         }
         chains[peerConfig.chainID] = Chain(peerConfig, autoConnectAll)
-        chainIDforBlockchainRID[peerConfig.commConfiguration.blockchainRID.byteArrayKeyOf()] =
+        chainIDforBlockchainRID[peerConfig.blockchainRID.byteArrayKeyOf()] =
                 peerConfig.chainID
 
         if (autoConnectAll) {
@@ -79,13 +83,17 @@ class DefaultXConnectionManager<PC : PacketConverter<*>>(
 
         val peerConnectionDescriptor = XPeerConnectionDescriptor(
                 peerId,
-                peerConfig.commConfiguration.blockchainRID.byteArrayKeyOf())
+                peerConfig.blockchainRID.byteArrayKeyOf())
 
         val peerInfo = peerConfig.commConfiguration.resolvePeer(peerId.byteArray)
                 ?: throw ProgrammerMistake("Peer ID not found: ${peerId.byteArray.toHex()}")
 
+        val packetEncoder = packetEncoderFactory.create(
+                peerConfig.commConfiguration,
+                peerConfig.blockchainRID)
+
         task {
-            connector.connectPeer(peerConnectionDescriptor, peerInfo)
+            connector.connectPeer(peerConnectionDescriptor, peerInfo, packetEncoder)
             logger.debug { "${myPeerId()}: Chain peer connected: chain = ${peerConfig.chainID}, peer = $peerId" }
         }
     }
@@ -208,5 +216,6 @@ class DefaultXConnectionManager<PC : PacketConverter<*>>(
         }
     }
 
-    private fun myPeerId(): ByteArrayKey = myPeerInfo.pubKey.byteArrayKeyOf()
+    private fun myPeerId(): ByteArrayKey =
+            peerCommConfiguration.myPeerInfo().pubKey.byteArrayKeyOf()
 }

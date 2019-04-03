@@ -12,6 +12,7 @@
 
     <properties>
         <maven.shade.plugin.version>3.1.1</maven.shade.plugin.version>
+        <assertk.version>0.10</assertk.version>
     </properties>
 
     <dependencies>
@@ -66,6 +67,13 @@
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
             <version>3.1.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.willowtreeapps.assertk</groupId>
+            <artifactId>assertk</artifactId>
+            <version>${assertk.version}</version>
             <scope>test</scope>
         </dependency>
 

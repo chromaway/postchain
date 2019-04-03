@@ -3,9 +3,10 @@ package net.postchain.network.netty2
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
+import io.netty.channel.EventLoopGroup
 import net.postchain.base.PeerInfo
 import net.postchain.base.peerId
-import net.postchain.network.IdentPacketConverter
+import net.postchain.network.XPacketEncoder
 import net.postchain.network.x.LazyPacket
 import net.postchain.network.x.XPacketHandler
 import net.postchain.network.x.XPeerConnection
@@ -13,12 +14,13 @@ import nl.komponents.kovenant.task
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 
-class NettyClientPeerConnection(
+class NettyClientPeerConnection<PacketType>(
+        group: EventLoopGroup,
         val peerInfo: PeerInfo,
-        val identPacketConverter: IdentPacketConverter
+        private val packetEncoder: XPacketEncoder<PacketType>
 ) : ChannelInboundHandlerAdapter(), XPeerConnection {
 
-    private val nettyClient = NettyClient()
+    private val nettyClient = NettyClient(group)
     private lateinit var context: ChannelHandlerContext
     private var packetHandler: XPacketHandler? = null
     private lateinit var onDisconnected: () -> Unit
@@ -72,6 +74,6 @@ class NettyClientPeerConnection(
 
     private fun buildIdentPacket(): ByteBuf {
         return Transport.wrapMessage(
-                identPacketConverter.makeIdentPacket(peerInfo.pubKey))
+                packetEncoder.makeIdentPacket(peerInfo.pubKey))
     }
 }

@@ -50,23 +50,28 @@ class EbftNettyConnector3PeersTest {
 
         // Creating
         context1 = EbftTestContext(
-                BasePeerCommConfiguration(peers, blockchainRid, 0, cryptoSystem, privKey1))
+                BasePeerCommConfiguration(peers, 0, cryptoSystem, privKey1),
+                blockchainRid)
+
         context2 = EbftTestContext(
-                BasePeerCommConfiguration(peers, blockchainRid, 1, cryptoSystem, privKey2))
+                BasePeerCommConfiguration(peers, 1, cryptoSystem, privKey2),
+                blockchainRid)
+
         context3 = EbftTestContext(
-                BasePeerCommConfiguration(peers, blockchainRid, 2, cryptoSystem, privKey3))
+                BasePeerCommConfiguration(peers, 2, cryptoSystem, privKey3),
+                blockchainRid)
 
         // Initializing
-        context1.peer.init(peerInfo1)
-        context2.peer.init(peerInfo2)
-        context3.peer.init(peerInfo3)
+        context1.init()
+        context2.init()
+        context3.init()
     }
 
     @After
     fun tearDown() {
-        context1.peer.shutdown()
-        context2.peer.shutdown()
-        context3.peer.shutdown()
+        context1.shutdown()
+        context2.shutdown()
+        context3.shutdown()
     }
 
     @Test
@@ -74,12 +79,12 @@ class EbftNettyConnector3PeersTest {
         // Connecting
         // * 1 -> 2
         val peerDescriptor2 = XPeerConnectionDescriptor(peerInfo2.peerId(), blockchainRid.byteArrayKeyOf())
-        context1.peer.connectPeer(peerDescriptor2, peerInfo2)
+        context1.peer.connectPeer(peerDescriptor2, peerInfo2, context1.buildPacketEncoder())
         // * 1 -> 3
         val peerDescriptor3 = XPeerConnectionDescriptor(peerInfo3.peerId(), blockchainRid.byteArrayKeyOf())
-        context1.peer.connectPeer(peerDescriptor3, peerInfo3)
+        context1.peer.connectPeer(peerDescriptor3, peerInfo3, context2.buildPacketEncoder())
         // * 3 -> 2
-        context3.peer.connectPeer(peerDescriptor2, peerInfo2)
+        context3.peer.connectPeer(peerDescriptor2, peerInfo2, context3.buildPacketEncoder())
 
         // Waiting for all connections establishing
         val (descriptor1, connection1) = argumentCaptor2<XPeerConnectionDescriptor, XPeerConnection>()

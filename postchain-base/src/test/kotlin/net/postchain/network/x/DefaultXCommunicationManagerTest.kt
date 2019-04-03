@@ -7,22 +7,29 @@ import com.nhaarman.mockitokotlin2.*
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerInfo
 import net.postchain.base.peerId
-import net.postchain.network.PacketConverter
+import net.postchain.network.XPacketDecoder
+import net.postchain.network.XPacketEncoder
 import org.junit.Before
 import org.junit.Test
 
 class DefaultXCommunicationManagerTest {
 
-    private val CHAIN_ID = 1L
     private val blockchainRid = byteArrayOf(0x01)
     private lateinit var peerInfo1: PeerInfo
     private lateinit var peerInfo2: PeerInfo
 
+    private val pubKey1 = byteArrayOf(0x01)
+    private val pubKey2 = byteArrayOf(0x02)
+
+    companion object {
+        private val CHAIN_ID = 1L
+    }
+
     @Before
     fun setUp() {
         // TODO: [et]: Make dynamic ports
-        peerInfo1 = PeerInfo("localhost", 3331, byteArrayOf(0x01))
-        peerInfo2 = PeerInfo("localhost", 3332, byteArrayOf(0x02))
+        peerInfo1 = PeerInfo("localhost", 3331, pubKey1)
+        peerInfo2 = PeerInfo("localhost", 3332, pubKey2)
     }
 
     @Test
@@ -30,14 +37,14 @@ class DefaultXCommunicationManagerTest {
         // Given
         val connectionManager: XConnectionManager = mock()
         val peerCommunicationConfig: PeerCommConfiguration = mock {
-            on { blockchainRID } doReturn blockchainRid
             on { peerInfo } doReturn arrayOf()
         }
-        val packetConverter: PacketConverter<Int> = mock()
+        val packetEncoder: XPacketEncoder<Int> = mock()
+        val packetDecoder: XPacketDecoder<Int> = mock()
 
         // When
         val communicationManager = DefaultXCommunicationManager(
-                connectionManager, peerCommunicationConfig, CHAIN_ID, packetConverter)
+                connectionManager, peerCommunicationConfig, CHAIN_ID, blockchainRid, packetEncoder, packetDecoder)
         communicationManager.init()
 
         // Then
@@ -48,7 +55,7 @@ class DefaultXCommunicationManagerTest {
             assert(firstValue.commConfiguration).isSameAs(peerCommunicationConfig)
 //            val f: XPacketHandler = { _, _ -> ; } // TODO: Assert function types
 //            assert(firstValue.packetHandler).isInstanceOf(f.javaClass)
-            assert(firstValue.identPacketConverter).isSameAs(packetConverter)
+//            assert(firstValue.identPacketConverter).isSameAs(packetConverter)
         }
 
         communicationManager.shutdown()
@@ -59,16 +66,16 @@ class DefaultXCommunicationManagerTest {
         // Given
         val connectionManager: XConnectionManager = mock()
         val peerCommunicationConfig: PeerCommConfiguration = mock {
-            on { blockchainRID } doReturn blockchainRid
             on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
             on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
             on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
         }
-        val packetConverter: PacketConverter<Int> = mock()
+        val packetEncoder: XPacketEncoder<Int> = mock()
+        val packetDecoder: XPacketDecoder<Int> = mock()
 
         // When
         val communicationManager = DefaultXCommunicationManager(
-                connectionManager, peerCommunicationConfig, CHAIN_ID, packetConverter)
+                connectionManager, peerCommunicationConfig, CHAIN_ID, blockchainRid, packetEncoder, packetDecoder)
         communicationManager.init()
 
         // Then
@@ -79,60 +86,46 @@ class DefaultXCommunicationManagerTest {
             assert(firstValue.commConfiguration).isSameAs(peerCommunicationConfig)
 //            val f: XPacketHandler = { _, _ -> ; } // TODO: Assert function types
 //            assert(firstValue.packetHandler).isInstanceOf(f.javaClass)
-            assert(firstValue.identPacketConverter).isSameAs(packetConverter)
+//            assert(firstValue.identPacketConverter).isSameAs(packetConverter)
         }
 
         communicationManager.shutdown()
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun sendPacket_will_result_in_exception_if_no_recipients_was_given() {
-        // When / Then exception
-        DefaultXCommunicationManager(mock(), mock(), CHAIN_ID, mock<PacketConverter<Int>>())
-                .apply {
-                    sendPacket(0, setOf())
-                }
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun sendPacket_will_result_in_exception_if_more_then_one_recipients_was_given() {
-        // When / Then exception
-        DefaultXCommunicationManager(mock(), mock(), CHAIN_ID, mock<PacketConverter<Int>>())
-                .apply {
-                    sendPacket(0, setOf(0, 42))
-                }
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun sendPacket_will_result_in_exception_if_too_big_recipient_index_was_given() {
+    fun sendPacket_will_result_in_exception_if_empty_XPeerID_was_given() {
         // Given
-        val peersConfig: PeerCommConfiguration = mock {
+        val connectionManager: XConnectionManager = mock()
+        val peerCommunicationConfig: PeerCommConfiguration = mock {
             on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
         }
 
-        // When / Then exception
-        DefaultXCommunicationManager(mock(), peersConfig, CHAIN_ID, mock<PacketConverter<Int>>())
-                .apply {
-                    sendPacket(0, setOf(42))
-                }
+        // When
+        val communicationManager = DefaultXCommunicationManager<Int>(
+                connectionManager, peerCommunicationConfig, CHAIN_ID, blockchainRid, mock(), mock())
+        communicationManager.init()
+        communicationManager.sendPacket(0, XPeerID(byteArrayOf()))
+        communicationManager.shutdown()
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun sendPacket_will_result_in_exception_if_negative_recipient_index_was_given() {
+    fun sendPacket_will_result_in_exception_if_unknown_recipient_was_given() {
         // Given
-        val peersConfig: PeerCommConfiguration = mock {
+        val connectionManager: XConnectionManager = mock()
+        val peerCommunicationConfig: PeerCommConfiguration = mock {
             on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
         }
 
-        // When / Then exception
-        DefaultXCommunicationManager(mock(), peersConfig, CHAIN_ID, mock<PacketConverter<Int>>())
-                .apply {
-                    sendPacket(0, setOf(-1))
-                }
+        // When
+        val communicationManager = DefaultXCommunicationManager<Int>(
+                connectionManager, peerCommunicationConfig, CHAIN_ID, blockchainRid, mock(), mock())
+        communicationManager.init()
+        communicationManager.sendPacket(0, XPeerID(byteArrayOf(0x42)))
+        communicationManager.shutdown()
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun sendPacket_will_result_in_exception_if_myIndex_was_given() {
+    fun sendPacket_will_result_in_exception_if_my_XPeerID_was_given() {
         // Given
         val peersConfig: PeerCommConfiguration = mock {
             on { myIndex } doReturn 1
@@ -140,9 +133,9 @@ class DefaultXCommunicationManagerTest {
         }
 
         // When / Then exception
-        DefaultXCommunicationManager(mock(), peersConfig, CHAIN_ID, mock<PacketConverter<Int>>())
+        DefaultXCommunicationManager<Int>(mock(), peersConfig, CHAIN_ID, blockchainRid, mock(), mock())
                 .apply {
-                    sendPacket(0, setOf(1))
+                    sendPacket(0, XPeerID(pubKey2))
                 }
     }
 
@@ -152,20 +145,17 @@ class DefaultXCommunicationManagerTest {
         val peerInfo1Mock: PeerInfo = spy(peerInfo1)
         val connectionManager: XConnectionManager = mock()
         val peerCommunicationConfig: PeerCommConfiguration = mock {
-            on { blockchainRID } doReturn blockchainRid
             on { peerInfo } doReturn arrayOf(peerInfo1Mock, peerInfo2)
             on { myIndex } doReturn 1
         }
 
         // When
-        val communicationManager = DefaultXCommunicationManager(
-                connectionManager,
-                peerCommunicationConfig,
-                CHAIN_ID,
-                mock<PacketConverter<Int>>())
+        val communicationManager = DefaultXCommunicationManager<Int>(
+                connectionManager, peerCommunicationConfig, CHAIN_ID, blockchainRid, mock(), mock()
+        )
                 .apply {
                     init()
-                    sendPacket(0, setOf(0))
+                    sendPacket(0, XPeerID(pubKey1))
                 }
 
         // Then
@@ -182,7 +172,9 @@ class DefaultXCommunicationManagerTest {
         val connectionManager: XConnectionManager = mock()
 
         // When
-        val communicationManager = DefaultXCommunicationManager(connectionManager, mock(), CHAIN_ID, mock<PacketConverter<Int>>())
+        val communicationManager = DefaultXCommunicationManager<Int>(
+                connectionManager, mock(), CHAIN_ID, blockchainRid, mock(), mock()
+        )
                 .apply {
                     init()
                     broadcastPacket(42)
@@ -200,7 +192,9 @@ class DefaultXCommunicationManagerTest {
         val connectionManager: XConnectionManager = mock()
 
         // When
-        val communicationManager = DefaultXCommunicationManager(connectionManager, mock(), CHAIN_ID, mock<PacketConverter<Int>>())
+        val communicationManager = DefaultXCommunicationManager<Int>(
+                connectionManager, mock(), CHAIN_ID, blockchainRid, mock(), mock()
+        )
                 .apply {
                     init()
                     shutdown()

@@ -80,8 +80,8 @@ class DefaultXCommunicationManager2IT {
         }
 
         // When
-        val context1 = IntegrationTestContext(connectorFactory, blockchainRid, peerInfos, 0, packetConverter1)
-        val context2 = IntegrationTestContext(connectorFactory, blockchainRid, peerInfos, 1, packetConverter2)
+        val context1 = IntegrationTestContext(mock()/*connectorFactory*/, peerInfos, 0)
+        val context2 = IntegrationTestContext(mock()/*connectorFactory*/, peerInfos, 1)
 
         // TODO: [et]: Fix two-connected-nodes problem
         await().atMost(FIVE_SECONDS)
@@ -97,13 +97,13 @@ class DefaultXCommunicationManager2IT {
 //        println("getConnectedPeers 1: ${communicationManager2.connectionManager.getConnectedPeers(1L).asString()}")
 
         // Interactions
-        context1.communicationManager.sendPacket(2, setOf(1))
+        context1.communicationManager.sendPacket(2, XPeerID(publicKey2))
 
-        context2.communicationManager.sendPacket(1, setOf(0))
-        context2.communicationManager.sendPacket(11, setOf(0))
+        context2.communicationManager.sendPacket(1, XPeerID(publicKey))
+        context2.communicationManager.sendPacket(11, XPeerID(publicKey))
 
-        context1.communicationManager.sendPacket(22, setOf(1))
-        context1.communicationManager.sendPacket(222, setOf(1))
+        context1.communicationManager.sendPacket(22, XPeerID(publicKey2))
+        context1.communicationManager.sendPacket(222, XPeerID(publicKey2))
 
         // Waiting for all transfers
         TimeUnit.SECONDS.sleep(1)

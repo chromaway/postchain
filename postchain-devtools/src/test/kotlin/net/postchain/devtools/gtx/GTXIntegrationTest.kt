@@ -54,7 +54,7 @@ class GTXIntegrationTest : IntegrationTest() {
 
         fun enqueueTx(data: ByteArray): Transaction? {
             try {
-                val tx = node.getBlockchainInstance().blockchainConfiguration.getTransactionFactory().decodeTransaction(data)
+                val tx = node.getBlockchainInstance().getEngine().getConfiguration().getTransactionFactory().decodeTransaction(data)
                 node.getBlockchainInstance().getEngine().getTransactionQueue().enqueue(tx)
                 return tx
             } catch (e: Exception) {

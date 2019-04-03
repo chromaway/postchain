@@ -4,12 +4,13 @@ import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import net.postchain.base.PeerCommConfiguration
-import net.postchain.ebft.EbftPacketConverter
-import net.postchain.ebft.message.Message
+import net.postchain.ebft.EbftPacketDecoder
+import net.postchain.ebft.EbftPacketEncoder
+import net.postchain.ebft.message.EbftMessage
 import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPacketHandler
 
-class EbftTestContext(config: PeerCommConfiguration) {
+class EbftTestContext(val config: PeerCommConfiguration, val blockchainRid: ByteArray) {
 
     val packets: XPacketHandler = mock()
 
@@ -17,9 +18,17 @@ class EbftTestContext(config: PeerCommConfiguration) {
         on { onPeerConnected(any(), any()) } doReturn packets
     }
 
-    val peer = NettyConnector(EbftPacketConverter(config), events)
+    val peer = NettyConnector<EbftMessage>(events)
 
-    fun encodePacket(message: Message): ByteArray = peer.packetConverter.encodePacket(message)
+    fun init() = peer.init(config.myPeerInfo(), EbftPacketDecoder(config))
 
-    fun decodePacket(bytes: ByteArray): Message = peer.packetConverter.decodePacket(bytes)!!
+    fun buildPacketEncoder(): EbftPacketEncoder = EbftPacketEncoder(config, blockchainRid)
+
+    fun buildPacketDecoder(): EbftPacketDecoder = EbftPacketDecoder(config)
+
+    fun encodePacket(message: EbftMessage): ByteArray = buildPacketEncoder().encodePacket(message)
+
+    fun decodePacket(bytes: ByteArray): EbftMessage = buildPacketDecoder().decodePacket(bytes)!!
+
+    fun shutdown = peer.shutdown()
 }

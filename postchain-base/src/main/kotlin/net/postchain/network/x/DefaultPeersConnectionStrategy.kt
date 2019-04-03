@@ -17,7 +17,8 @@ object DefaultPeersConnectionStrategy : PeersConnectionStrategy {
         }
 
         // myIndex
-        val message = "Invalid PeerCommConfiguration: myIndex must be in range ${configuration.peerInfo.indices}"
+        val message = "Invalid PeerCommConfiguration: myIndex ${configuration.myIndex} " +
+                "must be in range ${configuration.peerInfo.indices}"
         require(configuration.myIndex >= 0) { message }
         require(configuration.myIndex < configuration.peerInfo.size) { message }
     }

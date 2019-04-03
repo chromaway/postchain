@@ -2,12 +2,11 @@
 
 package net.postchain.base.data
 
+import net.postchain.base.BaseEContext
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.core.EContext
 import net.postchain.core.UserMistake
-import org.easymock.EasyMock.expect
-import org.easymock.EasyMock.mock
-import org.easymock.EasyMock.replay
+import org.easymock.EasyMock.*
 import org.junit.Assert.assertArrayEquals
 import org.junit.Before
 import org.junit.Test
@@ -24,7 +23,7 @@ class BaseBlockStoreTest {
         sut = BaseBlockStore()
         db = mock(DatabaseAccess::class.java)
         sut.db = db
-        ctx = EContext(mock(Connection::class.java), 2L, 0)
+        ctx = BaseEContext(mock(Connection::class.java), 2L, 0, SQLDatabaseAccess())
     }
 
     @Test

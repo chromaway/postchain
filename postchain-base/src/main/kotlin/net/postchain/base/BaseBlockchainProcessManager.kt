@@ -15,7 +15,7 @@ class BaseBlockchainProcessManager(
     private val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
 
     override fun startBlockchain(chainId: Long) {
-        blockchainProcesses[chainId]?.shutdown()
+        stopBlockchain(chainId)
 
         withReadConnection(storage, chainId) { eContext ->
             val blockchainRID = dbAccess.getBlockchainRID(eContext)!! // TODO: [et]: Fix Kotlin NPE
@@ -41,6 +41,11 @@ class BaseBlockchainProcessManager(
 
     override fun retrieveBlockchain(chainId: Long): BlockchainProcess? {
         return blockchainProcesses[chainId]
+    }
+
+    override fun stopBlockchain(chainId: Long) {
+        blockchainProcesses.remove(chainId)
+                ?.shutdown()
     }
 
     override fun shutdown() {

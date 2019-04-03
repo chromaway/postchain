@@ -5,14 +5,15 @@ import io.netty.channel.*
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
+import io.netty.util.concurrent.PromiseCombiner
 import net.postchain.core.Shutdownable
 import java.net.SocketAddress
+import java.util.concurrent.TimeUnit
 
-class NettyClient : Shutdownable {
+class NettyClient(val group: EventLoopGroup) : Shutdownable {
 
     private lateinit var client: Bootstrap
     lateinit var connectFuture: ChannelFuture
-    private lateinit var group: EventLoopGroup
     private lateinit var channelHandler: ChannelHandler
 
     fun setChannelHandler(channelHandler: ChannelHandler) {
@@ -20,8 +21,6 @@ class NettyClient : Shutdownable {
     }
 
     fun connect(peerAddress: SocketAddress) {
-        group = NioEventLoopGroup()
-
         client = Bootstrap()
                 .group(group)
                 .channel(NioSocketChannel::class.java)
@@ -44,6 +43,5 @@ class NettyClient : Shutdownable {
     override fun shutdown() {
         connectFuture.channel().close()
         connectFuture.channel().closeFuture().sync()
-        group.shutdownGracefully().sync()
     }
 }

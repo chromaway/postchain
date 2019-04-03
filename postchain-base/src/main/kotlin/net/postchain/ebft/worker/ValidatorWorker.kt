@@ -1,11 +1,17 @@
-package net.postchain.ebft
+package net.postchain.ebft.worker
 
 import net.postchain.base.NetworkAwareTxQueue
 import net.postchain.core.BlockchainConfiguration
 import net.postchain.core.BlockchainEngine
 import net.postchain.core.NODE_ID_AUTO
 import net.postchain.core.RestartHandler
-import net.postchain.ebft.message.Message
+import net.postchain.ebft.BaseBlockDatabase
+import net.postchain.ebft.BaseBlockManager
+import net.postchain.ebft.BaseStatusManager
+import net.postchain.ebft.BlockManager
+import net.postchain.ebft.message.EbftMessage
+import net.postchain.ebft.syncmanager.SyncManagerBase
+import net.postchain.ebft.syncmanager.ValidatorSyncManager
 import net.postchain.network.CommunicationManager
 import kotlin.concurrent.thread
 
@@ -13,30 +19,31 @@ import kotlin.concurrent.thread
  * A blockchain instance worker
  *
  * @property updateLoop the main thread
- * @property peerInfos information relating to our peers
+ * @property blockManager manages intents and acts as a wrapper for [blockDatabase] and [statusManager]
+ * @property statusManager manages the status of the consensus protocol
  */
-open class EBFTBlockchainInstanceWorker(
+class ValidatorWorker(
+        private val signers: List<ByteArray>,
         private val engine: BlockchainEngine,
         nodeIndex: Int,
-        communicationManager: CommunicationManager<Message>,
+        private val communicationManager: CommunicationManager<EbftMessage>,
         val restartHandler: RestartHandler // TODO: Maybe redesign this feature
-) : BlockchainInstanceModel {
+) : WorkerBase {
 
     private lateinit var updateLoop: Thread
-    override val blockchainConfiguration: BlockchainConfiguration
+    override val blockchainConfiguration: BlockchainConfiguration = engine.getConfiguration()
     override val blockDatabase: BaseBlockDatabase
-    override val blockManager: BlockManager
-    override val statusManager: BaseStatusManager
-    override val syncManager: SyncManager
+    private val blockManager: BlockManager
+    val statusManager: BaseStatusManager
+    override val syncManager: ValidatorSyncManager
     override val networkAwareTxQueue: NetworkAwareTxQueue
 
     init {
-        blockchainConfiguration = engine.getConfiguration()
 
         val blockQueries = engine.getBlockQueries()
         val bestHeight = blockQueries.getBestHeight().get()
         statusManager = BaseStatusManager(
-                communicationManager.peers().size,
+                signers.size,
                 nodeIndex,
                 bestHeight + 1)
 
@@ -50,7 +57,8 @@ open class EBFTBlockchainInstanceWorker(
 
         // Give the SyncManager the BaseTransactionQueue and not the network-aware one,
         // because we don't want tx forwarding/broadcasting when received through p2p network
-        syncManager = SyncManager(
+        syncManager = ValidatorSyncManager(
+                signers,
                 statusManager,
                 blockManager,
                 blockDatabase,
@@ -76,20 +84,18 @@ open class EBFTBlockchainInstanceWorker(
      *
      * @param syncManager the syncronization manager
      */
-    private fun startUpdateLoop(syncManager: SyncManager) {
+    private fun startUpdateLoop(syncManager: SyncManagerBase) {
         updateLoop = thread(name = "updateLoop") {
             while (!Thread.interrupted()) {
                 try {
                     syncManager.update()
-                }
-                catch (e: Exception) {
+                } catch (e: Exception) {
                     e.printStackTrace()
                 }
 
                 try {
-                    Thread.sleep(50)
+                    Thread.sleep(20)
                 } catch (e: InterruptedException) {
-                    e.printStackTrace()
                     Thread.currentThread().interrupt()
                 }
             }
@@ -104,5 +110,6 @@ open class EBFTBlockchainInstanceWorker(
         updateLoop.join()
         engine.shutdown()
         blockDatabase.stop()
+        communicationManager.shutdown()
     }
 }

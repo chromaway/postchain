@@ -1,15 +1,17 @@
 // Copyright (c) 2017 ChromaWay Inc. See README for license information.
 
-package net.postchain.ebft
+package net.postchain.ebft.syncmanager
 
 import mu.KLogging
 import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.ebft.*
 import net.postchain.core.Signature
 import net.postchain.ebft.message.*
 import net.postchain.ebft.message.BlockData
 import net.postchain.ebft.message.Transaction
 import net.postchain.network.CommunicationManager
+import net.postchain.network.x.XPeerID
 import java.util.*
 
 fun decodeBlockDataWithWitness(block: CompleteBlock, bc: BlockchainConfiguration)
@@ -25,41 +27,10 @@ fun decodeBlockData(block: BlockData, bc: BlockchainConfiguration)
     return net.postchain.core.BlockData(header, block.transactions)
 }
 
-class RevoltTracker(private val revoltTimeout: Int, private val statusManager: StatusManager) {
-    private var deadLine = newDeadLine()
-    private var prevHeight = statusManager.myStatus.height
-    private var prevRound = statusManager.myStatus.round
-
-    /**
-     * Set new deadline for the revolt tracker
-     *
-     * @return the time at which the deadline is passed
-     */
-    private fun newDeadLine(): Long {
-        return Date().time + revoltTimeout
-    }
-
-    /**
-     * Starts a revolt if certain conditions are met.
-     */
-    fun update() {
-        val current = statusManager.myStatus
-        if (current.height > prevHeight ||
-                current.height == prevHeight && current.round > prevRound) {
-            prevHeight = current.height
-            prevRound = current.round
-            deadLine = newDeadLine()
-        } else if (Date().time > deadLine && !current.revolting) {
-            this.statusManager.onStartRevolting()
-        }
-    }
-}
-
-
 private class StatusSender(
         private val maxStatusInterval: Int,
         private val statusManager: StatusManager,
-        private val communicationManager: CommunicationManager<Message>
+        private val communicationManager: CommunicationManager<EbftMessage>
 ) {
     var lastSerial: Long = -1
     var lastSentTime: Long = Date(0L).time
@@ -84,14 +55,19 @@ private class StatusSender(
 const val StatusLogInterval = 10000L
 
 /**
- * The SyncManager handles communications with our peers.
+ * The ValidatorSyncManager handles communications with our peers.
  */
-class SyncManager(private val statusManager: StatusManager, private val blockManager: BlockManager,
-                  private val blockDatabase: BlockDatabase, private val communicationManager: CommunicationManager<Message>,
-                  private val txQueue: TransactionQueue, val blockchainConfiguration: BlockchainConfiguration) {
-
-    private val revoltTracker: RevoltTracker = RevoltTracker(10000, statusManager)
-    private val statusSender: StatusSender = StatusSender(1000, statusManager, communicationManager)
+class ValidatorSyncManager(
+        private val signers: List<ByteArray>,
+        private val statusManager: StatusManager,
+        private val blockManager: BlockManager,
+        private val blockDatabase: BlockDatabase,
+        private val communicationManager: CommunicationManager<EbftMessage>,
+        private val txQueue: TransactionQueue,
+        val blockchainConfiguration: BlockchainConfiguration
+) : SyncManagerBase {
+    private val revoltTracker = RevoltTracker(10000, statusManager)
+    private val statusSender = StatusSender(1000, statusManager, communicationManager)
     private val defaultTimeout = 1000
     private var currentTimeout: Int
     private var processingIntent: BlockIntent
@@ -100,49 +76,69 @@ class SyncManager(private val statusManager: StatusManager, private val blockMan
 
     companion object : KLogging()
 
+    private val nodes = communicationManager.peers().map { XPeerID(it.pubKey) }
+
+    private fun getPeerIndex(peerID: XPeerID): Int {
+        return nodes.indexOf(peerID)
+    }
+
+    // get n-th validator node XPeerID
+    private fun validatorAtIndex(n: Int): XPeerID {
+        return XPeerID(signers[n])
+    }
+
     /**
      * Handle incoming messages
      */
     private fun dispatchMessages() {
         for (packet in communicationManager.getPackets()) {
-            val nodeIndex = packet.first
+            val xPeerId = packet.first
+            val nodeIndex = getPeerIndex(xPeerId)
             val message = packet.second
-            logger.debug { "Received message type ${message::class.java.simpleName} from $nodeIndex" }
+            logger.debug { "Received message type ${message.getBackingInstance().choiceID} from $nodeIndex" }
             try {
                 when (message) {
-                    is Status -> {
-                        val nodeStatus = NodeStatus(message.height, message.serial)
-                        nodeStatus.blockRID = message.blockRID
-                        nodeStatus.revolting = message.revolting
-                        nodeStatus.round = message.round
-                        nodeStatus.state = NodeState.values()[message.state]
-                        statusManager.onStatusUpdate(nodeIndex, nodeStatus)
-                    }
-                    is BlockSignature -> {
-                        val signature = Signature(message.sig.subjectID, message.sig.data)
-                        val smBlockRID = this.statusManager.myStatus.blockRID
-                        if (smBlockRID == null) {
-                            logger.info("Received signature not needed")
-                        } else if (!smBlockRID.contentEquals(message.blockRID)) {
-                            logger.info("Receive signature for a different block")
-                        } else if (this.blockDatabase.verifyBlockSignature(signature)) {
-                            this.statusManager.onCommitSignature(nodeIndex, message.blockRID, signature)
+                    // same case for replica and validator node
+                    is GetBlockAtHeight -> sendBlockAtHeight(xPeerId, message.height)
+                    else -> {
+                        if(nodeIndex != NODE_ID_READ_ONLY) {
+                            // validator consensus logic
+                            when (message) {
+                                is Status -> {
+                                    val nodeStatus = NodeStatus(message.height, message.serial)
+                                    nodeStatus.blockRID = message.blockRId
+                                    nodeStatus.revolting = message.revolting
+                                    nodeStatus.round = message.round
+                                    nodeStatus.state = NodeState.values()[message.state]
+                                    statusManager.onStatusUpdate(nodeIndex, nodeStatus)
+                                }
+                                is BlockSignature -> {
+                                    val signature = Signature(message.signature.subjectID, message.signature.data)
+                                    val smBlockRID = this.statusManager.myStatus.blockRID
+                                    if (smBlockRID == null) {
+                                        logger.info("Received signature not needed")
+                                    } else if (!smBlockRID.contentEquals(message.blockRID)) {
+                                        logger.info("Receive signature for a different block")
+                                    } else if (this.blockDatabase.verifyBlockSignature(signature)) {
+                                        this.statusManager.onCommitSignature(nodeIndex, message.blockRID, signature)
+                                    }
+                                }
+                                is CompleteBlock -> {
+                                    blockManager.onReceivedBlockAtHeight(
+                                            decodeBlockDataWithWitness(message, blockchainConfiguration),
+                                            message.height
+                                    )
+                                }
+                                is UnfinishedBlock -> {
+                                    blockManager.onReceivedUnfinishedBlock(decodeBlockData(message, blockchainConfiguration))
+                                }
+                                is GetUnfinishedBlock -> sendUnfinishedBlock(nodeIndex)
+                                is GetBlockSignature -> sendBlockSignature(nodeIndex, message.blockRID)
+                                is Transaction -> handleTransaction(nodeIndex, message)
+                                else -> throw ProgrammerMistake("Unhandled type ${message::class}")
+                            }
                         }
                     }
-                    is CompleteBlock -> {
-                        blockManager.onReceivedBlockAtHeight(
-                                decodeBlockDataWithWitness(message, blockchainConfiguration), message.height
-                        )
-                    }
-                    is UnfinishedBlock -> {
-                        blockManager.onReceivedUnfinishedBlock(decodeBlockData(BlockData(message.header, message.transactions),
-                                blockchainConfiguration))
-                    }
-                    is GetUnfinishedBlock -> sendUnfinishedBlock(nodeIndex)
-                    is GetBlockAtHeight -> sendBlockAtHeight(nodeIndex, message.height)
-                    is GetBlockSignature -> sendBlockSignature(nodeIndex, message.blockRID)
-                    is Transaction -> handleTransaction(nodeIndex, message)
-                    else -> throw ProgrammerMistake("Unhandled type ${message::class}")
                 }
             } catch (e: Exception) {
                 logger.error("Couldn't handle message ${message}. Ignoring and continuing", e)
@@ -176,15 +172,17 @@ class SyncManager(private val statusManager: StatusManager, private val blockMan
             assert(statusManager.myStatus.blockRID!!.contentEquals(currentBlock.header.blockRID))
             val signature = statusManager.getCommitSignature()
             if (signature != null) {
-                communicationManager.sendPacket(BlockSignature(blockRID,
-                        net.postchain.ebft.message.Signature(signature.subjectID, signature.data)), setOf(nodeIndex))
+                communicationManager.sendPacket(BlockSignature(
+                        blockRID,
+                        net.postchain.ebft.message.Signature(signature.subjectID, signature.data)),
+                        validatorAtIndex(nodeIndex))
             }
             return
         }
         val blockSignature = blockDatabase.getBlockSignature(blockRID)
         blockSignature success {
             val packet = BlockSignature(blockRID, net.postchain.ebft.message.Signature(it.subjectID, it.data))
-            communicationManager.sendPacket(packet, setOf(nodeIndex))
+            communicationManager.sendPacket(packet, validatorAtIndex(nodeIndex))
         } fail {
             logger.debug("Error sending BlockSignature", it)
         }
@@ -193,14 +191,18 @@ class SyncManager(private val statusManager: StatusManager, private val blockMan
     /**
      * Send message to node including the block at [height]. This is a response to the [fetchBlockAtHeight] request.
      *
-     * @param nodeIndex index of receiving node
+     * @param xPeerId XPeerID of receiving node
      * @param height requested block height
      */
-    private fun sendBlockAtHeight(nodeIndex: Int, height: Long) {
+    private fun sendBlockAtHeight(xPeerId: XPeerID, height: Long) {
         val blockAtHeight = blockDatabase.getBlockAtHeight(height)
         blockAtHeight success {
-            val packet = CompleteBlock(BlockData(it.header.rawData, it.transactions), height, it.witness!!.getRawData())
-            communicationManager.sendPacket(packet, setOf(nodeIndex))
+            val packet = CompleteBlock(
+                    BlockData(it.header.rawData, it.transactions),
+                    height,
+                    it.witness!!.getRawData()
+            )
+            communicationManager.sendPacket(packet, xPeerId)
         } fail { logger.debug("Error sending CompleteBlock", it) }
     }
 
@@ -212,7 +214,8 @@ class SyncManager(private val statusManager: StatusManager, private val blockMan
     private fun sendUnfinishedBlock(nodeIndex: Int) {
         val currentBlock = blockManager.currentBlock
         if (currentBlock != null) {
-            communicationManager.sendPacket(UnfinishedBlock(currentBlock.header.rawData, currentBlock.transactions.toList()), setOf(nodeIndex))
+            communicationManager.sendPacket(UnfinishedBlock(currentBlock.header.rawData, currentBlock.transactions.toList()),
+                    validatorAtIndex(nodeIndex))
         }
     }
 
@@ -240,7 +243,7 @@ class SyncManager(private val statusManager: StatusManager, private val blockMan
     private fun fetchBlockAtHeight(height: Long) {
         val nodeIndex = selectRandomNode { it.height > height } ?: return
         logger.debug("Fetching block at height $height from node $nodeIndex")
-        communicationManager.sendPacket(GetBlockAtHeight(height), setOf(nodeIndex))
+        communicationManager.sendPacket(GetBlockAtHeight(height), validatorAtIndex(nodeIndex))
     }
 
     /**
@@ -253,7 +256,7 @@ class SyncManager(private val statusManager: StatusManager, private val blockMan
         val message = GetBlockSignature(blockRID)
         logger.debug("Fetching commit signature for block with RID ${blockRID.toHex()} from nodes ${Arrays.toString(nodes)}")
         nodes.forEach {
-            communicationManager.sendPacket(message, setOf(it))
+            communicationManager.sendPacket(message, validatorAtIndex(it))
         }
     }
 
@@ -268,7 +271,7 @@ class SyncManager(private val statusManager: StatusManager, private val blockMan
             it.height == height && (it.blockRID?.contentEquals(blockRID) ?: false)
         } ?: return
         logger.debug("Fetching unfinished block with RID ${blockRID.toHex()} from node $nodeIndex ")
-        communicationManager.sendPacket(GetUnfinishedBlock(blockRID), setOf(nodeIndex))
+        communicationManager.sendPacket(GetUnfinishedBlock(blockRID), validatorAtIndex(nodeIndex))
     }
 
     /**
@@ -316,7 +319,7 @@ class SyncManager(private val statusManager: StatusManager, private val blockMan
      * Process peer messages, how we should proceed with the current block, updating the revolt tracker and
      * notify peers of our current status.
      */
-    fun update() {
+    override fun update() {
         // Process all messages from peers, one at a time. Some
         // messages may trigger asynchronous code which will
         // send replies at a later time, others will send replies

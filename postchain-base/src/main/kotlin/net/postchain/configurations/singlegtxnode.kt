@@ -2,14 +2,14 @@
 
 package net.postchain.configurations
 
-import net.postchain.core.*
+import net.postchain.core.EContext
+import net.postchain.core.TxEContext
+import net.postchain.core.UserMistake
 import net.postchain.gtx.*
 import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.ScalarHandler
-
-
 
 private val r = QueryRunner()
 private val nullableStringReader = ScalarHandler<String?>()

@@ -39,7 +39,7 @@
         <dict>
             <entry key="modules">
                 <array>
-                    <string>net.postchain.configurations.GTXTestModule</string>
+                        <string>net.postchain.configurations.GTXTestModule</string>
                 </array>
             </entry>
         </dict>

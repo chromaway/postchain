@@ -4,6 +4,7 @@ package net.postchain.base
 
 import mu.KLogging
 import net.postchain.core.*
+import net.postchain.gtv.Gtv
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.task
@@ -107,6 +108,10 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
     }
 
     override fun query(query: String): Promise<String, Exception> {
+        return Promise.ofFail(UserMistake("Queries are not supported"))
+    }
+
+    override fun query(name: String, args: Gtv): Promise<Gtv, Exception> {
         return Promise.ofFail(UserMistake("Queries are not supported"))
     }
 

@@ -1,26 +1,32 @@
 package net.postchain.network.netty2
 
+import io.netty.channel.EventLoopGroup
+import io.netty.channel.nio.NioEventLoopGroup
 import mu.KLogging
 import net.postchain.base.PeerInfo
 import net.postchain.core.byteArrayKeyOf
-import net.postchain.network.PacketConverter
+import net.postchain.network.XPacketDecoder
+import net.postchain.network.XPacketEncoder
 import net.postchain.network.x.XConnector
 import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPeerConnectionDescriptor
+import java.util.concurrent.TimeUnit
 
-class NettyConnector<PC : PacketConverter<*>>(
-        val packetConverter: PC,
-        val eventReceiver: XConnectorEvents
-) : XConnector {
+class NettyConnector<PacketType>(
+        private val eventReceiver: XConnectorEvents
+) : XConnector<PacketType> {
 
     companion object : KLogging()
 
     private lateinit var server: NettyServer
+    private lateinit var eventGroup: EventLoopGroup
 
-    override fun init(peerInfo: PeerInfo) {
-        server = NettyServer().apply {
+    override fun init(peerInfo: PeerInfo, packetDecoder: XPacketDecoder<PacketType>) {
+        eventGroup = NioEventLoopGroup()
+
+        server = NettyServer(eventGroup).apply {
             setChannelHandler {
-                NettyServerPeerConnection(packetConverter).onConnected { connection, identPacketInfo ->
+                NettyServerPeerConnection(packetDecoder).onConnected { connection, identPacketInfo ->
                     val descriptor = XPeerConnectionDescriptor(
                             identPacketInfo.peerID.byteArrayKeyOf(),
                             identPacketInfo.blockchainRID.byteArrayKeyOf())
@@ -33,9 +39,9 @@ class NettyConnector<PC : PacketConverter<*>>(
         }
     }
 
-    override fun connectPeer(peerConnectionDescriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo) {
+    override fun connectPeer(peerConnectionDescriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo, packetEncoder: XPacketEncoder<PacketType>) {
         try {
-            NettyClientPeerConnection(peerInfo, packetConverter).also { connection ->
+            NettyClientPeerConnection(eventGroup, peerInfo, packetEncoder).also { connection ->
                 connection.open(
                         onConnected = {
                             eventReceiver.onPeerConnected(peerConnectionDescriptor, connection)
@@ -55,5 +61,6 @@ class NettyConnector<PC : PacketConverter<*>>(
 
     override fun shutdown() {
         server.shutdown()
+        eventGroup.shutdownGracefully(600, 2000, TimeUnit.MILLISECONDS).sync()
     }
 }

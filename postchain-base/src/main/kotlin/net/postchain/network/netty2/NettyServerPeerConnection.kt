@@ -8,12 +8,13 @@ import net.postchain.base.PeerID
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.network.IdentPacketInfo
 import net.postchain.network.PacketConverter
+import net.postchain.network.XPacketDecoder
 import net.postchain.network.x.LazyPacket
 import net.postchain.network.x.XPacketHandler
 import net.postchain.network.x.XPeerConnection
 
-class NettyServerPeerConnection<PC : PacketConverter<*>>(
-        val packetConverter: PC
+class NettyServerPeerConnection<PacketType>(
+        private val packetDecoder: XPacketDecoder<PacketType>
 ) : ChannelInboundHandlerAdapter(), XPeerConnection {
 
     private lateinit var context: ChannelHandlerContext
@@ -41,14 +42,13 @@ class NettyServerPeerConnection<PC : PacketConverter<*>>(
 
     override fun channelRead(ctx: ChannelHandlerContext?, msg: Any?) {
         val message = Transport.unwrapMessage(msg as ByteBuf)
-        if (packetConverter.isIdentPacket(message)) {
-            val identPacketInfo = packetConverter.parseIdentPacket(
+        if (packetDecoder.isIdentPacket(message)) {
+            val identPacketInfo = packetDecoder.parseIdentPacket(
                     Transport.unwrapMessage(msg))
             peerId = identPacketInfo.peerID
             onConnectedHandler?.invoke(this, identPacketInfo)
 
         } else {
-//            println("Here: ${Arrays.toString(Transport.unwrapMessage(msg))}")
             if (peerId != null) {
                 packetHandler?.invoke(
                         message,
