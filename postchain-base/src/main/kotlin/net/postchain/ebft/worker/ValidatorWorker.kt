@@ -27,7 +27,7 @@ class ValidatorWorker(
         private val engine: BlockchainEngine,
         nodeIndex: Int,
         private val communicationManager: CommunicationManager<EbftMessage>,
-        val restartHandler: RestartHandler // TODO: Maybe redesign this feature
+        val restartHandler: RestartHandler
 ) : WorkerBase {
 
     private lateinit var updateLoop: Thread
@@ -89,6 +89,9 @@ class ValidatorWorker(
             while (!Thread.interrupted()) {
                 try {
                     syncManager.update()
+                    if (engine.isRestartNeeded) {
+                        restartHandler()
+                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
