@@ -151,8 +151,6 @@ open class IntegrationTest {
             nodeCount: Int,
             nodeConfigFilename: String = DEFAULT_CONFIG_FILE,
             vararg blockchainConfigFilenames: String): PostchainTestNode {
-        val blockchainConfig = GtvMLParser.parseGtvML(
-                javaClass.getResource(blockchainConfigFilename).readText())
 
         val nodeConfig = createConfig(nodeIndex, nodeCount, nodeConfigFilename)
 
@@ -170,8 +168,8 @@ open class IntegrationTest {
         return node
     }
 
-    protected fun readBlockchainConfig(blockchainConfigFilename: String): GTXValue {
-        return GTXMLValueParser.parseGTXMLValue(
+    protected fun readBlockchainConfig(blockchainConfigFilename: String): Gtv {
+        return GtvMLParser.parseGtvML(
                 javaClass.getResource(blockchainConfigFilename).readText())
     }
 

@@ -9,7 +9,7 @@ import net.postchain.ebft.BaseBlockDatabase
 import net.postchain.ebft.BaseBlockManager
 import net.postchain.ebft.BaseStatusManager
 import net.postchain.ebft.BlockManager
-import net.postchain.ebft.message.EbftMessage
+import net.postchain.ebft.message.Message
 import net.postchain.ebft.syncmanager.SyncManagerBase
 import net.postchain.ebft.syncmanager.ValidatorSyncManager
 import net.postchain.network.CommunicationManager
@@ -26,7 +26,7 @@ class ValidatorWorker(
         private val signers: List<ByteArray>,
         private val engine: BlockchainEngine,
         nodeIndex: Int,
-        private val communicationManager: CommunicationManager<EbftMessage>,
+        private val communicationManager: CommunicationManager<Message>,
         val restartHandler: RestartHandler
 ) : WorkerBase {
 

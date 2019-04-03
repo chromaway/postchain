@@ -3,10 +3,10 @@ package net.postchain.integrationtest.reconfiguration
 import net.postchain.core.EContext
 import net.postchain.core.Transactor
 import net.postchain.core.TxEContext
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvNull
 import net.postchain.gtx.ExtOpData
 import net.postchain.gtx.GTXModule
-import net.postchain.gtx.GTXNull
-import net.postchain.gtx.GTXValue
 
 open class AbstractDummyModule : GTXModule {
 
@@ -21,7 +21,7 @@ open class AbstractDummyModule : GTXModule {
 
     override fun getQueries(): Set<String> = emptySet()
 
-    override fun query(ctxt: EContext, name: String, args: GTXValue): GTXValue = GTXNull
+    override fun query(ctxt: EContext, name: String, args: Gtv): Gtv = GtvNull
 
     override fun initializeDB(ctx: EContext) = Unit
 }

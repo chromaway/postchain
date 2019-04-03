@@ -14,8 +14,8 @@ import net.postchain.core.Signature
 import net.postchain.core.Transaction
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.testinfra.TestTransaction
-import net.postchain.gtx.encodeGTXValue
-import net.postchain.gtx.gtx
+import net.postchain.gtv.GtvEncoder
+import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.integrationtest.JsonTools.jsonAsMap
 import org.hamcrest.core.IsEqual
 import org.junit.Assert.*
@@ -82,9 +82,9 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
         buildBlockAndCommit(nodes[0])
 
-        val gtxQuery1 = gtx( gtx("gtx_test_get_value"), gtx("txRID" to gtx("abcd")) )
-        val gtxQuery2 = gtx( gtx("gtx_test_get_value"), gtx("txRID" to gtx("cdef")) )
-        val jsonQuery = """{"queries" : ["${encodeGTXValue(gtxQuery1).toHex()}", "${encodeGTXValue(gtxQuery2).toHex()}"]}""".trimMargin()
+        val gtxQuery1 = gtv( gtv("gtx_test_get_value"), gtv("txRID" to gtv("abcd")) )
+        val gtxQuery2 = gtv( gtv("gtx_test_get_value"), gtv("txRID" to gtv("cdef")) )
+        val jsonQuery = """{"queries" : ["${GtvEncoder.encodeGtv(gtxQuery1).toHex()}", "${GtvEncoder.encodeGtv(gtxQuery2).toHex()}"]}""".trimMargin()
 
 
         val response = given().port(nodes[0].getRestApiHttpPort())

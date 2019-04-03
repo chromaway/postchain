@@ -30,7 +30,7 @@ fun decodeBlockData(block: BlockData, bc: BlockchainConfiguration)
 private class StatusSender(
         private val maxStatusInterval: Int,
         private val statusManager: StatusManager,
-        private val communicationManager: CommunicationManager<EbftMessage>
+        private val communicationManager: CommunicationManager<Message>
 ) {
     var lastSerial: Long = -1
     var lastSentTime: Long = Date(0L).time
@@ -62,7 +62,7 @@ class ValidatorSyncManager(
         private val statusManager: StatusManager,
         private val blockManager: BlockManager,
         private val blockDatabase: BlockDatabase,
-        private val communicationManager: CommunicationManager<EbftMessage>,
+        private val communicationManager: CommunicationManager<Message>,
         private val txQueue: TransactionQueue,
         val blockchainConfiguration: BlockchainConfiguration
 ) : SyncManagerBase {
@@ -95,7 +95,7 @@ class ValidatorSyncManager(
             val xPeerId = packet.first
             val nodeIndex = getPeerIndex(xPeerId)
             val message = packet.second
-            logger.debug { "Received message type ${message.javaClass.simpleName}/${message.getBackingInstance().choiceID} from node $nodeIndex" }
+            logger.debug { "Received message type ${message.javaClass.simpleName} from node $nodeIndex" }
             try {
                 when (message) {
                     // same case for replica and validator node
@@ -106,14 +106,14 @@ class ValidatorSyncManager(
                             when (message) {
                                 is Status -> {
                                     val nodeStatus = NodeStatus(message.height, message.serial)
-                                    nodeStatus.blockRID = message.blockRId
+                                    nodeStatus.blockRID = message.blockRID
                                     nodeStatus.revolting = message.revolting
                                     nodeStatus.round = message.round
                                     nodeStatus.state = NodeState.values()[message.state]
                                     statusManager.onStatusUpdate(nodeIndex, nodeStatus)
                                 }
                                 is BlockSignature -> {
-                                    val signature = Signature(message.signature.subjectID, message.signature.data)
+                                    val signature = Signature(message.sig.subjectID, message.sig.data)
                                     val smBlockRID = this.statusManager.myStatus.blockRID
                                     if (smBlockRID == null) {
                                         logger.info("Received signature not needed")
@@ -130,7 +130,8 @@ class ValidatorSyncManager(
                                     )
                                 }
                                 is UnfinishedBlock -> {
-                                    blockManager.onReceivedUnfinishedBlock(decodeBlockData(message, blockchainConfiguration))
+                                    blockManager.onReceivedUnfinishedBlock(decodeBlockData(BlockData(message.header, message.transactions),
+                                            blockchainConfiguration))
                                 }
                                 is GetUnfinishedBlock -> sendUnfinishedBlock(nodeIndex)
                                 is GetBlockSignature -> sendBlockSignature(nodeIndex, message.blockRID)

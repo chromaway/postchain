@@ -4,7 +4,7 @@ import net.postchain.api.rest.model.ApiStatus
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
 import net.postchain.base.ConfirmationProof
-import net.postchain.gtx.GTXValue
+import net.postchain.gtv.Gtv
 
 interface Model {
     fun postTransaction(tx: ApiTx)
@@ -12,7 +12,7 @@ interface Model {
     fun getConfirmationProof(txRID: TxRID): ConfirmationProof?
     fun getStatus(txRID: TxRID): ApiStatus
     fun query(query: Query): QueryResult
-    fun query(query: GTXValue): GTXValue
+    fun query(query: Gtv): Gtv
 }
 
 data class Query(val json: String)

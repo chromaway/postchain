@@ -7,8 +7,8 @@ import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.config.CommonsConfigurationFactory
-import net.postchain.gtx.encodeGTXValue
-import net.postchain.gtx.gtxml.GTXMLValueParser
+import net.postchain.gtv.GtvEncoder
+import net.postchain.gtv.gtvml.GtvMLParser
 import org.apache.commons.configuration2.ex.ConfigurationException
 import org.apache.commons.dbcp2.BasicDataSource
 import java.io.File
@@ -141,7 +141,7 @@ class CliExecution {
     }
 
     private fun getEncodedGtxValueFromFile(blockchainConfigFile: String) :ByteArray {
-        val gtxValue = GTXMLValueParser.parseGTXMLValue(File(blockchainConfigFile).readText())
-        return encodeGTXValue(gtxValue)
+        val gtv =  GtvMLParser.parseGtvML(File(blockchainConfigFile).readText())
+        return GtvEncoder.encodeGtv(gtv)
     }
 }

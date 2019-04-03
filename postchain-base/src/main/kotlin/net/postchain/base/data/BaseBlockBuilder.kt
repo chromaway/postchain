@@ -73,8 +73,8 @@ open class BaseBlockBuilder(
         val header = blockHeader as BaseBlockHeader
 
         val computedMerkleRoot = computeRootHash()
+        // TODO: Remove these "debug" lines 2019-06-01 (nice to keep for now since we'll see what tests are not updated)
         println("computed MR: ${computedMerkleRoot.toHex()}")
-
         println("header MR: ${header.blockHeaderRec.getMerkleRootHash().toHex()}")
         return when {
             !Arrays.equals(header.prevBlockRID, initialBlockData.prevBlockRID) ->

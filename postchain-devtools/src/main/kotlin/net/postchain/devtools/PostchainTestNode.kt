@@ -15,13 +15,12 @@ import net.postchain.core.*
 import net.postchain.ebft.EBFTSynchronizationInfrastructure
 import net.postchain.core.BlockchainProcess
 import net.postchain.core.NODE_ID_TODO
-import net.postchain.ebft.BlockchainInstanceModel
 import net.postchain.gtv.GtvEncoder.encodeGtv
 import net.postchain.gtv.Gtv
 import org.apache.commons.configuration2.Configuration
 
+//class PostchainTestNode(private val nodeConfig: Configuration, blockchainConfig: Gtv) : PostchainNode(nodeConfig) {
 class PostchainTestNode(private val nodeConfig: Configuration) : PostchainNode(nodeConfig) {
-class SingleChainTestNode(nodeConfig: Configuration, blockchainConfig: Gtv) : PostchainNode(nodeConfig) {
 
     private val storage = StorageBuilder.buildStorage(nodeConfig, NODE_ID_TODO, true)
     private var isInitialized = false
@@ -43,13 +42,13 @@ class SingleChainTestNode(nodeConfig: Configuration, blockchainConfig: Gtv) : Po
         isInitialized = true
     }
 
-    fun addBlockchain(chainId: Long, blockchainRid: ByteArray, blockchainConfig: GTXValue) {
+    fun addBlockchain(chainId: Long, blockchainRid: ByteArray, blockchainConfig: Gtv) {
         initDb(chainId, blockchainRid)
         addConfiguration(chainId, 0, blockchainConfig)
     }
 
 
-    fun addConfiguration(chainId: Long, height: Long, blockchainConfig: GTXValue) {
+    fun addConfiguration(chainId: Long, height: Long, blockchainConfig: Gtv) {
         check(isInitialized) { "PostchainNode is not initialized" }
 
         withWriteConnection(storage, chainId) { eContext ->

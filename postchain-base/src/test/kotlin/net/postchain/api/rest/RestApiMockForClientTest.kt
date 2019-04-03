@@ -16,7 +16,7 @@ import net.postchain.common.toHex
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.TransactionStatus
 import net.postchain.core.UserMistake
-import net.postchain.gtx.GTXValue
+import net.postchain.gtv.Gtv
 import org.junit.After
 import org.junit.Test
 
@@ -95,7 +95,7 @@ class RestApiMockForClientManual {
             })
         }
 
-        override fun query(query: GTXValue): GTXValue {
+        override fun query(query: Gtv): Gtv {
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
     }

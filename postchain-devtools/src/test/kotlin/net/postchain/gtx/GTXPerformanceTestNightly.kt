@@ -11,7 +11,6 @@ import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
-import net.postchain.devtools.SingleChainTestNode
 import net.postchain.gtv.GtvFactory
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtx.factory.GtxTransactionDataFactory
@@ -38,7 +37,7 @@ class GTXPerformanceTestNightly : IntegrationTest() {
         val b = GTXDataBuilder(net.postchain.devtools.gtx.testBlockchainRID, arrayOf(pubKey(0)), net.postchain.devtools.gtx.myCS)
         b.addOperation("gtx_test", arrayOf(gtv(id), gtv(value)))
         b.finish()
-        b.sign(myCS.buildSigMaker(pubKey(0), privKey(0)))
+        b.sign(net.postchain.devtools.gtx.myCS.buildSigMaker(pubKey(0), privKey(0)))
         return b.serialize()
     }
 

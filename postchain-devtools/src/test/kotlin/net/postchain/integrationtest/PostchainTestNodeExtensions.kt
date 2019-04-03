@@ -7,10 +7,10 @@ import net.postchain.core.BlockQueries
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
-import net.postchain.gtx.GTXValue
+import net.postchain.gtv.Gtv
 import nl.komponents.kovenant.Promise
 
-fun PostchainTestNode.addBlockchainAndStart(chainId: Long, blockchainRid: ByteArray, blockchainConfig: GTXValue) {
+fun PostchainTestNode.addBlockchainAndStart(chainId: Long, blockchainRid: ByteArray, blockchainConfig: Gtv) {
     addBlockchain(chainId, blockchainRid, blockchainConfig)
     startBlockchain(chainId)
 }

@@ -5,9 +5,11 @@ package net.postchain.base
 import net.postchain.base.data.BaseBlockBuilder
 import net.postchain.base.data.BaseBlockStore
 import net.postchain.base.data.BaseTransactionFactory
+import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.BlockEContext
 import net.postchain.core.EContext
+import net.postchain.core.ExecutionContext
 import net.postchain.core.InitialBlockData
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
@@ -33,8 +35,8 @@ class BaseBlockBuilderValidationTest {
     val sigMaker = cryptoSystem.buildSigMaker(pubKey(0), privKey(0))
 
     // Objects using mocks
-    val ctx = EContext(mockedConn, 2L, 0)
-    val bctx = BlockEContext(mockedConn, 2, 0, 1, 10)
+    val ctx = BaseEContext(mockedConn, 2L, 0, SQLDatabaseAccess())
+    val bctx = BaseBlockEContext(ctx, 1, 10)
     val bbb = BaseBlockBuilder(cryptoSystem, ctx, bbs, tf, subjects, sigMaker)
 
     @Test

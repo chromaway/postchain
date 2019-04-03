@@ -19,7 +19,7 @@ class SQLModuleIntegrationTest : IntegrationTest() {
         return GTXDataBuilder(net.postchain.devtools.gtx.testBlockchainRID, arrayOf(owner), net.postchain.devtools.gtx.myCS).run {
             addOperation("test_set_value", arrayOf(gtv(key), gtv(value), gtv(owner)))
             finish()
-            sign(myCS.buildSigMaker(owner, privKey(ownerIdx)))
+            sign(net.postchain.devtools.gtx.myCS.buildSigMaker(owner, privKey(ownerIdx)))
             serialize()
         }
     }

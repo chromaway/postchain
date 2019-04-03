@@ -13,9 +13,9 @@ import net.postchain.network.XPacketEncoder
 
 // TODO: [et]: Redesign ident stage
 @Deprecated("TODO: [et]: Remove it. Was replaced by pair Encoder/Decoder")
-class EbftPacketConverter(val config: PeerCommConfiguration) : PacketConverter<EbftMessage> {
+class EbftPacketConverter(val config: PeerCommConfiguration) : PacketConverter<Message> {
     override fun makeIdentPacket(forPeer: ByteArray): ByteArray {
-        val bytes = GtvEncoder.encodeGtv(Identification(forPeer, config.blockchainRID,
+        val bytes = GtvEncoder.encodeGtv(Identification(forPeer, byteArrayOf(),
                 System.currentTimeMillis()).toGtv())
         val sigMaker = config.sigMaker()
         val signature = sigMaker.signMessage(bytes) // TODO POS-04_sig I THINK this is one of the cases where we actually sign the data
@@ -38,15 +38,15 @@ class EbftPacketConverter(val config: PeerCommConfiguration) : PacketConverter<E
         return IdentPacketInfo(signedMessage.pubKey, message.blockchainRID, null)
     }
 
-    override fun decodePacket(pubKey: ByteArray, bytes: ByteArray): EbftMessage {
+    override fun decodePacket(pubKey: ByteArray, bytes: ByteArray): Message {
         return decodeAndVerify(bytes, pubKey, config.verifier())
     }
 
-    override fun decodePacket(bytes: ByteArray): EbftMessage? {
+    override fun decodePacket(bytes: ByteArray): Message? {
         return decodeAndVerify(bytes, config.verifier())
     }
 
-    override fun encodePacket(packet: EbftMessage): ByteArray {
+    override fun encodePacket(packet: Message): ByteArray {
         return encodeAndSign(packet, config.sigMaker())
     }
 

@@ -8,7 +8,7 @@ import net.postchain.core.BlockchainEngine
 import net.postchain.core.NODE_ID_AUTO
 import net.postchain.core.RestartHandler
 import net.postchain.ebft.BaseBlockDatabase
-import net.postchain.ebft.message.EbftMessage
+import net.postchain.ebft.message.Message
 import net.postchain.ebft.syncmanager.ReplicaSyncManager
 import net.postchain.network.CommunicationManager
 import kotlin.concurrent.thread
@@ -21,7 +21,7 @@ import kotlin.concurrent.thread
 class ReadOnlyWorker(
         private val engine: BlockchainEngine,
         nodeIndex: Int,
-        communicationManager: CommunicationManager<EbftMessage>,
+        communicationManager: CommunicationManager<Message>,
         val restartHandler: RestartHandler
 ) : WorkerBase {
 

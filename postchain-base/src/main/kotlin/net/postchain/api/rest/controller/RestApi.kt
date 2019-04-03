@@ -21,8 +21,9 @@ import net.postchain.common.TimeLog
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.UserMistake
-import net.postchain.gtx.decodeGTXValue
-import net.postchain.gtx.encodeGTXValue
+import net.postchain.gtv.GtvEncoder
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvFactory
 import spark.Request
 import spark.Service
 
@@ -238,8 +239,8 @@ class RestApi(private val listenPort: Int, private val basePath: String,
 
         queriesArray.forEach {
             val hexQuery = it.asString
-            val gtxQuery = decodeGTXValue( hexQuery.hexStringToByteArray() )
-            response.add(encodeGTXValue(model(request).query(gtxQuery)).toHex())
+            val gtxQuery =  GtvFactory.decodeGtv(hexQuery.hexStringToByteArray() )
+            response.add(GtvEncoder.encodeGtv(model(request).query(gtxQuery)).toHex())
         }
 
         return gson.toJson(response)
