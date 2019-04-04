@@ -1,9 +1,7 @@
 package net.postchain.base
 
 import net.postchain.common.hexStringToByteArray
-import net.postchain.core.BlockchainContext
-import net.postchain.core.NODE_ID_AUTO
-import net.postchain.core.NODE_ID_READ_ONLY
+import net.postchain.core.*
 import net.postchain.gtv.*
 import net.postchain.gtv.GtvDictionary
 import net.postchain.gtv.GtvFactory.gtv

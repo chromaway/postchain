@@ -15,6 +15,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.test.assertNotNull
 
 @RunWith(JUnitParamsRunner::class)
 class FullEbftMultipleChainsTestNightly : IntegrationTest() {
@@ -161,10 +162,10 @@ class FullEbftMultipleChainsTestNightly : IntegrationTest() {
 
                     // Asserting uniqueness of block at height
                     val blockRids = queries.getBlockRids(height).get()
-                    assertEquals(1, blockRids.size)
+                    assertNotNull(blockRids)
 
                     // Asserting txs count
-                    val txs = queries.getBlockTransactionRids(blockRids[0]).get()
+                    val txs = queries.getBlockTransactionRids(blockRids!!).get()
                     assertEquals(txPerBlock, txs.size)
 
                     // Asserting txs content

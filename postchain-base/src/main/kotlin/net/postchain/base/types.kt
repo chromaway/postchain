@@ -18,7 +18,9 @@ open class BaseEContext(
         override val conn: Connection,
         override val chainID: Long,
         override val nodeID: Int,
-        val dbAccess: DatabaseAccess) : EContext {
+        val dbAccess: DatabaseAccess
+) : EContext {
+
     override fun <T> getInterface(c: Class<T>): T? {
         if (c == DatabaseAccess::class.java) {
             return dbAccess as T?
@@ -29,8 +31,20 @@ open class BaseEContext(
 open class BaseBlockEContext(
         val ectx: EContext,
         override val blockIID: Long,
-        override val timestamp: Long
-) : EContext by ectx, BlockEContext
+        override val timestamp: Long,
+        val dependencyHeightMap: Map<Long, Long>
+) : EContext by ectx, BlockEContext {
+
+    /**
+     * @param chainID is the blockchain dependency we want to look at
+     * @return the required height of the blockchain (specificied by the chainID param)
+     *         or null if there is no such dependency.
+     *         (Note that Height = 0 is a dependency without any blocks, which is allowed)
+     */
+    fun getChainDependencyHeight(chainID:Long): Long? {
+        return dependencyHeightMap[chainID]
+    }
+}
 
 open class BaseTxEContext(
         val bectx: BlockEContext,
