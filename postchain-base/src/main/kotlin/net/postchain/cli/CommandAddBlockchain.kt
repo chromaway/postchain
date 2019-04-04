@@ -2,15 +2,8 @@ package net.postchain.cli
 
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
-import net.postchain.base.BaseConfigurationDataStore
-import net.postchain.base.data.BaseBlockStore
-import net.postchain.base.data.SQLDatabaseAccess
-import net.postchain.common.hexStringToByteArray
-import net.postchain.gtv.GtvEncoder.encodeGtv
-import net.postchain.gtv.gtvml.GtvMLParser
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
-import java.io.File
 
 @Parameters(commandDescription = "Adds blockchain")
 class CommandAddBlockchain : Command {
@@ -55,19 +48,10 @@ class CommandAddBlockchain : Command {
         println("add-blockchain will be executed with options: " +
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
-        val gtv = GtvMLParser.parseGtvML(
-                File(blockchainConfigFile).readText())
-        val encodedGtv = encodeGtv(gtv)
         return try {
-            runDBCommandBody(nodeConfigFile, chainId) { ctx, _ ->
-                if (force || SQLDatabaseAccess().getBlockchainRID(ctx) == null) {
-                    BaseBlockStore().initialize(ctx, blockchainRID.hexStringToByteArray())
-                    BaseConfigurationDataStore.addConfigurationData(ctx, 0, encodedGtv)
-                } else {
-                    throw CliError.Companion.CliException(
-                            "Blockchain with chainId $chainId already exists. Use -f flag to force addition.")
-                }
-            }
+            val cliExecution = CliExecution()
+            val mode = if (force) AlreadyExistMode.FORCE else AlreadyExistMode.ERROR
+            cliExecution.addBlockchain(nodeConfigFile, chainId, blockchainRID, blockchainConfigFile, mode);
             Ok("Configuration has been added successfully")
         } catch (e: CliError.Companion.CliException) {
             CliError.CommandNotAllowed(message = e.message)

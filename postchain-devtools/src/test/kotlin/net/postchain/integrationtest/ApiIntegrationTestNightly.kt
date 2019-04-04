@@ -14,7 +14,10 @@ import net.postchain.core.Signature
 import net.postchain.core.Transaction
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.testinfra.TestTransaction
+import net.postchain.gtv.GtvEncoder
+import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.integrationtest.JsonTools.jsonAsMap
+import org.hamcrest.core.IsEqual
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -28,6 +31,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
     fun testMixedAPICalls() {
         val nodeCount = 3
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
+        configOverrides.setProperty("api.port", 0)
         createNodes(nodeCount, "/net/postchain/api/blockchain_config.xml")
 
         testStatusGet("/tx/$blockchainRID/$txHashHex", 404)
@@ -48,11 +52,57 @@ class ApiIntegrationTestNightly : IntegrationTest() {
     }
 
     @Test
+    fun testBatchQueriesApi() {
+        val nodesCount = 1
+        val blocksCount = 1
+        val txPerBlock = 1
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+        configOverrides.setProperty("api.port", 0)
+        createNodes(nodesCount, "/net/postchain/api/blockchain_config_1.xml")
+
+        buildBlockAndCommit(nodes[0])
+        val query = """{"queries": [{"type"="gtx_test_get_value", "txRID"="abcd"},
+                                    {"type"="gtx_test_get_value", "txRID"="cdef"}]}""".trimMargin()
+        given().port(nodes[0].getRestApiHttpPort())
+                .body(query)
+                .post("/batch_query/$blockchainRID")
+                .then()
+                .statusCode(200)
+                .body(IsEqual.equalTo("[\"null\",\"null\"]"))
+    }
+
+    @Test
+    fun testQueryGTXApi() {
+        val nodesCount = 1
+        val blocksCount = 1
+        val txPerBlock = 1
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+        configOverrides.setProperty("api.port", 0)
+        createNodes(nodesCount, "/net/postchain/api/blockchain_config_1.xml")
+
+        buildBlockAndCommit(nodes[0])
+
+        val gtxQuery1 = gtv( gtv("gtx_test_get_value"), gtv("txRID" to gtv("abcd")) )
+        val gtxQuery2 = gtv( gtv("gtx_test_get_value"), gtv("txRID" to gtv("cdef")) )
+        val jsonQuery = """{"queries" : ["${GtvEncoder.encodeGtv(gtxQuery1).toHex()}", "${GtvEncoder.encodeGtv(gtxQuery2).toHex()}"]}""".trimMargin()
+
+
+        val response = given().port(nodes[0].getRestApiHttpPort())
+                .body(jsonQuery)
+                .post("/query_gtx/$blockchainRID")
+                .then()
+                .statusCode(200)
+                .body(IsEqual.equalTo("[\"A0020500\",\"A0020500\"]"))
+        
+    }
+
+    @Test
     @Suppress("UNCHECKED_CAST")
     fun testConfirmationProof() {
         val nodeCount = 3
 //        createEbftNodes(nodeCount)
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
+        configOverrides.setProperty("api.port", 0)
         createNodes(nodeCount, "/net/postchain/api/blockchain_config.xml")
 
         var blockHeight = 0
@@ -115,7 +165,8 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                 // Assert Merkle Path
                 val header = nodes[0]
                         .getBlockchainInstance()
-                        .blockchainConfiguration
+                        .getEngine()
+                        .getConfiguration()
                         .decodeBlockHeader(blockHeader) as BaseBlockHeader
                 assertTrue(header.validateMerklePath(path, tx.getHash()))
             }

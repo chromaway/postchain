@@ -4,7 +4,8 @@ import net.postchain.gtv.GtvArray
 import net.postchain.gtv.GtvByteArray
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.GtvString
-import net.postchain.gtx.GTXData
+import net.postchain.gtx.GTXTransactionBodyData
+import net.postchain.gtx.GTXTransactionData
 import net.postchain.gtx.GtxHelper
 import net.postchain.gtx.OpData
 import org.junit.Assert
@@ -41,10 +42,11 @@ class GtxDataSerializerTest {
 
         // ---------- Build GTXData ---------------------------
         val expectedOp = OpData(op_name, op_args.map { gtv(it.toLong()) }.toTypedArray())
-        val data = GTXData(blockchainRID, arrayOf(aliceSigner), arrayOf(aliceSignature), arrayOf(expectedOp))
+        val body = GTXTransactionBodyData(blockchainRID, arrayOf(expectedOp), arrayOf(aliceSigner))
+        val txData = GTXTransactionData(body, arrayOf(aliceSignature))
 
         // ---------- Convert it ------------------------------
-        val tx = GtxDataSerializer.serializeToGtv(data)
+        val tx = GtxTransactionDataSerializer.serializeToGtv(txData)
 
         Assert.assertEquals(tx, expectedGtvTxStruct)
     }

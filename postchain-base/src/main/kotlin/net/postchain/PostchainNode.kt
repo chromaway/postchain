@@ -2,34 +2,44 @@
 
 package net.postchain
 
-import net.postchain.base.BaseApiInfrastructure
-import net.postchain.base.BaseBlockchainInfrastructure
-import net.postchain.base.BaseBlockchainProcessManager
+import net.postchain.base.BaseTestInfrastructureFactory
 import net.postchain.core.BlockchainInfrastructure
-import net.postchain.ebft.EBFTSynchronizationInfrastructure
+import net.postchain.core.BlockchainProcessManager
+import net.postchain.core.InfrastructureFactory
+import net.postchain.core.Shutdownable
+import net.postchain.ebft.BaseEBFTInfrastructureFactory
 import org.apache.commons.configuration2.Configuration
 
-open class PostchainNode(nodeConfig: Configuration) {
+/**
+ * Postchain node instantiates infrastructure and blockchain
+ * process manager.
+ */
+open class PostchainNode(nodeConfig: Configuration) : Shutdownable {
 
-    protected val processManager: BaseBlockchainProcessManager
+    val processManager: BlockchainProcessManager
     protected val blockchainInfrastructure: BlockchainInfrastructure
 
     init {
-        blockchainInfrastructure = BaseBlockchainInfrastructure(
-                nodeConfig,
-                EBFTSynchronizationInfrastructure(nodeConfig),
-                BaseApiInfrastructure(nodeConfig))
+        val factoryClass = when (nodeConfig.getString("infrastructure")) {
+            "base/ebft" -> BaseEBFTInfrastructureFactory::class.java
+            "base/test" -> BaseTestInfrastructureFactory::class.java
+            else -> BaseEBFTInfrastructureFactory::class.java
+        }
 
-        processManager = BaseBlockchainProcessManager(
-                blockchainInfrastructure,
-                nodeConfig)
+        val factory: InfrastructureFactory = factoryClass.newInstance()
+        blockchainInfrastructure = factory.makeBlockchainInfrastructure(nodeConfig)
+        processManager = factory.makeProcessManager(nodeConfig, blockchainInfrastructure)
     }
 
     fun startBlockchain(chainID: Long) {
         processManager.startBlockchain(chainID)
     }
 
-    fun stopAllBlockchain() {
+    fun stopBlockchain(chainID: Long) {
+        processManager.stopBlockchain(chainID)
+    }
+
+    override fun shutdown() {
         processManager.shutdown()
     }
 }

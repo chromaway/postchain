@@ -85,8 +85,8 @@ fun makeFTRegisterRules(config: Gtv): FTRegisterRules {
 //    } else {
 //        val registrators = config.getStringArray("registrators").map { it.hexStringToByteArray() }
 //        fun checkRegistration(data: FTRegisterData): Boolean {
-//            return data.opData.signers.any { signer ->
-//                registrators.any { it.contentEquals(signer) }
+//            return data.opData.signers.any { sigMaker ->
+//                registrators.any { it.contentEquals(sigMaker) }
 //            }
 //        }
 //        return FTRegisterRules(arrayOf(::checkRegistration), arrayOf())

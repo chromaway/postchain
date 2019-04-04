@@ -11,8 +11,11 @@ import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
-import net.postchain.devtools.SingleChainTestNode
+import net.postchain.gtv.GtvFactory
 import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtx.factory.GtxTransactionDataFactory
+import net.postchain.devtools.PostchainTestNode
+import net.postchain.ebft.worker.ValidatorWorker
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -23,7 +26,7 @@ class GTXPerformanceTestNightly : IntegrationTest() {
 
     companion object : KLogging()
 
-    private fun strategy(node: SingleChainTestNode): OnDemandBlockBuildingStrategy {
+    private fun strategy(node: PostchainTestNode): OnDemandBlockBuildingStrategy {
         return node
                 .getBlockchainInstance()
                 .getEngine()
@@ -34,7 +37,7 @@ class GTXPerformanceTestNightly : IntegrationTest() {
         val b = GTXDataBuilder(net.postchain.devtools.gtx.testBlockchainRID, arrayOf(pubKey(0)), net.postchain.devtools.gtx.myCS)
         b.addOperation("gtx_test", arrayOf(gtv(id), gtv(value)))
         b.finish()
-        b.sign(net.postchain.devtools.gtx.myCS.makeSigner(pubKey(0), privKey(0)))
+        b.sign(net.postchain.devtools.gtx.myCS.buildSigMaker(pubKey(0), privKey(0)))
         return b.serialize()
     }
 
@@ -57,8 +60,10 @@ class GTXPerformanceTestNightly : IntegrationTest() {
         }
         var total = 0
         val nanoDelta = measureNanoTime {
-            for (tx in transactions) {
-                total += decodeGTXData(tx).operations.size
+            for (rawTx in transactions) {
+                val gtvData = GtvFactory.decodeGtv(rawTx)
+                val gtxData = GtxTransactionDataFactory.deserializeFromGtv(gtvData)
+                total += gtxData.transactionBodyData.operations.size
             }
         }
         Assert.assertTrue(total == 1000)
@@ -73,9 +78,10 @@ class GTXPerformanceTestNightly : IntegrationTest() {
         var total = 0
         val module = GTXTestModule()
         val cs = SECP256K1CryptoSystem()
+        val txFactory = GTXTransactionFactory(byteArrayOf() ,module, cs)
         val nanoDelta = measureNanoTime {
-            for (tx in transactions) {
-                val ttx = GTXTransaction(tx, module, cs)
+            for (rawTx in transactions) {
+                val ttx =  txFactory.decodeTransaction(rawTx) as GTXTransaction
                 total += ttx.ops.size
             }
         }
@@ -91,9 +97,10 @@ class GTXPerformanceTestNightly : IntegrationTest() {
         var total = 0
         val module = GTXTestModule()
         val cs = SECP256K1CryptoSystem()
+        val txFactory = GTXTransactionFactory(byteArrayOf() ,module, cs)
         val nanoDelta = measureNanoTime {
-            for (tx in transactions) {
-                val ttx = GTXTransaction(tx, module, cs)
+            for (rawTx in transactions) {
+                val ttx =  txFactory.decodeTransaction(rawTx) as GTXTransaction
                 total += ttx.ops.size
                 Assert.assertTrue(ttx.isCorrect())
             }
@@ -109,17 +116,18 @@ class GTXPerformanceTestNightly : IntegrationTest() {
             //"4, 10", "10, 10", "16, 10"
     )
     fun runXNodesWithYTxPerBlock(nodeCount: Int, txPerBlock: Int) {
-        val blockCount = 2
+        val blocksCount = 2
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
         createNodes(nodeCount, "/net/postchain/performance/blockchain_config_$nodeCount.xml")
 
         var txId = 0
-        val statusManager = nodes[0].getBlockchainInstance().statusManager
-        for (i in 0 until blockCount) {
+        val statusManager = (nodes[0].getBlockchainInstance() as ValidatorWorker).statusManager
+        for (i in 0 until blocksCount) {
             for (tx in 0 until txPerBlock) {
                 val txFactory = nodes[statusManager.primaryIndex()]
                         .getBlockchainInstance()
-                        .blockchainConfiguration
+                        .getEngine()
+                        .getConfiguration()
                         .getTransactionFactory()
 
                 val tx = makeTestTx(1, (txId++).toString())

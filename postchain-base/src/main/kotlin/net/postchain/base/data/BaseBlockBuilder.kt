@@ -19,8 +19,8 @@ import java.util.*
  * @property store For database access
  * @property txFactory Used for serializing transaction data
  * @property subjects Public keys for nodes authorized to sign blocks
- * @property blockSigner Signing function for local node to sign block
  * @property blockchainDependencies holds the blockchain RIDs this blockchain depends on
+ * @property blockSigMaker used to produce signatures on blocks for local node
  */
 open class BaseBlockBuilder(
         val cryptoSystem: CryptoSystem,
@@ -28,7 +28,7 @@ open class BaseBlockBuilder(
         store: BlockStore,
         txFactory: TransactionFactory,
         val subjects: Array<ByteArray>,
-        val blockSigner: Signer,
+        val blockSigMaker: SigMaker,
         val blockchainRelatedInfoDependencyList: List<BlockchainRelatedInfo>
 ): AbstractBlockBuilder(eContext, store, txFactory) {
 
@@ -77,8 +77,8 @@ open class BaseBlockBuilder(
         val header = blockHeader as BaseBlockHeader
 
         val computedMerkleRoot = computeRootHash()
+        // TODO: Remove these "debug" lines 2019-06-01 (nice to keep for now since we'll see what tests are not updated)
         println("computed MR: ${computedMerkleRoot.toHex()}")
-
         println("header MR: ${header.blockHeaderRec.getMerkleRootHash().toHex()}")
         return when {
             !Arrays.equals(header.prevBlockRID, initialBlockData.prevBlockRID) ->
@@ -196,7 +196,7 @@ open class BaseBlockBuilder(
         }
 
         val witnessBuilder = BaseBlockWitnessBuilder(cryptoSystem, _blockData!!.header, subjects, getRequiredSigCount())
-        witnessBuilder.applySignature(blockSigner(_blockData!!.header.rawData))
+        witnessBuilder.applySignature(blockSigMaker.signDigest(_blockData!!.header.blockRID)) // TODO: POS-04_sig
         return witnessBuilder
     }
 

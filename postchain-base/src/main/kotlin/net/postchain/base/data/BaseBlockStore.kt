@@ -4,6 +4,7 @@ package net.postchain.base.data
 
 import net.postchain.base.BlockchainDependencies
 import net.postchain.base.BlockchainDependency
+import net.postchain.base.BaseTxEContext
 import net.postchain.base.ConfirmationProofMaterial
 import net.postchain.base.HeightDependency
 import net.postchain.base.merkle.Hash
@@ -44,7 +45,7 @@ class BaseBlockStore : BlockStore {
 
     override fun addTransaction(bctx: BlockEContext, tx: Transaction): TxEContext {
         val txIid = db.insertTransaction(bctx, tx)
-        return TxEContext(bctx.conn, bctx.chainID, bctx.nodeID, bctx.blockIID, bctx.timestamp, bctx.dependencyHeightMap, txIid)
+        return BaseTxEContext(bctx, txIid)
     }
 
     override fun finalizeBlock(bctx: BlockEContext, bh: BlockHeader) {

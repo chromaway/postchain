@@ -37,7 +37,7 @@ class StorageBuilder {
             createSchemaIfNotExists(writeDataSource, config.getString("database.schema"))
             createTablesIfNotExists(writeDataSource)
 
-            return BaseStorage(readDataSource, writeDataSource, nodeIndex)
+            return BaseStorage(readDataSource, writeDataSource, nodeIndex, SQLDatabaseAccess())
         }
 
         private fun createBasicDataSource(config: Configuration): BasicDataSource {

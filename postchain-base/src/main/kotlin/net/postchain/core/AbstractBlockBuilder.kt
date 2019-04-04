@@ -2,6 +2,7 @@
 
 package net.postchain.core
 
+import net.postchain.base.BaseBlockEContext
 import net.postchain.base.BlockchainDependencies
 import net.postchain.base.merkle.Hash
 import net.postchain.common.TimeLog
@@ -52,10 +53,8 @@ abstract class AbstractBlockBuilder(
         }
         blockchainDependencies = buildBlockchainDependencies(partialBlockHeader)
         initialBlockData = store.beginBlock(ectx, blockchainDependencies!!.extractBlockHeightDependencyArray())
-        bctx = BlockEContext(
-                ectx.conn,
-                ectx.chainID,
-                ectx.nodeID,
+        bctx = BaseBlockEContext(
+                ectx,
                 initialBlockData.blockIID,
                 initialBlockData.timestamp,
                 blockchainDependencies!!.extractChainIdToHeightMap())

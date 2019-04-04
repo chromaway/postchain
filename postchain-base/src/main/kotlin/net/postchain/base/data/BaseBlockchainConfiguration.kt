@@ -13,6 +13,7 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
     val blockStore = BaseBlockStore()
     override val chainID = configData.context.chainID
     val blockchainRID = configData.context.blockchainRID
+    val signers = configData.getSigners()
 
     val bcRelatedInfosDependencyList: List<BlockchainRelatedInfo> = configData.getDependenciesAsList()
 
@@ -29,14 +30,13 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
     }
 
     override fun makeBlockBuilder(ctx: EContext): BlockBuilder {
-        val signerPubKeys = configData.getSigners()
         return createBlockBuilderInstance(
                 cryptoSystem,
                 ctx,
                 blockStore,
                 getTransactionFactory(),
-                signerPubKeys.toTypedArray(),
-                configData.blockSigner)
+                signers.toTypedArray(),
+                configData.blockSigMaker)
     }
 
     open fun createBlockBuilderInstance(cryptoSystem: CryptoSystem,
@@ -44,11 +44,11 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
                                         blockStore: BlockStore,
                                         transactionFactory: TransactionFactory,
                                         signers: Array<ByteArray>,
-                                        blockSigner: Signer
+                                        blockSigMaker: SigMaker
     ): BlockBuilder {
         addChainIDToDependencies(ctx) // We wait until now with this, b/c now we have an EContext
         return BaseBlockBuilder(
-                cryptoSystem, ctx, blockStore, getTransactionFactory(), signers, blockSigner, bcRelatedInfosDependencyList)
+                cryptoSystem, ctx, blockStore, getTransactionFactory(), signers, blockSigMaker, bcRelatedInfosDependencyList)
     }
 
     /**
@@ -96,6 +96,5 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
 
         return ctor.newInstance(configData, this, blockQueries, txQueue) as BlockBuildingStrategy
     }
-
 }
 

@@ -13,7 +13,7 @@ import net.postchain.modules.ft.BasicAccount
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
-import net.postchain.devtools.SingleChainTestNode
+import net.postchain.devtools.PostchainTestNode
 
 val testBlockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3".hexStringToByteArray()
 val myCS = SECP256K1CryptoSystem()
@@ -42,7 +42,7 @@ open class FTIntegrationTest : IntegrationTest() {
             b.addOperation("ft_register", arrayOf(gtv(desc)))
         }
         b.finish()
-        b.sign(myCS.makeSigner(pubKey(registrator), privKey(registrator)))
+        b.sign(myCS.buildSigMaker(pubKey(registrator), privKey(registrator)))
         return b.serialize()
     }
 
@@ -52,7 +52,7 @@ open class FTIntegrationTest : IntegrationTest() {
                 gtv(issuerID), gtv(assetID), gtv(amout), gtv(recipientID)
         ))
         b.finish()
-        b.sign(myCS.makeSigner(issuerPubKeys[issuerIdx], issuerPrivKeys[issuerIdx]))
+        b.sign(myCS.buildSigMaker(issuerPubKeys[issuerIdx], issuerPrivKeys[issuerIdx]))
         return b.serialize()
     }
 
@@ -87,11 +87,11 @@ open class FTIntegrationTest : IntegrationTest() {
         }
         b.addOperation("ft_transfer", args.toTypedArray())
         b.finish()
-        b.sign(myCS.makeSigner(senderPubKey, senderPrivKey))
+        b.sign(myCS.buildSigMaker(senderPubKey, senderPrivKey))
         return b.serialize()
     }
 
-    fun enqueueTx(node: SingleChainTestNode, data: ByteArray): Transaction? {
+    fun enqueueTx(node: PostchainTestNode, data: ByteArray): Transaction? {
         return enqueueTx(node, data, -1)
     }
 

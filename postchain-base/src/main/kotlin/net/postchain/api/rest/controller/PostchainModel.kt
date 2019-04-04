@@ -15,6 +15,7 @@ import net.postchain.core.TransactionQueue
 import net.postchain.core.TransactionStatus.CONFIRMED
 import net.postchain.core.TransactionStatus.UNKNOWN
 import net.postchain.core.UserMistake
+import net.postchain.gtv.Gtv
 
 open class PostchainModel(
         val txQueue: TransactionQueue,
@@ -63,5 +64,9 @@ open class PostchainModel(
 
     override fun query(query: Query): QueryResult {
         return QueryResult(blockQueries.query(query.json).get())
+    }
+
+    override fun query(query: Gtv): Gtv {
+        return blockQueries.query(query[0]!!.asString(), query[1]).get()
     }
 }

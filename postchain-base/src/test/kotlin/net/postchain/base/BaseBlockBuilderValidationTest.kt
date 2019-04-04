@@ -5,9 +5,11 @@ package net.postchain.base
 import net.postchain.base.data.BaseBlockBuilder
 import net.postchain.base.data.BaseBlockStore
 import net.postchain.base.data.BaseTransactionFactory
+import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.BlockEContext
 import net.postchain.core.EContext
+import net.postchain.core.ExecutionContext
 import net.postchain.core.InitialBlockData
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
@@ -30,12 +32,12 @@ class BaseBlockBuilderValidationTest {
     val rootHash =    "46AF9064F12528CAD6A7C377204ACD0AC38CDC6912903E7DAB3703764C8DD5E5".hexStringToByteArray()
     val badRootHash = "46AF9064F12FFFFFFFFFFFFFF04ACD0AC38CDC6912903E7DAB3703764C8DD5E5".hexStringToByteArray()
     val subjects = arrayOf("test".toByteArray())
-    val signer = cryptoSystem.makeSigner(pubKey(0), privKey(0))
+    val sigMaker = cryptoSystem.buildSigMaker(pubKey(0), privKey(0))
 
     // Objects using mocks
-    val ctx = EContext(mockedConn, 2L, 0)
-    val bctx = BlockEContext(mockedConn, 2, 0, 1, 10, mapOf())
-    val bbb = BaseBlockBuilder(cryptoSystem, ctx, bbs, tf, subjects, signer, listOf())
+    val ctx = BaseEContext(mockedConn, 2L, 0, SQLDatabaseAccess())
+    val bctx = BaseBlockEContext(ctx, 1, 10, mapOf())
+    val bbb = BaseBlockBuilder(cryptoSystem, ctx, bbs, tf, subjects, sigMaker, listOf())
 
     @Test
     fun validateBlokcHeader_valid() {

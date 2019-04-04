@@ -49,7 +49,7 @@ class RestApiTestManual {
         val b = GTXDataBuilder(EMPTY_SIGNATURE, arrayOf(pubKey(0)), cryptoSystem)
         b.addOperation("gtx_test", arrayOf(gtv(id), gtv(value)))
         b.finish()
-        b.sign(cryptoSystem.makeSigner(pubKey(0), privKey(0)))
+        b.sign(cryptoSystem.buildSigMaker(pubKey(0), privKey(0)))
         return b.serialize()
     }
 }

@@ -16,13 +16,13 @@ class BaseBlockchainInfrastructure(
 ) : BlockchainInfrastructure {
 
     val cryptoSystem = SECP256K1CryptoSystem()
-    val blockSigner: Signer
+    val blockSigMaker: SigMaker
     val subjectID: ByteArray
 
     init {
         val privKey = config.getString("messaging.privkey").hexStringToByteArray()
         val pubKey = secp256k1_derivePubKey(privKey)
-        blockSigner = cryptoSystem.makeSigner(pubKey, privKey)
+        blockSigMaker = cryptoSystem.buildSigMaker(pubKey, privKey)
         subjectID = pubKey
     }
 
@@ -43,7 +43,7 @@ class BaseBlockchainInfrastructure(
         }
 
         val gtxData = GtvFactory.decodeGtv(rawConfigurationData)
-        val confData = BaseBlockchainConfigurationData(gtxData as GtvDictionary, actualContext, blockSigner)
+        val confData = BaseBlockchainConfigurationData(gtxData as GtvDictionary, actualContext, blockSigMaker)
 
         val bcfClass = Class.forName(confData.data["configurationfactory"]!!.asString())
         val factory = (bcfClass.newInstance() as BlockchainConfigurationFactory)

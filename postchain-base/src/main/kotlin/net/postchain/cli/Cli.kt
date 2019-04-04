@@ -17,6 +17,8 @@ class Cli {
 
             , CommandConfigureNode()
             , CommandRunNode()
+            , CommandRunNodeAuto()
+            , CommandWipeDb()
 //            , CommandStopNode()
 
     ).map { it.key() to it }.toMap()

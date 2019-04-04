@@ -6,7 +6,7 @@ import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.common.toHex
 import net.postchain.core.ApiInfrastructure
 import net.postchain.core.BlockchainProcess
-import net.postchain.ebft.BlockchainInstanceModel
+import net.postchain.ebft.worker.WorkerBase
 import org.apache.commons.configuration2.Configuration
 
 class BaseApiInfrastructure(val config: Configuration) : ApiInfrastructure {
@@ -30,7 +30,7 @@ class BaseApiInfrastructure(val config: Configuration) : ApiInfrastructure {
             val engine = process.getEngine()
 
             val apiModel = PostchainModel(
-                    (process as BlockchainInstanceModel).networkAwareTxQueue,
+                    (process as WorkerBase).networkAwareTxQueue,
                     engine.getConfiguration().getTransactionFactory(),
                     engine.getBlockQueries() as BaseBlockQueries) // TODO: [et]: Resolve type cast
 

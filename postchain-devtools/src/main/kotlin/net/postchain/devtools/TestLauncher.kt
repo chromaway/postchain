@@ -44,7 +44,7 @@ class TestLauncher : IntegrationTest() {
         }
     }
 
-    private fun createTestNode(configFile: String, blockchainConfigFile: String): SingleChainTestNode {
+    private fun createTestNode(configFile: String, blockchainRid: ByteArray, blockchainConfigFile: String): PostchainTestNode {
         val nodeConfig = CommonsConfigurationFactory.readFromFile(configFile)
         // TODO: Fix this hack
         nodeConfig.setProperty("api.port", -1) // FYI: Disabling Rest API in test mode
@@ -57,7 +57,10 @@ class TestLauncher : IntegrationTest() {
         val blockchainConfig = GtvMLParser.parseGtvML(
                 File(blockchainConfigFile).readText())
 
-        return SingleChainTestNode(nodeConfig, blockchainConfig).apply {
+        val chainId = nodeConfig.getLong("activechainids")
+
+        return PostchainTestNode(nodeConfig).apply {
+            addBlockchain(chainId, blockchainRid, blockchainConfig)
             startBlockchain()
             nodes.add(this)
         }
@@ -70,7 +73,7 @@ class TestLauncher : IntegrationTest() {
     )
 
     fun runXMLGTXTests(xml: String,
-                       blockchainRID: String?,
+                       blockchainRID: String,
                        nodeConfigFile: String? = null,
                        blockchainConfigFile: String? = null
     ): TestOutput {
@@ -82,14 +85,15 @@ class TestLauncher : IntegrationTest() {
     }
 
     private fun _runXMLGTXTests(xml: String,
-                                blockchainRID: String?,
+                                blockchainRID: String,
                                 nodeConfigFile: String? = null,
                                 blockchainConfigFile: String? = null
     ): TestOutput {
-        val node: SingleChainTestNode
+        val node: PostchainTestNode
         val testType: TestType
         try {
-            node = createTestNode(nodeConfigFile!!, blockchainConfigFile!!)
+            // TODO: Resolve nullability here and above: !! vs ?.
+            node = createTestNode(nodeConfigFile!!, blockchainRID.hexStringToByteArray(), blockchainConfigFile!!)
         } catch (e: Exception) {
             return TestOutput(false, false, e, listOf())
         }
@@ -121,9 +125,9 @@ class TestLauncher : IntegrationTest() {
                 ),
                 true,
                 mapOf(
-                        pubKey(0).byteArrayKeyOf() to cryptoSystem.makeSigner(pubKey(0), privKey(0)),
-                        user2pub.byteArrayKeyOf() to cryptoSystem.makeSigner(user2pub, user2priv),
-                        user3pub.byteArrayKeyOf() to cryptoSystem.makeSigner(user3pub, user3priv)
+                        pubKey(0).byteArrayKeyOf() to cryptoSystem.buildSigMaker(pubKey(0), privKey(0)),
+                        user2pub.byteArrayKeyOf() to cryptoSystem.buildSigMaker(user2pub, user2priv),
+                        user3pub.byteArrayKeyOf() to cryptoSystem.buildSigMaker(user3pub, user3priv)
                 )
         )
 
@@ -136,7 +140,7 @@ class TestLauncher : IntegrationTest() {
             val enqueued = mutableListOf<EnqueuedTx>()
             for ((txIdx, txXml) in block.transaction.withIndex()) {
                 try {
-                    val gtxData = GTXMLTransactionParser.parseGTXMLTransaction(txXml, txContext)
+                    val gtxData = GTXMLTransactionParser.parseGTXMLTransaction(txXml, txContext, cryptoSystem)
                     val tx = enqueueTx(node, gtxData.serialize(), blockNum)
                     enqueued.add(EnqueuedTx(
                             txIdx.toLong(), tx!!.getRID(), txXml.isFailure
@@ -176,7 +180,8 @@ class TestLauncher : IntegrationTest() {
                     failures.add(TransactionFailure(blockHeight.toLong(), it.txIdx,
                             Exception("Transaction should fail")))
                 } else if (!present && !it.isFailure) {
-                    val reason = node.getBlockchainInstance().networkAwareTxQueue.getRejectionReason(txRID)
+                    val engine = node.getBlockchainInstance().getEngine()
+                    val reason = engine.getTransactionQueue().getRejectionReason(txRID)
                     failures.add(TransactionFailure(blockHeight.toLong(), it.txIdx, reason))
                 }
             }

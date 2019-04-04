@@ -3,7 +3,6 @@
 package net.postchain.base.data
 
 import mu.KLogging
-import net.postchain.core.ManagedBlockBuilder
 import net.postchain.base.Storage
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
@@ -14,18 +13,19 @@ import net.postchain.core.*
  * with checks to see if current working block has been commited or not, and rolling back
  * database state in case some operation fails
  *
- * @property ctxt Connection context including blockchain and node identifiers
- * @property s For database access
- * @property bb The base block builder
+ * @property eContext Connection context including blockchain and node identifiers
+ * @property storage For database access
+ * @property blockBuilder The base block builder
  * @property onCommit Clean-up function to be called when block has been commited
  * @property closed Boolean for if block is open to further modifications and queries. It is closed if
  * an operation fails to execute in full or if a witness is created and the block commited.
  */
 class BaseManagedBlockBuilder(
-        val ctxt: EContext,
-        val s: Storage,
-        val bb: BlockBuilder,
-        val onCommit: (BlockBuilder)->Unit
+        private val eContext: EContext,
+        val storage: Storage,
+        val blockBuilder: BlockBuilder,
+        val beforeCommit: (BlockBuilder) -> Unit,
+        val afterCommit: (BlockBuilder) -> Unit
 ) : ManagedBlockBuilder {
     companion object : KLogging()
 
@@ -51,11 +51,11 @@ class BaseManagedBlockBuilder(
     }
 
     override fun begin(partialBlockHeader: BlockHeader?) {
-        runOp { bb.begin(partialBlockHeader) }
+        runOp { blockBuilder.begin(partialBlockHeader) }
     }
 
     override fun appendTransaction(tx: Transaction) {
-        runOp { bb.appendTransaction(tx) }
+        runOp { blockBuilder.appendTransaction(tx) }
     }
 
     /**
@@ -67,14 +67,14 @@ class BaseManagedBlockBuilder(
      */
     override fun maybeAppendTransaction(tx: Transaction): Exception? {
         TimeLog.startSum("BaseManagedBlockBuilder.maybeAppendTransaction().withSavepoint")
-        val exception = s.withSavepoint(ctxt) {
-                TimeLog.startSum("BaseManagedBlockBuilder.maybeAppendTransaction().insideSavepoint")
-                try {
-                    bb.appendTransaction(tx)
-                } finally {
-                    TimeLog.end("BaseManagedBlockBuilder.maybeAppendTransaction().insideSavepoint")
-                }
+        val exception = storage.withSavepoint(eContext) {
+            TimeLog.startSum("BaseManagedBlockBuilder.maybeAppendTransaction().insideSavepoint")
+            try {
+                blockBuilder.appendTransaction(tx)
+            } finally {
+                TimeLog.end("BaseManagedBlockBuilder.maybeAppendTransaction().insideSavepoint")
             }
+        }
         TimeLog.end("BaseManagedBlockBuilder.maybeAppendTransaction().withSavepoint")
         if (exception != null) {
             logger.info("Failed to append transaction ${tx.getRID().toHex()}", exception)
@@ -83,33 +83,34 @@ class BaseManagedBlockBuilder(
     }
 
     override fun finalizeBlock() {
-        runOp { bb.finalizeBlock() }
+        runOp { blockBuilder.finalizeBlock() }
     }
 
     override fun finalizeAndValidate(blockHeader: BlockHeader) {
-        runOp { bb.finalizeAndValidate(blockHeader) }
+        runOp { blockBuilder.finalizeAndValidate(blockHeader) }
     }
 
     override fun getBlockData(): BlockData {
-        return bb.getBlockData()
+        return blockBuilder.getBlockData()
     }
 
     override fun getBlockWitnessBuilder(): BlockWitnessBuilder? {
         if (closed) throw ProgrammerMistake("Already closed")
-        return bb.getBlockWitnessBuilder()
+        return blockBuilder.getBlockWitnessBuilder()
     }
 
     override fun commit(blockWitness: BlockWitness?) {
-        runOp { bb.commit(blockWitness) }
+        runOp { blockBuilder.commit(blockWitness) }
         closed = true
-        s.closeWriteConnection(ctxt, true)
-        onCommit(bb)
+        beforeCommit(blockBuilder)
+        storage.closeWriteConnection(eContext, true)
+        afterCommit(blockBuilder)
     }
 
     override fun rollback() {
-        logger.debug("${ctxt.nodeID} BaseManagedBlockBuilder.rollback()")
+        logger.debug("${eContext.nodeID} BaseManagedBlockBuilder.rollback()")
         if (closed) throw ProgrammerMistake("Already closed")
         closed = true
-        s.closeWriteConnection(ctxt, false)
+        storage.closeWriteConnection(eContext, false)
     }
 }
