@@ -190,6 +190,20 @@
         <testSourceDirectory>src/test/java</testSourceDirectory>
         <plugins>
             <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>1.0.2</version>
+                <configuration>
+                    <to>
+                        <image>?</image>
+                        <auth>
+                            <username>?</username>
+                            <password>?</password>
+                        </auth>
+                    </to>
+                </configuration>
+            </plugin>
+            <plugin>
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <executions>
