@@ -44,7 +44,7 @@ private class StatusSender(
         if (isNewState || timeoutExpired) {
             this.lastSentTime = Date().time
             this.lastSerial = myStatus.serial
-            val statusMessage = Status(myStatus.blockRID!!, myStatus.height,
+            val statusMessage = Status(myStatus.blockRID, myStatus.height,
                     myStatus.revolting, myStatus.round, myStatus.serial,
                     myStatus.state.ordinal)
             communicationManager.broadcastPacket(statusMessage)

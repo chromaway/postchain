@@ -145,12 +145,17 @@ class Identification(val pubKey: ByteArray, val blockchainRID: ByteArray, val ti
     }
 }
 
-class Status(val blockRID: ByteArray, val height: Long, val revolting: Boolean, val round: Long,
+class Status(val blockRID: ByteArray?, val height: Long, val revolting: Boolean, val round: Long,
                   val serial: Long, val state: Int): Message(MessageType.STATUS.ordinal) {
 
 
     override fun toGtv(): Gtv {
-        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), GtvFactory.gtv(blockRID), GtvFactory.gtv(height),
+        val bRid: Gtv = if (blockRID != null) {
+            GtvFactory.gtv(blockRID)
+        } else {
+            GtvNull
+        }
+        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), bRid, GtvFactory.gtv(height),
                 GtvFactory.gtv(revolting), GtvFactory.gtv(round), GtvFactory.gtv(serial), GtvFactory.gtv(state.toLong()))
     }
 }
