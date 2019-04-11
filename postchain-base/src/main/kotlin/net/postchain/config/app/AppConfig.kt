@@ -8,12 +8,6 @@ import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler
 
 class AppConfig(val config: Configuration) {
 
-    /**
-     * Configuration provider
-     */
-    val nodeConfigProvider: String
-        get() = config.getString("configuration.provider.node") // legacy | manual | managed
-
     companion object {
 
         fun fromPropertiesFile(configFile: String): AppConfig {
@@ -28,4 +22,29 @@ class AppConfig(val config: Configuration) {
             return AppConfig(configuration)
         }
     }
+
+    /**
+     * Configuration provider
+     */
+    val nodeConfigProvider: String
+        get() = config.getString("configuration.provider.node") // legacy | manual | managed
+
+    /**
+     * Database
+     */
+    val databaseDriverclass: String
+        get() = config.getString("database.driverclass")
+
+    val databaseUrl: String
+        get() = config.getString("database.url")
+
+    val databaseSchema: String
+        get() = config.getString("database.schema", "public")
+
+    val databaseUsername: String
+        get() = config.getString("database.username")
+
+    val databasePassword: String
+        get() = config.getString("database.password")
+
 }

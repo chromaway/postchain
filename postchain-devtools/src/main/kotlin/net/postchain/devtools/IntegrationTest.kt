@@ -54,7 +54,7 @@ open class IntegrationTest {
     }
 
     @After
-    fun tearDown() {
+    open fun tearDown() {
         logger.debug("Integration test -- TEARDOWN")
         nodes.forEach { it.shutdown() }
         nodes.clear()
@@ -105,16 +105,18 @@ open class IntegrationTest {
             nodeIndex: Int,
             totalNodesCount: Int,
             nodeConfig: String,
-            blockchainConfigFilename: String
+            blockchainConfigFilename: String,
+            preWipeDatabase: Boolean = true
     ): PostchainTestNode {
 
         val nodeConfigProvider = createNodeConfig(nodeIndex, totalNodesCount, nodeConfig)
-        nodesNames[nodeConfigProvider.getConfiguration().pubKey] = "$nodeIndex"
+        val nodeConfig = nodeConfigProvider.getConfiguration()
+        nodesNames[nodeConfig.pubKey] = "$nodeIndex"
         val blockchainConfig = readBlockchainConfig(blockchainConfigFilename)
-        val chainId = nodeConfigProvider.getConfiguration().activeChainIds.first().toLong()
+        val chainId = nodeConfig.activeChainIds.first().toLong()
         val blockchainRid = blockchainRids[chainId]!!.hexStringToByteArray()
 
-        return PostchainTestNode(nodeConfigProvider)
+        return PostchainTestNode(nodeConfigProvider, preWipeDatabase)
                 .apply {
                     addBlockchain(chainId, blockchainRid, blockchainConfig)
                     startBlockchain()
@@ -139,11 +141,13 @@ open class IntegrationTest {
             nodeIndex: Int,
             nodeCount: Int,
             nodeConfigFilename: String = DEFAULT_CONFIG_FILE,
-            vararg blockchainConfigFilenames: String): PostchainTestNode {
+            vararg blockchainConfigFilenames: String,
+            preWipeDatabase: Boolean = true
+    ): PostchainTestNode {
 
         val nodeConfigProvider = createNodeConfig(nodeIndex, nodeCount, nodeConfigFilename)
 
-        val node = PostchainTestNode(nodeConfigProvider)
+        val node = PostchainTestNode(nodeConfigProvider, preWipeDatabase)
                 .also { nodes.add(it) }
 
         nodeConfigProvider.getConfiguration().activeChainIds
@@ -178,16 +182,18 @@ open class IntegrationTest {
                 .configure(params)
                 .configuration
 
-        // append nodeIndex to schema name
-        baseConfig.setProperty("database.schema", baseConfig.getString("database.schema") + "_" + nodeIndex)
+        if (baseConfig.getString("configuration.provider.node") == "legacy") {
+            // append nodeIndex to schema name
+            baseConfig.setProperty("database.schema", baseConfig.getString("database.schema") + "_" + nodeIndex)
 
-        // peers
-        var port = (baseConfig.getProperty("node.0.port") as String).toInt()
-        for (i in 0 until nodeCount) {
-            baseConfig.setProperty("node.$i.id", "node$i")
-            baseConfig.setProperty("node.$i.host", "127.0.0.1")
-            baseConfig.setProperty("node.$i.port", port++)
-            baseConfig.setProperty("node.$i.pubkey", pubKeyHex(i))
+            // peers
+            var port = (baseConfig.getProperty("node.0.port") as String).toInt()
+            for (i in 0 until nodeCount) {
+                baseConfig.setProperty("node.$i.id", "node$i")
+                baseConfig.setProperty("node.$i.host", "127.0.0.1")
+                baseConfig.setProperty("node.$i.port", port++)
+                baseConfig.setProperty("node.$i.pubkey", pubKeyHex(i))
+            }
         }
 
         baseConfig.setProperty("messaging.privkey", privKeyHex(nodeIndex))

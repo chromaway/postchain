@@ -14,7 +14,7 @@ import net.postchain.ebft.EBFTSynchronizationInfrastructure
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.encodeGTXValue
 
-class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider) : PostchainNode(nodeConfigProvider) {
+class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider, preWipeDatabase: Boolean) : PostchainNode(nodeConfigProvider) {
 
     private val storage: Storage
     val pubKey: String
@@ -22,7 +22,7 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider) : Postcha
 
     init {
         val nodeConfig = nodeConfigProvider.getConfiguration()
-        storage = StorageBuilder.buildStorage(nodeConfig, NODE_ID_TODO, true)
+        storage = StorageBuilder.buildStorage(nodeConfig, NODE_ID_TODO, preWipeDatabase)
         pubKey = nodeConfig.pubKey
     }
 

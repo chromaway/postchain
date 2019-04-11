@@ -14,7 +14,7 @@ class LegacyNodeConfigurationProvider(private val appConfig: AppConfig) : NodeCo
     }
 
     /**
-     * Retrieve peer information from config, including networking info and public keys
+     * Retrieves peer information from config, including networking info and public keys
      */
     private fun createPeerInfoCollection(config: Configuration): Array<PeerInfo> {
         // this is for testing only. We can prepare the configuration with a

@@ -24,19 +24,19 @@ open class NodeConfig(private val appConfig: AppConfig) {
      * Database
      */
     val databaseDriverclass: String
-        get() = config.getString("database.driverclass")
+        get() = appConfig.databaseDriverclass
 
     val databaseUrl: String
-        get() = config.getString("database.url")
+        get() = appConfig.databaseUrl
 
     val databaseSchema: String
-        get() = config.getString("database.schema", "public")
+        get() = appConfig.databaseSchema
 
     val databaseUsername: String
-        get() = config.getString("database.username")
+        get() = appConfig.databaseUsername
 
     val databasePassword: String
-        get() = config.getString("database.password")
+        get() = appConfig.databasePassword
 
 
     /**

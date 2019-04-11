@@ -24,7 +24,7 @@ class SinglePeerReconfigurationTest : ReconfigurationTest() {
         val blockchainConfig2 = readBlockchainConfig(
                 "/net/postchain/reconfiguration/single_peer/blockchain_config_2.xml")
 
-        PostchainTestNode(nodeConfigProvider)
+        PostchainTestNode(nodeConfigProvider, true)
                 .apply {
                     // Adding chain1 with blockchainConfig1 with DummyModule1
                     addBlockchain(chainId, blockchainRid, blockchainConfig1)

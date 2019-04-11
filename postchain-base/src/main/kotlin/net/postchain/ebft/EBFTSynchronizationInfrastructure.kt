@@ -1,12 +1,13 @@
 package net.postchain.ebft
 
-import net.postchain.base.*
+import net.postchain.base.BasePeerCommConfiguration
+import net.postchain.base.DefaultPeerResolver
+import net.postchain.base.PeerCommConfiguration
+import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.base.data.BaseBlockchainConfiguration
+import net.postchain.config.node.NodeConfig
 import net.postchain.config.node.NodeConfigurationProvider
-import net.postchain.core.BlockchainEngine
-import net.postchain.core.BlockchainProcess
-import net.postchain.core.RestartHandler
-import net.postchain.core.SynchronizationInfrastructure
+import net.postchain.core.*
 import net.postchain.ebft.message.EbftMessage
 import net.postchain.ebft.worker.ValidatorWorker
 import net.postchain.network.CommunicationManager
@@ -23,7 +24,7 @@ class EBFTSynchronizationInfrastructure(nodeConfigProvider: NodeConfigurationPro
     init {
         connectionManager = DefaultXConnectionManager(
                 NettyConnectorFactory(),
-                buildPeerCommConfiguration(nodeConfig.peerInfos),
+                buildPeerCommConfiguration(nodeConfig),
                 EbftPacketEncoderFactory(),
                 EbftPacketDecoderFactory(),
                 SECP256K1CryptoSystem()
@@ -36,12 +37,23 @@ class EBFTSynchronizationInfrastructure(nodeConfigProvider: NodeConfigurationPro
 
     override fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
+        validateConfigurations(nodeConfig, blockchainConfig)
+
         return ValidatorWorker(
                 blockchainConfig.signers,
                 engine,
                 blockchainConfig.configData.context.nodeID,
                 buildXCommunicationManager(blockchainConfig),
                 restartHandler)
+    }
+
+    private fun validateConfigurations(nodeConfig: NodeConfig, blockchainConfig: BaseBlockchainConfiguration) {
+        val nodePeers = nodeConfig.peerInfos.map { it.pubKey.byteArrayKeyOf() }
+        val chainPeers = blockchainConfig.signers.map { it.byteArrayKeyOf() }
+
+        require(chainPeers.all { nodePeers.contains(it) }) {
+            "Invalid blockchain config: unreachable signers have been detected"
+        }
     }
 
     private fun buildXCommunicationManager(blockchainConfig: BaseBlockchainConfiguration): CommunicationManager<EbftMessage> {
@@ -64,10 +76,10 @@ class EBFTSynchronizationInfrastructure(nodeConfigProvider: NodeConfigurationPro
         ).apply { init() }
     }
 
-    private fun buildPeerCommConfiguration(peers: Array<PeerInfo>): PeerCommConfiguration {
+    private fun buildPeerCommConfiguration(nodeConfig: NodeConfig): PeerCommConfiguration {
         return BasePeerCommConfiguration(
-                peers,
-                DefaultPeerResolver.resolvePeerIndex(nodeConfig.pubKeyByteArray, peers),
+                nodeConfig.peerInfos,
+                DefaultPeerResolver.resolvePeerIndex(nodeConfig.pubKeyByteArray, nodeConfig.peerInfos),
                 SECP256K1CryptoSystem(),
                 nodeConfig.privKeyByteArray)
     }

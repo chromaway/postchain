@@ -63,7 +63,7 @@ class TestLauncher : IntegrationTest() {
 
         val chainId = nodeConfigProvider.getConfiguration().activeChainIds.first().toLong()
 
-        return PostchainTestNode(nodeConfigProvider).apply {
+        return PostchainTestNode(nodeConfigProvider, true).apply {
             addBlockchain(chainId, blockchainRid, blockchainConfig)
             startBlockchain()
             nodes.add(this)

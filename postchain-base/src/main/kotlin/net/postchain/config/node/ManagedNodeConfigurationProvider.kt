@@ -5,6 +5,6 @@ import net.postchain.config.app.AppConfig
 class ManagedNodeConfigurationProvider(private val appConfig: AppConfig) : NodeConfigurationProvider {
 
     override fun getConfiguration(): NodeConfig {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        TODO("Communication with System Blockchain will be here")
     }
 }
