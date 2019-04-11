@@ -6,6 +6,7 @@ import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import mu.KLogging
 import net.postchain.base.SECP256K1CryptoSystem
+import net.postchain.common.hexStringToByteArray
 import net.postchain.configurations.GTXTestModule
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
@@ -25,6 +26,8 @@ import kotlin.system.measureNanoTime
 class GTXPerformanceTestNightly : IntegrationTest() {
 
     companion object : KLogging()
+
+    val expectedBcRid = "78967BAA4768CBCEF11C508326FFB13A956689FCB6DC3BA17F4B895CBB1577A3".hexStringToByteArray()
 
     private fun strategy(node: PostchainTestNode): OnDemandBlockBuildingStrategy {
         return node
@@ -78,7 +81,7 @@ class GTXPerformanceTestNightly : IntegrationTest() {
         var total = 0
         val module = GTXTestModule()
         val cs = SECP256K1CryptoSystem()
-        val txFactory = GTXTransactionFactory(byteArrayOf() ,module, cs)
+        val txFactory = GTXTransactionFactory(expectedBcRid ,module, cs)
         val nanoDelta = measureNanoTime {
             for (rawTx in transactions) {
                 val ttx =  txFactory.decodeTransaction(rawTx) as GTXTransaction
@@ -97,7 +100,7 @@ class GTXPerformanceTestNightly : IntegrationTest() {
         var total = 0
         val module = GTXTestModule()
         val cs = SECP256K1CryptoSystem()
-        val txFactory = GTXTransactionFactory(byteArrayOf() ,module, cs)
+        val txFactory = GTXTransactionFactory(expectedBcRid ,module, cs)
         val nanoDelta = measureNanoTime {
             for (rawTx in transactions) {
                 val ttx =  txFactory.decodeTransaction(rawTx) as GTXTransaction

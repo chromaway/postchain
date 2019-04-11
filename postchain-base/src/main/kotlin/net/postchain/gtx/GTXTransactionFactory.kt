@@ -1,6 +1,7 @@
 package net.postchain.gtx
 
 import net.postchain.base.CryptoSystem
+import net.postchain.common.toHex
 import net.postchain.core.Transaction
 import net.postchain.core.TransactionFactory
 import net.postchain.core.UserMistake
@@ -53,7 +54,7 @@ class GTXTransactionFactory(val blockchainRID: ByteArray, val module: GTXModule,
         val body = gtxData.transactionBodyData
 
         if (!body.blockchainRID.contentEquals(blockchainRID)) {
-            throw UserMistake("Transaction has wrong blockchainRID")
+            throw UserMistake("Transaction has wrong blockchainRID: Should be: ${blockchainRID.toHex()}, but was: ${body.blockchainRID.toHex()} ")
         }
 
         // We wait until after validation before doing (expensive) merkle root calculation
