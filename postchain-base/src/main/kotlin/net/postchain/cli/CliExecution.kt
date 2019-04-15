@@ -88,7 +88,7 @@ class CliExecution {
     }
 
     fun runNode(nodeConfigFile: String, chainIDs: List<Long>) {
-        val nodeConfigProvider = NodeConfigurationProviderFactory.create(
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
                 AppConfig.fromPropertiesFile(nodeConfigFile))
         val node = PostchainNode(nodeConfigProvider)
         chainIDs.forEach(node::startBlockchain)
@@ -126,7 +126,7 @@ class CliExecution {
 
     private fun tryCreateBasicDataSource(nodeConfigFile: String): Connection? {
         return try {
-            val nodeConfig = NodeConfigurationProviderFactory.create(
+            val nodeConfig = NodeConfigurationProviderFactory.createProvider(
                     AppConfig.fromPropertiesFile(nodeConfigFile)
             ).getConfiguration()
 

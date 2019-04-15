@@ -24,7 +24,7 @@ class CliIntegrationTest {
     @Test
     fun testModule() {
         val nodeConfigPath = fullPath("node-config.properties")
-        val nodeConfigProvider = NodeConfigurationProviderFactory.create(
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
                 AppConfig.fromPropertiesFile(nodeConfigPath))
 
         // this wipes the data base!
@@ -55,7 +55,7 @@ class CliIntegrationTest {
     @Test
     fun testAddConfiguration() {
         val nodeConfigPath = fullPath("node-config.properties")
-        val nodeConfigProvider = NodeConfigurationProviderFactory.create(
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
                 AppConfig.fromPropertiesFile(nodeConfigPath))
 
         // this wipes the data base!

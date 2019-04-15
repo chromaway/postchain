@@ -12,7 +12,7 @@ import net.postchain.core.NODE_ID_TODO
 typealias DBCommandBody = (ctx: EContext) -> Unit
 
 fun runDBCommandBody(nodeConfigFile: String, chainId: Long, body: DBCommandBody) {
-    val nodeConfig = NodeConfigurationProviderFactory.create(
+    val nodeConfig = NodeConfigurationProviderFactory.createProvider(
             AppConfig.fromPropertiesFile(nodeConfigFile)
     ).getConfiguration()
 

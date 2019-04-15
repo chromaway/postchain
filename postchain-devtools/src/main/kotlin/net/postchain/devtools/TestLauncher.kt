@@ -45,7 +45,7 @@ class TestLauncher : IntegrationTest() {
     }
 
     private fun createTestNode(configFile: String, blockchainRid: ByteArray, blockchainConfigFile: String): PostchainTestNode {
-        val nodeConfigProvider = NodeConfigurationProviderFactory.create(
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
                 AppConfig.fromPropertiesFile(configFile))
 
         /*

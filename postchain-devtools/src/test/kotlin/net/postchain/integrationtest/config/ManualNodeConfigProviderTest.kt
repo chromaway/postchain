@@ -60,7 +60,7 @@ class ManualNodeConfigProviderTest : IntegrationTest() {
     }
 
     @Test
-    fun test4Peers() {
+    fun fourPeersConnectedSuccessfully() {
         val nodesCount = 4
         val blockchainConfig = "/net/postchain/config/blockchain_config_4.xml"
         val nodeConfigs = arrayOf(

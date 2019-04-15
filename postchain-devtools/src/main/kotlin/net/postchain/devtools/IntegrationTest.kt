@@ -204,7 +204,7 @@ open class IntegrationTest {
             addConfiguration(baseConfig)
         }
 
-        return NodeConfigurationProviderFactory.create(AppConfig(appConfig))
+        return NodeConfigurationProviderFactory.createProvider(AppConfig(appConfig))
     }
 
     protected fun gtxConfigSigners(nodeCount: Int = 1): GTXValue {

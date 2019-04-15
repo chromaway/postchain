@@ -19,7 +19,7 @@ class CommandWipeDb : Command {
 
     override fun execute(): CliResult {
         return try {
-            val nodeConfig = NodeConfigurationProviderFactory.create(
+            val nodeConfig = NodeConfigurationProviderFactory.createProvider(
                     AppConfig.fromPropertiesFile(nodeConfigFile)
             ).getConfiguration()
             StorageBuilder.buildStorage(nodeConfig, NODE_ID_NA, true)

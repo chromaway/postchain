@@ -22,7 +22,7 @@ class SQLModuleTest {
         val mf = SQLGTXModuleFactory()
         val module = mf.makeModule(config, testBlockchainRID)
 
-        val nodeConfig = NodeConfigurationProviderFactory.create(
+        val nodeConfig = NodeConfigurationProviderFactory.createProvider(
                 AppConfig(getDatabaseConfig())
         ).getConfiguration()
 

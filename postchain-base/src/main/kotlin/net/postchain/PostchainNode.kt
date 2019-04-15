@@ -8,6 +8,8 @@ import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.BlockchainInfrastructure
 import net.postchain.core.BlockchainProcessManager
 import net.postchain.core.InfrastructureFactory
+import net.postchain.core.Infrastructures.BaseEbft
+import net.postchain.core.Infrastructures.BaseTest
 import net.postchain.core.Shutdownable
 import net.postchain.ebft.BaseEBFTInfrastructureFactory
 
@@ -21,7 +23,7 @@ open class PostchainNode(nodeConfigProvider: NodeConfigurationProvider) : Shutdo
     protected val blockchainInfrastructure: BlockchainInfrastructure
 
     init {
-        val blockchainConfigProvider = BlockchainConfigurationProviderFactory.create(nodeConfigProvider)
+        val blockchainConfigProvider = BlockchainConfigurationProviderFactory.createProvider(nodeConfigProvider)
         val infrastructureFactory = buildInfrastructureFactory(nodeConfigProvider)
 
         blockchainInfrastructure = infrastructureFactory.makeBlockchainInfrastructure(nodeConfigProvider)
@@ -42,9 +44,9 @@ open class PostchainNode(nodeConfigProvider: NodeConfigurationProvider) : Shutdo
     }
 
     private fun buildInfrastructureFactory(nodeConfigProvider: NodeConfigurationProvider): InfrastructureFactory {
-        val factoryClass = when (nodeConfigProvider.getConfiguration().infrastructure) {
-            "base/ebft" -> BaseEBFTInfrastructureFactory::class.java
-            "base/test" -> BaseTestInfrastructureFactory::class.java
+        val factoryClass = when (nodeConfigProvider.getConfiguration().infrastructure.toLowerCase()) {
+            BaseEbft.secondName.toLowerCase() -> BaseEBFTInfrastructureFactory::class.java
+            BaseTest.secondName.toLowerCase() -> BaseTestInfrastructureFactory::class.java
             else -> BaseEBFTInfrastructureFactory::class.java
         }
 

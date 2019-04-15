@@ -25,3 +25,8 @@ interface InfrastructureFactory {
                            blockchainInfrastructure: BlockchainInfrastructure
     ): BlockchainProcessManager
 }
+
+enum class Infrastructures(val secondName: String) {
+    BaseEbft("base/ebft"),
+    BaseTest("base/test")
+}

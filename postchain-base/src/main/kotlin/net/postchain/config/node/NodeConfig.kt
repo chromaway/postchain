@@ -14,10 +14,12 @@ open class NodeConfig(private val appConfig: AppConfig) {
      * Blockchain configuration provider
      */
     val blockchainConfigProvider: String
-        get() = config.getString("configuration.provider.blockchain") // manual | managed
+        // manual | managed
+        get() = config.getString("configuration.provider.blockchain", "")
 
     val infrastructure: String
-        get() = config.getString("infrastructure") // base/ebft | base/test
+        // base/ebft | base/test
+        get() = config.getString("infrastructure", "")
 
 
     /**
@@ -43,13 +45,13 @@ open class NodeConfig(private val appConfig: AppConfig) {
      * Pub/Priv keys
      */
     val privKey: String
-        get() = config.getString("messaging.privkey")
+        get() = config.getString("messaging.privkey", "")
 
     val privKeyByteArray: ByteArray
         get() = privKey.hexStringToByteArray()
 
     val pubKey: String
-        get() = config.getString("messaging.pubkey")
+        get() = config.getString("messaging.pubkey", "")
 
     val pubKeyByteArray: ByteArray
         get() = pubKey.hexStringToByteArray()
