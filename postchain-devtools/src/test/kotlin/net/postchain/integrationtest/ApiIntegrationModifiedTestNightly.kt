@@ -1,5 +1,3 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
-
 package net.postchain.integrationtest
 
 import io.restassured.RestAssured.given
@@ -25,7 +23,17 @@ import org.hamcrest.core.IsEqual
 import org.junit.Assert.*
 import org.junit.Test
 
-class ApiIntegrationTestNightly : IntegrationTest() {
+
+/**
+ * TODO: Fix after spark post bug has been fixed
+ *
+ * NOTE:
+ * ----------------------------------------
+ * These changes should go into the [ApiIntegrationTestNightly] class, but because of a bug
+ * i put them here instead, so that the bug fix will be easier to test.
+ * -----------------------------------
+ */
+class ApiIntegrationModifiedTestNightly : IntegrationTest() {
 
     private val gson = JsonTools.buildGson()
     private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
@@ -101,7 +109,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                 .then()
                 .statusCode(200)
                 .body(IsEqual.equalTo("[\"A0020500\",\"A0020500\"]"))
-        
+
     }
 
     @Test
@@ -216,3 +224,4 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                 .statusCode(expectedStatus)
     }
 }
+
