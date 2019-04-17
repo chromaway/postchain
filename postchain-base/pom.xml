@@ -195,11 +195,11 @@
                 <version>1.0.2</version>
                 <configuration>
                     <to>
-                        <image>?</image>
-                        <auth>
-                            <username>?</username>
-                            <password>?</password>
-                        </auth>
+                        <image>postchain-base</image>
+                        <!--<auth>-->
+                            <!--<username>?</username>-->
+                            <!--<password>?</password>-->
+                        <!--</auth>-->
                     </to>
                 </configuration>
             </plugin>
