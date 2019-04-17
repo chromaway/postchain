@@ -4,3 +4,6 @@
   configuration.to.auth.username
   configuration.to.auth.password
  2. Execute maven goals: mvn compile jib:build
+ 
+  In order to build to local docker daemon use next command:
+  mvn compile jib:dockerBuild
