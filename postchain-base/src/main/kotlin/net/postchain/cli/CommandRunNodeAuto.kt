@@ -37,10 +37,11 @@ class CommandRunNodeAuto : Command {
 
         val path = configDirectory + File.separator + BLOCKCHAIN_DIR
         val nodeConfigFile = configDirectory + File.separator + NODE_CONFIG_FILE
-        var chainIds = mutableListOf<Long>()
+        val chainIds = mutableListOf<Long>()
 
         return try {
             val cliExecution = CliExecution()
+            cliExecution.waitDb(50, 1000, nodeConfigFile)
             File(path).listFiles().forEach {
                 if (it.isDirectory) {
                     val chainId = it.name.toLong()
@@ -50,7 +51,7 @@ class CommandRunNodeAuto : Command {
                     it.listFiles().forEach {
                         if (it.extension == "xml") {
                             val blockchainConfigFile = it.absolutePath;
-                            var height = (it.nameWithoutExtension.split(".")[0]).toLong()
+                            val height = (it.nameWithoutExtension.split(".")[0]).toLong()
                             if (height.toInt() == 0) {
                                 cliExecution.addBlockchain(nodeConfigFile, chainId, brid, blockchainConfigFile)
                             } else {

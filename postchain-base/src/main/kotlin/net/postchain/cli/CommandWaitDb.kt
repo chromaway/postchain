@@ -15,7 +15,7 @@ class CommandWaitDb : Command {
     @Parameter(
             names = ["-rt", "--retry-times"],
             description = "Number of retries")
-    private var retryTimes = 5
+    private var retryTimes = 50
 
     @Parameter(
             names = ["-ri", "--retry-interval"],

@@ -41,12 +41,16 @@ class StorageBuilder {
         }
 
         private fun createBasicDataSource(config: Configuration): BasicDataSource {
+            val databaseURL = System.getenv("POSTCHAIN_DB_URL") ?: config.getString("database.url")
+            val databasePassword = System.getenv("POSTCHAIN_DB_PASSWORD") ?: config.getString("database.password")
+            val databaseUsername = System.getenv("POSTCHAIN_DB_USERNAME") ?: config.getString("database.username")
+
             return BasicDataSource().apply {
                 addConnectionProperty("currentSchema", schema(config))
                 driverClassName = config.getString("database.driverclass")
-                url = "${config.getString("database.url")}?loggerLevel=OFF"
-                username = config.getString("database.username")
-                password = config.getString("database.password")
+                url = "${databaseURL}?loggerLevel=OFF"
+                username = databaseUsername
+                password = databasePassword
                 defaultAutoCommit = false
             }
         }
@@ -76,8 +80,8 @@ class StorageBuilder {
         }
 
         private fun schema(config: Configuration): String {
-            return config.getString("database.schema", "public")
+            return System.getenv("POSTCHAIN_DB_SCHEMA") ?:
+                config.getString("database.schema", "public")
         }
-
     }
 }
