@@ -2,11 +2,15 @@ package net.postchain.cli
 
 import net.postchain.PostchainNode
 import net.postchain.base.BaseConfigurationDataStore
+import net.postchain.base.PeerInfo
 import net.postchain.base.data.BaseBlockStore
 import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
+import net.postchain.config.SimpleDatabaseConnector
 import net.postchain.config.app.AppConfig
+import net.postchain.config.app.AppConfigDbLayer
+import net.postchain.config.node.LegacyNodeConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.gtx.encodeGTXValue
 import net.postchain.gtx.gtxml.GTXMLValueParser
@@ -20,7 +24,14 @@ class CliExecution {
 
     private val dbAccess = SQLDatabaseAccess()
 
-    fun addBlockchain(nodeConfigFile: String, chainId: Long, blockchainRID: String, blockchainConfigFile: String, mode: AlreadyExistMode = AlreadyExistMode.IGNORE) {
+    fun addBlockchain(
+            nodeConfigFile: String,
+            chainId: Long,
+            blockchainRID: String,
+            blockchainConfigFile: String,
+            mode: AlreadyExistMode = AlreadyExistMode.IGNORE
+    ) {
+
         val encodedGtxValue = getEncodedGtxValueFromFile(blockchainConfigFile)
         runDBCommandBody(nodeConfigFile, chainId) { eContext ->
 
@@ -35,7 +46,8 @@ class CliExecution {
                     if (SQLDatabaseAccess().getBlockchainRID(eContext) == null) {
                         init()
                     } else {
-                        throw CliError.Companion.CliException("Blockchain with chainId $chainId already exists. Use -f flag to force addition.")
+                        throw CliError.Companion.CliException(
+                                "Blockchain with chainId $chainId already exists. Use -f flag to force addition.")
                     }
                 }
 
@@ -52,7 +64,14 @@ class CliExecution {
         }
     }
 
-    fun addConfiguration(nodeConfigFile: String, blockchainConfigFile: String, chainId: Long, height: Long, mode: AlreadyExistMode = AlreadyExistMode.IGNORE): Boolean {
+    fun addConfiguration(
+            nodeConfigFile: String,
+            blockchainConfigFile: String,
+            chainId: Long,
+            height: Long,
+            mode: AlreadyExistMode = AlreadyExistMode.IGNORE
+    ): Boolean {
+
         val encodedGtxValue = getEncodedGtxValueFromFile(blockchainConfigFile)
         var result = false
         runDBCommandBody(nodeConfigFile, chainId) { eContext ->
@@ -90,8 +109,10 @@ class CliExecution {
     fun runNode(nodeConfigFile: String, chainIDs: List<Long>) {
         val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
                 AppConfig.fromPropertiesFile(nodeConfigFile))
-        val node = PostchainNode(nodeConfigProvider)
-        chainIDs.forEach(node::startBlockchain)
+
+        with(PostchainNode(nodeConfigProvider)) {
+            chainIDs.forEach(::startBlockchain)
+        }
     }
 
     fun checkBlockchain(nodeConfigFile: String, chainId: Long, blockchainRID: String) {
@@ -122,6 +143,85 @@ class CliExecution {
             Thread.sleep(retryInterval)
             waitDb(retryTimes - 1, retryInterval, nodeConfigFile)
         } else CliError.DatabaseOffline()
+    }
+
+    fun peerinfoList(nodeConfigFile: String): Array<PeerInfo> {
+        return peerinfoFind(nodeConfigFile, null, null, null)
+    }
+
+    fun peerinfoFind(nodeConfigFile: String, host: String?, port: Int?, pubKey: String?): Array<PeerInfo> {
+        val appConfig = AppConfig.fromPropertiesFile(nodeConfigFile)
+        return SimpleDatabaseConnector(appConfig).withWriteConnection { connection ->
+            AppConfigDbLayer(appConfig, connection).findPeerInfo(host, port, pubKey)
+        }
+    }
+
+    fun peerinfoImport(nodeConfigFile: String): Array<PeerInfo> {
+        val appConfig = AppConfig.fromPropertiesFile(nodeConfigFile)
+        val nodeConfig = LegacyNodeConfigurationProvider(appConfig).getConfiguration()
+
+        return if (nodeConfig.peerInfos.isEmpty()) {
+            emptyArray()
+
+        } else {
+            SimpleDatabaseConnector(appConfig).withWriteConnection { connection ->
+                val imported = mutableListOf<PeerInfo>()
+
+                val dbLayer = AppConfigDbLayer(appConfig, connection)
+                nodeConfig.peerInfos.forEach { peerInfo ->
+                    val found = dbLayer.findPeerInfo(peerInfo.host, peerInfo.port, null)
+                    if (found.isEmpty()) {
+                        val added = dbLayer.addPeerInfo(
+                                peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex())
+
+                        if (added) {
+                            imported.add(peerInfo)
+                        }
+                    }
+                }
+
+                imported.toTypedArray()
+            }
+        }
+    }
+
+    fun peerinfoAdd(nodeConfigFile: String, host: String, port: Int, pubKey: String, mode: AlreadyExistMode): Boolean {
+        val appConfig = AppConfig.fromPropertiesFile(nodeConfigFile)
+        val connector = SimpleDatabaseConnector(appConfig)
+
+        return when (mode) {
+            AlreadyExistMode.ERROR -> {
+                connector.withWriteConnection { connection ->
+                    val peerinfos = AppConfigDbLayer(appConfig, connection).findPeerInfo(
+                            host, port, null)
+
+                    if (!peerinfos.isEmpty()) {
+                        throw CliError.Companion.CliException(
+                                "Peerinfo with port, host already exists. Use -f flag to force addition.")
+                    } else {
+                        AppConfigDbLayer(appConfig, connection).addPeerInfo(
+                                host, port, pubKey)
+                    }
+                }
+            }
+
+            AlreadyExistMode.FORCE -> {
+                connector.withWriteConnection { connection ->
+                    AppConfigDbLayer(appConfig, connection).addPeerInfo(
+                            host, port, pubKey)
+                }
+            }
+
+            else -> false
+        }
+    }
+
+    fun peerinfoRemove(nodeConfigFile: String, pubKey: String): Array<PeerInfo> {
+        val appConfig = AppConfig.fromPropertiesFile(nodeConfigFile)
+        return SimpleDatabaseConnector(appConfig).withWriteConnection { connection ->
+            AppConfigDbLayer(appConfig, connection)
+                    .removePeerInfo(pubKey)
+        }
     }
 
     private fun tryCreateBasicDataSource(nodeConfigFile: String): Connection? {
