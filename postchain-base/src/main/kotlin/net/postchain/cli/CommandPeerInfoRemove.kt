@@ -2,6 +2,10 @@ package net.postchain.cli
 
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
+import net.postchain.base.PeerInfo
+import net.postchain.config.SimpleDatabaseConnector
+import net.postchain.config.app.AppConfig
+import net.postchain.config.app.AppConfigDbLayer
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
 
@@ -28,7 +32,7 @@ class CommandPeerInfoRemove : Command {
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
         return try {
-            val removed = CliExecution().peerinfoRemove(nodeConfigFile, pubKey)
+            val removed = peerinfoRemove(nodeConfigFile, pubKey)
 
             val report = if (removed.isEmpty()) {
                 "No peerinfo has been removed"
@@ -43,6 +47,14 @@ class CommandPeerInfoRemove : Command {
 
         } catch (e: CliError.Companion.CliException) {
             CliError.CommandNotAllowed(message = e.message)
+        }
+    }
+
+    fun peerinfoRemove(nodeConfigFile: String, pubKey: String): Array<PeerInfo> {
+        val appConfig = AppConfig.fromPropertiesFile(nodeConfigFile)
+        return SimpleDatabaseConnector(appConfig).withWriteConnection { connection ->
+            AppConfigDbLayer(appConfig, connection)
+                    .removePeerInfo(pubKey)
         }
     }
 }

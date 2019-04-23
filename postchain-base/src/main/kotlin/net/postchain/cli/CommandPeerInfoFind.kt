@@ -2,6 +2,10 @@ package net.postchain.cli
 
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
+import net.postchain.base.PeerInfo
+import net.postchain.config.SimpleDatabaseConnector
+import net.postchain.config.app.AppConfig
+import net.postchain.config.app.AppConfigDbLayer
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
 
@@ -37,7 +41,7 @@ class CommandPeerInfoFind : Command {
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
         return try {
-            val peerInfos = CliExecution().peerinfoFind(nodeConfigFile, host, port, pubKey)
+            val peerInfos = peerinfoFind(nodeConfigFile, host, port, pubKey)
 
             val report = if (peerInfos.isEmpty()) {
                 "No peerinfo found"
@@ -52,6 +56,13 @@ class CommandPeerInfoFind : Command {
 
         } catch (e: CliError.Companion.CliException) {
             CliError.CommandNotAllowed(message = e.message)
+        }
+    }
+
+    fun peerinfoFind(nodeConfigFile: String, host: String?, port: Int?, pubKey: String?): Array<PeerInfo> {
+        val appConfig = AppConfig.fromPropertiesFile(nodeConfigFile)
+        return SimpleDatabaseConnector(appConfig).withWriteConnection { connection ->
+            AppConfigDbLayer(appConfig, connection).findPeerInfo(host, port, pubKey)
         }
     }
 }

@@ -2,6 +2,9 @@ package net.postchain.cli
 
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
+import net.postchain.config.SimpleDatabaseConnector
+import net.postchain.config.app.AppConfig
+import net.postchain.config.app.AppConfigDbLayer
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
 
@@ -46,13 +49,44 @@ class CommandPeerInfoAdd : Command {
 
         return try {
             val mode = if (force) AlreadyExistMode.FORCE else AlreadyExistMode.ERROR
-            val added = CliExecution().peerinfoAdd(nodeConfigFile, host, port, pubKey, mode)
+            val added = peerinfoAdd(nodeConfigFile, host, port, pubKey, mode)
             return when {
                 added -> Ok("Peerinfo has been added")
                 else -> Ok("Peerinfo hasn't been added")
             }
         } catch (e: CliError.Companion.CliException) {
             CliError.CommandNotAllowed(message = e.message)
+        }
+    }
+
+    fun peerinfoAdd(nodeConfigFile: String, host: String, port: Int, pubKey: String, mode: AlreadyExistMode): Boolean {
+        val appConfig = AppConfig.fromPropertiesFile(nodeConfigFile)
+        val connector = SimpleDatabaseConnector(appConfig)
+
+        return when (mode) {
+            AlreadyExistMode.ERROR -> {
+                connector.withWriteConnection { connection ->
+                    val peerinfos = AppConfigDbLayer(appConfig, connection).findPeerInfo(
+                            host, port, null)
+
+                    if (!peerinfos.isEmpty()) {
+                        throw CliError.Companion.CliException(
+                                "Peerinfo with port, host already exists. Use -f flag to force addition.")
+                    } else {
+                        AppConfigDbLayer(appConfig, connection).addPeerInfo(
+                                host, port, pubKey)
+                    }
+                }
+            }
+
+            AlreadyExistMode.FORCE -> {
+                connector.withWriteConnection { connection ->
+                    AppConfigDbLayer(appConfig, connection).addPeerInfo(
+                            host, port, pubKey)
+                }
+            }
+
+            else -> false
         }
     }
 }
