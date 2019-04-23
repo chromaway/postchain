@@ -12,12 +12,11 @@ import org.awaitility.Awaitility.await
 import org.awaitility.Duration.TEN_SECONDS
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(JUnitParamsRunner::class)
-class FullEbftMultipleChainsTestNightly : IntegrationTest() {
+class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
 
     companion object : KLogging()
 
@@ -26,56 +25,9 @@ class FullEbftMultipleChainsTestNightly : IntegrationTest() {
     }
 
     @Test
-    @Parameters(
-            "1, 0", "2, 0", "10, 0"
+    @Parameters("1, 0", "2, 0", "10, 0"
             , "1, 1", "2, 1", "10, 1"
-            , "1, 10", "2, 10", "10, 10"
-    )
-    @TestCaseName("[{index}] nodesCount: 1, blocksCount: {0}, txPerBlock: {1}")
-    fun runSingleNodeWithYTxPerBlock(blocksCount: Int, txPerBlock: Int) {
-        runXNodesWithYTxPerBlock(
-                1,
-                blocksCount,
-                txPerBlock,
-                arrayOf(
-                        "classpath:/net/postchain/multiple_chains/ebft_nightly/single_node/node0.properties"
-                ),
-                arrayOf(
-                        "/net/postchain/multiple_chains/ebft_nightly/single_node/blockchain_config_1.xml",
-                        "/net/postchain/multiple_chains/ebft_nightly/single_node/blockchain_config_2.xml"
-                ))
-    }
-
-    @Ignore // tests overlap and cause failures
-    @Test
-    @Parameters(
-            "1, 0", "2, 0", "10, 0"
-            , "1, 1", "2, 1", "10, 1"
-            , "1, 10", "2, 10", "10, 10"
-    )
-    @TestCaseName("[{index}] nodesCount: 2, blocksCount: {0}, txPerBlock: {1}")
-    fun runTwoNodesWithYTxPerBlock(blocksCount: Int, txPerBlock: Int) {
-        runXNodesWithYTxPerBlock(
-                2,
-                blocksCount,
-                txPerBlock,
-                arrayOf(
-                        "classpath:/net/postchain/multiple_chains/ebft_nightly/two_nodes/node0.properties",
-                        "classpath:/net/postchain/multiple_chains/ebft_nightly/two_nodes/node1.properties"
-                ),
-                arrayOf(
-                        "/net/postchain/multiple_chains/ebft_nightly/two_nodes/blockchain_config_1.xml",
-                        "/net/postchain/multiple_chains/ebft_nightly/two_nodes/blockchain_config_2.xml"
-                ))
-    }
-
-    @Ignore
-    @Test
-    @Parameters(
-            "1, 0", "2, 0", "10, 0"
-            , "1, 1", "2, 1", "10, 1"
-            , "1, 10", "2, 10", "10, 10"
-    )
+            , "1, 10", "2, 10", "10, 10")
     @TestCaseName("[{index}] nodesCount: 5, blocksCount: {0}, txPerBlock: {1}")
     fun runFiveNodesWithYTxPerBlock(blocksCount: Int, txPerBlock: Int) {
         runXNodesWithYTxPerBlock(
@@ -87,7 +39,8 @@ class FullEbftMultipleChainsTestNightly : IntegrationTest() {
                         "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node1.properties",
                         "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node2.properties",
                         "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node3.properties",
-                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node4.properties"
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node4.properties",
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/replica0.properties"
                 ),
                 arrayOf(
                         "/net/postchain/multiple_chains/ebft_nightly/five_nodes/blockchain_config_1.xml",
@@ -109,11 +62,9 @@ class FullEbftMultipleChainsTestNightly : IntegrationTest() {
         }
 
         val chains = arrayOf(1L, 2L)
-
-        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-
-        // Creating node with two chains
-        createMultipleChainNodes(nodesCount, nodeConfigsFilenames, blockchainConfigsFilenames)
+        val numberOfReplicas = 3
+        configOverrides.setProperty("testpeerinfos", createPeerInfosWithReplica(numberOfReplicas, nodesCount))
+        createMultipleChainNodesWithReplicas(numberOfReplicas, nodesCount, nodeConfigsFilenames, blockchainConfigsFilenames)
 
         // Asserting all chains are started
         await().atMost(TEN_SECONDS)
@@ -128,10 +79,9 @@ class FullEbftMultipleChainsTestNightly : IntegrationTest() {
         for (block in 0 until blocksCount) {
             (0 until txPerBlock).forEach { _ ->
                 val currentTxId = txId++
-                nodes.forEach { node ->
+                nodes.dropLast(numberOfReplicas).forEach { node ->
                     chains.forEach { chain ->
-                        node.transactionQueue(chain).enqueue(
-                                TestTransaction(currentTxId))
+                        node.transactionQueue(chain).enqueue(TestTransaction(currentTxId))
                     }
                 }
             }

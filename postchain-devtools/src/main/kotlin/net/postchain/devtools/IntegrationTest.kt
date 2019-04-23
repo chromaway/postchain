@@ -134,6 +134,17 @@ open class IntegrationTest {
         }
     }
 
+    protected fun createMultipleChainNodesWithReplicas(
+            numberOfReplicas: Int,
+            count: Int,
+            nodeConfigsFilenames: Array<String>,
+            blockchainConfigsFilenames: Array<String>
+    ): Array<PostchainTestNode> {
+
+        return Array(count) { createMultipleChainNode(it, count, nodeConfigsFilenames[it], *blockchainConfigsFilenames) }
+                .plus(Array(numberOfReplicas){ createMultipleChainNode(- it - 1, count, nodeConfigsFilenames[count], *blockchainConfigsFilenames) })
+    }
+
     private fun createMultipleChainNode(
             nodeIndex: Int,
             nodeCount: Int,
