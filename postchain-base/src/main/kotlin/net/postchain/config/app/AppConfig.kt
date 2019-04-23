@@ -37,15 +37,19 @@ class AppConfig(val config: Configuration) {
         get() = config.getString("database.driverclass", "")
 
     val databaseUrl: String
-        get() = config.getString("database.url", "")
+        get() = System.getenv("POSTCHAIN_DB_URL")
+                ?: config.getString("database.url", "")
 
     val databaseSchema: String
-        get() = config.getString("database.schema", "public")
+        get() = System.getenv("POSTCHAIN_DB_SCHEMA")
+                ?: config.getString("database.schema", "public")
 
     val databaseUsername: String
-        get() = config.getString("database.username", "")
+        get() = System.getenv("POSTCHAIN_DB_USERNAME")
+                ?: config.getString("database.username", "")
 
     val databasePassword: String
-        get() = config.getString("database.password", "")
+        get() = System.getenv("POSTCHAIN_DB_PASSWORD")
+                ?: config.getString("database.password", "")
 
 }
