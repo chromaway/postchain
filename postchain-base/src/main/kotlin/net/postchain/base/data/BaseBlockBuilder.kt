@@ -92,7 +92,7 @@ open class BaseBlockBuilder(
             !Arrays.equals(header.prevBlockRID, initialBlockData.prevBlockRID) ->
                 ValidationResult(false, "header.prevBlockRID != initialBlockData.prevBlockRID," +
                         "( ${header.prevBlockRID.toHex()} != ${initialBlockData.prevBlockRID.toHex()} ), "+
-                        " height: ${header.blockHeaderRec.height} and ${initialBlockData.height} ")
+                        " height: ${header.blockHeaderRec.getHeight()} and ${initialBlockData.height} ")
 
             header.blockHeaderRec.getHeight() != initialBlockData.height ->
                 ValidationResult(false, "header.blockHeaderRec.height != initialBlockData.height")
