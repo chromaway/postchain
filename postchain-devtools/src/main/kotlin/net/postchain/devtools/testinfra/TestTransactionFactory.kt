@@ -1,21 +1,31 @@
 package net.postchain.devtools.testinfra
 
+import mu.KLogging
+import net.postchain.common.toHex
 import net.postchain.core.Transaction
 import net.postchain.core.TransactionFactory
-import org.junit.Assert
+import net.postchain.core.UserMistake
 import java.io.DataInputStream
 
 class TestTransactionFactory : TransactionFactory {
 
     val specialTxs = mutableMapOf<Int, Transaction>()
 
+    companion object : KLogging()
+
     override fun decodeTransaction(data: ByteArray): Transaction {
-        val id = DataInputStream(data.inputStream()).readInt()
+        val stream = DataInputStream(data.inputStream())
+        val id = stream.readInt()
         if (specialTxs.containsKey(DataInputStream(data.inputStream()).readInt())) {
             return specialTxs[id]!!
         }
+
         val result = TestTransaction(id)
-        Assert.assertArrayEquals(result.getRawData(), data)
+
+        if (!result.getRawData().contentEquals(data)) {
+            throw UserMistake("This is a test, and you must send TX data in a format so it can be interpreted " +
+                  "as an integer. You sent: ${data.toHex()} (and the format we expected was ${result.getRawData().toHex()})")
+        }
         return result
     }
 }

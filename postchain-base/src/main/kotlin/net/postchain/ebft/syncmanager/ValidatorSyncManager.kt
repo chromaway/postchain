@@ -166,7 +166,9 @@ class ValidatorSyncManager(
     private fun sendBlockSignature(nodeIndex: Int, blockRID: ByteArray) {
         val currentBlock = this.blockManager.currentBlock
         if (currentBlock != null && currentBlock.header.blockRID.contentEquals(blockRID)) {
-            assert(statusManager.myStatus.blockRID!!.contentEquals(currentBlock.header.blockRID))
+            if(!statusManager.myStatus.blockRID!!.contentEquals(currentBlock.header.blockRID)) {
+                throw ProgrammerMistake("status manager block RID (${statusManager.myStatus.blockRID!!.toHex()}) out of sync with current block RID (${currentBlock.header.blockRID.toHex()})")
+            }
             val signature = statusManager.getCommitSignature()
             if (signature != null) {
                 communicationManager.sendPacket(BlockSignature(blockRID, signature), validatorAtIndex(nodeIndex))

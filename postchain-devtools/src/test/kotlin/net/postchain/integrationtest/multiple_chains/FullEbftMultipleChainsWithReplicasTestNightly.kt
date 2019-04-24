@@ -25,13 +25,12 @@ class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
     }
 
     @Test
-    @Parameters("1, 0", "2, 0", "10, 0"
-            , "1, 1", "2, 1", "10, 1"
-            , "1, 10", "2, 10", "10, 10")
-    @TestCaseName("[{index}] nodesCount: 5, blocksCount: {0}, txPerBlock: {1}")
-    fun runFiveNodesWithYTxPerBlock(blocksCount: Int, txPerBlock: Int) {
-        runXNodesWithYTxPerBlock(
-                5,
+    @Parameters("5, 3, 10, 10")
+    @TestCaseName("[{index}] nodesCount: {0}, replicaCount: {1}, blocksCount: {2}, txPerBlock: {3}")
+    fun runFiveNodesWithYTxPerBlock(nodesCount: Int, replicaCount: Int, blocksCount: Int, txPerBlock: Int) {
+        runXNodesWithReplicasWithYTxPerBlock(
+                nodesCount,
+                replicaCount,
                 blocksCount,
                 txPerBlock,
                 arrayOf(
@@ -48,8 +47,9 @@ class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
                 ))
     }
 
-    private fun runXNodesWithYTxPerBlock(
+    private fun runXNodesWithReplicasWithYTxPerBlock(
             nodesCount: Int,
+            replicaCount: Int,
             blocksCount: Int,
             txPerBlock: Int,
             nodeConfigsFilenames: Array<String>,
@@ -62,9 +62,8 @@ class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
         }
 
         val chains = arrayOf(1L, 2L)
-        val numberOfReplicas = 3
-        configOverrides.setProperty("testpeerinfos", createPeerInfosWithReplica(numberOfReplicas, nodesCount))
-        createMultipleChainNodesWithReplicas(numberOfReplicas, nodesCount, nodeConfigsFilenames, blockchainConfigsFilenames)
+        configOverrides.setProperty("testpeerinfos", createPeerInfosWithReplica(replicaCount, nodesCount))
+        createMultipleChainNodesWithReplicas(replicaCount, nodesCount, nodeConfigsFilenames, blockchainConfigsFilenames)
 
         // Asserting all chains are started
         await().atMost(TEN_SECONDS)
@@ -79,7 +78,7 @@ class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
         for (block in 0 until blocksCount) {
             (0 until txPerBlock).forEach { _ ->
                 val currentTxId = txId++
-                nodes.dropLast(numberOfReplicas).forEach { node ->
+                nodes.dropLast(replicaCount).forEach { node ->
                     chains.forEach { chain ->
                         node.transactionQueue(chain).enqueue(TestTransaction(currentTxId))
                     }

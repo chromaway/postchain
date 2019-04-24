@@ -87,7 +87,7 @@ class DefaultXConnectionManagerTest {
 
         // Then
         verify(chainPeerConfig, times(5)).chainID
-        verify(chainPeerConfig).blockchainRID
+        verify(chainPeerConfig, times(2)).blockchainRID
         verify(chainPeerConfig, never()).commConfiguration
         verify(communicationConfig, never()).peerInfo
 
@@ -119,7 +119,7 @@ class DefaultXConnectionManagerTest {
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(1)).commConfiguration
-        verify(chainPeerConfig).blockchainRID
+        verify(chainPeerConfig, times(2)).blockchainRID
         verify(communicationConfig).peerInfo
 
         connectionManager.shutdown()
@@ -150,7 +150,7 @@ class DefaultXConnectionManagerTest {
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(1 + (2 - 1) * 2)).commConfiguration
-        verify(chainPeerConfig, times(1 + 1 * 2)).blockchainRID
+        verify(chainPeerConfig, times(1 + 1 * 2 + 1)).blockchainRID
         verify(communicationConfig, times(2 + 2 + 2)).peerInfo
 
         connectionManager.shutdown()
@@ -208,7 +208,7 @@ class DefaultXConnectionManagerTest {
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(2)).commConfiguration
-        verify(chainPeerConfig, times(1 + 2)).blockchainRID
+        verify(chainPeerConfig, times(1 + 2 + 1)).blockchainRID
 
         connectionManager.shutdown()
     }
@@ -243,7 +243,7 @@ class DefaultXConnectionManagerTest {
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(1 + (2 - 1) * 2)).commConfiguration
-        verify(chainPeerConfig, times(1 + 2)).blockchainRID
+        verify(chainPeerConfig, times(1 + 2 + 1)).blockchainRID
         verify(communicationConfig, times(2 + 2 + 2)).peerInfo
 
         connectionManager.shutdown()
