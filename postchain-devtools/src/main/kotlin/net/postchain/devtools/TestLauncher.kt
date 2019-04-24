@@ -4,7 +4,8 @@ import com.google.gson.GsonBuilder
 import mu.KLogging
 import net.postchain.base.gtxml.TestType
 import net.postchain.common.hexStringToByteArray
-import net.postchain.config.CommonsConfigurationFactory
+import net.postchain.config.app.AppConfig
+import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.core.UserMistake
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.devtools.KeyPairHelper.privKey
@@ -45,7 +46,10 @@ class TestLauncher : IntegrationTest() {
     }
 
     private fun createTestNode(configFile: String, blockchainRid: ByteArray, blockchainConfigFile: String): PostchainTestNode {
-        val nodeConfig = CommonsConfigurationFactory.readFromFile(configFile)
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
+                AppConfig.fromPropertiesFile(configFile))
+
+        /*
         // TODO: Fix this hack
         nodeConfig.setProperty("api.port", -1) // FYI: Disabling Rest API in test mode
         nodeConfig.setProperty("node.0.id", nodeConfig.getProperty("test.node.0.id"))
@@ -53,13 +57,14 @@ class TestLauncher : IntegrationTest() {
         nodeConfig.setProperty("node.0.port", nodeConfig.getProperty("test.node.0.port"))
         nodeConfig.setProperty("node.0.pubkey", nodeConfig.getProperty("test.node.0.pubkey"))
         nodeConfig.setProperty("database.schema", nodeConfig.getProperty("test.database.schema"))
+        */
 
         val blockchainConfig = GtvMLParser.parseGtvML(
                 File(blockchainConfigFile).readText())
 
-        val chainId = nodeConfig.getLong("activechainids")
+        val chainId = nodeConfigProvider.getConfiguration().activeChainIds.first().toLong()
 
-        return PostchainTestNode(nodeConfig).apply {
+        return PostchainTestNode(nodeConfigProvider, true).apply {
             addBlockchain(chainId, blockchainRid, blockchainConfig)
             startBlockchain()
             nodes.add(this)

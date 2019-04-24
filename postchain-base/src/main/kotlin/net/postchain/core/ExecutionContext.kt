@@ -11,7 +11,7 @@ interface ExecutionContext {
     }
 }
 
-interface EContext : ExecutionContext {}
+interface EContext : ExecutionContext
 
 interface BlockEContext : EContext {
     val blockIID: Long

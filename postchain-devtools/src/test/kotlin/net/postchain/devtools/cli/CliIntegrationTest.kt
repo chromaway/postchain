@@ -4,7 +4,8 @@ import net.postchain.PostchainNode
 import net.postchain.StorageBuilder
 import net.postchain.cli.AlreadyExistMode
 import net.postchain.cli.CliExecution
-import net.postchain.config.CommonsConfigurationFactory
+import net.postchain.config.app.AppConfig
+import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.core.BlockQueries
 import net.postchain.core.NODE_ID_NA
 import org.junit.Assert
@@ -23,25 +24,26 @@ class CliIntegrationTest {
     @Test
     fun testModule() {
         val nodeConfigPath = fullPath("node-config.properties")
-        val nodeConfig = CommonsConfigurationFactory.readFromFile(nodeConfigPath)
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
+                AppConfig.fromPropertiesFile(nodeConfigPath))
 
         // this wipes the data base!
-        StorageBuilder.buildStorage(nodeConfig, NODE_ID_NA, true)
+        StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration(), NODE_ID_NA, true)
 
         // add-blockchain goes here
-        val chainId : Long = 1;
+        val chainId: Long = 1;
         val brid = File(fullPath("brid.txt")).readText()
         val blockChainConfig = fullPath("blockchain_config_4_signers.xml")
         CliExecution().addBlockchain(nodeConfigPath, chainId, brid, blockChainConfig, AlreadyExistMode.FORCE)
 
-        val node = PostchainNode(nodeConfig)
+        val node = PostchainNode(nodeConfigProvider)
         node.startBlockchain(chainId)
         val chain = node.processManager.retrieveBlockchain(chainId)
         val queries = chain!!.getEngine().getBlockQueries()
 
         for (x in 0..1000) {
             Thread.sleep(10)
-            if (queries.getBestHeight().get() > 5)  {
+            if (queries.getBestHeight().get() > 5) {
                 break
             };
         }
@@ -53,10 +55,11 @@ class CliIntegrationTest {
     @Test
     fun testAddConfiguration() {
         val nodeConfigPath = fullPath("node-config.properties")
-        val nodeConfig = CommonsConfigurationFactory.readFromFile(nodeConfigPath)
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
+                AppConfig.fromPropertiesFile(nodeConfigPath))
 
         // this wipes the data base!
-        StorageBuilder.buildStorage(nodeConfig, NODE_ID_NA, true)
+        StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration(), NODE_ID_NA, true)
 
         // add-blockchain goes here
         val chainId = 1L
@@ -66,7 +69,7 @@ class CliIntegrationTest {
         cliExecution.addBlockchain(nodeConfigPath, chainId, brid, blockChainConfig, AlreadyExistMode.FORCE)
 
         // start blockchain with one signer first
-        val node = PostchainNode(nodeConfig)
+        val node = PostchainNode(nodeConfigProvider)
         node.startBlockchain(chainId)
         val chain = node.processManager.retrieveBlockchain(chainId)
         val queries = chain!!.getEngine().getBlockQueries()
@@ -84,16 +87,15 @@ class CliIntegrationTest {
         println(queries.getBestHeight().get())
 
         Assert.assertTrue(queries.getBestHeight().get() == 10L)
-        waitUntilBlock(queries,11, 200) // this should exit after 200 milliseconds
+        waitUntilBlock(queries, 11, 200) // this should exit after 200 milliseconds
         Assert.assertTrue(queries.getBestHeight().get() == 10L)
 
         node.shutdown()
     }
 
-
     fun waitUntilBlock(queries: BlockQueries, height: Int, maxWaitTime: Int) {
-        var count : Int = 0;
-        while(count < maxWaitTime) {
+        var count: Int = 0;
+        while (count < maxWaitTime) {
             Thread.sleep(10)
             if (queries.getBestHeight().get() >= height) {
                 break;

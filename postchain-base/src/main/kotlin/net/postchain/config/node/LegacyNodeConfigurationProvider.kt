@@ -1,17 +1,22 @@
-package net.postchain.base
+package net.postchain.config.node
 
+import net.postchain.base.PeerInfo
 import net.postchain.common.hexStringToByteArray
+import net.postchain.config.app.AppConfig
 import org.apache.commons.configuration2.Configuration
 
-object PeerInfoCollectionFactory {
+class LegacyNodeConfigurationProvider(private val appConfig: AppConfig) : NodeConfigurationProvider {
+
+    override fun getConfiguration(): NodeConfig {
+        return object : NodeConfig(appConfig) {
+            override val peerInfos = createPeerInfoCollection(appConfig.config)
+        }
+    }
 
     /**
-     * Retrieve peer information from config, including networking info and public keys
-     *
-     * @param config configuration
-     * @return peer information
+     * Retrieves peer information from config, including networking info and public keys
      */
-    fun createPeerInfoCollection(config: Configuration): Array<PeerInfo> {
+    private fun createPeerInfoCollection(config: Configuration): Array<PeerInfo> {
         // this is for testing only. We can prepare the configuration with a
         // special Array<PeerInfo> for dynamic ports
         val peerInfos = config.getProperty("testpeerinfos")
@@ -35,5 +40,4 @@ object PeerInfoCollectionFactory {
             PeerInfo(host, port, pubKey)
         }
     }
-
 }
