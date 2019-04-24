@@ -1,13 +1,12 @@
 package net.postchain.ebft
 
-import net.postchain.base.*
+import net.postchain.base.BasePeerCommConfiguration
+import net.postchain.base.PeerCommConfiguration
+import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.common.hexStringToByteArray
-import net.postchain.common.toHex
-import net.postchain.core.BlockchainEngine
-import net.postchain.core.BlockchainProcess
-import net.postchain.core.RestartHandler
-import net.postchain.core.SynchronizationInfrastructure
+import net.postchain.config.node.NodeConfig
+import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
 import net.postchain.ebft.message.EbftMessage
 import net.postchain.ebft.worker.ReadOnlyWorker
@@ -17,17 +16,16 @@ import net.postchain.network.netty2.NettyConnectorFactory
 import net.postchain.network.x.DefaultXCommunicationManager
 import net.postchain.network.x.DefaultXConnectionManager
 import net.postchain.network.x.XConnectionManager
-import org.apache.commons.configuration2.Configuration
 
-class EBFTSynchronizationInfrastructure(val config: Configuration) : SynchronizationInfrastructure {
+class EBFTSynchronizationInfrastructure(nodeConfigProvider: NodeConfigurationProvider) : SynchronizationInfrastructure {
 
-    /*private */val connectionManager: XConnectionManager
-    private val peers = PeerInfoCollectionFactory.createPeerInfoCollection(config)
+    private val nodeConfig = nodeConfigProvider.getConfiguration()
+    val connectionManager: XConnectionManager
 
     init {
         connectionManager = DefaultXConnectionManager(
                 NettyConnectorFactory(),
-                buildPeerCommConfiguration(peers),
+                buildPeerCommConfiguration(nodeConfig),
                 EbftPacketEncoderFactory(),
                 EbftPacketDecoderFactory(),
                 SECP256K1CryptoSystem()
@@ -40,6 +38,7 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
 
     override fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
+        validateConfigurations(nodeConfig, blockchainConfig)
         return if(blockchainConfig.configData.context.nodeID != NODE_ID_READ_ONLY) {
             ValidatorWorker(
                     blockchainConfig.signers,
@@ -57,12 +56,21 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
         }
     }
 
+    private fun validateConfigurations(nodeConfig: NodeConfig, blockchainConfig: BaseBlockchainConfiguration) {
+        val nodePeers = nodeConfig.peerInfos.map { it.pubKey.byteArrayKeyOf() }
+        val chainPeers = blockchainConfig.signers.map { it.byteArrayKeyOf() }
+
+        require(chainPeers.all { nodePeers.contains(it) }) {
+            "Invalid blockchain config: unreachable signers have been detected"
+        }
+    }
+
     private fun buildXCommunicationManager(blockchainConfig: BaseBlockchainConfiguration): CommunicationManager<EbftMessage> {
         val communicationConfig = BasePeerCommConfiguration(
-                PeerInfoCollectionFactory.createPeerInfoCollection(config),
+                nodeConfig.peerInfos,
                 SECP256K1CryptoSystem(),
-                privKey(),
-                pubKey())
+                nodeConfig.privKeyByteArray,
+                nodeConfig.pubKey.hexStringToByteArray())
 
         val packetEncoder = EbftPacketEncoder(communicationConfig, blockchainConfig.blockchainRID)
         val packetDecoder = EbftPacketDecoder(communicationConfig)
@@ -77,17 +85,11 @@ class EBFTSynchronizationInfrastructure(val config: Configuration) : Synchroniza
         ).apply { init() }
     }
 
-    private fun privKey(): ByteArray =
-            config.getString("messaging.privkey").hexStringToByteArray()
-
-    private fun pubKey(): ByteArray =
-            config.getString("messaging.pubkey").hexStringToByteArray()
-
-    private fun buildPeerCommConfiguration(peers: Array<PeerInfo>): PeerCommConfiguration {
+    private fun buildPeerCommConfiguration(nodeConfig: NodeConfig): PeerCommConfiguration {
         return BasePeerCommConfiguration(
-                peers,
+                nodeConfig.peerInfos,
                 SECP256K1CryptoSystem(),
-                privKey(),
-                pubKey())
+                nodeConfig.privKeyByteArray,
+                nodeConfig.pubKey.hexStringToByteArray())
     }
 }

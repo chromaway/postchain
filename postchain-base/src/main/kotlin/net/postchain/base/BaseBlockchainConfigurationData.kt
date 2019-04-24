@@ -39,6 +39,8 @@ class BaseBlockchainConfigurationData(
     }
 
     companion object {
+
+        @Deprecated("Deprecated in v2.4.4. Will be deleted in v3.0")
         fun readFromCommonsConfiguration(config: Configuration, chainId: Long, blockchainRID: ByteArray, nodeID: Int):
                 BaseBlockchainConfigurationData {
 
@@ -54,6 +56,7 @@ class BaseBlockchainConfigurationData(
                     signer)
         }
 
+        @Deprecated("Deprecated in v2.4.4. Will be deleted in v3.0")
         private fun convertGTXConfigToGTXValue(config: Configuration): GTXValue {
             val properties = mutableListOf(
                     "modules" to gtx(
@@ -92,6 +95,7 @@ class BaseBlockchainConfigurationData(
             return gtx(*properties.toTypedArray())
         }
 
+        @Deprecated("Deprecated in v2.4.4. Will be deleted in v3.0")
         private fun convertConfigToGTXValue(config: Configuration): GTXValue {
 
             fun blockStrategy(config: Configuration): GTXValue {
