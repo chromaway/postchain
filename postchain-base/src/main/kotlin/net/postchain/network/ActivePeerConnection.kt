@@ -7,6 +7,7 @@ import java.net.Socket
 import java.util.concurrent.CyclicBarrier
 import kotlin.concurrent.thread
 
+@Deprecated("Deprecated after Netty2")
 class ActivePeerConnection(
         val peer: PeerInfo,
         val packetConverter: IdentPacketConverter,

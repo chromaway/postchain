@@ -9,6 +9,7 @@ import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.TimeUnit
 
+@Deprecated("Deprecated after Netty2")
 class ConnectionManagerTest {
 
     private val blockchainRid = byteArrayOf(0x01)

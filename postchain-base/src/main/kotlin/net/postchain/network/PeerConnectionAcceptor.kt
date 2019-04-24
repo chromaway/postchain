@@ -6,6 +6,7 @@ import net.postchain.base.PeerInfo
 import java.net.ServerSocket
 import kotlin.concurrent.thread
 
+@Deprecated("Deprecated after Netty2")
 class PeerConnectionAcceptor(
         peer: PeerInfo,
         private val identPacketConverter: IdentPacketConverter,

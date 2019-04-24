@@ -25,6 +25,7 @@ import java.util.concurrent.LinkedBlockingQueue
 
 */
 
+@Deprecated("Deprecated after Netty2")
 abstract class PeerConnection : AbstractPeerConnection {
     @Volatile
     protected var keepGoing: Boolean = true

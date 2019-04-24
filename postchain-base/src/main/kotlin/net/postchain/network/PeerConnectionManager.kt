@@ -11,6 +11,7 @@ import java.util.*
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.concurrent.thread
 
+@Deprecated("Deprecated after Netty2")
 interface PeerConnectionManagerInterface<PacketType> {
     fun sendPacket(packet: OutboundPacket<PacketType>)
     fun connectPeer(peer: PeerInfo, packetHandler: (ByteArray) -> Unit): AbstractPeerConnection
@@ -18,6 +19,7 @@ interface PeerConnectionManagerInterface<PacketType> {
     fun packetConverter(): PacketConverter<PacketType>
 }
 
+@Deprecated("Deprecated after Netty2")
 class PeerConnectionManager<PacketType>(
         myPeerInfo: PeerInfo,
         val packetConverter: PacketConverter<PacketType>

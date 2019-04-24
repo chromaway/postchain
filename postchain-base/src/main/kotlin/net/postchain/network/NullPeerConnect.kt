@@ -2,6 +2,7 @@ package net.postchain.network
 
 import mu.KLogging
 
+@Deprecated("Deprecated after Netty2")
 class NullPeerConnect() : AbstractPeerConnection {
     companion object : KLogging()
 

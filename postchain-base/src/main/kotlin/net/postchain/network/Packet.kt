@@ -4,6 +4,7 @@ import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerID
 import net.postchain.core.ByteArrayKey
 
+@Deprecated("Deprecated after Netty2")
 interface PacketConverter<PacketType> : IdentPacketConverter {
     fun decodePacket(pubKey: ByteArray, bytes: ByteArray): PacketType
     fun decodePacket(bytes: ByteArray): PacketType?

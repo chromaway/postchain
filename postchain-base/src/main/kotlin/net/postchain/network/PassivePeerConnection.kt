@@ -5,6 +5,7 @@ import java.io.DataOutputStream
 import java.net.Socket
 import kotlin.concurrent.thread
 
+@Deprecated("Deprecated after Netty2")
 class PassivePeerConnection(
         private val packetConverter: IdentPacketConverter,
         inSocket: Socket,
