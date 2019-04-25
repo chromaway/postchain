@@ -305,7 +305,10 @@
                         <credHelper>wincred</credHelper>
                     </from>
                     <to>
-                        <image>docker.io/chromaway/postchain-jib-test</image>
+                        <image>docker.io/chromaway/postchain-jib:2.4.4-beta</image>
+                        <tags>
+                            <tag>latest</tag>
+                        </tags>
                         <credHelper>wincred</credHelper>
                         <auth>
                             <username>${env.CHROMAWAY_DOCKER_HUB_USERNAME}</username>
@@ -317,7 +320,7 @@
                         <args>
                             <arg>run-node-auto</arg>
                             <arg>-d</arg>
-                            <arg>/config</arg>
+                            <arg>./config</arg>
                         </args>
                     </container>
                 </configuration>
