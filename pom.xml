@@ -1,6 +1,7 @@
 <!-- Copyright (c) 2017 ChromaWay Inc. See README for license information. -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.postchain</groupId>
@@ -11,6 +12,7 @@
         <module>postchain-base</module>
         <module>postchain-devtools</module>
         <module>postchain-cw-modules</module>
+        <!-- Should it be commented for jib? -->
         <module>postchain-docker</module>
     </modules>
     <packaging>pom</packaging>
@@ -172,6 +174,39 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
                 <version>2.5</version>
+            </plugin>
+
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>1.1.2</version>
+                <configuration>
+                    <from>
+                        <image>openjdk:8-jre-alpine</image>
+                        <credHelper>wincred</credHelper>
+                    </from>
+                    <to>
+                        <image>postchain-jib-test</image>
+                        <credHelper>wincred</credHelper>
+                        <auth>
+                            <username>${env.CHROMAWAY_DOCKER_HUB_USERNAME}</username>
+                            <password>${env.CHROMAWAY_DOCKER_HUB_PASSWORD}</password>
+                        </auth>
+                    </to>
+                    <container>
+                        <!--<entrypoint>
+                            <executable>java</executable>
+                            <param1>-cp</param1>
+                            <param2>/app/resources:/app/classes:/app/libs/*</param2>
+                            <param3>net.postchain.AppKt</param3>
+                            <param4>run-node-auto</param4>
+                        </entrypoint><module>postchain-docker</module>-->
+                        <mainClass>net.postchain.AppKt</mainClass>
+                        <args>
+                            <arg>run-node-auto</arg>
+                        </args>
+                    </container>
+                </configuration>
             </plugin>
 
             <plugin>
