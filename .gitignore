@@ -2,3 +2,7 @@
 *.iml
 target
 .DS_Store
+postchain-base/start.sh
+postchain-base/postchain.pid
+*.log
+*.log.lck

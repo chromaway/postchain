@@ -11,7 +11,8 @@ import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
-import net.postchain.devtools.SingleChainTestNode
+import net.postchain.devtools.PostchainTestNode
+import net.postchain.ebft.worker.ValidatorWorker
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,7 +23,7 @@ class GTXPerformanceTestNightly : IntegrationTest() {
 
     companion object : KLogging()
 
-    private fun strategy(node: SingleChainTestNode): OnDemandBlockBuildingStrategy {
+    private fun strategy(node: PostchainTestNode): OnDemandBlockBuildingStrategy {
         return node
                 .getBlockchainInstance()
                 .getEngine()
@@ -108,17 +109,18 @@ class GTXPerformanceTestNightly : IntegrationTest() {
             //"4, 10", "10, 10", "16, 10"
     )
     fun runXNodesWithYTxPerBlock(nodeCount: Int, txPerBlock: Int) {
-        val blockCount = 2
+        val blocksCount = 2
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
         createNodes(nodeCount, "/net/postchain/performance/blockchain_config_$nodeCount.xml")
 
         var txId = 0
-        val statusManager = nodes[0].getBlockchainInstance().statusManager
-        for (i in 0 until blockCount) {
+        val statusManager = (nodes[0].getBlockchainInstance() as ValidatorWorker).statusManager
+        for (i in 0 until blocksCount) {
             for (tx in 0 until txPerBlock) {
                 val txFactory = nodes[statusManager.primaryIndex()]
                         .getBlockchainInstance()
-                        .blockchainConfiguration
+                        .getEngine()
+                        .getConfiguration()
                         .getTransactionFactory()
 
                 val tx = makeTestTx(1, (txId++).toString())

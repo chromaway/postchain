@@ -2,34 +2,54 @@
 
 package net.postchain
 
-import net.postchain.base.BaseApiInfrastructure
-import net.postchain.base.BaseBlockchainInfrastructure
-import net.postchain.base.BaseBlockchainProcessManager
+import net.postchain.base.BaseTestInfrastructureFactory
+import net.postchain.config.blockchain.BlockchainConfigurationProviderFactory
+import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.BlockchainInfrastructure
-import net.postchain.ebft.EBFTSynchronizationInfrastructure
-import org.apache.commons.configuration2.Configuration
+import net.postchain.core.BlockchainProcessManager
+import net.postchain.core.InfrastructureFactory
+import net.postchain.core.Infrastructures.BaseEbft
+import net.postchain.core.Infrastructures.BaseTest
+import net.postchain.core.Shutdownable
+import net.postchain.ebft.BaseEBFTInfrastructureFactory
 
-open class PostchainNode(nodeConfig: Configuration) {
+/**
+ * Postchain node instantiates infrastructure and blockchain
+ * process manager.
+ */
+open class PostchainNode(nodeConfigProvider: NodeConfigurationProvider) : Shutdownable {
 
-    protected val processManager: BaseBlockchainProcessManager
+    val processManager: BlockchainProcessManager
     protected val blockchainInfrastructure: BlockchainInfrastructure
 
     init {
-        blockchainInfrastructure = BaseBlockchainInfrastructure(
-                nodeConfig,
-                EBFTSynchronizationInfrastructure(nodeConfig),
-                BaseApiInfrastructure(nodeConfig))
+        val blockchainConfigProvider = BlockchainConfigurationProviderFactory.createProvider(nodeConfigProvider)
+        val infrastructureFactory = buildInfrastructureFactory(nodeConfigProvider)
 
-        processManager = BaseBlockchainProcessManager(
-                blockchainInfrastructure,
-                nodeConfig)
+        blockchainInfrastructure = infrastructureFactory.makeBlockchainInfrastructure(nodeConfigProvider)
+        processManager = infrastructureFactory.makeProcessManager(
+                nodeConfigProvider, blockchainConfigProvider, blockchainInfrastructure)
     }
 
     fun startBlockchain(chainID: Long) {
         processManager.startBlockchain(chainID)
     }
 
-    fun stopAllBlockchain() {
+    fun stopBlockchain(chainID: Long) {
+        processManager.stopBlockchain(chainID)
+    }
+
+    override fun shutdown() {
         processManager.shutdown()
+    }
+
+    private fun buildInfrastructureFactory(nodeConfigProvider: NodeConfigurationProvider): InfrastructureFactory {
+        val factoryClass = when (nodeConfigProvider.getConfiguration().infrastructure.toLowerCase()) {
+            BaseEbft.secondName.toLowerCase() -> BaseEBFTInfrastructureFactory::class.java
+            BaseTest.secondName.toLowerCase() -> BaseTestInfrastructureFactory::class.java
+            else -> BaseEBFTInfrastructureFactory::class.java
+        }
+
+        return factoryClass.newInstance()
     }
 }

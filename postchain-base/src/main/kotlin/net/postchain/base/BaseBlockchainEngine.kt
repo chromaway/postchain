@@ -10,7 +10,7 @@ import net.postchain.core.*
 import nl.komponents.kovenant.task
 import java.lang.Long.max
 
-val LOG_STATS = true
+const val LOG_STATS = true
 
 fun ms(n1: Long, n2: Long): Long {
     return (n2 - n1) / 1000000
@@ -25,16 +25,11 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
 
     companion object : KLogging()
 
+    override var isRestartNeeded: Boolean = false
     private lateinit var strategy: BlockBuildingStrategy
     private lateinit var blockQueries: BlockQueries
     private var initialized = false
     private var closed = false
-
-    private var _restartHandler: RestartHandler? = null
-
-    override fun setRestartHandler(restartHandler: RestartHandler) {
-        _restartHandler = restartHandler
-    }
 
     override fun initializeDB() {
         if (initialized) {
@@ -70,27 +65,31 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
     }
 
     override fun shutdown() {
+        closed = true
         storage.close()
     }
 
     private fun makeBlockBuilder(): ManagedBlockBuilder {
         if (!initialized) throw ProgrammerMistake("Engine is not initialized yet")
         if (closed) throw ProgrammerMistake("Engine is already closed")
-        val ctxt = storage.openWriteConnection(chainID)
-        val bb = bc.makeBlockBuilder(ctxt)
-        return BaseManagedBlockBuilder(ctxt, storage, bb) { _bb ->
-            val aBB = _bb as AbstractBlockBuilder
-            tq.removeAll(aBB.transactions)
-            strategy.blockCommitted(_bb.getBlockData())
-            // TODO
-            /*
-            val myConfigurationHeight = BaseConfigurationDataStore.findConfiguration(ctxt, aBB.iBlockData.height)
-            val nextConfigurationHeight = BaseConfigurationDataStore.findConfiguration(ctxt, aBB.iBlockData.height + 1)
-            if (myConfigurationHeight != nextConfigurationHeight)
-                if (_restartHandler != null)
-                    _restartHandler!!()*/
+        val eContext = storage.openWriteConnection(chainID) // TODO: Close eContext
 
-        }
+        return BaseManagedBlockBuilder(eContext, storage, bc.makeBlockBuilder(eContext), {
+            val blockBuilder = it as AbstractBlockBuilder
+            val currentConfigurationHeight = BaseConfigurationDataStore.findConfiguration(
+                    eContext, blockBuilder.initialBlockData.height)
+            val nextConfigurationHeight = BaseConfigurationDataStore.findConfiguration(
+                    eContext, blockBuilder.initialBlockData.height + 1)
+
+            if (currentConfigurationHeight != nextConfigurationHeight) {
+                closed = true
+                isRestartNeeded = true
+            }
+        }, {
+            val blockBuilder = it as AbstractBlockBuilder
+            tq.removeAll(blockBuilder.transactions)
+            strategy.blockCommitted(blockBuilder.getBlockData())
+        })
     }
 
     override fun addBlock(block: BlockDataWithWitness) {
@@ -168,7 +167,7 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
         val tStart = System.nanoTime()
 
         val blockBuilder = makeBlockBuilder()
-        val abstractBlockBuilder = ((blockBuilder as BaseManagedBlockBuilder).bb as AbstractBlockBuilder)
+        val abstractBlockBuilder = ((blockBuilder as BaseManagedBlockBuilder).blockBuilder as AbstractBlockBuilder)
         blockBuilder.begin()
         val tBegin = System.nanoTime()
 

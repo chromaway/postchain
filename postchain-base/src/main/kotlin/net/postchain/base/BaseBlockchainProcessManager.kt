@@ -2,34 +2,38 @@ package net.postchain.base
 
 import net.postchain.StorageBuilder
 import net.postchain.base.data.SQLDatabaseAccess
+import net.postchain.config.blockchain.BlockchainConfigurationProvider
+import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
-import org.apache.commons.configuration2.Configuration
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class BaseBlockchainProcessManager(
         private val blockchainInfrastructure: BlockchainInfrastructure,
-        nodeConfig: Configuration
+        private val nodeConfigProvider: NodeConfigurationProvider,
+        private val blockchainConfigProvider: BlockchainConfigurationProvider
 ) : BlockchainProcessManager {
 
-    val storage = StorageBuilder.buildStorage(nodeConfig, NODE_ID_TODO)
+    val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration(), NODE_ID_TODO)
     private val dbAccess = SQLDatabaseAccess()
     private val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
+    private val executor = Executors.newSingleThreadExecutor()
 
     override fun startBlockchain(chainId: Long) {
-        blockchainProcesses[chainId]?.shutdown()
+        stopBlockchain(chainId)
 
         withReadConnection(storage, chainId) { eContext ->
-            val blockchainRID = dbAccess.getBlockchainRID(eContext)!! // TODO: [et]: Fix Kotlin NPE
-
-            // TODO: [et]: Starting with 0-height config
-            val configurationData = BaseConfigurationDataStore.getConfigurationData(eContext, 0)
-            if (configurationData != null) {
-                val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(
-                        configurationData,
-                        BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null))
+            val configuration = blockchainConfigProvider.getConfiguration(chainId)
+            if (configuration != null) {
+                val blockchainRID = dbAccess.getBlockchainRID(eContext)!! // TODO: [et]: Fix Kotlin NPE
+                val context = BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null)
+                val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(configuration, context)
 
                 val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig)
                 blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(engine) {
-                    startBlockchain(chainId)
+                    executor.execute {
+                        startBlockchain(chainId)
+                    }
                 }
             } else {
                 println("Can't start blockchain due to configuration is absent")
@@ -43,8 +47,16 @@ class BaseBlockchainProcessManager(
         return blockchainProcesses[chainId]
     }
 
+    override fun stopBlockchain(chainId: Long) {
+        blockchainProcesses.remove(chainId)
+                ?.shutdown()
+    }
+
     override fun shutdown() {
+        executor.shutdownNow()
+        executor.awaitTermination(1000, TimeUnit.MILLISECONDS)
         blockchainProcesses.forEach { _, process -> process.shutdown() }
+        blockchainProcesses.clear()
         storage.close()
         blockchainInfrastructure.shutdown()
     }

@@ -22,7 +22,7 @@ class ClientManual : FTIntegrationTest() {
     fun postTx(bytes: ByteArray) {
         given().port(8383)
                 .body("{tx: ${bytes.toHex()}}")
-                .post("/tx")
+                .post("/tx/78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3")
     }
 
     fun makeTestTx(id: Long, value: String): ByteArray {
@@ -55,6 +55,7 @@ class ClientManual : FTIntegrationTest() {
         while (endTime > System.currentTimeMillis()) {
             postTx(makeTransferTx(alicePubKey, alicePrivKey, aliceAccountID, assetID, 10, bobAccountID, "A->B ${i}"))
             postTx(makeTransferTx(bobPubKey, bobPrivKey, bobAccountID, assetID, 10, aliceAccountID, memo1 = "B->A ${i++}"))
+            Thread.sleep(2)
             println("$i")
         }
     }

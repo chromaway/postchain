@@ -4,7 +4,8 @@ import com.google.gson.GsonBuilder
 import mu.KLogging
 import net.postchain.base.gtxml.TestType
 import net.postchain.common.hexStringToByteArray
-import net.postchain.config.CommonsConfigurationFactory
+import net.postchain.config.app.AppConfig
+import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.core.UserMistake
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.devtools.KeyPairHelper.privKey
@@ -43,8 +44,11 @@ class TestLauncher : IntegrationTest() {
         }
     }
 
-    private fun createTestNode(configFile: String, blockchainConfigFile: String): SingleChainTestNode {
-        val nodeConfig = CommonsConfigurationFactory.readFromFile(configFile)
+    private fun createTestNode(configFile: String, blockchainRid: ByteArray, blockchainConfigFile: String): PostchainTestNode {
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
+                AppConfig.fromPropertiesFile(configFile))
+
+        /*
         // TODO: Fix this hack
         nodeConfig.setProperty("api.port", -1) // FYI: Disabling Rest API in test mode
         nodeConfig.setProperty("node.0.id", nodeConfig.getProperty("test.node.0.id"))
@@ -52,11 +56,15 @@ class TestLauncher : IntegrationTest() {
         nodeConfig.setProperty("node.0.port", nodeConfig.getProperty("test.node.0.port"))
         nodeConfig.setProperty("node.0.pubkey", nodeConfig.getProperty("test.node.0.pubkey"))
         nodeConfig.setProperty("database.schema", nodeConfig.getProperty("test.database.schema"))
+        */
 
         val blockchainConfig = GTXMLValueParser.parseGTXMLValue(
                 File(blockchainConfigFile).readText())
 
-        return SingleChainTestNode(nodeConfig, blockchainConfig).apply {
+        val chainId = nodeConfigProvider.getConfiguration().activeChainIds.first().toLong()
+
+        return PostchainTestNode(nodeConfigProvider, true).apply {
+            addBlockchain(chainId, blockchainRid, blockchainConfig)
             startBlockchain()
             nodes.add(this)
         }
@@ -69,7 +77,7 @@ class TestLauncher : IntegrationTest() {
     )
 
     fun runXMLGTXTests(xml: String,
-                       blockchainRID: String?,
+                       blockchainRID: String,
                        nodeConfigFile: String? = null,
                        blockchainConfigFile: String? = null
     ): TestOutput {
@@ -81,14 +89,15 @@ class TestLauncher : IntegrationTest() {
     }
 
     private fun _runXMLGTXTests(xml: String,
-                                blockchainRID: String?,
+                                blockchainRID: String,
                                 nodeConfigFile: String? = null,
                                 blockchainConfigFile: String? = null
     ): TestOutput {
-        val node: SingleChainTestNode
+        val node: PostchainTestNode
         val testType: TestType
         try {
-            node = createTestNode(nodeConfigFile!!, blockchainConfigFile!!)
+            // TODO: Resolve nullability here and above: !! vs ?.
+            node = createTestNode(nodeConfigFile!!, blockchainRID.hexStringToByteArray(), blockchainConfigFile!!)
         } catch (e: Exception) {
             return TestOutput(false, false, e, listOf())
         }
@@ -175,7 +184,8 @@ class TestLauncher : IntegrationTest() {
                     failures.add(TransactionFailure(blockHeight.toLong(), it.txIdx,
                             Exception("Transaction should fail")))
                 } else if (!present && !it.isFailure) {
-                    val reason = node.getBlockchainInstance().networkAwareTxQueue.getRejectionReason(txRID)
+                    val engine = node.getBlockchainInstance().getEngine()
+                    val reason = engine.getTransactionQueue().getRejectionReason(txRID)
                     failures.add(TransactionFailure(blockHeight.toLong(), it.txIdx, reason))
                 }
             }

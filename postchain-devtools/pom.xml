@@ -4,7 +4,7 @@
     <parent>
         <artifactId>postchain</artifactId>
         <groupId>net.postchain</groupId>
-        <version>2.4.3</version>
+        <version>2.5</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>postchain-devtools</artifactId>
@@ -12,6 +12,9 @@
 
     <properties>
         <maven.shade.plugin.version>3.1.1</maven.shade.plugin.version>
+        <mockito.version>2.23.0</mockito.version>
+        <mockito-kotlin.version>2.0.0-RC3</mockito-kotlin.version>
+        <assertk.version>0.10</assertk.version>
     </properties>
 
     <dependencies>
@@ -66,6 +69,27 @@
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
             <version>3.1.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.nhaarman.mockitokotlin2</groupId>
+            <artifactId>mockito-kotlin</artifactId>
+            <version>${mockito-kotlin.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.willowtreeapps.assertk</groupId>
+            <artifactId>assertk</artifactId>
+            <version>${assertk.version}</version>
             <scope>test</scope>
         </dependency>
 

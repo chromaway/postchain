@@ -36,11 +36,18 @@ interface DatabaseAccess {
     fun getTxBytes(ctx: EContext, txRID: ByteArray): ByteArray?
     fun isTransactionConfirmed(ctx: EContext, txRID: ByteArray): Boolean
 
-    // Configurations
+    // Blockchain configurations
+    fun findConfiguration(context: EContext, height: Long): Long?
 
-    fun findConfiguration(context: EContext, height: Long): ByteArray?
     fun getConfigurationData(context: EContext, height: Long): ByteArray?
     fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long
+
+    companion object {
+        fun of(ctx: EContext): DatabaseAccess {
+            return ctx.getInterface(DatabaseAccess::class.java)
+                    ?: throw ProgrammerMistake("DatabaseAccess not accessible through EContext")
+        }
+    }
 }
 
 class SQLDatabaseAccess : DatabaseAccess {
@@ -56,6 +63,13 @@ class SQLDatabaseAccess : DatabaseAccess {
     private val byteArrayListRes = ColumnListHandler<ByteArray>()
     private val mapListHandler = MapListHandler()
     private val stringRes = ScalarHandler<String>()
+
+    companion object {
+        const val TABLE_PEERINFOS = "peerinfos"
+        const val TABLE_PEERINFOS_FIELD_HOST = "host"
+        const val TABLE_PEERINFOS_FIELD_PORT = "port"
+        const val TABLE_PEERINFOS_FIELD_PUBKEY = "pub_key"
+    }
 
     override fun insertBlock(ctx: EContext, height: Long): Long {
         return queryRunner.insert(ctx.conn,
@@ -265,10 +279,17 @@ class SQLDatabaseAccess : DatabaseAccess {
                     ", PRIMARY KEY (chain_id, height)" +
                     ")")
 
+            // PeerInfos
+            queryRunner.update(connection, "CREATE TABLE $TABLE_PEERINFOS (" +
+                    " $TABLE_PEERINFOS_FIELD_HOST text NOT NULL" +
+                    ", $TABLE_PEERINFOS_FIELD_PORT integer NOT NULL" +
+                    ", $TABLE_PEERINFOS_FIELD_PUBKEY text NOT NULL" +
+                    ", UNIQUE ($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT)" +
+                    ")")
+
             queryRunner.update(connection, """CREATE INDEX transactions_block_iid_idx ON transactions(block_iid)""")
             queryRunner.update(connection, """CREATE INDEX blocks_chain_id_timestamp ON blocks(chain_id, timestamp)""")
             queryRunner.update(connection, """CREATE INDEX configurations_chain_id_to_height ON configurations(chain_id, height)""")
-
         }
     }
 
@@ -294,11 +315,11 @@ class SQLDatabaseAccess : DatabaseAccess {
         }
     }
 
-    override fun findConfiguration(context: EContext, height: Long): ByteArray? {
+    override fun findConfiguration(context: EContext, height: Long): Long? {
         return queryRunner.query(context.conn,
-                "SELECT configuration_data FROM configurations WHERE chain_id = ? AND height <= ? " +
+                "SELECT height FROM configurations WHERE chain_id = ? AND height <= ? " +
                         "ORDER BY height DESC LIMIT 1",
-                nullableByteArrayRes, context.chainID, height)
+                nullableLongRes, context.chainID, height)
     }
 
     override fun getConfigurationData(context: EContext, height: Long): ByteArray? {

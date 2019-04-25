@@ -5,22 +5,25 @@ package net.postchain.devtools
 import mu.KLogging
 import net.postchain.base.PeerInfo
 import net.postchain.base.SECP256K1CryptoSystem
+import net.postchain.common.hexStringToByteArray
+import net.postchain.config.app.AppConfig
+import net.postchain.config.node.NodeConfigurationProvider
+import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.core.*
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.privKeyHex
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.KeyPairHelper.pubKeyHex
+import net.postchain.devtools.utils.configuration.UniversalFileLocationStrategy
 import net.postchain.gtx.GTXValue
 import net.postchain.gtx.gtx
 import net.postchain.gtx.gtxml.GTXMLValueParser
 import org.apache.commons.configuration2.CompositeConfiguration
-import org.apache.commons.configuration2.Configuration
 import org.apache.commons.configuration2.MapConfiguration
 import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder
 import org.apache.commons.configuration2.builder.fluent.Parameters
 import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler
-import org.apache.commons.configuration2.io.ClasspathLocationStrategy
 import org.junit.After
 import org.junit.Assert.*
 import java.io.File
@@ -28,10 +31,15 @@ import java.io.File
 
 open class IntegrationTest {
 
-    protected val nodes = mutableListOf<SingleChainTestNode>()
+    protected val nodes = mutableListOf<PostchainTestNode>()
+    protected val nodesNames = mutableMapOf<String, String>() // { pubKey -> Node${i} }
     val configOverrides = MapConfiguration(mutableMapOf<String, String>())
     val cryptoSystem = SECP256K1CryptoSystem()
     var gtxConfig: GTXValue? = null
+    protected val blockchainRids = mapOf(
+            1L to "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3",
+            2L to "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a4"
+    )
 
     // PeerInfos must be shared between all nodes because
     // a listening node will update the PeerInfo port after
@@ -46,9 +54,11 @@ open class IntegrationTest {
     }
 
     @After
-    fun tearDown() {
-        nodes.forEach { it.stopAllBlockchain() }
+    open fun tearDown() {
+        logger.debug("Integration test -- TEARDOWN")
+        nodes.forEach { it.shutdown() }
         nodes.clear()
+        nodesNames.clear()
         logger.debug("Closed nodes")
         peerInfos = null
         expectedSuccessRids = mutableMapOf()
@@ -56,10 +66,10 @@ open class IntegrationTest {
     }
 
     // TODO: [et]: Check out nullability for return value
-    protected fun enqueueTx(node: SingleChainTestNode, data: ByteArray, expectedConfirmationHeight: Long): Transaction? {
-        val blockchain = node.getBlockchainInstance()
-        val tx = blockchain.blockchainConfiguration.getTransactionFactory().decodeTransaction(data)
-        blockchain.getEngine().getTransactionQueue().enqueue(tx)
+    protected fun enqueueTx(node: PostchainTestNode, data: ByteArray, expectedConfirmationHeight: Long): Transaction? {
+        val blockchainEngine = node.getBlockchainInstance().getEngine()
+        val tx = blockchainEngine.getConfiguration().getTransactionFactory().decodeTransaction(data)
+        blockchainEngine.getTransactionQueue().enqueue(tx)
 
         if (expectedConfirmationHeight >= 0) {
             expectedSuccessRids.getOrPut(expectedConfirmationHeight) { mutableListOf() }
@@ -69,7 +79,7 @@ open class IntegrationTest {
         return tx
     }
 
-    protected fun verifyBlockchainTransactions(node: SingleChainTestNode) {
+    protected fun verifyBlockchainTransactions(node: PostchainTestNode) {
         val expectAtLeastHeight = expectedSuccessRids.keys.reduce { acc, l -> maxOf(l, acc) }
         val bestHeight = getBestHeight(node)
         assertTrue(bestHeight >= expectAtLeastHeight)
@@ -85,63 +95,116 @@ open class IntegrationTest {
         }
     }
 
-    protected fun createNode(nodeIndex: Int, blockchainConfigFilename: String): SingleChainTestNode =
-            createSingleNode(nodeIndex, 1, blockchainConfigFilename)
+    protected fun createNode(nodeIndex: Int, blockchainConfigFilename: String): PostchainTestNode =
+            createSingleNode(nodeIndex, 1, DEFAULT_CONFIG_FILE, blockchainConfigFilename)
 
-    protected fun createNodes(count: Int, blockchainConfigFilename: String): Array<SingleChainTestNode> =
-            Array(count) { createSingleNode(it, count, blockchainConfigFilename) }
+    protected fun createNodes(count: Int, blockchainConfigFilename: String): Array<PostchainTestNode> =
+            Array(count) { createSingleNode(it, count, DEFAULT_CONFIG_FILE, blockchainConfigFilename) }
 
-    private fun createSingleNode(nodeIndex: Int, totalNodesCount: Int, blockchainConfigFilename: String): SingleChainTestNode {
-        val nodeConfig = createConfig(
-                nodeIndex, totalNodesCount, DEFAULT_CONFIG_FILE)
+    protected fun createSingleNode(
+            nodeIndex: Int,
+            totalNodesCount: Int,
+            nodeConfig: String,
+            blockchainConfigFilename: String,
+            preWipeDatabase: Boolean = true
+    ): PostchainTestNode {
 
-        val blockchainConfig = GTXMLValueParser.parseGTXMLValue(
-                javaClass.getResource(blockchainConfigFilename).readText())
+        val nodeConfigProvider = createNodeConfig(nodeIndex, totalNodesCount, nodeConfig)
+        val nodeConfig = nodeConfigProvider.getConfiguration()
+        nodesNames[nodeConfig.pubKey] = "$nodeIndex"
+        val blockchainConfig = readBlockchainConfig(blockchainConfigFilename)
+        val chainId = nodeConfig.activeChainIds.first().toLong()
+        val blockchainRid = blockchainRids[chainId]!!.hexStringToByteArray()
 
-        return SingleChainTestNode(nodeConfig, blockchainConfig)
-                .apply { startBlockchain() }
-                .also { nodes.add(it) }
+        return PostchainTestNode(nodeConfigProvider, preWipeDatabase)
+                .apply {
+                    addBlockchain(chainId, blockchainRid, blockchainConfig)
+                    startBlockchain()
+                }
+                .also {
+                    nodes.add(it)
+                }
     }
 
-    private fun createConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
-            : Configuration {
+    protected fun createMultipleChainNodes(
+            count: Int,
+            nodeConfigsFilenames: Array<String>,
+            blockchainConfigsFilenames: Array<String>
+    ): Array<PostchainTestNode> {
 
-        val propertiesFile = File(configFile)
+        return Array(count) {
+            createMultipleChainNode(it, count, nodeConfigsFilenames[it], *blockchainConfigsFilenames)
+        }
+    }
+
+    private fun createMultipleChainNode(
+            nodeIndex: Int,
+            nodeCount: Int,
+            nodeConfigFilename: String = DEFAULT_CONFIG_FILE,
+            vararg blockchainConfigFilenames: String,
+            preWipeDatabase: Boolean = true
+    ): PostchainTestNode {
+
+        val nodeConfigProvider = createNodeConfig(nodeIndex, nodeCount, nodeConfigFilename)
+
+        val node = PostchainTestNode(nodeConfigProvider, preWipeDatabase)
+                .also { nodes.add(it) }
+
+        nodeConfigProvider.getConfiguration().activeChainIds
+                .filter(String::isNotEmpty)
+                .forEachIndexed { i, chainId ->
+                    val blockchainRid = blockchainRids[chainId.toLong()]!!.hexStringToByteArray()
+                    val blockchainConfig = readBlockchainConfig(blockchainConfigFilenames[i])
+                    node.addBlockchain(chainId.toLong(), blockchainRid, blockchainConfig)
+                    node.startBlockchain(chainId.toLong())
+                }
+
+        return node
+    }
+
+    protected fun readBlockchainConfig(blockchainConfigFilename: String): GTXValue {
+        return GTXMLValueParser.parseGTXMLValue(
+                javaClass.getResource(blockchainConfigFilename).readText())
+    }
+
+    protected fun createNodeConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
+            : NodeConfigurationProvider {
+
+        // Read first file directly via the builder
         val params = Parameters()
                 .fileBased()
-                .setLocationStrategy(ClasspathLocationStrategy())
-                .setFile(propertiesFile)
-        // Read first file directly via the builder
+//                .setLocationStrategy(ClasspathLocationStrategy())
+                .setLocationStrategy(UniversalFileLocationStrategy())
+                .setListDelimiterHandler(DefaultListDelimiterHandler(','))
+                .setFile(File(configFile))
+
         val baseConfig = FileBasedConfigurationBuilder(PropertiesConfiguration::class.java)
                 .configure(params)
                 .configuration
 
-        baseConfig.listDelimiterHandler = DefaultListDelimiterHandler(',')
-        val chainId = baseConfig.getLong("activechainids")
-        val signers = Array(nodeCount) { pubKeyHex(it) }.joinToString(",")
-//        baseConfig.setProperty("blockchain.$chainId.signers", signers)
-        // append nodeIndex to schema name
-        baseConfig.setProperty("database.schema", baseConfig.getString("database.schema") + nodeIndex)
-//        baseConfig.setProperty("blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: newschool
-//        baseConfig.setProperty("blockchain.$chainId.blocksigningprivkey", privKeyHex(nodeIndex)) // TODO: oldschool
+        if (baseConfig.getString("configuration.provider.node") == "legacy") {
+            // append nodeIndex to schema name
+            baseConfig.setProperty("database.schema", baseConfig.getString("database.schema") + "_" + nodeIndex)
 
-        // peers
-        var port = (baseConfig.getProperty("node.0.port") as String).toInt()
-        for (i in 0 until nodeCount) {
-            baseConfig.setProperty("node.$i.id", "node$i")
-            baseConfig.setProperty("node.$i.host", "127.0.0.1")
-            baseConfig.setProperty("node.$i.port", port++)
-            baseConfig.setProperty("node.$i.pubkey", pubKeyHex(i))
+            // peers
+            var port = (baseConfig.getProperty("node.0.port") as String).toInt()
+            for (i in 0 until nodeCount) {
+                baseConfig.setProperty("node.$i.id", "node$i")
+                baseConfig.setProperty("node.$i.host", "127.0.0.1")
+                baseConfig.setProperty("node.$i.port", port++)
+                baseConfig.setProperty("node.$i.pubkey", pubKeyHex(i))
+            }
         }
-//        baseConfig.setProperty("blockchain.$chainId.testmyindex", nodeIndex)
 
-        configOverrides.setProperty("messaging.privkey", privKeyHex(nodeIndex))
+        baseConfig.setProperty("messaging.privkey", privKeyHex(nodeIndex))
+        baseConfig.setProperty("messaging.pubkey", pubKeyHex(nodeIndex))
 
-        return CompositeConfiguration().apply {
+        val appConfig = CompositeConfiguration().apply {
             addConfiguration(configOverrides)
             addConfiguration(baseConfig)
-
         }
+
+        return NodeConfigurationProviderFactory.createProvider(AppConfig(appConfig))
     }
 
     protected fun gtxConfigSigners(nodeCount: Int = 1): GTXValue {
@@ -164,7 +227,7 @@ open class IntegrationTest {
         commitBlock(blockBuilder)
     }
 
-    protected fun buildBlockAndCommit(node: SingleChainTestNode) {
+    protected fun buildBlockAndCommit(node: PostchainTestNode) {
         commitBlock(node
                 .getBlockchainInstance()
                 .getEngine()
@@ -187,13 +250,13 @@ open class IntegrationTest {
         return witness
     }
 
-    protected fun getTxRidsAtHeight(node: SingleChainTestNode, height: Long): Array<ByteArray> {
+    protected fun getTxRidsAtHeight(node: PostchainTestNode, height: Long): Array<ByteArray> {
         val blockQueries = node.getBlockchainInstance().getEngine().getBlockQueries()
         val list = blockQueries.getBlockRids(height).get()
         return blockQueries.getBlockTransactionRids(list[0]).get().toTypedArray()
     }
 
-    protected fun getBestHeight(node: SingleChainTestNode): Long {
+    protected fun getBestHeight(node: PostchainTestNode): Long {
         return node.getBlockchainInstance().getEngine().getBlockQueries().getBestHeight().get()
     }
 

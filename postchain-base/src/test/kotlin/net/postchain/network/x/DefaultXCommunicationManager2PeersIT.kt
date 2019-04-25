@@ -25,14 +25,14 @@ class DefaultXCommunicationManager2PeersIT {
     private lateinit var context1: EbftIntegrationTestContext
     private lateinit var context2: EbftIntegrationTestContext
 
+    val privKey1 = cryptoSystem.getRandomBytes(32)
+    val pubKey1 = secp256k1_derivePubKey(privKey1)
+
+    val privKey2 = cryptoSystem.getRandomBytes(32)
+    val pubKey2 = secp256k1_derivePubKey(privKey2)
+
     @Before
     fun setUp() {
-        val privKey1 = cryptoSystem.getRandomBytes(32)
-        val pubKey1 = secp256k1_derivePubKey(privKey1)
-
-        val privKey2 = cryptoSystem.getRandomBytes(32)
-        val pubKey2 = secp256k1_derivePubKey(privKey2)
-
         // TODO: [et]: Make dynamic ports
         peerInfo1 = PeerInfo("localhost", 3331, pubKey1)
         peerInfo2 = PeerInfo("localhost", 3332, pubKey2)
@@ -40,12 +40,12 @@ class DefaultXCommunicationManager2PeersIT {
 
         // Creating
         context1 = EbftIntegrationTestContext(
-                peerInfo1,
-                BasePeerCommConfiguration(peers, blockchainRid, 0, cryptoSystem, privKey1))
+                BasePeerCommConfiguration(peers, 0, cryptoSystem, privKey1),
+                blockchainRid)
 
         context2 = EbftIntegrationTestContext(
-                peerInfo2,
-                BasePeerCommConfiguration(peers, blockchainRid, 1, cryptoSystem, privKey2))
+                BasePeerCommConfiguration(peers, 1, cryptoSystem, privKey2),
+                blockchainRid)
 
         // Initializing
         context1.communicationManager.init()
@@ -60,7 +60,7 @@ class DefaultXCommunicationManager2PeersIT {
 
     @Test
     fun twoPeers_SendsPackets_Successfully() {
-        // Waiting for all connections establishing
+        // Waiting for all connections to be established
         await().atMost(Duration.FIVE_SECONDS)
                 .untilAsserted {
                     val actual1 = context1.connectionManager.getConnectedPeers(context1.chainId)
@@ -75,16 +75,16 @@ class DefaultXCommunicationManager2PeersIT {
         val packets1 = arrayOf(
                 GetBlockAtHeight(10),
                 GetBlockAtHeight(11))
-        context1.communicationManager.sendPacket(packets1[0], setOf(1))
-        context1.communicationManager.sendPacket(packets1[1], setOf(1))
+        context1.communicationManager.sendPacket(packets1[0], XPeerID(pubKey2))
+        context1.communicationManager.sendPacket(packets1[1], XPeerID(pubKey2))
         // * 2 -> 1
         val packets2 = arrayOf(
                 GetBlockAtHeight(20),
                 GetBlockAtHeight(21),
                 GetBlockAtHeight(22))
-        context2.communicationManager.sendPacket(packets2[0], setOf(0))
-        context2.communicationManager.sendPacket(packets2[1], setOf(0))
-        context2.communicationManager.sendPacket(packets2[2], setOf(0))
+        context2.communicationManager.sendPacket(packets2[0], XPeerID(pubKey1))
+        context2.communicationManager.sendPacket(packets2[1], XPeerID(pubKey1))
+        context2.communicationManager.sendPacket(packets2[2], XPeerID(pubKey1))
 
         // * asserting
         val actual1 = mutableListOf<Long>()

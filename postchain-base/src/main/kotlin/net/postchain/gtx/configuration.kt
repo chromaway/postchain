@@ -36,13 +36,21 @@ open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationDat
                     gtxToJSON(queryResult, gson)
                 }
             }
+
+            override fun query(name: String, args: GTXValue): Promise<GTXValue, Exception> {
+                return runOp {
+                    module.query(it, name, args)
+                }
+            }
+
         }
     }
 }
 
 open class GTXBlockchainConfigurationFactory : BlockchainConfigurationFactory {
     override fun makeBlockchainConfiguration(configurationData: Any): BlockchainConfiguration {
-        return GTXBlockchainConfiguration(configurationData as BaseBlockchainConfigurationData,
+        return GTXBlockchainConfiguration(
+                configurationData as BaseBlockchainConfigurationData,
                 createGtxModule(configurationData.context.blockchainRID, configurationData.data))
     }
 
