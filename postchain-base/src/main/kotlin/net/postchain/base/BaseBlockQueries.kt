@@ -3,6 +3,7 @@
 package net.postchain.base
 
 import mu.KLogging
+import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
@@ -122,7 +123,7 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
             val decodedBlockHeader = blockchainConfiguration.decodeBlockHeader(material.header) as BaseBlockHeader
 
             val merkleProofTree = decodedBlockHeader.merklePath(material.txHash, material.txHashes)
-            ConfirmationProof(material.txHash, material.header, decodedWitness, merkleProofTree)
+            ConfirmationProof(material.txHash.byteArray, material.header, decodedWitness, merkleProofTree)
         }
     }
 

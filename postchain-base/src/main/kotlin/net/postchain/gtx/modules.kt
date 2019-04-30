@@ -29,7 +29,7 @@ abstract class SimpleGTXModule<ConfT>(
         if (opData.opName in opmap) {
             return opmap[opData.opName]!!(conf, opData)
         } else {
-            throw UserMistake("Unknown operation")
+            throw UserMistake("Unknown operation: ${opData.opName}")
         }
     }
 

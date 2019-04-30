@@ -6,6 +6,7 @@ import net.postchain.base.gtv.BlockHeaderData
 import net.postchain.base.gtv.BlockHeaderDataFactory
 import net.postchain.common.toHex
 import net.postchain.core.BlockHeader
+import net.postchain.core.ByteArrayKey
 import net.postchain.core.InitialBlockData
 import net.postchain.core.UserMistake
 import net.postchain.gtv.GtvEncoder
@@ -59,13 +60,13 @@ class BaseBlockHeader(override val rawData: ByteArray, private val cryptoSystem:
      * @param txHashes All hashes are the leaves part of this Merkle tree
      * @return The Merkle proof tree for [txHash]
      */
-    fun merklePath(txHash: ByteArray, txHashes: Array<ByteArray>): GtvMerkleProofTree {
-        //return merklePath(cryptoSystem, txHashes, txHash)
-        val positionOfOurTxToProve = txHashes.indexOf(txHash)
+    fun merklePath(txHash: ByteArrayKey, txHashes: Array<ByteArrayKey>): GtvMerkleProofTree {
+        //println("looking for tx hash: ${txHash.toHex()} in array where first is: ${txHashes[0].toHex()}")
+        val positionOfOurTxToProve = txHashes.indexOf(txHash) //txHash.positionInArray(txHashes)
         if (positionOfOurTxToProve < 0) {
-            throw UserMistake("We cannot prove this transaction (hash: ${txHash.toHex()}), because it is not in the block")
+            throw UserMistake("We cannot prove this transaction (hash: ${txHash.byteArray.toHex()}), because it is not in the block")
         }
-        val gtvArray = gtv(txHashes.map { gtv(it)})
+        val gtvArray = gtv(txHashes.map { gtv(it.byteArray)})
         val calculator = GtvMerkleHashCalculator(cryptoSystem)
         return gtvArray.generateProof(listOf(positionOfOurTxToProve), calculator)
     }

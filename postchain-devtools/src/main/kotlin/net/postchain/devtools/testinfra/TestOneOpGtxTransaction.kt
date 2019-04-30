@@ -6,7 +6,8 @@ import net.postchain.gtv.GtvFactory
 import net.postchain.gtx.*
 
 /**
- * This represents a "real" GTX transaction, which means it can be transformed to GTV and GTX without generating errors.
+ * This represents a "real" GTX transaction (which means it can be transformed to GTV and GTX without generating errors)
+ * but is only meant to be used during tests.
  *
  * Out of simplicity, this is a one-operation only transaction.
  *
@@ -34,7 +35,7 @@ class TestOneOpGtxTransaction(
      * If we are super lazy and want don't have any signers, we can use this constructor
      */
     constructor(factory: GTXTransactionFactory, id: Int) :
-            this(factory, id, "op_test", arrayOf())
+            this(factory, id, "gtx_test", arrayOf())
 
 
     /**
@@ -75,7 +76,9 @@ class TestOneOpGtxTransaction(
      */
     private fun buildTheTx() {
         val b = GTXDataBuilder(blockchainRID, arrayOf(KeyPairHelper.pubKey(0)), cryptoSystem)
-        b.addOperation(op_name, arrayOf(GtvFactory.gtv(id.toLong()), GtvFactory.gtv("${id} and ${id}")))
+        val arg0 =GtvFactory.gtv(1.toLong())
+        val arg1 =GtvFactory.gtv("${id} and ${id}")
+        b.addOperation(op_name, arrayOf(arg0, arg1))
         b.finish()
         b.sign(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)))
         cachedBuilder = b
