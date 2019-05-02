@@ -49,14 +49,13 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                     jsonAsMap(gson, it))
         }
 
-        val tx = TestTransaction(1)
-        testStatusPost(
-                0,
-                "/tx/$blockchainRID",
-                "{\"tx\": \"${tx.getRawData().toHex()}\"}",
-                200)
+        val factory = GTXTransactionFactory(blockchainRIDBytes, gtxTestModule, cryptoSystem)
 
-        awaitConfirmed(blockchainRID, tx.getRID())
+
+        val blockHeight = 0 // If we set it to zero the node with index 0 will get the post
+        val tx = postGtxTransaction( factory, 1, blockHeight, nodeCount)
+
+        awaitConfirmed(blockchainRID, tx!!.getRID())
     }
 
     @Test
