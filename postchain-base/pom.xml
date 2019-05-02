@@ -304,7 +304,7 @@
                         <credHelper>wincred</credHelper>
                     </from>
                     <to>
-                        <image>docker.io/chromaway/postchain-jib:2.4.4-beta</image>
+                        <image>docker.io/chromaway/postchain-jib:2.5</image>
                         <tags>
                             <tag>latest</tag>
                         </tags>
