@@ -112,9 +112,24 @@ open class IntegrationTest {
         }
     }
 
+    /**
+     * Creates one node from the given configuration.
+     * Note: if you want to create many nodes with different configuration, call this method many times
+     *
+     * @param nodeIndex is a unique number only this node should have (it is used to separate schemas in the DB etc).
+     * @param blockchainConfigFilename is the file holding the blockchain's configuration
+     * @return the node
+     */
     protected fun createNode(nodeIndex: Int, blockchainConfigFilename: String): PostchainTestNode =
             createSingleNode(nodeIndex, 1, DEFAULT_CONFIG_FILE, blockchainConfigFilename)
 
+    /**
+     * Creates [count] nodes with the same configuration.
+     *
+     * @param count number of nodes to create
+     * @param blockchainConfigFilename is the file holding the blockchain's configuration
+     * @return an array of nodes
+     */
     protected fun createNodes(count: Int, blockchainConfigFilename: String): Array<PostchainTestNode> =
             Array(count) { createSingleNode(it, count, DEFAULT_CONFIG_FILE, blockchainConfigFilename) }
 
