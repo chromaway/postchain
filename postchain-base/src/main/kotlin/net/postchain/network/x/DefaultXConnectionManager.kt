@@ -55,7 +55,8 @@ class DefaultXConnectionManager<PacketType>(
 
     @Synchronized
     override fun connectChain(peerConfig: XChainPeerConfiguration, autoConnectAll: Boolean) {
-        logger.debug { "${myPeerId()}: Connecting chain: ${peerConfig.chainID}" }
+        logger.debug { "${myPeerId()}: Connecting chain: ${peerConfig.chainID}" +
+                "BcRID: ${peerConfig.blockchainRID.toHex()}" }
 
         if (isShutDown) throw ProgrammerMistake("Already shut down")
         val chainID = peerConfig.chainID
@@ -164,7 +165,8 @@ class DefaultXConnectionManager<PacketType>(
 
     @Synchronized
     override fun onPeerConnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection): XPacketHandler? {
-        logger.debug { "${myPeerId()}: onPeerConnected: peerId = ${descriptor.peerId}, connection = ${connection.javaClass.simpleName}" }
+        logger.debug { "${myPeerId()}: onPeerConnected: peerId = ${descriptor.peerId}, " +
+                "connection = ${connection.javaClass.simpleName} , BcRID: ${descriptor.blockchainRID}" }
 
         val chainID = chainIDforBlockchainRID[descriptor.blockchainRID]
         val chain = if (chainID != null) chains[chainID] else null

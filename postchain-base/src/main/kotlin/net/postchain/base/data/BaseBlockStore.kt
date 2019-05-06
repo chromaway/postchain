@@ -105,8 +105,8 @@ class BaseBlockStore : BlockStore {
     override fun getConfirmationProofMaterial(ctx: EContext, txRID: ByteArray): Any {
         val block = db.getBlockInfo(ctx, txRID)
         return ConfirmationProofMaterial(
-                db.getTxHash(ctx, txRID),
-                db.getBlockTxHashes(ctx, block.blockIid).toTypedArray(),
+                ByteArrayKey(db.getTxHash(ctx, txRID)),
+                db.getBlockTxHashes(ctx, block.blockIid).map{ ByteArrayKey(it) }.toTypedArray(),
                 block.blockHeader,
                 block.witness
         )

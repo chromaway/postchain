@@ -13,17 +13,24 @@ fun main(args: Array<String>) {
         is CliError -> {
             when(cliResult) {
                 is CliError.MissingCommand -> {
-                    Cli().usage()
+                    println(cliResult.message + "\n")
+                    Cli().usageCommands()
+                    println("\n")
                 }
-                is CliError.CommandNotFound -> {
+                is CliError.ArgumentNotFound -> {
+                    println(cliResult.message + "\n")
                     Cli().usage(cliResult.command)
                 }
-                else -> cliResult.message?.let { println(it) }
+                else -> cliResult.message?.let {
+                    println("\n$it\n")
+                }
             }
             System.exit(cliResult.code)
         }
         is Ok -> {
-            cliResult.info?.also { println(it) }
+            cliResult.info?.also {
+                println("\n$it\n")
+            }
             if(!cliResult.isLongRunning){
                 System.exit(cliResult.code)
             }

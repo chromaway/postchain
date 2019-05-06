@@ -3,29 +3,37 @@
 package net.postchain.integrationtest
 
 import io.restassured.RestAssured.given
-import net.postchain.base.BaseBlockHeader
-import net.postchain.base.MerklePath
-import net.postchain.base.MerklePathItem
-import net.postchain.base.Side
+import net.postchain.base.gtv.BlockHeaderDataFactory
+import net.postchain.base.merkle.Hash
 import net.postchain.common.RestTools
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
+import net.postchain.configurations.GTXTestModule
 import net.postchain.core.Signature
-import net.postchain.core.Transaction
 import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.testinfra.TestOneOpGtxTransaction
 import net.postchain.devtools.testinfra.TestTransaction
-import net.postchain.gtv.GtvEncoder
+import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtv.merkle.GtvMerkleHashCalculator
+import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
+import net.postchain.gtv.merkle.proof.merkleHash
+import net.postchain.gtx.GTXTransactionFactory
 import net.postchain.integrationtest.JsonTools.jsonAsMap
 import org.hamcrest.core.IsEqual
 import org.junit.Assert.*
 import org.junit.Test
+import kotlin.test.assertTrue
 
 class ApiIntegrationTestNightly : IntegrationTest() {
 
     private val gson = JsonTools.buildGson()
     private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
+    private val blockchainRIDBytes = blockchainRID.hexStringToByteArray()
     private var txHashHex = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+    private val gtxTestModule =  GTXTestModule()
+    private val gtxTextModuleOperation = "gtx_test" // This is a real operation
 
     @Test
     fun testMixedAPICalls() {
@@ -41,14 +49,13 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                     jsonAsMap(gson, it))
         }
 
-        val tx = TestTransaction(1)
-        testStatusPost(
-                0,
-                "/tx/$blockchainRID",
-                "{\"tx\": \"${tx.getRawData().toHex()}\"}",
-                200)
+        val factory = GTXTransactionFactory(blockchainRIDBytes, gtxTestModule, cryptoSystem)
 
-        awaitConfirmed(blockchainRID, tx)
+
+        val blockHeight = 0 // If we set it to zero the node with index 0 will get the post
+        val tx = postGtxTransaction( factory, 1, blockHeight, nodeCount)
+
+        awaitConfirmed(blockchainRID, tx!!.getRID())
     }
 
     @Test
@@ -100,6 +107,9 @@ class ApiIntegrationTestNightly : IntegrationTest() {
     @Suppress("UNCHECKED_CAST")
     fun testConfirmationProof() {
         val nodeCount = 3
+
+        val factory = GTXTransactionFactory(blockchainRIDBytes, gtxTestModule, cryptoSystem)
+
 //        createEbftNodes(nodeCount)
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
         configOverrides.setProperty("api.port", 0)
@@ -110,74 +120,183 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
         for (txCount in 1..16) {
 
+            println("----------------- Running testConfirmationProof with txCount: $txCount ---------------------")
+            val txList = mutableListOf<TestOneOpGtxTransaction>()
+            var lastTx: TestOneOpGtxTransaction? = null
             for (i in 1..txCount) {
-                val tx = TestTransaction(++currentId)
-                testStatusPost(
-                        blockHeight % nodeCount, "/tx/$blockchainRID",
-                        "{\"tx\": \"${tx.getRawData().toHex()}\"}",
-                        200)
+                lastTx = postGtxTransaction(factory, ++currentId, blockHeight, nodeCount)
+                txList.add(lastTx!!)
             }
 
-            awaitConfirmed(blockchainRID, TestTransaction(currentId))
+            val lastTxRid =lastTx!!.getRID()
+
+            awaitConfirmed(blockchainRID, lastTxRid) // Should be enough to wait for the last one to confirm
+
+            txList.reverse() // We begin with the last TX that we saved from last step
+            val txArr = txList.toTypedArray()
+
             blockHeight++
 
             for (i in 0 until txCount) {
-                val tx = TestTransaction(currentId - i)
-
-                val body = given().port(nodes[0].getRestApiHttpPort())
-                        .get("/tx/$blockchainRID/${tx.getRID().toHex()}/confirmationProof")
-                        .then()
-                        .statusCode(200)
-                        .extract()
-                        .body().asString()
-
-                val actualMap = jsonAsMap(gson, body)
-
-                // Assert tx hash
-                val hash = (actualMap["hash"] as String).hexStringToByteArray()
-                assertArrayEquals(tx.getHash(), hash)
-
-                // Assert signatures
-                val verifier = cryptoSystem.makeVerifier()
-                val blockHeader = (actualMap["blockHeader"] as String).hexStringToByteArray()
-                val signatures = actualMap["signatures"] as List<Map<String, String>>
-                signatures.forEach {
-                    assertTrue(verifier(blockHeader,
-                            Signature(it["pubKey"]!!.hexStringToByteArray(),
-                                    it["signature"]!!.hexStringToByteArray())))
-                }
-
-                // Build MerklePath
-                val path = MerklePath()
-                val merklePath = actualMap["merklePath"] as List<Map<String, Any>>
-                merklePath.forEach {
-                    // The use of 0.0 and 1.0 is to work around that the json parser creates doubles
-                    // instances from json integer values
-                    val side = when {
-                        it["side"] == 0.0 -> Side.LEFT
-                        it["side"] == 1.0 -> Side.RIGHT
-                        else -> throw AssertionError("Invalid 'side' of merkle path: ${it["side"]}")
-                    }
-                    val pathItemHash = (it["hash"] as String).hexStringToByteArray()
-                    path.add(MerklePathItem(side, pathItemHash))
-                }
-
-                // Assert Merkle Path
-                val header = nodes[0]
-                        .getBlockchainInstance()
-                        .getEngine()
-                        .getConfiguration()
-                        .decodeBlockHeader(blockHeader) as BaseBlockHeader
-                assertTrue(header.validateMerklePath(path, tx.getHash()))
+                val realTx = txArr[i]!!
+                val jsonResponse = fetchConfirmationProof(realTx, i)
+                checkConfirmationProofForTx(realTx, jsonResponse)
             }
         }
     }
 
-    private fun awaitConfirmed(blockchainRID: String, tx: Transaction) {
+    /**
+     * Will create and post a transaction to the servers
+     *
+     * @return the posted transaction
+     */
+    private fun postGtxTransaction(
+            factory: GTXTransactionFactory,
+            currentId: Int,
+            blockHeight: Int,
+            nodeCount: Int
+    ): TestOneOpGtxTransaction? {
+
+        val tx = TestOneOpGtxTransaction(factory, currentId)
+        val strHexData = tx.getRawData().toHex()
+        //println("Sending TX: $strHexData:")
+        testStatusPost(
+                blockHeight % nodeCount, "/tx/$blockchainRID",
+                "{\"tx\": \"$strHexData\"}",
+                200)
+
+        return tx
+    }
+
+    /**
+     * Fetch the confirmation proof from the server for the given TX.
+     *
+     * An example of what the JSON response might look like:
+     *
+   {
+    "hash":"93A4..0F",
+    "blockHeader":"A581..00",
+    "signatures":[
+      {
+        "pubKey":"03A3..70",
+        "signature":"3CE..F3"
+      },
+      {
+        "pubKey":"031B..8F",
+        "signature":"D5F3..E0"
+      },
+      {
+        "pubKey":"03B2..94"
+        ,"signature":"33C8..3E"
+      }
+    ],
+    "merkleProofTree":[
+      103,
+      1,
+      -10,
+      [
+        101,
+        0,
+        "93A4..0F"
+      ],
+      [
+        100,
+        "0000..00"
+      ]
+    ]
+  }
+
+     *
+     * @param realTx is the transaction we need to prove.
+     * @param seqNr is just for debugging
+     * @return the Json converted to a [Map]
+     */
+    private fun fetchConfirmationProof(realTx: TestOneOpGtxTransaction, seqNr: Int): String {
+        val txRidHex = realTx.getRID().toHex()
+        println("Fetching conf proof for tx nr: $seqNr with tx RID: $txRidHex ")
+        val body = given().port(nodes[0].getRestApiHttpPort())
+                .get("/tx/$blockchainRID/${txRidHex}/confirmationProof")
+                .then()
+                .statusCode(200)
+                .extract()
+                .body().asString()
+
+        println("Response: ${body}")
+
+        return body
+    }
+
+    /**
+     * Verify that the transaction is in the block, and verify that the confirmation proof is correct. It should have:
+     *   2.a hash
+     *   2.b signatures
+     *   2.c merkle path
+     *
+     * @param realTx - the transaction to check
+     * @param actualMap - a map of json parts that is the proof
+     */
+    private fun checkConfirmationProofForTx(realTx: TestOneOpGtxTransaction, jsonBody: String) {
+
+        val actualMap: Map<String, Any> = jsonAsMap(gson, jsonBody)
+
+        // Assert tx hash
+        val hash = (actualMap["hash"] as String).hexStringToByteArray()
+        assertArrayEquals(realTx.getHash(), hash)
+
+        // Assert signatures
+        val verifier = cryptoSystem.makeVerifier()
+        val blockHeader = (actualMap["blockHeader"] as String).hexStringToByteArray()
+        val signatures = actualMap["signatures"] as List<Map<String, String>>
+        signatures.forEach {
+            assertTrue(verifier(blockHeader,
+                    Signature(it["pubKey"]!!.hexStringToByteArray(),
+                            it["signature"]!!.hexStringToByteArray())))
+        }
+
+        // Block Header
+
+        val blockHeaderData = BlockHeaderDataFactory.buildFromBinary(blockHeader)
+        val blockRid = blockHeaderData.getMerkleRootHash()
+        //println("BlockRID - from header: ${blockRid.toHex()}")
+
+
+        // -------------------
+        // Merkle Proof Tree
+        // -------------------
+
+        // a) Do we have the value to prove
+        val merkleProofTree = actualMap["merkleProofTree"] as List<Any>
+        val found = GtvProofTreeTestHelper.findHashInBlockProof(realTx.getHash(), merkleProofTree)
+        assertTrue(found, "The proof does not contain the hash we expected")
+
+        // b) Calculate the merkle root of the proof
+        // JSON -> GTV
+        val gsonGtv = make_gtv_gson()
+        val gtvDictBody = gsonGtv.fromJson<Gtv>(jsonBody, Gtv::class.java)
+        val gtvProof = gtvDictBody!!.asDict().get("merkleProofTree")
+
+        // TODO: Should this really be done? Shouldn't we make the JSON format understand Binary?
+        val gtvCleanProof = GtvProofTreeTestHelper.translateGtvStringToGtvByteArray(gtvProof!!)
+        println("Proof as gtv: $gtvCleanProof")
+        // GTV -> Proof
+        val proofTreeFactory = GtvMerkleProofTreeFactory()
+        val x = proofTreeFactory.deserialize(gtvCleanProof as GtvArray)
+        println("Proof as classes: $x")
+        val myNewBlockHash = x.merkleHash(GtvMerkleHashCalculator(cryptoSystem))
+
+        // Assert we get the same block RID
+        println("BlockRID - calculated : ${myNewBlockHash.toHex()}")
+        assertTrue(myNewBlockHash.contentEquals(blockRid),
+                "The block merkle root calculated from the proof doesn't correspond to the blockRid")
+
+    }
+
+
+    private fun awaitConfirmed(blockchainRID: String, txRid: Hash) {
         RestTools.awaitConfirmed(
                 nodes[0].getRestApiHttpPort(),
                 blockchainRID,
-                tx.getRID().toHex())
+                txRid.toHex())
     }
 
     private fun testStatusGet(path: String, expectedStatus: Int, extraChecks: (responseBody: String) -> Unit = {}) {

@@ -18,7 +18,7 @@ import net.postchain.gtv.GtvEncoder
  * @property signatures are the actual signatures
  * @property ops are the operations of the TX
  * @property myHash is the merkle root of the TX
- * @property myRID  ?? // TODO
+ * @property myRID  is the merkle root of the TX body
  * @property module is the module the transaction is related to
  * @property cs is the [CryptoSystem] we use
  */

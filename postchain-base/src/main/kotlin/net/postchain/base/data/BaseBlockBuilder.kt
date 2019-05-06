@@ -2,6 +2,7 @@
 
 package net.postchain.base.data
 
+import mu.KLogging
 import net.postchain.base.*
 import net.postchain.base.merkle.Hash
 import net.postchain.common.toHex
@@ -32,6 +33,7 @@ open class BaseBlockBuilder(
         val blockchainRelatedInfoDependencyList: List<BlockchainRelatedInfo>
 ): AbstractBlockBuilder(eContext, store, txFactory) {
 
+    companion object : KLogging()
 
     private val calc = GtvMerkleHashCalculator(cryptoSystem)
 
@@ -60,7 +62,17 @@ open class BaseBlockBuilder(
             timestamp = initialBlockData.timestamp + 1
         }
 
-        return BaseBlockHeader.make(cryptoSystem, initialBlockData,  computeRootHash(), timestamp)
+        val rootHash = computeRootHash()
+        if (logger.isDebugEnabled) {
+            logger.debug("Create Block header. Root hash: ${rootHash.toHex()}, "+
+                    " prev block: ${initialBlockData.prevBlockRID.toHex()} ," +
+                    " height = ${initialBlockData.height} ")
+        }
+        val bh = BaseBlockHeader.make(cryptoSystem, initialBlockData, rootHash , timestamp)
+        if (logger.isDebugEnabled) {
+            logger.debug("Block header created with block RID: ${bh.blockRID.toHex()}.")
+        }
+        return bh
     }
 
     /**
@@ -82,7 +94,9 @@ open class BaseBlockBuilder(
         println("header MR: ${header.blockHeaderRec.getMerkleRootHash().toHex()}")
         return when {
             !Arrays.equals(header.prevBlockRID, initialBlockData.prevBlockRID) ->
-                ValidationResult(false, "header.prevBlockRID != initialBlockData.prevBlockRID")
+                ValidationResult(false, "header.prevBlockRID != initialBlockData.prevBlockRID," +
+                        "( ${header.prevBlockRID.toHex()} != ${initialBlockData.prevBlockRID.toHex()} ), "+
+                        " height: ${header.blockHeaderRec.getHeight()} and ${initialBlockData.height} ")
 
             header.blockHeaderRec.getHeight() != initialBlockData.height ->
                 ValidationResult(false, "header.blockHeaderRec.height != initialBlockData.height")

@@ -10,7 +10,6 @@ import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.base.peerId
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.byteArrayKeyOf
-import net.postchain.network.PacketConverter
 import net.postchain.network.XPacketDecoderFactory
 import net.postchain.network.XPacketEncoderFactory
 import org.apache.commons.lang3.reflect.FieldUtils
@@ -27,13 +26,11 @@ class DefaultXConnectionManagerTest {
 
     private lateinit var peerInfo1: PeerInfo
     private lateinit var peerConnectionDescriptor1: XPeerConnectionDescriptor
-    private lateinit var packetConverter1: PacketConverter<Int>
     private lateinit var packetEncoderFactory: XPacketEncoderFactory<Int>
     private lateinit var packetDecoderFactory: XPacketDecoderFactory<Int>
 
     private lateinit var peerInfo2: PeerInfo
     private lateinit var peerConnectionDescriptor2: XPeerConnectionDescriptor
-    private lateinit var packetConverter2: PacketConverter<Int>
 
     private lateinit var unknownPeerInfo: PeerInfo
 
@@ -46,9 +43,6 @@ class DefaultXConnectionManagerTest {
 
         peerConnectionDescriptor1 = XPeerConnectionDescriptor(peerInfo1.peerId(), blockchainRid.byteArrayKeyOf())
         peerConnectionDescriptor2 = XPeerConnectionDescriptor(peerInfo2.peerId(), blockchainRid.byteArrayKeyOf())
-
-        packetConverter1 = mock()
-        packetConverter2 = mock()
 
         val connector: XConnector<Int> = mock {
             on { connectPeer(any(), any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
@@ -87,7 +81,7 @@ class DefaultXConnectionManagerTest {
 
         // Then
         verify(chainPeerConfig, times(5)).chainID
-        verify(chainPeerConfig).blockchainRID
+        verify(chainPeerConfig, times(2)).blockchainRID
         verify(chainPeerConfig, never()).commConfiguration
         verify(communicationConfig, never()).peerInfo
 
@@ -119,7 +113,7 @@ class DefaultXConnectionManagerTest {
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(1)).commConfiguration
-        verify(chainPeerConfig).blockchainRID
+        verify(chainPeerConfig, times(2)).blockchainRID
         verify(communicationConfig).peerInfo
 
         connectionManager.shutdown()
@@ -150,7 +144,7 @@ class DefaultXConnectionManagerTest {
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(1 + (2 - 1) * 2)).commConfiguration
-        verify(chainPeerConfig, times(1 + 1 * 2)).blockchainRID
+        verify(chainPeerConfig, times(1 + 1 * 2 + 1)).blockchainRID
         verify(communicationConfig, times(2 + 2)).peerInfo
 
         connectionManager.shutdown()
@@ -208,7 +202,7 @@ class DefaultXConnectionManagerTest {
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(2)).commConfiguration
-        verify(chainPeerConfig, times(1 + 2)).blockchainRID
+        verify(chainPeerConfig, times(1 + 2 + 1)).blockchainRID
 
         connectionManager.shutdown()
     }
@@ -243,7 +237,7 @@ class DefaultXConnectionManagerTest {
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(1 + (2 - 1) * 2)).commConfiguration
-        verify(chainPeerConfig, times(1 + 2)).blockchainRID
+        verify(chainPeerConfig, times(1 + 2 + 1)).blockchainRID
         verify(communicationConfig, times(2 + 2)).peerInfo
 
         connectionManager.shutdown()

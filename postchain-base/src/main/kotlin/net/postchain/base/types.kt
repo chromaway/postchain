@@ -5,11 +5,12 @@ package net.postchain.base
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.core.BlockEContext
 import net.postchain.core.EContext
+import net.postchain.core.ByteArrayKey
 import net.postchain.core.TxEContext
 import java.sql.Connection
 
-class ConfirmationProofMaterial(val txHash: ByteArray,
-                                val txHashes: Array<ByteArray>,
+class ConfirmationProofMaterial(val txHash: ByteArrayKey,
+                                val txHashes: Array<ByteArrayKey>,
                                 val header: ByteArray,
                                 val witness: ByteArray)
 
