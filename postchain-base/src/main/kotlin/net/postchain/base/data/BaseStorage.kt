@@ -13,7 +13,8 @@ class BaseStorage(
         private val readDataSource: DataSource,
         private val writeDataSource: DataSource,
         private val nodeId: Int,
-        private val dbAccess: DatabaseAccess
+        private val dbAccess: DatabaseAccess,
+        private val savepointSupport: Boolean = true
 ) : Storage {
 
     companion object : KLogging()
@@ -50,6 +51,8 @@ class BaseStorage(
             close()
         }
     }
+
+    override fun isSavepointSupported(): Boolean = savepointSupport
 
     override fun withSavepoint(context: EContext, fn: () -> Unit): Exception? {
         var exception: Exception? = null

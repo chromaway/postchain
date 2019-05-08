@@ -24,11 +24,10 @@ object CommonsConfigurationFactory {
                 .configuration
     }
 
-    fun getSQLCommandsImplementation(driverClassName : String) : SQLCommands {
-        if (driverClassName == POSTGRE_DRIVER_CLASS) {
-            return PostgreSQLCommands
-        } else {
-            return SAPHanaSQLCommands
+    fun getSQLCommandsImplementation(driverClassName: String): SQLCommands {
+        return when (driverClassName) {
+            POSTGRE_DRIVER_CLASS -> PostgreSQLCommands
+            else -> SAPHanaSQLCommands
         }
     }
 }

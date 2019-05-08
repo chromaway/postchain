@@ -3,11 +3,12 @@ package net.postchain.integrationtest
 import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import junitparams.naming.TestCaseName
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(JUnitParamsRunner::class)
-class SAPFullEbftMultipleChainsTestNightly : FullEbftMultipleChainsTestNightly() {
+class PostgreSQLFullEbftMultipleChainsTestNightly : FullEbftMultipleChainsTestNightly() {
 
     @Test
     @Parameters(
@@ -29,6 +30,7 @@ class SAPFullEbftMultipleChainsTestNightly : FullEbftMultipleChainsTestNightly()
                         "/net/postchain/multiple_chains/ebft_nightly/single_node/blockchain_config_2.xml"
                 ))
     }
+
 
     @Test
     @Parameters(
@@ -53,12 +55,11 @@ class SAPFullEbftMultipleChainsTestNightly : FullEbftMultipleChainsTestNightly()
     }
 
     @Test
+    @Ignore
     @Parameters(
-            "1, 0", "2, 0"
-            , "1, 1", "2, 1"
-            , "1, 10", "2, 10"
-            // 10 blocks
-//            , "10, 0", "10, 1", "10, 10" // TODO: Fix them
+            "1, 0", "2, 0", "10, 0"
+            , "1, 1", "2, 1", "10, 1"
+            , "1, 10", "2, 10", "10, 10"
     )
     @TestCaseName("[{index}] nodesCount: 5, blocksCount: {0}, txPerBlock: {1}")
     fun runFiveNodesWithYTxPerBlock(blocksCount: Int, txPerBlock: Int) {
@@ -78,4 +79,5 @@ class SAPFullEbftMultipleChainsTestNightly : FullEbftMultipleChainsTestNightly()
                         "/net/postchain/multiple_chains/ebft_nightly/five_nodes/blockchain_config_2.xml"
                 ))
     }
+
 }

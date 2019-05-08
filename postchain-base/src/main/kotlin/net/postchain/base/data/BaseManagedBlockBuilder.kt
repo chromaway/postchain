@@ -3,7 +3,6 @@
 package net.postchain.base.data
 
 import mu.KLogging
-import net.postchain.core.ManagedBlockBuilder
 import net.postchain.base.Storage
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
@@ -25,7 +24,7 @@ class BaseManagedBlockBuilder(
         val ctxt: EContext,
         val s: Storage,
         val bb: BlockBuilder,
-        val onCommit: (BlockBuilder)->Unit
+        val onCommit: (BlockBuilder) -> Unit
 ) : ManagedBlockBuilder {
     companion object : KLogging()
 
@@ -67,18 +66,29 @@ class BaseManagedBlockBuilder(
      */
     override fun maybeAppendTransaction(tx: Transaction): Exception? {
         TimeLog.startSum("BaseManagedBlockBuilder.maybeAppendTransaction().withSavepoint")
-        val exception = s.withSavepoint(ctxt) {
-                TimeLog.startSum("BaseManagedBlockBuilder.maybeAppendTransaction().insideSavepoint")
-                try {
-                    bb.appendTransaction(tx)
-                } finally {
-                    TimeLog.end("BaseManagedBlockBuilder.maybeAppendTransaction().insideSavepoint")
+
+        val action = {
+            TimeLog.startSum("BaseManagedBlockBuilder.maybeAppendTransaction().insideSavepoint")
+            try {
+                bb.appendTransaction(tx)
+            } finally {
+                TimeLog.end("BaseManagedBlockBuilder.maybeAppendTransaction().insideSavepoint")
+            }
+        }
+
+        val exception = if (s.isSavepointSupported()) {
+            s.withSavepoint(ctxt, action).also {
+                if (it != null) {
+                    logger.info("Failed to append transaction ${tx.getRID().toHex()}", it)
                 }
             }
-        TimeLog.end("BaseManagedBlockBuilder.maybeAppendTransaction().withSavepoint")
-        if (exception != null) {
-            logger.info("Failed to append transaction ${tx.getRID().toHex()}", exception)
+
+        } else {
+            action()
+            null
         }
+
+        TimeLog.end("BaseManagedBlockBuilder.maybeAppendTransaction().withSavepoint")
         return exception
     }
 

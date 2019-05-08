@@ -279,8 +279,15 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
         queryRunner.update(context.conn, sqlCommands.insertConfiguration, context.chainID, height, data)
     }
 
-    fun tableExists(connection: Connection, tableName : String) : Boolean {
-        val types : Array<String> = arrayOf<String>("TABLE")
+    fun tableExists(connection: Connection, tableName_: String): Boolean {
+        val types: Array<String> = arrayOf("TABLE")
+
+        val tableName = if (connection.metaData.storesUpperCaseIdentifiers()) {
+            tableName_.toUpperCase()
+        } else {
+            tableName_
+        }
+
         val rs = connection.metaData.getTables(null, null, tableName, types)
         while (rs.next()) {
             // avoid wildcard '_' in SQL. Eg: if you pass "employee_salary" that should return something employeesalary which we don't expect

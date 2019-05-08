@@ -19,9 +19,10 @@ class StorageBuilder {
             val sqlCommands = CommonsConfigurationFactory
                     .getSQLCommandsImplementation(config.getString("database.driverclass"))
 
-            var db = SQLDatabaseAccess(sqlCommands)
-            if (sqlCommands is PostgreSQLCommands) {
-               db = PostgreSQLDatabaseAccess(sqlCommands)
+            val db = when (sqlCommands) {
+                is PostgreSQLCommands -> PostgreSQLDatabaseAccess(sqlCommands)
+                is SAPHanaSQLCommands -> SAPHanaSQLDatabaseAccess(sqlCommands)
+                else -> SQLDatabaseAccess(sqlCommands)
             }
 
             val initSchemaWriteDataSource = createBasicDataSource(config, false)
@@ -49,7 +50,7 @@ class StorageBuilder {
             }
 
             createTablesIfNotExists(writeDataSource, db)
-            return BaseStorage(readDataSource, writeDataSource, nodeIndex, db)
+            return BaseStorage(readDataSource, writeDataSource, nodeIndex, db, sqlCommands.isSavepointSupported())
         }
 
         private fun setCurrentSchema(dataSource: DataSource, schema: String, sqlCommands: SQLCommands) {
@@ -62,7 +63,7 @@ class StorageBuilder {
         private fun createBasicDataSource(config: Configuration, withSchema: Boolean = true): BasicDataSource {
             return BasicDataSource().apply {
                 driverClassName = config.getString("database.driverclass")
-                url = "${config.getString("database.url")}?loggerLevel=OFF"
+                url = "${config.getString("database.url")}" // ?loggerLevel=OFF
                 username = config.getString("database.username")
                 password = config.getString("database.password")
                 defaultAutoCommit = false
@@ -106,7 +107,7 @@ class StorageBuilder {
             return config.getString("database.schema", "public")
         }
 
-        private fun isSchemaExists(conn: Connection, schema: String) : Boolean {
+        private fun isSchemaExists(conn: Connection, schema: String): Boolean {
             val rs = conn.metaData.schemas
             while (rs.next()) {
                 if (rs.getString(1).toLowerCase() == schema.toLowerCase()) {

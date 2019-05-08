@@ -23,7 +23,16 @@
     </entry>
     <entry key="signers">
         <array>
-            <bytea>03A301697BDFCD704313BA48E51D567543F2A182031EFD6915DDC07BBCC4E16070</bytea>
+            <!-- Key0 -->
+            <bytea>03a301697bdfcd704313ba48e51d567543f2a182031efd6915ddc07bbcc4e16070</bytea>
+            <!-- Key1 -->
+            <bytea>031B84C5567B126440995D3ED5AABA0565D71E1834604819FF9C17F5E9D5DD078F</bytea>
+            <!-- Key2 -->
+            <bytea>03B2EF623E7EC933C478135D1763853CBB91FC31BA909AEC1411CA253FDCC1AC94</bytea>
+            <!-- Key3 -->
+            <bytea>0203C6150397F7E4197FF784A8D74357EF20DAF1D09D823FFF8D3FC9150CBAE85D</bytea>
+            <!-- Key4 -->
+            <bytea>031A7C8706F34316DF7154595FA798F672968C3E44EF65E4695E89F0965E4141D1</bytea>
         </array>
     </entry>
     <entry key="gtx">
