@@ -7,7 +7,6 @@ import net.postchain.integrationtest.assertNodeConnectedWith
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.Assert
-import org.junit.Ignore
 import org.junit.Test
 
 class FourPeersReconnectionTest : ReconnectionTest() {
@@ -108,11 +107,9 @@ class FourPeersReconnectionTest : ReconnectionTest() {
                     nodes[3].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[1], nodes[2], nodes[0])
                 }
 
-        // Asserting that height is
-        Assert.assertEquals(1, queries(nodes[0]) { it.getBestHeight() })
-        Assert.assertEquals(1, queries(nodes[1]) { it.getBestHeight() })
-        Assert.assertEquals(1, queries(nodes[2]) { it.getBestHeight() })
+        /* It's not correct to assert that height is -1 for peer 3
         Assert.assertEquals(-1, queries(nodes[3]) { it.getBestHeight() })
+        */
 
         // Building a block 2 via newly connected peer 3
         nodes[3].let {
