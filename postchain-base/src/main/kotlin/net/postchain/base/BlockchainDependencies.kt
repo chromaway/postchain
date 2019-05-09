@@ -1,5 +1,6 @@
 package net.postchain.base
 
+import mu.KLogging
 import net.postchain.base.merkle.Hash
 import net.postchain.common.toHex
 import net.postchain.core.ProgrammerMistake
@@ -83,6 +84,8 @@ class BlockchainDependencies(
     private val chaindIdMap = mutableMapOf<Long, BlockchainDependency>() // Convenience lookups
     private val blockchainRidMap = mutableMapOf<Hash, BlockchainDependency>() // Convenience lookups
 
+    companion object : KLogging()
+
     // Convenience constructor
     constructor(depList: List<BlockchainDependency>): this(depList.toTypedArray()) {
         for (dep in depList) {
@@ -90,6 +93,9 @@ class BlockchainDependencies(
         }
     }
 
+    // ------------------------------------------------
+    // Collection functions
+    // ------------------------------------------------
     fun isEmpty() = internalArray.isEmpty()
     fun all(): List<BlockchainDependency> = internalArray.toList()
 
@@ -120,11 +126,29 @@ class BlockchainDependencies(
         val retMap = mutableMapOf<Long, Long>()
         for (dep in internalArray) {
             val chainId = dep.blockchainRelatedInfo.chainId ?: throw ProgrammerMistake("Must have a chainId for $dep")
-            val tmp = dep.heightDependency ?: throw ProgrammerMistake("Must have height for $dep")
-            val height = tmp.height ?: throw ProgrammerMistake("Must have height for $dep")
+            val height = getHeight(dep)
             retMap[chainId] = height
         }
         return retMap.toMap()
+    }
+
+    /**
+     * @return the height of the dependency.
+     *
+     * If there is no height yet we will assume 0.
+     * This was decided after discussion with Alex: we allow this to make testing easier, but in "real world" a
+     * blockchain we depend on should have at least a genesis block.
+     */
+    private fun getHeight(dep: BlockchainDependency): Long {
+        if (dep.heightDependency != null) {
+            logger.debug("Have height for dependency: $dep")
+            return dep.heightDependency.height ?:
+               throw ProgrammerMistake("If last block RID exists for dependency: $dep we must know height at this stage")
+        } else {
+            logger.warn("No height known for dependency $dep, so assuming height = 0. (This is ok if we are running a test)")
+            return 0L
+        }
+
     }
 
     fun extractBlockHeightDependencyArray(): Array<Hash?>? {

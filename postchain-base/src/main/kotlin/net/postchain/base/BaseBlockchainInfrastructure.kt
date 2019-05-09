@@ -1,5 +1,6 @@
 package net.postchain.base
 
+import mu.KLogging
 import net.postchain.StorageBuilder
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.base.data.BaseTransactionQueue
@@ -24,6 +25,9 @@ class BaseBlockchainInfrastructure(
         blockSigMaker = cryptoSystem.buildSigMaker(pubKey, privKey)
         subjectID = pubKey
     }
+
+    companion object: KLogging()
+
 
     override fun shutdown() {
         synchronizationInfrastructure.shutdown()
@@ -51,11 +55,13 @@ class BaseBlockchainInfrastructure(
     }
 
     override fun makeBlockchainEngine(configuration: BlockchainConfiguration): BaseBlockchainEngine {
+        logger.info("makeBlockchainEngine() - start")
         val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration(), -1) // TODO: nodeID
         // TODO: [et]: Maybe extract 'queuecapacity' param from ''
         val tq = BaseTransactionQueue(
                 (configuration as BaseBlockchainConfiguration)
                         .configData.getBlockBuildingStrategy()?.get("queuecapacity")?.asInteger()?.toInt() ?: 2500)
+        logger.info("makeBlockchainEngine() - end")
         return BaseBlockchainEngine(configuration, storage, configuration.chainID, tq)
                 .apply { initializeDB() }
     }

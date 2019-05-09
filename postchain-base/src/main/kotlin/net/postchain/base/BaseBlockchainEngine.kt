@@ -36,6 +36,7 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
             throw ProgrammerMistake("Engine is already initialized")
         }
 
+        logger.info("Initialize DB - begin")
         withWriteConnection(storage, chainID) { ctx ->
             bc.initializeDB(ctx)
             true
@@ -46,6 +47,7 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
         blockQueries = bc.makeBlockQueries(storage)
         strategy = bc.getBlockBuildingStrategy(blockQueries, tq)
         initialized = true
+        logger.info("Initialize DB - end")
     }
 
     override fun getTransactionQueue(): TransactionQueue {

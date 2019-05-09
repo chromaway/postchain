@@ -2,6 +2,7 @@ package net.postchain.cli
 
 import net.postchain.PostchainNode
 import net.postchain.base.BaseConfigurationDataStore
+import net.postchain.base.BlockchainRelatedInfo
 import net.postchain.base.data.BaseBlockStore
 import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.common.hexStringToByteArray
@@ -25,14 +26,14 @@ class CliExecution {
             chainId: Long,
             blockchainRID: String,
             blockchainConfigFile: String,
-            mode: AlreadyExistMode = AlreadyExistMode.IGNORE
+            mode: AlreadyExistMode = AlreadyExistMode.IGNORE,
+            givenDependencies:  List<BlockchainRelatedInfo> = listOf()
     ) {
-
         val encodedGtxValue = getEncodedGtxValueFromFile(blockchainConfigFile)
         runDBCommandBody(nodeConfigFile, chainId) { eContext ->
 
             fun init() {
-                BaseBlockStore().initialize(eContext, blockchainRID.hexStringToByteArray())
+                BaseBlockStore().initialize(eContext, blockchainRID.hexStringToByteArray(), givenDependencies)
                 BaseConfigurationDataStore.addConfigurationData(eContext, 0, encodedGtxValue)
             }
 

@@ -158,11 +158,21 @@ open class IntegrationTest {
                 }
     }
 
+    /**
+     * Creates [count] nodes with many blockchains.
+     *
+     * @param count number of nodes to create
+     * @param nodeConfigsFilenames holds all the nodes' config files
+     * @param blockchainConfigFilename holds all the blockchains' configuration
+     * @return an array of nodes
+     */
     protected fun createMultipleChainNodes(
             count: Int,
             nodeConfigsFilenames: Array<String>,
             blockchainConfigsFilenames: Array<String>
     ): Array<PostchainTestNode> {
+
+        require(count == nodeConfigsFilenames.size){ "Must have as many nodes in the array as specified"}
 
         return Array(count) {
             createMultipleChainNode(it, count, nodeConfigsFilenames[it], *blockchainConfigsFilenames)
@@ -178,6 +188,9 @@ open class IntegrationTest {
     ): PostchainTestNode {
 
         val nodeConfigProvider = createNodeConfig(nodeIndex, nodeCount, nodeConfigFilename)
+        require(nodeConfigProvider.getConfiguration().activeChainIds.size == blockchainConfigFilenames.size) {
+            "The nodes config must have the same number of active chains as the number of specified BC config files."
+        }
 
         val node = PostchainTestNode(nodeConfigProvider, preWipeDatabase)
                 .also { nodes.add(it) }
@@ -186,7 +199,8 @@ open class IntegrationTest {
                 .filter(String::isNotEmpty)
                 .forEachIndexed { i, chainId ->
                     val blockchainRid = blockchainRids[chainId.toLong()]!!.hexStringToByteArray()
-                    val blockchainConfig = readBlockchainConfig(blockchainConfigFilenames[i])
+                    val filename = blockchainConfigFilenames[i]
+                    val blockchainConfig = readBlockchainConfig(filename)
                     node.addBlockchain(chainId.toLong(), blockchainRid, blockchainConfig)
                     node.startBlockchain(chainId.toLong())
                 }

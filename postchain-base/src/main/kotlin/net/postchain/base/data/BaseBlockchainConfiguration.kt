@@ -78,7 +78,7 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
     }
 
     override fun initializeDB(ctx: EContext) {
-        blockStore.initialize(ctx, blockchainRID)
+        blockStore.initialize(ctx, blockchainRID, bcRelatedInfosDependencyList)
     }
 
     override fun getBlockBuildingStrategy(blockQueries: BlockQueries, txQueue: TransactionQueue): BlockBuildingStrategy {

@@ -2,6 +2,7 @@
 
 package net.postchain.base.data
 
+import mu.KLogging
 import net.postchain.base.BaseBlockHeader
 import net.postchain.common.toHex
 import net.postchain.core.*
@@ -67,7 +68,7 @@ class SQLDatabaseAccess : DatabaseAccess {
     private val mapListHandler = MapListHandler()
     private val stringRes = ScalarHandler<String>()
 
-    companion object {
+    companion object: KLogging() {
         const val TABLE_PEERINFOS = "peerinfos"
         const val TABLE_PEERINFOS_FIELD_HOST = "host"
         const val TABLE_PEERINFOS_FIELD_PORT = "port"
@@ -341,6 +342,7 @@ class SQLDatabaseAccess : DatabaseAccess {
                 ctx.chainID)
 
         if (rid == null) {
+            logger.info("Blockchain RID: ${blockchainRID.toHex()} doesn't exist in DB, so we add it.")
             queryRunner.insert(
                     ctx.conn,
                     "INSERT INTO blockchains (chain_id, blockchain_rid) values (?, ?)",
@@ -351,6 +353,8 @@ class SQLDatabaseAccess : DatabaseAccess {
         } else if (!rid.contentEquals(blockchainRID)) {
             throw UserMistake("The blockchainRID in db for chainId ${ctx.chainID} " +
                     "is ${rid.toHex()}, but the expected rid is ${blockchainRID.toHex()}")
+        } else {
+            logger.info("Verified that Blockchain RID: ${blockchainRID.toHex()} exists in DB.")
         }
     }
 

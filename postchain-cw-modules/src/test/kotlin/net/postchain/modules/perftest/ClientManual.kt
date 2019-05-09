@@ -39,19 +39,19 @@ class ClientManual : FTIntegrationTest() {
     @Test
     fun testBombFT() {
         // Setup Alice's and Bob's accounts. Fun Alice with 100 TST
-        var nodeStarted = false;
+        var nodeStarted = false
         while (!nodeStarted) {
             try {
                 postTx(makeRegisterTx(arrayOf(aliceAccountDesc, bobAccountDesc), 1))
                 postTx(makeIssueTx(0, issuerID, aliceAccountID, assetID, 100))
-                nodeStarted = true;
+                nodeStarted = true
             } catch (e: Exception) {
                 Thread.sleep(10)
             }
         }
 
         val endTime = System.currentTimeMillis() + 600000
-        var i = 0;
+        var i = 0
         while (endTime > System.currentTimeMillis()) {
             postTx(makeTransferTx(alicePubKey, alicePrivKey, aliceAccountID, assetID, 10, bobAccountID, "A->B ${i}"))
             postTx(makeTransferTx(bobPubKey, bobPrivKey, bobAccountID, assetID, 10, aliceAccountID, memo1 = "B->A ${i++}"))

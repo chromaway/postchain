@@ -2,11 +2,8 @@
 
 package net.postchain.base.data
 
-import net.postchain.base.BlockchainDependencies
-import net.postchain.base.BlockchainDependency
-import net.postchain.base.BaseTxEContext
-import net.postchain.base.ConfirmationProofMaterial
-import net.postchain.base.HeightDependency
+import mu.KLogging
+import net.postchain.base.*
 import net.postchain.base.merkle.Hash
 import net.postchain.core.*
 
@@ -18,6 +15,9 @@ import net.postchain.core.*
  */
 class BaseBlockStore : BlockStore {
     var db: DatabaseAccess = SQLDatabaseAccess()
+
+    companion object: KLogging()
+
 
     /**
      * Get initial block data, i.e. data necessary for building the next block
@@ -120,7 +120,19 @@ class BaseBlockStore : BlockStore {
         return db.isTransactionConfirmed(ctx, txRID)
     }
 
-    fun initialize(ctx: EContext, blockchainRID: ByteArray) {
+    fun initialize(ctx: EContext, blockchainRID: ByteArray, dependencies:  List<BlockchainRelatedInfo>) {
         db.checkBlockchainRID(ctx, blockchainRID)
+
+        // Verify all dependencies
+        for (dep in dependencies) {
+            val chainId = db.getChainId(ctx, dep.blockchainRid)
+            if (chainId == null) {
+                throw BadDataMistake(BadDataType.BAD_CONFIGURATION,
+                        "Dependency given in configuration: ${dep.nickname} is missing in DB. Dependent blockchains must be added in correct order!")
+            } else {
+                logger.info("initialize() - Verified BC dependency: ${dep.nickname} exists as chainID: = $chainId (before: ${dep.chainId}) ")
+                dep.chainId = chainId
+            }
+        }
     }
 }

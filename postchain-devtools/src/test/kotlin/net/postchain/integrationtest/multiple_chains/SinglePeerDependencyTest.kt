@@ -1,0 +1,91 @@
+package net.postchain.integrationtest.multiple_chains
+
+import mu.KLogging
+import net.postchain.core.BadDataMistake
+import net.postchain.core.BadDataType
+import net.postchain.util.MultiNodeDoubleChainBlockTestHelper
+import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.fail
+
+class SinglePeerDependencyTest {
+
+    companion object : KLogging()
+
+    val multiHelper = MultiNodeDoubleChainBlockTestHelper()
+
+    /**
+     * Begin with a simple happy test to see that we can start/stop a node with 2 chains.
+     */
+    @Test
+    fun startingAndStoppingSingleChainSuccessfully() {
+        val chainList = listOf(1L, 2L)
+        multiHelper.runXNodes(
+                1,
+                chainList,
+                arrayOf(
+                        "classpath:/net/postchain/multiple_chains/dependent_bcs/single_peer/node0bc2.properties"
+                ),
+                arrayOf(
+                        "/net/postchain/multiple_chains/dependent_bcs/single_peer/blockchain_config_1.xml",
+                        "/net/postchain/multiple_chains/dependent_bcs/single_peer/blockchain_config_2.xml"
+                )
+        )
+        val txList = multiHelper.runXNodesWithYTxPerBlock( 1, 1, chainList)
+        multiHelper.runXNodesAssertions( 1, 1, chainList, txList)
+    }
+
+    /**
+     * What if our configuration tells us we should have a dependency, but we haven't got it?
+     */
+    @Test
+    fun testBreakIfDependencyNotFound() {
+        val chainList = listOf(1L)
+        try {
+            // It will break immediately
+            multiHelper.runXNodes(
+                    1,
+                    chainList,
+                    arrayOf(
+                            "classpath:/net/postchain/multiple_chains/dependent_bcs/single_peer/node0bc1dep.properties"
+                    ),
+                    arrayOf(
+                            "/net/postchain/multiple_chains/dependent_bcs/single_peer/blockchain_config_bad_dependency.xml"
+                    )
+            )
+
+            fail("This is not allowed since we don't have the blockchain we depend on")
+        } catch (e: BadDataMistake) {
+            assertEquals(BadDataType.BAD_CONFIGURATION, e.type)
+        }
+
+    }
+
+    /**
+     * One BC depend on another BC.
+     */
+    @Test
+    fun testHappyDependency() {
+        val chainList = listOf(1L, 2L)
+
+        multiHelper.runXNodes(
+                1,
+                chainList,
+                arrayOf(
+                        "classpath:/net/postchain/multiple_chains/dependent_bcs/single_peer/node0bc2dep.properties"
+                ),
+                arrayOf(
+                        "/net/postchain/multiple_chains/dependent_bcs/single_peer/blockchain_config_1.xml",
+                        "/net/postchain/multiple_chains/dependent_bcs/single_peer/blockchain_config_2_depends_on_1.xml"
+                )
+        )
+
+        val txList = multiHelper.runXNodesWithYTxPerBlock( 2, 10, chainList)
+        multiHelper.runXNodesAssertions( 2, 10, chainList, txList)
+
+    }
+
+
+
+}
+

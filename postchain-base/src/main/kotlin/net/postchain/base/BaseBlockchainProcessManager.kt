@@ -1,5 +1,6 @@
 package net.postchain.base
 
+import mu.KLogging
 import net.postchain.StorageBuilder
 import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.config.blockchain.BlockchainConfigurationProvider
@@ -19,7 +20,10 @@ class BaseBlockchainProcessManager(
     private val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
     private val executor = Executors.newSingleThreadExecutor()
 
+    companion object: KLogging()
+
     override fun startBlockchain(chainId: Long) {
+        logger.info("startBlockchain() - start")
         stopBlockchain(chainId)
 
         withReadConnection(storage, chainId) { eContext ->
@@ -35,6 +39,7 @@ class BaseBlockchainProcessManager(
                         startBlockchain(chainId)
                     }
                 }
+                logger.info("startBlockchain() - end")
             } else {
                 println("Can't start blockchain due to configuration is absent")
             }

@@ -163,7 +163,7 @@ open class BaseBlockBuilder(
                         if (dbHeight != null) {
                             BlockchainDependency(bcInfo, HeightDependency(blockRid, dbHeight))
                         } else {
-                            // TODO: Discussed this with Alex (2019-03-29) (A bit wasteful to abort rather than wait?)
+                            // Ok to bang out if we are behind in blocks. Discussed this with Alex (2019-03-29)
                             throw BadDataMistake(BadDataType.MISSING_DEPENDENCY,
                                     "We are not ready to accept the block since block dependency (RID: ${blockRid.toHex()}) is missing. ")
                         }
@@ -186,7 +186,7 @@ open class BaseBlockBuilder(
     private fun buildBlockchainDependenciesFromDb(): BlockchainDependencies {
         val resList = mutableListOf<BlockchainDependency>()
         for (bcInfo in blockchainRelatedInfoDependencyList) {
-            val res: Pair<Long, Hash>? = store.getBlockHeightInfo(bctx, bcInfo.blockchainRid)
+            val res: Pair<Long, Hash>? = store.getBlockHeightInfo(ectx, bcInfo.blockchainRid)
             val dep = if (res != null) {
                 BlockchainDependency(bcInfo, HeightDependency(res.second, res.first))
             } else {
