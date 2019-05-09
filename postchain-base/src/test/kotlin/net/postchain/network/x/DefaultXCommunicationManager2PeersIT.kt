@@ -60,7 +60,7 @@ class DefaultXCommunicationManager2PeersIT {
 
     @Test
     fun twoPeers_SendsPackets_Successfully() {
-        // Waiting for all connections establishing
+        // Waiting for all connections to be established
         await().atMost(Duration.FIVE_SECONDS)
                 .untilAsserted {
                     val actual1 = context1.connectionManager.getConnectedPeers(context1.chainId)

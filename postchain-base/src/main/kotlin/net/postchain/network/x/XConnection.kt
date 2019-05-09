@@ -12,10 +12,8 @@ interface XPeerConnection {
 }
 
 interface XConnectorEvents {
-    fun onPeerConnected(descriptor: XPeerConnectionDescriptor,
-                        connection: XPeerConnection): XPacketHandler?
-
-    fun onPeerDisconnected(descriptor: XPeerConnectionDescriptor)
+    fun onPeerConnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection): XPacketHandler?
+    fun onPeerDisconnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection)
 }
 
 interface XConnector<PacketType> : Shutdownable {

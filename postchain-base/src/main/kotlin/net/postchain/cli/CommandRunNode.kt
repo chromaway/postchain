@@ -20,6 +20,7 @@ class CommandRunNode : Command {
 
     @Parameter(
             names = ["-cid", "--chain-ids"],
+            description = "IDs of chains to launch",
             required = true)
     private var chainIDs = listOf<Long>()
 

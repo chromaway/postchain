@@ -3,6 +3,7 @@ package net.postchain.integrationtest
 import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import junitparams.naming.TestCaseName
+import net.postchain.integrationtest.multiple_chains.FullEbftMultipleChainsTestNightly
 import org.junit.Test
 import org.junit.runner.RunWith
 

@@ -3,8 +3,7 @@
 package net.postchain
 
 import net.postchain.base.data.*
-import net.postchain.config.CommonsConfigurationFactory
-import org.apache.commons.configuration2.Configuration
+import net.postchain.config.node.NodeConfig
 import org.apache.commons.dbcp2.BasicDataSource
 import org.apache.commons.dbutils.QueryRunner
 import java.sql.Connection
@@ -14,10 +13,8 @@ class StorageBuilder {
 
     companion object {
 
-        fun buildStorage(config: Configuration, nodeIndex: Int, wipeDatabase: Boolean = false): BaseStorage {
-
-            val sqlCommands = CommonsConfigurationFactory
-                    .getSQLCommandsImplementation(config.getString("database.driverclass"))
+        fun buildStorage(nodeConfig: NodeConfig, nodeIndex: Int, wipeDatabase: Boolean = false): BaseStorage {
+            val sqlCommands = SQLCommandsFactory.getSQLCommands(nodeConfig.databaseDriverclass)
 
             val db = when (sqlCommands) {
                 is PostgreSQLCommands -> PostgreSQLDatabaseAccess(sqlCommands)
@@ -25,25 +22,24 @@ class StorageBuilder {
                 else -> SQLDatabaseAccess(sqlCommands)
             }
 
-            val initSchemaWriteDataSource = createBasicDataSource(config, false)
+            val initSchemaWriteDataSource = createBasicDataSource(nodeConfig, false)
 
             if (wipeDatabase) {
-                wipeDatabase(initSchemaWriteDataSource, config, sqlCommands)
+                wipeDatabase(initSchemaWriteDataSource, nodeConfig, sqlCommands)
             } else {
-                createSchemaIfNotExists(initSchemaWriteDataSource,
-                        schema(config), sqlCommands)
+                createSchemaIfNotExists(initSchemaWriteDataSource, nodeConfig.databaseSchema, sqlCommands)
             }
             initSchemaWriteDataSource.close()
 
             // Read DataSource
-            val readDataSource = createBasicDataSource(config).apply {
+            val readDataSource = createBasicDataSource(nodeConfig).apply {
                 defaultAutoCommit = true
                 maxTotal = 2
                 defaultReadOnly = true
             }
 
             // Write DataSource
-            val writeDataSource = createBasicDataSource(config).apply {
+            val writeDataSource = createBasicDataSource(nodeConfig).apply {
                 maxWaitMillis = 0
                 defaultAutoCommit = false
                 maxTotal = 1
@@ -60,28 +56,28 @@ class StorageBuilder {
             }
         }
 
-        private fun createBasicDataSource(config: Configuration, withSchema: Boolean = true): BasicDataSource {
+        private fun createBasicDataSource(nodeConfig: NodeConfig, withSchema: Boolean = true): BasicDataSource {
             return BasicDataSource().apply {
-                driverClassName = config.getString("database.driverclass")
-                url = "${config.getString("database.url")}" // ?loggerLevel=OFF
-                username = config.getString("database.username")
-                password = config.getString("database.password")
+                driverClassName = nodeConfig.databaseDriverclass
+                url = nodeConfig.databaseUrl // ?loggerLevel=OFF
+                username = nodeConfig.databaseUsername
+                password = nodeConfig.databasePassword
                 defaultAutoCommit = false
 
                 if (withSchema) {
-                    defaultSchema = schema(config)
+                    defaultSchema = nodeConfig.databaseSchema
                 }
             }
 
         }
 
-        private fun wipeDatabase(dataSource: DataSource, config: Configuration, sqlCommands: SQLCommands) {
+        private fun wipeDatabase(dataSource: DataSource, nodeConfig: NodeConfig, sqlCommands: SQLCommands) {
             dataSource.connection.use { connection ->
                 QueryRunner().let { query ->
-                    if (isSchemaExists(connection, schema(config))) {
-                        query.update(connection, sqlCommands.dropSchemaCascade(schema(config)))
+                    if (isSchemaExists(connection, nodeConfig.databaseSchema)) {
+                        query.update(connection, sqlCommands.dropSchemaCascade(nodeConfig.databaseSchema))
                     }
-                    query.update(connection, sqlCommands.createSchema(schema(config)))
+                    query.update(connection, sqlCommands.createSchema(nodeConfig.databaseSchema))
                 }
                 connection.commit()
             }
@@ -101,10 +97,6 @@ class StorageBuilder {
                 dbAccess.initialize(connection, expectedDbVersion = 1) // TODO: [et]: Extract version
                 connection.commit()
             }
-        }
-
-        private fun schema(config: Configuration): String {
-            return config.getString("database.schema", "public")
         }
 
         private fun isSchemaExists(conn: Connection, schema: String): Boolean {

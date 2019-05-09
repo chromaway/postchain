@@ -2,29 +2,29 @@
 
 package net.postchain.ebft
 
-import net.postchain.core.ManagedBlockBuilder
-import net.postchain.common.toHex
 import mu.KLogging
+import net.postchain.common.toHex
 import net.postchain.core.*
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
-import java.util.concurrent.SynchronousQueue
-import java.util.concurrent.ThreadFactory
-import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-
-typealias Operation = () -> Unit
 
 /**
  * A wrapper class for the [engine] and [blockQueries], starting new threads when running
  */
-class BaseBlockDatabase(private val engine: BlockchainEngine, private val blockQueries: BlockQueries, val nodeIndex: Int) : BlockDatabase {
-    private val executor = ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS,
-            SynchronousQueue<Runnable>(), ThreadFactory {
-        val t = Thread(it, "${nodeIndex}-BaseBlockDatabaseWorker")
-        t.isDaemon = true // So it can't block the JVM from exiting if still running
-        t
-    })
+class BaseBlockDatabase(
+        private val engine: BlockchainEngine,
+        private val blockQueries: BlockQueries,
+        val nodeIndex: Int
+) : BlockDatabase {
+
+    private val executor = Executors.newSingleThreadExecutor {
+        Thread(it, "$nodeIndex-BaseBlockDatabaseWorker")
+                .apply {
+                    isDaemon = true // So it can't block the JVM from exiting if still running
+                }
+    }
     private var blockBuilder: ManagedBlockBuilder? = null
     private var witnessBuilder: MultiSigBlockWitnessBuilder? = null
 

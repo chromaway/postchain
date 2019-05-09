@@ -92,13 +92,13 @@ class ValidatorSyncManager(
             val xPeerId = packet.first
             val nodeIndex = getPeerIndex(xPeerId)
             val message = packet.second
-            logger.debug { "Received message type ${message.getBackingInstance().choiceID} from $nodeIndex" }
+            logger.debug { "Received message type ${message.javaClass.simpleName}/${message.getBackingInstance().choiceID} from node $nodeIndex" }
             try {
                 when (message) {
                     // same case for replica and validator node
                     is GetBlockAtHeight -> sendBlockAtHeight(xPeerId, message.height)
                     else -> {
-                        if(nodeIndex != NODE_ID_READ_ONLY) {
+                        if (nodeIndex != NODE_ID_READ_ONLY) {
                             // validator consensus logic
                             when (message) {
                                 is Status -> {
@@ -166,7 +166,9 @@ class ValidatorSyncManager(
     private fun sendBlockSignature(nodeIndex: Int, blockRID: ByteArray) {
         val currentBlock = this.blockManager.currentBlock
         if (currentBlock != null && currentBlock.header.blockRID.contentEquals(blockRID)) {
-            assert(statusManager.myStatus.blockRID!!.contentEquals(currentBlock.header.blockRID))
+            if(!statusManager.myStatus.blockRID!!.contentEquals(currentBlock.header.blockRID)) {
+                throw ProgrammerMistake("status manager block RID (${statusManager.myStatus.blockRID!!.toHex()}) out of sync with current block RID (${currentBlock.header.blockRID.toHex()})")
+            }
             val signature = statusManager.getCommitSignature()
             if (signature != null) {
                 communicationManager.sendPacket(BlockSignature(blockRID, signature), validatorAtIndex(nodeIndex))

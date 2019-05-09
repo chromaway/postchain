@@ -8,7 +8,7 @@ typealias XPacketHandler = (data: ByteArray, peerID: XPeerID) -> Unit
 
 typealias LazyPacket = () -> ByteArray
 
-interface XConnectionManager : Shutdownable {
+interface XConnectionManager : NetworkTopology, Shutdownable {
     fun connectChain(peerConfig: XChainPeerConfiguration, autoConnectAll: Boolean)
     fun connectChainPeer(chainID: Long, peerID: XPeerID)
     fun isPeerConnected(chainID: Long, peerID: XPeerID): Boolean
@@ -17,4 +17,8 @@ interface XConnectionManager : Shutdownable {
     fun broadcastPacket(data: LazyPacket, chainID: Long)
     fun disconnectChainPeer(chainID: Long, peerID: XPeerID)
     fun disconnectChain(chainID: Long)
+}
+
+interface NetworkTopology {
+    fun getPeersTopology(chainID: Long): Map<XPeerID, String>
 }

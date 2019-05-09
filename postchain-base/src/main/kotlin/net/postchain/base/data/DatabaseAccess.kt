@@ -36,8 +36,7 @@ interface DatabaseAccess {
     fun getTxBytes(ctx: EContext, txRID: ByteArray): ByteArray?
     fun isTransactionConfirmed(ctx: EContext, txRID: ByteArray): Boolean
 
-    // Configurations
-
+    // Blockchain configurations
     fun findConfiguration(context: EContext, height: Long): Long?
     fun getConfigurationData(context: EContext, height: Long): ByteArray?
     fun addConfigurationData(context: EContext, height: Long, data: ByteArray)
@@ -63,6 +62,13 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
     private val byteArrayListRes = ColumnListHandler<ByteArray>()
     private val mapListHandler = MapListHandler()
     private val stringRes = ScalarHandler<String>()
+
+    companion object {
+        const val TABLE_PEERINFOS = "peerinfos"
+        const val TABLE_PEERINFOS_FIELD_HOST = "host"
+        const val TABLE_PEERINFOS_FIELD_PORT = "port"
+        const val TABLE_PEERINFOS_FIELD_PUBKEY = "pub_key"
+    }
 
     override fun insertBlock(ctx: EContext, height: Long): Long {
         queryRunner.update(ctx.conn, sqlCommands.insertBlocks, ctx.chainID, height)
@@ -234,10 +240,17 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
             // Configurations
             queryRunner.update(connection, sqlCommands.createTableConfiguration)
 
+            // PeerInfos
+            queryRunner.update(connection, "CREATE TABLE $TABLE_PEERINFOS (" +
+                    " $TABLE_PEERINFOS_FIELD_HOST text NOT NULL" +
+                    ", $TABLE_PEERINFOS_FIELD_PORT integer NOT NULL" +
+                    ", $TABLE_PEERINFOS_FIELD_PUBKEY text NOT NULL" +
+                    ", UNIQUE ($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT)" +
+                    ")")
+
             queryRunner.update(connection, """CREATE INDEX transactions_block_iid_idx ON transactions(block_iid)""")
             queryRunner.update(connection, """CREATE INDEX blocks_chain_id_timestamp ON blocks(chain_id, timestamp)""")
             //queryRunner.update(connection, """CREATE INDEX configurations_chain_id_to_height ON configurations(chain_id, height)""")
-
         }
     }
 
