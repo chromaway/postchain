@@ -31,8 +31,15 @@ object SAPHanaSQLCommands : SQLCommands {
     override val createTableConfiguration = "CREATE TABLE configurations (" +
             " chain_id bigint NOT NULL" +
             ", height BIGINT NOT NULL" +
-            ", configuration_data VARBINARY(1000) NOT NULL" +
+            ", configuration_data BLOB NOT NULL" +
             ", PRIMARY KEY (chain_id, height)" +
+            ")"
+
+    override val createTablePeerInfos = "CREATE TABLE ${SQLDatabaseAccess.TABLE_PEERINFOS} (" +
+            " ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_HOST} VARCHAR(255) NOT NULL" +
+            ", ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_PORT} BIGINT NOT NULL" +
+            ", ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_PUBKEY} VARCHAR(255) NOT NULL" +
+            ", UNIQUE (${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_HOST}, ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_PORT})" +
             ")"
 
     override val createTableMeta: String = "CREATE TABLE meta (key VARCHAR(255) PRIMARY KEY, value VARCHAR(1000))"

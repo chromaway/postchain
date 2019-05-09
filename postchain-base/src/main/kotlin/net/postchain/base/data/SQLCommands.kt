@@ -5,6 +5,7 @@ interface SQLCommands {
     val createTableBlockChains: String
     val createTableTransactions: String
     val createTableConfiguration: String
+    val createTablePeerInfos: String
     val createTableMeta: String
     val insertBlocks: String
     val insertTransactions: String

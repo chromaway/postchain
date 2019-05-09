@@ -36,6 +36,13 @@ object PostgreSQLCommands : SQLCommands {
             ", PRIMARY KEY (chain_id, height)" +
             ")"
 
+    override val createTablePeerInfos = "CREATE TABLE ${SQLDatabaseAccess.TABLE_PEERINFOS} (" +
+            " ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_HOST} text NOT NULL" +
+            ", ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_PORT} integer NOT NULL" +
+            ", ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_PUBKEY} text NOT NULL" +
+            ", UNIQUE (${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_HOST}, ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_PORT})" +
+            ")"
+
     override val createTableMeta: String = "CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)"
 
     override val insertBlocks: String = "INSERT INTO blocks (chain_id, block_height) VALUES (?, ?)"

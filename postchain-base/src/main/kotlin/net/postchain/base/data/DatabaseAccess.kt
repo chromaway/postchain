@@ -183,10 +183,8 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
                 ColumnListHandler<ByteArray>(), blockIid)!!
     }
 
-
     override fun getTxBytes(ctx: EContext, txRID: ByteArray): ByteArray? {
-        return queryRunner.query(ctx.conn, "SELECT tx_data FROM " +
-                "transactions WHERE chain_id=? AND tx_rid=?",
+        return queryRunner.query(ctx.conn, "SELECT tx_data FROM transactions WHERE chain_id=? AND tx_rid=?",
                 nullableByteArrayRes, ctx.chainID, txRID)
     }
 
@@ -241,12 +239,7 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
             queryRunner.update(connection, sqlCommands.createTableConfiguration)
 
             // PeerInfos
-            queryRunner.update(connection, "CREATE TABLE $TABLE_PEERINFOS (" +
-                    " $TABLE_PEERINFOS_FIELD_HOST text NOT NULL" +
-                    ", $TABLE_PEERINFOS_FIELD_PORT integer NOT NULL" +
-                    ", $TABLE_PEERINFOS_FIELD_PUBKEY text NOT NULL" +
-                    ", UNIQUE ($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT)" +
-                    ")")
+            queryRunner.update(connection, sqlCommands.createTablePeerInfos)
 
             queryRunner.update(connection, """CREATE INDEX transactions_block_iid_idx ON transactions(block_iid)""")
             queryRunner.update(connection, """CREATE INDEX blocks_chain_id_timestamp ON blocks(chain_id, timestamp)""")
