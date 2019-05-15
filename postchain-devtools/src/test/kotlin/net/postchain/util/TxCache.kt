@@ -2,7 +2,7 @@ package net.postchain.util
 
 import net.postchain.common.toHex
 import net.postchain.gtx.GTXTransaction
-import net.postchain.integrationtest.multiple_chains.SinglePeerDependencyTest
+import net.postchain.integrationtest.multiple_chains.SinglePeerDoubleChainsDependencyTest
 
 /**
  * Used to fetch a Transaction created in a by the [MultiNodeDoubleChainBlockTestHelper]
@@ -13,7 +13,7 @@ class TxCache(val internalTxList: List<GTXTransaction>) {
         val baseIndex = height * txPerBlock + counter
         val index =  baseIndex * nrOfChains + chainId -1
         val expectedTxRid = internalTxList[index].getRID()
-        SinglePeerDependencyTest.logger.debug(
+        SinglePeerDoubleChainsDependencyTest.logger.debug(
                 "Fetching cached TX with index: $index (chainId: $chainId, height: $height, TX pos: $counter):  TX RID: ${expectedTxRid.toHex()}")
         return expectedTxRid
 

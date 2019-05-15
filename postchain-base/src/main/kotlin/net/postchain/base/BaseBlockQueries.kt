@@ -3,7 +3,6 @@
 package net.postchain.base
 
 import mu.KLogging
-import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
@@ -77,7 +76,7 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
      */
     override fun getBlockTransactionRids(blockRID: ByteArray): Promise<List<ByteArray>, Exception> {
         return runOp {
-            val height = blockStore.getBlockHeight(it, blockRID)
+            val height = blockStore.getBlockHeightFromOwnBlockchain(it, blockRID)
             if (height == null) {
                 //Shouldn't this be UserMistake?
                 throw ProgrammerMistake("BlockRID does not exist")

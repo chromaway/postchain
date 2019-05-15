@@ -8,11 +8,9 @@ import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
 
-class SinglePeerDependencyTest {
+class SinglePeerDoubleChainsDependencyTest: MultiNodeDoubleChainBlockTestHelper() {
 
     companion object : KLogging()
-
-    val multiHelper = MultiNodeDoubleChainBlockTestHelper()
 
     /**
      * Begin with a simple happy test to see that we can start/stop a node with 2 chains.
@@ -20,7 +18,7 @@ class SinglePeerDependencyTest {
     @Test
     fun startingAndStoppingSingleChainSuccessfully() {
         val chainList = listOf(1L, 2L)
-        multiHelper.runXNodes(
+        runXNodes(
                 1,
                 chainList,
                 arrayOf(
@@ -31,8 +29,8 @@ class SinglePeerDependencyTest {
                         "/net/postchain/multiple_chains/dependent_bcs/single_peer/blockchain_config_2.xml"
                 )
         )
-        val txList = multiHelper.runXNodesWithYTxPerBlock( 1, 1, chainList)
-        multiHelper.runXNodesAssertions( 1, 1, chainList, txList)
+        val txList = runXNodesWithYTxPerBlock( 1, 1, chainList)
+        runXNodesAssertions( 1, 1, chainList, txList)
     }
 
     /**
@@ -43,7 +41,7 @@ class SinglePeerDependencyTest {
         val chainList = listOf(1L)
         try {
             // It will break immediately
-            multiHelper.runXNodes(
+            runXNodes(
                     1,
                     chainList,
                     arrayOf(
@@ -68,7 +66,7 @@ class SinglePeerDependencyTest {
     fun testHappyDependency() {
         val chainList = listOf(1L, 2L)
 
-        multiHelper.runXNodes(
+        runXNodes(
                 1,
                 chainList,
                 arrayOf(
@@ -80,8 +78,8 @@ class SinglePeerDependencyTest {
                 )
         )
 
-        val txList = multiHelper.runXNodesWithYTxPerBlock( 2, 10, chainList)
-        multiHelper.runXNodesAssertions( 2, 10, chainList, txList)
+        val txList = runXNodesWithYTxPerBlock( 2, 10, chainList)
+        runXNodesAssertions( 2, 10, chainList, txList)
 
     }
 

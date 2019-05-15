@@ -23,7 +23,7 @@ interface DatabaseAccess {
     fun finalizeBlock(ctx: BlockEContext, header: BlockHeader)
 
     fun commitBlock(bctx: BlockEContext, w: BlockWitness)
-    fun getBlockHeight(ctx: EContext, blockRID: ByteArray): Long?
+    fun getBlockHeight(ctx: EContext, blockRID: ByteArray, chainId: Long): Long?
     fun getBlockRID(ctx: EContext, height: Long): ByteArray?
     fun getBlockHeader(ctx: EContext, blockRID: ByteArray): ByteArray
     fun getBlockTransactions(ctx: EContext, blockRID: ByteArray): List<ByteArray>
@@ -102,9 +102,9 @@ class SQLDatabaseAccess : DatabaseAccess {
                 w.getRawData(), bctx.blockIID)
     }
 
-    override fun getBlockHeight(ctx: EContext, blockRID: ByteArray): Long? {
+    override fun getBlockHeight(ctx: EContext, blockRID: ByteArray, chainId: Long): Long? {
         return queryRunner.query(ctx.conn, "SELECT block_height FROM blocks where chain_id = ? and block_rid = ?",
-                nullableLongRes, ctx.chainID, blockRID)
+                nullableLongRes, chainId, blockRID)
     }
 
     // The combination of CHAIN_ID and BLOCK_HEIGHT is unique

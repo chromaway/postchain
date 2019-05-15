@@ -58,8 +58,12 @@ class BaseBlockStore : BlockStore {
         db.commitBlock(bctx, w)
     }
 
-    override fun getBlockHeight(ctx: EContext, blockRID: ByteArray): Long? {
-        return db.getBlockHeight(ctx, blockRID)
+    override fun getBlockHeightFromOwnBlockchain(ctx: EContext, blockRID: ByteArray): Long? {
+        return db.getBlockHeight(ctx, blockRID, ctx.chainID)
+    }
+
+    override fun getBlockHeightFromAnyBlockchain(ctx: EContext, blockRID: ByteArray, chainId: Long): Long? {
+        return db.getBlockHeight(ctx, blockRID, chainId)
     }
 
     override fun getChainId(ctx: EContext, blockchainRID: ByteArray): Long? {

@@ -10,13 +10,12 @@ import net.postchain.devtools.testinfra.TestOneOpGtxTransaction
 import net.postchain.gtx.GTXTransaction
 import net.postchain.gtx.GTXTransactionFactory
 import net.postchain.integrationtest.assertChainStarted
-import net.postchain.integrationtest.multiple_chains.SinglePeerDependencyTest
 import org.awaitility.Awaitility
 import org.awaitility.Duration
 import org.junit.Assert
 import kotlin.test.assertNotNull
 
-class MultiNodeDoubleChainBlockTestHelper(): IntegrationTest()  {
+open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
 
     private val gtxTestModule =  GTXTestModule()
     private val factory1 = GTXTransactionFactory(blockchainRids[1L]!!.hexStringToByteArray(), gtxTestModule, cryptoSystem)

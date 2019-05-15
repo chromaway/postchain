@@ -19,7 +19,8 @@ interface BlockStore {
     fun addTransaction(bctx: BlockEContext, tx: Transaction): TxEContext
     fun finalizeBlock(bctx: BlockEContext, bh: BlockHeader)
     fun commitBlock(bctx: BlockEContext, w: BlockWitness?)
-    fun getBlockHeight(ctx: EContext, blockRID: ByteArray): Long? // returns null if not found
+    fun getBlockHeightFromOwnBlockchain(ctx: EContext, blockRID: ByteArray): Long? // returns null if not found
+    fun getBlockHeightFromAnyBlockchain(ctx: EContext, blockRID: ByteArray, chainId: Long): Long? // returns null if not found
     fun getChainId(ctx: EContext, blockchainRID: ByteArray): Long? // returns null if not found
     fun getBlockRID(ctx: EContext, height: Long): ByteArray? // returns null if height is out of range
     fun getLastBlockHeight(ctx: EContext): Long // height of the last block, first block has height 0
