@@ -84,7 +84,10 @@ class BlockchainDependencies(
     private val chaindIdMap = mutableMapOf<Long, BlockchainDependency>() // Convenience lookups
     private val blockchainRidMap = mutableMapOf<Hash, BlockchainDependency>() // Convenience lookups
 
-    companion object : KLogging()
+    companion object : KLogging() {
+
+        const val NO_BLOCKS_YET = -1L // We cannot use 0, bc that is the height of the first block.
+    }
 
     // Convenience constructor
     constructor(depList: List<BlockchainDependency>): this(depList.toTypedArray()) {
@@ -145,8 +148,8 @@ class BlockchainDependencies(
             return dep.heightDependency.height ?:
                throw ProgrammerMistake("If last block RID exists for dependency: $dep we must know height at this stage")
         } else {
-            logger.warn("No height known for dependency $dep, so assuming height = 0. (This is ok if we are running a test)")
-            return 0L
+            logger.warn("No height known for dependency $dep, so assuming height = $NO_BLOCKS_YET. (This is ok if we are running a test)")
+            return NO_BLOCKS_YET
         }
 
     }

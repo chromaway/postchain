@@ -40,10 +40,11 @@ open class BaseBlockEContext(
      * @param chainID is the blockchain dependency we want to look at
      * @return the required height of the blockchain (specificied by the chainID param)
      *         or null if there is no such dependency.
-     *         (Note that Height = 0 is a dependency without any blocks, which is allowed)
+     *         (Note that Height = -1 is a dependency without any blocks, which is allowed)
      */
-    fun getChainDependencyHeight(chainID:Long): Long? {
-        return dependencyHeightMap[chainID]
+    override fun getChainDependencyHeight(chainID:Long): Long {
+        return dependencyHeightMap[chainID] ?:
+           throw IllegalArgumentException("The blockchain with chain ID: $chainID is not a dependency")
     }
 }
 

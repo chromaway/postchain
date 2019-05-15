@@ -16,6 +16,7 @@ interface EContext : ExecutionContext
 interface BlockEContext : EContext {
     val blockIID: Long
     val timestamp: Long
+    fun getChainDependencyHeight(chainID:Long): Long
 }
 
 interface TxEContext : BlockEContext {
