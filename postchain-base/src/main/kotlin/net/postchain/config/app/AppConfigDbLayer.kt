@@ -1,6 +1,7 @@
 package net.postchain.config.app
 
 import net.postchain.base.PeerInfo
+import net.postchain.base.data.SQLCommandsFactory
 import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_HOST
@@ -20,7 +21,7 @@ class AppConfigDbLayer(
 
     init {
         createSchemaIfNotExists(connection)
-        createTablesIfNotExists(connection)
+        createTablesIfNotExists(appConfig, connection)
     }
 
     fun getPeerInfoCollection(): Array<PeerInfo> {
@@ -99,8 +100,9 @@ class AppConfigDbLayer(
         connection.commit()
     }
 
-    private fun createTablesIfNotExists(connection: Connection) {
-        SQLDatabaseAccess().initialize(connection, expectedDbVersion = 1) // TODO: [et]: Extract version
+    private fun createTablesIfNotExists(appConfig: AppConfig, connection: Connection) {
+        val sqlCommands = SQLCommandsFactory.getSQLCommands(appConfig.databaseDriverclass)
+        SQLDatabaseAccess(sqlCommands).initialize(connection, expectedDbVersion = 1) // TODO: [et]: Extract version
         connection.commit()
     }
 }

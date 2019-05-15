@@ -255,7 +255,6 @@ open class IntegrationTest {
 
     private fun commitBlock(blockBuilder: BlockBuilder): BlockWitness {
         val witnessBuilder = blockBuilder.getBlockWitnessBuilder() as MultiSigBlockWitnessBuilder
-        assertNotNull(witnessBuilder)
         val blockData = blockBuilder.getBlockData()
         // Simulate other peers sign the block
         val blockHeader = blockData.header

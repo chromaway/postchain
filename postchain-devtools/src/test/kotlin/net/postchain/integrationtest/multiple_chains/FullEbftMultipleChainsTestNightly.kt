@@ -12,12 +12,8 @@ import org.awaitility.Awaitility.await
 import org.awaitility.Duration.TEN_SECONDS
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
-import org.junit.Ignore
-import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(JUnitParamsRunner::class)
-class FullEbftMultipleChainsTestNightly : IntegrationTest() {
+open class FullEbftMultipleChainsTestNightly : IntegrationTest() {
 
     companion object : KLogging()
 
@@ -25,77 +21,7 @@ class FullEbftMultipleChainsTestNightly : IntegrationTest() {
         return nodes[nodeId].blockBuildingStrategy(chainId) as OnDemandBlockBuildingStrategy
     }
 
-    @Test
-    @Parameters(
-            "1, 0", "2, 0", "10, 0"
-            , "1, 1", "2, 1", "10, 1"
-            , "1, 10", "2, 10", "10, 10"
-    )
-    @TestCaseName("[{index}] nodesCount: 1, blocksCount: {0}, txPerBlock: {1}")
-    fun runSingleNodeWithYTxPerBlock(blocksCount: Int, txPerBlock: Int) {
-        runXNodesWithYTxPerBlock(
-                1,
-                blocksCount,
-                txPerBlock,
-                arrayOf(
-                        "classpath:/net/postchain/multiple_chains/ebft_nightly/single_node/node0.properties"
-                ),
-                arrayOf(
-                        "/net/postchain/multiple_chains/ebft_nightly/single_node/blockchain_config_1.xml",
-                        "/net/postchain/multiple_chains/ebft_nightly/single_node/blockchain_config_2.xml"
-                ))
-    }
-
-    @Ignore // tests overlap and cause failures
-    @Test
-    @Parameters(
-            "1, 0", "2, 0", "10, 0"
-            , "1, 1", "2, 1", "10, 1"
-            , "1, 10", "2, 10", "10, 10"
-    )
-    @TestCaseName("[{index}] nodesCount: 2, blocksCount: {0}, txPerBlock: {1}")
-    fun runTwoNodesWithYTxPerBlock(blocksCount: Int, txPerBlock: Int) {
-        runXNodesWithYTxPerBlock(
-                2,
-                blocksCount,
-                txPerBlock,
-                arrayOf(
-                        "classpath:/net/postchain/multiple_chains/ebft_nightly/two_nodes/node0.properties",
-                        "classpath:/net/postchain/multiple_chains/ebft_nightly/two_nodes/node1.properties"
-                ),
-                arrayOf(
-                        "/net/postchain/multiple_chains/ebft_nightly/two_nodes/blockchain_config_1.xml",
-                        "/net/postchain/multiple_chains/ebft_nightly/two_nodes/blockchain_config_2.xml"
-                ))
-    }
-
-    @Ignore
-    @Test
-    @Parameters(
-            "1, 0", "2, 0", "10, 0"
-            , "1, 1", "2, 1", "10, 1"
-            , "1, 10", "2, 10", "10, 10"
-    )
-    @TestCaseName("[{index}] nodesCount: 5, blocksCount: {0}, txPerBlock: {1}")
-    fun runFiveNodesWithYTxPerBlock(blocksCount: Int, txPerBlock: Int) {
-        runXNodesWithYTxPerBlock(
-                5,
-                blocksCount,
-                txPerBlock,
-                arrayOf(
-                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node0.properties",
-                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node1.properties",
-                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node2.properties",
-                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node3.properties",
-                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node4.properties"
-                ),
-                arrayOf(
-                        "/net/postchain/multiple_chains/ebft_nightly/five_nodes/blockchain_config_1.xml",
-                        "/net/postchain/multiple_chains/ebft_nightly/five_nodes/blockchain_config_2.xml"
-                ))
-    }
-
-    private fun runXNodesWithYTxPerBlock(
+    protected fun runXNodesWithYTxPerBlock(
             nodesCount: Int,
             blocksCount: Int,
             txPerBlock: Int,
