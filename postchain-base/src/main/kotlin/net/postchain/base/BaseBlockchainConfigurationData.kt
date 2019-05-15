@@ -42,7 +42,7 @@ class BaseBlockchainConfigurationData(
         val dep = data["dependencies"]
         return if (dep != null) {
             try {
-                // Should contain a map of String -> ByteArr
+                // Should contain an array of String, ByteArr pairs
                 val gtvDepArray = dep!! as GtvArray
                 val depList = mutableListOf<BlockchainRelatedInfo>()
                 for (element in gtvDepArray.array) {

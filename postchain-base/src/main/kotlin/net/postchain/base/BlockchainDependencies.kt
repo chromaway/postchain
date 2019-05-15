@@ -55,7 +55,7 @@ data class HeightDependency(
 
 
 /**
- * Mapps a blockchain to it's latest block.
+ * Maps a blockchain to it's latest block.
  *
  * @property blockchainRelatedInfo
  * @property heightDependency is the height of the BC, (The idea is that we can be set this later or update the height of this object if needed)
@@ -119,7 +119,7 @@ class BlockchainDependencies(
     fun isDependingOnBlockchain(chainId: Long): Boolean = chaindIdMap.containsKey(chainId)
 
     /**
-     * Extracts a map ChainID -> blokchain height from the data.
+     * Extracts a map ChainID -> blockchain height from the data.
      * Note that this requires the data to be complete, or else we will explode.
      */
     fun extractChainIdToHeightMap(): Map<Long, Long> {
