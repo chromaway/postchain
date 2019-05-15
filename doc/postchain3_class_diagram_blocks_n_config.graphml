@@ -17,10 +17,10 @@
     <node id="n0">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry height="609.9969087998797" width="676.7970984368604" x="-1419.5532820946876" y="-1996.1983077779087"/>
+          <y:Geometry height="609.9969087998797" width="707.3998339207313" x="-1450.1560175785585" y="-1996.1983077779087"/>
           <y:Fill color="#CCFFFF" transparent="false"/>
           <y:BorderStyle color="#999999" raised="false" type="dashed" width="3.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="4.0" x="336.39854921843016" y="302.9984543999399">
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="4.0" x="351.6999169603657" y="302.9984543999399">
             <y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
@@ -1467,13 +1467,13 @@ signatures: List&lt;Signature&gt;</y:AttributeLabel>
       <data key="d4"/>
       <data key="d6">
         <y:UMLNoteNode>
-          <y:Geometry height="313.4831915074351" width="376.7561837697472" x="-1896.2692557496453" y="-1847.9414491316863"/>
+          <y:Geometry height="313.4831915074351" width="376.7561837697472" x="-1905.358822546783" y="-1847.9414491316863"/>
           <y:Fill hasColor="false" transparent="false"/>
           <y:BorderStyle hasColor="false" type="line" width="1.0"/>
-          <y:NodeLabel alignment="left" autoSizePolicy="content" borderDistance="6.0" fontFamily="Dialog" fontSize="44" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="311.3125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="529.615234375" x="-76.42952530262642" y="1.0853457537175473">= Interface
+          <y:NodeLabel alignment="left" autoSizePolicy="content" borderDistance="6.0" fontFamily="Dialog" fontSize="44" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="311.3125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="498.462890625" x="-60.853353427626416" y="1.0853457537175473">= Interface
 = Open Class
 = Normal Class
-= Data Class (=Record)
+= Data Class 
 = Shutdownable Class
 = Factory/Builder<y:LabelModel>
               <y:SmartNodeLabelModel distance="6.0"/>
@@ -1489,7 +1489,7 @@ signatures: List&lt;Signature&gt;</y:AttributeLabel>
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="49.9340565225441" width="158.7058571632797" x="-1772.1558854108737" y="-1363.0506475229529"/>
+          <y:Geometry height="49.9340565225441" width="158.7058571632797" x="-1787.2440924464115" y="-1287.39247985101"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="22.45263671875" x="68.12661022226484" y="3.0">Cli<y:LabelModel>
@@ -1510,7 +1510,7 @@ signatures: List&lt;Signature&gt;</y:AttributeLabel>
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="60.255965474329514" width="203.2190895178544" x="-1919.0806909620983" y="-1161.9086177727947"/>
+          <y:Geometry height="60.255965474329514" width="203.2190895178544" x="-1934.1688979976361" y="-1086.2504501008518"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="180.921875" x="11.1486072589272" y="3.0">CommandAddBlockchain<y:LabelModel>
@@ -1531,7 +1531,7 @@ signatures: List&lt;Signature&gt;</y:AttributeLabel>
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="84.0" width="203.2190895178544" x="-1919.0806909620985" y="-1283.1165910004088"/>
+          <y:Geometry height="84.0" width="203.2190895178544" x="-1934.1688979976363" y="-1207.4584233284659"/>
           <y:Fill color="#C0C0C0" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="75.83642578125" x="63.6913318683022" y="3.0">Command<y:LabelModel>
@@ -2098,6 +2098,24 @@ height: Long?</y:AttributeLabel>
             <y:MethodLabel/>
           </y:UML>
         </y:UMLClassNode>
+      </data>
+    </node>
+    <node id="n86">
+      <data key="d4"/>
+      <data key="d6">
+        <y:UMLNoteNode>
+          <y:Geometry height="36.32158024691353" width="218.0914628308227" x="-1440.0750117569878" y="-1629.7572806853216"/>
+          <y:Fill hasColor="false" transparent="false"/>
+          <y:BorderStyle hasColor="false" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="30" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="73.84375" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="209.3857421875" x="4.35286032166141" y="-18.761084876543237">Blockchain
+Dependency<y:LabelModel>
+              <y:SmartNodeLabelModel distance="4.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+        </y:UMLNoteNode>
       </data>
     </node>
     <edge id="e0" source="n11" target="n10">
@@ -2974,7 +2992,7 @@ height: Long?</y:AttributeLabel>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
-            <y:Point x="-1692.8029568292338" y="-1147.9391220101088"/>
+            <y:Point x="-1707.8911638647717" y="-1072.2809543381659"/>
           </y:Path>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
