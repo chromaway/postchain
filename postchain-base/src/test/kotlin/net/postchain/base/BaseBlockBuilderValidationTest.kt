@@ -2,10 +2,7 @@
 
 package net.postchain.base
 
-import net.postchain.base.data.BaseBlockBuilder
-import net.postchain.base.data.BaseBlockStore
-import net.postchain.base.data.BaseTransactionFactory
-import net.postchain.base.data.SQLDatabaseAccess
+import net.postchain.base.data.*
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.BlockEContext
 import net.postchain.core.EContext
@@ -35,7 +32,8 @@ class BaseBlockBuilderValidationTest {
     val sigMaker = cryptoSystem.buildSigMaker(pubKey(0), privKey(0))
 
     // Objects using mocks
-    val ctx = BaseEContext(mockedConn, 2L, 0, SQLDatabaseAccess())
+    val db = mock(DatabaseAccess::class.java)
+    val ctx = BaseEContext(mockedConn, 2L, 0, db)
     val bctx = BaseBlockEContext(ctx, 1, 10, mapOf())
     val bbb = BaseBlockBuilder(cryptoSystem, ctx, bbs, tf, subjects, sigMaker, listOf())
 
