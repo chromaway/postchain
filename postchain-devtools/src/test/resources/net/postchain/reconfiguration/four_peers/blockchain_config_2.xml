@@ -12,7 +12,7 @@
                 <string>net.postchain.base.BaseBlockBuildingStrategy</string>
             </entry>
             <entry key="maxblocktime"><int>1000</int></entry>
-            <entry key="blockdelay"><int>1000</int></entry>
+            <entry key="blockdelay"><int>100</int></entry>
         </dict>
     </entry>
     <entry key="configurationfactory">

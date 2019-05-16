@@ -22,8 +22,8 @@ class BaseBlockStoreTest {
     fun setup() {
         sut = BaseBlockStore()
         db = mock(DatabaseAccess::class.java)
-        sut.db = db
-        ctx = BaseEContext(mock(Connection::class.java), 2L, 0, SQLDatabaseAccess())
+        //sut.db = db
+        ctx = BaseEContext(mock(Connection::class.java), 2L, 0, db)
     }
 
     @Test

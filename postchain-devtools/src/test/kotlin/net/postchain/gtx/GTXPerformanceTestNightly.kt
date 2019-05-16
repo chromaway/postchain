@@ -114,9 +114,9 @@ class GTXPerformanceTestNightly : IntegrationTest() {
 
     @Test
     @Parameters(
-            "3, 100", "4, 100", "10, 100",
-            "4, 1000", "10, 1000"
-            //"4, 10", "10, 10", "16, 10"
+            "1, 100", "1, 1000"
+/*            "3, 100", "4, 100", "10, 100",
+            "4, 1000"*/
     )
     fun runXNodesWithYTxPerBlock(nodeCount: Int, txPerBlock: Int) {
         val blocksCount = 2

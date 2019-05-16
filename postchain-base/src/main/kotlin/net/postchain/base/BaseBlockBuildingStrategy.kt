@@ -9,7 +9,7 @@ class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
                                 val blockchainConfiguration: BlockchainConfiguration,
                                 blockQueries: BlockQueries,
                                 private val txQueue: TransactionQueue
-): BlockBuildingStrategy {
+) : BlockBuildingStrategy {
     private var lastBlockTime: Long
     private var lastTxTime = System.currentTimeMillis()
     private var lastTxSize = 0

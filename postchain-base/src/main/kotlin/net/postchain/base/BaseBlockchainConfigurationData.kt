@@ -17,7 +17,6 @@ class BaseBlockchainConfigurationData(
     val subjectID = partialContext.nodeRID!!
 
     init {
-
         context = BaseBlockchainContext(
                 partialContext.blockchainRID,
                 resolveNodeID(partialContext),

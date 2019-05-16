@@ -67,7 +67,8 @@ class BaseManagedBlockBuilder(
      */
     override fun maybeAppendTransaction(tx: Transaction): Exception? {
         TimeLog.startSum("BaseManagedBlockBuilder.maybeAppendTransaction().withSavepoint")
-        val exception = storage.withSavepoint(eContext) {
+
+        val action = {
             TimeLog.startSum("BaseManagedBlockBuilder.maybeAppendTransaction().insideSavepoint")
             try {
                 blockBuilder.appendTransaction(tx)
@@ -75,10 +76,20 @@ class BaseManagedBlockBuilder(
                 TimeLog.end("BaseManagedBlockBuilder.maybeAppendTransaction().insideSavepoint")
             }
         }
-        TimeLog.end("BaseManagedBlockBuilder.maybeAppendTransaction().withSavepoint")
-        if (exception != null) {
-            logger.info("Failed to append transaction ${tx.getRID().toHex()}", exception)
+
+        val exception = if (storage.isSavepointSupported()) {
+            storage.withSavepoint(eContext, action).also {
+                if (it != null) {
+                    logger.info("Failed to append transaction ${tx.getRID().toHex()}", it)
+                }
+            }
+
+        } else {
+            action()
+            null
         }
+
+        TimeLog.end("BaseManagedBlockBuilder.maybeAppendTransaction().withSavepoint")
         return exception
     }
 

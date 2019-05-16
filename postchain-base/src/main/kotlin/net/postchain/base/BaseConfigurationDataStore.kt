@@ -14,7 +14,7 @@ object BaseConfigurationDataStore : ConfigurationDataStore {
         return DatabaseAccess.of(context).getConfigurationData(context, height)
     }
 
-    override fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long {
-        return DatabaseAccess.of(context).addConfigurationData(context, height, data)
+    override fun addConfigurationData(context: EContext, height: Long, data: ByteArray) {
+        DatabaseAccess.of(context).addConfigurationData(context, height, data)
     }
 }
