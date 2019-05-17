@@ -3,8 +3,10 @@ package net.postchain.gtv
 import net.postchain.base.merkle.Hash
 import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.base.merkle.proof.MerkleHashSummary
+import net.postchain.base.merkle.proof.MerkleProofElement
 import net.postchain.gtv.merkle.GtvMerkleBasics
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
+import net.postchain.gtv.merkle.proof.merkleHashSummary
 import net.postchain.gtv.path.GtvPath
 import net.postchain.gtv.path.GtvPathFactory
 import net.postchain.gtv.path.GtvPathSet
@@ -73,24 +75,35 @@ fun Gtv.merkleHash(calculator: MerkleHashCalculator<Gtv>): Hash {
  * @return the merkle root hash summary
  */
 fun Gtv.merkleHashSummary(calculator: MerkleHashCalculator<Gtv>): MerkleHashSummary {
-    var foundInCache = false
-    val cachedSummary = calculator.memoization.findMerkleHash(this)
+    return when (this) {
+        is GtvVirtual -> {
+            // We have cached the proof element for this object inside the GTV Virtual
+            // and we cannot use the cache directly on the virtual GTV since it doesn't even have a hashCode() impl.
+            val proofTree: GtvMerkleProofTree = this.getGtvMerkleProofTree()
+            proofTree.merkleHashSummary(calculator)
+        }
+        else -> {
+            // For non virtual GTV we can use the cache.
+            var foundInCache = false
+            val cachedSummary = calculator.memoization.findMerkleHash(this)
 
-    val newSummary = if (cachedSummary != null) {
-        foundInCache = true
-        cachedSummary
-    } else {
-        // Need to calculate hash
-        val summaryFactory = GtvMerkleBasics.getGtvMerkleHashSummaryFactory()
-        summaryFactory.calculateMerkleRoot(this, calculator)
+            val newSummary = if (cachedSummary != null) {
+                foundInCache = true
+                cachedSummary
+            } else {
+                // Need to calculate hash
+                val summaryFactory = GtvMerkleBasics.getGtvMerkleHashSummaryFactory()
+                summaryFactory.calculateMerkleRoot(this, calculator)
+            }
+
+            // Update cache
+            if (!foundInCache) {
+                calculator.memoization.add(this, newSummary)
+            }
+
+            newSummary
+        }
     }
-
-    // Update cache
-    if (!foundInCache) {
-        calculator.memoization.add(this, newSummary)
-    }
-
-    return newSummary
 }
 
 /**

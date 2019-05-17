@@ -24,7 +24,7 @@ object GtvVirtualFactory: KLogging() {
     /**
      * Turns a proof tree into a virtual GTV.
      *
-     * Note: There is this strange corner case where the prof in the ENTIRE structure (i.e. the proof tree and the
+     * Note: There is this strange corner case where the proof in the ENTIRE structure (i.e. the proof tree and the
      * original source GTV object graph are the same). I have chosen not to handle trivial cases, the
      * result would be null anyway.
      *
@@ -72,11 +72,11 @@ object GtvVirtualFactory: KLogging() {
         return if (isRoot) {
             val tmpSet = handleArrLeftAndRight(arrHeadElement.left, arrHeadElement.right)
             if (logger.isDebugEnabled) { logger.debug("Building root array (found ${tmpSet.innerSet.size} elements).") }
-            tmpSet.buildGtvVirtualArray(arrHeadElement.size)
+            tmpSet.buildGtvVirtualArray(arrHeadElement, arrHeadElement.size)
         } else {
             val tmpSet = buildGtvVirtualArrayInner(arrHeadElement)
             if (logger.isDebugEnabled) { logger.debug("Building array (found ${tmpSet.innerSet.size} elements).") }
-            tmpSet.buildGtvVirtualArray(arrHeadElement.size)
+            tmpSet.buildGtvVirtualArray(arrHeadElement, arrHeadElement.size)
         }
     }
 
@@ -100,14 +100,14 @@ object GtvVirtualFactory: KLogging() {
             is ProofNodeGtvDictHead  -> {                                     // Valuable leaf (at the the beginning of a new dict-tree)
                 val index = getIndex(currentElement.pathElem!!)
                 val tmpMap = handleLDictLeftAndRight(currentElement.left, currentElement.right)
-                val dict = GtvVirtualDictionary(tmpMap, currentElement.size)
+                val dict = GtvVirtualDictionary(currentElement, tmpMap, currentElement.size)
                 if (logger.isDebugEnabled) { logger.debug("Put virtual dict (size: ${dict.getSize()} ) in array at pos $index.") }
                 ArrayIndexAndGtvList(index, dict)
             }
             is ProofNodeGtvArrayHead -> {                                     // Valuable leaf (at the the beginning of a new array-tree)
                 val index = getIndex(currentElement.pathElem!!)
                 val tmpSet = handleArrLeftAndRight(currentElement.left, currentElement.right)
-                val arr = tmpSet.buildGtvVirtualArray(currentElement.size)
+                val arr = tmpSet.buildGtvVirtualArray(currentElement, currentElement.size)
                 if (logger.isDebugEnabled) { logger.debug("Put virtual array (size: ${arr.getSize()} ) in array at pos $index..") }
                 ArrayIndexAndGtvList(index, arr)
             }
@@ -119,49 +119,6 @@ object GtvVirtualFactory: KLogging() {
             }
         }
     }
-
-    /**
-     * TODO:POS-8 Delete this if not used after 2019-06-01
-     *
-     * If we are at a:
-     * 1. leaf we return a set with one element in it.
-     * 2. node we calculate left and right side, and smash the results together
-     *
-     *
-     *
-    private fun buildGtvVirtualArrayInner(currentElement: MerkleProofElement): ArrayIndexAndGtvList {
-        return when (currentElement) {
-            is ProofHashedLeaf -> ArrayIndexAndGtvList() // We are not interested in these, just return empty set.
-            is ProofValueLeaf<*> -> ArrayIndexAndGtvList(currentElement.content as Gtv) // We are at a leaf that holds a real value [Gtv]. We should preserve this value
-            is ProofNodeGtvDictHead -> {
-                // We are at a leaf, that happens to be the beginning of a new tree
-                val virtualDict = buildGtvVirtualDictionary(currentElement)
-                ArrayIndexAndGtvList(virtualDict)
-            }
-            is ProofNodeGtvArrayHead -> {
-                // We are at a leaf, that happens to be the beginning of a new tree
-                val virtualArr = buildGtvVirtualArray(currentElement)
-                ArrayIndexAndGtvList(virtualArr)
-            }
-            is ProofNode -> {
-                // This is just an internal node and should be removed, only thing to remember here is to keep track
-                // of the position.
-                val leftSet = buildGtvVirtualArrayInner(currentElement.left)
-                leftSet.updateAllHeights()
-
-                val rightSet = buildGtvVirtualArrayInner(currentElement.right)
-                rightSet.updateAllIndexes()
-
-                leftSet.addAll(rightSet)
-                leftSet
-            }
-            else -> {
-                throw IllegalStateException("Should have handled this type: $currentElement")
-            }
-        }
-    }
-
-     */
 
     // --------------------- Dictionary ----------------------
 
@@ -178,11 +135,11 @@ object GtvVirtualFactory: KLogging() {
         return if (isRoot) {
             val tmpMap = handleLDictLeftAndRight(dictHeadElement.left, dictHeadElement.right)
             if (logger.isDebugEnabled) { logger.debug("Building root dict (found ${tmpMap.keys.size} elements).") }
-            GtvVirtualDictionary(tmpMap, dictHeadElement.size)
+            GtvVirtualDictionary(dictHeadElement, tmpMap, dictHeadElement.size)
         } else {
             val tmpMap = buildGtvVirtualDictionaryInner(dictHeadElement)
             if (logger.isDebugEnabled) { logger.debug("Building dict (found ${tmpMap.keys.size} elements).") }
-            GtvVirtualDictionary(tmpMap, dictHeadElement.size)
+            GtvVirtualDictionary(dictHeadElement, tmpMap, dictHeadElement.size)
         }
     }
 
@@ -204,14 +161,14 @@ object GtvVirtualFactory: KLogging() {
             is ProofNodeGtvDictHead  -> {                                                  // Valuable leaf (at the the beginning of a new dict-tree)
                 val key = (currentElement.pathElem as DictGtvPathElement).key
                 val dictMap = handleLDictLeftAndRight(currentElement.left, currentElement.right)
-                val dict = GtvVirtualDictionary(dictMap, currentElement.size)
+                val dict = GtvVirtualDictionary(currentElement, dictMap, currentElement.size)
                 if (logger.isDebugEnabled) { logger.debug("Put virtual dict (size: ${dict.getSize()} ) in array at key: $key.") }
                 mutableMapOf(Pair(key, dict))
             }
             is ProofNodeGtvArrayHead -> {                                                  // Valuable leaf (at the the beginning of a new array-tree)
                 val key = (currentElement.pathElem as DictGtvPathElement).key
                 val tmpSet = handleArrLeftAndRight(currentElement.left, currentElement.right)
-                val arr = tmpSet.buildGtvVirtualArray(currentElement.size)
+                val arr = tmpSet.buildGtvVirtualArray(currentElement, currentElement.size)
                 if (logger.isDebugEnabled) { logger.debug("Put virtual array (size: ${arr.getSize()} ) in array at key: $key.") }
                 mutableMapOf(Pair(key, arr))
             }

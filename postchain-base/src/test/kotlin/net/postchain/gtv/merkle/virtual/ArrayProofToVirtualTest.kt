@@ -1,10 +1,12 @@
 package net.postchain.gtv.merkle.virtual
 
+import net.postchain.base.merkle.TreeHelper
 import net.postchain.gtv.generateProof
 import net.postchain.gtv.merkle.ArrayToGtvBinaryTreeHelper
 import net.postchain.gtv.merkle.MerkleHashCalculatorDummy
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 import net.postchain.gtv.merkle.proof.toGtvVirtual
+import net.postchain.gtv.merkleHash
 import net.postchain.gtv.path.GtvPath
 import net.postchain.gtv.path.GtvPathFactory
 import net.postchain.gtv.path.GtvPathSet
@@ -27,6 +29,8 @@ class ArrayProofToVirtualTest {
         val merkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
 
         val virtualGtv = merkleProofTree.toGtvVirtual()
+        val merkleRoot = virtualGtv.merkleHash(calculator)
+        assertEquals(ArrayToGtvBinaryTreeHelper.expected1ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleRoot))
 
         val orgGtv = orgGtvArr[0]
         val gtvFromVirt =virtualGtv[0]
@@ -47,6 +51,8 @@ class ArrayProofToVirtualTest {
         val merkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
 
         val virtualGtv = merkleProofTree.toGtvVirtual()
+        val merkleRoot = virtualGtv.merkleHash(calculator)
+        assertEquals(ArrayToGtvBinaryTreeHelper.expected4ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleRoot))
 
         val orgGtv = orgGtvArr[0]
         val gtvFromVirt =virtualGtv[0]
@@ -69,6 +75,8 @@ class ArrayProofToVirtualTest {
         val merkleProofTree: GtvMerkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
 
         val virtualGtv = merkleProofTree.toGtvVirtual()
+        val merkleRoot = virtualGtv.merkleHash(calculator)
+        assertEquals(ArrayToGtvBinaryTreeHelper.expected7ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleRoot))
 
         val orgGtv = orgGtvArr[3]
         val gtvFromVirt =virtualGtv[3]
@@ -104,6 +112,8 @@ class ArrayProofToVirtualTest {
         val merkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
 
         val virtualGtv = merkleProofTree.toGtvVirtual()
+        val merkleRoot = virtualGtv.merkleHash(calculator)
+        assertEquals(ArrayToGtvBinaryTreeHelper.expected7ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleRoot))
 
         val orgGtv = orgGtvArr[3]
         val gtvFromVirt =virtualGtv[3]
@@ -172,6 +182,8 @@ class ArrayProofToVirtualTest {
         val merkleProofTree: GtvMerkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
 
         val virtualGtv = merkleProofTree.toGtvVirtual()
+        val merkleRoot = virtualGtv.merkleHash(calculator)
+        assertEquals(ArrayToGtvBinaryTreeHelper.expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleRoot))
 
         val orgGtv = orgGtvArr[3][1]
         val gtvFromVirt =virtualGtv[3][1]
@@ -207,6 +219,8 @@ class ArrayProofToVirtualTest {
         val merkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
 
         val virtualGtv = merkleProofTree.toGtvVirtual()
+        val merkleRoot = virtualGtv.merkleHash(calculator)
+        assertEquals(ArrayToGtvBinaryTreeHelper.expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleRoot))
 
         val orgGtv = orgGtvArr[2]
         val gtvFromVirt =virtualGtv[2]
@@ -241,6 +255,8 @@ class ArrayProofToVirtualTest {
         val merkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
 
         val virtualGtv = merkleProofTree.toGtvVirtual()
+        val merkleRoot = virtualGtv.merkleHash(calculator)
+        assertEquals(ArrayToGtvBinaryTreeHelper.expectet7and3ElementArrayMerkleRoot, TreeHelper.convertToHex(merkleRoot))
 
         val orgGtv = orgGtvArr[3]
         val gtvFromVirt =virtualGtv[3]

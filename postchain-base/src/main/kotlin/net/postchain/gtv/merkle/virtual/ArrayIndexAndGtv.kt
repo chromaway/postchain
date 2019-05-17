@@ -1,5 +1,6 @@
 package net.postchain.gtv.merkle.virtual
 
+import net.postchain.base.merkle.proof.MerkleProofElement
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvVirtualArray
 
@@ -44,29 +45,12 @@ data class ArrayIndexAndGtvList(val innerSet: MutableList<ArrayIndexAndGtv>) {
     /**
      * Turns the elements into a virtual array (put "null" in all empty positions)
      */
-    fun buildGtvVirtualArray(arrSize: Int): GtvVirtualArray {
+    fun buildGtvVirtualArray(proofElement: MerkleProofElement, arrSize: Int): GtvVirtualArray {
         val retArr: Array<Gtv?> = Array(arrSize){null}
         for (element in innerSet) {
             retArr[element.index] = element.value
         }
-        return GtvVirtualArray(retArr)
+        return GtvVirtualArray(proofElement, retArr)
     }
-
-    /**
-     * TODO:POS-8 Delete this if not used after 2019-06-01
-     * Every time we move up in depth (from the right side) we need to increase the index value.
-    fun updateAllIndexes() {
-        for (element in innerSet) {
-            element.updateIndex()
-        }
-    }
-
-    fun updateAllHeights() {
-        for (element in innerSet) {
-            element.updateHeightOnly()
-        }
-    }
-     */
-
 
 }

@@ -1,5 +1,6 @@
 package net.postchain.gtv
 
+import net.postchain.base.merkle.proof.MerkleProofElement
 import net.postchain.core.UserMistake
 import java.util.*
 
@@ -9,10 +10,11 @@ import java.util.*
  * Note: If the user tries to use the virtual object like a real [Gtv] it will explode (Exception).
  * This is intentional, b/c using a virtual object for something other than data access could cause bugs.
  *
+ * @property proofElement is cached here (see super class for desc)
  * @property array is where we store sub elements. This wil be mostly "null", and if the user asks for a "null"
  *           we will explode (since we don't know what this value would be in the original [GtvArray] ).
  */
-data class GtvVirtualArray(val array: Array<out Gtv?>) : GtvVirtual() {
+data class GtvVirtualArray(val proofElement: MerkleProofElement, val array: Array<out Gtv?>) : GtvVirtual(proofElement) {
 
     override val type = GtvType.ARRAY // The virtual Array pretends to be a normal [GtvArray].
 
