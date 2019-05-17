@@ -31,6 +31,8 @@ data class GtvVirtualArray(val proofElement: MerkleProofElement, val array: Arra
         return array.size
     }
 
+    fun isKeyPresent(index: Int): Boolean = array[index] != null
+
     // ----------- These methods will explode -----------
 
     override fun asArray(): Array<out Gtv> {

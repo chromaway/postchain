@@ -39,6 +39,8 @@ data class GtvVirtualDictionary(val proofElement: MerkleProofElement ,val dict: 
         }
     }
 
+    fun isKeyPresent(key: String): Boolean = dict[key] != null
+
     // ----------- These methods will explode -----------
 
     override fun asDict(): Map<String, Gtv> {

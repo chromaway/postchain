@@ -1,6 +1,7 @@
 package net.postchain.gtv.merkle.virtual
 
 import net.postchain.base.merkle.TreeHelper
+import net.postchain.gtv.GtvVirtualArray
 import net.postchain.gtv.generateProof
 import net.postchain.gtv.merkle.ArrayToGtvBinaryTreeHelper
 import net.postchain.gtv.merkle.MerkleHashCalculatorDummy
@@ -12,6 +13,8 @@ import net.postchain.gtv.path.GtvPathFactory
 import net.postchain.gtv.path.GtvPathSet
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class ArrayProofToVirtualTest {
 
@@ -35,6 +38,8 @@ class ArrayProofToVirtualTest {
         val orgGtv = orgGtvArr[0]
         val gtvFromVirt =virtualGtv[0]
         assertEquals(orgGtv, gtvFromVirt)
+        val virtArr = virtualGtv as GtvVirtualArray
+        assertTrue(virtArr.isKeyPresent(0))
     }
 
     // -------------- Size 4 ------------
@@ -58,6 +63,9 @@ class ArrayProofToVirtualTest {
         val gtvFromVirt =virtualGtv[0]
         assertEquals(orgGtv, gtvFromVirt)
 
+        val virtArr = virtualGtv as GtvVirtualArray
+        assertTrue(virtArr.isKeyPresent(0))
+        assertFalse(virtArr.isKeyPresent(1))
     }
 
     // -------------- Size 7 ------------
