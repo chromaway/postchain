@@ -232,6 +232,13 @@
                 <module>postchain-hana</module>
             </modules>
         </profile>
+
+        <profile>
+            <id>client-api</id>
+            <modules>
+                <module>postchain-client</module>
+            </modules>
+        </profile>
     </profiles>
 
 </project>

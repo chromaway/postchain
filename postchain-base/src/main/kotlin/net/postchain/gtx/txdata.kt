@@ -147,7 +147,7 @@ class GTXDataBuilder(val blockchainRID: ByteArray,
                      val crypto: CryptoSystem,
                      val signatures: Array<ByteArray>,
                      val operations: MutableList<OpData>,
-                     private var finished: Boolean) {
+                     var finished: Boolean) {
 
     val calculator = GtvMerkleHashCalculator(crypto)
 
