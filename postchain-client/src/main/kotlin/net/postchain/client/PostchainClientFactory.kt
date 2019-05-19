@@ -1,3 +1,5 @@
+package net.postchain.client
+
 import net.postchain.client.DefaultSigner
 import net.postchain.client.PostchainClient
 import net.postchain.client.PostchainNodeResolver
