@@ -94,11 +94,11 @@ class GtvMLEncodeArraysTest {
                                 <string>2</string>
                             </array>
                         </entry>
-                        <entry key="str">
-                            <string>foo</string>
-                        </entry>
                         <entry key="int">
                             <int>42</int>
+                        </entry>
+                        <entry key="str">
+                            <string>foo</string>
                         </entry>
                     </dict>
                 </array>

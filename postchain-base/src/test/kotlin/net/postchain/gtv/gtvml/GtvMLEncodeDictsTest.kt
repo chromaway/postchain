@@ -28,11 +28,11 @@ class GtvMLEncodeDictsTest {
         val actual = GtvMLEncoder.encodeXMLGtv(gtv)
         val expected = expected("""
             <dict>
-                <entry key="hello">
-                    <string>world</string>
-                </entry>
                 <entry key="123">
                     <int>123</int>
+                </entry>
+                <entry key="hello">
+                    <string>world</string>
                 </entry>
             </dict>
         """.trimIndent())
@@ -104,11 +104,11 @@ class GtvMLEncodeDictsTest {
                                     <string>2</string>
                                 </array>
                             </entry>
-                            <entry key="str">
-                                <string>foo</string>
-                            </entry>
                             <entry key="int">
                                 <int>42</int>
+                            </entry>
+                            <entry key="str">
+                                <string>foo</string>
                             </entry>
                         </dict>
                     </array>
