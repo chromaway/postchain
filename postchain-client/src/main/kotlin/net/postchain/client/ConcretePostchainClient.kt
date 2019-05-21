@@ -52,20 +52,22 @@ class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchai
 
         fun submitTransaction() : CloseableHttpResponse {
             val httpPost = HttpPost("${serverUrl}/tx/${blockchainRID}")
-            httpPost.entity = StringEntity(String(b.serialize()))
-            httpPost.setHeader("Accept", "application/json")
-            httpPost.setHeader("Content-type", "application/json")
+            with (httpPost) {
+                entity = StringEntity(String(b.serialize()))
+                setHeader("Accept", "application/json")
+                setHeader("Content-type", "application/json")
+            }
             return httpClient.execute(httpPost)
         }
 
         when (confirmationLevel) {
-            
+
             ConfirmationLevel.NO_WAIT -> {
                 val response = submitTransaction()
                 if (response.statusLine.statusCode == 200) {
-                    return UnknownTransaction()
+                    return TransactionResultImpl(TransactionStatus.UNKNOWN)
                 } else {
-                    return RejectedTransaction()
+                    return TransactionResultImpl(TransactionStatus.REJECTED)
                 }
             }
 
@@ -82,11 +84,11 @@ class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchai
                         val status = gson.fromJson(resp, ApiStatus::class.java).status
                         when (status.toLowerCase()) {
                             "confirmed" -> {
-                                return ConfirmedTransaction()
+                                return TransactionResultImpl(TransactionStatus.CONFIRMED)
                             }
 
                             "rejected" -> {
-                                return RejectedTransaction()
+                                return TransactionResultImpl(TransactionStatus.REJECTED)
                             }
 
                             else -> {
@@ -98,14 +100,14 @@ class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchai
             }
 
             else -> {
-                return RejectedTransaction()
+                return TransactionResultImpl(TransactionStatus.REJECTED)
             }
         }
     }
 
-    fun parseResponse(content: InputStream) : String {
+    private fun parseResponse(content: InputStream) : String {
         val bufferReader = BufferedReader(InputStreamReader(content))
-        val ret : StringBuffer = StringBuffer()
+        val ret = StringBuffer()
         var line : String?
         line = bufferReader.readLine()
         while (line != null) {
