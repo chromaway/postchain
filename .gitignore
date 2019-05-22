@@ -6,4 +6,6 @@
 target
 .DS_Store
 */*.pid
-*/start.sh
+postchain-base/start.sh
+*.log
+*.log.lck

@@ -3,13 +3,12 @@
 package net.postchain.base
 
 import net.postchain.core.*
-import net.postchain.gtv.GtvDictionary
 
 class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
                                 val blockchainConfiguration: BlockchainConfiguration,
                                 blockQueries: BlockQueries,
                                 private val txQueue: TransactionQueue
-): BlockBuildingStrategy {
+) : BlockBuildingStrategy {
     private var lastBlockTime: Long
     private var lastTxTime = System.currentTimeMillis()
     private var lastTxSize = 0
@@ -23,7 +22,7 @@ class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
         lastBlockTime = if (height == -1L) {
             System.currentTimeMillis()
         } else {
-            val blockRID = blockQueries.getBlockRids(height).get()[0]
+            val blockRID = blockQueries.getBlockRids(height).get()!!
             (blockQueries.getBlockHeader(blockRID).get() as BaseBlockHeader).timestamp
         }
     }
@@ -45,6 +44,11 @@ class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
         }
         val transactionQueueSize = txQueue.getTransactionQueueSize()
         if (transactionQueueSize > 0) {
+            if (transactionQueueSize >= maxBlockTransactions) {
+                lastTxSize = 0
+                lastTxTime = System.currentTimeMillis()
+                return true
+            }
             if (transactionQueueSize == lastTxSize && lastTxTime + blockDelay < System.currentTimeMillis()) {
                 lastTxSize = 0
                 lastTxTime = System.currentTimeMillis()

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<dict>
+    <entry key="blockstrategy">
+        <dict>
+            <entry key="name">
+                <string>net.postchain.base.BaseBlockBuildingStrategy</string>
+            </entry>
+            <entry key="maxblocktime">
+                <int>15000</int>
+            </entry>
+            <entry key="blockdelay">
+                <int>750</int>
+            </entry>
+            <entry key="maxblocktransactions">
+                <int>500</int>
+            </entry>
+        </dict>
+    </entry>
+    <entry key="configurationfactory">
+        <string>net.postchain.gtx.GTXBlockchainConfigurationFactory</string>
+    </entry>
+    <entry key="signers">
+        <array>
+            <bytea>0350FE40766BC0CE8D08B3F5B810E49A8352FDD458606BD5FAFE5ACDCDC8FF3F57</bytea>
+        </array>
+    </entry>
+    <entry key="gtx">
+        <dict>
+            <entry key="modules">
+                <array>
+                    <string>net.postchain.gtx.StandardOpsGTXModule</string>
+                </array>
+            </entry>
+            <entry key="rell">
+                <dict>
+                    <entry key="mainFile">
+                        <string>main.rell</string>
+                    </entry>
+                    <entry key="sources_v0.8">
+                        <dict>
+                            <entry key="main.rell">
+                                <string>
+class city { key name; }
+
+operation add_city (name) { create city (name); }
+
+query get_cities () { return city @* {}; }
+</string>
+                            </entry>
+                        </dict>
+                    </entry>
+                </dict>
+            </entry>
+        </dict>
+    </entry>
+</dict>

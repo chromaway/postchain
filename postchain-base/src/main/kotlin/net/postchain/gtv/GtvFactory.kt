@@ -51,6 +51,9 @@ object GtvFactory {
         return GtvDictionary(dict)
     }
 
+    fun decodeGtv(b: ByteArray): Gtv {
+        return GtvDecoder.decodeGtv(b)
+    }
 
     fun makeDictPair(name: String, value: RawGtv): DictPair {
         val dp = DictPair()

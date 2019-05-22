@@ -2,6 +2,7 @@
 
 package net.postchain.gtx
 
+import mu.KLogging
 import net.postchain.base.BaseBlockQueries
 import net.postchain.base.BaseBlockchainConfigurationData
 import net.postchain.base.Storage
@@ -14,12 +15,15 @@ open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationDat
     : BaseBlockchainConfiguration(configData) {
     val txFactory = GTXTransactionFactory(blockchainRID, module, cryptoSystem)
 
+    companion object : KLogging()
+
     override fun getTransactionFactory(): TransactionFactory {
         return txFactory
     }
 
     override fun initializeDB(ctx: EContext) {
         super.initializeDB(ctx)
+        logger.info("Running initialize DB of class GTXBlockchainConfiguration")
         GTXSchemaManager.initializeDB(ctx)
         module.initializeDB(ctx)
     }
@@ -37,13 +41,21 @@ open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationDat
                     gtvToJSON(queryResult, gson)
                 }
             }
+
+            override fun query(name: String, args: Gtv): Promise<Gtv, Exception> {
+                return runOp {
+                    module.query(it, name, args)
+                }
+            }
+
         }
     }
 }
 
 open class GTXBlockchainConfigurationFactory : BlockchainConfigurationFactory {
     override fun makeBlockchainConfiguration(configurationData: Any): BlockchainConfiguration {
-        return GTXBlockchainConfiguration(configurationData as BaseBlockchainConfigurationData,
+        return GTXBlockchainConfiguration(
+                configurationData as BaseBlockchainConfigurationData,
                 createGtxModule(configurationData.context.blockchainRID, configurationData.data))
     }
 

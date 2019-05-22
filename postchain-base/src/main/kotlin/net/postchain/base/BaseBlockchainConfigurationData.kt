@@ -1,27 +1,21 @@
 package net.postchain.base
 
 import net.postchain.common.hexStringToByteArray
-import net.postchain.core.BlockchainContext
-import net.postchain.core.NODE_ID_AUTO
-import net.postchain.core.NODE_ID_READ_ONLY
-import net.postchain.gtv.Gtv
-import net.postchain.gtv.GtvArray
-import net.postchain.gtv.GtvDictionary
+import net.postchain.core.*
+import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
 import org.apache.commons.configuration2.Configuration
 
 class BaseBlockchainConfigurationData(
         val data: GtvDictionary,
         partialContext: BlockchainContext,
-        val blockSigner: Signer
+        val blockSigMaker: SigMaker
 ) {
 
     val context: BlockchainContext
-    val subjectID: ByteArray
+    val subjectID = partialContext.nodeRID!!
 
     init {
-        subjectID = partialContext.nodeRID!!
-
         context = BaseBlockchainContext(
                 partialContext.blockchainRID,
                 resolveNodeID(partialContext),
@@ -42,7 +36,36 @@ class BaseBlockchainConfigurationData(
         return data["blockstrategy"]
     }
 
+    fun getDependenciesAsList(): List<BlockchainRelatedInfo> {
+        val dep = data["dependencies"]
+        return if (dep != null) {
+            try {
+                // Should contain an array of String, ByteArr pairs
+                val gtvDepArray = dep!! as GtvArray
+                val depList = mutableListOf<BlockchainRelatedInfo>()
+                for (element in gtvDepArray.array) {
+                    val elemArr = element as GtvArray
+                    val nickname = elemArr[0] as GtvString
+                    val blockchainRid = elemArr[1] as GtvByteArray
+                    depList.add(
+                            BlockchainRelatedInfo(blockchainRid.bytearray, nickname.string, null)
+                    )
+
+                }
+                depList.toList()
+            } catch (e: Exception) {
+                throw BadDataMistake(BadDataType.BAD_CONFIGURATION,
+                        "Dependencies must be array of array and have two parts, one string (description) and one bytea (blokchain RID)", e)
+            }
+        } else {
+            // It is allowed to have no dependencies
+            listOf<BlockchainRelatedInfo>()
+        }
+    }
+
     companion object {
+
+        @Deprecated("Deprecated in v2.4.4. Will be deleted in v3.0")
         fun readFromCommonsConfiguration(config: Configuration, chainId: Long, blockchainRID: ByteArray, nodeID: Int):
                 BaseBlockchainConfigurationData {
 
@@ -50,14 +73,15 @@ class BaseBlockchainConfigurationData(
             val cryptoSystem = SECP256K1CryptoSystem()
             val privKey = gtxConfig["blocksigningprivkey"]!!.asByteArray()
             val pubKey = secp256k1_derivePubKey(privKey)
-            val signer = cryptoSystem.makeSigner(pubKey, privKey) // TODO: maybe take it from somewhere?
+            val sigMaker = cryptoSystem.buildSigMaker(pubKey, privKey) // TODO: maybe take it from somewhere?
 
             return BaseBlockchainConfigurationData(
                     gtxConfig,
                     BaseBlockchainContext(blockchainRID, nodeID, chainId, pubKey),
-                    signer)
+                    sigMaker)
         }
 
+        @Deprecated("Deprecated in v2.4.4. Will be deleted in v3.0")
         private fun convertGTXConfigToGtv(config: Configuration): Gtv {
             val properties: MutableList<Pair<String, Gtv>> = mutableListOf(
                     "modules" to gtv(
@@ -96,6 +120,7 @@ class BaseBlockchainConfigurationData(
             return gtv(*properties.toTypedArray())
         }
 
+        @Deprecated("Deprecated in v2.4.4. Will be deleted in v3.0")
         private fun convertConfigToGtv(config: Configuration): Gtv {
 
             fun blockStrategy(config: Configuration): Gtv {

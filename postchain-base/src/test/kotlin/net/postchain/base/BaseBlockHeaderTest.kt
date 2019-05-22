@@ -2,9 +2,10 @@
 
 package net.postchain.base
 
+import net.postchain.base.merkle.Hash
 import net.postchain.core.BlockHeader
 import net.postchain.core.InitialBlockData
-import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.*
 import org.junit.Test
 
 class BaseBlockHeaderTest {
@@ -31,10 +32,38 @@ class BaseBlockHeaderTest {
         assertArrayEquals(prevBlockRid, decodedHeader0.prevBlockRID)
     }
 
+    @Test
+    fun seeIfAllDependenciesArePresent() {
+        val headerRaw = createHeader(blockchainRID,2L, 0, prevBlockRID0, 0)
+
+        val decodedHeader = BaseBlockHeader(headerRaw.rawData, cryptoSystem)
+
+        assertTrue(
+                decodedHeader.checkIfAllBlockchainDependenciesArePresent(listOf(
+                BlockchainRelatedInfo( ByteArray(32, {1}), "hello", 1L),
+                BlockchainRelatedInfo( ByteArray(32, {2}), "World", 2L)
+                ))
+        )
+        assertFalse(
+                decodedHeader.checkIfAllBlockchainDependenciesArePresent(listOf(
+                BlockchainRelatedInfo( ByteArray(32, {1}), "hello", 1L),
+                BlockchainRelatedInfo( ByteArray(32, {2}), "cruel", 2L),
+                BlockchainRelatedInfo( ByteArray(32, {3}), "World", 3L)
+                ))
+        )
+    }
+
     private fun createHeader(blockchainRid: ByteArray, blockIID: Long, chainId: Long, prevBlockRid: ByteArray, height: Long): BlockHeader {
         val rootHash = ByteArray(32, {0})
         val timestamp = 10000L + height
-        val blockData = InitialBlockData(blockchainRid, blockIID, chainId, prevBlockRid, height, timestamp)
+        val dependencies = createBlockchainDependencies()
+        val blockData = InitialBlockData(blockchainRid, blockIID, chainId, prevBlockRid, height, timestamp, dependencies)
         return BaseBlockHeader.make(SECP256K1CryptoSystem(), blockData, rootHash, timestamp)
+    }
+
+    private fun createBlockchainDependencies(): Array<Hash?>? {
+        val dummyHash1 = ByteArray(32, {1})
+        val dummyHash2 = ByteArray(32, {2})
+        return arrayOf(dummyHash1, dummyHash2)
     }
 }

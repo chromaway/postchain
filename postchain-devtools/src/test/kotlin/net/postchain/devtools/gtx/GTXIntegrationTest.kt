@@ -25,7 +25,7 @@ class GTXIntegrationTest : IntegrationTest() {
         val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(0)), myCS)
         b.addOperation("nop", arrayOf(gtv(42)))
         b.finish()
-        b.sign(myCS.makeSigner(pubKey(0), privKey(0)))
+        b.sign(myCS.buildSigMaker(pubKey(0), privKey(0)))
         return b.serialize()
     }
 
@@ -33,7 +33,7 @@ class GTXIntegrationTest : IntegrationTest() {
         val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(0)), myCS)
         b.addOperation("gtx_test", arrayOf(gtv(id), gtv(value)))
         b.finish()
-        b.sign(myCS.makeSigner(pubKey(0), privKey(0)))
+        b.sign(myCS.buildSigMaker(pubKey(0), privKey(0)))
         return b.serialize()
     }
 
@@ -44,7 +44,7 @@ class GTXIntegrationTest : IntegrationTest() {
                 if (to != null) gtv(to) else GtvNull
         ))
         b.finish()
-        b.sign(myCS.makeSigner(pubKey(0), privKey(0)))
+        b.sign(myCS.buildSigMaker(pubKey(0), privKey(0)))
         return b.serialize()
     }
 
@@ -54,7 +54,7 @@ class GTXIntegrationTest : IntegrationTest() {
 
         fun enqueueTx(data: ByteArray): Transaction? {
             try {
-                val tx = node.getBlockchainInstance().blockchainConfiguration.getTransactionFactory().decodeTransaction(data)
+                val tx = node.getBlockchainInstance().getEngine().getConfiguration().getTransactionFactory().decodeTransaction(data)
                 node.getBlockchainInstance().getEngine().getTransactionQueue().enqueue(tx)
                 return tx
             } catch (e: Exception) {

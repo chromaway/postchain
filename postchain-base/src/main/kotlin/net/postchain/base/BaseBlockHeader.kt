@@ -4,9 +4,17 @@ package net.postchain.base
 
 import net.postchain.base.gtv.BlockHeaderData
 import net.postchain.base.gtv.BlockHeaderDataFactory
+import net.postchain.base.merkle.Hash
+import net.postchain.common.toHex
 import net.postchain.core.BlockHeader
+import net.postchain.core.ByteArrayKey
 import net.postchain.core.InitialBlockData
+import net.postchain.core.UserMistake
 import net.postchain.gtv.GtvEncoder
+import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtv.generateProof
+import net.postchain.gtv.merkle.GtvMerkleHashCalculator
+import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 
 /**
  * BaseBlockHeader implements elements and functionality that are necessary to describe and operate on a block header
@@ -19,6 +27,7 @@ import net.postchain.gtv.GtvEncoder
 class BaseBlockHeader(override val rawData: ByteArray, private val cryptoSystem: CryptoSystem) : BlockHeader {
     override val prevBlockRID: ByteArray
     override val blockRID: ByteArray
+    val blockHeightDependencyArray: Array<Hash?>
     val timestamp: Long get() = blockHeaderRec.getTimestamp()
     val blockHeaderRec: BlockHeaderData
 
@@ -26,6 +35,16 @@ class BaseBlockHeader(override val rawData: ByteArray, private val cryptoSystem:
         blockHeaderRec = BlockHeaderDataFactory.buildFromBinary(rawData)
         prevBlockRID = blockHeaderRec.getPreviousBlockRid()
         blockRID = cryptoSystem.digest(rawData)
+        blockHeightDependencyArray = blockHeaderRec.getBlockHeightDependencyArray()
+    }
+
+    /**
+     * @param depMap contains the Chain IDs we depend on
+     * @return true if there are the same number of elements in the block header as in the configuration
+     *          (it's lame, but it's the best we can do, since we allow "null")
+     */
+    fun checkIfAllBlockchainDependenciesArePresent(depRequired: List<BlockchainRelatedInfo>): Boolean {
+        return depRequired.size == blockHeightDependencyArray.size
     }
 
     companion object Factory {
@@ -47,14 +66,21 @@ class BaseBlockHeader(override val rawData: ByteArray, private val cryptoSystem:
     }
 
     /**
-     * Return a Merkle path of a hash in a Merkle tree
+     * Return a Merkle proof tree of a hash in a Merkle tree
      *
      * @param txHash Target hash for which the Merkle path is wanted
      * @param txHashes All hashes are the leaves part of this Merkle tree
-     * @return The Merkle path for [txHash]
+     * @return The Merkle proof tree for [txHash]
      */
-    fun merklePath(txHash: ByteArray, txHashes: Array<ByteArray>): MerklePath {
-        return merklePath(cryptoSystem, txHashes, txHash)
+    fun merklePath(txHash: ByteArrayKey, txHashes: Array<ByteArrayKey>): GtvMerkleProofTree {
+        //println("looking for tx hash: ${txHash.toHex()} in array where first is: ${txHashes[0].toHex()}")
+        val positionOfOurTxToProve = txHashes.indexOf(txHash) //txHash.positionInArray(txHashes)
+        if (positionOfOurTxToProve < 0) {
+            throw UserMistake("We cannot prove this transaction (hash: ${txHash.byteArray.toHex()}), because it is not in the block")
+        }
+        val gtvArray = gtv(txHashes.map { gtv(it.byteArray)})
+        val calculator = GtvMerkleHashCalculator(cryptoSystem)
+        return gtvArray.generateProof(listOf(positionOfOurTxToProve), calculator)
     }
 
     /**

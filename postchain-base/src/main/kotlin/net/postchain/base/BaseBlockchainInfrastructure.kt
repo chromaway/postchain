@@ -1,30 +1,33 @@
 package net.postchain.base
 
+import mu.KLogging
 import net.postchain.StorageBuilder
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.base.data.BaseTransactionQueue
-import net.postchain.common.hexStringToByteArray
+import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
-import net.postchain.gtv.GtvDecoder
 import net.postchain.gtv.GtvDictionary
-import org.apache.commons.configuration2.Configuration
+import net.postchain.gtv.GtvFactory
 
 class BaseBlockchainInfrastructure(
-        val config: Configuration,
+        private val nodeConfigProvider: NodeConfigurationProvider,
         val synchronizationInfrastructure: SynchronizationInfrastructure,
         val apiInfrastructure: ApiInfrastructure
 ) : BlockchainInfrastructure {
 
     val cryptoSystem = SECP256K1CryptoSystem()
-    val blockSigner: Signer
+    val blockSigMaker: SigMaker
     val subjectID: ByteArray
 
     init {
-        val privKey = config.getString("messaging.privkey").hexStringToByteArray()
+        val privKey = nodeConfigProvider.getConfiguration().privKeyByteArray
         val pubKey = secp256k1_derivePubKey(privKey)
-        blockSigner = cryptoSystem.makeSigner(pubKey, privKey)
+        blockSigMaker = cryptoSystem.buildSigMaker(pubKey, privKey)
         subjectID = pubKey
     }
+
+    companion object: KLogging()
+
 
     override fun shutdown() {
         synchronizationInfrastructure.shutdown()
@@ -42,8 +45,8 @@ class BaseBlockchainInfrastructure(
             context
         }
 
-        val gtxData = GtvDecoder.decodeGtv(rawConfigurationData)
-        val confData = BaseBlockchainConfigurationData(gtxData as GtvDictionary, actualContext, blockSigner)
+        val gtxData = GtvFactory.decodeGtv(rawConfigurationData)
+        val confData = BaseBlockchainConfigurationData(gtxData as GtvDictionary, actualContext, blockSigMaker)
 
         val bcfClass = Class.forName(confData.data["configurationfactory"]!!.asString())
         val factory = (bcfClass.newInstance() as BlockchainConfigurationFactory)
@@ -52,11 +55,13 @@ class BaseBlockchainInfrastructure(
     }
 
     override fun makeBlockchainEngine(configuration: BlockchainConfiguration): BaseBlockchainEngine {
-        val storage = StorageBuilder.buildStorage(config, -1) // TODO: nodeID
+        logger.info("makeBlockchainEngine() - start")
+        val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration(), -1) // TODO: nodeID
         // TODO: [et]: Maybe extract 'queuecapacity' param from ''
         val tq = BaseTransactionQueue(
                 (configuration as BaseBlockchainConfiguration)
                         .configData.getBlockBuildingStrategy()?.get("queuecapacity")?.asInteger()?.toInt() ?: 2500)
+        logger.info("makeBlockchainEngine() - end")
         return BaseBlockchainEngine(configuration, storage, configuration.chainID, tq)
                 .apply { initializeDB() }
     }

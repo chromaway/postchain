@@ -3,6 +3,7 @@
 package net.postchain.base.data
 
 import mu.KLogging
+import net.postchain.base.BaseEContext
 import net.postchain.base.Storage
 import net.postchain.core.EContext
 import net.postchain.core.ProgrammerMistake
@@ -11,7 +12,9 @@ import javax.sql.DataSource
 class BaseStorage(
         private val readDataSource: DataSource,
         private val writeDataSource: DataSource,
-        private val nodeId: Int
+        private val nodeId: Int,
+        private val dbAccess: DatabaseAccess,
+        private val savepointSupport: Boolean = true
 ) : Storage {
 
     companion object : KLogging()
@@ -49,6 +52,8 @@ class BaseStorage(
         }
     }
 
+    override fun isSavepointSupported(): Boolean = savepointSupport
+
     override fun withSavepoint(context: EContext, fn: () -> Unit): Exception? {
         var exception: Exception? = null
 
@@ -72,6 +77,6 @@ class BaseStorage(
     }
 
     private fun getContext(chainID: Long, dataSource: DataSource): EContext =
-            EContext(dataSource.connection, chainID, nodeId)
+            BaseEContext(dataSource.connection, chainID, nodeId, dbAccess)
 }
 

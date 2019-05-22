@@ -2,12 +2,11 @@
 
 package net.postchain.base.data
 
+import net.postchain.base.BaseEContext
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.core.EContext
 import net.postchain.core.UserMistake
-import org.easymock.EasyMock.expect
-import org.easymock.EasyMock.mock
-import org.easymock.EasyMock.replay
+import org.easymock.EasyMock.*
 import org.junit.Assert.assertArrayEquals
 import org.junit.Before
 import org.junit.Test
@@ -23,8 +22,8 @@ class BaseBlockStoreTest {
     fun setup() {
         sut = BaseBlockStore()
         db = mock(DatabaseAccess::class.java)
-        sut.db = db
-        ctx = EContext(mock(Connection::class.java), 2L, 0)
+        //sut.db = db
+        ctx = BaseEContext(mock(Connection::class.java), 2L, 0, db)
     }
 
     @Test
@@ -34,7 +33,7 @@ class BaseBlockStoreTest {
         expect(db.insertBlock(ctx, 0)).andReturn(17)
         expect(db.getLastBlockTimestamp(ctx)).andReturn(1509606236)
         replay(db)
-        val initialBlockData = sut.beginBlock(ctx)
+        val initialBlockData = sut.beginBlock(ctx, null)
         assertArrayEquals(blockchainRID, initialBlockData.prevBlockRID)
     }
 
@@ -42,12 +41,12 @@ class BaseBlockStoreTest {
     fun beginBlockReturnsPrevBlockRIdOnSecondBlock() {
         val anotherRID = cryptoSystem.digest("A RID".toByteArray())
         expect(db.getLastBlockHeight(ctx)).andReturn(0)
-        expect(db.getBlockRIDs(ctx, 0)).andReturn(listOf(anotherRID))
+        expect(db.getBlockRID(ctx, 0)).andReturn(anotherRID)
         expect(db.getBlockchainRID(ctx)).andReturn(blockchainRID)
         expect(db.insertBlock(ctx, 1)).andReturn(17)
         expect(db.getLastBlockTimestamp(ctx)).andReturn(1509606236)
         replay(db)
-        val initialBlockData = sut.beginBlock(ctx)
+        val initialBlockData = sut.beginBlock(ctx, null)
         assertArrayEquals(anotherRID, initialBlockData.prevBlockRID)
     }
 
@@ -57,6 +56,6 @@ class BaseBlockStoreTest {
         expect(db.getBlockchainRID(ctx)).andReturn(null)
         expect(db.getLastBlockTimestamp(ctx)).andReturn(1509606236)
         replay(db)
-        sut.beginBlock(ctx)
+        sut.beginBlock(ctx, null)
     }
 }

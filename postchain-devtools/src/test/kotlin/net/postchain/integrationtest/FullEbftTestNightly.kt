@@ -8,19 +8,20 @@ import junitparams.naming.TestCaseName
 import mu.KLogging
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
-import net.postchain.devtools.SingleChainTestNode
+import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.test.assertNotNull
 
 @RunWith(JUnitParamsRunner::class)
 class FullEbftTestNightly : IntegrationTest() {
 
     companion object : KLogging()
 
-    private fun strategy(node: SingleChainTestNode): OnDemandBlockBuildingStrategy {
+    private fun strategy(node: PostchainTestNode): OnDemandBlockBuildingStrategy {
         return node
                 .getBlockchainInstance()
                 .getEngine()
@@ -34,19 +35,18 @@ class FullEbftTestNightly : IntegrationTest() {
             , "8, 1, 0", "8, 2, 0", "8, 10, 0", "8, 1, 10", "8, 2, 10", "8, 10, 10"
 //            , "25, 100, 0"
     )
-    @TestCaseName("[{index}] nodesCount: {0}, blockCount: {1}, txPerBlock: {2}")
-    fun runXNodesWithYTxPerBlock(nodesCount: Int, blockCount: Int, txPerBlock: Int) {
+    @TestCaseName("[{index}] nodesCount: {0}, blocksCount: {1}, txPerBlock: {2}")
+    fun runXNodesWithYTxPerBlock(nodesCount: Int, blocksCount: Int, txPerBlock: Int) {
         logger.info {
             "runXNodesWithYTxPerBlock(): " +
-                    "nodesCount: $nodesCount, blockCount: $blockCount, txPerBlock: $txPerBlock"
+                    "nodesCount: $nodesCount, blocksCount: $blocksCount, txPerBlock: $txPerBlock"
         }
 
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         createNodes(nodesCount, "/net/postchain/full_ebft/blockchain_config_$nodesCount.xml")
 
         var txId = 0
-        nodes[0].getBlockchainInstance().statusManager
-        for (i in 0 until blockCount) {
+        for (i in 0 until blocksCount) {
             for (tx in 0 until txPerBlock) {
                 val currentTxId = txId++
                 nodes.forEach {
@@ -64,17 +64,17 @@ class FullEbftTestNightly : IntegrationTest() {
 
         val queries = nodes[0].getBlockchainInstance().getEngine().getBlockQueries()
         val referenceHeight = queries.getBestHeight().get()
-        logger.info { "$blockCount, refHe: $referenceHeight" }
+        logger.info { "$blocksCount, refHe: $referenceHeight" }
         nodes.forEach { node ->
             val queries = node.getBlockchainInstance().getEngine().getBlockQueries()
             assertEquals(referenceHeight, queries.getBestHeight().get())
 
             for (height in 0..referenceHeight) {
                 logger.info { "Verifying height $height" }
-                val rids = queries.getBlockRids(height).get()
-                assertEquals(1, rids.size)
+                val rid = queries.getBlockRids(height).get()
+                assertNotNull(rid)
 
-                val txs = queries.getBlockTransactionRids(rids[0]).get()
+                val txs = queries.getBlockTransactionRids(rid!!).get()
                 assertEquals(txPerBlock, txs.size)
 
                 for (tx in 0 until txPerBlock) {

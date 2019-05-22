@@ -2,6 +2,9 @@
 
 package net.postchain.core
 
+import net.postchain.base.BaseBlockEContext
+import net.postchain.base.BlockchainDependencies
+import net.postchain.base.merkle.Hash
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
 
@@ -28,21 +31,33 @@ abstract class AbstractBlockBuilder(
 
     abstract fun validateBlockHeader(blockHeader: BlockHeader): ValidationResult
     abstract fun validateWitness(blockWitness: BlockWitness): Boolean
+    abstract fun buildBlockchainDependencies(partialBlockHeader: BlockHeader?): BlockchainDependencies
     // fun getBlockWitnessBuilder(): BlockWitnessBuilder?;
 
     var finalized: Boolean = false
     val rawTransactions = mutableListOf<ByteArray>()
     val transactions = mutableListOf<Transaction>()
+    var blockchainDependencies: BlockchainDependencies? = null
     lateinit var bctx: BlockEContext
     lateinit var initialBlockData: InitialBlockData
     var _blockData: BlockData? = null
 
     /**
      * Retrieve initial block data and set block context
+     *
+     * @param partialBlockHeader might hold the header.
      */
-    override fun begin() {
-        initialBlockData = store.beginBlock(ectx)
-        bctx = BlockEContext(ectx.conn, ectx.chainID, ectx.nodeID, initialBlockData.blockIID, initialBlockData.timestamp)
+    override fun begin(partialBlockHeader: BlockHeader?) {
+        if (finalized)  {
+            ProgrammerMistake("This builder has already been used once (you must create a new builder instance)")
+        }
+        blockchainDependencies = buildBlockchainDependencies(partialBlockHeader)
+        initialBlockData = store.beginBlock(ectx, blockchainDependencies!!.extractBlockHeightDependencyArray())
+        bctx = BaseBlockEContext(
+                ectx,
+                initialBlockData.blockIID,
+                initialBlockData.timestamp,
+                blockchainDependencies!!.extractChainIdToHeightMap())
     }
 
     /**

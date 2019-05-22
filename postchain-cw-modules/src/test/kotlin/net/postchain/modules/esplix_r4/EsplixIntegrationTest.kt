@@ -6,7 +6,6 @@ import net.postchain.common.toHex
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
-import net.postchain.gtx.GTXBlockchainConfigurationFactory
 import net.postchain.gtx.GTXDataBuilder
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.modules.esplix_r4.BaseEsplixModuleFactory
@@ -26,7 +25,7 @@ class EsplixIntegrationTest : IntegrationTest() {
                 gtv(nonce),
                 gtv(payload)))
         b.finish()
-        b.sign(myCS.makeSigner(pubKey(creator), privKey(creator)))
+        b.sign(myCS.buildSigMaker(pubKey(creator), privKey(creator)))
         return b.serialize()
 
     }
@@ -37,7 +36,7 @@ class EsplixIntegrationTest : IntegrationTest() {
                 gtv(prevID),
                 gtv(payload)))
         b.finish()
-        b.sign(myCS.makeSigner(pubKey(poster), privKey(poster)))
+        b.sign(myCS.buildSigMaker(pubKey(poster), privKey(poster)))
         return b.serialize()
     }
 
@@ -51,7 +50,7 @@ class EsplixIntegrationTest : IntegrationTest() {
         fun buildBlockAndCommitWithTx(data: ByteArray, fail: Boolean = false) {
             currentBlockHeight += 1
             try {
-                val tx = node.getBlockchainInstance().blockchainConfiguration.getTransactionFactory().decodeTransaction(data)
+                val tx = node.getBlockchainInstance().getEngine().getConfiguration().getTransactionFactory().decodeTransaction(data)
                 node.getBlockchainInstance().getEngine().getTransactionQueue().enqueue(tx)
                 buildBlockAndCommit(node.getBlockchainInstance().getEngine())
                 Assert.assertEquals(currentBlockHeight, getBestHeight(node))

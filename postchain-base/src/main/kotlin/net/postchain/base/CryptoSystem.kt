@@ -1,11 +1,28 @@
 package net.postchain.base
 
+import net.postchain.base.merkle.Hash
 import net.postchain.core.Signature
 
 /**
- * Function that will sign some data and return a signature
- * */
-typealias Signer = (ByteArray) -> Signature
+ * Can sign digests/messages.
+ */
+interface SigMaker {
+
+    /**
+     * @param msg is raw binary data that should be the base for the signature (Usually the raw data will be digested
+     *            before it's signed)
+     * @return a [Signature] created using the specific algo of the implementation.
+     */
+    fun signMessage(msg: ByteArray): Signature
+
+    /**
+     * Note: To save CPU cycles you should call this method if you already have the digest and just need the signature.
+     *
+     * @param digest is the "hash" that should be signed
+     * @return a [Signature] created using the specific algo of the implementation.
+     */
+    fun signDigest(digest: Hash): Signature
+}
 
 /**
  * Function that will return a boolean depending on if the data and
@@ -18,7 +35,7 @@ typealias Verifier = (ByteArray, Signature) -> Boolean
  */
 interface CryptoSystem {
     fun digest(bytes: ByteArray): ByteArray
-    fun makeSigner(pubKey: ByteArray, privKey: ByteArray): Signer
+    fun buildSigMaker(pubKey: ByteArray, privKey: ByteArray): SigMaker
     fun verifyDigest(ddigest: ByteArray, s: Signature): Boolean
     fun makeVerifier(): Verifier
     fun getRandomBytes(size: Int): ByteArray

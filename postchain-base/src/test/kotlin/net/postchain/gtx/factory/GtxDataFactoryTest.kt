@@ -6,7 +6,8 @@ import org.junit.Assert
 import org.junit.Test
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.GtvString
-import net.postchain.gtx.GTXData
+import net.postchain.gtx.GTXTransactionBodyData
+import net.postchain.gtx.GTXTransactionData
 import net.postchain.gtx.GtxHelper.convertToByteArray
 import net.postchain.gtx.OpData
 
@@ -23,7 +24,8 @@ class GtxDataFactoryTest {
 
         // ---------- Build expected  ----------------------
         val expectedOp = OpData(op_name, op_args.map{ gtv(it.toLong())}.toTypedArray() )
-        val expectedData = GTXData(blockchainRID, arrayOf(aliceSigner), arrayOf(aliceSignature), arrayOf(expectedOp))
+        val expectedTxBody = GTXTransactionBodyData(blockchainRID, arrayOf(expectedOp), arrayOf(aliceSigner))
+        val expectedTx = GTXTransactionData(expectedTxBody, arrayOf(aliceSignature))
 
         // ---------- Build da GTV struct -----------------
 
@@ -43,8 +45,8 @@ class GtxDataFactoryTest {
         val tx = gtv(listOf(txb, signatures))
 
         // ---------- Convert it ------------------------------
-        val data: GTXData = GtxDataFactory.deserializeFromGtv(tx)
+        val txData: GTXTransactionData = GtxTransactionDataFactory.deserializeFromGtv(tx)
 
-        Assert.assertEquals(data, expectedData)
+        Assert.assertEquals(txData, expectedTx)
     }
 }

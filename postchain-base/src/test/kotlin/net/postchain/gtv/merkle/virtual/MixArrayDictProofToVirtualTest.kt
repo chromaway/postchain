@@ -1,10 +1,12 @@
 package net.postchain.gtv.merkle.virtual
 
+import net.postchain.base.merkle.TreeHelper
 import net.postchain.core.UserMistake
 import net.postchain.gtv.generateProof
 import net.postchain.gtv.merkle.MerkleHashCalculatorDummy
 import net.postchain.gtv.merkle.MixArrayDictToGtvBinaryTreeHelper
 import net.postchain.gtv.merkle.proof.toGtvVirtual
+import net.postchain.gtv.merkleHash
 import net.postchain.gtv.path.GtvPath
 import net.postchain.gtv.path.GtvPathFactory
 import net.postchain.gtv.path.GtvPathSet
@@ -27,6 +29,9 @@ class MixArrayDictProofToVirtualTest {
         val merkleProofTree = gtvDict.generateProof(gtvPaths, calculator)
 
         val virtualGtv = merkleProofTree.toGtvVirtual()
+        val merkleRoot = virtualGtv.merkleHash(calculator)
+        assertEquals(MixArrayDictToGtvBinaryTreeHelper.expecedMerkleRoot_dict1_array4, TreeHelper.convertToHex(merkleRoot))
+
 
         val orgGtv = gtvDict["one"]!![3]
         val gtvFromVirt =virtualGtv["one"]!![3]
@@ -55,6 +60,8 @@ class MixArrayDictProofToVirtualTest {
         val merkleProofTree = gtvDict.generateProof(gtvPaths, calculator)
 
         val virtualGtv = merkleProofTree.toGtvVirtual()
+        val merkleRoot = virtualGtv.merkleHash(calculator)
+        assertEquals(MixArrayDictToGtvBinaryTreeHelper.expecedMerkleRoot_dict1_array4, TreeHelper.convertToHex(merkleRoot))
 
         val orgGtv = gtvDict["one"]!!
         val gtvFromVirt =virtualGtv["one"]!!

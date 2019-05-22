@@ -6,7 +6,7 @@ import net.postchain.core.*
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
-import net.postchain.devtools.SingleChainTestNode
+import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.testinfra.ErrorTransaction
 import net.postchain.devtools.testinfra.TestBlockchainConfiguration
 import net.postchain.devtools.testinfra.TestTransaction
@@ -98,7 +98,7 @@ class BlockchainEngineTest : IntegrationTest() {
 
         val blockData = createBlockWithTxAndCommit(node0, 2)
 
-        val bc = node1.getBlockchainInstance().blockchainConfiguration as TestBlockchainConfiguration
+        val bc = node1.getBlockchainInstance().getEngine().getConfiguration() as TestBlockchainConfiguration
         // Make the tx invalid on follower. Should discard whole block
         bc.transactionFactory.specialTxs[0] = ErrorTransaction(0, true, false)
         try {
@@ -151,13 +151,13 @@ class BlockchainEngineTest : IntegrationTest() {
         assertTrue(riDsAtHeight0.contentDeepEquals(Array(2) { TestTransaction(it).getRID() }))
     }
 
-    private fun createBlockWithTxAndCommit(node: SingleChainTestNode, txCount: Int, startId: Int = 0): BlockData {
+    private fun createBlockWithTxAndCommit(node: PostchainTestNode, txCount: Int, startId: Int = 0): BlockData {
         val blockBuilder = createBlockWithTx(node, txCount, startId)
         commitBlock(blockBuilder)
         return blockBuilder.getBlockData()
     }
 
-    private fun createBlockWithTx(node: SingleChainTestNode, txCount: Int, startId: Int = 0): BlockBuilder {
+    private fun createBlockWithTx(node: PostchainTestNode, txCount: Int, startId: Int = 0): BlockBuilder {
         val engine = node.getBlockchainInstance().getEngine()
         (startId until startId + txCount).forEach {
             engine.getTransactionQueue().enqueue(TestTransaction(it))
@@ -165,7 +165,7 @@ class BlockchainEngineTest : IntegrationTest() {
         return engine.buildBlock()
     }
 
-    private fun loadUnfinishedAndCommit(node: SingleChainTestNode, blockData: BlockData) {
+    private fun loadUnfinishedAndCommit(node: PostchainTestNode, blockData: BlockData) {
         val blockBuilder = node.getBlockchainInstance().getEngine().loadUnfinishedBlock(blockData)
         commitBlock(blockBuilder)
     }
@@ -178,7 +178,8 @@ class BlockchainEngineTest : IntegrationTest() {
         val blockHeader = blockData.header
         var i = 0
         while (!witnessBuilder.isComplete()) {
-            witnessBuilder.applySignature(cryptoSystem.makeSigner(pubKey(i), privKey(i))(blockHeader.rawData))
+            val sigMaker = cryptoSystem.buildSigMaker(pubKey(i), privKey(i))
+            witnessBuilder.applySignature(sigMaker.signDigest(blockHeader.blockRID))
             i++
         }
         val witness = witnessBuilder.getWitness()

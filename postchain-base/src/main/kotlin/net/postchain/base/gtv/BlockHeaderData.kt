@@ -1,5 +1,9 @@
 package net.postchain.base.gtv
 
+import net.postchain.base.merkle.Hash
+import net.postchain.core.BadDataMistake
+import net.postchain.core.BadDataType
+import net.postchain.core.UserMistake
 import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
 
@@ -11,6 +15,7 @@ import net.postchain.gtv.GtvFactory.gtv
  *  3. rootHash [GtvByteArray]
  *  4. timestamp [GtvInteger]
  *  5. height [GtvInteger]
+ *  6. dependencies [GtvArray] or [GtvNull] (this is to save space)
  *  6. extra  [GtvDictionary]
  */
 data class BlockHeaderData(
@@ -19,6 +24,7 @@ data class BlockHeaderData(
         val gtvMerkleRootHash: GtvByteArray,
         val gtvTimestamp: GtvInteger,
         val gtvHeight: GtvInteger,
+        val gtvDependencies: Gtv, // Can be either GtvNull or GtvArray
         val gtvExtra: GtvDictionary) {
 
 
@@ -42,6 +48,34 @@ data class BlockHeaderData(
         return gtvHeight.integer.toLong()
     }
 
+    /**
+     * Turns the [gtvDependencies] into an array of [Hash].
+     *
+     * Note that empty BC dependencies are allowed. This means that the BC we depend on has no blocks.
+     * (We allow this bc it's easier to get started, specially during test)
+     */
+    fun getBlockHeightDependencyArray(): Array<Hash?> {
+        return when (gtvDependencies) {
+            is GtvNull -> arrayOf()
+            is GtvArray -> {
+                val lastBlockRidArray = arrayOfNulls<Hash>(gtvDependencies.getSize())
+                var i = 0
+                for (bRid in gtvDependencies.array) {
+                    lastBlockRidArray[i] = when (bRid) {
+                        is GtvByteArray -> bRid.bytearray
+                        is GtvNull -> null // Allowed
+                        else -> throw UserMistake("Cannot use type ${bRid.type} in dependency list (at pos: $i)")
+                    }
+                    i++
+                }
+                lastBlockRidArray
+            }
+            else -> throw BadDataMistake(BadDataType.BAD_BLOCK,
+                    "Header data has incorrect format in dependency part, where we found type: ${gtvDependencies.type}")
+        }
+
+    }
+
     fun getExtra(): Map<String, String> {
         val retMap = HashMap<String, String>()
         for (key in this.gtvExtra.dict.keys) {
@@ -52,7 +86,7 @@ data class BlockHeaderData(
     }
 
     fun toGtv(): GtvArray {
-        return gtv(gtvBlockchainRid, gtvPreviousBlockRid, gtvMerkleRootHash, gtvTimestamp, gtvHeight, gtvExtra)
+        return gtv(gtvBlockchainRid, gtvPreviousBlockRid, gtvMerkleRootHash, gtvTimestamp, gtvHeight, gtvDependencies, gtvExtra)
     }
 
 }

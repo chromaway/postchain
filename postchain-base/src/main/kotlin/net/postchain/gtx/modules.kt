@@ -2,6 +2,7 @@
 
 package net.postchain.gtx
 
+import mu.KLogging
 import net.postchain.core.EContext
 import net.postchain.core.Transactor
 import net.postchain.core.UserMistake
@@ -29,7 +30,7 @@ abstract class SimpleGTXModule<ConfT>(
         if (opData.opName in opmap) {
             return opmap[opData.opName]!!(conf, opData)
         } else {
-            throw UserMistake("Unknown operation")
+            throw UserMistake("Unknown operation: ${opData.opName}")
         }
     }
 
@@ -54,6 +55,8 @@ class CompositeGTXModule (val modules: Array<GTXModule>, val allowOverrides: Boo
     lateinit var qmap: Map<String, GTXModule>
     lateinit var ops: Set<String>
     lateinit var _queries: Set<String>
+
+    companion object: KLogging()
 
     override fun makeTransactor(opData: ExtOpData): Transactor {
         if (opData.opName in opmap) {
@@ -81,6 +84,7 @@ class CompositeGTXModule (val modules: Array<GTXModule>, val allowOverrides: Boo
 
     override fun initializeDB(ctx: EContext) {
         for (module in modules) {
+            logger.info("Initialize DB for module: $module") // TODO: Should probably write the module name here
             module.initializeDB(ctx)
         }
         val _opmap = mutableMapOf<String, GTXModule>()

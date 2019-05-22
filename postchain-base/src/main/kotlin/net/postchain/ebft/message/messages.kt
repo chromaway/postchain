@@ -43,7 +43,7 @@ abstract class Message(val type: Int) {
             val type = data[0].asInteger().toInt()
             return when (type) {
                 MessageType.ID.ordinal -> Identification(data[1].asByteArray(), data[2].asByteArray(), data[3].asInteger()) as T
-                MessageType.STATUS.ordinal -> Status(data[1].asByteArray(), data[2].asInteger(), data[3].asBoolean(), data[4].asInteger(), data[5].asInteger(), data[6].asInteger().toInt()) as T
+                MessageType.STATUS.ordinal -> Status(nullableBytearray(data[1]), data[2].asInteger(), data[3].asBoolean(), data[4].asInteger(), data[5].asInteger(), data[6].asInteger().toInt()) as T
                 MessageType.TX.ordinal -> Transaction(data[1].asByteArray()) as T
                 MessageType.SIG.ordinal -> Signature(data[1].asByteArray(), data[2].asByteArray()) as T
                 MessageType.BLOCKSIG.ordinal -> BlockSignature(data[1].asByteArray(), Signature(data[2].asByteArray(), data[3].asByteArray())) as T
@@ -54,6 +54,14 @@ abstract class Message(val type: Int) {
                 MessageType.GETUNFINISHEDBLOCK.ordinal -> GetUnfinishedBlock(data[1].asByteArray()) as T
                 MessageType.UNFINISHEDBLOCK.ordinal -> UnfinishedBlock(data[1].asByteArray(), data[2].asArray().map { it.asByteArray() }) as T
                 else -> throw ProgrammerMistake("Message type $type is not handled")
+            }
+        }
+
+        fun nullableBytearray(tmpGtv: Gtv): ByteArray? {
+            return when (tmpGtv) {
+                is GtvNull -> null
+                is GtvByteArray -> tmpGtv.asByteArray()
+                else -> throw ProgrammerMistake("Incorrect EBFT status ${tmpGtv.type}")
             }
         }
     }
@@ -145,12 +153,17 @@ class Identification(val pubKey: ByteArray, val blockchainRID: ByteArray, val ti
     }
 }
 
-class Status(val blockRID: ByteArray, val height: Long, val revolting: Boolean, val round: Long,
+class Status(val blockRID: ByteArray?, val height: Long, val revolting: Boolean, val round: Long,
                   val serial: Long, val state: Int): Message(MessageType.STATUS.ordinal) {
 
 
     override fun toGtv(): Gtv {
-        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), GtvFactory.gtv(blockRID), GtvFactory.gtv(height),
+        val bRid: Gtv = if (blockRID != null) {
+            GtvFactory.gtv(blockRID)
+        } else {
+            GtvNull
+        }
+        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), bRid, GtvFactory.gtv(height),
                 GtvFactory.gtv(revolting), GtvFactory.gtv(round), GtvFactory.gtv(serial), GtvFactory.gtv(state.toLong()))
     }
 }

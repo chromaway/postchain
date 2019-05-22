@@ -1,83 +1,86 @@
 package net.postchain.ebft
 
 import net.postchain.base.BasePeerCommConfiguration
-import net.postchain.base.PeerInfoCollectionFactory
+import net.postchain.base.DefaultPeerResolver
+import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.base.data.BaseBlockchainConfiguration
-import net.postchain.common.hexStringToByteArray
-import net.postchain.core.BlockchainEngine
-import net.postchain.core.BlockchainProcess
-import net.postchain.core.RestartHandler
-import net.postchain.core.SynchronizationInfrastructure
+import net.postchain.config.node.NodeConfig
+import net.postchain.config.node.NodeConfigurationProvider
+import net.postchain.core.*
 import net.postchain.ebft.message.Message
-import net.postchain.network.CommManager
+import net.postchain.ebft.worker.ValidatorWorker
 import net.postchain.network.CommunicationManager
-import net.postchain.network.PeerConnectionManager
 import net.postchain.network.netty2.NettyConnectorFactory
 import net.postchain.network.x.DefaultXCommunicationManager
 import net.postchain.network.x.DefaultXConnectionManager
 import net.postchain.network.x.XConnectionManager
-import org.apache.commons.configuration2.Configuration
 
-class EBFTSynchronizationInfrastructure(val config: Configuration) : SynchronizationInfrastructure {
+class EBFTSynchronizationInfrastructure(nodeConfigProvider: NodeConfigurationProvider) : SynchronizationInfrastructure {
 
-    private val connectionManagers = mutableListOf<XConnectionManager>()
-    @Deprecated("See XCommunicationManager")
-    private val connectionManagersDeprecated = mutableListOf<PeerConnectionManager<*>>()
+    private val nodeConfig = nodeConfigProvider.getConfiguration()
+    val connectionManager: XConnectionManager
+
+    init {
+        connectionManager = DefaultXConnectionManager(
+                NettyConnectorFactory(),
+                buildPeerCommConfiguration(nodeConfig),
+                EbftPacketEncoderFactory(),
+                EbftPacketDecoderFactory(),
+                SECP256K1CryptoSystem()
+        )
+    }
 
     override fun shutdown() {
-        connectionManagers.forEach { it.shutdown() }
-        connectionManagersDeprecated.forEach { it.shutdown() }
+        connectionManager.shutdown()
     }
 
     override fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
-        return EBFTBlockchainInstanceWorker(
+        validateConfigurations(nodeConfig, blockchainConfig)
+
+        return ValidatorWorker(
+                blockchainConfig.signers,
                 engine,
                 blockchainConfig.configData.context.nodeID,
-//                buildCommunicationManager(blockchainConfig),
                 buildXCommunicationManager(blockchainConfig),
                 restartHandler)
     }
 
+    private fun validateConfigurations(nodeConfig: NodeConfig, blockchainConfig: BaseBlockchainConfiguration) {
+        val nodePeers = nodeConfig.peerInfos.map { it.pubKey.byteArrayKeyOf() }
+        val chainPeers = blockchainConfig.signers.map { it.byteArrayKeyOf() }
+
+        require(chainPeers.all { nodePeers.contains(it) }) {
+            "Invalid blockchain config: unreachable signers have been detected"
+        }
+    }
+
     private fun buildXCommunicationManager(blockchainConfig: BaseBlockchainConfiguration): CommunicationManager<Message> {
         val communicationConfig = BasePeerCommConfiguration(
-                PeerInfoCollectionFactory.createPeerInfoCollection(config),
-                blockchainConfig.blockchainRID,
+                nodeConfig.peerInfos,
                 blockchainConfig.configData.context.nodeID,
                 SECP256K1CryptoSystem(),
-                privKey())
+                nodeConfig.privKeyByteArray)
 
-        val packetConverter = EbftPacketConverter(communicationConfig)
-
-        val connectionManager = DefaultXConnectionManager(
-                NettyConnectorFactory(),
-                communicationConfig.peerInfo[communicationConfig.myIndex],
-                packetConverter,
-                SECP256K1CryptoSystem()
-        ).also { connectionManagers.add(it) }
+        val packetEncoder = EbftPacketEncoder(communicationConfig, blockchainConfig.blockchainRID)
+        val packetDecoder = EbftPacketDecoder(communicationConfig)
 
         return DefaultXCommunicationManager(
                 connectionManager,
                 communicationConfig,
                 blockchainConfig.chainID,
-                packetConverter).apply { init() }
-    }
-
-    @Deprecated("See XCommunicationManager")
-    private fun buildCommunicationManager(blockchainConfig: BaseBlockchainConfiguration): CommManager<Message> {
-        val communicationConfig = BasePeerCommConfiguration(
-                PeerInfoCollectionFactory.createPeerInfoCollection(config),
                 blockchainConfig.blockchainRID,
-                blockchainConfig.configData.context.nodeID,
-                SECP256K1CryptoSystem(),
-                privKey())
-
-        val connectionManager = EbftPeerManagerFactory.createConnectionManager(communicationConfig)
-        connectionManagersDeprecated.add(connectionManager)
-        return CommManager(communicationConfig, connectionManager)
+                packetEncoder,
+                packetDecoder
+        ).apply { init() }
     }
 
-    private fun privKey(): ByteArray =
-            config.getString("messaging.privkey").hexStringToByteArray()
+    private fun buildPeerCommConfiguration(nodeConfig: NodeConfig): PeerCommConfiguration {
+        return BasePeerCommConfiguration(
+                nodeConfig.peerInfos,
+                DefaultPeerResolver.resolvePeerIndex(nodeConfig.pubKeyByteArray, nodeConfig.peerInfos),
+                SECP256K1CryptoSystem(),
+                nodeConfig.privKeyByteArray)
+    }
 }

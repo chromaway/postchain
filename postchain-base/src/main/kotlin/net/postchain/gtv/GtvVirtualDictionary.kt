@@ -1,5 +1,6 @@
 package net.postchain.gtv
 
+import net.postchain.base.merkle.proof.MerkleProofElement
 import net.postchain.core.UserMistake
 import net.postchain.gtv.messages.RawGtv
 
@@ -9,11 +10,12 @@ import net.postchain.gtv.messages.RawGtv
  * Note: If the user tries to use the virtual object like a real [Gtv] it will explode (Exception).
  * This is intentional, b/c using a virtual object for something other than data access could cause bugs.
  *
+ * @property proofElement is cached here (see super class for desc)
  * @property dict is where we store sub-elements. This map will be mostly empty, and if the user asks for a key that
  *           doesn't exist we will explode (because we have no way of knowing if this key exists in the original dict).
  * @property size is the number of elements in the original dictionary (sometimes we don't know this).
  */
-data class GtvVirtualDictionary(val dict: Map<String, Gtv>, val size: Int? = null) : GtvVirtual() {
+data class GtvVirtualDictionary(val proofElement: MerkleProofElement ,val dict: Map<String, Gtv>, val size: Int? = null) : GtvVirtual(proofElement) {
 
     override val type = GtvType.DICT // The virtual Dict pretends to be a normal [GtvDictionary].
 
@@ -37,6 +39,8 @@ data class GtvVirtualDictionary(val dict: Map<String, Gtv>, val size: Int? = nul
             dict.keys.size
         }
     }
+
+    fun isKeyPresent(key: String): Boolean = dict[key] != null
 
     // ----------- These methods will explode -----------
 

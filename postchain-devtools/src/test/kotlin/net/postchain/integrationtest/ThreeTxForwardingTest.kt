@@ -6,14 +6,14 @@ import net.postchain.api.rest.controller.Model
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.common.toHex
 import net.postchain.devtools.IntegrationTest
-import net.postchain.devtools.SingleChainTestNode
+import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
 import org.junit.Assert
 import org.junit.Test
 
 class ThreeTxForwardingTest : IntegrationTest() {
 
-    private fun strategy(node: SingleChainTestNode): ThreeTxStrategy {
+    private fun strategy(node: PostchainTestNode): ThreeTxStrategy {
         return node
                 .getBlockchainInstance()
                 .getEngine()
@@ -31,6 +31,7 @@ class ThreeTxForwardingTest : IntegrationTest() {
     fun testTxNotForwardedIfPrimary() {
         val count = 3
         configOverrides.setProperty("testpeerinfos", createPeerInfos(count))
+        configOverrides.setProperty("api.port", 0)
         createNodes(count, "/net/postchain/three_tx/blockchain_config.xml")
 
         apiModel(0).postTransaction(tx(0))
