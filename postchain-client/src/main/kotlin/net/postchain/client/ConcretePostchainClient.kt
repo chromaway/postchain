@@ -34,6 +34,7 @@ class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchai
     private val gson = JsonFactory.makeJson()
     private val serverUrl = resolver.getNodeURL(blockchainRID)
     private val httpClient = HttpClients.createDefault()
+    private val blockchainRIDHex = blockchainRID.toHex()
 
     override fun makeTransaction(signers: Array<ByteArray>): GTXTransactionBuilder {
         return GTXTransactionBuilder(this, blockchainRID, signers)
@@ -56,7 +57,7 @@ class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchai
     }
 
     private fun doQuery(name: String, args: List<Gtv>) : Gtv {
-        val httpPost = HttpPost("${serverUrl}/query_gtx/${blockchainRID}")
+        val httpPost = HttpPost("${serverUrl}/query_gtx/${blockchainRIDHex}")
         val gtxQuery = GtvFactory.gtv(args)
         val jsonQuery = """{"queries" : ["${GtvEncoder.encodeGtv(gtxQuery).toHex()}"]}""".trimMargin()
         with (httpPost) {
@@ -77,7 +78,7 @@ class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchai
         val txHex = b.serialize().toHex()
 
         fun submitTransaction() : CloseableHttpResponse {
-            val httpPost = HttpPost("${serverUrl}/tx/${blockchainRID}")
+            val httpPost = HttpPost("${serverUrl}/tx/${blockchainRIDHex}")
             with (httpPost) {
                 entity = StringEntity(txHex)
                 setHeader("Accept", "application/json")
@@ -99,7 +100,7 @@ class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchai
 
             ConfirmationLevel.UNVERIFIED -> {
                 submitTransaction()
-                val httpGet = HttpGet("${serverUrl}/tx/${blockchainRID}/${txHex}/status")
+                val httpGet = HttpGet("${serverUrl}/tx/${blockchainRIDHex}/${txHex}/status")
                 httpGet.setHeader("Content-type", "application/json")
 
                 // keep polling till getting Confirmed or Rejected

@@ -39,6 +39,21 @@
         </dependency>
 
         <dependency>
+            <groupId>net.postchain</groupId>
+            <artifactId>postchain-devtools</artifactId>
+            <version>2.5.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.postchain</groupId>
+            <artifactId>postchain-devtools</artifactId>
+            <version>2.5.1-SNAPSHOT</version>
+            <classifier>tests</classifier>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>com.willowtreeapps.assertk</groupId>
             <artifactId>assertk</artifactId>
             <version>${assertk.version}</version>
