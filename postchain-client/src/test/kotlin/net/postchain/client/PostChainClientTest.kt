@@ -19,8 +19,7 @@ class PostChainClientTest : IntegrationTest() {
     private val txHashHex = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     private val privateKey = "03a301697bdfcd704313ba48e51d567543f2a182031efd6915ddc07bbcc4e16070"
 
-    @Test
-    fun testPostTransaction() {
+    fun testPostTransaction(confirmationLevel: ConfirmationLevel) {
         val nodesCount = 1
         val blocksCount = 1
         val txPerBlock = 1
@@ -41,7 +40,11 @@ class PostChainClientTest : IntegrationTest() {
         val defaultSigner = DefaultSigner(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)), KeyPairHelper.pubKey(0))
 
         val client = postchainClientFactory.getClient(resolver, blockchainRIDBytes, defaultSigner)
-        client.postTransactionSync(b, ConfirmationLevel.NO_WAIT)
+        client.postTransactionSync(b, confirmationLevel)
+    }
 
+    @Test
+    fun testPostTransactionConfirmLevelNoWait() {
+        testPostTransaction(ConfirmationLevel.NO_WAIT)
     }
 }

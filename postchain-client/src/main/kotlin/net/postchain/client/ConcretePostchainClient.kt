@@ -79,11 +79,7 @@ class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchai
 
         fun submitTransaction() : CloseableHttpResponse {
             val httpPost = HttpPost("${serverUrl}/tx/${blockchainRIDHex}")
-            with (httpPost) {
-                entity = StringEntity(txHex)
-                setHeader("Accept", "application/json")
-                setHeader("Content-type", "application/json")
-            }
+            httpPost.entity = StringEntity(txHex)
             return httpClient.execute(httpPost)
         }
 
