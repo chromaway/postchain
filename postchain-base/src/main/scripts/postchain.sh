@@ -1,5 +1,7 @@
 #!/bin/bash
 
-scriptdir=`dirname $0`
+set -eu
 
-java -cp $scriptdir/${project.artifactId}-${project.version}-${executable-classifier}.jar:$APPCP ${main-class} $@
+scriptdir=`dirname ${BASH_SOURCE[0]}`
+
+${RELL_JAVA:-java} -cp "$scriptdir/lib/*" net.postchain.AppKt $@
