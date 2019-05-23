@@ -48,17 +48,17 @@ class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchai
         return doPostTransaction(builder, confirmationLevel)
     }
 
-    override fun query(name: String, args: List<Gtv>): Promise<Gtv, Exception> {
-        return task { doQuery(name, args) }
+    override fun query(name: String, gtv: Gtv): Promise<Gtv, Exception> {
+        return task { doQuery(name, gtv) }
     }
 
     override fun makeTransaction(): GTXTransactionBuilder {
         return GTXTransactionBuilder(this, blockchainRID, arrayOf(defaultSigner!!.pubkey))
     }
 
-    private fun doQuery(name: String, args: List<Gtv>) : Gtv {
+    private fun doQuery(name: String, gtv : Gtv) : Gtv {
         val httpPost = HttpPost("${serverUrl}/query_gtx/${blockchainRIDHex}")
-        val gtxQuery = GtvFactory.gtv(args)
+        val gtxQuery = GtvFactory.gtv(gtv)
         val jsonQuery = """{"queries" : ["${GtvEncoder.encodeGtv(gtxQuery).toHex()}"]}""".trimMargin()
         with (httpPost) {
             entity = StringEntity(jsonQuery)

@@ -43,7 +43,7 @@ interface PostchainClient {
     fun postTransaction(b: GTXDataBuilder, confirmationLevel: ConfirmationLevel): Promise<TransactionResult, Exception>
     fun postTransactionSync(b: GTXDataBuilder, confirmationLevel: ConfirmationLevel): TransactionResult
 
-    fun query(name: String, args: List<Gtv>): Promise<Gtv, Exception>
+    fun query(name: String, gtv: Gtv): Promise<Gtv, Exception>
 
 }
 
