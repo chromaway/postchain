@@ -37,6 +37,25 @@ class ReplicaSyncManager(
     private var parallelRequestsState = hashMapOf<Long, IssuedRequestTimer>()
     private var blocks = PriorityQueue<IncomingBlock>(parallelism)
 
+    override fun update() {
+        replicaLogger.logCurrentState(blockHeight, parallelRequestsState, blocks)
+        checkBlock()
+        processState()
+        dispatchMessages()
+    }
+
+    private fun checkBlock() {
+        if (blocks.peek() != null) {
+            blocks.peek().height.let {
+                when {
+                    it <= blockHeight -> blocks.remove()
+                    it == blockHeight + 1 -> commitBlock(blocks.remove().block)
+                    else -> Unit
+                }
+            }
+        }
+    }
+
     private fun commitBlock(block: BlockDataWithWitness) {
         blockDatabase.addBlock(block)
                 .run {
@@ -53,28 +72,8 @@ class ReplicaSyncManager(
                 }
     }
 
-    override fun update() {
-        replicaLogger.logCurrentState(blockHeight, parallelRequestsState, blocks)
-        checkBlock()
-        processState()
-        dispatchMessages()
-    }
-
-    private fun checkBlock() {
-        if (blocks.peek() != null) {
-            blocks.peek().height.let {
-                when {
-                    it <= blockHeight -> blocks.remove()
-                    it == blockHeight + 1 -> commitBlock(blocks.remove().block)
-                    else -> {
-                    }
-                }
-            }
-        }
-    }
-
     private fun processState() {
-        parallelRequestsState.entries.removeIf{ it.key <= blockHeight }
+        parallelRequestsState.entries.removeIf { it.key <= blockHeight }
         val maxElem = (parallelRequestsState.maxBy { it.key }?.key ?: blockHeight) + 1
         val diff = parallelism - parallelRequestsState.count()
         (maxElem until maxElem + diff).subtract(parallelRequestsState.keys).map { askForBlock(it) }
@@ -90,20 +89,20 @@ class ReplicaSyncManager(
 
     private fun askForBlock(height: Long) {
         nodesWithBlocks
-            .filter { it.value >= height }
-            .map { it.key }
-            .toMutableList()
-            .also {
-                it.shuffle()
-                if (it.count() >= nodePoolCount) {
-                    replicaLogger.askForBlock(height, blockHeight)
-                    val timer = parallelRequestsState[height]
-                            ?: IssuedRequestTimer(defaultBackoffDelta, Date().time)
-                    val backoffDelta = min((timer.backoffDelta.toDouble() * 1.1).toInt(), maxBackoffDelta)
-                    communicationManager.sendPacket(GetBlockAtHeight(height), it.first())
-                    parallelRequestsState[height] = timer.copy(backoffDelta = backoffDelta, lastSentTimestamp = Date().time)
+                .filter { it.value >= height }
+                .map { it.key }
+                .toMutableList()
+                .also {
+                    it.shuffle()
+                    if (it.count() >= nodePoolCount) {
+                        replicaLogger.askForBlock(height, blockHeight)
+                        val timer = parallelRequestsState[height]
+                                ?: IssuedRequestTimer(defaultBackoffDelta, Date().time)
+                        val backoffDelta = min((timer.backoffDelta.toDouble() * 1.1).toInt(), maxBackoffDelta)
+                        communicationManager.sendPacket(GetBlockAtHeight(height), it.first())
+                        parallelRequestsState[height] = timer.copy(backoffDelta = backoffDelta, lastSentTimestamp = Date().time)
+                    }
                 }
-            }
     }
 
     private fun doesQueueContainsBlock(height: Long) = blocks.firstOrNull { it.height == height } != null
@@ -116,7 +115,11 @@ class ReplicaSyncManager(
                 when (message) {
                     is CompleteBlock -> {
                         if (!doesQueueContainsBlock(message.height) && message.height > blockHeight) {
-                            blocks.offer(IncomingBlock(decodeBlockDataWithWitness(message, blockchainConfiguration), message.height))
+                            blocks.offer(
+                                    IncomingBlock(
+                                            decodeBlockDataWithWitness(message, blockchainConfiguration),
+                                            message.height)
+                            )
                         }
                     }
                     is Status -> {
@@ -129,6 +132,6 @@ class ReplicaSyncManager(
             } catch (e: Exception) {
                 replicaLogger.fatal("Couldn't handle message $message. Ignoring and continuing", e)
             }
-       }
+        }
     }
 }

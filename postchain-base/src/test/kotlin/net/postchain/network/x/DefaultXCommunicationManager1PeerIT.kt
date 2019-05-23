@@ -24,16 +24,16 @@ class DefaultXCommunicationManager1PeerIT {
 
     private val peerInfo = PeerInfo("localhost", 3331, pubKey)
 
-    private fun startTestContext(peers: Array<PeerInfo>, pkey: ByteArray = pubKey): EbftIntegrationTestContext {
+    private fun startTestContext(peers: Array<PeerInfo>, pubKey: ByteArray): EbftIntegrationTestContext {
         val peerConfiguration = BasePeerCommConfiguration(
-                peers, cryptoSystem, privKey, pkey)
+                peers, cryptoSystem, privKey, pubKey)
 
         return EbftIntegrationTestContext(peerConfiguration, blockchainRid)
     }
 
     @Test
     fun singlePeer_launched_successfully() {
-        startTestContext(arrayOf(peerInfo))
+        startTestContext(arrayOf(peerInfo), pubKey)
                 .use { context ->
                     context.communicationManager.init()
 
@@ -48,7 +48,7 @@ class DefaultXCommunicationManager1PeerIT {
 
     @Test(expected = UserMistake::class)
     fun singlePeer_launching_with_empty_peers_will_result_in_exception() {
-        startTestContext(arrayOf())
+        startTestContext(arrayOf(), pubKey)
                 .use {
                     it.communicationManager.init()
                 }

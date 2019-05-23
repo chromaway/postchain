@@ -1,8 +1,5 @@
 package net.postchain.integrationtest.multiple_chains
 
-import junitparams.JUnitParamsRunner
-import junitparams.Parameters
-import junitparams.naming.TestCaseName
 import mu.KLogging
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
