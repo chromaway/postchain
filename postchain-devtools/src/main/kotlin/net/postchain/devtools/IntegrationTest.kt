@@ -188,9 +188,9 @@ open class IntegrationTest {
     ): PostchainTestNode {
 
         val nodeConfigProvider = createNodeConfig(nodeIndex, nodeCount, nodeConfigFilename)
-        require(nodeConfigProvider.getConfiguration().activeChainIds.size == blockchainConfigFilenames.size) {
-            "The nodes config must have the same number of active chains as the number of specified BC config files."
-        }
+        //require(nodeConfigProvider.getConfiguration().activeChainIds.size == blockchainConfigFilenames.size) {
+        //    "The nodes config must have the same number of active chains as the number of specified BC config files."
+        //}
 
         val node = PostchainTestNode(nodeConfigProvider, preWipeDatabase)
                 .also { nodes.add(it) }
