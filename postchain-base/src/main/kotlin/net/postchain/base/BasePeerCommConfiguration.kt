@@ -2,6 +2,7 @@
 
 package net.postchain.base
 
+import net.postchain.common.toHex
 import net.postchain.core.UserMistake
 
 class BasePeerCommConfiguration(override val peerInfo: Array<PeerInfo>,
@@ -15,7 +16,7 @@ class BasePeerCommConfiguration(override val peerInfo: Array<PeerInfo>,
     }
 
     override fun myPeerInfo(): PeerInfo = resolvePeer(pubKey)
-            ?: throw UserMistake("PubKey is not inside peerInfo array")
+            ?: throw UserMistake("Unknown pubKey detected: ${pubKey.toHex()}")
 
     override fun signer(): Signer = cryptoSystem.makeSigner(pubKey, privKey)
 

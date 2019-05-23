@@ -129,6 +129,6 @@ class ReplicaSyncManager(
             } catch (e: Exception) {
                 replicaLogger.fatal("Couldn't handle message $message. Ignoring and continuing", e)
             }
-        }
+       }
     }
 }

@@ -51,7 +51,7 @@ class DefaultXCommunicationManager<PacketType>(
         }
 
         require(XPeerID(config.pubKey) != recipient) {
-            "CommunicationManager.sendPacket(): recipient must not be equal to pubKey ${config.pubKey.toHex()}"
+            "CommunicationManager.sendPacket(): sender can not be the recipient"
         }
 
         connectionManager.sendPacket(

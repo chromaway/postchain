@@ -4,7 +4,7 @@ import mu.KLogging
 import java.util.*
 
 
-class ReplicaTelemetry() {
+class ReplicaTelemetry {
     companion object : KLogging()
 
     enum class LogLevel {
@@ -15,7 +15,9 @@ class ReplicaTelemetry() {
         LogLevel.Error -> {
             if (throwable != null) {
                 logger.error(message, throwable)
-            } else logger.error(message)
+            } else {
+                logger.error(message)
+            }
         }
         LogLevel.Warning -> {
             logger.warn(message)
