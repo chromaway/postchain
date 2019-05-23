@@ -54,7 +54,7 @@ object GtvMLParser {
             it.key to parseJAXBElementToGtvML(it.value, params)
         }.toMap()
 
-        return GtvDictionary(parsedDict)
+        return GtvDictionary.build(parsedDict)
     }
 
     private fun parseParam(paramType: ParamType, params: Map<String, Gtv>): Gtv {

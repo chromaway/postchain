@@ -20,7 +20,7 @@ object GtvFactory {
             RawGtv.byteArrayChosen -> return GtvByteArray(r.byteArray)
             RawGtv.stringChosen -> return GtvString(r.string)
             RawGtv.integerChosen -> return GtvInteger(r.integer)
-            RawGtv.dictChosen -> return GtvDictionary(r.dict.associateBy({ it.name }, { wrapValue(it.value) }))
+            RawGtv.dictChosen -> return GtvDictionary.build(r.dict.associateBy({ it.name }, { wrapValue(it.value) }))
             RawGtv.arrayChosen -> return GtvArray(r.array.map { wrapValue(it) }.toTypedArray())
         }
         throw ProgrammerMistake("Unknown type identifier")
@@ -56,11 +56,11 @@ object GtvFactory {
     }
 
     fun gtv(vararg pairs: Pair<String, Gtv>): GtvDictionary {
-        return GtvDictionary(mapOf(*pairs))
+        return GtvDictionary.build(mapOf(*pairs))
     }
 
     fun gtv(dict: Map<String, Gtv>): GtvDictionary {
-        return GtvDictionary(dict)
+        return GtvDictionary.build(dict)
     }
 
 

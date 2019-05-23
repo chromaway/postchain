@@ -91,7 +91,7 @@ class BlockHeaderDataFactoryTest {
         val merkleRootHash = GtvByteArray(dummyRootHash)
         val timestamp = GtvInteger(dummyTimestamp)
         val height = GtvInteger(dummyHeight)
-        val extra= GtvDictionary(mapOf())
+        val extra= GtvDictionary.build(mapOf())
 
         return arrayOf(gtvBlockchainRid, previousBlockRid, merkleRootHash, timestamp, height, dependencies, extra)
 

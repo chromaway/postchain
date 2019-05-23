@@ -43,13 +43,13 @@ class GtvMLEncodeArraysTest {
                 GtvArray(arrayOf()),
                 GtvArray(arrayOf(
                         GtvArray(arrayOf(
-                                GtvDictionary(mapOf(
+                                GtvDictionary.build(mapOf(
                                         "0" to GtvNull,
                                         "1" to GtvString("1"),
                                         "2" to GtvInteger(2)
                                 ))
                         )),
-                        GtvDictionary(mapOf(
+                        GtvDictionary.build(mapOf(
                                 "array" to GtvArray(arrayOf(
                                         GtvInteger(1),
                                         GtvString("2")
@@ -58,8 +58,8 @@ class GtvMLEncodeArraysTest {
                                 "int" to GtvInteger(42)
                         ))
                 )),
-                GtvDictionary(mapOf()),
-                GtvDictionary(mapOf(
+                GtvDictionary.build(mapOf()),
+                GtvDictionary.build(mapOf(
                         "1" to GtvString("1"),
                         "2" to GtvInteger(42)
                 ))

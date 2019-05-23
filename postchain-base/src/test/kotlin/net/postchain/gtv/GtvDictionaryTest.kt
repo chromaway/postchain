@@ -16,7 +16,7 @@ class GtvDictionaryTest {
                 "b" to gtv(2),
                 "a" to gtv(1))
 
-        val dict = GtvDictionary(myMap)
+        val dict = GtvDictionary.build(myMap)
         val resList = mutableListOf<String>()
         dict.dict.forEach{
             resList.add(it.key)

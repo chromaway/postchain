@@ -4,27 +4,33 @@ import net.postchain.gtv.messages.DictPair
 import net.postchain.gtv.messages.Gtv as RawGtv
 import java.util.*
 
-data class GtvDictionary(private val initialDict: Map<String, Gtv>) : GtvCollection() {
+data class GtvDictionary private constructor (val dict: Map<String, Gtv>) : GtvCollection() {
 
     override val type = GtvType.DICT
 
-    val dict: Map<String, Gtv> =  makeSortedDict(initialDict)
+    /*
+    lateinit var dict: Map<String, Gtv>
+
+    constructor(unsorted: Map<String, Gtv>) : this() {
+        dict = makeSortedDict(unsorted)
+    }
+    */
 
     companion object {
 
         /**
-         * Sorts the keys and return a new LinkedHashMap
+         * Note: We use this constructor instead of the main constructor to make sure we never create an unsorted dict
          *
-         * Note: Used to make sure we never create an unsorted dict
+         * @return sorts the keys and return a dict
          */
-        fun makeSortedDict(unsorted: Map<String, Gtv>): LinkedHashMap<String, Gtv> {
+        fun build(unsorted: Map<String, Gtv>): GtvDictionary {
             val retMap = LinkedHashMap<String, Gtv>()
 
             for (key in unsorted.keys.sorted()) {
                 retMap[key] = unsorted[key]!!
             }
 
-            return retMap
+            return GtvDictionary(retMap)
         }
     }
 
