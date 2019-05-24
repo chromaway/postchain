@@ -13,8 +13,7 @@
     <name>Postchain Base</name>
     <url>http://postchain.org</url>
     <properties>
-        <main-class>&gt;net.postchain.AppKt</main-class>
-
+        <main-class>net.postchain.AppKt</main-class>
         <commons-dbutils.version>1.6</commons-dbutils.version>
         <postgresql.version>42.1.4</postgresql.version>
         <h2database.version>1.4.199</h2database.version>
