@@ -55,7 +55,7 @@ class GtvEncoderTest {
     @Test
     fun testGtvDictionary() {
         val map = mapOf(Pair("name", GtvString("postchain")))
-        val expected = GtvDictionary(map)
+        val expected = GtvDictionary.build(map)
         val b = GtvEncoder.encodeGtv(expected)
         val result = GtvDecoder.decodeGtv(b)
         assertEquals(expected, result)
