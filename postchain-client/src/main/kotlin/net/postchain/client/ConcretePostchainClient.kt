@@ -58,7 +58,7 @@ class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchai
 
     private fun doQuery(name: String, gtv : Gtv) : Gtv {
         val httpPost = HttpPost("${serverUrl}/query_gtx/${blockchainRIDHex}")
-        val gtxQuery = GtvFactory.gtv(gtv)
+        val gtxQuery = gtv(gtv(name), gtv)
         val jsonQuery = """{"queries" : ["${GtvEncoder.encodeGtv(gtxQuery).toHex()}"]}""".trimMargin()
         with (httpPost) {
             entity = StringEntity(jsonQuery)
@@ -76,10 +76,12 @@ class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchai
 
     private fun doPostTransaction(b: GTXDataBuilder, confirmationLevel: ConfirmationLevel) : TransactionResult {
         val txHex = b.serialize().toHex()
+        val txJson = """{"tx" : ${txHex}}"""
 
         fun submitTransaction() : CloseableHttpResponse {
             val httpPost = HttpPost("${serverUrl}/tx/${blockchainRIDHex}")
-            httpPost.entity = StringEntity(txHex)
+            httpPost.setHeader("Content-type", "application/json")
+            httpPost.entity = StringEntity(txJson)
             return httpClient.execute(httpPost)
         }
 
