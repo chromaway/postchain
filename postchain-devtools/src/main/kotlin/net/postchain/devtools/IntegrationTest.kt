@@ -145,14 +145,21 @@ open class IntegrationTest {
     }
 
     protected fun createMultipleChainNodesWithReplicas(
-            numberOfReplicas: Int,
-            count: Int,
+            nodeCount: Int,
+            replicaCount: Int,
             nodeConfigsFilenames: Array<String>,
             blockchainConfigsFilenames: Array<String>
     ): Array<PostchainTestNode> {
 
-        return Array(count) { createMultipleChainNode(it, count, nodeConfigsFilenames[it], *blockchainConfigsFilenames) }
-                .plus(Array(numberOfReplicas) { createMultipleChainNode(-it - 1, count, nodeConfigsFilenames[count], *blockchainConfigsFilenames) })
+        val validators = Array(nodeCount) {
+            createMultipleChainNode(it, nodeCount, nodeConfigsFilenames[it], *blockchainConfigsFilenames)
+        }
+
+        val replicas = Array(replicaCount) {
+            createMultipleChainNode(-it - 1, replicaCount, nodeConfigsFilenames[nodeCount + it], *blockchainConfigsFilenames)
+        }
+
+        return validators + replicas
     }
 
     private fun createMultipleChainNode(
@@ -203,6 +210,7 @@ open class IntegrationTest {
         if (baseConfig.getString("configuration.provider.node") == "legacy") {
             // append nodeIndex to schema name
             val dbSchema = baseConfig.getString("database.schema") + "_" + nodeIndex
+            // To convert negative indexes of replica nodes to 'replica_' prefixed indexes.
             baseConfig.setProperty("database.schema", dbSchema.replace("-", "replica_"))
 
             // peers
@@ -236,6 +244,7 @@ open class IntegrationTest {
                     Array(nodeCount) { PeerInfo("localhost", BASE_PORT + it, pubKey(it)) } +
                     Array(replicasCount) { PeerInfo("localhost", BASE_PORT - it - 1, pubKey(-it - 1)) }
         }
+
         return peerInfos!!
     }
 

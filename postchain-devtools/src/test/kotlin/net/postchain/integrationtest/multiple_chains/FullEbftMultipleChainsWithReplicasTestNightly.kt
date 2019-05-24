@@ -25,13 +25,13 @@ class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
     }
 
     @Test
-    @Parameters("5, 3, 10, 10")
-    @TestCaseName("[{index}] nodesCount: {0}, replicaCount: {1}, blocksCount: {2}, txPerBlock: {3}")
-    fun runFiveNodesWithYTxPerBlock(nodesCount: Int, replicaCount: Int, blocksCount: Int, txPerBlock: Int) {
+    @Parameters("5, 1, 3, 2")
+    @TestCaseName("[{index}] nodeCount: {0}, replicaCount: {1}, blockCount: {2}, txPerBlock: {3}")
+    fun runFiveNodesWithYTxPerBlock(nodeCount: Int, replicaCount: Int, blockCount: Int, txPerBlock: Int) {
         runXNodesWithReplicasWithYTxPerBlock(
-                nodesCount,
+                nodeCount,
                 replicaCount,
-                blocksCount,
+                blockCount,
                 txPerBlock,
                 arrayOf(
                         "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node0.properties",
@@ -48,22 +48,21 @@ class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
     }
 
     private fun runXNodesWithReplicasWithYTxPerBlock(
-            nodesCount: Int,
+            nodeCount: Int,
             replicaCount: Int,
-            blocksCount: Int,
+            blockCount: Int,
             txPerBlock: Int,
             nodeConfigsFilenames: Array<String>,
             blockchainConfigsFilenames: Array<String>
     ) {
-
         logger.info {
-            "runXNodesWithYTxPerBlock(): " +
-                    "nodesCount: $nodesCount, blocksCount: $blocksCount, txPerBlock: $txPerBlock"
+            "runXNodesWithReplicasWithYTxPerBlock(): " +
+                    "nodeCount: $nodeCount, replicaCount: $replicaCount, blockCount: $blockCount, txPerBlock: $txPerBlock"
         }
 
         val chains = arrayOf(1L, 2L)
-        configOverrides.setProperty("testpeerinfos", createPeerInfosWithReplicas(nodesCount, replicaCount))
-        createMultipleChainNodesWithReplicas(replicaCount, nodesCount, nodeConfigsFilenames, blockchainConfigsFilenames)
+        configOverrides.setProperty("testpeerinfos", createPeerInfosWithReplicas(nodeCount, replicaCount))
+        createMultipleChainNodesWithReplicas(nodeCount, replicaCount, nodeConfigsFilenames, blockchainConfigsFilenames)
 
         // Asserting all chains are started
         await().atMost(TEN_SECONDS)
@@ -75,7 +74,7 @@ class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
 
         // Enqueueing txs
         var txId = 0
-        for (block in 0 until blocksCount) {
+        for (block in 0 until blockCount) {
             (0 until txPerBlock).forEach { _ ->
                 val currentTxId = txId++
                 nodes.dropLast(replicaCount).forEach { node ->
@@ -96,7 +95,7 @@ class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
         }
 
         // Assertions
-        val expectedHeight = (blocksCount - 1).toLong()
+        val expectedHeight = (blockCount - 1).toLong()
         nodes.forEachIndexed { nodeId, node ->
             chains.forEach { chain ->
                 logger.info { "Assertions: node: $nodeId, chain: $chain, expectedHeight: $expectedHeight" }
