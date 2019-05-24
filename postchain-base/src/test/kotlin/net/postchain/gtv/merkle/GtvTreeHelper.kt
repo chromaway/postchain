@@ -46,7 +46,7 @@ object GtvTreeHelper {
             val content = GtvInteger(ints[i].toLong())
             dict.set(key, content)
         }
-        return GtvDictionary(dict)
+        return GtvDictionary.build(dict)
 
     }
 }

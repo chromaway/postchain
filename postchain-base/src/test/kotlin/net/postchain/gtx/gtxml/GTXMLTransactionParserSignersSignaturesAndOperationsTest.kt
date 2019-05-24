@@ -244,7 +244,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                                                 GtvString("foo"),
                                                 GtvString("bar")
                                         )),
-                                        GtvDictionary(mapOf(
+                                        GtvDictionary.build(mapOf(
                                                 "key2" to GtvString("42"),
                                                 "key1" to GtvInteger(42),
                                                 "key3" to GtvArray(arrayOf(
@@ -268,7 +268,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                                         GtvString("foo"),
                                         GtvString("bar")
                                 )),
-                                GtvDictionary(mapOf(
+                                GtvDictionary.build(mapOf(
                                         "key1" to GtvInteger(42),
                                         "key2" to GtvString("42"),
                                         "key3" to GtvArray(arrayOf(
