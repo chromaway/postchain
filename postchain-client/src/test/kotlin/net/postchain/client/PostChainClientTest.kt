@@ -22,17 +22,13 @@ class PostChainClientTest : IntegrationTest() {
     private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
     private val blockchainRIDBytes = blockchainRID.hexStringToByteArray()
     private val privateKey = "03a301697bdfcd704313ba48e51d567543f2a182031efd6915ddc07bbcc4e16070"
-    val defaultSigner = DefaultSigner(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)), KeyPairHelper.pubKey(0))
-    val postchainClientFactory =  PostchainClientFactory()
+    private val defaultSigner = DefaultSigner(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)), KeyPairHelper.pubKey(0))
+    private val postchainClientFactory =  PostchainClientFactory()
 
-    fun postTransaction(confirmationLevel: ConfirmationLevel) : TransactionResult {
-        val nodesCount = 1
-        val blocksCount = 1
-        val txPerBlock = 1
+    fun postTransaction(confirmationLevel: ConfirmationLevel, nodesCount: Int, configFileName: String) : TransactionResult {
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         configOverrides.setProperty("api.port", 0)
-        createNodes(nodesCount, "/net/postchain/api/blockchain_config_1.xml")
-        buildBlockAndCommit(nodes[0])
+        createNodes(nodesCount, configFileName)
         val resolver = postchainClientFactory.makeSimpleNodeResolver("http://127.0.0.1:${nodes[0].getRestApiHttpPort()}")
 
         val b = GTXDataBuilder(blockchainRIDBytes, arrayOf(KeyPairHelper.pubKey(0)), cryptoSystem)
@@ -46,8 +42,14 @@ class PostChainClientTest : IntegrationTest() {
 
     @Test
     fun testPostTransactionApiConfirmLevelNoWait() {
-        val result = postTransaction(ConfirmationLevel.NO_WAIT)
+        val result = postTransaction(ConfirmationLevel.NO_WAIT, 1, "/net/postchain/api/blockchain_config_1.xml")
         assertEquals(result.status, TransactionStatus.WAITING)
+    }
+
+    @Test
+    fun testPostTransactionApiConfirmLevelUnverified() {
+        val result = postTransaction(ConfirmationLevel.UNVERIFIED, 3,"/net/postchain/api/blockchain_config.xml")
+        assertEquals(result.status, TransactionStatus.CONFIRMED)
     }
 
     @Test
@@ -58,7 +60,7 @@ class PostChainClientTest : IntegrationTest() {
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         configOverrides.setProperty("api.port", 0)
         createNodes(nodesCount, "/net/postchain/api/blockchain_config_1.xml")
-        buildBlockAndCommit(nodes[0])
+        //buildBlockAndCommit(nodes[0])
 
         val resolver = postchainClientFactory.makeSimpleNodeResolver("http://127.0.0.1:${nodes[0].getRestApiHttpPort()}")
 

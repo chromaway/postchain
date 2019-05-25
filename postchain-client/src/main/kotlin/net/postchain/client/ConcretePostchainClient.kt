@@ -1,5 +1,8 @@
 package net.postchain.client.net.postchain.client
 
+import com.google.gson.Gson
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
 import net.postchain.api.rest.json.JsonFactory
 import net.postchain.api.rest.model.ApiStatus
@@ -19,6 +22,7 @@ import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClients
 import java.lang.Exception
 import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtx.GTXTransactionFactory
 import org.spongycastle.crypto.tls.ConnectionEnd.client
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
@@ -77,6 +81,7 @@ class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchai
     private fun doPostTransaction(b: GTXDataBuilder, confirmationLevel: ConfirmationLevel) : TransactionResult {
         val txHex = b.serialize().toHex()
         val txJson = """{"tx" : ${txHex}}"""
+        val txHashHex = b.getDigestForSigning().toHex()
 
         fun submitTransaction() : CloseableHttpResponse {
             val httpPost = HttpPost("${serverUrl}/tx/${blockchainRIDHex}")
@@ -98,14 +103,16 @@ class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchai
 
             ConfirmationLevel.UNVERIFIED -> {
                 submitTransaction()
-                val httpGet = HttpGet("${serverUrl}/tx/${blockchainRIDHex}/${txHex}/status")
+                val httpGet = HttpGet("${serverUrl}/tx/${blockchainRIDHex}/${txHashHex}/status")
                 httpGet.setHeader("Content-type", "application/json")
 
                 // keep polling till getting Confirmed or Rejected
                 while (true) {
                     httpClient.execute(httpGet).entity?.let { e ->
                         val resp = parseResponse(e.content)
-                        val status = gson.fromJson(resp, ApiStatus::class.java).status
+                        val jsonObject = Gson().fromJson(resp, JsonObject::class.java)
+                        val status = jsonObject.get("status").asString
+                        println("Status: ${status}")
                         when (status.toLowerCase()) {
                             "confirmed" -> {
                                 return TransactionResultImpl(TransactionStatus.CONFIRMED)
