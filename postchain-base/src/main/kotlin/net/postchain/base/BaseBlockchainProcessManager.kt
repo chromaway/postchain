@@ -9,24 +9,30 @@ import net.postchain.core.*
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-class BaseBlockchainProcessManager(
-        private val blockchainInfrastructure: BlockchainInfrastructure,
-        private val nodeConfigProvider: NodeConfigurationProvider,
-        private val blockchainConfigProvider: BlockchainConfigurationProvider
+open class BaseBlockchainProcessManager(
+        protected val blockchainInfrastructure: BlockchainInfrastructure,
+        protected val nodeConfigProvider: NodeConfigurationProvider,
+        protected val blockchainConfigProvider: BlockchainConfigurationProvider
 ) : BlockchainProcessManager {
 
     val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration(), NODE_ID_TODO)
     private val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
-    private val executor = Executors.newSingleThreadExecutor()
+    protected val executor = Executors.newSingleThreadScheduledExecutor()
 
     companion object: KLogging()
+
+    override fun startBlockchainAsync(chainId: Long) {
+        executor.execute {
+            startBlockchain(chainId)
+        }
+    }
 
     override fun startBlockchain(chainId: Long) {
         logger.info("startBlockchain() - start")
         stopBlockchain(chainId)
 
         withReadConnection(storage, chainId) { eContext ->
-            val configuration = blockchainConfigProvider.getConfiguration(chainId)
+            val configuration = blockchainConfigProvider.getConfiguration(eContext, chainId)
             if (configuration != null) {
                 val blockchainRID = DatabaseAccess.of(eContext).getBlockchainRID(eContext)!! // TODO: [et]: Fix Kotlin NPE
                 val context = BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null)
