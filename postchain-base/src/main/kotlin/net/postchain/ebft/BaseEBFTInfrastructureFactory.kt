@@ -4,12 +4,17 @@ import net.postchain.base.BaseApiInfrastructure
 import net.postchain.base.BaseBlockchainInfrastructure
 import net.postchain.base.BaseBlockchainProcessManager
 import net.postchain.config.blockchain.BlockchainConfigurationProvider
+import net.postchain.config.blockchain.BlockchainConfigurationProviderFactory
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.BlockchainInfrastructure
 import net.postchain.core.BlockchainProcessManager
 import net.postchain.core.InfrastructureFactory
 
-class BaseEBFTInfrastructureFactory : InfrastructureFactory {
+open class BaseEBFTInfrastructureFactory : InfrastructureFactory {
+
+    override fun makeBlockchainConfigurationProvider(nodeConfigProvider: NodeConfigurationProvider): BlockchainConfigurationProvider {
+        return BlockchainConfigurationProviderFactory.createProvider(nodeConfigProvider)
+    }
 
     override fun makeBlockchainInfrastructure(nodeConfigProvider: NodeConfigurationProvider): BlockchainInfrastructure {
         return BaseBlockchainInfrastructure(
@@ -20,13 +25,13 @@ class BaseEBFTInfrastructureFactory : InfrastructureFactory {
 
     override fun makeProcessManager(
             nodeConfigProvider: NodeConfigurationProvider,
-            blockchainConfig: BlockchainConfigurationProvider,
             blockchainInfrastructure: BlockchainInfrastructure
     ): BlockchainProcessManager {
 
         return BaseBlockchainProcessManager(
                 blockchainInfrastructure,
                 nodeConfigProvider,
-                blockchainConfig)
+                makeBlockchainConfigurationProvider(nodeConfigProvider)
+        )
     }
 }

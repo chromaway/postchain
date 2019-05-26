@@ -19,9 +19,9 @@ interface ApiInfrastructure : Shutdownable {
 }
 
 interface InfrastructureFactory {
+    fun makeBlockchainConfigurationProvider(nodeConfigProvider: NodeConfigurationProvider): BlockchainConfigurationProvider
     fun makeBlockchainInfrastructure(nodeConfigProvider: NodeConfigurationProvider): BlockchainInfrastructure
     fun makeProcessManager(nodeConfigProvider: NodeConfigurationProvider,
-                           blockchainConfig: BlockchainConfigurationProvider,
                            blockchainInfrastructure: BlockchainInfrastructure
     ): BlockchainProcessManager
 }
