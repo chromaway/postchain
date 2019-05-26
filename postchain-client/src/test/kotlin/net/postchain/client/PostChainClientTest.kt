@@ -25,47 +25,59 @@ class PostChainClientTest : IntegrationTest() {
     private val defaultSigner = DefaultSigner(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)), KeyPairHelper.pubKey(0))
     private val postchainClientFactory =  PostchainClientFactory()
 
-    fun postTransaction(confirmationLevel: ConfirmationLevel, nodesCount: Int, configFileName: String) : TransactionResult {
+    private fun createNodesTest(nodesCount: Int, configFileName: String) {
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         configOverrides.setProperty("api.port", 0)
         createNodes(nodesCount, configFileName)
-        val resolver = postchainClientFactory.makeSimpleNodeResolver("http://127.0.0.1:${nodes[0].getRestApiHttpPort()}")
+    }
 
+    private fun createGtxDataBuiler() :GTXDataBuilder {
         val b = GTXDataBuilder(blockchainRIDBytes, arrayOf(KeyPairHelper.pubKey(0)), cryptoSystem)
         b.addOperation("gtx_test", arrayOf(GtvFactory.gtv(1L), GtvFactory.gtv("hello${Random().nextLong()}")))
         b.finish()
         b.sign(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)))
+        return b
+    }
 
-        val client = postchainClientFactory.getClient(resolver, blockchainRIDBytes, defaultSigner)
-        return client.postTransactionSync(b, confirmationLevel)
+    private fun createPostChainClientTest() : PostchainClient {
+        val resolver = postchainClientFactory.makeSimpleNodeResolver("http://127.0.0.1:${nodes[0].getRestApiHttpPort()}")
+        return postchainClientFactory.getClient(resolver, blockchainRIDBytes, defaultSigner)
     }
 
     @Test
     fun testPostTransactionApiConfirmLevelNoWait() {
-        val result = postTransaction(ConfirmationLevel.NO_WAIT, 1, "/net/postchain/api/blockchain_config_1.xml")
+        createNodesTest(1, "/net/postchain/api/blockchain_config_1.xml")
+        val b = createGtxDataBuiler()
+        val client = createPostChainClientTest()
+        val result = client.postTransactionSync(b, ConfirmationLevel.NO_WAIT)
         assertEquals(result.status, TransactionStatus.WAITING)
     }
 
     @Test
+    fun testPostTransactionApiConfirmLevelNoWaitPromise() {
+        createNodesTest(1, "/net/postchain/api/blockchain_config_1.xml")
+        val b = createGtxDataBuiler()
+        val client = createPostChainClientTest()
+        client.postTransaction(b, ConfirmationLevel.NO_WAIT).success {
+            it -> assertEquals(it.status, TransactionStatus.WAITING)
+        }
+    }
+
+    @Test
     fun testPostTransactionApiConfirmLevelUnverified() {
-        val result = postTransaction(ConfirmationLevel.UNVERIFIED, 3,"/net/postchain/api/blockchain_config.xml")
+        createNodesTest(3, "/net/postchain/api/blockchain_config.xml")
+        val b = createGtxDataBuiler()
+        val client = createPostChainClientTest()
+        val result = client.postTransactionSync(b, ConfirmationLevel.UNVERIFIED)
         assertEquals(result.status, TransactionStatus.CONFIRMED)
     }
 
     @Test
     fun testQueryGtxClientApi() {
-        val nodesCount = 1
-        val blocksCount = 1
-        val txPerBlock = 1
-        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-        configOverrides.setProperty("api.port", 0)
-        createNodes(nodesCount, "/net/postchain/api/blockchain_config_1.xml")
-        //buildBlockAndCommit(nodes[0])
-
-        val resolver = postchainClientFactory.makeSimpleNodeResolver("http://127.0.0.1:${nodes[0].getRestApiHttpPort()}")
-
-        val client = postchainClientFactory.getClient(resolver, blockchainRIDBytes, defaultSigner)
-        client.query("gtx_test_get_value", gtv("txRID" to gtv("abcd")))
-
+        createNodesTest(1, "/net/postchain/api/blockchain_config_1.xml")
+        val b = createGtxDataBuiler()
+        val client = createPostChainClientTest()
+        client.postTransactionSync(b, ConfirmationLevel.NO_WAIT)
+        val gtv = client.query("gtx_test_get_value", gtv("txRID" to gtv(b.getDigestForSigning().toHex())))
     }
 }
