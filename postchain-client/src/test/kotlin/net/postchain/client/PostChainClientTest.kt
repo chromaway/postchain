@@ -64,6 +64,16 @@ class PostChainClientTest : IntegrationTest() {
     }
 
     @Test
+    fun testPostTransactionApiConfirmLevelUnverifiedPromise() {
+        createNodesTest(3, "/net/postchain/api/blockchain_config.xml")
+        val b = createGtxDataBuiler()
+        val client = createPostChainClientTest()
+        client.postTransaction(b, ConfirmationLevel.UNVERIFIED).success {
+            it -> assertEquals(it.status, TransactionStatus.CONFIRMED)
+        }
+    }
+
+    @Test
     fun testPostTransactionApiConfirmLevelUnverified() {
         createNodesTest(3, "/net/postchain/api/blockchain_config.xml")
         val b = createGtxDataBuiler()

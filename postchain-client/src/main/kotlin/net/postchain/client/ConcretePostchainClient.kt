@@ -23,13 +23,17 @@ import org.apache.http.impl.client.HttpClients
 import java.lang.Exception
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtx.GTXTransactionFactory
+import nl.komponents.kovenant.deferred
 import org.spongycastle.crypto.tls.ConnectionEnd.client
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
+import org.spongycastle.util.encoders.UrlBase64
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.lang.reflect.Type
+import java.net.HttpURLConnection
+import java.net.URL
 
 
 class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchainRID: ByteArray, val defaultSigner: DefaultSigner?) :PostchainClient
@@ -45,7 +49,13 @@ class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchai
     }
 
     override fun postTransaction(builder: GTXDataBuilder, confirmationLevel: ConfirmationLevel): Promise<TransactionResult, Exception> {
-        return task { doPostTransaction(builder, confirmationLevel) }
+        val def = deferred<TransactionResult, Exception>()
+        try {
+            def.resolve(doPostTransaction(builder, confirmationLevel))
+        } catch (e: Exception) {
+            def.reject(e)
+        }
+        return def.promise
     }
 
     override fun postTransactionSync(builder: GTXDataBuilder, confirmationLevel: ConfirmationLevel): TransactionResult {
@@ -53,7 +63,13 @@ class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchai
     }
 
     override fun query(name: String, gtv: Gtv): Promise<Gtv, Exception> {
-        return task { doQuery(name, gtv) }
+        val def = deferred<Gtv, Exception>()
+        try {
+            def.resolve(doQuery(name, gtv))
+        } catch (e: Exception) {
+            def.reject(e)
+        }
+        return def.promise
     }
 
     override fun makeTransaction(): GTXTransactionBuilder {
