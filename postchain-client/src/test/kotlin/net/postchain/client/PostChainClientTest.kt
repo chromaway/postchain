@@ -24,6 +24,7 @@ class PostChainClientTest : IntegrationTest() {
     private val privateKey = "03a301697bdfcd704313ba48e51d567543f2a182031efd6915ddc07bbcc4e16070"
     private val defaultSigner = DefaultSigner(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)), KeyPairHelper.pubKey(0))
     private val postchainClientFactory =  PostchainClientFactory()
+    private val randomStr = "hello${Random().nextLong()}"
 
     private fun createNodesTest(nodesCount: Int, configFileName: String) {
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
@@ -33,7 +34,8 @@ class PostChainClientTest : IntegrationTest() {
 
     private fun createGtxDataBuiler() :GTXDataBuilder {
         val b = GTXDataBuilder(blockchainRIDBytes, arrayOf(KeyPairHelper.pubKey(0)), cryptoSystem)
-        b.addOperation("gtx_test", arrayOf(GtvFactory.gtv(1L), GtvFactory.gtv("hello${Random().nextLong()}")))
+
+        b.addOperation("gtx_test", arrayOf(gtv(1L), gtv(randomStr)))
         b.finish()
         b.sign(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)))
         return b
@@ -59,17 +61,7 @@ class PostChainClientTest : IntegrationTest() {
         val b = createGtxDataBuiler()
         val client = createPostChainClientTest()
         client.postTransaction(b, ConfirmationLevel.NO_WAIT).success {
-            it -> assertEquals(it.status, TransactionStatus.WAITING)
-        }
-    }
-
-    @Test
-    fun testPostTransactionApiConfirmLevelUnverifiedPromise() {
-        createNodesTest(3, "/net/postchain/api/blockchain_config.xml")
-        val b = createGtxDataBuiler()
-        val client = createPostChainClientTest()
-        client.postTransaction(b, ConfirmationLevel.UNVERIFIED).success {
-            it -> assertEquals(it.status, TransactionStatus.CONFIRMED)
+            resp -> assertEquals(resp.status, TransactionStatus.WAITING)
         }
     }
 
@@ -83,11 +75,23 @@ class PostChainClientTest : IntegrationTest() {
     }
 
     @Test
-    fun testQueryGtxClientApi() {
-        createNodesTest(1, "/net/postchain/api/blockchain_config_1.xml")
+    fun testPostTransactionApiConfirmLevelUnverifiedPromise() {
+        createNodesTest(3, "/net/postchain/api/blockchain_config.xml")
         val b = createGtxDataBuiler()
         val client = createPostChainClientTest()
-        client.postTransactionSync(b, ConfirmationLevel.NO_WAIT)
-        val gtv = client.query("gtx_test_get_value", gtv("txRID" to gtv(b.getDigestForSigning().toHex())))
+        client.postTransaction(b, ConfirmationLevel.UNVERIFIED).success {
+            resp -> assertEquals(resp.status, TransactionStatus.CONFIRMED)
+        }
+    }
+
+    @Test
+    fun testQueryGtxClientApi() {
+        createNodesTest(3, "/net/postchain/api/blockchain_config.xml")
+        val b = createGtxDataBuiler()
+        val client = createPostChainClientTest()
+        client.postTransactionSync(b, ConfirmationLevel.UNVERIFIED)
+        client.query("gtx_test_get_value", gtv("txRID" to gtv(b.getDigestForSigning().toHex()))).success {
+            resp -> assertEquals(resp.asString(), randomStr)
+        }
     }
 }
