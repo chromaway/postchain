@@ -1,26 +1,37 @@
 package net.postchain.network.x
 
 import net.postchain.base.PeerCommConfiguration
-import net.postchain.base.PeerInfo
 import net.postchain.base.SECP256K1CryptoSystem
-import net.postchain.ebft.EbftPacketConverter
+import net.postchain.ebft.EbftPacketDecoder
+import net.postchain.ebft.EbftPacketDecoderFactory
+import net.postchain.ebft.EbftPacketEncoder
+import net.postchain.ebft.EbftPacketEncoderFactory
+import net.postchain.ebft.message.EbftMessage
 import net.postchain.network.netty2.NettyConnectorFactory
 import java.io.Closeable
 
 class EbftIntegrationTestContext(
-        peerInfo: PeerInfo,
-        config: PeerCommConfiguration
+        config: PeerCommConfiguration,
+        blockchainRid: ByteArray
 ) : Closeable {
 
     val chainId = 1L
-    private val packetConverter = EbftPacketConverter(config)
-    private val connectorFactory = NettyConnectorFactory<EbftPacketConverter>()
+    private val connectorFactory = NettyConnectorFactory<EbftMessage>()
 
     val connectionManager = DefaultXConnectionManager(
-            connectorFactory, peerInfo, packetConverter, SECP256K1CryptoSystem())
+            connectorFactory,
+            config,
+            EbftPacketEncoderFactory(),
+            EbftPacketDecoderFactory(),
+            SECP256K1CryptoSystem())
 
     val communicationManager = DefaultXCommunicationManager(
-            connectionManager, config, chainId, packetConverter)
+            connectionManager,
+            config,
+            chainId,
+            blockchainRid,
+            EbftPacketEncoder(config, blockchainRid),
+            EbftPacketDecoder(config))
 
     fun shutdown() {
         communicationManager.shutdown()

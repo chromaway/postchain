@@ -3,29 +3,34 @@ package net.postchain.network.x
 import mu.KLogging
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerInfo
-import net.postchain.core.NODE_ID_READ_ONLY
-import net.postchain.core.Shutdownable
-import net.postchain.core.byteArrayKeyOf
+import net.postchain.base.peerId
+import net.postchain.common.toHex
 import net.postchain.network.CommunicationManager
-import net.postchain.network.PacketConverter
+import net.postchain.network.XPacketDecoder
+import net.postchain.network.XPacketEncoder
 
 class DefaultXCommunicationManager<PacketType>(
         val connectionManager: XConnectionManager,
         val config: PeerCommConfiguration,
         val chainID: Long,
-        val packetConverter: PacketConverter<PacketType>
-) : CommunicationManager<PacketType>, Shutdownable {
+        val blockchainRID: ByteArray,
+        private val packetEncoder: XPacketEncoder<PacketType>,
+        private val packetDecoder: XPacketDecoder<PacketType>
+) : CommunicationManager<PacketType> {
 
     companion object : KLogging()
 
-    private var inboundPackets = mutableListOf<Pair<Int, PacketType>>()
+    private var inboundPackets = mutableListOf<Pair<XPeerID, PacketType>>()
 
     override fun init() {
         val peerConfig = XChainPeerConfiguration(
                 chainID,
+                blockchainRID,
                 config,
                 { data: ByteArray, peerID: XPeerID -> decodeAndEnqueue(peerID, data) },
-                packetConverter)
+                packetEncoder,
+                packetDecoder
+        )
 
         connectionManager.connectChain(peerConfig, true)
     }
@@ -33,35 +38,31 @@ class DefaultXCommunicationManager<PacketType>(
     override fun peers(): Array<PeerInfo> = config.peerInfo
 
     @Synchronized
-    override fun getPackets(): MutableList<Pair<Int, PacketType>> {
+    override fun getPackets(): MutableList<Pair<XPeerID, PacketType>> {
         val currentQueue = inboundPackets
         inboundPackets = mutableListOf()
         return currentQueue
     }
 
-    override fun sendPacket(packet: PacketType, recipients: Set<Int>) {
-        require(recipients.size == 1) {
-            "CommunicationManager.sendPacket(): multiple recipients are not allowed"
+    override fun sendPacket(packet: PacketType, recipient: XPeerID) {
+        val peers: List<XPeerID> = config.peerInfo.map(PeerInfo::peerId)
+        require(recipient in peers) {
+            "CommunicationManager.sendPacket(): recipient not found among peers"
         }
 
-        require(recipients.first() in config.peerInfo.indices) {
-            "CommunicationManager.sendPacket(): recipient must be in range ${config.peerInfo.indices}"
+        require(XPeerID(config.pubKey) != recipient) {
+            "CommunicationManager.sendPacket(): sender can not be the recipient"
         }
 
-        require(recipients.first() != config.myIndex) {
-            "CommunicationManager.sendPacket(): recipient must not be equal to myIndex ${config.myIndex}"
-        }
-
-        val peerIdx = recipients.first()
         connectionManager.sendPacket(
-                { packetConverter.encodePacket(packet) },
+                { packetEncoder.encodePacket(packet) },
                 chainID,
-                config.peerInfo[peerIdx].pubKey.byteArrayKeyOf())
+                recipient)
     }
 
     override fun broadcastPacket(packet: PacketType) {
         connectionManager.broadcastPacket(
-                { packetConverter.encodePacket(packet) },
+                { packetEncoder.encodePacket(packet) },
                 chainID)
     }
 
@@ -72,19 +73,9 @@ class DefaultXCommunicationManager<PacketType>(
     private fun decodeAndEnqueue(peerID: XPeerID, packet: ByteArray) {
         // packet decoding should not be synchronized so we can make
         // use of parallel processing in different threads
-        val decodedPacket = packetConverter.decodePacket(peerID.byteArray, packet)
+        val decodedPacket = packetDecoder.decodePacket(peerID.byteArray, packet)
         synchronized(this) {
-            inboundPackets.add(
-                    getPeerIndex(peerID) to decodedPacket)
+            inboundPackets.add(peerID to decodedPacket)
         }
-    }
-
-    private fun getPeerIndex(peerID: XPeerID): Int {
-        for (pi in config.peerInfo.withIndex()) {
-            if (pi.value.pubKey.contentEquals(peerID.byteArray)) {
-                return pi.index
-            }
-        }
-        return NODE_ID_READ_ONLY
     }
 }

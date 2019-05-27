@@ -96,7 +96,7 @@ class BaseBlockManager(
                 // we won't build a block until we have at least three transactions
                 // in the transaction queue. Or it will only build a block every 10 minutes.
                 // Be careful not to have a BlockBuildingStrategy that conflicts with the
-                // RevoltTracker of SyncManager.
+                // RevoltTracker of ValidatorSyncManager.
                 if (!blockStrategy.shouldBuildBlock()) {
                     return
                 }

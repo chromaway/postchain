@@ -1,22 +1,21 @@
 package net.postchain.network.netty2
 
-import net.postchain.base.CryptoSystem
 import net.postchain.base.PeerInfo
-import net.postchain.network.PacketConverter
+import net.postchain.network.XPacketDecoder
 import net.postchain.network.x.XConnector
 import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XConnectorFactory
 
-class NettyConnectorFactory<PC : PacketConverter<*>> : XConnectorFactory<PC> {
+class NettyConnectorFactory<PacketType> : XConnectorFactory<PacketType> {
 
     override fun createConnector(
             peerInfo: PeerInfo,
-            packetConverter: PC,
-            eventReceiver: XConnectorEvents,
-            cryptoSystem: CryptoSystem?): XConnector {
+            packetDecoder: XPacketDecoder<PacketType>,
+            eventReceiver: XConnectorEvents
+    ): XConnector<PacketType> {
 
-        return NettyConnector(packetConverter, eventReceiver).apply {
-            init(peerInfo)
+        return NettyConnector<PacketType>(eventReceiver).apply {
+            init(peerInfo, packetDecoder)
         }
     }
 }

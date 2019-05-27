@@ -4,15 +4,17 @@ import com.google.gson.GsonBuilder
 import mu.KLogging
 import net.postchain.base.gtxml.TestType
 import net.postchain.common.hexStringToByteArray
-import net.postchain.config.CommonsConfigurationFactory
+import net.postchain.config.app.AppConfig
+import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.core.UserMistake
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
-import net.postchain.gtx.GTXNull
 import net.postchain.gtx.gtx
 import net.postchain.gtx.gtxml.GTXMLTransactionParser
+import net.postchain.gtx.gtxml.GTXMLValueParser
 import net.postchain.gtx.gtxml.TransactionContext
+import java.io.File
 import java.io.StringReader
 import javax.xml.bind.JAXBContext
 import javax.xml.bind.JAXBElement
@@ -27,8 +29,8 @@ class TestLauncher : IntegrationTest() {
 
     private val jaxbContext = JAXBContext.newInstance("net.postchain.base.gtxml")
 
-    class TransactionFailure (val blockHeight: Long, val txIdx: Long,
-                              val exception: Exception?)
+    class TransactionFailure(val blockHeight: Long, val txIdx: Long,
+                             val exception: Exception?)
 
     class TestOutput(
             val passed: Boolean,
@@ -42,47 +44,60 @@ class TestLauncher : IntegrationTest() {
         }
     }
 
-    fun createTestNode(configFile: String): SingleChainTestNode {
-        val config = CommonsConfigurationFactory.readFromFile(configFile)
-        // TODO: Fix this hack
-        config.setProperty("api.port", -1) // FYI: Disabling Rest API in test mode
-        config.setProperty("node.0.id", config.getProperty("test.node.0.id"))
-        config.setProperty("node.0.host", config.getProperty("test.node.0.host"))
-        config.setProperty("node.0.port", config.getProperty("test.node.0.port"))
-        config.setProperty("node.0.pubkey", config.getProperty("test.node.0.pubkey"))
-        config.setProperty("database.schema", config.getProperty("test.database.schema"))
+    private fun createTestNode(configFile: String, blockchainRid: ByteArray, blockchainConfigFile: String): PostchainTestNode {
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
+                AppConfig.fromPropertiesFile(configFile))
 
-        return SingleChainTestNode(config, GTXNull /*DEFAULT_BLOCKCHAIN_CONFIG_FILE*/).apply {
+        /*
+        // TODO: Fix this hack
+        nodeConfig.setProperty("api.port", -1) // FYI: Disabling Rest API in test mode
+        nodeConfig.setProperty("node.0.id", nodeConfig.getProperty("test.node.0.id"))
+        nodeConfig.setProperty("node.0.host", nodeConfig.getProperty("test.node.0.host"))
+        nodeConfig.setProperty("node.0.port", nodeConfig.getProperty("test.node.0.port"))
+        nodeConfig.setProperty("node.0.pubkey", nodeConfig.getProperty("test.node.0.pubkey"))
+        nodeConfig.setProperty("database.schema", nodeConfig.getProperty("test.database.schema"))
+        */
+
+        val blockchainConfig = GTXMLValueParser.parseGTXMLValue(
+                File(blockchainConfigFile).readText())
+
+        val chainId = nodeConfigProvider.getConfiguration().activeChainIds.first().toLong()
+
+        return PostchainTestNode(nodeConfigProvider, true).apply {
+            addBlockchain(chainId, blockchainRid, blockchainConfig)
             startBlockchain()
             nodes.add(this)
         }
     }
 
-    data class EnqueuedTx (
+    data class EnqueuedTx(
             val txIdx: Long,
             val txRID: ByteArray,
             val isFailure: Boolean
     )
 
     fun runXMLGTXTests(xml: String,
-                       blockchainRID: String?,
-                       configFile: String? = null
+                       blockchainRID: String,
+                       nodeConfigFile: String? = null,
+                       blockchainConfigFile: String? = null
     ): TestOutput {
         try {
-            return _runXMLGTXTests(xml, blockchainRID, configFile)
+            return _runXMLGTXTests(xml, blockchainRID, nodeConfigFile, blockchainConfigFile)
         } finally {
             tearDown()
         }
     }
 
     private fun _runXMLGTXTests(xml: String,
-                       blockchainRID: String?,
-                       configFile: String? = null
+                                blockchainRID: String,
+                                nodeConfigFile: String? = null,
+                                blockchainConfigFile: String? = null
     ): TestOutput {
-        val node: SingleChainTestNode
+        val node: PostchainTestNode
         val testType: TestType
         try {
-            node = createTestNode(configFile!!)
+            // TODO: Resolve nullability here and above: !! vs ?.
+            node = createTestNode(nodeConfigFile!!, blockchainRID.hexStringToByteArray(), blockchainConfigFile!!)
         } catch (e: Exception) {
             return TestOutput(false, false, e, listOf())
         }
@@ -148,14 +163,14 @@ class TestLauncher : IntegrationTest() {
             } catch (e: Exception) {
                 failures.add(TransactionFailure(blockNum, -1, e))
                 return TestOutput(false, false, null,
-                       failures)
+                        failures)
             }
         }
 
 
         if (getBestHeight(node).toInt() != testType.block.size) {
             failures.add(TransactionFailure(-1, -1,
-                            Exception("Unexpected error: not all blocks were built")))
+                    Exception("Unexpected error: not all blocks were built")))
         }
 
 
@@ -169,7 +184,8 @@ class TestLauncher : IntegrationTest() {
                     failures.add(TransactionFailure(blockHeight.toLong(), it.txIdx,
                             Exception("Transaction should fail")))
                 } else if (!present && !it.isFailure) {
-                    val reason = node.getBlockchainInstance().networkAwareTxQueue.getRejectionReason(txRID)
+                    val engine = node.getBlockchainInstance().getEngine()
+                    val reason = engine.getTransactionQueue().getRejectionReason(txRID)
                     failures.add(TransactionFailure(blockHeight.toLong(), it.txIdx, reason))
                 }
             }

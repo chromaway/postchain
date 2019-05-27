@@ -8,7 +8,7 @@ class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
                                 val blockchainConfiguration: BlockchainConfiguration,
                                 blockQueries: BlockQueries,
                                 private val txQueue: TransactionQueue
-): BlockBuildingStrategy {
+) : BlockBuildingStrategy {
     private var lastBlockTime: Long
     private var lastTxTime = System.currentTimeMillis()
     private var lastTxSize = 0
@@ -44,6 +44,11 @@ class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
         }
         val transactionQueueSize = txQueue.getTransactionQueueSize()
         if (transactionQueueSize > 0) {
+            if (transactionQueueSize >= maxBlockTransactions) {
+                lastTxSize = 0
+                lastTxTime = System.currentTimeMillis()
+                return true
+            }
             if (transactionQueueSize == lastTxSize && lastTxTime + blockDelay < System.currentTimeMillis()) {
                 lastTxSize = 0
                 lastTxTime = System.currentTimeMillis()

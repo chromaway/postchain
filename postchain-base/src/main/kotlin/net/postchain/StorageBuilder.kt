@@ -2,82 +2,111 @@
 
 package net.postchain
 
-import net.postchain.base.data.BaseStorage
-import net.postchain.base.data.SQLDatabaseAccess
-import org.apache.commons.configuration2.Configuration
+import net.postchain.base.data.*
+import net.postchain.config.node.NodeConfig
 import org.apache.commons.dbcp2.BasicDataSource
 import org.apache.commons.dbutils.QueryRunner
+import java.sql.Connection
 import javax.sql.DataSource
 
 class StorageBuilder {
 
     companion object {
 
-        private val dbAccess = SQLDatabaseAccess()
+        fun buildStorage(nodeConfig: NodeConfig, nodeIndex: Int, wipeDatabase: Boolean = false): BaseStorage {
+            val sqlCommands = SQLCommandsFactory.getSQLCommands(nodeConfig.databaseDriverclass)
 
-        fun buildStorage(config: Configuration, nodeIndex: Int, wipeDatabase: Boolean = false): BaseStorage {
+            val db = when (sqlCommands) {
+                is PostgreSQLCommands -> PostgreSQLDatabaseAccess(sqlCommands)
+                is SAPHanaSQLCommands -> SAPHanaSQLDatabaseAccess(sqlCommands)
+                else -> SQLDatabaseAccess(sqlCommands)
+            }
+
+            val initSchemaWriteDataSource = createBasicDataSource(nodeConfig, false)
+
+            if (wipeDatabase) {
+                wipeDatabase(initSchemaWriteDataSource, nodeConfig, sqlCommands)
+            } else {
+                createSchemaIfNotExists(initSchemaWriteDataSource, nodeConfig.databaseSchema, sqlCommands)
+            }
+            initSchemaWriteDataSource.close()
+
             // Read DataSource
-            val readDataSource = createBasicDataSource(config).apply {
+            val readDataSource = createBasicDataSource(nodeConfig).apply {
                 defaultAutoCommit = true
                 maxTotal = 2
                 defaultReadOnly = true
             }
 
             // Write DataSource
-            val writeDataSource = createBasicDataSource(config).apply {
+            val writeDataSource = createBasicDataSource(nodeConfig).apply {
                 maxWaitMillis = 0
                 defaultAutoCommit = false
                 maxTotal = 1
             }
 
-            if (wipeDatabase) {
-                wipeDatabase(writeDataSource, config)
-            }
-
-            createSchemaIfNotExists(writeDataSource, config.getString("database.schema"))
-            createTablesIfNotExists(writeDataSource)
-
-            return BaseStorage(readDataSource, writeDataSource, nodeIndex)
+            createTablesIfNotExists(writeDataSource, db)
+            return BaseStorage(readDataSource, writeDataSource, nodeIndex, db, sqlCommands.isSavepointSupported())
         }
 
-        private fun createBasicDataSource(config: Configuration): BasicDataSource {
+        private fun setCurrentSchema(dataSource: DataSource, schema: String, sqlCommands: SQLCommands) {
+            dataSource.connection.use { connection ->
+                QueryRunner().update(connection, sqlCommands.setCurrentSchema(schema))
+                connection.commit()
+            }
+        }
+
+        private fun createBasicDataSource(nodeConfig: NodeConfig, withSchema: Boolean = true): BasicDataSource {
             return BasicDataSource().apply {
-                addConnectionProperty("currentSchema", schema(config))
-                driverClassName = config.getString("database.driverclass")
-                url = "${config.getString("database.url")}?loggerLevel=OFF"
-                username = config.getString("database.username")
-                password = config.getString("database.password")
+                driverClassName = nodeConfig.databaseDriverclass
+                url = nodeConfig.databaseUrl // ?loggerLevel=OFF
+                username = nodeConfig.databaseUsername
+                password = nodeConfig.databasePassword
                 defaultAutoCommit = false
+
+                if (withSchema) {
+                    defaultSchema = nodeConfig.databaseSchema
+                }
             }
+
         }
 
-        private fun wipeDatabase(dataSource: DataSource, config: Configuration) {
+        private fun wipeDatabase(dataSource: DataSource, nodeConfig: NodeConfig, sqlCommands: SQLCommands) {
             dataSource.connection.use { connection ->
                 QueryRunner().let { query ->
-                    query.update(connection, "DROP SCHEMA IF EXISTS ${schema(config)} CASCADE")
-                    query.update(connection, "CREATE SCHEMA ${schema(config)}")
+                    if (isSchemaExists(connection, nodeConfig.databaseSchema)) {
+                        query.update(connection, sqlCommands.dropSchemaCascade(nodeConfig.databaseSchema))
+                    }
+                    query.update(connection, sqlCommands.createSchema(nodeConfig.databaseSchema))
                 }
                 connection.commit()
             }
         }
 
-        private fun createSchemaIfNotExists(dataSource: DataSource, schema: String) {
+        private fun createSchemaIfNotExists(dataSource: DataSource, schema: String, sqlCommands: SQLCommands) {
             dataSource.connection.use { connection ->
-                QueryRunner().update(connection, "CREATE SCHEMA IF NOT EXISTS $schema")
-                connection.commit()
+                if (!isSchemaExists(connection, schema)) {
+                    QueryRunner().update(connection, sqlCommands.createSchema(schema))
+                    connection.commit()
+                }
             }
         }
 
-        private fun createTablesIfNotExists(dataSource: DataSource) {
+        private fun createTablesIfNotExists(dataSource: DataSource, dbAccess: SQLDatabaseAccess) {
             dataSource.connection.use { connection ->
                 dbAccess.initialize(connection, expectedDbVersion = 1) // TODO: [et]: Extract version
                 connection.commit()
             }
         }
 
-        private fun schema(config: Configuration): String {
-            return config.getString("database.schema", "public")
+        private fun isSchemaExists(conn: Connection, schema: String): Boolean {
+            val rs = conn.metaData.schemas
+            while (rs.next()) {
+                if (rs.getString(1).toLowerCase() == schema.toLowerCase()) {
+                    return true
+                }
+            }
+            return false
         }
-
     }
 }

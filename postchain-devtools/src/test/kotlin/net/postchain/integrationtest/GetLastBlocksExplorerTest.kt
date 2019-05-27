@@ -4,20 +4,11 @@ import net.postchain.api.rest.controller.Model
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.common.toHex
 import net.postchain.devtools.IntegrationTest
-import net.postchain.devtools.SingleChainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
 import org.junit.Assert
 import org.junit.Test
 
-
 class GetLastBlocksExplorerTest : IntegrationTest() {
-
-    private fun strategy(node: SingleChainTestNode): ThreeTxStrategy {
-        return node
-                .getBlockchainInstance()
-                .getEngine()
-                .getBlockBuildingStrategy() as ThreeTxStrategy
-    }
 
     private fun tx(id: Int): ApiTx {
         return ApiTx(TestTransaction(id).getRawData().toHex())
@@ -29,7 +20,12 @@ class GetLastBlocksExplorerTest : IntegrationTest() {
     fun buildOneBlock() {
         val count = 2
         configOverrides.setProperty("testpeerinfos", createPeerInfos(count))
-        createNodes(count, "/net/postchain/three_tx/blockchain_config.xml")
+        val nodeConfig0 = "classpath:/net/postchain/rest_api/node0.properties"
+        val nodeConfig1 = "classpath:/net/postchain/rest_api/node1.properties"
+        val blockchainConfig = "/net/postchain/three_tx/blockchain_config.xml"
+
+        createSingleNode(0, 2, nodeConfig0, blockchainConfig)
+        createSingleNode(1, 2, nodeConfig1, blockchainConfig)
 
         apiModel(0).postTransaction(tx(0))
 

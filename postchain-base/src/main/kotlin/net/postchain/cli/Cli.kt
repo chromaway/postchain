@@ -1,6 +1,7 @@
 package net.postchain.cli
 
 import com.beust.jcommander.JCommander
+import com.beust.jcommander.MissingCommandException
 import com.beust.jcommander.ParameterException
 import java.sql.SQLException
 
@@ -17,7 +18,15 @@ class Cli {
 
             , CommandConfigureNode()
             , CommandRunNode()
+            , CommandRunNodeAuto()
+            , CommandWipeDb()
 //            , CommandStopNode()
+
+            , CommandPeerInfoList()
+            , CommandPeerInfoFind()
+            , CommandPeerInfoAdd()
+            , CommandPeerInfoRemove()
+            , CommandPeerInfoImport()
 
     ).map { it.key() to it }.toMap()
 
@@ -34,12 +43,15 @@ class Cli {
             if (jCommander.parsedCommand == null) {
                 CliError.MissingCommand(message = "Expected a command, got <no-command>")
             } else {
-                commands[jCommander.parsedCommand]?.execute()?: CliError.CommandNotFound(command = jCommander.parsedCommand)
+                commands[jCommander.parsedCommand]?.execute()
+                        ?: CliError.ArgumentNotFound(command = jCommander.parsedCommand)
             }
-        } catch (e: ParameterException){
-            CliError.CommandNotFound(command = jCommander.parsedCommand)
-        } catch (e: SQLException){
-            CliError.DatabaseOffline()
+        } catch (e: MissingCommandException) {
+            CliError.MissingCommand(e.unknownCommand)
+        } catch (e: ParameterException) {
+            CliError.ArgumentNotFound(command = jCommander.parsedCommand)
+        } catch (e: SQLException) {
+            CliError.DatabaseError(e)
         }
     }
 
@@ -54,5 +66,19 @@ class Cli {
 
     fun usage(command: String) {
         jCommander.usage(command)
+    }
+
+    fun usageCommands() {
+        val usage = jCommander.commands.keys
+                .asSequence()
+                .sorted()
+                .map { cmd ->
+                    "${cmd.padEnd(25, ' ')}${jCommander.getCommandDescription(cmd)}"
+                }.joinToString(
+                        separator = "\n  ",
+                        prefix = "Commands:\n  "
+                )
+
+        println(usage)
     }
 }

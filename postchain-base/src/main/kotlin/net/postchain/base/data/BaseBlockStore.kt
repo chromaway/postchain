@@ -3,6 +3,7 @@
 package net.postchain.base.data
 
 import net.postchain.base.BaseBlockHeader
+import net.postchain.base.BaseTxEContext
 import net.postchain.base.ConfirmationProofMaterial
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.core.*
@@ -14,7 +15,6 @@ import net.postchain.core.*
  * @property db Object used to access the DBMS
  */
 class BaseBlockStore : BlockStore {
-    var db: DatabaseAccess = SQLDatabaseAccess()
 
     /**
      * Get initial block data, i.e. data necessary for building the next block
@@ -23,6 +23,7 @@ class BaseBlockStore : BlockStore {
      * @returns Initial block data
      */
     override fun beginBlock(ctx: EContext): InitialBlockData {
+        val db = DatabaseAccess.of(ctx)
         if (ctx.chainID < 0) {
             throw UserMistake("ChainId must be >=0, got ${ctx.chainID}")
         }
@@ -44,30 +45,30 @@ class BaseBlockStore : BlockStore {
     }
 
     override fun addTransaction(bctx: BlockEContext, tx: Transaction): TxEContext {
-        val txIid = db.insertTransaction(bctx, tx)
-        return TxEContext(bctx.conn, bctx.chainID, bctx.nodeID, bctx.blockIID, bctx.timestamp, txIid)
+        val txIid = DatabaseAccess.of(bctx).insertTransaction(bctx, tx)
+        return BaseTxEContext(bctx, txIid)
     }
 
     override fun finalizeBlock(bctx: BlockEContext, bh: BlockHeader) {
-        db.finalizeBlock(bctx, bh)
+        DatabaseAccess.of(bctx).finalizeBlock(bctx, bh)
     }
 
 
     override fun commitBlock(bctx: BlockEContext, w: BlockWitness?) {
         if (w == null) return
-        db.commitBlock(bctx, w)
+        DatabaseAccess.of(bctx).commitBlock(bctx, w)
     }
 
     override fun getBlockHeight(ctx: EContext, blockRID: ByteArray): Long? {
-        return db.getBlockHeight(ctx, blockRID)
+        return DatabaseAccess.of(ctx).getBlockHeight(ctx, blockRID)
     }
 
     override fun getBlockRIDs(ctx: EContext, height: Long): List<ByteArray> {
-        return db.getBlockRIDs(ctx, height)
+        return DatabaseAccess.of(ctx).getBlockRIDs(ctx, height)
     }
 
     override fun getBlockHeader(ctx: EContext, blockRID: ByteArray): ByteArray {
-        return db.getBlockHeader(ctx, blockRID)
+        return DatabaseAccess.of(ctx).getBlockHeader(ctx, blockRID)
     }
 
     // This implementation does not actually *stream* data from the database connection.
@@ -75,14 +76,15 @@ class BaseBlockStore : BlockStore {
     // Eventually, we may change this implementation to actually deliver a true
     // stream so that we don't have to store all transaction data in memory.
     override fun getBlockTransactions(ctx: EContext, blockRID: ByteArray): List<ByteArray> {
-        return db.getBlockTransactions(ctx, blockRID)
+        return DatabaseAccess.of(ctx).getBlockTransactions(ctx, blockRID)
     }
 
     override fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray {
-        return db.getWitnessData(ctx, blockRID)
+        return DatabaseAccess.of(ctx).getWitnessData(ctx, blockRID)
     }
 
     override fun getLatestBlocksUpTo(ctx: EContext, upTo: Long, n: Int): List<BlockDetail> {
+        val db = DatabaseAccess.of(ctx)
         val blocksInfo = db.getLatestBlocksUpTo(ctx, upTo, n)
         return blocksInfo.map { blockInfo ->
             val transactions = db.getBlockTransactions(ctx, blockInfo.blockRid)
@@ -94,18 +96,19 @@ class BaseBlockStore : BlockStore {
     }
 
     override fun getLastBlockHeight(ctx: EContext): Long {
-        return db.getLastBlockHeight(ctx)
+        return DatabaseAccess.of(ctx).getLastBlockHeight(ctx)
     }
 
     override fun getLastBlockTimestamp(ctx: EContext): Long {
-        return db.getLastBlockTimestamp(ctx)
+        return DatabaseAccess.of(ctx).getLastBlockTimestamp(ctx)
     }
 
     override fun getTxRIDsAtHeight(ctx: EContext, height: Long): Array<ByteArray> {
-        return db.getTxRIDsAtHeight(ctx, height)
+        return DatabaseAccess.of(ctx).getTxRIDsAtHeight(ctx, height)
     }
 
     override fun getConfirmationProofMaterial(ctx: EContext, txRID: ByteArray): Any {
+        val db = DatabaseAccess.of(ctx)
         val block = db.getBlockInfo(ctx, txRID)
         return ConfirmationProofMaterial(
                 db.getTxHash(ctx, txRID),
@@ -116,14 +119,14 @@ class BaseBlockStore : BlockStore {
     }
 
     override fun getTxBytes(ctx: EContext, txRID: ByteArray): ByteArray? {
-        return db.getTxBytes(ctx, txRID)
+        return DatabaseAccess.of(ctx).getTxBytes(ctx, txRID)
     }
 
     override fun isTransactionConfirmed(ctx: EContext, txRID: ByteArray): Boolean {
-        return db.isTransactionConfirmed(ctx, txRID)
+        return DatabaseAccess.of(ctx).isTransactionConfirmed(ctx, txRID)
     }
 
     fun initialize(ctx: EContext, blockchainRID: ByteArray) {
-        db.checkBlockchainRID(ctx, blockchainRID)
+        DatabaseAccess.of(ctx).checkBlockchainRID(ctx, blockchainRID)
     }
 }

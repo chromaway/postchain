@@ -17,15 +17,36 @@ class DefaultPeersConnectionStrategyTest {
     private lateinit var peer3: PeerInfo
     private lateinit var peer4: PeerInfo
 
+    private lateinit var privKey1: ByteArray
+    private lateinit var pubKey1: ByteArray
+
+    private lateinit var privKey2: ByteArray
+    private lateinit var pubKey2: ByteArray
+
+    private lateinit var privKey3: ByteArray
+    private lateinit var pubKey3: ByteArray
+
+    private lateinit var privKey4: ByteArray
+    private lateinit var pubKey4: ByteArray
+
     @Before
     fun setUp() {
-        val privKey1 = SECP256K1CryptoSystem().getRandomBytes(32)
-        val pubKey1 = secp256k1_derivePubKey(privKey1)
+        privKey1 = SECP256K1CryptoSystem().getRandomBytes(32)
+        pubKey1 = secp256k1_derivePubKey(privKey1)
+
+        privKey2 = SECP256K1CryptoSystem().getRandomBytes(32)
+        pubKey2 = secp256k1_derivePubKey(privKey2)
+
+        privKey3 = SECP256K1CryptoSystem().getRandomBytes(32)
+        pubKey3 = secp256k1_derivePubKey(privKey3)
+
+        privKey4 = SECP256K1CryptoSystem().getRandomBytes(32)
+        pubKey4 = secp256k1_derivePubKey(privKey4)
 
         peer1 = PeerInfo("localhost", 3331, pubKey1)
-        peer2 = PeerInfo("localhost", 3332, pubKey1)
-        peer3 = PeerInfo("localhost", 3333, pubKey1)
-        peer4 = PeerInfo("localhost", 3334, pubKey1)
+        peer2 = PeerInfo("localhost", 3332, pubKey2)
+        peer3 = PeerInfo("localhost", 3333, pubKey3)
+        peer4 = PeerInfo("localhost", 3334, pubKey4)
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -44,11 +65,11 @@ class DefaultPeersConnectionStrategyTest {
     }
 
     @Test
-    fun no_peers_interactions_when_two_peers_and_myIndex_0_provided() {
+    fun no_peers_interactions_when_two_peers_and_pubkey1_provided() {
         // Mock
         val config: PeerCommConfiguration = mock {
             on { peerInfo } doReturn arrayOf(peer1, peer2)
-            on { myIndex } doReturn 0
+            on { pubKey } doReturn pubKey1
         }
         val action: (PeerInfo) -> Unit = mock { Unit }
 
@@ -60,11 +81,11 @@ class DefaultPeersConnectionStrategyTest {
     }
 
     @Test
-    fun peer1_interaction_when_two_peers_and_myIndex_1_provided() {
+    fun peer1_interaction_when_two_peers_and_pubkey2_provided() {
         // Mock
         val config: PeerCommConfiguration = mock {
             on { peerInfo } doReturn arrayOf(peer1, peer2)
-            on { myIndex } doReturn 1
+            on { pubKey } doReturn pubKey2
         }
 
         val action: (PeerInfo) -> Unit = mock { Unit }
@@ -80,11 +101,11 @@ class DefaultPeersConnectionStrategyTest {
     }
 
     @Test
-    fun peer1_2_3_interactions_when_four_peers_and_myIndex_3_provided() {
+    fun peer1_2_3_interactions_when_four_peers_and_pubkey4_provided() {
         // Mock
         val config: PeerCommConfiguration = mock {
             on { peerInfo } doReturn arrayOf(peer1, peer2, peer3, peer4)
-            on { myIndex } doReturn 3
+            on { pubKey } doReturn pubKey4
         }
 
         val action: (PeerInfo) -> Unit = mock { Unit }
@@ -106,21 +127,7 @@ class DefaultPeersConnectionStrategyTest {
         // Mock
         val config: PeerCommConfiguration = mock {
             on { peerInfo } doReturn arrayOf(peer1, peer2)
-            on { myIndex } doReturn 42
-        }
-
-        val action: (PeerInfo) -> Unit = mock { Unit }
-
-        // When
-        DefaultPeersConnectionStrategy.forEach(config, action)
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun will_result_in_exception_when_myIndex_negative() {
-        // Mock
-        val config: PeerCommConfiguration = mock {
-            on { peerInfo } doReturn arrayOf(peer1, peer2)
-            on { myIndex } doReturn -1
+            on { pubKey } doReturn ByteArray(0)
         }
 
         val action: (PeerInfo) -> Unit = mock { Unit }

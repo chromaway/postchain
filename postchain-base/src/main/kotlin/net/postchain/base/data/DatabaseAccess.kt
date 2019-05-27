@@ -38,17 +38,24 @@ interface DatabaseAccess {
     fun isTransactionConfirmed(ctx: EContext, txRID: ByteArray): Boolean
     fun getLatestBlocksUpTo(ctx: EContext, upTo: Long, n: Int): List<BlockInfoExt>
 
-    // Configurations
+    // Blockchain configurations
+    fun findConfiguration(context: EContext, height: Long): Long?
 
-    fun findConfiguration(context: EContext, height: Long): ByteArray?
     fun getConfigurationData(context: EContext, height: Long): ByteArray?
-    fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long
+    fun addConfigurationData(context: EContext, height: Long, data: ByteArray)
+
+    companion object {
+        fun of(ctx: EContext): DatabaseAccess {
+            return ctx.getInterface(DatabaseAccess::class.java)
+                    ?: throw ProgrammerMistake("DatabaseAccess not accessible through EContext")
+        }
+    }
 }
 
-class SQLDatabaseAccess : DatabaseAccess {
+open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
     var queryRunner = QueryRunner()
     private val intRes = ScalarHandler<Int>()
-    private val longRes = ScalarHandler<Long>()
+    val longRes = ScalarHandler<Long>()
     private val signatureRes = BeanListHandler<Signature>(Signature::class.java)
     private val nullableByteArrayRes = ScalarHandler<ByteArray?>()
     private val nullableIntRes = ScalarHandler<Int?>()
@@ -59,18 +66,21 @@ class SQLDatabaseAccess : DatabaseAccess {
     private val mapListHandler = MapListHandler()
     private val stringRes = ScalarHandler<String>()
 
+    companion object {
+        const val TABLE_PEERINFOS = "peerinfos"
+        const val TABLE_PEERINFOS_FIELD_HOST = "host"
+        const val TABLE_PEERINFOS_FIELD_PORT = "port"
+        const val TABLE_PEERINFOS_FIELD_PUBKEY = "pub_key"
+    }
+
     override fun insertBlock(ctx: EContext, height: Long): Long {
-        return queryRunner.insert(ctx.conn,
-                "INSERT INTO blocks (chain_id, block_height) VALUES (?, ?) RETURNING block_iid",
-                longRes, ctx.chainID, height)
+        queryRunner.update(ctx.conn, sqlCommands.insertBlocks, ctx.chainID, height)
+        return queryRunner.query(ctx.conn, "SELECT block_iid FROM blocks WHERE chain_id = ? and block_height = ?", longRes, ctx.chainID, height)
     }
 
     override fun insertTransaction(ctx: BlockEContext, tx: Transaction): Long {
-        return queryRunner.insert(ctx.conn,
-                "INSERT INTO transactions (chain_id, tx_rid, tx_data, tx_hash, block_iid)" +
-                        "VALUES (?, ?, ?, ?, ?) RETURNING tx_iid",
-                longRes,
-                ctx.chainID, tx.getRID(), tx.getRawData(), tx.getHash(), ctx.blockIID)
+        queryRunner.update(ctx.conn, sqlCommands.insertTransactions, ctx.chainID, tx.getRID(), tx.getRawData(), tx.getHash(), ctx.blockIID)
+        return queryRunner.query(ctx.conn, "SELECT tx_iid FROM transactions WHERE chain_id = ? and tx_rid = ?", longRes, ctx.chainID, tx.getRID())
     }
 
     override fun finalizeBlock(ctx: BlockEContext, header: BlockHeader) {
@@ -176,10 +186,8 @@ class SQLDatabaseAccess : DatabaseAccess {
                 ColumnListHandler<ByteArray>(), blockIid)!!
     }
 
-
     override fun getTxBytes(ctx: EContext, txRID: ByteArray): ByteArray? {
-        return queryRunner.query(ctx.conn, "SELECT tx_data FROM " +
-                "transactions WHERE chain_id=? AND tx_rid=?",
+        return queryRunner.query(ctx.conn, "SELECT tx_data FROM transactions WHERE chain_id=? AND tx_rid=?",
                 nullableByteArrayRes, ctx.chainID, txRID)
     }
 
@@ -203,17 +211,8 @@ class SQLDatabaseAccess : DatabaseAccess {
          * We need to know whether it exists or not in order to
          * make decisions on upgrade
          */
-        val checkExists = """
-            SELECT 1
-            FROM   pg_catalog.pg_class c
-            JOIN   pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-            WHERE  n.nspname = ANY(current_schemas(FALSE))
-                    AND    n.nspname NOT LIKE 'pg_%'
-                    AND    c.relname = 'meta'
-                    AND    c.relkind = 'r'
-        """
-        val metaExists = queryRunner.query(connection, checkExists, ColumnListHandler<Int>())
-        if (metaExists.size == 1) {
+
+        if (tableExists(connection, "meta")) {
             // meta table already exists. Check the version
             val versionString = queryRunner.query(connection, "SELECT value FROM meta WHERE key='version'", ScalarHandler<String>())
             val version = versionString.toInt()
@@ -223,7 +222,7 @@ class SQLDatabaseAccess : DatabaseAccess {
 
         } else {
             // meta table does not exist! Assume database does not exist.
-            queryRunner.update(connection, """CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)""")
+            queryRunner.update(connection, sqlCommands.createTableMeta)
             queryRunner.update(
                     connection,
                     "INSERT INTO meta (key, value) values ('version', ?)",
@@ -233,44 +232,21 @@ class SQLDatabaseAccess : DatabaseAccess {
             // Don't use "CREATE TABLE IF NOT EXISTS" because if they do exist
             // we must throw an error. If these tables exists but meta did not exist,
             // there is some serious problem that needs manual work
-            queryRunner.update(
-                    connection,
-                    "CREATE TABLE blockchains " +
-                            "(chain_id BIGINT PRIMARY KEY, blockchain_rid BYTEA NOT NULL)")
+            queryRunner.update(connection, sqlCommands.createTableBlockChains)
 
-            queryRunner.update(connection,
-                    "CREATE TABLE blocks" +
-                            " (block_iid BIGSERIAL PRIMARY KEY," +
-                            "  block_height BIGINT NOT NULL, " +
-                            "  block_rid BYTEA," +
-                            "  chain_id BIGINT NOT NULL," +
-                            "  block_header_data BYTEA," +
-                            "  block_witness BYTEA," +
-                            "  timestamp BIGINT," +
-                            "  UNIQUE (chain_id, block_rid)," +
-                            "  UNIQUE (chain_id, block_height))")
+            queryRunner.update(connection, sqlCommands.createTableBlocks)
 
-            queryRunner.update(connection, "CREATE TABLE transactions (" +
-                    "    tx_iid BIGSERIAL PRIMARY KEY, " +
-                    "    chain_id bigint NOT NULL," +
-                    "    tx_rid bytea NOT NULL," +
-                    "    tx_data bytea NOT NULL," +
-                    "    tx_hash bytea NOT NULL," +
-                    "    block_iid bigint NOT NULL REFERENCES blocks(block_iid)," +
-                    "    UNIQUE (chain_id, tx_rid))")
+            queryRunner.update(connection, sqlCommands.createTableTransactions)
 
             // Configurations
-            queryRunner.update(connection, "CREATE TABLE configurations (" +
-                    " chain_id bigint NOT NULL" +
-                    ", height BIGINT NOT NULL" +
-                    ", configuration_data bytea NOT NULL" +
-                    ", PRIMARY KEY (chain_id, height)" +
-                    ")")
+            queryRunner.update(connection, sqlCommands.createTableConfiguration)
+
+            // PeerInfos
+            queryRunner.update(connection, sqlCommands.createTablePeerInfos)
 
             queryRunner.update(connection, """CREATE INDEX transactions_block_iid_idx ON transactions(block_iid)""")
             queryRunner.update(connection, """CREATE INDEX blocks_chain_id_timestamp ON blocks(chain_id, timestamp)""")
-            queryRunner.update(connection, """CREATE INDEX configurations_chain_id_to_height ON configurations(chain_id, height)""")
-
+            //queryRunner.update(connection, """CREATE INDEX configurations_chain_id_to_height ON configurations(chain_id, height)""")
         }
     }
 
@@ -283,10 +259,9 @@ class SQLDatabaseAccess : DatabaseAccess {
                 ctx.chainID)
 
         if (rid == null) {
-            queryRunner.insert(
+            queryRunner.update(
                     ctx.conn,
                     "INSERT INTO blockchains (chain_id, blockchain_rid) values (?, ?)",
-                    ScalarHandler<Unit>(),
                     ctx.chainID,
                     blockchainRID)
 
@@ -297,7 +272,7 @@ class SQLDatabaseAccess : DatabaseAccess {
     }
 
     override fun getLatestBlocksUpTo(context: EContext, upTo: Long, n: Int): List<DatabaseAccess.BlockInfoExt> {
-        if(n > 50) throw UserMistake("cannot retrive more than 50 blocks per query")
+        if (n > 50) throw UserMistake("cannot retrive more than 50 blocks per query")
         val blocksInfo = queryRunner.query(context.conn,
                 "SELECT block_rid, block_height, block_header_data, block_witness, timestamp " +
                         "FROM blocks WHERE timestamp < ? " +
@@ -316,11 +291,11 @@ class SQLDatabaseAccess : DatabaseAccess {
         }
     }
 
-    override fun findConfiguration(context: EContext, height: Long): ByteArray? {
+    override fun findConfiguration(context: EContext, height: Long): Long? {
         return queryRunner.query(context.conn,
-                "SELECT configuration_data FROM configurations WHERE chain_id = ? AND height <= ? " +
+                "SELECT height FROM configurations WHERE chain_id = ? AND height <= ? " +
                         "ORDER BY height DESC LIMIT 1",
-                nullableByteArrayRes, context.chainID, height)
+                nullableLongRes, context.chainID, height)
     }
 
     override fun getConfigurationData(context: EContext, height: Long): ByteArray? {
@@ -329,10 +304,28 @@ class SQLDatabaseAccess : DatabaseAccess {
                 nullableByteArrayRes, context.chainID, height)
     }
 
-    override fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long {
-        return queryRunner.insert(context.conn,
-                "INSERT INTO configurations (chain_id, height, configuration_data) VALUES (?, ?, ?) " +
-                        "ON CONFLICT (chain_id, height) DO UPDATE SET configuration_data = ?",
-                longRes, context.chainID, height, data, data)
+    override fun addConfigurationData(context: EContext, height: Long, data: ByteArray) {
+        queryRunner.update(context.conn, sqlCommands.insertConfiguration, context.chainID, height, data)
     }
+
+    fun tableExists(connection: Connection, tableName_: String): Boolean {
+        val types: Array<String> = arrayOf("TABLE")
+
+        val tableName = if (connection.metaData.storesUpperCaseIdentifiers()) {
+            tableName_.toUpperCase()
+        } else {
+            tableName_
+        }
+
+        val rs = connection.metaData.getTables(null, null, tableName, types)
+        while (rs.next()) {
+            // avoid wildcard '_' in SQL. Eg: if you pass "employee_salary" that should return something employeesalary which we don't expect
+            if (rs.getString(2).toLowerCase() == connection.schema.toLowerCase()
+                    && rs.getString(3).toLowerCase() == tableName.toLowerCase()) {
+                return true
+            }
+        }
+        return false
+    }
+
 }

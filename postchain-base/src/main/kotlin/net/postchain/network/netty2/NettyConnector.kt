@@ -2,54 +2,58 @@ package net.postchain.network.netty2
 
 import mu.KLogging
 import net.postchain.base.PeerInfo
-import net.postchain.core.byteArrayKeyOf
-import net.postchain.network.PacketConverter
+import net.postchain.network.XPacketDecoder
+import net.postchain.network.XPacketEncoder
 import net.postchain.network.x.XConnector
 import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPeerConnectionDescriptor
 
-class NettyConnector<PC : PacketConverter<*>>(
-        val packetConverter: PC,
-        val eventReceiver: XConnectorEvents
-) : XConnector {
+class NettyConnector<PacketType>(
+        private val eventReceiver: XConnectorEvents
+) : XConnector<PacketType> {
 
     companion object : KLogging()
 
     private lateinit var server: NettyServer
 
-    override fun init(peerInfo: PeerInfo) {
+    override fun init(peerInfo: PeerInfo, packetDecoder: XPacketDecoder<PacketType>) {
         server = NettyServer().apply {
             setChannelHandler {
-                NettyServerPeerConnection(packetConverter).onConnected { connection, identPacketInfo ->
-                    val descriptor = XPeerConnectionDescriptor(
-                            identPacketInfo.peerID.byteArrayKeyOf(),
-                            identPacketInfo.blockchainRID.byteArrayKeyOf())
-                    eventReceiver.onPeerConnected(descriptor, connection)
-                            ?.also { connection.accept(it) }
+                NettyServerPeerConnection(packetDecoder)
+                        .onConnected { descriptor, connection ->
+                            eventReceiver.onPeerConnected(descriptor, connection)
+                                    ?.also { connection.accept(it) }
 //                            ?: connection.close()
-                }
+                        }
+                        .onDisconnected { descriptor, connection ->
+                            eventReceiver.onPeerDisconnected(descriptor, connection)
+                        }
             }
+
             run(peerInfo.port)
         }
     }
 
-    override fun connectPeer(peerConnectionDescriptor: XPeerConnectionDescriptor, peerInfo: PeerInfo) {
-        try {
-            NettyClientPeerConnection(peerInfo, packetConverter).also { connection ->
-                connection.open(
+    override fun connectPeer(
+            peerConnectionDescriptor: XPeerConnectionDescriptor,
+            peerInfo: PeerInfo,
+            packetEncoder: XPacketEncoder<PacketType>
+    ) {
+        with(NettyClientPeerConnection(peerInfo, packetEncoder)) {
+            try {
+                open(
                         onConnected = {
-                            eventReceiver.onPeerConnected(peerConnectionDescriptor, connection)
-                                    ?.also { connection.accept(it) }
+                            eventReceiver.onPeerConnected(peerConnectionDescriptor, this)
+                                    ?.also { this.accept(it) }
 //                                    ?: connection.close()
                         },
                         onDisconnected = {
-                            eventReceiver.onPeerDisconnected(peerConnectionDescriptor)
-                        }
-                )
+                            eventReceiver.onPeerDisconnected(peerConnectionDescriptor, this)
+                        })
+            } catch (e: Exception) {
+                logger.error { e.message }
+                eventReceiver.onPeerDisconnected(peerConnectionDescriptor, this) // TODO: [et]: Maybe create different event receiver.
             }
-        } catch (e: Exception) {
-            logger.error { e.message }
-            eventReceiver.onPeerDisconnected(peerConnectionDescriptor) // TODO: [et]: Maybe create different event receiver.
         }
     }
 

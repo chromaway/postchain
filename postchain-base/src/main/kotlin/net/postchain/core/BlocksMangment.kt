@@ -1,6 +1,6 @@
 package net.postchain.core
 
-import net.postchain.base.data.DatabaseAccess
+import net.postchain.gtx.GTXValue
 import nl.komponents.kovenant.Promise
 
 interface BlockWitnessBuilder {
@@ -51,6 +51,7 @@ interface BlockQueries {
     fun getBlockTransactionRids(blockRID: ByteArray): Promise<List<ByteArray>, Exception>
     fun getTransaction(txRID: ByteArray): Promise<Transaction?, Exception>
     fun query(query: String): Promise<String, Exception>
+    fun query(name: String, args: GTXValue): Promise<GTXValue, Exception>
     fun isTransactionConfirmed(txRID: ByteArray): Promise<Boolean, Exception>
 }
 

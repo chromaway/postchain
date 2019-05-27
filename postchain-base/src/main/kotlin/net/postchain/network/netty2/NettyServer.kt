@@ -9,25 +9,24 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import net.postchain.core.Shutdownable
+import java.util.concurrent.TimeUnit
 
 class NettyServer : Shutdownable {
 
     private lateinit var server: ServerBootstrap
     private lateinit var bindFuture: ChannelFuture
-    private lateinit var parentGroup: EventLoopGroup
-    private lateinit var childGroup: EventLoopGroup
     private lateinit var createChannelHandler: () -> ChannelHandler
+    private lateinit var eventLoopGroup: EventLoopGroup
 
     fun setChannelHandler(handlerFactory: () -> ChannelHandler) {
         this.createChannelHandler = handlerFactory
     }
 
     fun run(port: Int) {
-        parentGroup = NioEventLoopGroup(1)
-        childGroup = NioEventLoopGroup()
+        eventLoopGroup = NioEventLoopGroup(1)
 
         server = ServerBootstrap()
-                .group(parentGroup, childGroup)
+                .group(eventLoopGroup)
                 .channel(NioServerSocketChannel::class.java)
 //                .option(ChannelOption.SO_BACKLOG, 10)
 //                .handler(LoggingHandler(LogLevel.INFO))
@@ -47,9 +46,10 @@ class NettyServer : Shutdownable {
     }
 
     override fun shutdown() {
-        bindFuture.channel().close()
-        bindFuture.channel().closeFuture().sync()
-        parentGroup.shutdownGracefully().sync()
-        childGroup.shutdownGracefully().sync()
+//        bindFuture.channel().close().sync()
+//        bindFuture.channel().closeFuture().sync()
+        // TODO: [et]: Fix this, make it .sync() again
+        eventLoopGroup.shutdownGracefully(0, 2000, TimeUnit.MILLISECONDS)//.sync()
+        //.syncUninterruptibly()
     }
 }

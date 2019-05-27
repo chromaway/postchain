@@ -17,6 +17,7 @@ import net.postchain.core.TransactionQueue
 import net.postchain.core.TransactionStatus.CONFIRMED
 import net.postchain.core.TransactionStatus.UNKNOWN
 import net.postchain.core.UserMistake
+import net.postchain.gtx.GTXValue
 
 open class PostchainModel(
         val txQueue: TransactionQueue,
@@ -69,5 +70,9 @@ open class PostchainModel(
 
     override fun query(query: Query): QueryResult {
         return QueryResult(blockQueries.query(query.json).get())
+    }
+
+    override fun query(query: GTXValue): GTXValue {
+        return blockQueries.query(query[0]!!.asString(), query[1]).get()
     }
 }
