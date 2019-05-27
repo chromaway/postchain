@@ -226,12 +226,12 @@
             </build>
         </profile>
 
-        <!--<profile>
+        <profile>
             <id>sap-hana</id>
             <modules>
                 <module>postchain-hana</module>
             </modules>
-        </profile>-->
+        </profile>
     </profiles>
 
 </project>
