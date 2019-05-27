@@ -1,7 +1,5 @@
 package net.postchain.core
 
-import net.postchain.common.toHex
-
 interface BlockHeader {
     val prevBlockRID: ByteArray
     val rawData: ByteArray
@@ -17,29 +15,14 @@ open class BlockData(
  * BlockDetail returns a more in deep block overview
  * ATM it is mainly used to reply to explorer's queries
  */
-open class BlockDetail (
+open class BlockDetail(
         val rid: ByteArray,
         val prevBlockRID: ByteArray,
         val header: ByteArray,
         val height: Long,
         val transactions: List<ByteArray>,
         val witness: ByteArray,
-        val timestamp: Long
-) {
-    fun equals(other: BlockDetail): Boolean {
-        if (//(this.prevBlockRID.toHex() != other.prevBlockRID.toHex()) || BlockRID differs per each node.
-            (this.height != other.height) ||
-            (this.witness.toHex() == other.witness.toHex()) ||
-            (this.transactions.size != other.transactions.size)) return false
-
-        val thisTransactionsToHex = transactions.map{ transaction -> transaction.toHex()}
-        for (transaction in  other.transactions) {
-            if (!thisTransactionsToHex.contains(transaction.toHex())) return false
-        }
-
-        return true
-    }
-}
+        val timestamp: Long)
 
 data class ValidationResult(
         val result: Boolean,

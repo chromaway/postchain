@@ -3,6 +3,7 @@ package net.postchain.integrationtest
 import net.postchain.api.rest.controller.Model
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.common.toHex
+import net.postchain.core.BlockDetail
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.testinfra.TestTransaction
 import org.junit.Assert
@@ -45,8 +46,21 @@ class GetLastBlocksExplorerTest : IntegrationTest() {
         val query0 = nodes[0].getRestApiModel().getLatestBlocksUpTo(Long.MAX_VALUE, 25)
         val query1 = nodes[1].getRestApiModel().getLatestBlocksUpTo(Long.MAX_VALUE, 25)
 
-        for (i in 0..query0.size) {
-            Assert.assertTrue(query0[0].equals(query1[0]))
+        (0 until query0.size).forEach {
+            Assert.assertTrue(
+                    compareBlocks(query0[it], query1[it]))
         }
+    }
+
+    private fun compareBlocks(block0: BlockDetail, block1: BlockDetail): Boolean {
+        if ((block0.height != block1.height) ||
+                (block0.transactions.size != block1.transactions.size)) return false
+
+        val thisTransactionsToHex = block0.transactions.map { transaction -> transaction.toHex() }
+        for (transaction in block1.transactions) {
+            if (!thisTransactionsToHex.contains(transaction.toHex())) return false
+        }
+
+        return true
     }
 }

@@ -100,7 +100,7 @@ class RestApi(private val listenPort: Int, private val basePath: String,
     private fun buildRouter(http: Service) {
 
         http.port(listenPort)
-        if(sslCertificate != null) {
+        if (sslCertificate != null) {
             http.secure(sslCertificate, sslCertificatePassword, null, null)
         }
         http.before { req, res ->
@@ -209,7 +209,7 @@ class RestApi(private val listenPort: Int, private val basePath: String,
         return txRID
     }
 
-    private fun toGTXQuery(json : String) : GTXQuery {
+    private fun toGTXQuery(json: String): GTXQuery {
         try {
             val gson = Gson()
             return gson.fromJson<GTXQuery>(json, GTXQuery::class.java)
@@ -232,9 +232,9 @@ class RestApi(private val listenPort: Int, private val basePath: String,
     private fun handleQueries(request: Request): String {
         logger.debug("Request body: ${request.body()}")
 
-        val queriesArray : JsonArray = parseMultipleQueriesRequest(request)
+        val queriesArray: JsonArray = parseMultipleQueriesRequest(request)
 
-        var response : MutableList<String> = mutableListOf<String>()
+        var response: MutableList<String> = mutableListOf()
 
         queriesArray.forEach {
             var query = gson.toJson(it)
@@ -246,12 +246,12 @@ class RestApi(private val listenPort: Int, private val basePath: String,
 
     private fun handleGTXQueries(request: Request): String {
         logger.debug("Request body: ${request.body()}")
-        var response : MutableList<String> = mutableListOf<String>()
-        val queriesArray : JsonArray = parseMultipleQueriesRequest(request)
+        var response: MutableList<String> = mutableListOf<String>()
+        val queriesArray: JsonArray = parseMultipleQueriesRequest(request)
 
         queriesArray.forEach {
             val hexQuery = it.asString
-            val gtxQuery = decodeGTXValue( hexQuery.hexStringToByteArray() )
+            val gtxQuery = decodeGTXValue(hexQuery.hexStringToByteArray())
             response.add(encodeGTXValue(model(request).query(gtxQuery)).toHex())
         }
 
@@ -294,8 +294,8 @@ class RestApi(private val listenPort: Int, private val basePath: String,
                 ?: throw NotFoundError("Can't find blockchain with blockchainRID: $blockchainRID")
     }
 
-    private fun parseMultipleQueriesRequest(request: Request) : JsonArray {
-        val element : JsonElement = gson.fromJson(request.body(), JsonElement::class.java)
+    private fun parseMultipleQueriesRequest(request: Request): JsonArray {
+        val element: JsonElement = gson.fromJson(request.body(), JsonElement::class.java)
         val jsonObject = element.asJsonObject
         return jsonObject.get("queries").asJsonArray
     }
