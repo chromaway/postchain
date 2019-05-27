@@ -5,7 +5,7 @@ import net.postchain.config.SimpleDatabaseConnector
 import net.postchain.config.app.AppConfig
 import net.postchain.config.app.AppConfigDbLayer
 
-class ManualNodeConfigurationProvider(private val appConfig: AppConfig) : NodeConfigurationProvider {
+open class ManualNodeConfigurationProvider(private val appConfig: AppConfig) : NodeConfigurationProvider {
 
     override fun getConfiguration(): NodeConfig {
         return object : NodeConfig(appConfig) {
@@ -13,7 +13,7 @@ class ManualNodeConfigurationProvider(private val appConfig: AppConfig) : NodeCo
         }
     }
 
-    private fun getPeerInfoCollection(appConfig: AppConfig): Array<PeerInfo> {
+    open fun getPeerInfoCollection(appConfig: AppConfig): Array<PeerInfo> {
         return SimpleDatabaseConnector(appConfig).withWriteConnection { connection ->
             AppConfigDbLayer(appConfig, connection).getPeerInfoCollection()
         }
