@@ -16,9 +16,9 @@ import net.postchain.network.x.DefaultXCommunicationManager
 import net.postchain.network.x.DefaultXConnectionManager
 import net.postchain.network.x.XConnectionManager
 
-class EBFTSynchronizationInfrastructure(nodeConfigProvider: NodeConfigurationProvider) : SynchronizationInfrastructure {
+class EBFTSynchronizationInfrastructure(val nodeConfigProvider: NodeConfigurationProvider) : SynchronizationInfrastructure {
 
-    private val nodeConfig = nodeConfigProvider.getConfiguration()
+    private val nodeConfig get() = nodeConfigProvider.getConfiguration()
     val connectionManager: XConnectionManager
 
     init {
