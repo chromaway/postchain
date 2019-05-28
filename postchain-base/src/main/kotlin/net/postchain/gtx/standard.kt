@@ -2,6 +2,7 @@
 
 package net.postchain.gtx
 
+import net.postchain.base.data.DatabaseAccess
 import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.core.EContext
 import net.postchain.core.TxEContext
@@ -43,7 +44,7 @@ class GTX_timeb(u: Unit, opData: ExtOpData) : GTXOperation(opData) {
 }
 
 fun lastBlockInfoQuery(config: Unit, ctx: EContext, args: GTXValue): GTXValue {
-    val dba = SQLDatabaseAccess()
+    val dba = DatabaseAccess.of(ctx) as SQLDatabaseAccess
     val prevHeight = dba.getLastBlockHeight(ctx)
     val prevTimestamp = dba.getLastBlockTimestamp(ctx)
     val prevBlockRID: ByteArray?
@@ -60,7 +61,7 @@ fun lastBlockInfoQuery(config: Unit, ctx: EContext, args: GTXValue): GTXValue {
 }
 
 fun txConfirmationTime(config: Unit, ctx: EContext, args: GTXValue): GTXValue {
-    val dba = SQLDatabaseAccess()
+    val dba : SQLDatabaseAccess = DatabaseAccess.of(ctx) as SQLDatabaseAccess
     val txRID = args["txRID"]!!.asByteArray(true)
     val info = dba.getBlockInfo(ctx, txRID)
     val timestamp = dba.queryRunner.query(ctx.conn,"SELECT timestamp FROM blocks WHERE block_iid = ?",

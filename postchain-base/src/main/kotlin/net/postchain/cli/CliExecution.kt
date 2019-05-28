@@ -3,9 +3,7 @@ package net.postchain.cli
 import net.postchain.PostchainNode
 import net.postchain.base.BaseConfigurationDataStore
 import net.postchain.base.data.BaseBlockStore
-import net.postchain.base.data.SQLDatabaseAccess
-import net.postchain.common.hexStringToByteArray
-import net.postchain.common.toHex
+import net.postchain.base.data.DatabaseAccess
 import net.postchain.config.app.AppConfig
 import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.gtx.encodeGTXValue
@@ -15,10 +13,10 @@ import org.apache.commons.dbcp2.BasicDataSource
 import java.io.File
 import java.sql.Connection
 import java.sql.SQLException
+import net.postchain.common.hexStringToByteArray
+import net.postchain.common.toHex
 
 class CliExecution {
-
-    private val dbAccess = SQLDatabaseAccess()
 
     fun addBlockchain(
             nodeConfigFile: String,
@@ -36,10 +34,11 @@ class CliExecution {
                 BaseConfigurationDataStore.addConfigurationData(eContext, 0, encodedGtxValue)
             }
 
+            val db = DatabaseAccess.of(eContext)
 
             when (mode) {
                 AlreadyExistMode.ERROR -> {
-                    if (SQLDatabaseAccess().getBlockchainRID(eContext) == null) {
+                    if (db.getBlockchainRID(eContext) == null) {
                         init()
                     } else {
                         throw CliError.Companion.CliException(
@@ -52,7 +51,7 @@ class CliExecution {
                 }
 
                 else -> {
-                    if (SQLDatabaseAccess().getBlockchainRID(eContext) == null) {
+                    if (db.getBlockchainRID(eContext) == null) {
                         init()
                     }
                 }
@@ -66,14 +65,13 @@ class CliExecution {
             chainId: Long,
             height: Long,
             mode: AlreadyExistMode = AlreadyExistMode.IGNORE
-    ): Boolean {
+    ) {
 
         val encodedGtxValue = getEncodedGtxValueFromFile(blockchainConfigFile)
-        var result = false
         runDBCommandBody(nodeConfigFile, chainId) { eContext ->
 
             fun init() {
-                result = BaseConfigurationDataStore.addConfigurationData(eContext, height, encodedGtxValue) > 0
+                BaseConfigurationDataStore.addConfigurationData(eContext, height, encodedGtxValue)
             }
 
             when (mode) {
@@ -99,7 +97,6 @@ class CliExecution {
                 }
             }
         }
-        return result
     }
 
     fun runNode(nodeConfigFile: String, chainIDs: List<Long>) {
@@ -113,7 +110,7 @@ class CliExecution {
 
     fun checkBlockchain(nodeConfigFile: String, chainId: Long, blockchainRID: String) {
         runDBCommandBody(nodeConfigFile, chainId) { eContext ->
-            val chainIdBlockchainRid = dbAccess.getBlockchainRID(eContext)
+            val chainIdBlockchainRid = DatabaseAccess.of(eContext).getBlockchainRID(eContext)
             when {
                 chainIdBlockchainRid == null -> {
                     throw CliError.Companion.CliException("Unknown chain-id: $chainId")
@@ -150,7 +147,7 @@ class CliExecution {
             BasicDataSource().apply {
                 addConnectionProperty("currentSchema", nodeConfig.databaseSchema)
                 driverClassName = nodeConfig.databaseDriverclass
-                url = "${nodeConfig.databaseUrl}?loggerLevel=OFF"
+                url = "${nodeConfig.databaseUrl}" //?loggerLevel=OFF"
                 username = nodeConfig.databaseUsername
                 password = nodeConfig.databasePassword
                 defaultAutoCommit = false

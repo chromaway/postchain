@@ -8,7 +8,7 @@
         -->
         <dict>
             <entry key="name">
-                <string>net.postchain.base.BaseBlockBuildingStrategy</string>
+                <string>net.postchain.devtools.OnDemandBlockBuildingStrategy</string>
             </entry>
         </dict>
     </entry>
@@ -19,14 +19,20 @@
         * Single node GTX: SingleNodeGtxBlockchainConfigurationFactory
         * Normal Gtx: GTXBlockchainConfigurationFactory
         -->
-        <string>net.postchain.gtx.GTXBlockchainConfigurationFactory</string>
+        <string>net.postchain.devtools.testinfra.TestBlockchainConfigurationFactory</string>
     </entry>
     <entry key="signers">
         <array>
-            <bytea>0350FE40766BC0CE8D08B3F5B810E49A8352FDD458606BD5FAFE5ACDCDC8FF3F57</bytea>
-            <bytea>035676109C54B9A16D271ABEB4954316A40A32BCCE023AC14C8E26E958AA68FBA9</bytea>
-            <bytea>03F811D3E806E6D093A4BCCE49C145BA78F9A4B2FBD167753ECAB2A13530B081F8</bytea>
-            <bytea>03EF3F5BE98D499B048BA28B247036B611A1CED7FCF87C17C8B5CA3B3CE1EE23A4</bytea>
+            <!-- Key0 -->
+            <bytea>03a301697bdfcd704313ba48e51d567543f2a182031efd6915ddc07bbcc4e16070</bytea>
+            <!-- Key1 -->
+            <bytea>031B84C5567B126440995D3ED5AABA0565D71E1834604819FF9C17F5E9D5DD078F</bytea>
+            <!-- Key2 -->
+            <bytea>03B2EF623E7EC933C478135D1763853CBB91FC31BA909AEC1411CA253FDCC1AC94</bytea>
+            <!-- Key3 -->
+            <bytea>0203C6150397F7E4197FF784A8D74357EF20DAF1D09D823FFF8D3FC9150CBAE85D</bytea>
+            <!-- Key4 -->
+            <bytea>031A7C8706F34316DF7154595FA798F672968C3E44EF65E4695E89F0965E4141D1</bytea>
         </array>
     </entry>
     <entry key="gtx">
@@ -39,7 +45,8 @@
         <dict>
             <entry key="modules">
                 <array>
-                        <string>net.postchain.configurations.GTXTestModule</string>
+                    <string>net.postchain.configurations.GTXTestModule</string>
+                    <string>net.postchain.gtx.StandardOpsGTXModule</string>
                 </array>
             </entry>
         </dict>

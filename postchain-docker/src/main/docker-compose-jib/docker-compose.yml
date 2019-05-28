@@ -14,7 +14,7 @@ services:
       POSTGRES_PASSWORD: postchain
 
   postchain:
-    image: chromaway/postchain-jib:2.4.4-beta
+    image: chromaway/postchain-jib:2.5
     ports:
       - 7740:7740
     volumes:

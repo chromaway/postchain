@@ -124,7 +124,7 @@ class DefaultXConnectionManagerTest {
         // TODO: [et]: Maybe use arg captor here
         // Given
         val communicationConfig: PeerCommConfiguration = mock {
-            on { myIndex } doReturn 1 // See DefaultPeersConnectionStrategy
+            on { pubKey } doReturn peerInfo2.pubKey// See DefaultPeersConnectionStrategy
             on { myPeerInfo() } doReturn peerInfo2
             on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
             on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
@@ -145,7 +145,7 @@ class DefaultXConnectionManagerTest {
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(1 + (2 - 1) * 2)).commConfiguration
         verify(chainPeerConfig, times(1 + 1 * 2 + 1)).blockchainRID
-        verify(communicationConfig, times(2 + 2)).peerInfo
+        verify(communicationConfig, times(2 + 2 + 2)).peerInfo
 
         connectionManager.shutdown()
     }
@@ -179,7 +179,7 @@ class DefaultXConnectionManagerTest {
     fun connectChainPeer_connects_peer_successfully() {
         // Given
         val communicationConfig: PeerCommConfiguration = mock {
-            on { myIndex } doReturn 0
+            on { pubKey } doReturn peerInfo1.pubKey
             on { myPeerInfo() } doReturn peerInfo1
             on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
             on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
@@ -211,7 +211,7 @@ class DefaultXConnectionManagerTest {
     fun connectChainPeer_connects_already_connected_peer_and_nothing_happens() {
         // Given
         val communicationConfig: PeerCommConfiguration = mock {
-            on { myIndex } doReturn 1 // See DefaultPeersConnectionStrategy
+            on { pubKey } doReturn peerInfo2.pubKey // See DefaultPeersConnectionStrategy
             on { myPeerInfo() } doReturn peerInfo2
             on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
             on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
@@ -238,7 +238,7 @@ class DefaultXConnectionManagerTest {
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(1 + (2 - 1) * 2)).commConfiguration
         verify(chainPeerConfig, times(1 + 2 + 1)).blockchainRID
-        verify(communicationConfig, times(2 + 2)).peerInfo
+        verify(communicationConfig, times(2 + 2 + 2)).peerInfo
 
         connectionManager.shutdown()
     }
@@ -271,7 +271,7 @@ class DefaultXConnectionManagerTest {
     fun isPeerConnected_and_getConnectedPeers_are_succeeded() {
         // Given
         val communicationConfig: PeerCommConfiguration = mock {
-            on { myIndex } doReturn 1 // See DefaultPeersConnectionStrategy
+            on { pubKey } doReturn peerInfo2.pubKey // See DefaultPeersConnectionStrategy
             on { myPeerInfo() } doReturn peerInfo2
             on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
             on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
@@ -342,7 +342,7 @@ class DefaultXConnectionManagerTest {
     fun sendPacket_sends_packet_to_receiver_via_connection_successfully() {
         // Given
         val communicationConfig: PeerCommConfiguration = mock {
-            on { myIndex } doReturn 1 // See DefaultPeersConnectionStrategy
+            on { pubKey } doReturn peerInfo2.pubKey // See DefaultPeersConnectionStrategy
             on { myPeerInfo() } doReturn peerInfo2
             on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
             on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
@@ -388,7 +388,7 @@ class DefaultXConnectionManagerTest {
     fun broadcastPacket_sends_packet_to_all_receivers_successfully() {
         // Given
         val communicationConfig: PeerCommConfiguration = mock {
-            on { myIndex } doReturn 0
+            on { pubKey } doReturn peerInfo1.pubKey
             on { myPeerInfo() } doReturn peerInfo1
             on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
             on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2

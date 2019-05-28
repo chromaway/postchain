@@ -12,6 +12,7 @@ interface Storage {
     fun openWriteConnection(chainID: Long): EContext
     fun closeWriteConnection(context: EContext, commit: Boolean)
 
+    fun isSavepointSupported(): Boolean
     fun withSavepoint(context: EContext, fn: () -> Unit): Exception?
 
     fun close()

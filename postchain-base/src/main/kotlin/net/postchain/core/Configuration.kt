@@ -22,7 +22,7 @@ interface BlockchainConfiguration {
 interface ConfigurationDataStore {
     fun findConfiguration(context: EContext, height: Long): Long?
     fun getConfigurationData(context: EContext, height: Long): ByteArray?
-    fun addConfigurationData(context: EContext, height: Long, data: ByteArray): Long
+    fun addConfigurationData(context: EContext, height: Long, data: ByteArray)
 }
 
 interface BlockchainConfigurationFactory {

@@ -13,7 +13,7 @@ class EbftPacketEncoder(val config: PeerCommConfiguration, val blockchainRID: By
     override fun makeIdentPacket(forPeer: ByteArray): ByteArray {
         val bytes = Identification(forPeer, blockchainRID, System.currentTimeMillis()).encode()
         val signature = config.signer()(bytes)
-        return SignedMessage(bytes, config.peerInfo[config.myIndex].pubKey, signature.data).encode()
+        return SignedMessage(bytes, config.pubKey, signature.data).encode()
     }
 
     override fun encodePacket(packet: EbftMessage): ByteArray {
@@ -38,7 +38,7 @@ class EbftPacketDecoder(val config: PeerCommConfiguration) : XPacketDecoder<Ebft
             throw UserMistake("Packet was not an Identification. Got ${message::class}")
         }
 
-        if (!config.peerInfo[config.myIndex].pubKey.contentEquals(message.yourPubKey)) {
+        if (!config.pubKey.contentEquals(message.yourPubKey)) {
             throw UserMistake("'yourPubKey' ${message.yourPubKey.toHex()} of Identification is not mine")
         }
 
