@@ -39,8 +39,8 @@ class EbftPacketDecoder(val config: PeerCommConfiguration) : XPacketDecoder<Mess
             throw UserMistake("Packet was not an Identification. Got ${message::class}")
         }
 
-        if (!config.pubKey.contentEquals(message.yourPubKey)) {
-            throw UserMistake("'yourPubKey' ${message.yourPubKey.toHex()} of Identification is not mine")
+        if (!config.pubKey.contentEquals(message.pubKey)) {
+            throw UserMistake("'yourPubKey' ${message.pubKey.toHex()} of Identification is not mine")
         }
 
         return IdentPacketInfo(signedMessage.pubKey, message.blockchainRID, null)

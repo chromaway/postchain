@@ -14,8 +14,7 @@ import net.postchain.network.CommunicationManager
  */
 class NetworkAwareTxQueue(
         private val queue: TransactionQueue,
-        private val network: CommunicationManager<Message>,
-        private val nodeIndex: Int)
+        private val network: CommunicationManager<Message>)
     : TransactionQueue by queue {
 
     companion object : KLogging()

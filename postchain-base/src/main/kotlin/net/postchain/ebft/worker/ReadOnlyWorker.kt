@@ -18,10 +18,9 @@ import net.postchain.network.CommunicationManager
 class ReadOnlyWorker(
         signers: List<ByteArray>,
         override val blockchainEngine: BlockchainEngine,
-        nodeIndex: Int,
         communicationManager: CommunicationManager<Message>,
         override val restartHandler: RestartHandler
-) : WorkerBase {
+) : AbstractBlockchainProcess() {
 
     override val blockDatabase: BaseBlockDatabase
     override val syncManager: ReplicaSyncManager

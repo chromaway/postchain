@@ -24,8 +24,8 @@ class ValidatorWorker(
         override val blockchainEngine: BlockchainEngine,
         nodeIndex: Int,
         private val communicationManager: CommunicationManager<Message>,
-        val restartHandler: RestartHandler
-) : WorkerBase {
+        override val restartHandler: RestartHandler
+) : AbstractBlockchainProcess() {
 
     override val blockDatabase: BaseBlockDatabase
     private val blockManager: BlockManager

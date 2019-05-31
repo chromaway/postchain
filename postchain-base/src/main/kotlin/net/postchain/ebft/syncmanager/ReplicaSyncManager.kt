@@ -6,7 +6,7 @@ import net.postchain.core.BlockchainConfiguration
 import net.postchain.core.ProgrammerMistake
 import net.postchain.ebft.BlockDatabase
 import net.postchain.ebft.message.CompleteBlock
-import net.postchain.ebft.message.EbftMessage
+import net.postchain.ebft.message.Message
 import net.postchain.ebft.message.GetBlockAtHeight
 import net.postchain.ebft.message.Status
 import net.postchain.ebft.syncmanager.replica.IncomingBlock
@@ -19,7 +19,7 @@ import java.util.*
 
 class ReplicaSyncManager(
         signers: List<ByteArray>,
-        private val communicationManager: CommunicationManager<EbftMessage>,
+        private val communicationManager: CommunicationManager<Message>,
         private val blockDatabase: BlockDatabase,
         val blockQueries: BlockQueries,
         private val blockchainConfiguration: BlockchainConfiguration
