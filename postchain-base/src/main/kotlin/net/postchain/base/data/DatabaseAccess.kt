@@ -12,6 +12,7 @@ import java.sql.Connection
 
 interface DatabaseAccess {
     class BlockInfo(val blockIid: Long, val blockHeader: ByteArray, val witness: ByteArray)
+    class BlockInfoExt(val blockRid: ByteArray, val blockHeight: Long, val blockHeader: ByteArray, val witness: ByteArray, val timestamp: Long)
 
     fun initialize(connection: Connection, expectedDbVersion: Int)
     fun getChainId(ctx: EContext, blockchainRID: ByteArray): Long?
@@ -39,9 +40,11 @@ interface DatabaseAccess {
     fun getBlockTxHashes(ctx: EContext, blokcIid: Long): List<ByteArray>
     fun getTxBytes(ctx: EContext, txRID: ByteArray): ByteArray?
     fun isTransactionConfirmed(ctx: EContext, txRID: ByteArray): Boolean
+    fun getLatestBlocksUpTo(ctx: EContext, upTo: Long, n: Int): List<BlockInfoExt>
 
     // Blockchain configurations
     fun findConfiguration(context: EContext, height: Long): Long?
+
     fun getConfigurationData(context: EContext, height: Long): ByteArray?
     fun addConfigurationData(context: EContext, height: Long, data: ByteArray)
 
@@ -308,6 +311,26 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
                     "is ${rid.toHex()}, but the expected rid is ${blockchainRID.toHex()}")
         } else {
             logger.info("Verified that Blockchain RID: ${blockchainRID.toHex()} exists in DB.")
+        }
+    }
+
+    override fun getLatestBlocksUpTo(context: EContext, upTo: Long, n: Int): List<DatabaseAccess.BlockInfoExt> {
+        val blocksInfo = queryRunner.query(context.conn,
+                "SELECT block_rid, block_height, block_header_data, block_witness, timestamp " +
+                        "FROM blocks WHERE timestamp < ? " +
+                        "ORDER BY timestamp DESC " +
+                        "LIMIT ?",
+                mapListHandler,
+                upTo,
+                n)
+
+        return blocksInfo.map { blockInfo ->
+            val blockRid = blockInfo.get("block_rid") as ByteArray
+            val blockHeight = blockInfo.get("block_height") as Long
+            val blockHeader = blockInfo.get("block_header_data") as ByteArray
+            val blockWitness = blockInfo.get("block_witness") as ByteArray
+            val timestamp = blockInfo.get("timestamp") as Long
+            DatabaseAccess.BlockInfoExt(blockRid, blockHeight, blockHeader, blockWitness, timestamp)
         }
     }
 

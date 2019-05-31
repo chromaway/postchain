@@ -1,5 +1,8 @@
 package net.postchain.integrationtest.multiple_chains
 
+import junitparams.JUnitParamsRunner
+import junitparams.Parameters
+import junitparams.naming.TestCaseName
 import mu.KLogging
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
@@ -9,12 +12,11 @@ import org.awaitility.Awaitility.await
 import org.awaitility.Duration.TEN_SECONDS
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.test.assertNotNull
 
-open class FullEbftMultipleChainsTestNightly : IntegrationTest() {
+@RunWith(JUnitParamsRunner::class)
+class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
 
     companion object : KLogging()
 
@@ -22,25 +24,45 @@ open class FullEbftMultipleChainsTestNightly : IntegrationTest() {
         return nodes[nodeId].blockBuildingStrategy(chainId) as OnDemandBlockBuildingStrategy
     }
 
-    protected fun runXNodesWithYTxPerBlock(
-            nodesCount: Int,
-            blocksCount: Int,
+    @Test
+    @Parameters("5, 1, 3, 2")
+    @TestCaseName("[{index}] nodeCount: {0}, replicaCount: {1}, blockCount: {2}, txPerBlock: {3}")
+    fun runFiveNodesWithYTxPerBlock(nodeCount: Int, replicaCount: Int, blockCount: Int, txPerBlock: Int) {
+        runXNodesWithReplicasWithYTxPerBlock(
+                nodeCount,
+                replicaCount,
+                blockCount,
+                txPerBlock,
+                arrayOf(
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node0.properties",
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node1.properties",
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node2.properties",
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node3.properties",
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node4.properties",
+                        "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/replica0.properties"
+                ),
+                arrayOf(
+                        "/net/postchain/multiple_chains/ebft_nightly/five_nodes/blockchain_config_1.xml",
+                        "/net/postchain/multiple_chains/ebft_nightly/five_nodes/blockchain_config_2.xml"
+                ))
+    }
+
+    private fun runXNodesWithReplicasWithYTxPerBlock(
+            nodeCount: Int,
+            replicaCount: Int,
+            blockCount: Int,
             txPerBlock: Int,
             nodeConfigsFilenames: Array<String>,
             blockchainConfigsFilenames: Array<String>
     ) {
-
         logger.info {
-            "runXNodesWithYTxPerBlock(): " +
-                    "nodesCount: $nodesCount, blocksCount: $blocksCount, txPerBlock: $txPerBlock"
+            "runXNodesWithReplicasWithYTxPerBlock(): " +
+                    "nodeCount: $nodeCount, replicaCount: $replicaCount, blockCount: $blockCount, txPerBlock: $txPerBlock"
         }
 
         val chains = arrayOf(1L, 2L)
-
-        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-
-        // Creating node with two chains
-        createMultipleChainNodes(nodesCount, nodeConfigsFilenames, blockchainConfigsFilenames)
+        configOverrides.setProperty("testpeerinfos", createPeerInfosWithReplicas(nodeCount, replicaCount))
+        createMultipleChainNodesWithReplicas(nodeCount, replicaCount, nodeConfigsFilenames, blockchainConfigsFilenames)
 
         // Asserting all chains are started
         await().atMost(TEN_SECONDS)
@@ -52,13 +74,12 @@ open class FullEbftMultipleChainsTestNightly : IntegrationTest() {
 
         // Enqueueing txs
         var txId = 0
-        for (block in 0 until blocksCount) {
+        for (block in 0 until blockCount) {
             (0 until txPerBlock).forEach { _ ->
                 val currentTxId = txId++
-                nodes.forEach { node ->
+                nodes.dropLast(replicaCount).forEach { node ->
                     chains.forEach { chain ->
-                        node.transactionQueue(chain).enqueue(
-                                TestTransaction(currentTxId))
+                        node.transactionQueue(chain).enqueue(TestTransaction(currentTxId))
                     }
                 }
             }
@@ -74,7 +95,7 @@ open class FullEbftMultipleChainsTestNightly : IntegrationTest() {
         }
 
         // Assertions
-        val expectedHeight = (blocksCount - 1).toLong()
+        val expectedHeight = (blockCount - 1).toLong()
         nodes.forEachIndexed { nodeId, node ->
             chains.forEach { chain ->
                 logger.info { "Assertions: node: $nodeId, chain: $chain, expectedHeight: $expectedHeight" }
@@ -89,10 +110,10 @@ open class FullEbftMultipleChainsTestNightly : IntegrationTest() {
 
                     // Asserting uniqueness of block at height
                     val blockRids = queries.getBlockRids(height).get()
-                    assertNotNull(blockRids)
+                    assertEquals(1, blockRids.size)
 
                     // Asserting txs count
-                    val txs = queries.getBlockTransactionRids(blockRids!!).get()
+                    val txs = queries.getBlockTransactionRids(blockRids[0]).get()
                     assertEquals(txPerBlock, txs.size)
 
                     // Asserting txs content

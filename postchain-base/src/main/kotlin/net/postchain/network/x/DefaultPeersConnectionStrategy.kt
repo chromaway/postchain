@@ -17,18 +17,20 @@ object DefaultPeersConnectionStrategy : PeersConnectionStrategy {
         }
 
         // myIndex
-        val message = "Invalid PeerCommConfiguration: myIndex ${configuration.myIndex} " +
+        val myIndex = configuration.peerInfo.indexOfFirst { it.pubKey.contentEquals(configuration.pubKey) }
+        val message = "Invalid PeerCommConfiguration: myIndex $myIndex " +
                 "must be in range ${configuration.peerInfo.indices}"
-        require(configuration.myIndex >= 0) { message }
-        require(configuration.myIndex < configuration.peerInfo.size) { message }
+        require(myIndex >= 0) { message }
+        require(myIndex < configuration.peerInfo.size) { message }
     }
 
     private fun runEachPeerAction(configuration: PeerCommConfiguration, action: (PeerInfo) -> Unit) {
+        val myIndex = configuration.peerInfo.indexOfFirst { it.pubKey.contentEquals(configuration.pubKey) }
         configuration.peerInfo
                 // To avoid connection to itself.
-                .filterIndexed { i, _ -> i != configuration.myIndex }
+                .filterIndexed { i, _ -> i != myIndex }
                 // To avoid duplicating of connection between two peers since each peer has Server and Client entities.
-                .filterIndexed { i, _ -> configuration.myIndex > i }
+                .filterIndexed { i, _ -> myIndex > i }
                 .forEach(action)
     }
 }
