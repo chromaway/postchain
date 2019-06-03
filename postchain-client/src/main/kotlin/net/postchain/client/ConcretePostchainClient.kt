@@ -1,12 +1,9 @@
-package net.postchain.client.net.postchain.client
+package net.postchain.client
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
 import net.postchain.api.rest.json.JsonFactory
-import net.postchain.api.rest.model.ApiStatus
-import net.postchain.client.*
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.TransactionStatus
@@ -16,25 +13,17 @@ import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.GtvFactory
 import net.postchain.gtx.GTXDataBuilder
 import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.task
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClients
 import java.lang.Exception
 import net.postchain.gtv.GtvFactory.gtv
-import net.postchain.gtx.GTXTransactionFactory
 import nl.komponents.kovenant.deferred
-import org.spongycastle.crypto.tls.ConnectionEnd.client
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
-import org.spongycastle.util.encoders.UrlBase64
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
-import java.lang.reflect.Type
-import java.net.HttpURLConnection
-import java.net.URL
-
 
 class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchainRID: ByteArray, val defaultSigner: DefaultSigner?) :PostchainClient
 {

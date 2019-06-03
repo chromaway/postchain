@@ -5,16 +5,12 @@ import net.postchain.common.toHex
 import net.postchain.core.TransactionStatus
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper
-import net.postchain.gtv.GtvFactory
-import net.postchain.gtx.EMPTY_SIGNATURE
 import net.postchain.gtx.GTXDataBuilder
 import net.postchain.integrationtest.JsonTools
 import net.postchain.gtv.GtvFactory.gtv
 import org.junit.Test
-import org.spongycastle.crypto.tls.ConnectionEnd.client
 import java.util.*
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class PostChainClientTest : IntegrationTest() {
 
