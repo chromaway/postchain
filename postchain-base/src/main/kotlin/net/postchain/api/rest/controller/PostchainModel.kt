@@ -11,13 +11,10 @@ import net.postchain.base.ConfirmationProof
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
-import net.postchain.core.BlockDetail
-import net.postchain.core.TransactionFactory
-import net.postchain.core.TransactionQueue
-import net.postchain.core.TransactionStatus.CONFIRMED
-import net.postchain.core.TransactionStatus.UNKNOWN
-import net.postchain.core.UserMistake
+import net.postchain.core.*
+import net.postchain.core.TransactionStatus.*
 import net.postchain.gtv.Gtv
+import java.rmi.server.ExportException
 
 open class PostchainModel(
         val txQueue: TransactionQueue,
@@ -65,7 +62,12 @@ open class PostchainModel(
                 CONFIRMED else UNKNOWN
         }
 
-        return ApiStatus(status)
+        val apiStatus = ApiStatus(status)
+        if (status == REJECTED) {
+            val exception = txQueue.getRejectionReason(txRID.bytes.byteArrayKeyOf())
+            apiStatus.rejectReason = exception?.message
+        }
+        return apiStatus
     }
 
     override fun query(query: Query): QueryResult {

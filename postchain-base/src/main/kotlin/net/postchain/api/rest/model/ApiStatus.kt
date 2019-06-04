@@ -12,4 +12,7 @@ class ApiStatus(private val txStatus: TransactionStatus) {
                 TransactionStatus.REJECTED -> "rejected"
             }
         }
+
+    var rejectReason: String? = null
+        set(value) { this.rejectReason = value}
 }
