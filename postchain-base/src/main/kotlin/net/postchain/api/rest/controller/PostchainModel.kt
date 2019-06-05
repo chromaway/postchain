@@ -62,12 +62,11 @@ open class PostchainModel(
                 CONFIRMED else UNKNOWN
         }
 
-        val apiStatus = ApiStatus(status)
         if (status == REJECTED) {
             val exception = txQueue.getRejectionReason(txRID.bytes.byteArrayKeyOf())
-            apiStatus.rejectReason = exception?.message
+            return ApiStatus(status, exception?.message)
         }
-        return apiStatus
+        return ApiStatus(status)
     }
 
     override fun query(query: Query): QueryResult {

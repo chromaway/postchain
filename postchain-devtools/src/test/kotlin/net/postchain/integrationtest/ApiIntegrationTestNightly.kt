@@ -11,12 +11,14 @@ import net.postchain.common.toHex
 import net.postchain.configurations.GTXTestModule
 import net.postchain.core.Signature
 import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.KeyPairHelper
 import net.postchain.devtools.testinfra.TestOneOpGtxTransaction
 import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
 import net.postchain.gtv.merkle.proof.merkleHash
+import net.postchain.gtx.GTXDataBuilder
 import net.postchain.gtx.GTXTransactionFactory
 import net.postchain.integrationtest.JsonTools.jsonAsMap
 import org.hamcrest.core.IsEqual
@@ -142,6 +144,30 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                 checkConfirmationProofForTx(realTx, jsonResponse)
             }
         }
+    }
+
+    @Test
+    fun testRejectedTransactionWithReason() {
+        val nodesCount = 3
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+        configOverrides.setProperty("api.port", 0)
+        createNodes(nodesCount, "/net/postchain/api/blockchain_config.xml")
+
+        val b = GTXDataBuilder(blockchainRIDBytes, arrayOf(KeyPairHelper.pubKey(0)), cryptoSystem)
+        b.addOperation("gtx_test", arrayOf(gtv(1L), gtv("rejectMe")))
+        b.finish()
+        b.sign(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)))
+
+        // post transaction
+        testStatusPost(0, "/tx/$blockchainRID", "{\"tx\": \"${b.serialize().toHex()}\"}", 200)
+
+        // wait a little bit to get rejected status
+        Thread.sleep(500)
+
+        testStatusGet("/tx/$blockchainRID/${b.getDigestForSigning().toHex()}/status", 200) {
+            assertEquals(jsonAsMap(gson, "{\"status\"=\"rejected\", \"rejectReason\": \"You were asking for it\"}"), jsonAsMap(gson, it))
+        }
+
     }
 
     /**

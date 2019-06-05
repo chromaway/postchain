@@ -2,7 +2,7 @@ package net.postchain.api.rest.model
 
 import net.postchain.core.TransactionStatus
 
-class ApiStatus(private val txStatus: TransactionStatus) {
+class ApiStatus(private val txStatus: TransactionStatus, val rejectReason: String? = null) {
     val status: String
         get() {
             return when (txStatus) {
@@ -12,7 +12,4 @@ class ApiStatus(private val txStatus: TransactionStatus) {
                 TransactionStatus.REJECTED -> "rejected"
             }
         }
-
-    var rejectReason: String? = null
-        set(value) { this.rejectReason = value}
 }
