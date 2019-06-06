@@ -24,6 +24,7 @@ class ReplicaSyncManager(
         val blockQueries: BlockQueries,
         private val blockchainConfiguration: BlockchainConfiguration
 ) : SyncManagerBase {
+    override val nodeStateTracker = NodeStateTracker()
 
     private val parallelism = 10
     private val nodePoolCount = 2 // used to select 1 random node
@@ -39,6 +40,7 @@ class ReplicaSyncManager(
 
     override fun update() {
         replicaLogger.logCurrentState(blockHeight, parallelRequestsState, blocks)
+        nodeStateTracker.blockHeight = blockHeight
         checkBlock()
         processState()
         dispatchMessages()

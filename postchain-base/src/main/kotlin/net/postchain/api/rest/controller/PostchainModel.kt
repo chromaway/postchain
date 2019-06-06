@@ -3,12 +3,12 @@
 package net.postchain.api.rest.controller
 
 import mu.KLogging
+import net.postchain.api.rest.contract.*
 import net.postchain.api.rest.model.ApiStatus
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
 import net.postchain.base.BaseBlockQueries
 import net.postchain.base.ConfirmationProof
-import net.postchain.base.data.DatabaseAccess
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
 import net.postchain.core.BlockDetail
@@ -17,9 +17,11 @@ import net.postchain.core.TransactionQueue
 import net.postchain.core.TransactionStatus.CONFIRMED
 import net.postchain.core.TransactionStatus.UNKNOWN
 import net.postchain.core.UserMistake
+import net.postchain.ebft.syncmanager.SyncManagerBase
 import net.postchain.gtx.GTXValue
 
 open class PostchainModel(
+        private val syncManagerBase: SyncManagerBase,
         val txQueue: TransactionQueue,
         private val transactionFactory: TransactionFactory,
         val blockQueries: BaseBlockQueries
@@ -74,5 +76,17 @@ open class PostchainModel(
 
     override fun query(query: GTXValue): GTXValue {
         return blockQueries.query(query[0]!!.asString(), query[1]).get()
+    }
+
+    override fun nodeQuery(subQuery: String): NodeStateTrackerContract? {
+        val currentState = syncManagerBase.nodeStateTracker
+        return when (subQuery) {
+            "height" -> BlockHeight(currentState.blockHeight)
+            "my_status" -> currentState.myStatus?.let { status -> MyStatus(status.toNodeStatusContract()) }
+            "statuses" -> currentState.nodeStatuses?.let { statuses ->
+                NodeStatuses(statuses.map { it.toNodeStatusContract() }.toTypedArray())
+            }
+            else -> throw NotSupported("NotSupported: $subQuery")
+        }
     }
 }

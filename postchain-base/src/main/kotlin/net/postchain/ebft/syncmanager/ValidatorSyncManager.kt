@@ -71,6 +71,8 @@ class ValidatorSyncManager(
     private var processingIntentDeadline = 0L
     private var lastStatusLogged = Date().time
 
+    override val nodeStateTracker = NodeStateTracker()
+
     companion object : KLogging()
 
     private val nodes = communicationManager.peers().map { XPeerID(it.pubKey) }
@@ -333,6 +335,10 @@ class ValidatorSyncManager(
 
         // Sends a status message to all peers when my status has changed or after a timeout
         statusSender.update()
+
+        nodeStateTracker.myStatus = statusManager.myStatus
+        nodeStateTracker.nodeStatuses = statusManager.nodeStatuses
+        nodeStateTracker.blockHeight = statusManager.myStatus.height
 
         if (Date().time - lastStatusLogged >= StatusLogInterval) {
             logStatus()

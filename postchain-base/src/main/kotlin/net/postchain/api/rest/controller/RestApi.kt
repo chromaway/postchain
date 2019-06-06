@@ -6,6 +6,9 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import mu.KLogging
+import net.postchain.api.rest.contract.BlockHeight
+import net.postchain.api.rest.contract.MyStatus
+import net.postchain.api.rest.contract.NodeStatuses
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_HEADERS
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_METHODS
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_ORIGIN
@@ -15,6 +18,7 @@ import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_BLOCKCHAIN_R
 import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_HASH_HEX
 import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_LIMIT
 import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_UP_TO
+import net.postchain.api.rest.controller.HttpHelper.Companion.SUBQUERY
 import net.postchain.api.rest.json.JsonFactory
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.GTXQuery
@@ -178,6 +182,10 @@ class RestApi(private val listenPort: Int, private val basePath: String,
             http.post("/query_gtx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
                 handleGTXQueries(request)
             }
+
+            http.get("/node/$PARAM_BLOCKCHAIN_RID/$SUBQUERY", "application/json") { request, _ ->
+                handleNodeStatusQueries(request)
+            }
         }
 
         http.awaitInitialization()
@@ -256,6 +264,17 @@ class RestApi(private val listenPort: Int, private val basePath: String,
         }
 
         return gson.toJson(response)
+    }
+
+    private fun handleNodeStatusQueries(request: Request): String {
+        logger.debug("Request body: ${request.body()}")
+        val response = model(request).nodeQuery(request.params(SUBQUERY))
+        return gson.toJson(when (response) {
+            is MyStatus -> response.myStatus
+            is BlockHeight -> response
+            is NodeStatuses -> response.statuses
+            else -> throw NotFoundError("NotFound")
+        })
     }
 
     private fun checkTxHashHex(request: Request): String {

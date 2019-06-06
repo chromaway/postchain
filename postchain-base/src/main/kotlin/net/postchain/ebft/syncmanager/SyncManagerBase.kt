@@ -3,5 +3,6 @@
 package net.postchain.ebft.syncmanager
 
 interface SyncManagerBase {
+    val nodeStateTracker: NodeStateTracker
     fun update()
 }
