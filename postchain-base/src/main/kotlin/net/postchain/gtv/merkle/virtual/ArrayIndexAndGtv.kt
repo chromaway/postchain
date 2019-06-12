@@ -9,21 +9,7 @@ import net.postchain.gtv.GtvVirtualArray
  * @property value is the [Gtv] value we want to keep in the
  * @property depth is how many steps from the
  */
-data class ArrayIndexAndGtv(var index: Int, val value: Gtv) {
-
-    /*
-    TODO:POS-8 Delete this if not used after 2019-06-01
-    fun updateIndex() {
-        height++
-        val valueToAdd = Math.pow(2.0, height.toDouble()).roundToInt()
-        index += valueToAdd
-    }
-
-    fun updateHeightOnly() {
-        height++
-    }
-    */
-}
+data class ArrayIndexAndGtv(var index: Int, val value: Gtv)
 
 
 data class ArrayIndexAndGtvList(val innerSet: MutableList<ArrayIndexAndGtv>) {
