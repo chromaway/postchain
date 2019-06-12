@@ -16,8 +16,7 @@ import kotlin.test.assertEquals
  */
 class MixArrayDictToMerkleProofTreeTest {
 
-
-
+    private val ln = System.lineSeparator()
 
     @Test
     fun test_dictWithArr_where_path_is_to_leaf4() {
@@ -28,16 +27,16 @@ class MixArrayDictToMerkleProofTreeTest {
         val gtvPaths = GtvPathSet(setOf(gtvPath))
         val gtvDict = MixArrayDictToGtvBinaryTreeHelper.buildGtvDictWithSubArray4()
 
-        val expectedTree = "       +               \n" +
-                "      / \\       \n" +
-                "     /   \\      \n" +
-                "    /     \\     \n" +
-                "   /       \\    \n" +
-                "   02706F66       *       \n" +
-                "          / \\   \n" +
-                "         /   \\  \n" +
-                " .   .   0103030304   +   \n" +
-                "            / \\ \n" +
+        val expectedTree = "       +               $ln" +
+                "      / \\       $ln" +
+                "     /   \\      $ln" +
+                "    /     \\     $ln" +
+                "   /       \\    $ln" +
+                "   02706F66       *       $ln" +
+                "          / \\   $ln" +
+                "         /   \\  $ln" +
+                " .   .   0103030304   +   $ln" +
+                "            / \\ $ln" +
                 "- - - - - - 0204 *4 "
 
         val merkleProofTree = gtvDict.generateProof(gtvPaths, calculator)
@@ -67,8 +66,8 @@ class MixArrayDictToMerkleProofTreeTest {
         val gtvPaths = GtvPathSet(setOf(gtvPath))
         val gtvDict = MixArrayDictToGtvBinaryTreeHelper.buildGtvDictWithSubArray4()
 
-        val expectedTree = " +   \n" +
-                "/ \\ \n" +
+        val expectedTree = " +   $ln" +
+                "/ \\ $ln" +
                 "02706F66 *GtvArray(array=[GtvInteger(integer=1), GtvInteger(integer=2), GtvInteger(integer=3), GtvInteger(integer=4)])"
 
         val merkleProofTree = gtvDict.generateProof(gtvPaths, calculator)

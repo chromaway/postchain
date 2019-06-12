@@ -11,6 +11,7 @@ import org.junit.Test
 
 class MixArrayDictToGtvBinaryTreeTest {
 
+    private val ln = System.lineSeparator()
     private val factory = GtvBinaryTreeFactory()
 
     /**
@@ -40,18 +41,17 @@ class MixArrayDictToGtvBinaryTreeTest {
     @Test
     fun testIntDictLength1withInnerLength4Array() {
         val expectedTree =
-                "       +               \n" +
-                        "      / \\       \n" +
-                        "     /   \\      \n" +
-                        "    /     \\     \n" +
-                        "   /       \\    \n" +
-                        "   one       +       \n" +
-                        "          / \\   \n" +
-                        "         /   \\  \n" +
-                        " .   .   +   +   \n" +
-                        "        / \\ / \\ \n" +
+                "       +               $ln" +
+                        "      / \\       $ln" +
+                        "     /   \\      $ln" +
+                        "    /     \\     $ln" +
+                        "   /       \\    $ln" +
+                        "   one       +       $ln" +
+                        "          / \\   $ln" +
+                        "         /   \\  $ln" +
+                        " .   .   +   +   $ln" +
+                        "        / \\ / \\ $ln" +
                         "- - - - 1 2 3 4 "
-
 
         val treePrintout = buildTreeOfDict1WithSubArray4()
         //println(treeHolder.treePrintout)
@@ -62,16 +62,16 @@ class MixArrayDictToGtvBinaryTreeTest {
     fun testIntDictLength1withInnerLength4Array_withPath() {
         val path: Array<Any> = arrayOf("one", 3)
 
-        val expectedTreeWithPath = "       *               \n" +
-                "      / \\       \n" +
-                "     /   \\      \n" +
-                "    /     \\     \n" +
-                "   /       \\    \n" +
-                "   one       *       \n" +
-                "          / \\   \n" +
-                "         /   \\  \n" +
-                " .   .   +   +   \n" +
-                "        / \\ / \\ \n" +
+        val expectedTreeWithPath = "       *               $ln" +
+                "      / \\       $ln" +
+                "     /   \\      $ln" +
+                "    /     \\     $ln" +
+                "   /       \\    $ln" +
+                "   one       *       $ln" +
+                "          / \\   $ln" +
+                "         /   \\  $ln" +
+                " .   .   +   +   $ln" +
+                "        / \\ / \\ $ln" +
                 "- - - - 1 2 3 *4 "
 
         val gtvPath: GtvPath = GtvPathFactory.buildFromArrayOfPointers(path)

@@ -44,9 +44,10 @@ class MixArrayDictToGtvBinaryTreeWithCacheTest {
         checkStats(0, 0, cacheMisses1, memoization)
 
         // ------------------- Do dict with array ---------------------
-        val expectedTree = "  +   \n" +
-                        "/ \\ \n" +
-                        "one (0802040404050204060407)       \n" // <-- The entire sub tree is just a hash
+        val ln = System.lineSeparator()
+        val expectedTree = "  +   $ln" +
+                        "/ \\ $ln" +
+                        "one (0802040404050204060407)       $ln" // <-- The entire sub tree is just a hash
 
         val treePrintout = buildTreeOfDict1WithSubArray4(calculator.memoization)
         //println(treeHolder.treePrintout)
