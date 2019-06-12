@@ -12,6 +12,7 @@ import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
 import net.postchain.common.hexStringToByteArray
 import net.postchain.ebft.NodeState
+import net.postchain.ebft.rest.contract.EBFTstateNodeStatusContract
 import org.easymock.EasyMock.*
 import org.hamcrest.CoreMatchers.equalTo
 import org.junit.After
@@ -160,7 +161,7 @@ class RestApiModelTest {
     fun test_node_get_my_status() {
         restApi.attachModel(blockchainRID1, model)
 
-        val response = NodeStatusContract(
+        val response = EBFTstateNodeStatusContract(
                 height = 233,
                 serial = 41744989480,
                 state = NodeState.WaitBlock,
@@ -189,7 +190,7 @@ class RestApiModelTest {
 
         val response: Array<NodeStatusContract> =
                 arrayOf(
-                        NodeStatusContract(
+                        EBFTstateNodeStatusContract(
                                 height = 233,
                                 serial = 41744989480,
                                 state = NodeState.WaitBlock,
@@ -197,7 +198,7 @@ class RestApiModelTest {
                                 revolting = false,
                                 blockRid = null
                         ),
-                        NodeStatusContract(
+                        EBFTstateNodeStatusContract(
                                 height = 233,
                                 serial = 41744999981,
                                 state = NodeState.WaitBlock,

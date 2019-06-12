@@ -17,6 +17,7 @@ import net.postchain.core.TransactionQueue
 import net.postchain.core.TransactionStatus.CONFIRMED
 import net.postchain.core.TransactionStatus.UNKNOWN
 import net.postchain.core.UserMistake
+import net.postchain.ebft.rest.contract.toNodeStatusContract
 import net.postchain.ebft.syncmanager.SyncManagerBase
 import net.postchain.gtx.GTXValue
 
