@@ -1,54 +1,61 @@
 package net.postchain.client
 
-import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
 import net.postchain.api.rest.json.JsonFactory
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.TransactionStatus
+import net.postchain.core.TransactionStatus.*
 import net.postchain.core.UserMistake
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.GtvFactory
+import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtx.GTXDataBuilder
 import nl.komponents.kovenant.Promise
-import org.apache.http.client.methods.HttpPost
-import org.apache.http.entity.StringEntity
-import org.apache.http.impl.client.HttpClients
-import java.lang.Exception
-import net.postchain.gtv.GtvFactory.gtv
 import nl.komponents.kovenant.deferred
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpPost
+import org.apache.http.entity.StringEntity
+import org.apache.http.impl.client.HttpClients
 import java.io.BufferedReader
 import java.io.InputStream
-import java.io.InputStreamReader
 
-class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchainRID: ByteArray, val defaultSigner: DefaultSigner?) :PostchainClient
-{
+class ConcretePostchainClient(
+        private val resolver: PostchainNodeResolver,
+        private val blockchainRID: ByteArray,
+        private val defaultSigner: DefaultSigner?
+) : PostchainClient {
 
     private val gson = JsonFactory.makeJson()
     private val serverUrl = resolver.getNodeURL(blockchainRID)
     private val httpClient = HttpClients.createDefault()
     private val blockchainRIDHex = blockchainRID.toHex()
+    val retrieveTxStatusAttempts = 20
+    val retrieveTxStatusIntervalMs = 500L
+
+    override fun makeTransaction(): GTXTransactionBuilder {
+        return GTXTransactionBuilder(this, blockchainRID, arrayOf(defaultSigner!!.pubkey))
+    }
 
     override fun makeTransaction(signers: Array<ByteArray>): GTXTransactionBuilder {
         return GTXTransactionBuilder(this, blockchainRID, signers)
     }
 
-    override fun postTransaction(builder: GTXDataBuilder, confirmationLevel: ConfirmationLevel): Promise<TransactionResult, Exception> {
+    override fun postTransaction(txBuilder: GTXDataBuilder, confirmationLevel: ConfirmationLevel): Promise<TransactionResult, Exception> {
         val def = deferred<TransactionResult, Exception>()
         try {
-            def.resolve(doPostTransaction(builder, confirmationLevel))
+            def.resolve(doPostTransaction(txBuilder, confirmationLevel))
         } catch (e: Exception) {
             def.reject(e)
         }
         return def.promise
     }
 
-    override fun postTransactionSync(builder: GTXDataBuilder, confirmationLevel: ConfirmationLevel): TransactionResult {
-        return doPostTransaction(builder, confirmationLevel)
+    override fun postTransactionSync(txBuilder: GTXDataBuilder, confirmationLevel: ConfirmationLevel): TransactionResult {
+        return doPostTransaction(txBuilder, confirmationLevel)
     }
 
     override fun query(name: String, gtv: Gtv): Promise<Gtv, Exception> {
@@ -61,15 +68,11 @@ class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchai
         return def.promise
     }
 
-    override fun makeTransaction(): GTXTransactionBuilder {
-        return GTXTransactionBuilder(this, blockchainRID, arrayOf(defaultSigner!!.pubkey))
-    }
-
-    private fun doQuery(name: String, gtv : Gtv) : Gtv {
-        val httpPost = HttpPost("${serverUrl}/query_gtx/${blockchainRIDHex}")
+    private fun doQuery(name: String, gtv: Gtv): Gtv {
+        val httpPost = HttpPost("$serverUrl/query_gtx/$blockchainRIDHex")
         val gtxQuery = gtv(gtv(name), gtv)
         val jsonQuery = """{"queries" : ["${GtvEncoder.encodeGtv(gtxQuery).toHex()}"]}""".trimMargin()
-        with (httpPost) {
+        with(httpPost) {
             entity = StringEntity(jsonQuery)
             setHeader("Accept", "application/json")
             setHeader("Content-type", "application/json")
@@ -83,13 +86,13 @@ class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchai
         return GtvFactory.decodeGtv(gtxHexCode!!.hexStringToByteArray())
     }
 
-    private fun doPostTransaction(b: GTXDataBuilder, confirmationLevel: ConfirmationLevel) : TransactionResult {
-        val txHex = b.serialize().toHex()
-        val txJson = """{"tx" : ${txHex}}"""
-        val txHashHex = b.getDigestForSigning().toHex()
+    private fun doPostTransaction(txBuilder: GTXDataBuilder, confirmationLevel: ConfirmationLevel): TransactionResult {
+        val txHex = txBuilder.serialize().toHex()
+        val txJson = """{"tx" : $txHex}"""
+        val txHashHex = txBuilder.getDigestForSigning().toHex()
 
-        fun submitTransaction() : CloseableHttpResponse {
-            val httpPost = HttpPost("${serverUrl}/tx/${blockchainRIDHex}")
+        fun submitTransaction(): CloseableHttpResponse {
+            val httpPost = HttpPost("$serverUrl/tx/$blockchainRIDHex")
             httpPost.setHeader("Content-type", "application/json")
             httpPost.entity = StringEntity(txJson)
             return httpClient.execute(httpPost)
@@ -99,59 +102,45 @@ class ConcretePostchainClient(val resolver: PostchainNodeResolver, val blockchai
 
             ConfirmationLevel.NO_WAIT -> {
                 val response = submitTransaction()
-                if (response.statusLine.statusCode == 200) {
-                    return TransactionResultImpl(TransactionStatus.WAITING)
+                return if (response.statusLine.statusCode == 200) {
+                    TransactionResultImpl(WAITING)
                 } else {
-                    return TransactionResultImpl(TransactionStatus.REJECTED)
+                    TransactionResultImpl(REJECTED)
                 }
             }
 
             ConfirmationLevel.UNVERIFIED -> {
                 submitTransaction()
-                val httpGet = HttpGet("${serverUrl}/tx/${blockchainRIDHex}/${txHashHex}/status")
+                val httpGet = HttpGet("$serverUrl/tx/$blockchainRIDHex/$txHashHex/status")
                 httpGet.setHeader("Content-type", "application/json")
 
                 // keep polling till getting Confirmed or Rejected
-                while (true) {
+                (0 until retrieveTxStatusAttempts).forEach { _ ->
                     httpClient.execute(httpGet).entity?.let { e ->
-                        val resp = parseResponse(e.content)
-                        val jsonObject = Gson().fromJson(resp, JsonObject::class.java)
-                        val status = jsonObject.get("status").asString
-                        println("Status: ${status}")
-                        when (status.toLowerCase()) {
-                            "confirmed" -> {
-                                return TransactionResultImpl(TransactionStatus.CONFIRMED)
-                            }
+                        val response = parseResponse(e.content)
+                        val jsonObject = gson.fromJson(response, JsonObject::class.java)
+                        val status = TransactionStatus.valueOf(
+                                jsonObject.get("status").asString.toUpperCase())
 
-                            "rejected" -> {
-                                return TransactionResultImpl(TransactionStatus.REJECTED)
-                            }
-
-                            else -> {
-                                Thread.sleep(500)
-                            }
+                        if (status == CONFIRMED || status == REJECTED) {
+                            return TransactionResultImpl(status)
                         }
+
+                        Thread.sleep(retrieveTxStatusIntervalMs)
                     }
                 }
+
+                return TransactionResultImpl(REJECTED)
             }
 
             else -> {
-                return TransactionResultImpl(TransactionStatus.REJECTED)
+                return TransactionResultImpl(REJECTED)
             }
         }
     }
 
-    private fun parseResponse(content: InputStream) : String {
-        val bufferReader = BufferedReader(InputStreamReader(content))
-        val ret = StringBuffer()
-        var line : String?
-        line = bufferReader.readLine()
-        while (line != null) {
-            ret.append(line)
-            line = bufferReader.readLine()
-        }
-        bufferReader.close()
-        return ret.toString()
+    private fun parseResponse(content: InputStream): String {
+        return content.bufferedReader().use(BufferedReader::readText)
     }
 
 }

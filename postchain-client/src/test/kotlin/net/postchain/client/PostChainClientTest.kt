@@ -1,93 +1,142 @@
 package net.postchain.client
 
+import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.eq
+import com.nhaarman.mockitokotlin2.spy
+import com.nhaarman.mockitokotlin2.verify
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
+import net.postchain.core.ProgrammerMistake
 import net.postchain.core.TransactionStatus
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper
-import net.postchain.gtx.GTXDataBuilder
-import net.postchain.integrationtest.JsonTools
 import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtx.GTXDataBuilder
+import nl.komponents.kovenant.deferred
 import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals
 
 class PostChainClientTest : IntegrationTest() {
 
-    private val gson = JsonTools.buildGson()
     private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
     private val blockchainRIDBytes = blockchainRID.hexStringToByteArray()
-    private val privateKey = "03a301697bdfcd704313ba48e51d567543f2a182031efd6915ddc07bbcc4e16070"
-    private val defaultSigner = DefaultSigner(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)), KeyPairHelper.pubKey(0))
-    private val postchainClientFactory =  PostchainClientFactory()
+    private val pubKey0 = KeyPairHelper.pubKey(0)
+    private val privKey0 = KeyPairHelper.privKey(0)
+    private val sigMaker0 = cryptoSystem.buildSigMaker(pubKey0, privKey0)
+    private val defaultSigner = DefaultSigner(sigMaker0, pubKey0)
+    private val postchainClientFactory = PostchainClientFactory()
     private val randomStr = "hello${Random().nextLong()}"
 
-    private fun createNodesTest(nodesCount: Int, configFileName: String) {
+    private fun createTestNodes(nodesCount: Int, configFileName: String) {
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         configOverrides.setProperty("api.port", 0)
         createNodes(nodesCount, configFileName)
     }
 
-    private fun createGtxDataBuiler() :GTXDataBuilder {
-        val b = GTXDataBuilder(blockchainRIDBytes, arrayOf(KeyPairHelper.pubKey(0)), cryptoSystem)
-
-        b.addOperation("gtx_test", arrayOf(gtv(1L), gtv(randomStr)))
-        b.finish()
-        b.sign(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)))
-        return b
+    private fun createGtxDataBuilder(): GTXDataBuilder {
+        return GTXDataBuilder(blockchainRIDBytes, arrayOf(pubKey0), cryptoSystem).apply {
+            addOperation("gtx_test", arrayOf(gtv(1L), gtv(randomStr)))
+            finish()
+            sign(sigMaker0)
+        }
     }
 
-    private fun createPostChainClientTest() : PostchainClient {
+    private fun createPostChainClient(): PostchainClient {
         val resolver = postchainClientFactory.makeSimpleNodeResolver("http://127.0.0.1:${nodes[0].getRestApiHttpPort()}")
         return postchainClientFactory.getClient(resolver, blockchainRIDBytes, defaultSigner)
     }
 
     @Test
+    fun makingAndPostingTransaction_SignedTransactionGiven_PostsSuccessfully() {
+        // Mock
+        createTestNodes(1, "/net/postchain/api/blockchain_config_1.xml")
+        val client = spy(createPostChainClient())
+        val txBuilder = client.makeTransaction()
+
+        // When
+        txBuilder.post(ConfirmationLevel.NO_WAIT).success {
+            // Then
+            verify(client).postTransaction(any(), eq(ConfirmationLevel.NO_WAIT))
+        }
+    }
+
+    @Test(expected = ProgrammerMistake::class)
+    fun makingAndPostingSyncTransaction_UnsignedTransactionGiven_throws_Exception() {
+        // Mock
+        createTestNodes(1, "/net/postchain/api/blockchain_config_1.xml")
+        val client = spy(createPostChainClient())
+        val txBuilder = client.makeTransaction()
+
+        // When
+        txBuilder.postSync(ConfirmationLevel.NO_WAIT)
+    }
+
+    @Test
+    fun makingAndPostingSyncTransaction_SignedTransactionGiven_PostsSuccessfully() {
+        // Mock
+        createTestNodes(1, "/net/postchain/api/blockchain_config_1.xml")
+        val client = spy(createPostChainClient())
+        val txBuilder = client.makeTransaction()
+
+        txBuilder.addOperation("nop", arrayOf())
+        txBuilder.addOperation("nop", arrayOf())
+        txBuilder.sign(sigMaker0)
+
+        // When
+        txBuilder.postSync(ConfirmationLevel.NO_WAIT)
+
+        // Then
+        verify(client).postTransactionSync(any(), eq(ConfirmationLevel.NO_WAIT))
+    }
+
+    @Test
     fun testPostTransactionApiConfirmLevelNoWait() {
-        createNodesTest(1, "/net/postchain/api/blockchain_config_1.xml")
-        val b = createGtxDataBuiler()
-        val client = createPostChainClientTest()
-        val result = client.postTransactionSync(b, ConfirmationLevel.NO_WAIT)
+        createTestNodes(1, "/net/postchain/api/blockchain_config_1.xml")
+        val builder = createGtxDataBuilder()
+        val client = createPostChainClient()
+        val result = client.postTransactionSync(builder, ConfirmationLevel.NO_WAIT)
         assertEquals(result.status, TransactionStatus.WAITING)
     }
 
     @Test
     fun testPostTransactionApiConfirmLevelNoWaitPromise() {
-        createNodesTest(1, "/net/postchain/api/blockchain_config_1.xml")
-        val b = createGtxDataBuiler()
-        val client = createPostChainClientTest()
-        client.postTransaction(b, ConfirmationLevel.NO_WAIT).success {
-            resp -> assertEquals(resp.status, TransactionStatus.WAITING)
+        createTestNodes(1, "/net/postchain/api/blockchain_config_1.xml")
+        val builder = createGtxDataBuilder()
+        val client = createPostChainClient()
+        client.postTransaction(builder, ConfirmationLevel.NO_WAIT).success { resp ->
+            assertEquals(resp.status, TransactionStatus.WAITING)
         }
     }
 
     @Test
     fun testPostTransactionApiConfirmLevelUnverified() {
-        createNodesTest(3, "/net/postchain/api/blockchain_config.xml")
-        val b = createGtxDataBuiler()
-        val client = createPostChainClientTest()
-        val result = client.postTransactionSync(b, ConfirmationLevel.UNVERIFIED)
+        createTestNodes(3, "/net/postchain/api/blockchain_config.xml")
+        val builder = createGtxDataBuilder()
+        val client = createPostChainClient()
+        val result = client.postTransactionSync(builder, ConfirmationLevel.UNVERIFIED)
         assertEquals(result.status, TransactionStatus.CONFIRMED)
     }
 
     @Test
     fun testPostTransactionApiConfirmLevelUnverifiedPromise() {
-        createNodesTest(3, "/net/postchain/api/blockchain_config.xml")
-        val b = createGtxDataBuiler()
-        val client = createPostChainClientTest()
-        client.postTransaction(b, ConfirmationLevel.UNVERIFIED).success {
-            resp -> assertEquals(resp.status, TransactionStatus.CONFIRMED)
+        createTestNodes(3, "/net/postchain/api/blockchain_config.xml")
+        val builder = createGtxDataBuilder()
+        val client = createPostChainClient()
+        client.postTransaction(builder, ConfirmationLevel.UNVERIFIED).success { resp ->
+            assertEquals(resp.status, TransactionStatus.CONFIRMED)
         }
     }
 
     @Test
-    fun testQueryGtxClientApi() {
-        createNodesTest(3, "/net/postchain/api/blockchain_config.xml")
-        val b = createGtxDataBuiler()
-        val client = createPostChainClientTest()
-        client.postTransactionSync(b, ConfirmationLevel.UNVERIFIED)
-        client.query("gtx_test_get_value", gtv("txRID" to gtv(b.getDigestForSigning().toHex()))).success {
-            resp -> assertEquals(resp.asString(), randomStr)
+    fun testQueryGtxClientApiPromise() {
+        createTestNodes(3, "/net/postchain/api/blockchain_config.xml")
+        val builder = createGtxDataBuilder()
+        val client = createPostChainClient()
+        client.postTransactionSync(builder, ConfirmationLevel.UNVERIFIED)
+        val gtv = gtv("txRID" to gtv(builder.getDigestForSigning().toHex()))
+        client.query("gtx_test_get_value", gtv).success { resp ->
+            assertEquals(resp.asString(), randomStr)
         }
     }
 }
