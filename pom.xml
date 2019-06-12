@@ -13,6 +13,7 @@
         <module>postchain-devtools</module>
         <module>postchain-cw-modules</module>
         <module>postchain-docker</module>
+        <module>postchain-client</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -230,13 +231,6 @@
             <id>sap-hana</id>
             <modules>
                 <module>postchain-hana</module>
-            </modules>
-        </profile>
-
-        <profile>
-            <id>client-api</id>
-            <modules>
-                <module>postchain-client</module>
             </modules>
         </profile>
     </profiles>
