@@ -5,7 +5,6 @@ import net.postchain.base.gtxml.DictType
 import net.postchain.base.gtxml.ObjectFactory
 import net.postchain.gtv.*
 import java.io.StringWriter
-import java.math.BigInteger
 import javax.xml.bind.JAXB
 import javax.xml.bind.JAXBElement
 
@@ -32,7 +31,7 @@ object GtvMLEncoder {
              */
             is GtvNull -> objectFactory.createNull(null)
             is GtvString -> objectFactory.createString(gtv.string)
-            is GtvInteger -> objectFactory.createInt(BigInteger.valueOf(gtv.integer))
+            is GtvInteger -> objectFactory.createInt(gtv.integer)
             is GtvByteArray -> objectFactory.createBytea(gtv.bytearray) // See comments in GTXMLValueEncodeScalarsTest
             is GtvArray -> createArrayElement(gtv)
             is GtvDictionary -> createDictElement(gtv)

@@ -1,6 +1,7 @@
 package net.postchain.gtv
 
-import net.postchain.gtv.messages.Gtv as RawGtv
+import org.openmuc.jasn1.ber.types.BerNull
+import net.postchain.gtv.messages.RawGtv
 
 object GtvNull : GtvPrimitive() {
 
@@ -10,8 +11,8 @@ object GtvNull : GtvPrimitive() {
         return true
     }
 
-    override fun getRawGtv(): net.postchain.gtv.messages.Gtv {
-        return RawGtv.null_(null)
+    override fun getRawGtv(): RawGtv {
+        return RawGtv(BerNull(), null, null, null, null, null)
     }
 
     override fun asPrimitive(): Any? {

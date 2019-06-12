@@ -6,12 +6,13 @@
         <format>dir</format>
     </formats>
 
+    <baseDirectory>postchain-node</baseDirectory>
     <files>
         <file>
             <source>
                 target/${project.artifactId}-${project.version}-${executable-classifier}.jar
             </source>
-            <outputDirectory>/</outputDirectory>
+            <outputDirectory>/lib</outputDirectory>
         </file>
     </files>
     <fileSets>
@@ -26,7 +27,7 @@
         </fileSet>
         <fileSet>
             <directory>src/main/resources/config</directory>
-            <outputDirectory>/config</outputDirectory>
+            <outputDirectory>/demo-config</outputDirectory>
         </fileSet>
     </fileSets>
 </assembly>

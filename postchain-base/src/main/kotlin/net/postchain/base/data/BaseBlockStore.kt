@@ -2,9 +2,13 @@
 
 package net.postchain.base.data
 
+import net.postchain.base.BaseBlockHeader
 import mu.KLogging
-import net.postchain.base.*
+import net.postchain.base.BaseTxEContext
+import net.postchain.base.BlockchainRelatedInfo
+import net.postchain.base.ConfirmationProofMaterial
 import net.postchain.base.merkle.Hash
+import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.core.*
 
 /**
@@ -88,6 +92,18 @@ class BaseBlockStore : BlockStore {
 
     override fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray {
         return DatabaseAccess.of(ctx).getWitnessData(ctx, blockRID)
+    }
+
+    override fun getLatestBlocksUpTo(ctx: EContext, upTo: Long, n: Int): List<BlockDetail> {
+        val db = DatabaseAccess.of(ctx)
+        val blocksInfo = db.getLatestBlocksUpTo(ctx, upTo, n)
+        return blocksInfo.map { blockInfo ->
+            val transactions = db.getBlockTransactions(ctx, blockInfo.blockRid)
+
+            // Decode block header
+            val blockHeaderDecoded = BaseBlockHeader(blockInfo.blockHeader, SECP256K1CryptoSystem())
+            BlockDetail(blockInfo.blockRid, blockHeaderDecoded.prevBlockRID, blockInfo.blockHeader, blockInfo.blockHeight, transactions, blockInfo.witness, blockInfo.timestamp)
+        }
     }
 
     override fun getLastBlockHeight(ctx: EContext): Long {

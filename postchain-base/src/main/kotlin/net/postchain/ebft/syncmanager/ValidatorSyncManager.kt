@@ -126,8 +126,7 @@ class ValidatorSyncManager(
                                 is CompleteBlock -> {
                                     blockManager.onReceivedBlockAtHeight(
                                             decodeBlockDataWithWitness(message, blockchainConfiguration),
-                                            message.height
-                                    )
+                                            message.height)
                                 }
                                 is UnfinishedBlock -> {
                                     blockManager.onReceivedUnfinishedBlock(decodeBlockData(BlockData(message.header, message.transactions),
@@ -142,7 +141,7 @@ class ValidatorSyncManager(
                     }
                 }
             } catch (e: Exception) {
-                logger.error("Couldn't handle message ${message}. Ignoring and continuing", e)
+                logger.error("Couldn't handle message $message. Ignoring and continuing", e)
             }
         }
     }

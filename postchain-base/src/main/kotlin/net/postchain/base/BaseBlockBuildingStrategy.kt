@@ -3,7 +3,6 @@
 package net.postchain.base
 
 import net.postchain.core.*
-import net.postchain.gtv.GtvDictionary
 
 class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
                                 val blockchainConfiguration: BlockchainConfiguration,

@@ -1,8 +1,11 @@
 .idea
+.project
+.settings/
+.classpath
 *.iml
 target
 .DS_Store
+*/*.pid
 postchain-base/start.sh
-postchain-base/postchain.pid
 *.log
 *.log.lck

@@ -1,15 +1,14 @@
 package net.postchain.gtv
 
-import java.io.ByteArrayOutputStream
+import org.openmuc.jasn1.ber.ReverseByteArrayOutputStream;
 
 /**
  * Responsible for turning GTV objects into binary data.
  */
 object GtvEncoder {
-
     fun encodeGtv(v: Gtv): ByteArray {
-        val outs = ByteArrayOutputStream()
-        v.getRawGtv().der_encode(outs)
-        return outs.toByteArray()
+        val outs = ReverseByteArrayOutputStream(1000)
+        v.getRawGtv().encode(outs)
+        return outs.array
     }
 }

@@ -2,22 +2,25 @@
 
 package net.postchain.base
 
+import net.postchain.common.toHex
+import net.postchain.core.UserMistake
+
 class BasePeerCommConfiguration(override val peerInfo: Array<PeerInfo>,
-                                override val myIndex: Int,
                                 private val cryptoSystem: CryptoSystem,
-                                private val privKey: ByteArray
+                                private val privKey: ByteArray,
+                                override val pubKey: ByteArray
 ) : PeerCommConfiguration {
 
     override fun resolvePeer(peerID: ByteArray): PeerInfo? {
         return DefaultPeerResolver.resolvePeer(peerID, peerInfo)
     }
 
-    override fun myPeerInfo(): PeerInfo = peerInfo[myIndex]
+    override fun myPeerInfo(): PeerInfo = resolvePeer(pubKey)
+            ?: throw UserMistake("Unknown pubKey detected: ${pubKey.toHex()}")
 
     override fun sigMaker(): SigMaker {
-        return cryptoSystem.buildSigMaker(myPeerInfo().pubKey, privKey)
+        return cryptoSystem.buildSigMaker(pubKey, privKey)
     }
 
     override fun verifier(): Verifier = cryptoSystem.makeVerifier()
-
 }

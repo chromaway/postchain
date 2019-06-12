@@ -8,7 +8,7 @@ import net.postchain.gtv.GtvFactory.gtv
 object BlockHeaderDataFactory {
 
     fun buildFromBinary(rawData: ByteArray): BlockHeaderData {
-        val gtv: Gtv = GtvFactory.decodeGtv(rawData)
+        val gtv: Gtv = GtvDecoder.decodeGtv(rawData)
         return buildFromGtv(gtv)
     }
 
@@ -34,7 +34,7 @@ object BlockHeaderDataFactory {
         val gtvTimestamp: GtvInteger = gtv(timestamp)
         val height: GtvInteger = gtv(iBlockData.height)
         val dependencies: Gtv = translateArrayOfHashToGtv(iBlockData.blockHeightDependencyArr)
-        val extra = GtvDictionary(HashMap<String, Gtv>())
+        val extra = GtvDictionary.build(HashMap<String, Gtv>())
 
         return BlockHeaderData(gtvBlockchainRid, previousBlockRid, merkleRootHash, gtvTimestamp, height, dependencies, extra)
     }

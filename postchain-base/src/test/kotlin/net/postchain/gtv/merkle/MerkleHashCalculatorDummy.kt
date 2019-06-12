@@ -13,7 +13,7 @@ import java.nio.charset.Charset
 fun dummySerializatorFun(iGtv: Gtv): ByteArray {
     when (iGtv) {
         is GtvInteger -> {
-            val i: Long = iGtv.integer
+            val i: Long = iGtv.integer.toLong()
             if (i > 127 && i > -1) {
                 throw IllegalArgumentException("Test integers should be positive and should not be bigger than 127: $i")
             } else {

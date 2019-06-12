@@ -39,7 +39,7 @@ object DictToGtvBinaryTreeHelper {
         // Put the inner Dict in the outer Dict
         val outerMap = HashMap<String, Gtv>()
         outerMap.set("one", innerGtvDict)
-        return GtvDictionary(outerMap)
+        return GtvDictionary.build(outerMap)
     }
 
 

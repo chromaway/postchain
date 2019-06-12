@@ -1,13 +1,14 @@
 package net.postchain.ebft
 
 import net.postchain.base.BasePeerCommConfiguration
-import net.postchain.base.DefaultPeerResolver
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.base.data.BaseBlockchainConfiguration
+import net.postchain.common.hexStringToByteArray
 import net.postchain.config.node.NodeConfig
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
+import net.postchain.ebft.worker.ReadOnlyWorker
 import net.postchain.ebft.message.Message
 import net.postchain.ebft.worker.ValidatorWorker
 import net.postchain.network.CommunicationManager
@@ -38,13 +39,21 @@ class EBFTSynchronizationInfrastructure(nodeConfigProvider: NodeConfigurationPro
     override fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
         validateConfigurations(nodeConfig, blockchainConfig)
-
-        return ValidatorWorker(
-                blockchainConfig.signers,
-                engine,
-                blockchainConfig.configData.context.nodeID,
-                buildXCommunicationManager(blockchainConfig),
-                restartHandler)
+        return if(blockchainConfig.configData.context.nodeID != NODE_ID_READ_ONLY) {
+            ValidatorWorker(
+                    blockchainConfig.signers,
+                    engine,
+                    blockchainConfig.configData.context.nodeID,
+                    buildXCommunicationManager(blockchainConfig),
+                    restartHandler)
+        } else {
+            ReadOnlyWorker(
+                    blockchainConfig.signers,
+                    engine,
+                    buildXCommunicationManager(blockchainConfig),
+                    restartHandler
+            )
+        }
     }
 
     private fun validateConfigurations(nodeConfig: NodeConfig, blockchainConfig: BaseBlockchainConfiguration) {
@@ -59,9 +68,9 @@ class EBFTSynchronizationInfrastructure(nodeConfigProvider: NodeConfigurationPro
     private fun buildXCommunicationManager(blockchainConfig: BaseBlockchainConfiguration): CommunicationManager<Message> {
         val communicationConfig = BasePeerCommConfiguration(
                 nodeConfig.peerInfos,
-                blockchainConfig.configData.context.nodeID,
                 SECP256K1CryptoSystem(),
-                nodeConfig.privKeyByteArray)
+                nodeConfig.privKeyByteArray,
+                nodeConfig.pubKey.hexStringToByteArray())
 
         val packetEncoder = EbftPacketEncoder(communicationConfig, blockchainConfig.blockchainRID)
         val packetDecoder = EbftPacketDecoder(communicationConfig)
@@ -79,8 +88,8 @@ class EBFTSynchronizationInfrastructure(nodeConfigProvider: NodeConfigurationPro
     private fun buildPeerCommConfiguration(nodeConfig: NodeConfig): PeerCommConfiguration {
         return BasePeerCommConfiguration(
                 nodeConfig.peerInfos,
-                DefaultPeerResolver.resolvePeerIndex(nodeConfig.pubKeyByteArray, nodeConfig.peerInfos),
                 SECP256K1CryptoSystem(),
-                nodeConfig.privKeyByteArray)
+                nodeConfig.privKeyByteArray,
+                nodeConfig.pubKey.hexStringToByteArray())
     }
 }

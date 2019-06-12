@@ -1,10 +1,6 @@
 package net.postchain.base.gtv
 
-import net.postchain.base.BlockchainDependencies
-import net.postchain.base.BlockchainDependency
 import net.postchain.base.merkle.Hash
-import net.postchain.common.hexStringToByteArray
-import net.postchain.common.toHex
 import net.postchain.core.BadDataMistake
 import net.postchain.core.BadDataType
 import net.postchain.core.UserMistake
@@ -45,11 +41,11 @@ data class BlockHeaderData(
     }
 
     fun getTimestamp(): Long {
-        return gtvTimestamp.integer
+        return gtvTimestamp.integer.toLong()
     }
 
     fun getHeight(): Long {
-        return gtvHeight.integer
+        return gtvHeight.integer.toLong()
     }
 
     /**

@@ -10,7 +10,6 @@ import net.postchain.core.ProgrammerMistake
 import net.postchain.core.Signature
 import net.postchain.core.UserMistake
 import java.util.*
-import net.postchain.gtv.messages.Gtv as RawGtv
 import net.postchain.gtv.*
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtx.factory.GtxTransactionDataFactory
@@ -131,7 +130,7 @@ data class GTXTransactionData(
 
 fun decodeGTXTransactionData(_rawData: ByteArray): GTXTransactionData {
     // Decode to RawGTV
-    val gtv: Gtv = GtvFactory.decodeGtv(_rawData)
+    val gtv: Gtv = GtvDecoder.decodeGtv(_rawData)
 
     // GTV -> GTXTransactionData
     return GtxTransactionDataFactory.deserializeFromGtv(gtv)

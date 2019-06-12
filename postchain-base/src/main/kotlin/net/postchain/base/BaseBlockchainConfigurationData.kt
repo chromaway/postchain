@@ -3,7 +3,6 @@ package net.postchain.base
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.*
 import net.postchain.gtv.*
-import net.postchain.gtv.GtvDictionary
 import net.postchain.gtv.GtvFactory.gtv
 import org.apache.commons.configuration2.Configuration
 

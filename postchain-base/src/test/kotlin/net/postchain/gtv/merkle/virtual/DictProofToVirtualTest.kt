@@ -1,14 +1,19 @@
 package net.postchain.gtv.merkle.virtual
 
+import net.postchain.base.merkle.TreeHelper
+import net.postchain.gtv.GtvVirtualDictionary
 import net.postchain.gtv.generateProof
 import net.postchain.gtv.merkle.DictToGtvBinaryTreeHelper
 import net.postchain.gtv.merkle.MerkleHashCalculatorDummy
 import net.postchain.gtv.merkle.proof.toGtvVirtual
+import net.postchain.gtv.merkleHash
 import net.postchain.gtv.path.GtvPath
 import net.postchain.gtv.path.GtvPathFactory
 import net.postchain.gtv.path.GtvPathSet
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 
 class DictProofToVirtualTest {
@@ -29,10 +34,15 @@ class DictProofToVirtualTest {
         val merkleProofTree = orgGtvDict.generateProof(gtvPaths, calculator)
 
         val virtualGtv = merkleProofTree.toGtvVirtual()
+        val merkleRoot = virtualGtv.merkleHash(calculator)
+        assertEquals(DictToGtvBinaryTreeHelper.expectedMerkleRoot1, TreeHelper.convertToHex(merkleRoot))
 
         val orgGtv = orgGtvDict["one"]!!
         val gtvFromVirt =virtualGtv["one"]!!
         assertEquals(orgGtv, gtvFromVirt)
+
+        val virtDict = virtualGtv as GtvVirtualDictionary
+        assertTrue(virtualGtv.isKeyPresent("one"))
     }
 
 
@@ -65,10 +75,16 @@ class DictProofToVirtualTest {
         val merkleProofTree = orgGtvDict.generateProof(gtvPaths, calculator)
 
         val virtualGtv = merkleProofTree.toGtvVirtual()
+        val merkleRoot = virtualGtv.merkleHash(calculator)
+        assertEquals(DictToGtvBinaryTreeHelper.expectedMerkleRoot4, TreeHelper.convertToHex(merkleRoot))
 
         val orgGtv = orgGtvDict["four"]!!
         val gtvFromVirt =virtualGtv["four"]!!
         assertEquals(orgGtv, gtvFromVirt)
+
+        val virtDict = virtualGtv as GtvVirtualDictionary
+        assertTrue(virtualGtv.isKeyPresent("four"))
+        assertFalse(virtualGtv.isKeyPresent("one"))
 
     }
 
@@ -99,6 +115,8 @@ class DictProofToVirtualTest {
         val merkleProofTree = orgGtvDict.generateProof(gtvPaths, calculator)
 
         val virtualGtv = merkleProofTree.toGtvVirtual()
+        val merkleRoot = virtualGtv.merkleHash(calculator)
+        assertEquals(DictToGtvBinaryTreeHelper.expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleRoot))
 
         val orgGtv = orgGtvDict["one"]!!["seven"]!!
         val gtvFromVirt =virtualGtv["one"]!!["seven"]!!
@@ -127,6 +145,8 @@ class DictProofToVirtualTest {
         val merkleProofTree = orgGtvDict.generateProof(gtvPaths, calculator)
 
         val virtualGtv = merkleProofTree.toGtvVirtual()
+        val merkleRoot = virtualGtv.merkleHash(calculator)
+        assertEquals(DictToGtvBinaryTreeHelper.expectedMerkleRootDictInDict, TreeHelper.convertToHex(merkleRoot))
 
         val orgGtv = orgGtvDict["one"]!!
         val gtvFromVirt =virtualGtv["one"]!!

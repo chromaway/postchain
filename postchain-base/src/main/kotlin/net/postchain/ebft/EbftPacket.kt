@@ -13,8 +13,8 @@ class EbftPacketEncoder(val config: PeerCommConfiguration, val blockchainRID: By
     override fun makeIdentPacket(forPeer: ByteArray): ByteArray {
         val bytes = Identification(forPeer, blockchainRID, System.currentTimeMillis()).encode()
         val sigMaker = config.sigMaker()
-        val signature = sigMaker.signMessage(bytes) // TODO POS-04_sig I THINK this is one of the cases where we actually sign the data
-        return SignedMessage(bytes, config.peerInfo[config.myIndex].pubKey, signature.data).encode()
+        val signature = sigMaker.signMessage(bytes)
+        return SignedMessage(bytes, config.pubKey, signature.data).encode()
     }
 
     override fun encodePacket(packet: Message): ByteArray {
@@ -39,7 +39,7 @@ class EbftPacketDecoder(val config: PeerCommConfiguration) : XPacketDecoder<Mess
             throw UserMistake("Packet was not an Identification. Got ${message::class}")
         }
 
-        if (!config.peerInfo[config.myIndex].pubKey.contentEquals(message.pubKey)) {
+        if (!config.pubKey.contentEquals(message.pubKey)) {
             throw UserMistake("'yourPubKey' ${message.pubKey.toHex()} of Identification is not mine")
         }
 
