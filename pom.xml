@@ -226,13 +226,6 @@
                 </plugins>
             </build>
         </profile>
-
-        <profile>
-            <id>sap-hana</id>
-            <modules>
-                <module>postchain-hana</module>
-            </modules>
-        </profile>
     </profiles>
 
 </project>
