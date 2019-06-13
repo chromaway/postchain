@@ -28,27 +28,55 @@ class RealManagedBlockchainConfigurationProvider(val nodeConfigProvider: NodeCon
         this.dataSource = dataSource
     }
 
+    private fun getConfigurationFromDataSource(eContext: EContext): ByteArray? {
+        val dba = DatabaseAccess.of(eContext)
+        /* val newCtx = BaseEContext(eContext.conn,
+                eContext.chainID, eContext.nodeID, dba)*/
+        val blockchainRID = dba.getBlockchainRID(eContext)
+        val height = dba.getLastBlockHeight(eContext) + 1
+        return dataSource.getConfiguration(blockchainRID!!, height)
+    }
+
     override fun getConfiguration(eContext: EContext, chainId: Long): ByteArray? {
         if (chainId == 0L) {
             return systemProvider.getConfiguration(eContext, chainId)
         } else {
             if (::dataSource.isInitialized) {
-                val dba = DatabaseAccess.of(eContext)
-                val newCtx = BaseEContext(eContext.conn,
-                        eContext.chainID, eContext.nodeID, dba)
-                val blockchainRID = dba.getBlockchainRID(newCtx)
-                val height = dba.getLastBlockHeight(newCtx) + 1
-                return dataSource.getConfiguration(blockchainRID!!, height)
+                if (eContext.chainID != chainId) throw IllegalStateException("chainID mismatch")
+                return getConfigurationFromDataSource(eContext)
             } else {
                 throw IllegalStateException("Using managed blockchain configuration provider before it's properly initialized")
             }
         }
     }
+
+    override fun needsConfigurationChange(eContext: EContext, chainId: Long): Boolean {
+        fun checkNeedConfChangeViaDataSource(): Boolean {
+            val dba = DatabaseAccess.of(eContext)
+            val blockchainRID = dba.getBlockchainRID(eContext)
+            val height = dba.getLastBlockHeight(eContext)
+            val nch = dataSource.findNextConfigurationHeight(blockchainRID!!, height)
+            return  (nch != null) && (nch == height + 1)
+        }
+
+        if (chainId == 0L) {
+            return systemProvider.needsConfigurationChange(eContext, chainId)
+        } else {
+            if (::dataSource.isInitialized) {
+               return checkNeedConfChangeViaDataSource()
+            } else {
+                throw IllegalStateException("Using managed blockchain configuration provider before it's properly initialized")
+            }
+        }
+    }
+
 }
 
 interface ManagedNodeDataSource: PeerInfoDataSource {
+    fun getPeerListVersion(): Long
     fun computeBlockchainList(ctx: EContext): List<ByteArray>
     fun getConfiguration(blockchainRID: ByteArray, height: Long): ByteArray?
+    fun findNextConfigurationHeight(blockchainRID: ByteArray, height: Long): Long?
 }
 
 class GTXManagedNodeDataSource(val q: BlockQueries, val nc: NodeConfig): ManagedNodeDataSource {
@@ -65,12 +93,24 @@ class GTXManagedNodeDataSource(val q: BlockQueries, val nc: NodeConfig): Managed
         }.toTypedArray()
     }
 
+    override fun getPeerListVersion(): Long {
+        val res = q.query("nm_get_peer_list_version", gtv(mapOf()))
+        return res.get().asInteger()
+    }
+
     override fun computeBlockchainList(ctx: EContext): List<ByteArray> {
             val res = q.query("nm_compute_blockchain_list",
                     gtv("node_id" to gtv(nc.pubKeyByteArray))
             )
             val a = res.get().asArray()
             return a.map { it.asByteArray() }
+    }
+
+    override fun findNextConfigurationHeight(blockchainRID: ByteArray, height: Long): Long? {
+        val res = q.query("nm_find_next_configuration_height",
+                gtv("blockchain_rid" to gtv(blockchainRID),
+                        "height" to gtv(height))).get()
+        return if (res.isNull()) null else res.asInteger()
     }
 
     override fun getConfiguration(blockchainRID: ByteArray, height: Long): ByteArray? {
@@ -102,6 +142,7 @@ class Manager(val procMan: BlockchainProcessManager,
     private val queryRunner = QueryRunner()
     private val longRes = ScalarHandler<Long>()
     lateinit var dataSource: ManagedNodeDataSource
+    var lastPeerListVersion: Long? = null
 
     fun init(proc0: BlockchainProcess): ManagedNodeDataSource {
         dataSource = GTXManagedNodeDataSource(proc0.getEngine().getBlockQueries(),
@@ -110,7 +151,7 @@ class Manager(val procMan: BlockchainProcessManager,
         return dataSource
     }
 
-    fun applyBlockchainList(ctx: EContext, list: List<ByteArray>) {
+    fun applyBlockchainList(ctx: EContext, list: List<ByteArray>, forceReload: Boolean) {
         val dba = DatabaseAccess.of(ctx)
         for (elt in list) {
             val ci = dba.getChainId(ctx, elt)
@@ -118,7 +159,7 @@ class Manager(val procMan: BlockchainProcessManager,
                 addBlockchain(ctx, elt)
             } else {
                 val proc = procMan.retrieveBlockchain(ci)
-                if (proc == null)
+                if (proc == null || forceReload)
                     procMan.startBlockchainAsync(ci)
             }
         }
@@ -135,8 +176,28 @@ class Manager(val procMan: BlockchainProcessManager,
         procMan.startBlockchainAsync(new_chain_id)
     }
 
+    fun maybeUpdateChain0(ctx: EContext) {
+        val dba = DatabaseAccess.of(ctx)
+        val brid = dba.getBlockchainRID(ctx)!!
+        val height = dba.getLastBlockHeight(ctx)
+        val nextConfHeight = dataSource.findNextConfigurationHeight(brid, height)
+        if (nextConfHeight != null) {
+            if (BaseConfigurationDataStore.findConfiguration(ctx, nextConfHeight) != nextConfHeight) {
+                BaseConfigurationDataStore.addConfigurationData(
+                        ctx, nextConfHeight,
+                        dataSource.getConfiguration(brid, nextConfHeight)!!
+                )
+            }
+        }
+    }
+
     fun runPeriodic(ctx: EContext) {
-        applyBlockchainList(ctx, dataSource.computeBlockchainList(ctx))
+        maybeUpdateChain0(ctx)
+
+        val peerListVersion = dataSource.getPeerListVersion()
+        val reloadBlockchains = (lastPeerListVersion != peerListVersion)
+        lastPeerListVersion = peerListVersion
+        applyBlockchainList(ctx, dataSource.computeBlockchainList(ctx), reloadBlockchains)
     }
 }
 
@@ -150,8 +211,11 @@ class ManagedBlockchainProcessManager(
 )
 {
     val manager = Manager(this, nodeConfigProvider)
+    var updaterThreadStarted = false
 
     fun startUpdaterThread() {
+        if (updaterThreadStarted) return
+        updaterThreadStarted = true
         executor.scheduleWithFixedDelay(
                 {
                     try {

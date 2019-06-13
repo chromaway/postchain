@@ -89,9 +89,6 @@ class ValidatorWorker(
             while (!Thread.interrupted()) {
                 try {
                     syncManager.update()
-                    if (engine.isRestartNeeded) {
-                        restartHandler()
-                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }

@@ -39,6 +39,8 @@ class EBFTSynchronizationInfrastructure(val nodeConfigProvider: NodeConfiguratio
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
         validateConfigurations(nodeConfig, blockchainConfig)
 
+        engine.setRestartHandler(restartHandler)
+
         return ValidatorWorker(
                 blockchainConfig.signers,
                 engine,

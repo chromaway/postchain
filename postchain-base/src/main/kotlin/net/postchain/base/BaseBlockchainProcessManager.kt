@@ -27,6 +27,12 @@ open class BaseBlockchainProcessManager(
         }
     }
 
+    protected fun isRestartNeeded(chainId: Long): Boolean {
+        return withReadConnection(storage, chainId) { eContext ->
+            (blockchainConfigProvider.needsConfigurationChange(eContext, chainId))
+        }
+    }
+
     override fun startBlockchain(chainId: Long) {
         logger.info("startBlockchain() - start")
         stopBlockchain(chainId)
@@ -40,9 +46,10 @@ open class BaseBlockchainProcessManager(
 
                 val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig)
                 blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(engine) {
-                    executor.execute {
-                        startBlockchain(chainId)
-                    }
+                    if (isRestartNeeded(chainId)) {
+                        startBlockchainAsync(chainId)
+                        true
+                    } else false
                 }
                 logger.info("startBlockchain() - end")
             } else {

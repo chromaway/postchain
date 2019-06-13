@@ -25,11 +25,11 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
 
     companion object : KLogging()
 
-    override var isRestartNeeded: Boolean = false
     private lateinit var strategy: BlockBuildingStrategy
     private lateinit var blockQueries: BlockQueries
     private var initialized = false
     private var closed = false
+    private var restartHandler: RestartHandler = { false }
 
     override fun initializeDB() {
         if (initialized) {
@@ -48,6 +48,10 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
         strategy = bc.getBlockBuildingStrategy(blockQueries, tq)
         initialized = true
         logger.info("Initialize DB - end")
+    }
+
+    override fun setRestartHandler(rh: RestartHandler) {
+        restartHandler = rh
     }
 
     override fun getTransactionQueue(): TransactionQueue {
@@ -76,22 +80,16 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
         if (closed) throw ProgrammerMistake("Engine is already closed")
         val eContext = storage.openWriteConnection(chainID) // TODO: Close eContext
 
-        return BaseManagedBlockBuilder(eContext, storage, bc.makeBlockBuilder(eContext), {
-            val blockBuilder = it as AbstractBlockBuilder
-            val currentConfigurationHeight = BaseConfigurationDataStore.findConfiguration(
-                    eContext, blockBuilder.initialBlockData.height)
-            val nextConfigurationHeight = BaseConfigurationDataStore.findConfiguration(
-                    eContext, blockBuilder.initialBlockData.height + 1)
+        return BaseManagedBlockBuilder(eContext, storage, bc.makeBlockBuilder(eContext), { },
+                {
+                    val blockBuilder = it as AbstractBlockBuilder
+                    tq.removeAll(blockBuilder.transactions)
+                    strategy.blockCommitted(blockBuilder.getBlockData())
+                    if (restartHandler()) {
+                        closed = true
+                    }
 
-            if (currentConfigurationHeight != nextConfigurationHeight) {
-                closed = true
-                isRestartNeeded = true
-            }
-        }, {
-            val blockBuilder = it as AbstractBlockBuilder
-            tq.removeAll(blockBuilder.transactions)
-            strategy.blockCommitted(blockBuilder.getBlockData())
-        })
+                })
     }
 
     override fun addBlock(block: BlockDataWithWitness) {

@@ -8,4 +8,5 @@ import net.postchain.core.EContext
  */
 interface BlockchainConfigurationProvider {
     fun getConfiguration(eContext: EContext, chainId: Long): ByteArray?
+    fun needsConfigurationChange(eContext: EContext, chainId: Long): Boolean
 }

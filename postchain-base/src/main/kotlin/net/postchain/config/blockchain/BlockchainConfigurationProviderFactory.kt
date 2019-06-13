@@ -10,7 +10,7 @@ object BlockchainConfigurationProviderFactory {
         val provider = nodeConfigProvider.getConfiguration().blockchainConfigProvider
         return when (provider.toLowerCase()) {
             Manual.name.toLowerCase() -> ManualBlockchainConfigurationProvider(nodeConfigProvider)
-            Managed.name.toLowerCase() -> ManagedBlockchainConfigurationProvider()
+            Managed.name.toLowerCase() -> TODO("REMOVE THIS")
             else -> ManualBlockchainConfigurationProvider(nodeConfigProvider)
         }
     }
