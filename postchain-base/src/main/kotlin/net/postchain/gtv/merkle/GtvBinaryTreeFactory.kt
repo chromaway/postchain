@@ -16,7 +16,7 @@ import net.postchain.gtv.path.GtvPathSet
  * 2. Same as above, but we also marked each Gtv sub structure that should be a path leaf.
  *    If you want this option (2) you have to provide a list of [GtvPath]
  */
-class GtvBinaryTreeFactory() : BinaryTreeFactory<Gtv, GtvPathSet>() {
+class GtvBinaryTreeFactory : BinaryTreeFactory<Gtv, GtvPathSet>() {
 
     /**
      * Generic builder.
@@ -32,16 +32,16 @@ class GtvBinaryTreeFactory() : BinaryTreeFactory<Gtv, GtvPathSet>() {
      * @param GtvPathList will tell us what element that are path leafs
      */
     fun buildFromGtvAndPath(gtv: Gtv, gtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): GtvBinaryTree {
-        if (logger.isDebugEnabled) {
-            logger.debug("--------------------------------------------")
-            logger.debug("--- Converting GTV to binary tree ----------")
-            logger.debug("--------------------------------------------")
+        if (logger.isTraceEnabled) {
+            logger.trace("--------------------------------------------")
+            logger.trace("--- Converting GTV to binary tree ----------")
+            logger.trace("--------------------------------------------")
         }
         val result = handleLeaf(gtv, gtvPaths, memoization, true)
-        if (logger.isDebugEnabled) {
-            logger.debug("--------------------------------------------")
-            logger.debug("--- /Converting GTV to binary tree ---------")
-            logger.debug("--------------------------------------------")
+        if (logger.isTraceEnabled) {
+            logger.trace("--------------------------------------------")
+            logger.trace("--- /Converting GTV to binary tree ---------")
+            logger.trace("--------------------------------------------")
         }
         return GtvBinaryTree(result)
     }
@@ -63,7 +63,6 @@ class GtvBinaryTreeFactory() : BinaryTreeFactory<Gtv, GtvPathSet>() {
 
         for (i in 0..(leafList.size - 1)) {
             val pathsRelevantForThisLeaf = onlyArrayPaths.getTailIfFirstElementIsArrayOfThisIndexFromList(i)
-            //println("New paths, (size: ${pathsRelevantForThisLeaf.size} ) list: " + GtvPath.debugRerpresentation(pathsRelevantForThisLeaf))
             val leaf = leafList[i]
             val binaryTreeElement = handleLeaf(leaf, pathsRelevantForThisLeaf, memoization)
             leafArray.add(binaryTreeElement)
@@ -82,7 +81,6 @@ class GtvBinaryTreeFactory() : BinaryTreeFactory<Gtv, GtvPathSet>() {
      * @return the tree element we created.
      */
     override fun innerHandleLeaf(leaf: Gtv, gtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): BinaryTreeElement {
-        //println("handleLeaf, Proof path (size: ${GtvPaths.size} ) list: " + GtvPath.debugRerpresentation(GtvPaths))
         return when (leaf) {
             is GtvPrimitive  -> handlePrimitiveLeaf(leaf, gtvPaths)
             is GtvArray      -> GtvBinaryTreeFactoryArray.buildFromGtvArray(leaf, gtvPaths, memoization)

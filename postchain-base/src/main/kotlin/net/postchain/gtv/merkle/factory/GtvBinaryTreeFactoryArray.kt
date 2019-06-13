@@ -19,7 +19,6 @@ object GtvBinaryTreeFactoryArray {
      */
     fun buildFromGtvArray(gtvArray: GtvArray, gtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): BinaryTreeElement {
         val pathElem: PathElement? =  gtvPaths.getPathLeafOrElseAnyCurrentPathElement()
-        //println("Arr,(is proof? $pathElem) Proof path (size: ${GtvPathList.size} ) list: " + GtvPath.debugRerpresentation(GtvPathList))
 
         // 1. Build leaf layer
         val leafList: List<Gtv> = gtvArray.array.map {it}
