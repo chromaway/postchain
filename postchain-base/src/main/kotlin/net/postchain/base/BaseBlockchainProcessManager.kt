@@ -34,6 +34,12 @@ open class BaseBlockchainProcessManager(
         }
     }
 
+    protected fun isRestartNeeded(chainId: Long): Boolean {
+        return withReadConnection(storage, chainId) { eContext ->
+            (blockchainConfigProvider.needsConfigurationChange(eContext, chainId))
+        }
+    }
+
     override fun startBlockchain(chainId: Long) {
         stopBlockchain(chainId)
 

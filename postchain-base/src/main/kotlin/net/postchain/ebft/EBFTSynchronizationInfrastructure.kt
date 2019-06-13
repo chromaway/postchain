@@ -39,20 +39,23 @@ class EBFTSynchronizationInfrastructure(val nodeConfigProvider: NodeConfiguratio
     override fun makeBlockchainProcess(processName: String, engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
         validateConfigurations(nodeConfig, blockchainConfig)
+
+        engine.setRestartHandler(restartHandler)
+
         return if (blockchainConfig.configData.context.nodeID != NODE_ID_READ_ONLY) {
             ValidatorWorker(
                     processName,
                     blockchainConfig.signers,
                     engine,
                     blockchainConfig.configData.context.nodeID,
-                    buildXCommunicationManager(processName, blockchainConfig),
+                    buildXCommunicationManager(blockchainConfig),
                     restartHandler)
         } else {
             ReadOnlyWorker(
                     processName,
                     blockchainConfig.signers,
                     engine,
-                    buildXCommunicationManager(processName, blockchainConfig),
+                    buildXCommunicationManager(blockchainConfig),
                     restartHandler)
         }
     }

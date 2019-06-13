@@ -12,6 +12,13 @@ class ManualBlockchainConfigurationProvider(
         private val nodeConfigProvider: NodeConfigurationProvider
 ) : BlockchainConfigurationProvider {
 
+    override fun needsConfigurationChange(eContext: EContext, chainId: Long): Boolean {
+        val lastHeight = DatabaseAccess.of(eContext).getLastBlockHeight(eContext)
+        val curConfId = BaseConfigurationDataStore.findConfiguration(eContext, lastHeight)
+        val nextConfId = BaseConfigurationDataStore.findConfiguration(eContext, lastHeight + 1)
+        return  (curConfId != nextConfId)
+    }
+
     override fun getConfiguration(eContext: EContext, chainId: Long): ByteArray? {
         val lastHeight = DatabaseAccess.of(eContext).getLastBlockHeight(eContext)
         val nextHeight = BaseConfigurationDataStore.findConfiguration(eContext, lastHeight + 1)
