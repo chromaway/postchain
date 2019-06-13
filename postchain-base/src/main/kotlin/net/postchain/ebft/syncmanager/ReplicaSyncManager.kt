@@ -5,6 +5,7 @@ import net.postchain.core.BlockQueries
 import net.postchain.core.BlockchainConfiguration
 import net.postchain.core.ProgrammerMistake
 import net.postchain.ebft.BlockDatabase
+import net.postchain.ebft.NodeStatus
 import net.postchain.ebft.message.CompleteBlock
 import net.postchain.ebft.message.EbftMessage
 import net.postchain.ebft.message.GetBlockAtHeight
@@ -31,7 +32,7 @@ class ReplicaSyncManager(
     private val defaultBackoffDelta = 1000
     private val maxBackoffDelta = 30 * defaultBackoffDelta
     private val validatorNodes: List<XPeerID> = signers.map { XPeerID(it) }
-    private val replicaLogger = ReplicaTelemetry()
+    private val replicaTelemetry = ReplicaTelemetry()
 
     private var blockHeight: Long = blockQueries.getBestHeight().get()
     private var nodesWithBlocks = hashMapOf<XPeerID, Long>()
@@ -39,8 +40,9 @@ class ReplicaSyncManager(
     private var blocks = PriorityQueue<IncomingBlock>(parallelism)
 
     override fun update() {
-        replicaLogger.logCurrentState(blockHeight, parallelRequestsState, blocks)
+        replicaTelemetry.logCurrentState(blockHeight, parallelRequestsState, blocks)
         nodeStateTracker.blockHeight = blockHeight
+        nodeStateTracker.nodeStatuses = replicaTelemetry.nodeStatuses()
         checkBlock()
         processState()
         dispatchMessages()
@@ -62,13 +64,13 @@ class ReplicaSyncManager(
         blockDatabase.addBlock(block)
                 .run {
                     success {
-                        replicaLogger.blockAppendedToDatabase(blockHeight)
+                        replicaTelemetry.blockAppendedToDatabase(blockHeight)
                         parallelRequestsState.remove(blockHeight)
                         blockHeight += 1
                         checkBlock()
                     }
                     fail {
-                        replicaLogger.failedToAppendBlockToDatabase(blockHeight, it.message)
+                        replicaTelemetry.failedToAppendBlockToDatabase(blockHeight, it.message)
                         it.printStackTrace()
                     }
                 }
@@ -97,7 +99,7 @@ class ReplicaSyncManager(
                 .also {
                     it.shuffle()
                     if (it.count() >= nodePoolCount) {
-                        replicaLogger.askForBlock(height, blockHeight)
+                        replicaTelemetry.askForBlock(height, blockHeight)
                         val timer = parallelRequestsState[height]
                                 ?: IssuedRequestTimer(defaultBackoffDelta, Date().time)
                         val backoffDelta = min((timer.backoffDelta.toDouble() * 1.1).toInt(), maxBackoffDelta)
@@ -125,6 +127,10 @@ class ReplicaSyncManager(
                         }
                     }
                     is Status -> {
+                        val nodeStatus = NodeStatus(message.height, message.serial)
+                        val index = validatorNodes.indexOf(xPeerId)
+                        replicaTelemetry.reportNodeStatus(index, nodeStatus)
+
                         if (xPeerId in validatorNodes) {
                             nodesWithBlocks[xPeerId] = message.height - 1
                         }
@@ -132,7 +138,7 @@ class ReplicaSyncManager(
                     else -> throw ProgrammerMistake("Unhandled type ${message::class}")
                 }
             } catch (e: Exception) {
-                replicaLogger.fatal("Couldn't handle message $message. Ignoring and continuing", e)
+                replicaTelemetry.fatal("Couldn't handle message $message. Ignoring and continuing", e)
             }
         }
     }
