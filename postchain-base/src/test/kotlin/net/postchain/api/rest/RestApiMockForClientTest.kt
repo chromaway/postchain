@@ -85,7 +85,7 @@ class RestApiMockForClientManual {
             }
         }
 
-        override fun getLatestBlocksUpTo(upTo: Long, n: Int): List<BlockDetail> {
+        override fun getLatestBlocksUpTo(upTo: Long, limit: Int): List<BlockDetail> {
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 
         }

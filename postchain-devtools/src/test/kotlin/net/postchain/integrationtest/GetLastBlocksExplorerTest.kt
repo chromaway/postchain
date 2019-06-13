@@ -32,24 +32,26 @@ class GetLastBlocksExplorerTest : IntegrationTest() {
 
         enqueueTx(nodes[0], tx(1).bytes, -1)
         enqueueTx(nodes[1], tx(1).bytes, -1)
+        // Block #0
         buildBlockAndCommit(nodes[0])
         buildBlockAndCommit(nodes[1])
 
+        // Block #1
         buildBlockAndCommit(nodes[0])
         buildBlockAndCommit(nodes[1])
 
         enqueueTx(nodes[1], tx(2).bytes, 1)
         enqueueTx(nodes[0], tx(2).bytes, 1)
+        // Block #2
         buildBlockAndCommit(nodes[1])
         buildBlockAndCommit(nodes[0])
 
         val query0 = nodes[0].getRestApiModel().getLatestBlocksUpTo(Long.MAX_VALUE, 25)
         val query1 = nodes[1].getRestApiModel().getLatestBlocksUpTo(Long.MAX_VALUE, 25)
 
-        (0 until query0.size).forEach {
-            Assert.assertTrue(
-                    compareBlocks(query0[it], query1[it]))
-        }
+        Assert.assertTrue(compareBlocks(query0[0], query1[0]))
+        Assert.assertTrue(compareBlocks(query0[1], query1[1]))
+        Assert.assertTrue(compareBlocks(query0[2], query1[2]))
     }
 
     private fun compareBlocks(block0: BlockDetail, block1: BlockDetail): Boolean {
