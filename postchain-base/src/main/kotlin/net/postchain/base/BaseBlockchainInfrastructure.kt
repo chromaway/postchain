@@ -66,8 +66,8 @@ class BaseBlockchainInfrastructure(
                 .apply { initializeDB() }
     }
 
-    override fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
-        return synchronizationInfrastructure.makeBlockchainProcess(engine, restartHandler)
+    override fun makeBlockchainProcess(processName: String, engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
+        return synchronizationInfrastructure.makeBlockchainProcess(processName,engine, restartHandler)
                 .also(apiInfrastructure::connectProcess)
     }
 }

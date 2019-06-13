@@ -8,8 +8,8 @@ import net.postchain.common.hexStringToByteArray
 import net.postchain.config.node.NodeConfig
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
-import net.postchain.ebft.worker.ReadOnlyWorker
 import net.postchain.ebft.message.Message
+import net.postchain.ebft.worker.ReadOnlyWorker
 import net.postchain.ebft.worker.ValidatorWorker
 import net.postchain.network.CommunicationManager
 import net.postchain.network.netty2.NettyConnectorFactory
@@ -36,11 +36,12 @@ class EBFTSynchronizationInfrastructure(nodeConfigProvider: NodeConfigurationPro
         connectionManager.shutdown()
     }
 
-    override fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
+    override fun makeBlockchainProcess(processName: String, engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
         validateConfigurations(nodeConfig, blockchainConfig)
-        return if(blockchainConfig.configData.context.nodeID != NODE_ID_READ_ONLY) {
+        return if (blockchainConfig.configData.context.nodeID != NODE_ID_READ_ONLY) {
             ValidatorWorker(
+                    processName,
                     blockchainConfig.signers,
                     engine,
                     blockchainConfig.configData.context.nodeID,
@@ -48,6 +49,7 @@ class EBFTSynchronizationInfrastructure(nodeConfigProvider: NodeConfigurationPro
                     restartHandler)
         } else {
             ReadOnlyWorker(
+                    processName,
                     blockchainConfig.signers,
                     engine,
                     buildXCommunicationManager(blockchainConfig),

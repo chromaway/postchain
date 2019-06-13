@@ -16,6 +16,7 @@ import net.postchain.network.CommunicationManager
  * @property updateLoop the main thread
  */
 class ReadOnlyWorker(
+        override val name: String,
         signers: List<ByteArray>,
         override val blockchainEngine: BlockchainEngine,
         communicationManager: CommunicationManager<Message>,

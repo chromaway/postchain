@@ -2,7 +2,6 @@ package net.postchain.integrationtest
 
 import net.postchain.common.hexStringToByteArray
 import net.postchain.devtools.IntegrationTest
-import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
@@ -188,7 +187,7 @@ class MixedFourPeersTest : IntegrationTest() {
                     nodes[2].assertNodeConnectedWith(chainId2, nodes[1]/*, nodes[0]*/)
                 }
 
-        // TODO: Finish this test
+        // TODO: [et]: Finish this test
 
 
 /*

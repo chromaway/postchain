@@ -20,6 +20,7 @@ import net.postchain.network.CommunicationManager
  * @property statusManager manages the status of the consensus protocol
  */
 class ValidatorWorker(
+        override val name: String,
         signers: List<ByteArray>,
         override val blockchainEngine: BlockchainEngine,
         nodeIndex: Int,

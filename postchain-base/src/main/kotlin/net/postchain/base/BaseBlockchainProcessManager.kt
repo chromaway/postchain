@@ -6,6 +6,7 @@ import net.postchain.base.data.DatabaseAccess
 import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
+import net.postchain.devtools.PeerNameHelper.peerName
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -15,15 +16,17 @@ class BaseBlockchainProcessManager(
         private val blockchainConfigProvider: BlockchainConfigurationProvider
 ) : BlockchainProcessManager {
 
-    val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration(), NODE_ID_TODO)
+    val nodeConfig = nodeConfigProvider.getConfiguration()
+    val storage = StorageBuilder.buildStorage(nodeConfig, NODE_ID_TODO)
     private val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
     private val executor = Executors.newSingleThreadExecutor()
 
-    companion object: KLogging()
+    companion object : KLogging()
 
     override fun startBlockchain(chainId: Long) {
-        logger.info("startBlockchain() - start")
         stopBlockchain(chainId)
+
+        logger.info("Node ${buildPeerName()}: Starting of BlockchainProcess $chainId")
 
         withReadConnection(storage, chainId) { eContext ->
             val configuration = blockchainConfigProvider.getConfiguration(chainId)
@@ -33,7 +36,8 @@ class BaseBlockchainProcessManager(
                 val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(configuration, context)
 
                 val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig)
-                blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(engine) {
+                val name = buildPeerName()
+                blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(name, engine) {
                     executor.execute {
                         startBlockchain(chainId)
                     }
@@ -52,8 +56,10 @@ class BaseBlockchainProcessManager(
     }
 
     override fun stopBlockchain(chainId: Long) {
-        blockchainProcesses.remove(chainId)
-                ?.shutdown()
+        blockchainProcesses.remove(chainId)?.also {
+            logger.info("Node ${buildPeerName()}: Stopping of BlockchainProcess $chainId")
+            it.shutdown()
+        }
     }
 
     override fun shutdown() {
@@ -63,5 +69,9 @@ class BaseBlockchainProcessManager(
         blockchainProcesses.clear()
         storage.close()
         blockchainInfrastructure.shutdown()
+    }
+
+    private fun buildPeerName(): String {
+        return peerName(nodeConfig.pubKey)
     }
 }

@@ -6,13 +6,11 @@ import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_ID
 import net.postchain.integrationtest.assertChainStarted
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
-import org.junit.Ignore
 import org.junit.Test
 
 class FourPeersReconfigurationTest : ReconfigurationTest() {
 
     @Test
-    @Ignore
     fun reconfigurationAtHeight_is_successful() {
         val nodesCount = 4
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
@@ -37,16 +35,16 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
 
 
         // Adding chain1's blockchainConfig2 with DummyModule2 at different heights to all peers
-        nodes[0].addConfiguration(DEFAULT_CHAIN_ID, 2, blockchainConfig2)
-        nodes[1].addConfiguration(DEFAULT_CHAIN_ID, 3, blockchainConfig2)
-        nodes[2].addConfiguration(DEFAULT_CHAIN_ID, 4, blockchainConfig2)
-        nodes[3].addConfiguration(DEFAULT_CHAIN_ID, 5, blockchainConfig2)
+        nodes[0].addConfiguration(DEFAULT_CHAIN_ID, 5, blockchainConfig2)
+        nodes[1].addConfiguration(DEFAULT_CHAIN_ID, 6, blockchainConfig2)
+        nodes[2].addConfiguration(DEFAULT_CHAIN_ID, 7, blockchainConfig2)
+        nodes[3].addConfiguration(DEFAULT_CHAIN_ID, 8, blockchainConfig2)
 
         // Again: Adding chain1's blockchainConfig3 with DummyModule3 at height 7 to all peers
-        nodes[0].addConfiguration(DEFAULT_CHAIN_ID, 7, blockchainConfig3)
-        nodes[1].addConfiguration(DEFAULT_CHAIN_ID, 7, blockchainConfig3)
-        nodes[2].addConfiguration(DEFAULT_CHAIN_ID, 7, blockchainConfig3)
-        nodes[3].addConfiguration(DEFAULT_CHAIN_ID, 7, blockchainConfig3)
+        nodes[0].addConfiguration(DEFAULT_CHAIN_ID, 10, blockchainConfig3)
+        nodes[1].addConfiguration(DEFAULT_CHAIN_ID, 10, blockchainConfig3)
+        nodes[2].addConfiguration(DEFAULT_CHAIN_ID, 10, blockchainConfig3)
+        nodes[3].addConfiguration(DEFAULT_CHAIN_ID, 10, blockchainConfig3)
 
 
         // Asserting chain 1 is started for all peers
@@ -63,7 +61,7 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
         assertk.assert(getModules(3).first()).isInstanceOf(DummyModule1::class)
 
         // Asserting blockchainConfig2 with DummyModule2 is loaded by all peers
-        await().atMost(Duration.TEN_SECONDS)
+        await().atMost(Duration.TEN_SECONDS.plus(5))
                 .untilAsserted {
                     assertk.assert(getModules(0)).isNotEmpty()
                     assertk.assert(getModules(1)).isNotEmpty()
@@ -76,7 +74,7 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
                     assertk.assert(getModules(3).first()).isInstanceOf(DummyModule2::class)
                 }
 
-        // Asserting blockchainConfig2 with DummyModule2 is loaded by all peers
+        // Asserting blockchainConfig2 with DummyModule3 is loaded by all peers
         await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
                     assertk.assert(getModules(0)).isNotEmpty()
