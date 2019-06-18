@@ -44,11 +44,11 @@ object GtvFactory {
     }
 
     fun gtv(vararg pairs: Pair<String, Gtv>): GtvDictionary {
-        return GtvDictionary(mapOf(*pairs))
+        return GtvDictionary.build(mapOf(*pairs))
     }
 
     fun gtv(dict: Map<String, Gtv>): GtvDictionary {
-        return GtvDictionary(dict)
+        return GtvDictionary.build(dict)
     }
 
     fun decodeGtv(b: ByteArray): Gtv {

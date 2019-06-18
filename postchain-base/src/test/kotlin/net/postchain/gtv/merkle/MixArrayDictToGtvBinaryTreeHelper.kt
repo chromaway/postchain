@@ -21,7 +21,7 @@ object MixArrayDictToGtvBinaryTreeHelper {
         // Put the inner Array in the outer Dict
         val outerMap = HashMap<String, Gtv>()
         outerMap.set("one", innerGtvArr)
-        return GtvDictionary(outerMap)
+        return GtvDictionary.build(outerMap)
     }
 
 

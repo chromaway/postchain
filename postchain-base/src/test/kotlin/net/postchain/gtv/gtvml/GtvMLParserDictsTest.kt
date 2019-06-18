@@ -11,7 +11,7 @@ class GtvMLParserDictsTest {
     fun parseGtv_dict_empty_successfully() {
         val xml = "<dict></dict>"
         val actual = GtvMLParser.parseGtvML(xml)
-        val expected = GtvDictionary(mapOf())
+        val expected = GtvDictionary.build(mapOf())
 
         assert(actual).isEqualTo(expected)
     }
@@ -26,7 +26,7 @@ class GtvMLParserDictsTest {
         """.trimIndent()
 
         val actual = GtvMLParser.parseGtvML(xml)
-        val expected = GtvDictionary(mapOf(
+        val expected = GtvDictionary.build(mapOf(
                 "hello" to GtvString("world"),
                 "123" to GtvInteger(123L)
         ))
@@ -55,7 +55,7 @@ class GtvMLParserDictsTest {
                         "p_butea1" to GtvByteArray(byteArrayOf(0x01, 0x02, 0x03, 0x0A, 0x0B, 0x0C))
                 ))
 
-        val expected = GtvDictionary(mapOf(
+        val expected = GtvDictionary.build(mapOf(
                 "hello" to GtvString("world"),
                 "num123" to GtvInteger(123L),
                 "num124" to GtvInteger(124L),
@@ -110,9 +110,9 @@ class GtvMLParserDictsTest {
 
         val actual = GtvMLParser.parseGtvML(xml)
 
-        val expected = GtvDictionary(mapOf(
+        val expected = GtvDictionary.build(mapOf(
                 "hello" to GtvString("world"),
-                "my_dict" to GtvDictionary(mapOf(
+                "my_dict" to GtvDictionary.build(mapOf(
                         "str" to GtvString("kitty"),
                         "number" to GtvInteger(123)
                 ))
@@ -204,7 +204,7 @@ class GtvMLParserDictsTest {
                         "param_string_foo" to GtvString("foo"))
         )
 
-        val expected = GtvDictionary(mapOf(
+        val expected = GtvDictionary.build(mapOf(
                 "entry_1" to GtvString("foo"),
 
                 "entry_2" to GtvInteger(42),
@@ -218,12 +218,12 @@ class GtvMLParserDictsTest {
                                 GtvArray(arrayOf(
                                         GtvInteger(44)
                                 )),
-                                GtvDictionary(mapOf(
+                                GtvDictionary.build(mapOf(
                                         "hello" to GtvString("world"),
                                         "123" to GtvInteger(123)
                                 ))
                         )),
-                        GtvDictionary(mapOf(
+                        GtvDictionary.build(mapOf(
                                 "hello" to GtvArray(arrayOf(
                                         GtvString("world"),
                                         GtvString("world")
@@ -232,10 +232,10 @@ class GtvMLParserDictsTest {
                         ))
                 )),
 
-                "entry_4" to GtvDictionary(mapOf(
+                "entry_4" to GtvDictionary.build(mapOf(
                         "null_entry" to GtvNull,
                         "hello" to GtvString("world"),
-                        "dict123" to GtvDictionary(mapOf(
+                        "dict123" to GtvDictionary.build(mapOf(
                                 "hello" to GtvString("foo"),
                                 "123" to GtvInteger(123)
                         )),
@@ -245,7 +245,7 @@ class GtvMLParserDictsTest {
                         ))
                 )),
 
-                "entry_5" to GtvDictionary(mapOf(
+                "entry_5" to GtvDictionary.build(mapOf(
                         "hello" to GtvString("world"),
                         "123" to GtvInteger(123),
                         "null_entry" to GtvNull,

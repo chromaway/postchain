@@ -166,7 +166,7 @@ class SQLGTXModule(private val moduleFiles: Array<String>) : GTXModule {
                 }
                 obj.set(it.key, gtv)
             }
-            list.add(GtvDictionary(obj))
+            list.add(GtvDictionary.build(obj))
         }
         return GtvArray(list.toTypedArray())
     }
