@@ -69,8 +69,6 @@ object GtvBinaryTreeFactoryDict {
 
         for (key in keys) {
 
-            //println("key extracted: $key")
-
             // 1.a Fix the key
             val keyGtvString: Gtv = GtvString(key)
             val keyElement = mainFactory.handleLeaf(keyGtvString, GtvPath.NO_PATHS, memoization) // The key cannot not be proved, so NO_PATHS
@@ -78,7 +76,7 @@ object GtvBinaryTreeFactoryDict {
 
             // 1.b Fix the value/content
             val pathsRelevantForThisLeaf = onlyDictPaths.getTailIfFirstElementIsDictOfThisKeyFromList(key)
-            val content: Gtv = gtvDictionary.get(key)!!  // TODO: Is it ok to bang here if the dict is broken?
+            val content: Gtv = gtvDictionary.get(key)!!
             val contentElement = mainFactory.handleLeaf(content, pathsRelevantForThisLeaf, memoization)
             leafArray.add(contentElement)
         }

@@ -50,15 +50,15 @@ class EbftNettyConnector3PeersCommunicationIT {
 
         // Creating
         context1 = EbftTestContext(
-                BasePeerCommConfiguration(peers, 0, cryptoSystem, privKey1),
+                BasePeerCommConfiguration(peers, cryptoSystem, privKey1, pubKey1),
                 blockchainRid)
 
         context2 = EbftTestContext(
-                BasePeerCommConfiguration(peers, 1, cryptoSystem, privKey2),
+                BasePeerCommConfiguration(peers, cryptoSystem, privKey2, pubKey2),
                 blockchainRid)
 
         context3 = EbftTestContext(
-                BasePeerCommConfiguration(peers, 2, cryptoSystem, privKey3),
+                BasePeerCommConfiguration(peers, cryptoSystem, privKey3, pubKey3),
                 blockchainRid)
 
         // Initializing

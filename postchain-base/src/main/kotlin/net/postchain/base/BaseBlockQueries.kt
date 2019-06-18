@@ -95,6 +95,12 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
         }
     }
 
+    override fun getLatestBlocksUpTo(upTo: Long, limit: Int): Promise<List<BlockDetail>, Exception> {
+        return runOp{
+            blockStore.getLatestBlocksUpTo(it, upTo, limit)
+        }
+    }
+
     override fun getBlockRids(height: Long): Promise<ByteArray?, Exception> {
         return runOp {
             blockStore.getBlockRID(it, height)

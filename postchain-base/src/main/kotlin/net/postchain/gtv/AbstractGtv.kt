@@ -25,7 +25,7 @@ abstract class AbstractGtv : Gtv {
     }
 
     override fun asArray(): Array<out Gtv> {
-        throw UserMistake("Type error: args expected")
+        throw UserMistake("Type error: array expected")
     }
 
     override fun isNull(): Boolean {
@@ -49,7 +49,7 @@ abstract class AbstractGtv : Gtv {
     }
 
     override fun asByteArray(convert: Boolean): ByteArray {
-        throw UserMistake("Type error: byte args expected")
+        throw UserMistake("Type error: byte array expected")
     }
 
     override fun nrOfBytes(): Int {

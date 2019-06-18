@@ -13,6 +13,7 @@ import net.postchain.api.rest.model.TxRID
 import net.postchain.base.ConfirmationProof
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
+import net.postchain.core.BlockDetail
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.TransactionStatus
 import net.postchain.core.UserMistake
@@ -82,6 +83,11 @@ class RestApiMockForClientManual {
                 TxRID(statusRejected.hexStringToByteArray()) -> ApiStatus(TransactionStatus.REJECTED)
                 else -> throw ProgrammerMistake("unexpected error")
             }
+        }
+
+        override fun getLatestBlocksUpTo(upTo: Long, limit: Int): List<BlockDetail> {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
         }
 
         override fun query(query: Query): QueryResult {

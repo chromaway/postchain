@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<dict>
+    <entry key="blockstrategy">
+        <dict>
+            <entry key="name">
+                <string>net.postchain.base.BaseBlockBuildingStrategy</string>
+            </entry>
+        </dict>
+    </entry>
+    <entry key="configurationfactory">
+        <string>net.postchain.gtx.GTXBlockchainConfigurationFactory</string>
+    </entry>
+    <entry key="signers">
+        <array>
+            <bytea>0350FE40766BC0CE8D08B3F5B810E49A8352FDD458606BD5FAFE5ACDCDC8FF3F57</bytea>
+        </array>
+    </entry>
+    <entry key="blocksigningprivkey">
+        <bytea>3132333435363738393031323334353637383930313233343536373839303131</bytea>
+    </entry>
+    <entry key="gtx">
+        <dict>
+            <entry key="modules">
+                <array>
+                    <string>net.postchain.configurations.GTXTestModule</string>
+                </array>
+            </entry>
+        </dict>
+    </entry>
+</dict>

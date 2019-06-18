@@ -25,7 +25,8 @@ import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder
 import org.apache.commons.configuration2.builder.fluent.Parameters
 import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertTrue
 import java.io.File
 
 /**
@@ -122,16 +123,21 @@ open class IntegrationTest {
      */
     protected fun createNode(nodeIndex: Int, blockchainConfigFilename: String): PostchainTestNode =
             createSingleNode(nodeIndex, 1, DEFAULT_CONFIG_FILE, blockchainConfigFilename)
-
     /**
      * Creates [count] nodes with the same configuration.
      *
-     * @param count number of nodes to create
+     * @param nodesCount number of nodes to create
      * @param blockchainConfigFilename is the file holding the blockchain's configuration
      * @return an array of nodes
      */
-    protected fun createNodes(count: Int, blockchainConfigFilename: String): Array<PostchainTestNode> =
-            Array(count) { createSingleNode(it, count, DEFAULT_CONFIG_FILE, blockchainConfigFilename) }
+    protected fun createNodes(nodesCount: Int, blockchainConfigFilename: String): Array<PostchainTestNode> =
+            Array(nodesCount) { createSingleNode(it, nodesCount, DEFAULT_CONFIG_FILE, blockchainConfigFilename) }
+
+    protected fun createNodesWithReplicas(nodesCount: Int, replicasCount: Int, blockchainConfigFilename: String): Array<PostchainTestNode> {
+        val validators = Array(nodesCount) { createSingleNode(it, nodesCount, DEFAULT_CONFIG_FILE, blockchainConfigFilename) }
+        val replicas = Array(replicasCount) { createSingleNode(-it - 1, nodesCount, DEFAULT_CONFIG_FILE, blockchainConfigFilename) }
+        return validators + replicas
+    }
 
     protected fun createSingleNode(
             nodeIndex: Int,
@@ -158,14 +164,6 @@ open class IntegrationTest {
                 }
     }
 
-    /**
-     * Creates [count] nodes with many blockchains.
-     *
-     * @param count number of nodes to create
-     * @param nodeConfigsFilenames holds all the nodes' config files
-     * @param blockchainConfigFilename holds all the blockchains' configuration
-     * @return an array of nodes
-     */
     protected fun createMultipleChainNodes(
             count: Int,
             nodeConfigsFilenames: Array<String>,
@@ -177,6 +175,24 @@ open class IntegrationTest {
         return Array(count) {
             createMultipleChainNode(it, count, nodeConfigsFilenames[it], *blockchainConfigsFilenames)
         }
+    }
+
+    protected fun createMultipleChainNodesWithReplicas(
+            nodeCount: Int,
+            replicaCount: Int,
+            nodeConfigsFilenames: Array<String>,
+            blockchainConfigsFilenames: Array<String>
+    ): Array<PostchainTestNode> {
+
+        val validators = Array(nodeCount) {
+            createMultipleChainNode(it, nodeCount, nodeConfigsFilenames[it], *blockchainConfigsFilenames)
+        }
+
+        val replicas = Array(replicaCount) {
+            createMultipleChainNode(-it - 1, replicaCount, nodeConfigsFilenames[nodeCount + it], *blockchainConfigsFilenames)
+        }
+
+        return validators + replicas
     }
 
     private fun createMultipleChainNode(
@@ -230,7 +246,9 @@ open class IntegrationTest {
 
         if (baseConfig.getString("configuration.provider.node") == "legacy") {
             // append nodeIndex to schema name
-            baseConfig.setProperty("database.schema", baseConfig.getString("database.schema") + "_" + nodeIndex)
+            val dbSchema = baseConfig.getString("database.schema") + "_" + nodeIndex
+            // To convert negative indexes of replica nodes to 'replica_' prefixed indexes.
+            baseConfig.setProperty("database.schema", dbSchema.replace("-", "replica_"))
 
             // peers
             var port = (baseConfig.getProperty("node.0.port") as String).toInt()
@@ -257,16 +275,17 @@ open class IntegrationTest {
         return gtv(*Array(nodeCount) { gtv(pubKey(it)) })
     }
 
-    fun createPeerInfos(nodeCount: Int): Array<PeerInfo> {
+    fun createPeerInfosWithReplicas(nodeCount: Int, replicasCount: Int): Array<PeerInfo> {
         if (peerInfos == null) {
-            peerInfos = Array(nodeCount) {
-                // TODO: Fix this hack
-                PeerInfo("localhost", BASE_PORT + it, pubKey(it))
-            }
+            peerInfos =
+                    Array(nodeCount) { PeerInfo("localhost", BASE_PORT + it, pubKey(it)) } +
+                    Array(replicasCount) { PeerInfo("localhost", BASE_PORT - it - 1, pubKey(-it - 1)) }
         }
 
         return peerInfos!!
     }
+
+    fun createPeerInfos(nodeCount: Int): Array<PeerInfo> = createPeerInfosWithReplicas(nodeCount, 0)
 
     protected fun buildBlockAndCommit(engine: BlockchainEngine) {
         val blockBuilder = engine.buildBlock()

@@ -14,8 +14,7 @@ import net.postchain.network.CommunicationManager
  */
 class NetworkAwareTxQueue(
         private val queue: TransactionQueue,
-        private val network: CommunicationManager<Message>,
-        private val nodeIndex: Int)
+        private val network: CommunicationManager<Message>)
     : TransactionQueue by queue {
 
     companion object : KLogging()
@@ -57,7 +56,7 @@ where we are guaranteed not to drop transactions.
 
     override fun enqueue(tx: net.postchain.core.Transaction): Boolean {
         return if (queue.enqueue(tx)) {
-            logger.debug("Node $nodeIndex broadcasting tx ${tx.getRID().toHex()}")
+            logger.debug("Node broadcasting tx ${tx.getRID().toHex()}")
             network.broadcastPacket(net.postchain.ebft.message.Transaction(tx.getRawData()))
             true
         } else

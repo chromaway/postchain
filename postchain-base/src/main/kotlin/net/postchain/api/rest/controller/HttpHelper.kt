@@ -11,5 +11,7 @@ class HttpHelper {
 
         const val PARAM_HASH_HEX = ":hashHex"
         const val PARAM_BLOCKCHAIN_RID = ":blockchainRID"
+        const val PARAM_UP_TO = ":upTo"
+        const val PARAM_LIMIT = ":limit"
     }
 }

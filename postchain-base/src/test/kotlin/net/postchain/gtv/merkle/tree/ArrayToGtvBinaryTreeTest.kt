@@ -2,15 +2,16 @@ package net.postchain.gtv.merkle.tree
 
 import net.postchain.base.merkle.PrintableTreeFactory
 import net.postchain.base.merkle.TreePrinter
+import net.postchain.gtv.merkle.*
 import net.postchain.gtv.path.GtvPath
 import net.postchain.gtv.path.GtvPathFactory
 import net.postchain.gtv.path.GtvPathSet
-import net.postchain.gtv.merkle.*
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ArrayToGtvBinaryTreeTest {
 
+    private val ln = System.lineSeparator()
     private val factory = GtvBinaryTreeFactory()
 
     // ------------------- Size 1 --------------------
@@ -42,8 +43,8 @@ class ArrayToGtvBinaryTreeTest {
 
     @Test
     fun testIntArrayLength1() {
-        val expectedTree = " +   \n" +
-                "/ \\ \n" +
+        val expectedTree = " +   $ln" +
+                "/ \\ $ln" +
                 "1 - "
 
         val treePrintout = buildTreeOf1()
@@ -55,9 +56,8 @@ class ArrayToGtvBinaryTreeTest {
     fun testIntArrayLength1_withPath() {
         val path: Array<Any> = arrayOf(0)
 
-        val expectedTreeWithPath =
-                " *   \n" +
-                "/ \\ \n" +
+        val expectedTreeWithPath = " *   $ln" +
+                "/ \\ $ln" +
                 "*1 - "
 
         val gtvPath: GtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
@@ -77,7 +77,7 @@ class ArrayToGtvBinaryTreeTest {
         val gtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf4()
 
         val newMemoization = GtvMerkleHashMemoization(100, 100)
-        val fullBinaryTree:GtvBinaryTree = if (gtvPath != null) {
+        val fullBinaryTree: GtvBinaryTree = if (gtvPath != null) {
             factory.buildFromGtvAndPath(gtvArr, GtvPathSet(setOf((gtvPath))), newMemoization)
         } else {
             factory.buildFromGtv(gtvArr, newMemoization)
@@ -94,12 +94,12 @@ class ArrayToGtvBinaryTreeTest {
     @Test
     fun testIntArrayLength4() {
         val expectedTree =
-                "   +       \n" +
-                        "  / \\   \n" +
-                        " /   \\  \n" +
-                        " +   +   \n" +
-                        "/ \\ / \\ \n" +
-                        "1 2 3 4 \n"
+                "   +       $ln" +
+                        "  / \\   $ln" +
+                        " /   \\  $ln" +
+                        " +   +   $ln" +
+                        "/ \\ / \\ $ln" +
+                        "1 2 3 4 $ln"
 
         val treePrintout = buildTreeOf4()
         //println(treeHolder.treePrintout)
@@ -110,11 +110,11 @@ class ArrayToGtvBinaryTreeTest {
     fun testIntArrayLength4_withPath() {
         val path: Array<Any> = arrayOf(3)
 
-        val expected = "   *       \n" +
-                "  / \\   \n" +
-                " /   \\  \n" +
-                " +   +   \n" +
-                "/ \\ / \\ \n" +
+        val expected = "   *       $ln" +
+                "  / \\   $ln" +
+                " /   \\  $ln" +
+                " +   +   $ln" +
+                "/ \\ / \\ $ln" +
                 "1 2 3 *4 "
 
         val gtvPath: GtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
@@ -138,7 +138,7 @@ class ArrayToGtvBinaryTreeTest {
         val gtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf7()
 
         val newMemoization = GtvMerkleHashMemoization(100, 100)
-        val fullBinaryTree = factory.buildFromGtvAndPath(gtvArr,gtvPaths, newMemoization)
+        val fullBinaryTree = factory.buildFromGtvAndPath(gtvArr, gtvPaths, newMemoization)
 
         val printer = TreePrinter()
         val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
@@ -151,16 +151,16 @@ class ArrayToGtvBinaryTreeTest {
     @Test
     fun testIntArrayLength7() {
         val expectedTree =
-                "       +               \n" +
-                        "      / \\       \n" +
-                        "     /   \\      \n" +
-                        "    /     \\     \n" +
-                        "   /       \\    \n" +
-                        "   +       +       \n" +
-                        "  / \\     / \\   \n" +
-                        " /   \\   /   \\  \n" +
-                        " +   +   +   7   \n" +
-                        "/ \\ / \\ / \\     \n" +
+                "       +               $ln" +
+                        "      / \\       $ln" +
+                        "     /   \\      $ln" +
+                        "    /     \\     $ln" +
+                        "   /       \\    $ln" +
+                        "   +       +       $ln" +
+                        "  / \\     / \\   $ln" +
+                        " /   \\   /   \\  $ln" +
+                        " +   +   +   7   $ln" +
+                        "/ \\ / \\ / \\     $ln" +
                         "1 2 3 4 5 6 - - "
 
         val treePrintout = buildTreeOf7()
@@ -172,16 +172,16 @@ class ArrayToGtvBinaryTreeTest {
     fun testIntArrayLength7_withPath() {
         val path: Array<Any> = arrayOf(6)
         val expectedTree =
-                "       *               \n" +
-                        "      / \\       \n" +
-                        "     /   \\      \n" +
-                        "    /     \\     \n" +
-                        "   /       \\    \n" +
-                        "   +       +       \n" +
-                        "  / \\     / \\   \n" +
-                        " /   \\   /   \\  \n" +
-                        " +   +   +   *7   \n" +
-                        "/ \\ / \\ / \\     \n" +
+                "       *               $ln" +
+                        "      / \\       $ln" +
+                        "     /   \\      $ln" +
+                        "    /     \\     $ln" +
+                        "   /       \\    $ln" +
+                        "   +       +       $ln" +
+                        "  / \\     / \\   $ln" +
+                        " /   \\   /   \\  $ln" +
+                        " +   +   +   *7   $ln" +
+                        "/ \\ / \\ / \\     $ln" +
                         "1 2 3 4 5 6 - - "
 
         val gtvPath: GtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
@@ -207,25 +207,25 @@ class ArrayToGtvBinaryTreeTest {
 
     @Test
     fun testIntArrayLength9() {
-         val expectedTree = "               +                               \n" +
-                "              / \\               \n" +
-                "             /   \\              \n" +
-                "            /     \\             \n" +
-                "           /       \\            \n" +
-                "          /         \\           \n" +
-                "         /           \\          \n" +
-                "        /             \\         \n" +
-                "       /               \\        \n" +
-                "       +               9               \n" +
-                "      / \\                       \n" +
-                "     /   \\                      \n" +
-                "    /     \\                     \n" +
-                "   /       \\                    \n" +
-                "   +       +       .       .       \n" +
-                "  / \\     / \\                   \n" +
-                " /   \\   /   \\                  \n" +
-                " +   +   +   +   .   .   .   .   \n" +
-                "/ \\ / \\ / \\ / \\                 \n" +
+        val expectedTree = "               +                               $ln" +
+                "              / \\               $ln" +
+                "             /   \\              $ln" +
+                "            /     \\             $ln" +
+                "           /       \\            $ln" +
+                "          /         \\           $ln" +
+                "         /           \\          $ln" +
+                "        /             \\         $ln" +
+                "       /               \\        $ln" +
+                "       +               9               $ln" +
+                "      / \\                       $ln" +
+                "     /   \\                      $ln" +
+                "    /     \\                     $ln" +
+                "   /       \\                    $ln" +
+                "   +       +       .       .       $ln" +
+                "  / \\     / \\                   $ln" +
+                " /   \\   /   \\                  $ln" +
+                " +   +   +   +   .   .   .   .   $ln" +
+                "/ \\ / \\ / \\ / \\                 $ln" +
                 "1 2 3 4 5 6 7 8 - - - - - - - - "
 
         val treePrintout = buildTreeOf9()
@@ -235,7 +235,7 @@ class ArrayToGtvBinaryTreeTest {
 
     // ------------------- Size 13 --------------------
     private fun buildTreeOf13(): String {
-        val intArray = intArrayOf(1,2,3,4,5,6,7,8,9,0,1,2,3)
+        val intArray = intArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3)
         val intArrayList = GtvTreeHelper.transformIntToGtv(intArray.toCollection(ArrayList()))
 
         val newMemoization = GtvMerkleHashMemoization(100, 100)
@@ -251,25 +251,25 @@ class ArrayToGtvBinaryTreeTest {
 
     @Test
     fun testIntArrayLength13() {
-        val expectedTree = "               +                               \n" +
-                "              / \\               \n" +
-                "             /   \\              \n" +
-                "            /     \\             \n" +
-                "           /       \\            \n" +
-                "          /         \\           \n" +
-                "         /           \\          \n" +
-                "        /             \\         \n" +
-                "       /               \\        \n" +
-                "       +               +               \n" +
-                "      / \\             / \\       \n" +
-                "     /   \\           /   \\      \n" +
-                "    /     \\         /     \\     \n" +
-                "   /       \\       /       \\    \n" +
-                "   +       +       +       3       \n" +
-                "  / \\     / \\     / \\           \n" +
-                " /   \\   /   \\   /   \\          \n" +
-                " +   +   +   +   +   +   .   .   \n" +
-                "/ \\ / \\ / \\ / \\ / \\ / \\         \n" +
+        val expectedTree = "               +                               $ln" +
+                "              / \\               $ln" +
+                "             /   \\              $ln" +
+                "            /     \\             $ln" +
+                "           /       \\            $ln" +
+                "          /         \\           $ln" +
+                "         /           \\          $ln" +
+                "        /             \\         $ln" +
+                "       /               \\        $ln" +
+                "       +               +               $ln" +
+                "      / \\             / \\       $ln" +
+                "     /   \\           /   \\      $ln" +
+                "    /     \\         /     \\     $ln" +
+                "   /       \\       /       \\    $ln" +
+                "   +       +       +       3       $ln" +
+                "  / \\     / \\     / \\           $ln" +
+                " /   \\   /   \\   /   \\          $ln" +
+                " +   +   +   +   +   +   .   .   $ln" +
+                "/ \\ / \\ / \\ / \\ / \\ / \\         $ln" +
                 "1 2 3 4 5 6 7 8 9 0 1 2 - - - - "
 
         val treePrintout = buildTreeOf13()
@@ -305,43 +305,43 @@ class ArrayToGtvBinaryTreeTest {
 
     @Test
     fun testIntArrayLength7withInnerLength3Array() {
-        val expectedTree = "                               +                                                               \n" +
-                        "                              / \\                               \n" +
-                        "                             /   \\                              \n" +
-                        "                            /     \\                             \n" +
-                        "                           /       \\                            \n" +
-                        "                          /         \\                           \n" +
-                        "                         /           \\                          \n" +
-                        "                        /             \\                         \n" +
-                        "                       /               \\                        \n" +
-                        "                      /                 \\                       \n" +
-                        "                     /                   \\                      \n" +
-                        "                    /                     \\                     \n" +
-                        "                   /                       \\                    \n" +
-                        "                  /                         \\                   \n" +
-                        "                 /                           \\                  \n" +
-                        "                /                             \\                 \n" +
-                        "               /                               \\                \n" +
-                        "               +                               +                               \n" +
-                        "              / \\                             / \\               \n" +
-                        "             /   \\                           /   \\              \n" +
-                        "            /     \\                         /     \\             \n" +
-                        "           /       \\                       /       \\            \n" +
-                        "          /         \\                     /         \\           \n" +
-                        "         /           \\                   /           \\          \n" +
-                        "        /             \\                 /             \\         \n" +
-                        "       /               \\               /               \\        \n" +
-                        "       +               +               +               7               \n" +
-                        "      / \\             / \\             / \\                       \n" +
-                        "     /   \\           /   \\           /   \\                      \n" +
-                        "    /     \\         /     \\         /     \\                     \n" +
-                        "   /       \\       /       \\       /       \\                    \n" +
-                        "   1       2       3       +       5       6       .       .       \n" +
-                        "                          / \\                                   \n" +
-                        "                         /   \\                                  \n" +
-                        " .   .   .   .   .   .   +   3   .   .   .   .   .   .   .   .   \n" +
-                        "                        / \\                                     \n" +
-                        "- - - - - - - - - - - - 1 9 - - - - - - - - - - - - - - - - - - "
+        val expectedTree = "                               +                                                               $ln" +
+                "                              / \\                               $ln" +
+                "                             /   \\                              $ln" +
+                "                            /     \\                             $ln" +
+                "                           /       \\                            $ln" +
+                "                          /         \\                           $ln" +
+                "                         /           \\                          $ln" +
+                "                        /             \\                         $ln" +
+                "                       /               \\                        $ln" +
+                "                      /                 \\                       $ln" +
+                "                     /                   \\                      $ln" +
+                "                    /                     \\                     $ln" +
+                "                   /                       \\                    $ln" +
+                "                  /                         \\                   $ln" +
+                "                 /                           \\                  $ln" +
+                "                /                             \\                 $ln" +
+                "               /                               \\                $ln" +
+                "               +                               +                               $ln" +
+                "              / \\                             / \\               $ln" +
+                "             /   \\                           /   \\              $ln" +
+                "            /     \\                         /     \\             $ln" +
+                "           /       \\                       /       \\            $ln" +
+                "          /         \\                     /         \\           $ln" +
+                "         /           \\                   /           \\          $ln" +
+                "        /             \\                 /             \\         $ln" +
+                "       /               \\               /               \\        $ln" +
+                "       +               +               +               7               $ln" +
+                "      / \\             / \\             / \\                       $ln" +
+                "     /   \\           /   \\           /   \\                      $ln" +
+                "    /     \\         /     \\         /     \\                     $ln" +
+                "   /       \\       /       \\       /       \\                    $ln" +
+                "   1       2       3       +       5       6       .       .       $ln" +
+                "                          / \\                                   $ln" +
+                "                         /   \\                                  $ln" +
+                " .   .   .   .   .   .   +   3   .   .   .   .   .   .   .   .   $ln" +
+                "                        / \\                                     $ln" +
+                "- - - - - - - - - - - - 1 9 - - - - - - - - - - - - - - - - - - "
 
 
         val treePrintout = buildTreeOf7WithSubTree()
@@ -352,42 +352,42 @@ class ArrayToGtvBinaryTreeTest {
     @Test
     fun testIntArrayLength7withInnerLength3Array_withPath() {
         val arr: Array<Any> = arrayOf(3, 0)
-        val expectedTree = "                               *                                                               \n" +
-                "                              / \\                               \n" +
-                "                             /   \\                              \n" +
-                "                            /     \\                             \n" +
-                "                           /       \\                            \n" +
-                "                          /         \\                           \n" +
-                "                         /           \\                          \n" +
-                "                        /             \\                         \n" +
-                "                       /               \\                        \n" +
-                "                      /                 \\                       \n" +
-                "                     /                   \\                      \n" +
-                "                    /                     \\                     \n" +
-                "                   /                       \\                    \n" +
-                "                  /                         \\                   \n" +
-                "                 /                           \\                  \n" +
-                "                /                             \\                 \n" +
-                "               /                               \\                \n" +
-                "               +                               +                               \n" +
-                "              / \\                             / \\               \n" +
-                "             /   \\                           /   \\              \n" +
-                "            /     \\                         /     \\             \n" +
-                "           /       \\                       /       \\            \n" +
-                "          /         \\                     /         \\           \n" +
-                "         /           \\                   /           \\          \n" +
-                "        /             \\                 /             \\         \n" +
-                "       /               \\               /               \\        \n" +
-                "       +               +               +               7               \n" +
-                "      / \\             / \\             / \\                       \n" +
-                "     /   \\           /   \\           /   \\                      \n" +
-                "    /     \\         /     \\         /     \\                     \n" +
-                "   /       \\       /       \\       /       \\                    \n" +
-                "   1       2       3       *       5       6       .       .       \n" +
-                "                          / \\                                   \n" +
-                "                         /   \\                                  \n" +
-                " .   .   .   .   .   .   +   3   .   .   .   .   .   .   .   .   \n" +
-                "                        / \\                                     \n" +
+        val expectedTree = "                               *                                                               $ln" +
+                "                              / \\                               $ln" +
+                "                             /   \\                              $ln" +
+                "                            /     \\                             $ln" +
+                "                           /       \\                            $ln" +
+                "                          /         \\                           $ln" +
+                "                         /           \\                          $ln" +
+                "                        /             \\                         $ln" +
+                "                       /               \\                        $ln" +
+                "                      /                 \\                       $ln" +
+                "                     /                   \\                      $ln" +
+                "                    /                     \\                     $ln" +
+                "                   /                       \\                    $ln" +
+                "                  /                         \\                   $ln" +
+                "                 /                           \\                  $ln" +
+                "                /                             \\                 $ln" +
+                "               /                               \\                $ln" +
+                "               +                               +                               $ln" +
+                "              / \\                             / \\               $ln" +
+                "             /   \\                           /   \\              $ln" +
+                "            /     \\                         /     \\             $ln" +
+                "           /       \\                       /       \\            $ln" +
+                "          /         \\                     /         \\           $ln" +
+                "         /           \\                   /           \\          $ln" +
+                "        /             \\                 /             \\         $ln" +
+                "       /               \\               /               \\        $ln" +
+                "       +               +               +               7               $ln" +
+                "      / \\             / \\             / \\                       $ln" +
+                "     /   \\           /   \\           /   \\                      $ln" +
+                "    /     \\         /     \\         /     \\                     $ln" +
+                "   /       \\       /       \\       /       \\                    $ln" +
+                "   1       2       3       *       5       6       .       .       $ln" +
+                "                          / \\                                   $ln" +
+                "                         /   \\                                  $ln" +
+                " .   .   .   .   .   .   +   3   .   .   .   .   .   .   .   .   $ln" +
+                "                        / \\                                     $ln" +
                 "- - - - - - - - - - - - *1 9 - - - - - - - - - - - - - - - - - - "
 
 

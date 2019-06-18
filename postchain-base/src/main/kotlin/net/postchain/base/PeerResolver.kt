@@ -6,7 +6,7 @@ interface PeerResolver {
 
 interface PeerCommConfiguration : PeerResolver {
     val peerInfo: Array<PeerInfo>
-    val myIndex: Int
+    val pubKey: ByteArray
     fun myPeerInfo(): PeerInfo
     fun sigMaker(): SigMaker
     fun verifier(): Verifier

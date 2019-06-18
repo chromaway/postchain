@@ -128,7 +128,7 @@ class DefaultXCommunicationManagerTest {
     fun sendPacket_will_result_in_exception_if_my_XPeerID_was_given() {
         // Given
         val peersConfig: PeerCommConfiguration = mock {
-            on { myIndex } doReturn 1
+            on { pubKey } doReturn pubKey2
             on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
         }
 
@@ -146,7 +146,7 @@ class DefaultXCommunicationManagerTest {
         val connectionManager: XConnectionManager = mock()
         val peerCommunicationConfig: PeerCommConfiguration = mock {
             on { peerInfo } doReturn arrayOf(peerInfo1Mock, peerInfo2)
-            on { myIndex } doReturn 1
+            on { pubKey } doReturn pubKey2
         }
 
         // When
@@ -160,7 +160,7 @@ class DefaultXCommunicationManagerTest {
 
         // Then
         verify(connectionManager).sendPacket(any(), eq(CHAIN_ID), eq(peerInfo1.peerId()))
-        verify(peerCommunicationConfig, times(2)).peerInfo
+        verify(peerCommunicationConfig, times(1)).peerInfo
         verify(peerInfo1Mock).pubKey
 
         communicationManager.shutdown()
