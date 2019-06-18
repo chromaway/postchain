@@ -172,11 +172,12 @@ class SQLGTXModule(private val moduleFiles: Array<String>): GTXModule
             val obj = mutableMapOf<String, GTXValue>()
             it.entries.forEach {
                 // Integer, String, ByteArray accepted as column type
-                val dbValue = it.value
+                var dbValue = it.value
                 val gtxValue = when (dbValue) {
                     is Int, is Long, is Short, is Byte -> gtx((dbValue as Number).toLong())
                     is String -> gtx(dbValue)
                     is ByteArray -> gtx(dbValue)
+                    null -> GTXNull
                     else -> throw ProgrammerMistake("Unsupported return type" +
                             " ${dbValue.javaClass.simpleName} of column ${it.key} " +
                             "from query ${name}")
