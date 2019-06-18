@@ -3,7 +3,6 @@ package net.postchain.api.rest
 import io.restassured.RestAssured.given
 import net.postchain.api.rest.contract.BlockHeight
 import net.postchain.api.rest.contract.MyStatus
-import net.postchain.api.rest.contract.NodeStatusContract
 import net.postchain.api.rest.contract.NodeStatuses
 import net.postchain.api.rest.controller.Model
 import net.postchain.api.rest.controller.RestApi
@@ -171,7 +170,7 @@ class RestApiModelTest {
         )
 
         expect(model.nodeQuery("my_status"))
-                .andReturn(MyStatus(response))
+                .andReturn(MyStatus(gson.toJson(response)))
 
         replay(model)
 
@@ -188,7 +187,7 @@ class RestApiModelTest {
     fun test_node_get_statuses() {
         restApi.attachModel(blockchainRID1, model)
 
-        val response: Array<NodeStatusContract> =
+        val response =
                 arrayOf(
                         EBFTstateNodeStatusContract(
                                 height = 233,
@@ -208,7 +207,7 @@ class RestApiModelTest {
                         ))
 
         expect(model.nodeQuery("statuses"))
-                .andReturn(NodeStatuses(response))
+                .andReturn(NodeStatuses(response.map { gson.toJson(it) }.toTypedArray()))
 
         replay(model)
 

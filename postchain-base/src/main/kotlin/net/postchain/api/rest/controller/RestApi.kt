@@ -269,12 +269,12 @@ class RestApi(private val listenPort: Int, private val basePath: String,
     private fun handleNodeStatusQueries(request: Request): String {
         logger.debug("Request body: ${request.body()}")
         val response = model(request).nodeQuery(request.params(SUBQUERY))
-        return gson.toJson(when (response) {
+        return when (response) {
             is MyStatus -> response.myStatus
-            is BlockHeight -> response
-            is NodeStatuses -> response.statuses
+            is BlockHeight -> gson.toJson(response)
+            is NodeStatuses -> response.statuses.joinToString(separator = ",", prefix = "[", postfix = "]")
             else -> throw NotFoundError("NotFound")
-        })
+        }
     }
 
     private fun checkTxHashHex(request: Request): String {

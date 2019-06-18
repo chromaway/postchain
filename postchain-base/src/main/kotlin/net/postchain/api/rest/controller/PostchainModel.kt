@@ -3,7 +3,10 @@
 package net.postchain.api.rest.controller
 
 import mu.KLogging
-import net.postchain.api.rest.contract.*
+import net.postchain.api.rest.contract.BlockHeight
+import net.postchain.api.rest.contract.MyStatus
+import net.postchain.api.rest.contract.NodeStateTrackerContract
+import net.postchain.api.rest.contract.NodeStatuses
 import net.postchain.api.rest.model.ApiStatus
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
@@ -17,7 +20,7 @@ import net.postchain.core.TransactionQueue
 import net.postchain.core.TransactionStatus.CONFIRMED
 import net.postchain.core.TransactionStatus.UNKNOWN
 import net.postchain.core.UserMistake
-import net.postchain.ebft.rest.contract.toNodeStatusContract
+import net.postchain.ebft.rest.contract.serialize
 import net.postchain.ebft.syncmanager.SyncManagerBase
 import net.postchain.gtx.GTXValue
 
@@ -83,9 +86,9 @@ open class PostchainModel(
         val currentState = syncManagerBase.nodeStateTracker
         return when (subQuery) {
             "height" -> BlockHeight(currentState.blockHeight)
-            "my_status" -> currentState.myStatus?.let { status -> MyStatus(status.toNodeStatusContract()) }
+            "my_status" -> currentState.myStatus?.let { status -> MyStatus(status.serialize()) }
             "statuses" -> currentState.nodeStatuses?.let { statuses ->
-                NodeStatuses(statuses.map { it.toNodeStatusContract() }.toTypedArray())
+                NodeStatuses(statuses.map { it.serialize() }.toTypedArray())
             }
             else -> throw NotSupported("NotSupported: $subQuery")
         }
