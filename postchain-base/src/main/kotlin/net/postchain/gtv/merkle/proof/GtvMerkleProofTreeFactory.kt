@@ -35,7 +35,7 @@ class GtvMerkleProofTreeFactory: MerkleProofTreeFactory<Gtv>()   {
             logger.trace("--- Converting binary tree to proof tree ---")
             logger.trace("--------------------------------------------")
         }
-        val rootElement = buildFromBinaryTreeInternal(orginalTree.root, calculator)
+        val rootElement = buildFromBinaryTreeInternal(orginalTree.root, calculator, true)
         if (logger.isTraceEnabled) {
             logger.trace("--------------------------------------------")
             logger.trace("--- /Converting binary tree to proof tree --")
@@ -46,7 +46,8 @@ class GtvMerkleProofTreeFactory: MerkleProofTreeFactory<Gtv>()   {
 
     override fun buildFromBinaryTreeInternal(
             currentElement: BinaryTreeElement,
-            calculator: MerkleHashCalculator<Gtv>
+            calculator: MerkleHashCalculator<Gtv>,
+            isRoot: Boolean
     ): MerkleProofElement {
         return when (currentElement) {
             is EmptyLeaf -> {
@@ -102,13 +103,40 @@ class GtvMerkleProofTreeFactory: MerkleProofTreeFactory<Gtv>()   {
                     }
                 } else {
                     if (logger.isTraceEnabled) { logger.trace("Not part of a path, so convert node of type; ${currentElement::class.simpleName}") }
-                    convertNode(currentElement, calculator)
+                    val convertedSubTreeNode = convertNode(currentElement, calculator)
+                    storeSubTreeNodeInCacheIfNotRoot(content, convertedSubTreeNode, calculator, isRoot)
+                    convertedSubTreeNode
                 }
             }
             is Node -> {
                 convertNode(currentElement, calculator)
             }
             else -> throw IllegalStateException("Cannot handle $currentElement")
+        }
+    }
+
+    /**
+     * Remember to store this hash into the cache. It cannot be there or it would have been found by the [GtvBinaryTreeFactory]
+     * Note: We should not store the ROOT, only the sub structures. The root is meant to be stored later.
+     *
+     * @param content
+     * @param convertedSubTreeNode
+     * @param calculator
+     * @param isRoot
+     */
+    private fun storeSubTreeNodeInCacheIfNotRoot(content: Gtv, convertedSubTreeNode: MerkleProofElement, calculator: MerkleHashCalculator<Gtv>, isRoot: Boolean) {
+        if (!isRoot) {
+            when (convertedSubTreeNode) {
+                is ProofHashedLeaf -> {
+                    val searchRes = calculator.memoization.findMerkleHash(content)
+                    if (searchRes == null) {
+                        calculator.memoization.add(content, MerkleHashSummary(convertedSubTreeNode.merkleHash, content.nrOfBytes()))
+                    } else {
+                        logger.warn("Why is this sub-tree-root-node (not part of a path) not found BEFORE we calculated it? $convertedSubTreeNode ")
+                    }
+                }
+                else -> logger.warn("Why is this sub-tree-root-node (not part of a path) not made into a hash? $convertedSubTreeNode ")
+            }
         }
     }
 
