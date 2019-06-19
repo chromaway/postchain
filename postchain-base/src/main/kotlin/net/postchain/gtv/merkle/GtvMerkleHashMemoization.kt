@@ -210,7 +210,7 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
         try {
             val allInteraction = localCacheHits + globalCacheHits + cacheMisses
             if (allInteraction.rem(TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS) == 0L) {
-                logger.debug("Time to check if cache is too big.")
+                logger.debug("Time to check if cache is too big. size: $totalSizeInBytes Bytes")
 
                 // Let's see if we should prune
                 if (totalSizeInBytes > MAX_CACHE_SIZE_BYTES) {
