@@ -26,7 +26,7 @@ abstract class MerkleProofTreeFactory<T> {
      * @param isRoot is "true" if this is the root element of the structure
      * @return the [MerkleProofElement] we have built.
      */
-    abstract fun buildFromBinaryTreeInternal(currentElement: BinaryTreeElement, calculator: MerkleHashCalculator<T>, isRoot: Boolean = false):
+    abstract fun buildFromBinaryTreeInternal(currentElement: BinaryTreeElement, calculator: MerkleHashCalculator<T>):
             MerkleProofElement
 
 

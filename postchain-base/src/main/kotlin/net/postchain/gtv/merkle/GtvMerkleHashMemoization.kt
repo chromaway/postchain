@@ -1,15 +1,16 @@
 package net.postchain.gtv.merkle
 
 import mu.KLogging
-import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.base.merkle.MerkleHashMemoization
 import net.postchain.base.merkle.proof.MerkleHashSummary
 import net.postchain.common.toHex
 import net.postchain.gtv.*
 
 /**
- * To improve performance, we will cache the hash of a given [Gtv] object.
+ * To improve performance, we will cache the hash of a given [GtvPrimitive] object.
  * (Well look in the cache, and only if not found we'll calculate the hash)
+ *
+ * The reason we don't cache [GtvArray] is that most transactions are different, so there is not much to gain.
  *
  * Note1: that there is a high risk for collisions on Java's hashCode(), so that is why we have to store a set of all
  * [Gtv]s with this hash code. This might be a threat to memory, so we need a way to prune the cache.
@@ -18,14 +19,10 @@ import net.postchain.gtv.*
  */
 object GtvMerkleHashCache {
 
-    val defaultSizeOf100MB = 100000000 // TODO: Make this configerable
+    val defaultSizeOf1MB = 1000000 // TODO: Make this configurable
     val defaultNumberOfLookupsBeforePrune = 100 // Not that important, no need to configure
 
-    val gtvMerkleHashMemoization = GtvMerkleHashMemoization(defaultNumberOfLookupsBeforePrune, defaultSizeOf100MB)
-
-    fun findOrCalculateMerkleHash(gtvSrc: Gtv, calculator: MerkleHashCalculator<Gtv>): MerkleHashSummary? {
-        return gtvMerkleHashMemoization.findMerkleHash(gtvSrc)
-    }
+    val gtvMerkleHashMemoization = GtvMerkleHashMemoization(defaultNumberOfLookupsBeforePrune, defaultSizeOf1MB)
 }
 
 /**
@@ -58,12 +55,10 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
     var searchedIntegerHashMap = HashMap<Int, Int>() // Number of times a specific GTV int was searched for
     var searchStringsHash = HashMap<String, Int>()  // ... GTV string ..
     var searchByteArrayHash = HashMap<String, Int>() // ... GTV ByteArray ..
-    var searchedArrayHashMap = HashMap<GtvArray, Int>() // Number of times a specific GTV array was searched for
 
     var hitsIntegerHashMap = HashMap<Int, Int>() // Number of times a specific GTV int was hit
     var hitsStringsHash = HashMap<String, Int>()  // ... GTV string ..
     var hitsByteArrayHash = HashMap<String, Int>() // ... GTV ByteArray ..
-    var hitsArrayHashMap = HashMap<GtvArray, Int>() // Number of times a specific GTV array was hit
 
 
     /**
@@ -101,6 +96,11 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
      */
     override fun findMerkleHash(src: Gtv): MerkleHashSummary? {
         var retMerkleHashSummary: MerkleHashSummary? = null
+
+        if (!(src is GtvPrimitive)) {
+            logger.warn("Who is searching for ${src.type} in the cache?")
+            return null
+        }
 
         if (EXTRA_STATS) {
             debugSearches(src)
@@ -156,6 +156,11 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
      */
     @Synchronized
     override fun add(src: Gtv, newSummary: MerkleHashSummary) {
+        if (!(src is GtvPrimitive)) {
+            logger.warn("Who is adding a ${src.type} to the cache?")
+            return
+        }
+
         // Add 2 Local
         if (src.getCachedMerkleHash() == null) {
             src.setCachedMerkleHash(newSummary)
@@ -304,9 +309,6 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
                     if (EXTRA_STATS) {
                         resetExtraStats()
                     }
-
-                    System.gc() // With will be needed here :-D
-
                 }
             }
         } catch (e: Exception) {
@@ -383,18 +385,6 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
         logger.debug("------------------  ")
 
 
-        logger.debug("------GtvArrays--------  ")
-        var aCount = 0
-        for (arr in searchedArrayHashMap.keys) {
-            val count =searchedArrayHashMap[arr]!!
-            aCount += count
-            if (count > 10) {
-                logger.debug("search array: ${arr}, nr: $count")
-            }
-        }
-
-        logger.debug(" unique search array: ${searchedArrayHashMap.keys.size}, total searches: $aCount  ")
-        logger.debug("------------------  ")
     }
 
     private fun hitStats() {
@@ -436,21 +426,6 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
         }
         logger.debug(" unique hit byte array: ${hitsByteArrayHash.keys.size}, total hits: $baCount  ")
         logger.debug("------------------  ")
-
-
-        logger.debug("------GtvArrays--------  ")
-        var aCount = 0
-        for (arr in hitsArrayHashMap.keys) {
-            val count =hitsArrayHashMap[arr]!!
-            aCount += count
-            if (count > 10) {
-                logger.debug("hit array: ${arr}, nr: $count")
-            }
-        }
-
-        logger.debug(" unique hit array: ${hitsArrayHashMap.keys.size}, total hits: $aCount  ")
-        logger.debug("------------------  ")
-
     }
 
 
@@ -472,10 +447,7 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
                     val nr = searchByteArrayHash[baStr] ?: 0
                     searchByteArrayHash[baStr] = 1 + nr
                 }
-                is GtvArray -> {
-                    val nr = searchedArrayHashMap[src] ?: 0
-                    searchedArrayHashMap[src] = nr + 1
-                }
+                else -> logger.debug("What is this? ${src.type}")
             }
         }
     }
@@ -496,10 +468,7 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
                 val nr = hitsByteArrayHash[baStr] ?: 0
                 hitsByteArrayHash[baStr] = 1 + nr
             }
-            is GtvArray -> {
-                val nr = hitsArrayHashMap[src] ?: 0
-                hitsArrayHashMap[src] = nr + 1
-            }
+            else -> logger.debug("What is this? ${src.type}")
         }
     }
 
@@ -509,12 +478,10 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
         searchedIntegerHashMap = HashMap<Int, Int>()
         searchStringsHash = HashMap<String, Int>()
         searchByteArrayHash = HashMap<String, Int>()
-        searchedArrayHashMap = HashMap<GtvArray, Int>()
 
         hitsIntegerHashMap = HashMap<Int, Int>()
         hitsStringsHash = HashMap<String, Int>()
         hitsByteArrayHash = HashMap<String, Int>()
-        hitsArrayHashMap = HashMap<GtvArray, Int>()
     }
 
 }
