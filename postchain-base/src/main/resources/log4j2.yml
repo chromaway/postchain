@@ -26,9 +26,9 @@ Configuration:
   Loggers:
     Root:
       level: off
-      AppenderRef:
-      - ref: ConsoleAppender
-      - ref: FileAppender
+#      AppenderRef:
+#      - ref: ConsoleAppender
+#      - ref: FileAppender
     Logger:
     - name: net.postchain
       level: all
