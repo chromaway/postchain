@@ -25,20 +25,6 @@ class BlockchainConfigurationProviderFactoryTest {
     }
 
     @Test
-    fun createManagedProvider() {
-        val nodeConfig: NodeConfig = mock {
-            on { blockchainConfigProvider } doReturn "Managed"
-        }
-
-        val nodeConfigProvider: NodeConfigurationProvider = mock {
-            on { getConfiguration() } doReturn nodeConfig
-        }
-
-        assertk.assert(createProvider(nodeConfigProvider)).isInstanceOf(
-                ManagedBlockchainConfigurationProvider::class)
-    }
-
-    @Test
     fun createDefaultProvider() {
         val nodeConfig: NodeConfig = mock {
             on { blockchainConfigProvider } doReturn "some-unknown-provider-here"
