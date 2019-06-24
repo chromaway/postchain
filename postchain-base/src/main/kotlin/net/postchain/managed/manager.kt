@@ -157,7 +157,7 @@ class Manager(val procMan: BlockchainProcessManager,
             val ci = dba.getChainId(ctx, elt)
             if (ci == null) {
                 addBlockchain(ctx, elt)
-            } else {
+            } else if (ci != 0L) {
                 val proc = procMan.retrieveBlockchain(ci)
                 if (proc == null || forceReload)
                     procMan.startBlockchainAsync(ci)
@@ -176,7 +176,7 @@ class Manager(val procMan: BlockchainProcessManager,
         procMan.startBlockchainAsync(new_chain_id)
     }
 
-    fun maybeUpdateChain0(ctx: EContext) {
+    fun maybeUpdateChain0(ctx: EContext, reload: Boolean) {
         val dba = DatabaseAccess.of(ctx)
         val brid = dba.getBlockchainRID(ctx)!!
         val height = dba.getLastBlockHeight(ctx)
@@ -189,14 +189,16 @@ class Manager(val procMan: BlockchainProcessManager,
                 )
             }
         }
+        if (reload)
+            procMan.startBlockchainAsync(0)
     }
 
     fun runPeriodic(ctx: EContext) {
-        maybeUpdateChain0(ctx)
-
         val peerListVersion = dataSource.getPeerListVersion()
-        val reloadBlockchains = (lastPeerListVersion != peerListVersion)
+        val reloadBlockchains = (lastPeerListVersion != null) && (lastPeerListVersion != peerListVersion)
         lastPeerListVersion = peerListVersion
+
+        maybeUpdateChain0(ctx, reloadBlockchains)
         applyBlockchainList(ctx, dataSource.computeBlockchainList(ctx), reloadBlockchains)
     }
 }
