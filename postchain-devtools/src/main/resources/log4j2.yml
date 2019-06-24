@@ -31,7 +31,7 @@ Configuration:
       # - ref: FileAppender
     Logger:
     - name: net.postchain
-      level: all
+      level: debug
       AppenderRef:
       - ref: ConsoleAppender
       - ref: FileAppender
