@@ -51,6 +51,7 @@ class ValidatorWorker(
         // Give the SyncManager the BaseTransactionQueue and not the network-aware one,
         // because we don't want tx forwarding/broadcasting when received through p2p network
         syncManager = ValidatorSyncManager(
+                name,
                 signers,
                 statusManager,
                 blockManager,

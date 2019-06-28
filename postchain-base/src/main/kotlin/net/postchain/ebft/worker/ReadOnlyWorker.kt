@@ -19,7 +19,7 @@ class ReadOnlyWorker(
         override val name: String,
         signers: List<ByteArray>,
         override val blockchainEngine: BlockchainEngine,
-        communicationManager: CommunicationManager<Message>,
+        val communicationManager: CommunicationManager<Message>,
         override val restartHandler: RestartHandler
 ) : AbstractBlockchainProcess() {
 
@@ -32,6 +32,7 @@ class ReadOnlyWorker(
                 blockchainEngine, blockchainEngine.getBlockQueries(), NODE_ID_READ_ONLY)
 
         syncManager = ReplicaSyncManager(
+                name,
                 signers,
                 communicationManager,
                 blockDatabase,
@@ -43,5 +44,10 @@ class ReadOnlyWorker(
                 communicationManager)
 
         startUpdateLoop(syncManager)
+    }
+
+    override fun shutdown() {
+        super.shutdown()
+        communicationManager.shutdown()
     }
 }

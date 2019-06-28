@@ -35,12 +35,12 @@ abstract class AbstractBlockchainProcess : BlockchainProcess {
      * @param syncManager the syncronization manager
      */
     protected fun startUpdateLoop(syncManager: SyncManagerBase) {
-        updateLoop = thread(name = "updateLoop") {
+        updateLoop = thread(name = "updateLoop-$name") {
             while (!Thread.interrupted()) {
                 try {
                     syncManager.update()
                     if (blockchainEngine.isRestartNeeded) {
-                        logger.info("Node $name: Restarting of BlockchainProcess ${blockchainEngine.getConfiguration().chainID}")
+                        logger.info("[$name]: Restarting of BlockchainProcess ${blockchainEngine.getConfiguration().chainID}")
                         restartHandler()
                     }
                 } catch (e: Exception) {

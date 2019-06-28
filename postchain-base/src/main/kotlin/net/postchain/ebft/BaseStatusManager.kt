@@ -10,8 +10,12 @@ import java.util.*
 /**
  * StatusManager manages the status of the consensus protocol
  */
-class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long)
-    : StatusManager {
+class BaseStatusManager(
+        val nodeCount: Int,
+        val myIndex: Int,
+        myNextHeight: Long
+): StatusManager {
+
     override val nodeStatuses = Array(nodeCount) { NodeStatus() }
     override val commitSignatures: Array<Signature?> = arrayOfNulls(nodeCount)
     override val myStatus: NodeStatus
@@ -38,7 +42,7 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
      * @return the number of nodes at the same state as the local node
      */
     private fun countNodes(state: NodeState, height: Long, blockRID: ByteArray?): Int {
-        var count: Int = 0
+        var count = 0
         for (ns in nodeStatuses) {
             if (ns.height == height && ns.state == state) {
                 if (blockRID == null) {

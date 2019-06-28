@@ -14,15 +14,6 @@ import org.junit.runner.RunWith
 class FullEbftWithReplicasTestNightly : FullEbftTestNightlyCore() {
 
     @Test
-    fun myTest() {
-        val res = (-10 .. 10).map {
-            "$it\t" + KeyPairHelper.privKey(it).toHex() + " -> " + KeyPairHelper.pubKey(it).toHex()
-        }.joinToString("\n")
-
-        println(res)
-    }
-
-    @Test
     @Parameters(
             "3, 1, 0, 1",
             "3, 10, 4, 3"

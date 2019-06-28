@@ -26,7 +26,7 @@ class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
     }
 
     @Test
-    @Parameters("5, 1, 3, 2")
+    @Parameters("2, 1, 3, 2")
     @TestCaseName("[{index}] nodeCount: {0}, replicaCount: {1}, blockCount: {2}, txPerBlock: {3}")
     fun runFiveNodesWithYTxPerBlock(nodeCount: Int, replicaCount: Int, blockCount: Int, txPerBlock: Int) {
         runXNodesWithReplicasWithYTxPerBlock(
