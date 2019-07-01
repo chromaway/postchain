@@ -1,14 +1,16 @@
 package net.postchain.gtv.merkle
 
 import mu.KLogging
-import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.base.merkle.MerkleHashMemoization
 import net.postchain.base.merkle.proof.MerkleHashSummary
-import net.postchain.gtv.Gtv
+import net.postchain.common.toHex
+import net.postchain.gtv.*
 
 /**
- * To improve performance, we will cache the hash of a given [Gtv] object.
+ * To improve performance, we will cache the hash of a given [GtvPrimitive] object.
  * (Well look in the cache, and only if not found we'll calculate the hash)
+ *
+ * The reason we don't cache [GtvArray] is that most transactions are different, so there is not much to gain.
  *
  * Note1: that there is a high risk for collisions on Java's hashCode(), so that is why we have to store a set of all
  * [Gtv]s with this hash code. This might be a threat to memory, so we need a way to prune the cache.
@@ -17,14 +19,10 @@ import net.postchain.gtv.Gtv
  */
 object GtvMerkleHashCache {
 
-    val defaultSizeOf100MB = 100000000 // TODO: Make this configerable
+    val defaultSizeOf1MB = 1000000 // TODO: Make this configurable
     val defaultNumberOfLookupsBeforePrune = 100 // Not that important, no need to configure
 
-    val gtvMerkleHashMemoization = GtvMerkleHashMemoization(defaultNumberOfLookupsBeforePrune, defaultSizeOf100MB)
-
-    fun findOrCalculateMerkleHash(gtvSrc: Gtv, calculator: MerkleHashCalculator<Gtv>): MerkleHashSummary? {
-        return gtvMerkleHashMemoization.findMerkleHash(gtvSrc)
-    }
+    val gtvMerkleHashMemoization = GtvMerkleHashMemoization(defaultNumberOfLookupsBeforePrune, defaultSizeOf1MB)
 }
 
 /**
@@ -37,7 +35,7 @@ object GtvMerkleHashCache {
  *                  of the tree many times over. Too hard to calculate real memory consumption, and don't want to
  *                  use java.lang.instrumentation (b/c probably too heavy)
  */
-class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val MAX_CACHE_SIZE_BYTES: Int): MerkleHashMemoization<Gtv>() {
+class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val MAX_CACHE_SIZE_BYTES: Int, val EXTRA_STATS: Boolean = false): MerkleHashMemoization<Gtv>() {
 
     companion object : KLogging()
 
@@ -47,8 +45,21 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
     var localCacheHits = 0L // How many times the local cache was successful
     var globalCacheHits = 0L // How many times the global cache was successful
     var cacheMisses = 0L // How many times no cached value was found
-
     private var totalSizeInBytes = 0 // Keeps track of how much space the cache consumes. This is not exact, but gives worst case!
+
+    // -----------------
+    // Type specific maps (only used during EXTRA_STATS extra debugging)
+    // -----------------
+    var elementTypeHashMap = HashMap<String, Int>() // Describes how many objects of a specific type we have added since last pruning.
+
+    var searchedIntegerHashMap = HashMap<Int, Int>() // Number of times a specific GTV int was searched for
+    var searchStringsHash = HashMap<String, Int>()  // ... GTV string ..
+    var searchByteArrayHash = HashMap<String, Int>() // ... GTV ByteArray ..
+
+    var hitsIntegerHashMap = HashMap<Int, Int>() // Number of times a specific GTV int was hit
+    var hitsStringsHash = HashMap<String, Int>()  // ... GTV string ..
+    var hitsByteArrayHash = HashMap<String, Int>() // ... GTV ByteArray ..
+
 
     /**
      * Use this method so cannot modify the value from outside (since Kotlin does a copy)
@@ -60,8 +71,8 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
      */
     private fun increaseTotalMem(increaseBytes: Int) {
         val addedNrOfBytes = (increaseBytes + MerkleHashSetWithSameGtvJavaHashCode.OVERHEAD_SIZE_BYTES)
-        if (logger.isDebugEnabled) {
-            logger.debug("add to cache: $addedNrOfBytes, (= bytes: ${increaseBytes} + overhead: ${MerkleHashSetWithSameGtvJavaHashCode.OVERHEAD_SIZE_BYTES}) ")
+        if (logger.isTraceEnabled) {
+            logger.trace("add to cache: $addedNrOfBytes, (= bytes: ${increaseBytes} + overhead: ${MerkleHashSetWithSameGtvJavaHashCode.OVERHEAD_SIZE_BYTES}) ")
         }
         totalSizeInBytes += addedNrOfBytes
     }
@@ -71,8 +82,8 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
      */
     private fun decreaseTotalMem(decreaseBytes: Int, timestamp: Long) {
         val nrOfBytesToDecrease = decreaseBytes +  MerkleHashSetWithSameGtvJavaHashCode.OVERHEAD_SIZE_BYTES
-        if (logger.isDebugEnabled) {
-            logger.debug("Cache item pruned! timestamp: $timestamp : $nrOfBytesToDecrease bytes ")
+        if (logger.isTraceEnabled) {
+            logger.trace("Cache item pruned! timestamp: $timestamp : $nrOfBytesToDecrease bytes ")
         }
         totalSizeInBytes -= nrOfBytesToDecrease
     }
@@ -85,6 +96,15 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
      */
     override fun findMerkleHash(src: Gtv): MerkleHashSummary? {
         var retMerkleHashSummary: MerkleHashSummary? = null
+
+        if (!(src is GtvPrimitive)) {
+            logger.warn("Who is searching for ${src.type} in the cache?")
+            return null
+        }
+
+        if (EXTRA_STATS) {
+            debugSearches(src)
+        }
 
         val localCachedVal = src.getCachedMerkleHash()
         if (localCachedVal != null) {
@@ -102,6 +122,9 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
 
                 synchronized(this) {
                     globalCacheHits++
+                    if (EXTRA_STATS) {
+                        debugHits(src)
+                    }
                 }
             } else {
                 synchronized(this) {
@@ -133,6 +156,11 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
      */
     @Synchronized
     override fun add(src: Gtv, newSummary: MerkleHashSummary) {
+        if (!(src is GtvPrimitive)) {
+            logger.warn("Who is adding a ${src.type} to the cache?")
+            return
+        }
+
         // Add 2 Local
         if (src.getCachedMerkleHash() == null) {
             src.setCachedMerkleHash(newSummary)
@@ -167,6 +195,11 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
         }
         increaseTotalMem(calculatedMerkleHashSummary.nrOfBytes)
 
+        if (EXTRA_STATS) {
+            val type = gtvSrc.type.name
+            val nr = elementTypeHashMap[type] ?: 0
+            elementTypeHashMap[type] = 1 + nr
+        }
     }
 
     /**
@@ -182,7 +215,7 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
         try {
             val allInteraction = localCacheHits + globalCacheHits + cacheMisses
             if (allInteraction.rem(TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS) == 0L) {
-                logger.debug("Time to check if cache is too big.")
+                logger.debug("Time to check if cache is too big. size: $totalSizeInBytes Bytes")
 
                 // Let's see if we should prune
                 if (totalSizeInBytes > MAX_CACHE_SIZE_BYTES) {
@@ -204,9 +237,9 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
                             if (foundSet != null) {
                                 // Add a pair to set
                                 foundSet.add(Pair(key, element))
-                                if (logger.isDebugEnabled) {
-                                    logger.debug("${foundSet.size} objects (java hash code=$key) with the same creation timestamp ($currentTimestamp) ? Unusual! ")
-                                }
+                                //if (logger.isDebugEnabled) {
+                                //    logger.debug("${foundSet.size} objects (java hash code=$key) with the same creation timestamp ($currentTimestamp) ? Unusual! ")
+                                //}
                             } else {
                                 // Create a set and add the element
                                 val newSet = mutableSetOf(Pair(key, element))
@@ -215,12 +248,40 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
                         }
                     }
 
+                    var nrOfStamps = 0
+                    var sumOfValues = 0
+                    for (timestamp in timeStampToHashMap.keys) {
+                        nrOfStamps++
+                        val sum = timeStampToHashMap[timestamp]!!.size
+                        val list = timeStampToHashMap[timestamp]!!
+                        sumOfValues += sum
+
+                        if (EXTRA_STATS) {
+                            if (sum > 10) {
+                                logger.debug("timestamp: $timestamp, sum: $sum  ")
+                            }
+                        }
+                    }
+
+                    if (EXTRA_STATS) {
+                        logger.debug("--------Types----------  ")
+                        for (type in elementTypeHashMap.keys) {
+                            logger.debug("type: $type, nr: ${elementTypeHashMap[type]}")
+                        }
+                        searchStats()
+                        hitStats()
+                    }
+
+                    logger.debug("------------------  ")
+                    logger.debug("Total unique timestamps: $nrOfStamps, sum: $sumOfValues, avg objects stored per timestamp: ${sumOfValues.toDouble()/nrOfStamps} ")
+                    logger.debug("------------------  ")
+
                     // 2. Remove oldest timestamps first
                     val allTimestamps: List<Long> = timeStampToHashMap.keys.sorted().asReversed()
 
                     val idealSizeInBytes = MAX_CACHE_SIZE_BYTES / 2 // Our goal is to make the cache half-empty so we don't have to do this often
                     var pruned = 0
-                    while (totalSizeInBytes > idealSizeInBytes) {
+                    while (totalSizeInBytes > idealSizeInBytes && pruned < allTimestamps.size) {
                         val timestampToRemove = allTimestamps[pruned]
                         // Remove ALL objects with this timestamp
                         val setToRemove = timeStampToHashMap[timestampToRemove]
@@ -230,7 +291,7 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
                         pruned++
                     }
 
-                    // 3. Done. Print and erase stats
+                    // 3. Done. Print stats
                     val hitrateLocal: Double = 100.0 * (localCacheHits.toDouble() / allInteraction)
                     val hitrateGlobal: Double = 100.0 * ((localCacheHits.toDouble() + globalCacheHits.toDouble()) / allInteraction)
                     val localHitrateStr = "%.2f".format(hitrateLocal)
@@ -240,9 +301,14 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
                     logger.info("----------------------------------------------------------------------------------")
                     logger.info("Cache pruned successfully down to size: $totalSizeInBytes (objects pruned: $pruned) in $duration ms. Local Hitrate = $localHitrateStr% Global Hitrate = $globalHitrateStr% (local hits: $localCacheHits, global hits: $globalCacheHits, misses: $cacheMisses)")
                     logger.info("----------------------------------------------------------------------------------")
+
+                    // 4. Erase stats
                     localCacheHits = 0
                     globalCacheHits = 0
                     cacheMisses = 0
+                    if (EXTRA_STATS) {
+                        resetExtraStats()
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -276,6 +342,146 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
         if (tmpSet.internalSet.isEmpty()) {
             javaHashCodeToGtvSet_Map.remove(javaHashCode)
         }
+    }
+
+    private fun searchStats() {
+        logger.debug("------GtvIntegers--------  ")
+        var intCount = 0
+        for (int in searchedIntegerHashMap.keys.sorted()) {
+            val count = searchedIntegerHashMap[int]!!
+            intCount += count
+            if (count > 10) {
+                logger.debug("search int: $int, nr: ${count}")
+            }
+        }
+
+        logger.debug("unique search integers: ${searchedIntegerHashMap.keys.size}, total searches: $intCount  ")
+        logger.debug("------------------  ")
+
+        logger.debug("------GtvStrings--------  ")
+        var strCount = 0
+        for (str in searchStringsHash.keys.sorted()) {
+            val count = searchStringsHash[str]!!
+            strCount += count
+            if (count > 10) {
+                logger.debug("search string: $str, nr: ${count}")
+            }
+        }
+
+        logger.debug("unique search strings: ${searchStringsHash.keys.size}, total searches: $strCount  ")
+        logger.debug("------------------  ")
+
+        logger.debug("------GtvByteArrays--------  ")
+        var baCount = 0
+        for (str in searchByteArrayHash.keys.sorted()) {
+            val count =searchByteArrayHash[str]!!
+            baCount += count
+            if (count > 10) {
+                logger.debug("search byte array: $str, nr: $count")
+            }
+
+        }
+        logger.debug(" unique search byte array: ${searchByteArrayHash.keys.size}, total searches: $baCount  ")
+        logger.debug("------------------  ")
+
+
+    }
+
+    private fun hitStats() {
+        logger.debug("------GtvIntegers--------  ")
+        var intCount = 0
+        for (int in hitsIntegerHashMap.keys.sorted()) {
+            val count = hitsIntegerHashMap[int]!!
+            intCount += count
+            if (count > 10) {
+                logger.debug("hit int: $int, nr: ${count}")
+            }
+        }
+
+        logger.debug("unique hit integers: ${hitsIntegerHashMap.keys.size}, total hits: $intCount  ")
+        logger.debug("------------------  ")
+
+        logger.debug("------GtvStrings--------  ")
+        var strCount = 0
+        for (str in hitsStringsHash.keys.sorted()) {
+            val count = hitsStringsHash[str]!!
+            strCount += count
+            if (count > 10) {
+                logger.debug("search string: $str, nr: ${count}")
+            }
+        }
+
+        logger.debug("unique hit strings: ${hitsStringsHash.keys.size}, total hits: $strCount  ")
+        logger.debug("------------------  ")
+
+        logger.debug("------GtvByteArrays--------  ")
+        var baCount = 0
+        for (str in hitsByteArrayHash.keys.sorted()) {
+            val count =hitsByteArrayHash[str]!!
+            baCount += count
+            if (count > 10) {
+                logger.debug("search byte array: $str, nr: $count")
+            }
+
+        }
+        logger.debug(" unique hit byte array: ${hitsByteArrayHash.keys.size}, total hits: $baCount  ")
+        logger.debug("------------------  ")
+    }
+
+
+
+    private fun debugSearches(src: Gtv) {
+        synchronized(this) {
+            when (src) {
+                is GtvInteger -> {
+                    val content = src.integer.intValueExact()
+                    val nr = searchedIntegerHashMap[content] ?: 0
+                    searchedIntegerHashMap[content] = nr + 1
+                }
+                is GtvString -> {
+                    val nr = searchStringsHash[src.string] ?: 0
+                    searchStringsHash[src.string] = nr + 1
+                }
+                is GtvByteArray -> {
+                    val baStr = src.bytearray.toHex()
+                    val nr = searchByteArrayHash[baStr] ?: 0
+                    searchByteArrayHash[baStr] = 1 + nr
+                }
+                else -> logger.debug("What is this? ${src.type}")
+            }
+        }
+    }
+
+    private fun debugHits(src: Gtv) {
+        when (src) {
+            is GtvInteger -> {
+                val content = src.integer.intValueExact()
+                val nr = hitsIntegerHashMap[content] ?: 0
+                hitsIntegerHashMap[content] = nr + 1
+            }
+            is GtvString -> {
+                val nr = hitsStringsHash[src.string] ?: 0
+                hitsStringsHash[src.string] = nr + 1
+            }
+            is GtvByteArray -> {
+                val baStr = src.bytearray.toHex()
+                val nr = hitsByteArrayHash[baStr] ?: 0
+                hitsByteArrayHash[baStr] = 1 + nr
+            }
+            else -> logger.debug("What is this? ${src.type}")
+        }
+    }
+
+    private fun resetExtraStats() {
+        elementTypeHashMap = HashMap<String, Int>()
+
+        searchedIntegerHashMap = HashMap<Int, Int>()
+        searchStringsHash = HashMap<String, Int>()
+        searchByteArrayHash = HashMap<String, Int>()
+
+        hitsIntegerHashMap = HashMap<Int, Int>()
+        hitsStringsHash = HashMap<String, Int>()
+        hitsByteArrayHash = HashMap<String, Int>()
     }
 
 }
