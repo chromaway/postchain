@@ -3,7 +3,6 @@
 package net.postchain.api.rest.controller
 
 import mu.KLogging
-import net.postchain.api.rest.json.JsonFactory
 import net.postchain.api.rest.model.ApiStatus
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
@@ -17,7 +16,6 @@ import net.postchain.core.TransactionStatus.UNKNOWN
 import net.postchain.gtx.GTXValue
 
 open class PostchainModel(
-        private val nodeStateTracker: NodeStateTracker,
         val txQueue: TransactionQueue,
         private val transactionFactory: TransactionFactory,
         val blockQueries: BaseBlockQueries
@@ -74,14 +72,5 @@ open class PostchainModel(
         return blockQueries.query(query[0]!!.asString(), query[1]).get()
     }
 
-    override fun nodeQuery(subQuery: String): String {
-        val gson = JsonFactory.makeJson()
-        return when (subQuery) {
-            "height" -> gson.toJson(BlockHeight(nodeStateTracker.blockHeight))
-            "my_status" -> nodeStateTracker.myStatus ?: throw NotFoundError("NotFound")
-            "statuses" -> nodeStateTracker.nodeStatuses?.joinToString(separator = ",", prefix = "[", postfix = "]")
-                    ?: throw NotFoundError("NotFound")
-            else -> throw NotSupported("NotSupported: $subQuery")
-        }
-    }
+    override fun nodeQuery(subQuery: String): String = throw NotSupported("NotSupported: $subQuery")
 }

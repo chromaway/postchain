@@ -1,12 +1,12 @@
 package net.postchain.base
 
-import net.postchain.api.rest.controller.PostchainModel
 import net.postchain.api.rest.controller.RestApi
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.common.toHex
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.ApiInfrastructure
 import net.postchain.core.BlockchainProcess
+import net.postchain.ebft.rest.model.PostchainEBFTModel
 import net.postchain.ebft.worker.AbstractBlockchainProcess
 
 class BaseApiInfrastructure(nodeConfigProvider: NodeConfigurationProvider) : ApiInfrastructure {
@@ -24,7 +24,7 @@ class BaseApiInfrastructure(nodeConfigProvider: NodeConfigurationProvider) : Api
         restApi?.run {
             val engine = process.getEngine()
 
-            val apiModel = PostchainModel(
+            val apiModel = PostchainEBFTModel(
                     (process as AbstractBlockchainProcess).nodeStateTracker,
                     process.networkAwareTxQueue,
                     engine.getConfiguration().getTransactionFactory(),
