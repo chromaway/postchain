@@ -3,10 +3,7 @@
 package net.postchain.api.rest.controller
 
 import mu.KLogging
-import net.postchain.api.rest.contract.BlockHeight
-import net.postchain.api.rest.contract.MyStatus
-import net.postchain.api.rest.contract.NodeStateTrackerContract
-import net.postchain.api.rest.contract.NodeStatuses
+import net.postchain.api.rest.json.JsonFactory
 import net.postchain.api.rest.model.ApiStatus
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
@@ -14,18 +11,13 @@ import net.postchain.base.BaseBlockQueries
 import net.postchain.base.ConfirmationProof
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
-import net.postchain.core.BlockDetail
-import net.postchain.core.TransactionFactory
-import net.postchain.core.TransactionQueue
+import net.postchain.core.*
 import net.postchain.core.TransactionStatus.CONFIRMED
 import net.postchain.core.TransactionStatus.UNKNOWN
-import net.postchain.core.UserMistake
-import net.postchain.ebft.rest.contract.serialize
-import net.postchain.ebft.syncmanager.SyncManagerBase
 import net.postchain.gtx.GTXValue
 
 open class PostchainModel(
-        private val syncManagerBase: SyncManagerBase,
+        private val nodeStateTracker: NodeStateTracker,
         val txQueue: TransactionQueue,
         private val transactionFactory: TransactionFactory,
         val blockQueries: BaseBlockQueries
@@ -82,14 +74,13 @@ open class PostchainModel(
         return blockQueries.query(query[0]!!.asString(), query[1]).get()
     }
 
-    override fun nodeQuery(subQuery: String): NodeStateTrackerContract? {
-        val currentState = syncManagerBase.nodeStateTracker
+    override fun nodeQuery(subQuery: String): String {
+        val gson = JsonFactory.makeJson()
         return when (subQuery) {
-            "height" -> BlockHeight(currentState.blockHeight)
-            "my_status" -> currentState.myStatus?.let { status -> MyStatus(status.serialize()) }
-            "statuses" -> currentState.nodeStatuses?.let { statuses ->
-                NodeStatuses(statuses.map { it.serialize() }.toTypedArray())
-            }
+            "height" -> gson.toJson(BlockHeight(nodeStateTracker.blockHeight))
+            "my_status" -> nodeStateTracker.myStatus ?: throw NotFoundError("NotFound")
+            "statuses" -> nodeStateTracker.nodeStatuses?.joinToString(separator = ",", prefix = "[", postfix = "]")
+                    ?: throw NotFoundError("NotFound")
             else -> throw NotSupported("NotSupported: $subQuery")
         }
     }

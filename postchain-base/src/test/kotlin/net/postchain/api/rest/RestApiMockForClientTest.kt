@@ -3,7 +3,6 @@
 package net.postchain.api.rest
 
 import mu.KLogging
-import net.postchain.api.rest.contract.NodeStateTrackerContract
 import net.postchain.api.rest.controller.*
 import net.postchain.api.rest.model.ApiStatus
 import net.postchain.api.rest.model.ApiTx
@@ -99,7 +98,7 @@ class RestApiMockForClientManual {
             })
         }
 
-        override fun nodeQuery(subQuery: String): NodeStateTrackerContract? = TODO()
+        override fun nodeQuery(subQuery: String): String = TODO()
         override fun query(query: GTXValue): GTXValue {
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }

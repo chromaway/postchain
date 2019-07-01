@@ -1,9 +1,8 @@
 package net.postchain.api.rest
 
+import com.google.gson.JsonParser
 import io.restassured.RestAssured.given
-import net.postchain.api.rest.contract.BlockHeight
-import net.postchain.api.rest.contract.MyStatus
-import net.postchain.api.rest.contract.NodeStatuses
+import net.postchain.api.rest.controller.BlockHeight
 import net.postchain.api.rest.controller.Model
 import net.postchain.api.rest.controller.RestApi
 import net.postchain.api.rest.json.JsonFactory
@@ -132,7 +131,7 @@ class RestApiModelTest {
                 .get("/node/$blockchainRID1/height")
                 .then()
                 .statusCode(404)
-                .assertThat().body(equalTo("""{"error":"NotFound"}"""))
+                .assertThat().body(equalTo(JsonParser().parse("""{"error":"Not found"}""").toString()))
 
         verify(model)
     }
@@ -143,7 +142,7 @@ class RestApiModelTest {
         restApi.attachModel(blockchainRID1, model)
 
         expect(model.nodeQuery("height"))
-                .andReturn(BlockHeight(42))
+                .andReturn(gson.toJson(BlockHeight(42)))
 
         replay(model)
 
@@ -170,7 +169,7 @@ class RestApiModelTest {
         )
 
         expect(model.nodeQuery("my_status"))
-                .andReturn(MyStatus(gson.toJson(response)))
+                .andReturn(gson.toJson(response))
 
         replay(model)
 
@@ -207,7 +206,7 @@ class RestApiModelTest {
                         ))
 
         expect(model.nodeQuery("statuses"))
-                .andReturn(NodeStatuses(response.map { gson.toJson(it) }.toTypedArray()))
+                .andReturn(response.map { gson.toJson(it) }.toTypedArray().joinToString(separator = ",", prefix = "[", postfix = "]"))
 
         replay(model)
 

@@ -1,6 +1,5 @@
 package net.postchain.api.rest.controller
 
-import net.postchain.api.rest.contract.NodeStateTrackerContract
 import net.postchain.api.rest.model.ApiStatus
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
@@ -16,12 +15,12 @@ interface Model {
     fun getStatus(txRID: TxRID): ApiStatus
     fun query(query: Query): QueryResult
     fun query(query: GTXValue): GTXValue
-    fun nodeQuery(subQuery: String): NodeStateTrackerContract?
+    fun nodeQuery(subQuery: String): String
 }
 
 data class Query(val json: String)
 data class QueryResult(val json: String)
-
+data class BlockHeight(val blockHeight: Long)
 data class ErrorBody(val error: String = "")
 
 class NotSupported(message: String) : Exception(message)

@@ -6,9 +6,6 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import mu.KLogging
-import net.postchain.api.rest.contract.BlockHeight
-import net.postchain.api.rest.contract.MyStatus
-import net.postchain.api.rest.contract.NodeStatuses
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_HEADERS
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_METHODS
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_ORIGIN
@@ -268,13 +265,7 @@ class RestApi(private val listenPort: Int, private val basePath: String,
 
     private fun handleNodeStatusQueries(request: Request): String {
         logger.debug("Request body: ${request.body()}")
-        val response = model(request).nodeQuery(request.params(SUBQUERY))
-        return when (response) {
-            is MyStatus -> response.myStatus
-            is BlockHeight -> gson.toJson(response)
-            is NodeStatuses -> response.statuses.joinToString(separator = ",", prefix = "[", postfix = "]")
-            else -> throw NotFoundError("NotFound")
-        }
+        return model(request).nodeQuery(request.params(SUBQUERY))
     }
 
     private fun checkTxHashHex(request: Request): String {

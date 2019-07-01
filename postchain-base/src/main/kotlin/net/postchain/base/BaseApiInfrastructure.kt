@@ -25,7 +25,7 @@ class BaseApiInfrastructure(nodeConfigProvider: NodeConfigurationProvider) : Api
             val engine = process.getEngine()
 
             val apiModel = PostchainModel(
-                    (process as AbstractBlockchainProcess).syncManager,
+                    (process as AbstractBlockchainProcess).nodeStateTracker,
                     process.networkAwareTxQueue,
                     engine.getConfiguration().getTransactionFactory(),
                     engine.getBlockQueries() as BaseBlockQueries) // TODO: [et]: Resolve type cast

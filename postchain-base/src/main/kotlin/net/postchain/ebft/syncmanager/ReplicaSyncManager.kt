@@ -1,15 +1,13 @@
 package net.postchain.ebft.syncmanager
 
-import net.postchain.core.BlockDataWithWitness
-import net.postchain.core.BlockQueries
-import net.postchain.core.BlockchainConfiguration
-import net.postchain.core.ProgrammerMistake
+import net.postchain.core.*
 import net.postchain.ebft.BlockDatabase
 import net.postchain.ebft.NodeStatus
 import net.postchain.ebft.message.CompleteBlock
 import net.postchain.ebft.message.EbftMessage
 import net.postchain.ebft.message.GetBlockAtHeight
 import net.postchain.ebft.message.Status
+import net.postchain.ebft.rest.contract.serialize
 import net.postchain.ebft.syncmanager.replica.IncomingBlock
 import net.postchain.ebft.syncmanager.replica.IssuedRequestTimer
 import net.postchain.ebft.syncmanager.replica.ReplicaTelemetry
@@ -21,11 +19,11 @@ import java.util.*
 class ReplicaSyncManager(
         signers: List<ByteArray>,
         private val communicationManager: CommunicationManager<EbftMessage>,
+        private val nodeStateTracker: NodeStateTracker,
         private val blockDatabase: BlockDatabase,
         val blockQueries: BlockQueries,
         private val blockchainConfiguration: BlockchainConfiguration
 ) : SyncManagerBase {
-    override val nodeStateTracker = NodeStateTracker()
 
     private val parallelism = 10
     private val nodePoolCount = 2 // used to select 1 random node
@@ -42,7 +40,7 @@ class ReplicaSyncManager(
     override fun update() {
         replicaTelemetry.logCurrentState(blockHeight, parallelRequestsState, blocks)
         nodeStateTracker.blockHeight = blockHeight
-        nodeStateTracker.nodeStatuses = replicaTelemetry.nodeStatuses()
+        nodeStateTracker.nodeStatuses = replicaTelemetry.nodeStatuses().map { it.serialize() }.toTypedArray()
         checkBlock()
         processState()
         dispatchMessages()
