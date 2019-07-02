@@ -2,7 +2,7 @@ package net.postchain.integrationtest.reconfiguration
 
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
-import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_ID
+import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.integrationtest.assertChainStarted
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
@@ -35,16 +35,16 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
 
 
         // Adding chain1's blockchainConfig2 with DummyModule2 at different heights to all peers
-        nodes[0].addConfiguration(DEFAULT_CHAIN_ID, 5, blockchainConfig2)
-        nodes[1].addConfiguration(DEFAULT_CHAIN_ID, 6, blockchainConfig2)
-        nodes[2].addConfiguration(DEFAULT_CHAIN_ID, 7, blockchainConfig2)
-        nodes[3].addConfiguration(DEFAULT_CHAIN_ID, 8, blockchainConfig2)
+        nodes[0].addConfiguration(DEFAULT_CHAIN_IID, 5, blockchainConfig2)
+        nodes[1].addConfiguration(DEFAULT_CHAIN_IID, 6, blockchainConfig2)
+        nodes[2].addConfiguration(DEFAULT_CHAIN_IID, 7, blockchainConfig2)
+        nodes[3].addConfiguration(DEFAULT_CHAIN_IID, 8, blockchainConfig2)
 
         // Again: Adding chain1's blockchainConfig3 with DummyModule3 at height 7 to all peers
-        nodes[0].addConfiguration(DEFAULT_CHAIN_ID, 10, blockchainConfig3)
-        nodes[1].addConfiguration(DEFAULT_CHAIN_ID, 10, blockchainConfig3)
-        nodes[2].addConfiguration(DEFAULT_CHAIN_ID, 10, blockchainConfig3)
-        nodes[3].addConfiguration(DEFAULT_CHAIN_ID, 10, blockchainConfig3)
+        nodes[0].addConfiguration(DEFAULT_CHAIN_IID, 10, blockchainConfig3)
+        nodes[1].addConfiguration(DEFAULT_CHAIN_IID, 10, blockchainConfig3)
+        nodes[2].addConfiguration(DEFAULT_CHAIN_IID, 10, blockchainConfig3)
+        nodes[3].addConfiguration(DEFAULT_CHAIN_IID, 10, blockchainConfig3)
 
 
         // Asserting chain 1 is started for all peers

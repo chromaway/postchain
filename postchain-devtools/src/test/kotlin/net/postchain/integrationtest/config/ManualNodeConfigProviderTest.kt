@@ -13,7 +13,7 @@ import net.postchain.config.SimpleDatabaseConnector
 import net.postchain.config.app.AppConfig
 import net.postchain.config.app.AppConfigDbLayer
 import net.postchain.devtools.IntegrationTest
-import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_ID
+import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.assertNodeConnectedWith
 import org.apache.commons.dbutils.QueryRunner
@@ -82,10 +82,10 @@ class ManualNodeConfigProviderTest : IntegrationTest() {
                     nodes.forEach { it.assertChainStarted() }
 
                     // network topology is that peer 3 is disconnected from interconnected peers 0, 1, 2
-                    nodes[0].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[1], nodes[2], nodes[3])
-                    nodes[1].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[0], nodes[2], nodes[3])
-                    nodes[2].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[1], nodes[0], nodes[3])
-                    nodes[3].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[1], nodes[2], nodes[0])
+                    nodes[0].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[1], nodes[2], nodes[3])
+                    nodes[1].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[0], nodes[2], nodes[3])
+                    nodes[2].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[1], nodes[0], nodes[3])
+                    nodes[3].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[1], nodes[2], nodes[0])
                 }
     }
 
