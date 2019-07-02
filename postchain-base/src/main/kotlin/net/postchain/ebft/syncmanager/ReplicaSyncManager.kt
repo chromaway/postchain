@@ -26,7 +26,7 @@ class ReplicaSyncManager(
 ) : SyncManagerBase {
 
     private val parallelism = 10
-    private val nodePoolCount = 2 // used to select 1 random node
+    private val nodePoolCount = 1
     private val defaultBackoffDelta = 1000
     private val maxBackoffDelta = 30 * defaultBackoffDelta
     private val validatorNodes: List<XPeerID> = signers.map { XPeerID(it) }
