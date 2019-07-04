@@ -3,17 +3,17 @@ package net.postchain.integrationtest.reconfiguration
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
-import net.postchain.devtools.PostchainTestNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ArrayNode
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_ID
-import net.postchain.devtools.testinfra.TestTransaction
-import net.postchain.devtools.testinfra.TestTransactionFactory
 import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.enqueueTxsAndAwaitBuiltBlock
-import net.postchain.integrationtest.query
+import net.postchain.integrationtest.reconfiguration.TxChartHelper.buildTxChart
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.Test
-import kotlin.test.assertNotNull
+import org.skyscreamer.jsonassert.JSONAssert
+import org.skyscreamer.jsonassert.JSONCompareMode
 
 class FourPeersReconfigurationTest : ReconfigurationTest() {
 
@@ -133,45 +133,20 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
         // Building a block 0 with two txs via node 0
         nodes[0].enqueueTxsAndAwaitBuiltBlock(DEFAULT_CHAIN_ID, 0, tx(0), tx(1))
 
-        // Asserting that all nodes have block 0 with expected txs
-        await().atMost(Duration.TEN_SECONDS.multiply(2))
-                .untilAsserted {
-                    val actual = setOf(0, 1)
-                    assertk.assert(blockTxsIds(nodes[0], 0)).isEqualTo(actual)
-                    assertk.assert(blockTxsIds(nodes[1], 0)).isEqualTo(actual)
-                    assertk.assert(blockTxsIds(nodes[2], 0)).isEqualTo(actual)
-                    assertk.assert(blockTxsIds(nodes[3], 0)).isEqualTo(actual)
-                }
-
         // Awaiting a reconfiguring at height 2
         awaitReconfiguration(2)
 
         // Asserting blockchainConfig2 with DummyModule2 is loaded by all nodes
         await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
-                    assertk.assert(getModules(0)).isNotEmpty()
-                    assertk.assert(getModules(1)).isNotEmpty()
-                    assertk.assert(getModules(2)).isNotEmpty()
-                    assertk.assert(getModules(3)).isNotEmpty()
-
-                    assertk.assert(getModules(0).first()).isInstanceOf(DummyModule2::class)
-                    assertk.assert(getModules(1).first()).isInstanceOf(DummyModule2::class)
-                    assertk.assert(getModules(2).first()).isInstanceOf(DummyModule2::class)
-                    assertk.assert(getModules(3).first()).isInstanceOf(DummyModule2::class)
+                    nodes.forEach { node ->
+                        assertk.assert(getModules(node)).isNotEmpty()
+                        assertk.assert(getModules(node).first()).isInstanceOf(DummyModule2::class)
+                    }
                 }
 
         // Building a block 2 with three txs via node 0
         nodes[0].enqueueTxsAndAwaitBuiltBlock(DEFAULT_CHAIN_ID, 2, tx(2), tx(3), tx(4))
-
-        // Asserting that all nodes have block 2 with expected txs
-        await().atMost(Duration.TEN_SECONDS)
-                .untilAsserted {
-                    val actual = setOf(2, 3, 4)
-                    assertk.assert(blockTxsIds(nodes[0], 2)).isEqualTo(actual)
-                    assertk.assert(blockTxsIds(nodes[1], 2)).isEqualTo(actual)
-                    assertk.assert(blockTxsIds(nodes[2], 2)).isEqualTo(actual)
-                    assertk.assert(blockTxsIds(nodes[3], 2)).isEqualTo(actual)
-                }
 
         // Awaiting a reconfiguring at height 5
         awaitReconfiguration(5)
@@ -179,34 +154,36 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
         // Asserting blockchainConfig3 with DummyModule3 is loaded by all nodes
         await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
-                    assertk.assert(getModules(0)).isNotEmpty()
-                    assertk.assert(getModules(1)).isNotEmpty()
-                    assertk.assert(getModules(2)).isNotEmpty()
-                    assertk.assert(getModules(3)).isNotEmpty()
-
-                    assertk.assert(getModules(0).first()).isInstanceOf(DummyModule3::class)
-                    assertk.assert(getModules(1).first()).isInstanceOf(DummyModule3::class)
-                    assertk.assert(getModules(2).first()).isInstanceOf(DummyModule3::class)
-                    assertk.assert(getModules(3).first()).isInstanceOf(DummyModule3::class)
+                    nodes.forEach { node ->
+                        assertk.assert(getModules(node)).isNotEmpty()
+                        assertk.assert(getModules(node).first()).isInstanceOf(DummyModule3::class)
+                    }
                 }
-    }
 
-    private fun tx(id: Int): TestTransaction = TestTransaction(id)
+        // Asserting equality of tx charts of all nodes
+        val chart0 = buildTxChart(nodes[0], DEFAULT_CHAIN_ID)
+        JSONAssert.assertEquals(chart0, buildTxChart(nodes[1], DEFAULT_CHAIN_ID), JSONCompareMode.NON_EXTENSIBLE)
+        JSONAssert.assertEquals(chart0, buildTxChart(nodes[2], DEFAULT_CHAIN_ID), JSONCompareMode.NON_EXTENSIBLE)
+        JSONAssert.assertEquals(chart0, buildTxChart(nodes[3], DEFAULT_CHAIN_ID), JSONCompareMode.NON_EXTENSIBLE)
 
-    private fun blockTxsIds(node: PostchainTestNode, height: Long): Set<Int> {
-        val blockRids = node.query(DEFAULT_CHAIN_ID) { it.getBlockRids(height) }
-        assertNotNull(blockRids)
+        // Asserting blocks and txs of chart
+        val jsonChar0 = ObjectMapper().readTree(chart0)
+        assertk.assert((jsonChar0.at("/blocks") as ArrayNode).size()).isEqualTo(5)
 
-        val txsRids = node.query(DEFAULT_CHAIN_ID) { it.getBlockTransactionRids(blockRids!!) }
-        assertNotNull(txsRids)
+        assertk.assert((jsonChar0.at("/blocks/0/tx") as ArrayNode).size()).isEqualTo(2)
+        assertk.assert(jsonChar0.at("/blocks/0/tx/0/id").asInt()).isEqualTo(0)
+        assertk.assert(jsonChar0.at("/blocks/0/tx/1/id").asInt()).isEqualTo(1)
 
-        val txFactory = TestTransactionFactory()
-        return txsRids!!.asSequence().map { txRid ->
-            val tx = node.query(DEFAULT_CHAIN_ID) { it.getTransaction(txRid) }
-            assertNotNull(tx)
+        assertk.assert((jsonChar0.at("/blocks/1/tx") as ArrayNode).size()).isEqualTo(0)
 
-            (txFactory.decodeTransaction(tx!!.getRawData()) as TestTransaction).id
-        }.toSet()
+        assertk.assert((jsonChar0.at("/blocks/2/tx") as ArrayNode).size()).isEqualTo(3)
+        assertk.assert(jsonChar0.at("/blocks/2/tx/0/id").asInt()).isEqualTo(2)
+        assertk.assert(jsonChar0.at("/blocks/2/tx/1/id").asInt()).isEqualTo(3)
+        assertk.assert(jsonChar0.at("/blocks/2/tx/2/id").asInt()).isEqualTo(4)
+
+        assertk.assert((jsonChar0.at("/blocks/3/tx") as ArrayNode).size()).isEqualTo(0)
+
+        assertk.assert((jsonChar0.at("/blocks/4/tx") as ArrayNode).size()).isEqualTo(0)
     }
 
 }
