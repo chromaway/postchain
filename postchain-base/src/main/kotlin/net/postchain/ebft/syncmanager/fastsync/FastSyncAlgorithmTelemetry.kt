@@ -1,4 +1,4 @@
-package net.postchain.ebft.syncmanager.replica
+package net.postchain.ebft.syncmanager.fastsync
 
 import mu.KLogging
 import net.postchain.ebft.NodeStatus
@@ -6,7 +6,7 @@ import java.util.*
 import kotlin.collections.HashMap
 
 
-class ReplicaTelemetry {
+class FastSyncAlgorithmTelemetry {
     companion object : KLogging()
 
     enum class LogLevel {
@@ -45,7 +45,7 @@ class ReplicaTelemetry {
             lastLoggedTimestamp = now
             val buffer = blocks.map { it.height }.toString()
             val requestsState = parallelRequestsState.map { "${it.key} last sent: ${it.value.lastSentTimestamp}" }.toString()
-            consoleLogger(LogLevel.Debug, "Replica [H: $blockHeight | buffer: $buffer | active requests: $requestsState]")
+            consoleLogger(LogLevel.Debug, "[H: $blockHeight | buffer: $buffer | active requests: $requestsState]")
         }
     }
 

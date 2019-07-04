@@ -1,4 +1,4 @@
-package net.postchain.ebft.syncmanager.replica
+package net.postchain.ebft.syncmanager.fastsync
 
 import net.postchain.core.BlockDataWithWitness
 
