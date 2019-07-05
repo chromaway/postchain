@@ -2,6 +2,7 @@ package net.postchain.integrationtest.reconfiguration
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import net.postchain.common.toHex
+import net.postchain.core.Transaction
 import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.integrationtest.query
@@ -42,6 +43,22 @@ object TxChartHelper {
         }
 
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(chart)
+    }
+
+    fun collectAllTxs(node: PostchainTestNode, chainId: Long): List<Transaction> {
+        val txs = mutableListOf<Transaction>()
+
+        val height = node.query(chainId) { it.getBestHeight() } ?: -1L
+        (0..height).forEach { h ->
+            val blockRid = node.query(chainId) { it.getBlockRids(h) }
+            val txsRids = node.query(chainId) { it.getBlockTransactionRids(blockRid!!) }
+            txsRids!!.forEach { txRid ->
+                val tx = node.query(chainId) { it.getTransaction(txRid) }
+                txs.add(tx!!)
+            }
+        }
+
+        return txs
     }
 
 }

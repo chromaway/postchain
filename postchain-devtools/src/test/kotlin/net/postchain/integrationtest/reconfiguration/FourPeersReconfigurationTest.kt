@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_ID
 import net.postchain.integrationtest.assertChainStarted
+import net.postchain.integrationtest.enqueueTxs
 import net.postchain.integrationtest.enqueueTxsAndAwaitBuiltBlock
 import net.postchain.integrationtest.reconfiguration.TxChartHelper.buildTxChart
 import org.awaitility.Awaitility.await
@@ -14,6 +15,8 @@ import org.awaitility.Duration
 import org.junit.Test
 import org.skyscreamer.jsonassert.JSONAssert
 import org.skyscreamer.jsonassert.JSONCompareMode
+import java.util.concurrent.CountDownLatch
+import kotlin.concurrent.timer
 
 class FourPeersReconfigurationTest : ReconfigurationTest() {
 
@@ -62,37 +65,27 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
 
 
         // Asserting blockchainConfig1 with DummyModule1 is loaded y all nodes
-        assertk.assert(getModules(0).first()).isInstanceOf(DummyModule1::class)
-        assertk.assert(getModules(1).first()).isInstanceOf(DummyModule1::class)
-        assertk.assert(getModules(2).first()).isInstanceOf(DummyModule1::class)
-        assertk.assert(getModules(3).first()).isInstanceOf(DummyModule1::class)
+        nodes.forEach { node ->
+            assertk.assert(getModules(node)).isNotEmpty()
+            assertk.assert(getModules(node).first()).isInstanceOf(DummyModule1::class)
+        }
 
         // Asserting blockchainConfig2 with DummyModule2 is loaded by all nodes
         await().atMost(Duration.TEN_SECONDS.plus(5))
                 .untilAsserted {
-                    assertk.assert(getModules(0)).isNotEmpty()
-                    assertk.assert(getModules(1)).isNotEmpty()
-                    assertk.assert(getModules(2)).isNotEmpty()
-                    assertk.assert(getModules(3)).isNotEmpty()
-
-                    assertk.assert(getModules(0).first()).isInstanceOf(DummyModule2::class)
-                    assertk.assert(getModules(1).first()).isInstanceOf(DummyModule2::class)
-                    assertk.assert(getModules(2).first()).isInstanceOf(DummyModule2::class)
-                    assertk.assert(getModules(3).first()).isInstanceOf(DummyModule2::class)
+                    nodes.forEach { node ->
+                        assertk.assert(getModules(node)).isNotEmpty()
+                        assertk.assert(getModules(node).first()).isInstanceOf(DummyModule2::class)
+                    }
                 }
 
         // Asserting blockchainConfig2 with DummyModule3 is loaded by all nodes
         await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
-                    assertk.assert(getModules(0)).isNotEmpty()
-                    assertk.assert(getModules(1)).isNotEmpty()
-                    assertk.assert(getModules(2)).isNotEmpty()
-                    assertk.assert(getModules(3)).isNotEmpty()
-
-                    assertk.assert(getModules(0).first()).isInstanceOf(DummyModule3::class)
-                    assertk.assert(getModules(1).first()).isInstanceOf(DummyModule3::class)
-                    assertk.assert(getModules(2).first()).isInstanceOf(DummyModule3::class)
-                    assertk.assert(getModules(3).first()).isInstanceOf(DummyModule3::class)
+                    nodes.forEach { node ->
+                        assertk.assert(getModules(node)).isNotEmpty()
+                        assertk.assert(getModules(node).first()).isInstanceOf(DummyModule3::class)
+                    }
                 }
     }
 
@@ -184,6 +177,92 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
         assertk.assert((jsonChar0.at("/blocks/3/tx") as ArrayNode).size()).isEqualTo(0)
 
         assertk.assert((jsonChar0.at("/blocks/4/tx") as ArrayNode).size()).isEqualTo(0)
+    }
+
+    @Test
+    fun reconfigurationAtHeight_withBaseBlockBuildingStrategy_withManyTxs_whenSignersAreChanged_isSuccessful() {
+        val nodesCount = 4
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+        val nodeConfigsFilenames = arrayOf(
+                "classpath:/net/postchain/reconfiguration/node0.properties",
+                "classpath:/net/postchain/reconfiguration/node1.properties",
+                "classpath:/net/postchain/reconfiguration/node2.properties",
+                "classpath:/net/postchain/reconfiguration/node3.properties"
+        )
+
+        // Chains configs
+        val blockchainConfig1 = "/net/postchain/reconfiguration/four_peers/signers2/blockchain_config_1.xml"
+        val blockchainConfig2 = readBlockchainConfig(
+                "/net/postchain/reconfiguration/four_peers/signers2/blockchain_config_2.xml")
+        val blockchainConfig3 = readBlockchainConfig(
+                "/net/postchain/reconfiguration/four_peers/signers2/blockchain_config_3.xml")
+        val blockchainConfig4 = readBlockchainConfig(
+                "/net/postchain/reconfiguration/four_peers/signers2/blockchain_config_4.xml")
+
+        // Creating all nodes
+        nodeConfigsFilenames.forEachIndexed { i, nodeConfig ->
+            createSingleNode(i, nodesCount, nodeConfig, blockchainConfig1)
+        }
+
+        // Adding blockchain configs with DummyModule2, DummyModule3, DummyModule4
+        // at height 2, 5, 7 to all nodes
+        nodes.forEach { it.addConfiguration(DEFAULT_CHAIN_ID, 2, blockchainConfig2) }
+        nodes.forEach { it.addConfiguration(DEFAULT_CHAIN_ID, 5, blockchainConfig3) }
+        nodes.forEach { it.addConfiguration(DEFAULT_CHAIN_ID, 8, blockchainConfig4) }
+
+        // Asserting chain 1 is started for all nodes
+        await().atMost(Duration.TEN_SECONDS)
+                .untilAsserted {
+                    nodes.forEach { it.assertChainStarted() }
+                }
+
+        // Enqueueing txs
+        val latch = CountDownLatch(1)
+        var txId = 0
+        val txTimer = timer(name = "txTimer", period = 500) {
+            if (txId < 100) {
+                // Enqueueing txs via node0 and node1
+                if (nodes[txId % 2].enqueueTxs(DEFAULT_CHAIN_ID, tx(txId))) {
+                    ++txId
+                }
+            } else {
+                latch.countDown()
+            }
+        }
+
+        // Waiting for all txs to be enqueued
+        latch.await()
+
+        txTimer.cancel()
+        txTimer.purge()
+
+        // Asserting equality of tx charts of all nodes
+        await().atMost(Duration.TEN_SECONDS.multiply(2))
+                .untilAsserted {
+                    // Asserting equality of tx charts of all nodes
+                    val chart0 = buildTxChart(nodes[0], DEFAULT_CHAIN_ID)
+                    JSONAssert.assertEquals(chart0, buildTxChart(nodes[1], DEFAULT_CHAIN_ID), JSONCompareMode.NON_EXTENSIBLE)
+                    JSONAssert.assertEquals(chart0, buildTxChart(nodes[2], DEFAULT_CHAIN_ID), JSONCompareMode.NON_EXTENSIBLE)
+                    JSONAssert.assertEquals(chart0, buildTxChart(nodes[3], DEFAULT_CHAIN_ID), JSONCompareMode.NON_EXTENSIBLE)
+                }
+
+//        println(buildTxChart(nodes[0], DEFAULT_CHAIN_ID))
+
+        /* TODO: [et]: We lose some txs during reconfiguration. Will be fixed later.
+        // Asserting equality of tx charts of all nodes
+        await().atMost(Duration.TEN_SECONDS.multiply(2))
+                .untilAsserted {
+                    // Asserting all txs
+                    val txs = collectAllTxs(nodes[0], DEFAULT_CHAIN_ID)
+                            .asSequence()
+                            .map { (it as TestTransaction).id }
+                            .toSet()
+
+                    assertk.assert(txs).hasSize(100)
+                    assertk.assert(txs).containsAll(*(0 until 100).toList().toTypedArray())
+                }
+                */
+
     }
 
 }

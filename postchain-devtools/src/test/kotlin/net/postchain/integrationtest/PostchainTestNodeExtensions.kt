@@ -65,9 +65,14 @@ fun PostchainTestNode.awaitBuiltBlock(chainId: Long, height: Long) {
     strategy.awaitCommitted(height.toInt())
 }
 
-fun PostchainTestNode.enqueueTxs(chainId: Long, vararg txs: TestTransaction) {
-    val txQueue = getBlockchainInstance(chainId).getEngine().getTransactionQueue()
-    txs.forEach { txQueue.enqueue(it) }
+fun PostchainTestNode.enqueueTxs(chainId: Long, vararg txs: TestTransaction): Boolean {
+    return retrieveBlockchain(chainId)
+            ?.let { process ->
+                val txQueue = process.getEngine().getTransactionQueue()
+                txs.forEach { txQueue.enqueue(it) }
+                true
+            }
+            ?: false
 }
 
 fun PostchainTestNode.enqueueTxsAndAwaitBuiltBlock(chainId: Long, height: Long, vararg txs: TestTransaction) {
