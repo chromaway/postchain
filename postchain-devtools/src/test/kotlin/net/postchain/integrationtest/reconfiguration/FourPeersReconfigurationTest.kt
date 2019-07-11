@@ -71,7 +71,7 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
         }
 
         // Asserting blockchainConfig2 with DummyModule2 is loaded by all nodes
-        await().atMost(Duration.TEN_SECONDS.plus(5))
+        await().atMost(Duration.TEN_SECONDS.multiply(3))
                 .untilAsserted {
                     nodes.forEach { node ->
                         assertk.assert(getModules(node)).isNotEmpty()
@@ -80,7 +80,7 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
                 }
 
         // Asserting blockchainConfig2 with DummyModule3 is loaded by all nodes
-        await().atMost(Duration.TEN_SECONDS)
+        await().atMost(Duration.TEN_SECONDS.multiply(3))
                 .untilAsserted {
                     nodes.forEach { node ->
                         assertk.assert(getModules(node)).isNotEmpty()
@@ -236,8 +236,8 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
         txTimer.cancel()
         txTimer.purge()
 
-        // Asserting equality of tx charts of all nodes
-        await().atMost(Duration.TEN_SECONDS.multiply(2))
+        // Asserting equality of `tx charts of all nodes
+        await().atMost(Duration.TEN_SECONDS.multiply(4))
                 .untilAsserted {
                     // Asserting equality of tx charts of all nodes
                     val chart0 = buildTxChart(nodes[0], DEFAULT_CHAIN_ID)
