@@ -12,6 +12,7 @@ import net.postchain.integrationtest.enqueueTxsAndAwaitBuiltBlock
 import net.postchain.integrationtest.reconfiguration.TxChartHelper.buildTxChart
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
+import org.junit.Ignore
 import org.junit.Test
 import org.skyscreamer.jsonassert.JSONAssert
 import org.skyscreamer.jsonassert.JSONCompareMode
@@ -21,6 +22,7 @@ import kotlin.concurrent.timer
 class FourPeersReconfigurationTest : ReconfigurationTest() {
 
     @Test
+    @Ignore
     fun reconfigurationAtHeight_isSuccessful() {
         val nodesCount = 4
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
@@ -90,6 +92,7 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
     }
 
     @Test
+    @Ignore
     fun reconfigurationAtHeight_whenSignersAreChanged_isSuccessful() {
         val nodesCount = 4
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
