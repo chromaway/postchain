@@ -248,33 +248,11 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
                     val chart2 = buildTxChart(nodes[2], DEFAULT_CHAIN_ID)
                     val chart3 = buildTxChart(nodes[3], DEFAULT_CHAIN_ID)
 
-                    logger.error { "\n\n\n" }
-                    logger.error { "chart0: $chart0" }
-                    logger.error { "chart1: $chart1" }
-                    logger.error { "chart2: $chart2" }
-                    logger.error { "chart3: $chart3" }
-                    logger.error { "\n\n\n" }
-
                     JSONAssert.assertEquals(chart0, chart1, JSONCompareMode.NON_EXTENSIBLE)
                     JSONAssert.assertEquals(chart0, chart2, JSONCompareMode.NON_EXTENSIBLE)
                     JSONAssert.assertEquals(chart0, chart3, JSONCompareMode.NON_EXTENSIBLE)
                 }
 
-        //
-
-        /*
-        val chart0 = buildTxChart(nodes[0], DEFAULT_CHAIN_ID)
-
-        logger.error { "\n\n\n" }
-        println(chart0)
-        val jsonChar0 = ObjectMapper().readTree(chart0)
-        logger.error { "Blocks: ${(jsonChar0.at("/blocks") as ArrayNode).size()}" }
-        logger.error { "\n\n\n" }
-*/
-
-
-
-//        println(buildTxChart(nodes[0], DEFAULT_CHAIN_ID))
 
         /* TODO: [et]: We lose some txs during reconfiguration. Will be fixed later.
         // Asserting equality of tx charts of all nodes
