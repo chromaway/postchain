@@ -255,10 +255,10 @@
                         <version>2.22.0</version>
                         <configuration>
                             <includes>
-<!--                                <include>**/*Test.java</include>-->
-<!--                                <include>**/*IT.java</include>-->
-<!--                                <include>**/*Nightly.java</include>-->
-                                <include>**/FourPeersReconfigurationTest.java</include>
+                                <include>**/*Test.java</include>
+                                <include>**/*IT.java</include>
+                                <include>**/*Nightly.java</include>
+<!--                                <include>**/FourPeersReconfigurationTest.java</include>-->
                             </includes>
                         </configuration>
                     </plugin>
