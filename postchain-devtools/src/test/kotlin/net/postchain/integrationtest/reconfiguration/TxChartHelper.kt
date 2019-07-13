@@ -9,13 +9,22 @@ import net.postchain.integrationtest.query
 
 object TxChartHelper {
 
-    fun buildTxChart(node: PostchainTestNode, chainId: Long, txPayloadName: String = "id"): String {
+    fun buildTxChart(
+            node: PostchainTestNode,
+            chainId: Long,
+            heightLimit: Long = Long.MAX_VALUE,
+            txPayloadName: String = "id"
+    ): String {
+
         val mapper = ObjectMapper()
         val chart = mapper.createObjectNode()
         val blocks = mapper.createArrayNode()
         chart.set("blocks", blocks)
 
-        val height = node.query(chainId) { it.getBestHeight() } ?: -1L
+        val height = minOf(
+                node.query(chainId) { it.getBestHeight() } ?: -1L,
+                heightLimit)
+
         (0..height).forEach { h ->
             val blockRid = node.query(chainId) { it.getBlockRids(h) }
 

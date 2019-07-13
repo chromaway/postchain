@@ -3,12 +3,14 @@ package net.postchain.integrationtest.reconfiguration
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
+import assertk.assertions.isTrue
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_ID
 import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.enqueueTxs
 import net.postchain.integrationtest.enqueueTxsAndAwaitBuiltBlock
+import net.postchain.integrationtest.query
 import net.postchain.integrationtest.reconfiguration.TxChartHelper.buildTxChart
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
@@ -243,10 +245,18 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
         await().atMost(Duration.TEN_SECONDS.multiply(4))
                 .untilAsserted {
                     // Asserting equality of tx charts of all nodes
-                    val chart0 = buildTxChart(nodes[0], DEFAULT_CHAIN_ID)
-                    val chart1 = buildTxChart(nodes[1], DEFAULT_CHAIN_ID)
-                    val chart2 = buildTxChart(nodes[2], DEFAULT_CHAIN_ID)
-                    val chart3 = buildTxChart(nodes[3], DEFAULT_CHAIN_ID)
+
+                    // Building tx charts of the minimum (common) length for all nodes
+                    val commonHeight = nodes.map { node ->
+                        node.query(DEFAULT_CHAIN_ID) { it.getBestHeight() } ?: -1L
+                    }.min() ?: -1L
+
+                    assertk.assert(commonHeight > 0L).isTrue()
+
+                    val chart0 = buildTxChart(nodes[0], DEFAULT_CHAIN_ID, commonHeight)
+                    val chart1 = buildTxChart(nodes[1], DEFAULT_CHAIN_ID, commonHeight)
+                    val chart2 = buildTxChart(nodes[2], DEFAULT_CHAIN_ID, commonHeight)
+                    val chart3 = buildTxChart(nodes[3], DEFAULT_CHAIN_ID, commonHeight)
 
                     JSONAssert.assertEquals(chart0, chart1, JSONCompareMode.NON_EXTENSIBLE)
                     JSONAssert.assertEquals(chart0, chart2, JSONCompareMode.NON_EXTENSIBLE)
@@ -268,7 +278,6 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
                     assertk.assert(txs).containsAll(*(0 until 100).toList().toTypedArray())
                 }
                 */
-
     }
 
 }
