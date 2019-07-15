@@ -46,7 +46,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
             awaitBuiltBlock(it, 0)
         }
         // * Asserting height is 0 for all peers
-        await().atMost(Duration.FIVE_SECONDS)
+        await().atMost(Duration.TEN_SECONDS.multiply(3))
                 .untilAsserted {
                     Assert.assertEquals(0, queries(nodes[0]) { it.getBestHeight() })
                     Assert.assertEquals(0, queries(nodes[1]) { it.getBestHeight() })
@@ -60,7 +60,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
             awaitBuiltBlock(it, 1)
         }
         // * Asserting height is 1 for all peers
-        await().atMost(Duration.FIVE_SECONDS)
+        await().atMost(Duration.TEN_SECONDS.multiply(3))
                 .untilAsserted {
                     Assert.assertEquals(1, queries(nodes[0]) { it.getBestHeight() })
                     Assert.assertEquals(1, queries(nodes[1]) { it.getBestHeight() })
@@ -117,7 +117,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
             awaitBuiltBlock(it, 2)
         }
         // * Asserting height is 2 for all peers
-        await().atMost(Duration.FIVE_SECONDS)
+        await().atMost(Duration.TEN_SECONDS.multiply(3))
                 .untilAsserted {
                     Assert.assertEquals(2, queries(nodes[0]) { it.getBestHeight() })
                     Assert.assertEquals(2, queries(nodes[1]) { it.getBestHeight() })
