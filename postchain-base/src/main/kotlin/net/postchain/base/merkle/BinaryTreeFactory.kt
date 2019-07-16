@@ -5,6 +5,7 @@ import net.postchain.base.path.PathLeafElement
 import net.postchain.base.path.PathSet
 import net.postchain.core.UserMistake
 import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvPrimitive
 
 
 /**
@@ -28,7 +29,7 @@ abstract class BinaryTreeFactory<T,TPathSet: PathSet>() : KLogging() {
      * @return the resulting [BinaryTreeElement] the leaf got converted to
      */
     fun handleLeaf(leaf: T, paths: TPathSet, memoization: MerkleHashMemoization<T>, isRoot: Boolean = false): BinaryTreeElement {
-        return if (paths.isEmpty() && !isRoot) {
+        return if (paths.isEmpty() && !isRoot && (leaf is GtvPrimitive)) {
             // We don't have paths and we are not in the root element, so we are free to look in cache
             val cachedSummary = memoization.findMerkleHash(leaf)
             if (cachedSummary != null) {

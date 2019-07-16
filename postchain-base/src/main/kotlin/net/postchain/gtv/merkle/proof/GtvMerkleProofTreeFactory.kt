@@ -68,20 +68,18 @@ class GtvMerkleProofTreeFactory: MerkleProofTreeFactory<Gtv>()   {
                         throw UserMistake("The path and structure don't match. We are at a leaf, but path elem is not a leaf: $pathElem ")
                     }
                 } else {
-                    val hashCarrier: Hash = if (content is GtvNull && content.getCachedMerkleHash() != null) { // Just to take care of the GtvNull case
-                        if (logger.isTraceEnabled) {
-                            logger.trace("Hash the leaf with GtvNull, no need to calculate since have the hash")
-                        }
+                    val hashCarrier: Hash = if (content is GtvNull && content.getCachedMerkleHash() != null) {
+                        // Just to take care of the GtvNull case
+                        if (logger.isTraceEnabled) { logger.trace("Hash the leaf with GtvNull, no need to calculate since have the hash") }
                         content.getCachedMerkleHash()!!.merkleHash
                     } else {
-                        // Make it a hash
-                        if (logger.isTraceEnabled) {
-                            logger.trace("Hash the leaf with content: $content")
-                        }
+                        // Not GtvNull -> Make it a hash
+                        if (logger.isTraceEnabled) { logger.trace("Hash the leaf with content: $content") }
                         val hashCarrier = calculator.calculateLeafHash(content)
-                        //val foundInGlobalCache = calculator.memoization.findMerkleHash(content) // TODO: not sure if it's right to look in cache here?
                         val summary = MerkleHashSummary(hashCarrier, currentElement.getNrOfBytes())
-                        calculator.memoization.add(content, summary)
+                        if (content is GtvPrimitive) {
+                            calculator.memoization.add(content, summary)
+                        }
                         hashCarrier
                     }
                     ProofHashedLeaf(hashCarrier)
@@ -111,6 +109,7 @@ class GtvMerkleProofTreeFactory: MerkleProofTreeFactory<Gtv>()   {
             else -> throw IllegalStateException("Cannot handle $currentElement")
         }
     }
+
 
     override fun buildNodeOfCorrectType(currentNode: Node, left: MerkleProofElement, right: MerkleProofElement): ProofNode {
         return when (currentNode) {

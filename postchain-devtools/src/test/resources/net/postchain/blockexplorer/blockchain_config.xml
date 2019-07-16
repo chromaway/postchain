@@ -7,9 +7,15 @@
         blockdelay=1000 (milliseconds)
         -->
         <dict>
+<!--            <entry key="name">-->
+<!--                <string>net.postchain.integrationtest.ThreeTxStrategy</string>-->
+<!--            </entry>-->
             <entry key="name">
-                <string>net.postchain.integrationtest.ThreeTxStrategy</string>
+                <string>net.postchain.devtools.OnDemandBlockBuildingStrategy</string>
+<!--                <string>net.postchain.base.BaseBlockBuildingStrategy</string>-->
             </entry>
+            <entry key="maxblocktime"><int>1000</int></entry>
+            <entry key="blockdelay"><int>100</int></entry>
         </dict>
     </entry>
     <entry key="configurationfactory">
@@ -26,9 +32,9 @@
             <!-- Key0 -->
             <bytea>03a301697bdfcd704313ba48e51d567543f2a182031efd6915ddc07bbcc4e16070</bytea>
             <!-- Key1 -->
-            <bytea>031B84C5567B126440995D3ED5AABA0565D71E1834604819FF9C17F5E9D5DD078F</bytea>
-            <!-- Key2 -->
-            <bytea>03B2EF623E7EC933C478135D1763853CBB91FC31BA909AEC1411CA253FDCC1AC94</bytea>
+<!--            <bytea>031B84C5567B126440995D3ED5AABA0565D71E1834604819FF9C17F5E9D5DD078F</bytea>-->
+<!--             Key2 -->
+<!--            <bytea>03B2EF623E7EC933C478135D1763853CBB91FC31BA909AEC1411CA253FDCC1AC94</bytea>-->
         </array>
     </entry>
     <entry key="gtx">

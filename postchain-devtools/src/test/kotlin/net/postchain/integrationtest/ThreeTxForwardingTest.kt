@@ -27,7 +27,7 @@ class ThreeTxForwardingTest : IntegrationTest() {
     private fun apiModel(nodeIndex: Int): Model =
             nodes[nodeIndex].getRestApiModel()
 
-    @Test
+    @Test(timeout = 2 * 60 * 1000L)
     fun testTxNotForwardedIfPrimary() {
         val count = 3
         configOverrides.setProperty("testpeerinfos", createPeerInfos(count))

@@ -8,6 +8,8 @@ interface Shutdownable {
  * Blockchain engine used for building and adding new blocks
  */
 interface BlockchainEngine : Shutdownable {
+    var isRestartNeeded: Boolean
+
     fun initializeDB()
     fun setRestartHandler(restartHandler: RestartHandler)
     fun addBlock(block: BlockDataWithWitness)

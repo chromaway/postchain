@@ -23,6 +23,7 @@ abstract class MerkleProofTreeFactory<T> {
      *
      * @param currentElement is the element we will use as root of the tree
      * @param calculator is the class we use for hash calculation
+     * @param isRoot is "true" if this is the root element of the structure
      * @return the [MerkleProofElement] we have built.
      */
     abstract fun buildFromBinaryTreeInternal(currentElement: BinaryTreeElement, calculator: MerkleHashCalculator<T>):

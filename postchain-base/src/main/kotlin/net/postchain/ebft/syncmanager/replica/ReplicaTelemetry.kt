@@ -1,42 +1,46 @@
 package net.postchain.ebft.syncmanager.replica
 
 import mu.KLogging
+import net.postchain.ebft.syncmanager.StatusLogInterval
 import java.util.*
 
 
-class ReplicaTelemetry {
+class ReplicaTelemetry(private val blockchainProcessName: String) {
     companion object : KLogging()
 
     enum class LogLevel {
         Error, Warning, Debug
     }
 
-    private fun consoleLogger(level: LogLevel, message: String, throwable: Throwable? = null) = when (level) {
-        LogLevel.Error -> {
-            if (throwable != null) {
-                logger.error(message, throwable)
-            } else {
-                logger.error(message)
+    private fun consoleLogger(level: LogLevel, message: String, throwable: Throwable? = null) {
+        val msg = "[$blockchainProcessName]: $message"
+
+        when (level) {
+            LogLevel.Error -> {
+                if (throwable != null) {
+                    logger.error(msg, throwable)
+                } else {
+                    logger.error(msg)
+                }
             }
-        }
-        LogLevel.Warning -> {
-            logger.warn(message)
-        }
-        LogLevel.Debug -> {
-            logger.debug(message)
+            LogLevel.Warning -> {
+                logger.warn(msg)
+            }
+            LogLevel.Debug -> {
+                logger.debug(msg)
+            }
         }
     }
 
     private var lastLoggedTimestamp = 0L
-    private var backoffTimeMs = 1000L
 
     fun logCurrentState(blockHeight: Long, parallelRequestsState: HashMap<Long, IssuedRequestTimer>, blocks: PriorityQueue<IncomingBlock>) {
         val now = Date().time
-        if (now > lastLoggedTimestamp + backoffTimeMs) {
+        if (now > lastLoggedTimestamp + StatusLogInterval) {
             lastLoggedTimestamp = now
             val buffer = blocks.map { it.height }.toString()
             val requestsState = parallelRequestsState.map { "${it.key} last sent: ${it.value.lastSentTimestamp}" }.toString()
-            consoleLogger(LogLevel.Debug, "Replica [H: $blockHeight | buffer: $buffer | active requests: $requestsState]")
+            consoleLogger(LogLevel.Debug, "[he:$blockHeight | buffer:$buffer | active requests:$requestsState]")
         }
     }
 
