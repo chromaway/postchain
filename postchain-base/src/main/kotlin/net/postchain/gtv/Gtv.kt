@@ -84,8 +84,8 @@ fun Gtv.merkleHashSummary(calculator: MerkleHashCalculator<Gtv>): MerkleHashSumm
             val proofTree: GtvMerkleProofTree = this.getGtvMerkleProofTree()
             proofTree.merkleHashSummary(calculator)
         }
-        else -> {
-            // For non virtual GTV we can use the cache.
+        is GtvPrimitive -> {
+            // For non primitive GTV we can use the cache.
             var foundInCache = false
             val cachedSummary = calculator.memoization.findMerkleHash(this)
 
@@ -104,6 +104,10 @@ fun Gtv.merkleHashSummary(calculator: MerkleHashCalculator<Gtv>): MerkleHashSumm
             }
 
             newSummary
+        }
+        else -> {
+            val summaryFactory = GtvMerkleBasics.getGtvMerkleHashSummaryFactory()
+            summaryFactory.calculateMerkleRoot(this, calculator)
         }
     }
 }

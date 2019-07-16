@@ -8,7 +8,6 @@ import net.postchain.ebft.BaseBlockManager
 import net.postchain.ebft.BaseStatusManager
 import net.postchain.ebft.BlockManager
 import net.postchain.ebft.message.Message
-import net.postchain.ebft.syncmanager.SyncManagerBase
 import net.postchain.ebft.syncmanager.ValidatorSyncManager
 import net.postchain.network.CommunicationManager
 
@@ -20,6 +19,7 @@ import net.postchain.network.CommunicationManager
  * @property statusManager manages the status of the consensus protocol
  */
 class ValidatorWorker(
+        override val name: String,
         signers: List<ByteArray>,
         override val blockchainEngine: BlockchainEngine,
         nodeIndex: Int,
@@ -51,6 +51,7 @@ class ValidatorWorker(
         // Give the SyncManager the BaseTransactionQueue and not the network-aware one,
         // because we don't want tx forwarding/broadcasting when received through p2p network
         syncManager = ValidatorSyncManager(
+                name,
                 signers,
                 statusManager,
                 blockManager,

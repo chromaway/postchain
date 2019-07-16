@@ -31,9 +31,12 @@ import spark.Service
 /**
  * Contains information on the rest API, such as network parameters and available queries
  */
-class RestApi(private val listenPort: Int, private val basePath: String,
-              private val sslCertificate: String? = null,
-              private val sslCertificatePassword: String? = null) : Modellable {
+class RestApi(
+        private val listenPort: Int,
+        private val basePath: String,
+        private val sslCertificate: String? = null,
+        private val sslCertificatePassword: String? = null
+) : Modellable {
 
     companion object : KLogging()
 
@@ -251,7 +254,7 @@ class RestApi(private val listenPort: Int, private val basePath: String,
 
         queriesArray.forEach {
             val hexQuery = it.asString
-            val gtxQuery =  GtvFactory.decodeGtv(hexQuery.hexStringToByteArray() )
+            val gtxQuery = GtvFactory.decodeGtv(hexQuery.hexStringToByteArray())
             response.add(GtvEncoder.encodeGtv(model(request).query(gtxQuery)).toHex())
         }
 

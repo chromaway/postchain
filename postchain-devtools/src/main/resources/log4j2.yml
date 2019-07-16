@@ -1,0 +1,40 @@
+Configuration:
+  name: Default
+
+  Properties:
+    Property:
+    - name: logs
+      value: "logs"
+    - name: logfile
+      value: "logfile.log"
+
+  Appenders:
+    Console:
+      name: ConsoleAppender
+      target: SYSTEM_OUT
+      PatternLayout:
+        # pattern: "[%X{node-id}] %-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
+        pattern: "%-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
+    File:
+      name: FileAppender
+      fileName: "${logs}/${logfile}"
+      PatternLayout:
+        # pattern: "[%X{node-id}] %-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
+        pattern: "%-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
+
+
+  Loggers:
+
+    Root:
+      level: warn
+      AppenderRef:
+      - ref: ConsoleAppender
+      - ref: FileAppender
+
+    Logger:
+    - name: net.postchain
+      level: debug
+      additivity: false
+      AppenderRef:
+      - ref: ConsoleAppender
+      - ref: FileAppender
