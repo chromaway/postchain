@@ -1,5 +1,6 @@
 package net.postchain.managed
 
+import net.postchain.StorageBuilder
 import net.postchain.base.*
 import net.postchain.base.data.BaseStorage
 import net.postchain.base.data.DatabaseAccess
@@ -24,7 +25,7 @@ class RealManagedBlockchainConfigurationProvider(val nodeConfigProvider: NodeCon
     private lateinit var dataSource: ManagedNodeDataSource
     val systemProvider = ManualBlockchainConfigurationProvider(nodeConfigProvider)
 
-    fun initDataSource(dataSource: ManagedNodeDataSource) {
+    fun setDataSource(dataSource: ManagedNodeDataSource) {
         this.dataSource = dataSource
     }
 
@@ -144,10 +145,8 @@ class Manager(val procMan: BlockchainProcessManager,
     lateinit var dataSource: ManagedNodeDataSource
     var lastPeerListVersion: Long? = null
 
-    fun init(proc0: BlockchainProcess): ManagedNodeDataSource {
-        dataSource = GTXManagedNodeDataSource(proc0.getEngine().getBlockQueries(),
-                nodeConfigProvider.getConfiguration()
-        )
+    fun useChain0BlockQueries(bq: BlockQueries): ManagedNodeDataSource {
+        dataSource = GTXManagedNodeDataSource(bq, nodeConfigProvider.getConfiguration())
         return dataSource
     }
 
@@ -226,23 +225,44 @@ class ManagedBlockchainProcessManager(
                             true
                         }
                     } catch (e: Exception) {
-                        logger.error("Unhandled exception in manager.runPeriodic", e.stackTrace)
+                        logger.error("Unhandled exception in manager.runPeriodic", e)
                     }
                 },
                 10, 10, TimeUnit.SECONDS
         )
     }
 
+    fun makeChain0BlockQueries(): BlockQueries {
+        val chainId = 0L
+        var bq: BlockQueries? = null
+
+        withWriteConnection(storage, chainId) { eContext ->
+            val configuration = blockchainConfigProvider.getConfiguration(eContext, chainId)
+            if (configuration == null) throw ProgrammerMistake("chain0 configuration not found")
+            val blockchainRID = DatabaseAccess.of(eContext).getBlockchainRID(eContext)!! // TODO: [et]: Fix Kotlin NPE
+            val context = BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null)
+            val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(configuration, context)
+            blockchainConfig.initializeDB(eContext)
+            val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration(), NODE_ID_NA)
+            bq = blockchainConfig.makeBlockQueries(storage)
+            true
+        }
+        return bq!!
+    }
+
     override fun startBlockchain(chainId: Long) {
-        super.startBlockchain(chainId)
         if (chainId == 0L) {
-            val dataSource = manager.init(retrieveBlockchain(0L)!!)
-            (blockchainConfigProvider as RealManagedBlockchainConfigurationProvider).initDataSource(dataSource)
+            val chain0BlockQueries = makeChain0BlockQueries()
+            val dataSource = manager.useChain0BlockQueries(chain0BlockQueries)
+            (blockchainConfigProvider as RealManagedBlockchainConfigurationProvider).setDataSource(dataSource)
             if (nodeConfigProvider is ManagedNodeConfigurationProvider) {
                 nodeConfigProvider.setPeerInfoDataSource(dataSource)
             } else {
                 logger.warn { "Node config is not managed, no peer info updates possible" }
             }
+        }
+        super.startBlockchain(chainId)
+        if (chainId == 0L) {
             startUpdaterThread()
         }
     }
