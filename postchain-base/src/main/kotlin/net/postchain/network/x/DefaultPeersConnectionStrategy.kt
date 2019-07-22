@@ -30,7 +30,8 @@ object DefaultPeersConnectionStrategy : PeersConnectionStrategy {
                 // To avoid connection to itself.
                 .filterIndexed { i, _ -> i != myIndex }
                 // To avoid duplicating of connection between two peers since each peer has Server and Client entities.
-                .filterIndexed { i, _ -> myIndex > i }
+                // TODO: Commented out for manager test scenario!
+                //.filterIndexed { i, _ -> myIndex > i }
                 .forEach(action)
     }
 }

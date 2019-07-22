@@ -93,7 +93,6 @@ class ValidatorSyncManager(
             val (xPeerId, message) = packet
 
             val nodeIndex = indexOfValidator(xPeerId)
-            if (nodeIndex == -1) continue
 
             logger.trace { "[$blockchainProcessName]: Received message type ${message.javaClass.simpleName} from node $nodeIndex" }
 
