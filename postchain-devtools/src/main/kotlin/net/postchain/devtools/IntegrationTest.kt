@@ -55,6 +55,7 @@ open class IntegrationTest {
     val cryptoSystem = SECP256K1CryptoSystem()
     var gtxConfig: Gtv? = null
     protected val blockchainRids = mapOf(
+            0L to "0000000000000000000000000000000000000000000000000000000000000000",
             1L to "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3",
             2L to "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a4"
     )
@@ -159,7 +160,7 @@ open class IntegrationTest {
         return PostchainTestNode(nodeConfigProvider, preWipeDatabase)
                 .apply {
                     addBlockchain(chainId, blockchainRid, blockchainConfig)
-                    startBlockchain()
+                    startBlockchain(chainId)
                 }
                 .also {
                     nodes.add(it)

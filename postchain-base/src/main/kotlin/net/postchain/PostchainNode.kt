@@ -24,11 +24,8 @@ open class PostchainNode(nodeConfigProvider: NodeConfigurationProvider) : Shutdo
 
     init {
         val infrastructureFactory = buildInfrastructureFactory(nodeConfigProvider)
-
         blockchainInfrastructure = infrastructureFactory.makeBlockchainInfrastructure(nodeConfigProvider)
-        processManager = infrastructureFactory.makeProcessManager(
-                nodeConfigProvider, blockchainInfrastructure
-        )
+        processManager = infrastructureFactory.makeProcessManager(nodeConfigProvider, blockchainInfrastructure)
     }
 
     fun startBlockchain(chainID: Long) {

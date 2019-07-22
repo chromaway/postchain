@@ -114,7 +114,7 @@ open class BaseBlockchainProcessManager(
 
     // FYI: [et]: For integration testing. Will be removed or refactored later
     private fun logPeerTopology(chainId: Long) {
-        // TODO: [et]: Fix links to EBFT entities
+        // TODO: [et]: Fix references to EBFT entities
         val topology = ((blockchainInfrastructure as BaseBlockchainInfrastructure)
                 .synchronizationInfrastructure as EBFTSynchronizationInfrastructure)
                 .connectionManager.getPeersTopology(chainId)

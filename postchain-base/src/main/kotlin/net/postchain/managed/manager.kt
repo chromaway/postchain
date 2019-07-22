@@ -2,7 +2,6 @@ package net.postchain.managed
 
 import net.postchain.StorageBuilder
 import net.postchain.base.*
-import net.postchain.base.data.BaseStorage
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.blockchain.ManualBlockchainConfigurationProvider
@@ -15,12 +14,10 @@ import net.postchain.ebft.BaseEBFTInfrastructureFactory
 import net.postchain.gtv.GtvFactory.gtv
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.ScalarHandler
-import java.lang.IllegalStateException
 import java.util.concurrent.TimeUnit
 
 class RealManagedBlockchainConfigurationProvider(val nodeConfigProvider: NodeConfigurationProvider)
-    : BlockchainConfigurationProvider
-{
+    : BlockchainConfigurationProvider {
 
     private lateinit var dataSource: ManagedNodeDataSource
     val systemProvider = ManualBlockchainConfigurationProvider(nodeConfigProvider)
@@ -57,14 +54,14 @@ class RealManagedBlockchainConfigurationProvider(val nodeConfigProvider: NodeCon
             val blockchainRID = dba.getBlockchainRID(eContext)
             val height = dba.getLastBlockHeight(eContext)
             val nch = dataSource.findNextConfigurationHeight(blockchainRID!!, height)
-            return  (nch != null) && (nch == height + 1)
+            return (nch != null) && (nch == height + 1)
         }
 
         if (chainId == 0L) {
             return systemProvider.needsConfigurationChange(eContext, chainId)
         } else {
             if (::dataSource.isInitialized) {
-               return checkNeedConfChangeViaDataSource()
+                return checkNeedConfChangeViaDataSource()
             } else {
                 throw IllegalStateException("Using managed blockchain configuration provider before it's properly initialized")
             }
@@ -73,14 +70,14 @@ class RealManagedBlockchainConfigurationProvider(val nodeConfigProvider: NodeCon
 
 }
 
-interface ManagedNodeDataSource: PeerInfoDataSource {
+interface ManagedNodeDataSource : PeerInfoDataSource {
     fun getPeerListVersion(): Long
     fun computeBlockchainList(ctx: EContext): List<ByteArray>
     fun getConfiguration(blockchainRID: ByteArray, height: Long): ByteArray?
     fun findNextConfigurationHeight(blockchainRID: ByteArray, height: Long): Long?
 }
 
-class GTXManagedNodeDataSource(val q: BlockQueries, val nc: NodeConfig): ManagedNodeDataSource {
+class GTXManagedNodeDataSource(val q: BlockQueries, val nc: NodeConfig) : ManagedNodeDataSource {
     override fun getPeerInfos(): Array<PeerInfo> {
         val res = q.query("nm_get_peer_infos", gtv(mapOf()))
         val a = res.get().asArray()
@@ -100,11 +97,11 @@ class GTXManagedNodeDataSource(val q: BlockQueries, val nc: NodeConfig): Managed
     }
 
     override fun computeBlockchainList(ctx: EContext): List<ByteArray> {
-            val res = q.query("nm_compute_blockchain_list",
-                    gtv("node_id" to gtv(nc.pubKeyByteArray))
-            )
-            val a = res.get().asArray()
-            return a.map { it.asByteArray() }
+        val res = q.query("nm_compute_blockchain_list",
+                gtv("node_id" to gtv(nc.pubKeyByteArray))
+        )
+        val a = res.get().asArray()
+        return a.map { it.asByteArray() }
     }
 
     override fun findNextConfigurationHeight(blockchainRID: ByteArray, height: Long): Long? {
@@ -125,7 +122,7 @@ class GTXManagedNodeDataSource(val q: BlockQueries, val nc: NodeConfig): Managed
     }
 }
 
-class ManagedInfrastructureFactory: BaseEBFTInfrastructureFactory() {
+class ManagedInfrastructureFactory : BaseEBFTInfrastructureFactory() {
     override fun makeProcessManager(
             nodeConfigProvider: NodeConfigurationProvider,
             blockchainInfrastructure: BlockchainInfrastructure
@@ -203,14 +200,13 @@ class Manager(val procMan: BlockchainProcessManager,
 }
 
 class ManagedBlockchainProcessManager(
-    blockchainInfrastructure: BlockchainInfrastructure,
-    nodeConfigProvider: NodeConfigurationProvider
-): BaseBlockchainProcessManager(
+        blockchainInfrastructure: BlockchainInfrastructure,
+        nodeConfigProvider: NodeConfigurationProvider
+) : BaseBlockchainProcessManager(
         blockchainInfrastructure,
         nodeConfigProvider,
         RealManagedBlockchainConfigurationProvider(nodeConfigProvider)
-)
-{
+) {
     val manager = Manager(this, nodeConfigProvider)
     var updaterThreadStarted = false
 
