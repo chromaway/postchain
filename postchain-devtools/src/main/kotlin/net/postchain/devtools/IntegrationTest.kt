@@ -81,6 +81,7 @@ open class IntegrationTest {
         peerInfos = null
         expectedSuccessRids = mutableMapOf()
         configOverrides.clear()
+        System.gc()
     }
 
     // TODO: [et]: Check out nullability for return value
