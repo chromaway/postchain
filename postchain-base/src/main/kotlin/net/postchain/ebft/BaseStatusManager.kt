@@ -116,6 +116,26 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
     }
 
     /**
+     * Fast forward height
+     *
+     * @param height the new height
+     * @return success or failure
+     */
+    @Synchronized
+    override fun fastForwardHeight(height: Long): Boolean {
+
+        if(height < myStatus.height) {
+            logger.error("Failed to fast forward negative increment.")
+            return false
+        }
+        logger.debug("Advancing block height from ${myStatus.height} to ${height + 1} ...")
+        (myStatus.height until height + 1).map { advanceHeight() }
+
+        logger.debug("Current state: ${myStatus.height}")
+        return true
+    }
+
+    /**
      * Block is committed
      *
      * @param blockRID the committed block

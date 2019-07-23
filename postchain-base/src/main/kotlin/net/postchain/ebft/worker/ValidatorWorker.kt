@@ -56,6 +56,7 @@ class ValidatorWorker(
                 statusManager,
                 blockManager,
                 blockDatabase,
+                blockchainEngine.getBlockQueries(),
                 communicationManager,
                 nodeStateTracker,
                 blockchainEngine.getTransactionQueue(),

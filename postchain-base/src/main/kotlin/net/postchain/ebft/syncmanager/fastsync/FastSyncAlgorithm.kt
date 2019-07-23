@@ -22,7 +22,7 @@ class FastSyncAlgorithm(
         private val communicationManager: CommunicationManager<EbftMessage>,
         private val blockDatabase: BlockDatabase,
         private val blockchainConfiguration: BlockchainConfiguration,
-        val blockQueries: BlockQueries
+        private val blockQueries: BlockQueries
 )
 {
     private val fastSyncAlgorithmTelemetry = FastSyncAlgorithmTelemetry()
@@ -36,6 +36,8 @@ class FastSyncAlgorithm(
     private var parallelRequestsState = hashMapOf<Long, IssuedRequestTimer>()
     private var blocks = PriorityQueue<IncomingBlock>(parallelism)
 
+    val blockHeightAheadCount = 3
+
     var blockHeight: Long = blockQueries.getBestHeight().get()
         private set
 
@@ -45,6 +47,17 @@ class FastSyncAlgorithm(
         checkBlock()
         processState()
         dispatchMessages()
+    }
+
+    fun isUpToDate(): Boolean {
+        val highest = nodeStatuses().map { it.height }.max()?: Long.MAX_VALUE
+        return if((highest - blockHeight) > blockHeightAheadCount) {
+            false
+        } else {
+            parallelRequestsState.clear()
+            blocks.clear()
+            true
+        }
     }
 
     fun nodeStatuses() = fastSyncAlgorithmTelemetry.nodeStatuses()
@@ -120,6 +133,8 @@ class FastSyncAlgorithm(
                         checkBlock()
                     }
                     fail {
+                        parallelRequestsState.remove(blockHeight)
+                        blockHeight = blockQueries.getBestHeight().get()
                         fastSyncAlgorithmTelemetry.failedToAppendBlockToDatabase(blockHeight, it.message)
                         it.printStackTrace()
                     }

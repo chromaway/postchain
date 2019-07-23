@@ -118,6 +118,7 @@ interface StatusManager {
     val myStatus: NodeStatus
 
     fun onStatusUpdate(nodeIndex: Int, status: NodeStatus) // STATUS message from another node
+    fun fastForwardHeight(height: Long): Boolean
     fun onHeightAdvance(height: Long):Boolean // a complete block was received from other peers, go forward
     fun onCommittedBlock(blockRID: ByteArray) // when block committed to the database
     fun onReceivedBlock(blockRID: ByteArray, mySignature: Signature): Boolean // received block was validated by BlockManager/DB

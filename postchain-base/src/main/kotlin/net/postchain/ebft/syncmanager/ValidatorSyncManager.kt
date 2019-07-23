@@ -9,6 +9,7 @@ import net.postchain.ebft.*
 import net.postchain.ebft.message.*
 import net.postchain.ebft.message.Transaction
 import net.postchain.ebft.rest.contract.serialize
+import net.postchain.ebft.syncmanager.fastsync.FastSyncAlgorithm
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
 import java.util.*
@@ -60,6 +61,7 @@ class ValidatorSyncManager(
         private val statusManager: StatusManager,
         private val blockManager: BlockManager,
         private val blockDatabase: BlockDatabase,
+        private val blockQueries: BlockQueries,
         private val communicationManager: CommunicationManager<EbftMessage>,
         private val nodeStateTracker: NodeStateTracker,
         private val txQueue: TransactionQueue,
@@ -72,6 +74,16 @@ class ValidatorSyncManager(
     private var processingIntent: BlockIntent = DoNothingIntent
     private var processingIntentDeadline = 0L
     private var lastStatusLogged = Date().time
+
+    @Volatile
+    private var useFastSyncAlgorithm: Boolean = false
+    private val fastSyncAlgorithm = FastSyncAlgorithm(
+            signers.minus(signers.elementAt((statusManager as BaseStatusManager).myIndex)),
+            communicationManager,
+            blockDatabase,
+            blockchainConfiguration,
+            blockQueries
+    )
 
     companion object : KLogging()
 
@@ -89,12 +101,12 @@ class ValidatorSyncManager(
     /**
      * Handle incoming messages
      */
-    fun dispatchMessages() {
+    private fun dispatchMessages() {
         for (packet in communicationManager.getPackets()) {
             val xPeerId = packet.first
             val nodeIndex = getPeerIndex(xPeerId)
             val message = packet.second
-            logger.debug { "Received message type ${message.javaClass.simpleName}/${message.getBackingInstance().choiceID} from node $nodeIndex" }
+//            logger.debug { "Received message type ${message.javaClass.simpleName}/${message.getBackingInstance().choiceID} from node $nodeIndex" }
             try {
                 when (message) {
                     // same case for replica and validator node
@@ -105,6 +117,7 @@ class ValidatorSyncManager(
                             when (message) {
                                 is Status -> {
                                     val nodeStatus = NodeStatus(message.height, message.serial)
+                                    useFastSyncAlgorithm = (message.height - statusManager.myStatus.height) >= fastSyncAlgorithm.blockHeightAheadCount
                                     nodeStatus.blockRID = message.blockRId
                                     nodeStatus.revolting = message.revolting
                                     nodeStatus.round = message.round
@@ -123,9 +136,16 @@ class ValidatorSyncManager(
                                     }
                                 }
                                 is CompleteBlock -> {
-                                    blockManager.onReceivedBlockAtHeight(
-                                            decodeBlockDataWithWitness(message, blockchainConfiguration),
-                                            message.height)
+                                    try {
+                                        blockManager.onReceivedBlockAtHeight(
+                                                decodeBlockDataWithWitness(message, blockchainConfiguration),
+                                                message.height)
+                                    } catch (e: Exception) {
+                                        logger.error("Failed to add block to database. Resetting state...", e)
+                                        // reset state to last known from database
+                                        val currentBlockHeight = blockQueries.getBestHeight().get()
+                                        statusManager.fastForwardHeight(currentBlockHeight + 1)
+                                    }
                                 }
                                 is UnfinishedBlock -> {
                                     blockManager.onReceivedUnfinishedBlock(decodeBlockData(message, blockchainConfiguration))
@@ -285,7 +305,7 @@ class ValidatorSyncManager(
         }
         when (intent) {
             DoNothingIntent -> Unit
-            is FetchBlockAtHeightIntent -> fetchBlockAtHeight(intent.height)
+            is FetchBlockAtHeightIntent -> if(!useFastSyncAlgorithm) { fetchBlockAtHeight(intent.height) }
             is FetchCommitSignatureIntent -> fetchCommitSignatures(intent.blockRID, intent.nodes)
             is FetchUnfinishedBlockIntent -> fetchUnfinishedBlock(intent.blockRID)
             else -> throw ProgrammerMistake("Unrecognized intent: ${intent::class}")
@@ -314,35 +334,45 @@ class ValidatorSyncManager(
      * notify peers of our current status.
      */
     override fun update() {
-        // Process all messages from peers, one at a time. Some
-        // messages may trigger asynchronous code which will
-        // send replies at a later time, others will send replies
-        // immediately
-        dispatchMessages()
+        if(useFastSyncAlgorithm) {
+            fastSyncAlgorithm.sync()
+            if(fastSyncAlgorithm.isUpToDate()){
+                useFastSyncAlgorithm = false
+                val currentBlockHeight = blockQueries.getBestHeight().get()
+                statusManager.fastForwardHeight(currentBlockHeight + 1)
+            }
+        } else {
 
-        // An intent is something that we want to do with our current block.
-        // The current intent is fetched from the BlockManager and will result in
-        // some messages being sent to peers requesting data like signatures or
-        // complete blocks
-        processIntent()
+            // Process all messages from peers, one at a time. Some
+            // messages may trigger asynchronous code which will
+            // send replies at a later time, others will send replies
+            // immediately
+            dispatchMessages()
 
-        // RevoltTracker will check trigger a revolt if conditions for revolting are met
-        // A revolt will be triggerd by calling statusManager.onStartRevolting()
-        // Typical revolt conditions
-        //    * A timeout happens and round has not increased. Round is increased then 2f+1 nodes
-        //      are revolting.
-        revoltTracker.update()
+            // An intent is something that we want to do with our current block.
+            // The current intent is fetched from the BlockManager and will result in
+            // some messages being sent to peers requesting data like signatures or
+            // complete blocks
+            processIntent()
 
-        // Sends a status message to all peers when my status has changed or after a timeout
-        statusSender.update()
+            // RevoltTracker will check trigger a revolt if conditions for revolting are met
+            // A revolt will be triggerd by calling statusManager.onStartRevolting()
+            // Typical revolt conditions
+            //    * A timeout happens and round has not increased. Round is increased then 2f+1 nodes
+            //      are revolting.
+            revoltTracker.update()
 
-        nodeStateTracker.myStatus = statusManager.myStatus.serialize()
-        nodeStateTracker.nodeStatuses = statusManager.nodeStatuses.map { it.serialize() }.toTypedArray()
-        nodeStateTracker.blockHeight = statusManager.myStatus.height
+            // Sends a status message to all peers when my status has changed or after a timeout
+            statusSender.update()
 
-        if (Date().time - lastStatusLogged >= StatusLogInterval) {
-            logStatus()
-            lastStatusLogged = Date().time
+            nodeStateTracker.myStatus = statusManager.myStatus.serialize()
+            nodeStateTracker.nodeStatuses = statusManager.nodeStatuses.map { it.serialize() }.toTypedArray()
+            nodeStateTracker.blockHeight = statusManager.myStatus.height
+
+            if (Date().time - lastStatusLogged >= StatusLogInterval) {
+                logStatus()
+                lastStatusLogged = Date().time
+            }
         }
     }
 }
