@@ -299,7 +299,7 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
                 ctx.chainID)
 
         if (rid == null) {
-            logger.info("Blockchain RID: ${blockchainRID.toHex()} doesn't exist in DB, so we add it.")
+            logger.debug("Blockchain RID: ${blockchainRID.toHex()} doesn't exist in DB, so we add it.")
             queryRunner.update(
                     ctx.conn,
                     "INSERT INTO blockchains (chain_iid, blockchain_rid) values (?, ?)",
@@ -310,7 +310,7 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
             throw UserMistake("The blockchainRID in db for chainId ${ctx.chainID} " +
                     "is ${rid.toHex()}, but the expected rid is ${blockchainRID.toHex()}")
         } else {
-            logger.info("Verified that Blockchain RID: ${blockchainRID.toHex()} exists in DB.")
+            logger.debug("Verified that Blockchain RID: ${blockchainRID.toHex()} exists in DB.")
         }
     }
 

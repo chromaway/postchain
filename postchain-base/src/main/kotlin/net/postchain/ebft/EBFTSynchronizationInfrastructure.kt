@@ -45,16 +45,15 @@ class EBFTSynchronizationInfrastructure(nodeConfigProvider: NodeConfigurationPro
                     blockchainConfig.signers,
                     engine,
                     blockchainConfig.configData.context.nodeID,
-                    buildXCommunicationManager(blockchainConfig),
+                    buildXCommunicationManager(processName, blockchainConfig),
                     restartHandler)
         } else {
             ReadOnlyWorker(
                     processName,
                     blockchainConfig.signers,
                     engine,
-                    buildXCommunicationManager(blockchainConfig),
-                    restartHandler
-            )
+                    buildXCommunicationManager(processName, blockchainConfig),
+                    restartHandler)
         }
     }
 
@@ -67,7 +66,7 @@ class EBFTSynchronizationInfrastructure(nodeConfigProvider: NodeConfigurationPro
         }
     }
 
-    private fun buildXCommunicationManager(blockchainConfig: BaseBlockchainConfiguration): CommunicationManager<Message> {
+    private fun buildXCommunicationManager(processName: String, blockchainConfig: BaseBlockchainConfiguration): CommunicationManager<Message> {
         val communicationConfig = BasePeerCommConfiguration(
                 nodeConfig.peerInfos,
                 SECP256K1CryptoSystem(),
@@ -83,7 +82,8 @@ class EBFTSynchronizationInfrastructure(nodeConfigProvider: NodeConfigurationPro
                 blockchainConfig.chainID,
                 blockchainConfig.blockchainRID,
                 packetEncoder,
-                packetDecoder
+                packetDecoder,
+                processName
         ).apply { init() }
     }
 

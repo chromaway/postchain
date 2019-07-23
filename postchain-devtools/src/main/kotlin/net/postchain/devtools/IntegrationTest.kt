@@ -10,14 +10,14 @@ import net.postchain.config.app.AppConfig
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.core.*
-import net.postchain.gtv.Gtv
-import net.postchain.gtv.GtvFactory.gtv
-import net.postchain.gtv.gtvml.GtvMLParser
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.privKeyHex
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.KeyPairHelper.pubKeyHex
 import net.postchain.devtools.utils.configuration.UniversalFileLocationStrategy
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtv.gtvml.GtvMLParser
 import org.apache.commons.configuration2.CompositeConfiguration
 import org.apache.commons.configuration2.MapConfiguration
 import org.apache.commons.configuration2.PropertiesConfiguration
@@ -81,6 +81,7 @@ open class IntegrationTest {
         peerInfos = null
         expectedSuccessRids = mutableMapOf()
         configOverrides.clear()
+        System.gc()
     }
 
     // TODO: [et]: Check out nullability for return value
@@ -123,6 +124,7 @@ open class IntegrationTest {
      */
     protected fun createNode(nodeIndex: Int, blockchainConfigFilename: String): PostchainTestNode =
             createSingleNode(nodeIndex, 1, DEFAULT_CONFIG_FILE, blockchainConfigFilename)
+
     /**
      * Creates [count] nodes with the same configuration.
      *
@@ -170,7 +172,7 @@ open class IntegrationTest {
             blockchainConfigsFilenames: Array<String>
     ): Array<PostchainTestNode> {
 
-        require(count == nodeConfigsFilenames.size){ "Must have as many nodes in the array as specified"}
+        require(count == nodeConfigsFilenames.size) { "Must have as many nodes in the array as specified" }
 
         return Array(count) {
             createMultipleChainNode(it, count, nodeConfigsFilenames[it], *blockchainConfigsFilenames)
@@ -279,7 +281,7 @@ open class IntegrationTest {
         if (peerInfos == null) {
             peerInfos =
                     Array(nodeCount) { PeerInfo("localhost", BASE_PORT + it, pubKey(it)) } +
-                    Array(replicasCount) { PeerInfo("localhost", BASE_PORT - it - 1, pubKey(-it - 1)) }
+                            Array(replicasCount) { PeerInfo("localhost", BASE_PORT - it - 1, pubKey(-it - 1)) }
         }
 
         return peerInfos!!
@@ -306,7 +308,7 @@ open class IntegrationTest {
         val blockHeader = blockData.header
         var i = 0
         while (!witnessBuilder.isComplete()) {
-            val sigMaker =cryptoSystem.buildSigMaker(pubKey(i), privKey(i))
+            val sigMaker = cryptoSystem.buildSigMaker(pubKey(i), privKey(i))
             witnessBuilder.applySignature(sigMaker.signDigest(blockHeader.blockRID))
             i++
         }

@@ -10,6 +10,7 @@ class HttpHelper {
         const val ACCESS_CONTROL_ALLOW_HEADERS = "Access-Control-Allow-Headers"
 
         const val PARAM_HASH_HEX = ":hashHex"
+        const val SUBQUERY = ":subQuery"
         const val PARAM_BLOCKCHAIN_RID = ":blockchainRID"
         const val PARAM_UP_TO = ":upTo"
         const val PARAM_LIMIT = ":limit"

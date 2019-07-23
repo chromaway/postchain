@@ -124,24 +124,24 @@ class MixedFourPeersTest : IntegrationTest() {
 
         // Asserting height is -1 for all peers for both chains
         // * chain 1
-        assertEquals(-1, nodes[0].query(chainId1) { it.getBestHeight() })
-        assertEquals(-1, nodes[1].query(chainId1) { it.getBestHeight() })
-        assertEquals(-1, nodes[2].query(chainId1) { it.getBestHeight() })
-        assertEquals(-1, nodes[3].query(chainId1) { it.getBestHeight() })
+        assertEquals(-1L, nodes[0].query(chainId1) { it.getBestHeight() })
+        assertEquals(-1L, nodes[1].query(chainId1) { it.getBestHeight() })
+        assertEquals(-1L, nodes[2].query(chainId1) { it.getBestHeight() })
+        assertEquals(-1L, nodes[3].query(chainId1) { it.getBestHeight() })
         // * chain 2
-        assertEquals(-1, nodes[0].query(chainId2) { it.getBestHeight() })
-        assertEquals(-1, nodes[1].query(chainId2) { it.getBestHeight() })
-        assertEquals(-1, nodes[2].query(chainId2) { it.getBestHeight() })
+        assertEquals(-1L, nodes[0].query(chainId2) { it.getBestHeight() })
+        assertEquals(-1L, nodes[1].query(chainId2) { it.getBestHeight() })
+        assertEquals(-1L, nodes[2].query(chainId2) { it.getBestHeight() })
 
         // Building a block 0 at chain 1 via peer 0
         nodes[0].enqueueTxsAndAwaitBuiltBlock(chainId1, 0, tx1_0)
         // * Asserting height is 0 for all peers
         await().atMost(Duration.FIVE_SECONDS)
                 .untilAsserted {
-                    assertEquals(0, nodes[0].query(chainId1) { it.getBestHeight() })
-                    assertEquals(0, nodes[1].query(chainId1) { it.getBestHeight() })
-                    assertEquals(0, nodes[2].query(chainId1) { it.getBestHeight() })
-                    assertEquals(0, nodes[3].query(chainId1) { it.getBestHeight() })
+                    assertEquals(0L, nodes[0].query(chainId1) { it.getBestHeight() })
+                    assertEquals(0L, nodes[1].query(chainId1) { it.getBestHeight() })
+                    assertEquals(0L, nodes[2].query(chainId1) { it.getBestHeight() })
+                    assertEquals(0L, nodes[3].query(chainId1) { it.getBestHeight() })
                 }
 
         // Building a block 0 at chain 2 via peer 1
@@ -149,9 +149,9 @@ class MixedFourPeersTest : IntegrationTest() {
         // * Asserting height is 0 for all peers
         await().atMost(Duration.FIVE_SECONDS)
                 .untilAsserted {
-                    assertEquals(0, nodes[0].query(chainId2) { it.getBestHeight() })
-                    assertEquals(0, nodes[1].query(chainId2) { it.getBestHeight() })
-                    assertEquals(0, nodes[2].query(chainId2) { it.getBestHeight() })
+                    assertEquals(0L, nodes[0].query(chainId2) { it.getBestHeight() })
+                    assertEquals(0L, nodes[1].query(chainId2) { it.getBestHeight() })
+                    assertEquals(0L, nodes[2].query(chainId2) { it.getBestHeight() })
                 }
 
         // Shutting down node 0

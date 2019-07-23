@@ -5,8 +5,11 @@ import net.postchain.base.BaseBlockchainConfigurationData
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.core.EContext
 import net.postchain.core.TransactionFactory
+import net.postchain.gtx.GTXModule
 
-open class TestBlockchainConfiguration(configData: BaseBlockchainConfigurationData
+open class TestBlockchainConfiguration(
+        configData: BaseBlockchainConfigurationData,
+        val module: GTXModule
 ) : BaseBlockchainConfiguration(configData) {
 
     val transactionFactory = TestTransactionFactory()
@@ -19,6 +22,6 @@ open class TestBlockchainConfiguration(configData: BaseBlockchainConfigurationDa
 
     override fun initializeDB(ctx: EContext) {
         super.initializeDB(ctx)
-        logger.info("++ TEST ONLY ++: Running TestBlockchainConfiguration - means DB for modules NOT initialized! ++ TEST ONLY ++")
+        logger.debug("++ TEST ONLY ++: Running TestBlockchainConfiguration - means DB for modules NOT initialized! ++ TEST ONLY ++")
     }
 }

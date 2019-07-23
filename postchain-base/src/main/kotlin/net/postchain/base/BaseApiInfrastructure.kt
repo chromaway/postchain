@@ -1,20 +1,29 @@
 package net.postchain.base
 
-import net.postchain.api.rest.controller.PostchainModel
 import net.postchain.api.rest.controller.RestApi
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.common.toHex
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.ApiInfrastructure
 import net.postchain.core.BlockchainProcess
+import net.postchain.ebft.rest.model.PostchainEBFTModel
 import net.postchain.ebft.worker.AbstractBlockchainProcess
 
 class BaseApiInfrastructure(nodeConfigProvider: NodeConfigurationProvider) : ApiInfrastructure {
 
     val restApi: RestApi? = with(nodeConfigProvider.getConfiguration()) {
         if (restApiPort != -1) {
-            if (restApiSsl) RestApi(restApiPort, restApiBasePath, restApiSslCertificate, restApiSslCertificatePassword)
-            else RestApi(restApiPort, restApiBasePath)
+            if (restApiSsl) {
+                RestApi(
+                        restApiPort,
+                        restApiBasePath,
+                        restApiSslCertificate,
+                        restApiSslCertificatePassword)
+            } else {
+                RestApi(
+                        restApiPort,
+                        restApiBasePath)
+            }
         } else {
             null
         }
@@ -24,8 +33,9 @@ class BaseApiInfrastructure(nodeConfigProvider: NodeConfigurationProvider) : Api
         restApi?.run {
             val engine = process.getEngine()
 
-            val apiModel = PostchainModel(
-                    (process as AbstractBlockchainProcess).networkAwareTxQueue,
+            val apiModel = PostchainEBFTModel(
+                    (process as AbstractBlockchainProcess).nodeStateTracker,
+                    process.networkAwareTxQueue,
                     engine.getConfiguration().getTransactionFactory(),
                     engine.getBlockQueries() as BaseBlockQueries) // TODO: [et]: Resolve type cast
 
