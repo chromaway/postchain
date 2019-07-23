@@ -10,6 +10,7 @@ internal class ApiStatusSerializer : JsonSerializer<ApiStatus> {
             JsonObject().apply {
                 add("status", JsonPrimitive(src!!.status))
                 src.rejectReason?.let {
-                    add("rejectReason", JsonPrimitive(src.rejectReason)) }
+                    add("rejectReason", JsonPrimitive(src.rejectReason))
+                }
             }
 }

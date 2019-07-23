@@ -21,9 +21,13 @@ import net.postchain.gtv.merkle.proof.merkleHash
 import net.postchain.gtx.GTXDataBuilder
 import net.postchain.gtx.GTXTransactionFactory
 import net.postchain.integrationtest.JsonTools.jsonAsMap
+import org.awaitility.Awaitility
 import org.hamcrest.core.IsEqual
-import org.junit.Assert.*
+import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.skyscreamer.jsonassert.JSONAssert
+import org.skyscreamer.jsonassert.JSONCompareMode
 import kotlin.test.assertTrue
 
 class ApiIntegrationTestNightly : IntegrationTest() {
@@ -33,7 +37,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
     private val blockchainRIDBytes = blockchainRID.hexStringToByteArray()
     private var txHashHex = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
-    private val gtxTestModule =  GTXTestModule()
+    private val gtxTestModule = GTXTestModule()
     private val gtxTextModuleOperation = "gtx_test" // This is a real operation
 
     @Test
@@ -54,7 +58,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
 
         val blockHeight = 0 // If we set it to zero the node with index 0 will get the post
-        val tx = postGtxTransaction( factory, 1, blockHeight, nodeCount)
+        val tx = postGtxTransaction(factory, 1, blockHeight, nodeCount)
 
         awaitConfirmed(blockchainRID, tx!!.getRID())
     }
@@ -90,8 +94,8 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
         buildBlockAndCommit(nodes[0])
 
-        val gtxQuery1 = gtv( gtv("gtx_test_get_value"), gtv("txRID" to gtv("abcd")) )
-        val gtxQuery2 = gtv( gtv("gtx_test_get_value"), gtv("txRID" to gtv("cdef")) )
+        val gtxQuery1 = gtv(gtv("gtx_test_get_value"), gtv("txRID" to gtv("abcd")))
+        val gtxQuery2 = gtv(gtv("gtx_test_get_value"), gtv("txRID" to gtv("cdef")))
         val jsonQuery = """{"queries" : ["${GtvEncoder.encodeGtv(gtxQuery1).toHex()}", "${GtvEncoder.encodeGtv(gtxQuery2).toHex()}"]}""".trimMargin()
 
 
@@ -101,7 +105,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                 .then()
                 .statusCode(200)
                 .body(IsEqual.equalTo("[\"A0020500\",\"A0020500\"]"))
-        
+
     }
 
     @Test
@@ -129,7 +133,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                 txList.add(lastTx!!)
             }
 
-            val lastTxRid =lastTx!!.getRID()
+            val lastTxRid = lastTx!!.getRID()
 
             awaitConfirmed(blockchainRID, lastTxRid) // Should be enough to wait for the last one to confirm
 
@@ -148,26 +152,41 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
     @Test
     fun testRejectedTransactionWithReason() {
-        val nodesCount = 3
+        val nodesCount = 1
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         configOverrides.setProperty("api.port", 0)
-        createNodes(nodesCount, "/net/postchain/api/blockchain_config.xml")
+        createNodes(nodesCount, "/net/postchain/api/blockchain_config_rejected.xml")
 
-        val b = GTXDataBuilder(blockchainRIDBytes, arrayOf(KeyPairHelper.pubKey(0)), cryptoSystem)
-        b.addOperation("gtx_test", arrayOf(gtv(1L), gtv("rejectMe")))
-        b.finish()
-        b.sign(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)))
+        val builder = GTXDataBuilder(blockchainRIDBytes, arrayOf(KeyPairHelper.pubKey(0)), cryptoSystem)
+        builder.addOperation("gtx_test", arrayOf(gtv(1L), gtv("rejectMe")))
+        builder.finish()
+        builder.sign(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)))
 
         // post transaction
-        testStatusPost(0, "/tx/$blockchainRID", "{\"tx\": \"${b.serialize().toHex()}\"}", 200)
+        testStatusPost(
+                0,
+                "/tx/$blockchainRID",
+                "{\"tx\": \"${builder.serialize().toHex()}\"}",
+                200)
 
-        // wait a little bit to get rejected status
-        Thread.sleep(500)
+        // Asserting
+        val txRidHex = builder.getDigestForSigning().toHex()
+        val expected = """
+            {
+                "status": "rejected",
+                "rejectReason": "You were asking for it"
+            }
+        """.trimIndent()
 
-        testStatusGet("/tx/$blockchainRID/${b.getDigestForSigning().toHex()}/status", 200) {
-            assertEquals(jsonAsMap(gson, "{\"status\"=\"rejected\", \"rejectReason\": \"You were asking for it\"}"), jsonAsMap(gson, it))
+        Awaitility.await().untilAsserted {
+            val body = given().port(nodes[0].getRestApiHttpPort())
+                    .get("/tx/$blockchainRID/$txRidHex/status")
+                    .then()
+                    .statusCode(200)
+                    .extract().body().asString()
+
+            JSONAssert.assertEquals(expected, body, JSONCompareMode.STRICT)
         }
-
     }
 
     /**
@@ -186,7 +205,8 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         val strHexData = tx.getRawData().toHex()
         //println("Sending TX: $strHexData:")
         testStatusPost(
-                blockHeight % nodeCount, "/tx/$blockchainRID",
+                blockHeight % nodeCount,
+                "/tx/$blockchainRID",
                 "{\"tx\": \"$strHexData\"}",
                 200)
 
@@ -198,39 +218,39 @@ class ApiIntegrationTestNightly : IntegrationTest() {
      *
      * An example of what the JSON response might look like:
      *
-   {
-    "hash":"93A4..0F",
-    "blockHeader":"A581..00",
-    "signatures":[
-      {
-        "pubKey":"03A3..70",
-        "signature":"3CE..F3"
-      },
-      {
-        "pubKey":"031B..8F",
-        "signature":"D5F3..E0"
-      },
-      {
-        "pubKey":"03B2..94"
-        ,"signature":"33C8..3E"
-      }
-    ],
-    "merkleProofTree":[
-      103,
-      1,
-      -10,
-      [
-        101,
-        0,
-        "93A4..0F"
-      ],
-      [
-        100,
-        "0000..00"
-      ]
-    ]
-  }
-
+     *  {
+     *    "hash":"93A4..0F",
+     *    "blockHeader":"A581..00",
+     *    "signatures":[
+     *      {
+     *        "pubKey":"03A3..70",
+     *        "signature":"3CE..F3"
+     *      },
+     *      {
+     *        "pubKey":"031B..8F",
+     *        "signature":"D5F3..E0"
+     *      },
+     *      {
+     *        "pubKey":"03B2..94"
+     *        ,"signature":"33C8..3E"
+     *      }
+     *    ],
+     *    "merkleProofTree":[
+     *      103,
+     *      1,
+     *      -10,
+     *      [
+     *        101,
+     *        0,
+     *        "93A4..0F"
+     *      ],
+     *      [
+     *        100,
+     *        "0000..00"
+     *      ]
+     *     ]
+     *  }
+     *
      *
      * @param realTx is the transaction we need to prove.
      * @param seqNr is just for debugging
@@ -246,7 +266,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                 .extract()
                 .body().asString()
 
-        println("Response: ${body}")
+        println("Response: $body")
 
         return body
     }
