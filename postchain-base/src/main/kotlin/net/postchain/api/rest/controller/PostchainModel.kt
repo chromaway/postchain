@@ -75,4 +75,6 @@ open class PostchainModel(
     override fun query(query: Gtv): Gtv {
         return blockQueries.query(query[0]!!.asString(), query[1]).get()
     }
+
+    override fun nodeQuery(subQuery: String): String = throw NotSupported("NotSupported: $subQuery")
 }
