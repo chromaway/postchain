@@ -8,6 +8,7 @@ import net.postchain.core.*
 import net.postchain.ebft.*
 import net.postchain.ebft.message.*
 import net.postchain.ebft.message.Transaction
+import net.postchain.ebft.rest.contract.serialize
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
 import java.util.*
@@ -60,6 +61,7 @@ class ValidatorSyncManager(
         private val blockManager: BlockManager,
         private val blockDatabase: BlockDatabase,
         private val communicationManager: CommunicationManager<EbftMessage>,
+        private val nodeStateTracker: NodeStateTracker,
         private val txQueue: TransactionQueue,
         val blockchainConfiguration: BlockchainConfiguration
 ) : SyncManagerBase {
@@ -333,6 +335,10 @@ class ValidatorSyncManager(
 
         // Sends a status message to all peers when my status has changed or after a timeout
         statusSender.update()
+
+        nodeStateTracker.myStatus = statusManager.myStatus.serialize()
+        nodeStateTracker.nodeStatuses = statusManager.nodeStatuses.map { it.serialize() }.toTypedArray()
+        nodeStateTracker.blockHeight = statusManager.myStatus.height
 
         if (Date().time - lastStatusLogged >= StatusLogInterval) {
             logStatus()

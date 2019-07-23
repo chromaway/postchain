@@ -15,6 +15,7 @@ import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_BLOCKCHAIN_R
 import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_HASH_HEX
 import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_LIMIT
 import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_UP_TO
+import net.postchain.api.rest.controller.HttpHelper.Companion.SUBQUERY
 import net.postchain.api.rest.json.JsonFactory
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.GTXQuery
@@ -178,6 +179,10 @@ class RestApi(private val listenPort: Int, private val basePath: String,
             http.post("/query_gtx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
                 handleGTXQueries(request)
             }
+
+            http.get("/node/$PARAM_BLOCKCHAIN_RID/$SUBQUERY", "application/json") { request, _ ->
+                handleNodeStatusQueries(request)
+            }
         }
 
         http.awaitInitialization()
@@ -256,6 +261,11 @@ class RestApi(private val listenPort: Int, private val basePath: String,
         }
 
         return gson.toJson(response)
+    }
+
+    private fun handleNodeStatusQueries(request: Request): String {
+        logger.debug("Request body: ${request.body()}")
+        return model(request).nodeQuery(request.params(SUBQUERY))
     }
 
     private fun checkTxHashHex(request: Request): String {
