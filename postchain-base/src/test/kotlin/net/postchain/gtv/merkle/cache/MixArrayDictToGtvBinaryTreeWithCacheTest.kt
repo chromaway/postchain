@@ -39,27 +39,36 @@ class MixArrayDictToGtvBinaryTreeWithCacheTest {
         val gtvInnerArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf4()
         val root1 = gtvInnerArr.merkleHash(calculator)
 
-        val maxTotalLookups = 4 + 1 // The outer GtvArray must be counted too
+        val maxTotalLookups = 4  // The outer GtvArray is not counted
         val cacheMisses1 = maxTotalLookups
         checkStats(0, 0, cacheMisses1, memoization)
 
         // ------------------- Do dict with array ---------------------
-        val expectedTree = "  +   \n" +
-                        "/ \\ \n" +
-                        "one (0802040404050204060407)       \n" // <-- The entire sub tree is just a hash
+        val ln = System.lineSeparator()
+        val expectedTree =  "       +               $ln" +
+                "      / \\       $ln" +
+                "     /   \\      $ln" +
+                "    /     \\     $ln" +
+                "   /       \\    $ln" +
+                "   one       +       $ln" +
+                "          / \\   $ln" +
+                "         /   \\  $ln" +
+                " .   .   +   +   $ln" +
+                "        / \\ / \\ $ln" +
+                "- - - - (0202) (0203) (0204) (0205) "
 
         val treePrintout = buildTreeOfDict1WithSubArray4(calculator.memoization)
-        //println(treeHolder.treePrintout)
+        //println(treePrintout)
         Assert.assertEquals(expectedTree.trim(), treePrintout.trim())
 
-        val maxTotalLookups2 = 2 + 0 // The outer Dict will NOT be counted, since the BinaryTreeFacotry does not look at root element
-        val potentialHits = 1 // the entire inner array
+        val maxTotalLookups2 = 5
+        val potentialHits = 4
         val realTotalHits = potentialHits // We expect success
-        val newMisses = (maxTotalLookups2 - realTotalHits) // 2 - 1 = 1
+        val newMisses = (maxTotalLookups2 - realTotalHits) // 5 - 4 = 1
 
         val cacheLocalHist2 = 0 // We are not re-using the instances
-        val cacheGlobalHits2 = realTotalHits - cacheLocalHist2
+        val cacheGlobalHits2 = realTotalHits - cacheLocalHist2 // 4 - 0
         val cacheMisses2 = cacheMisses1 + newMisses  // 5 + 1
-        checkStats(cacheLocalHist2, cacheGlobalHits2, cacheMisses2, memoization) // 0, 1, 6
+        checkStats(cacheLocalHist2, cacheGlobalHits2, cacheMisses2, memoization) // 0, 4, 6
     }
 }

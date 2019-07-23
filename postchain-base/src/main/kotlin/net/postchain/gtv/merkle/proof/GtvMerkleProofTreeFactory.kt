@@ -30,16 +30,16 @@ class GtvMerkleProofTreeFactory: MerkleProofTreeFactory<Gtv>()   {
             orginalTree: GtvBinaryTree,
             calculator: MerkleHashCalculator<Gtv>
     ): GtvMerkleProofTree {
-        if (logger.isDebugEnabled) {
-            logger.debug("--------------------------------------------")
-            logger.debug("--- Converting binary tree to proof tree ---")
-            logger.debug("--------------------------------------------")
+        if (logger.isTraceEnabled) {
+            logger.trace("--------------------------------------------")
+            logger.trace("--- Converting binary tree to proof tree ---")
+            logger.trace("--------------------------------------------")
         }
         val rootElement = buildFromBinaryTreeInternal(orginalTree.root, calculator)
-        if (logger.isDebugEnabled) {
-            logger.debug("--------------------------------------------")
-            logger.debug("--- /Converting binary tree to proof tree --")
-            logger.debug("--------------------------------------------")
+        if (logger.isTraceEnabled) {
+            logger.trace("--------------------------------------------")
+            logger.trace("--- /Converting binary tree to proof tree --")
+            logger.trace("--------------------------------------------")
         }
         return GtvMerkleProofTree(rootElement, orginalTree.root.getNrOfBytes())
     }
@@ -62,17 +62,26 @@ class GtvMerkleProofTreeFactory: MerkleProofTreeFactory<Gtv>()   {
                 if (pathElem != null) {
                     if (pathElem is GtvPathLeafElement) {
                         // Don't convert it
-                        if (logger.isDebugEnabled) { logger.debug("Prove the leaf with content: $content") }
+                        if (logger.isTraceEnabled) { logger.trace("Prove the leaf with content: $content") }
                         ProofValueGtvLeaf(content, currentElement.sizeInBytes, pathElem.previous!!)
                     } else {
                         throw UserMistake("The path and structure don't match. We are at a leaf, but path elem is not a leaf: $pathElem ")
                     }
                 } else {
-                    // Make it a hash
-                    if (logger.isDebugEnabled) { logger.debug("Hash the leaf with content: $content") }
-                    val hashCarrier = calculator.calculateLeafHash(content)
-                    val summary = MerkleHashSummary(hashCarrier, currentElement.getNrOfBytes())
-                    calculator.memoization.add(content, summary)
+                    val hashCarrier: Hash = if (content is GtvNull && content.getCachedMerkleHash() != null) {
+                        // Just to take care of the GtvNull case
+                        if (logger.isTraceEnabled) { logger.trace("Hash the leaf with GtvNull, no need to calculate since have the hash") }
+                        content.getCachedMerkleHash()!!.merkleHash
+                    } else {
+                        // Not GtvNull -> Make it a hash
+                        if (logger.isTraceEnabled) { logger.trace("Hash the leaf with content: $content") }
+                        val hashCarrier = calculator.calculateLeafHash(content)
+                        val summary = MerkleHashSummary(hashCarrier, currentElement.getNrOfBytes())
+                        if (content is GtvPrimitive) {
+                            calculator.memoization.add(content, summary)
+                        }
+                        hashCarrier
+                    }
                     ProofHashedLeaf(hashCarrier)
                 }
             }
@@ -83,14 +92,14 @@ class GtvMerkleProofTreeFactory: MerkleProofTreeFactory<Gtv>()   {
                 if (pathElem != null) {
                     if (pathElem is GtvPathLeafElement) {
                         // Don't convert it
-                        if (logger.isDebugEnabled) { logger.debug("Prove the node with content: $content") }
+                        if (logger.isTraceEnabled) { logger.trace("Prove the node with content: $content") }
                         ProofValueGtvLeaf(content, currentElement.getNrOfBytes(), pathElem.previous!!)
                     } else {
-                        if (logger.isDebugEnabled) { logger.debug("Part of a path (=$pathElem), but not leaf so convert") }
+                        if (logger.isTraceEnabled) { logger.trace("Part of a path (=$pathElem), but not leaf so convert") }
                         convertNode(currentElement, calculator)
                     }
                 } else {
-                    if (logger.isDebugEnabled) { logger.debug("Not part of a path, so convert node of type; ${currentElement::class.simpleName}") }
+                    if (logger.isTraceEnabled) { logger.trace("Not part of a path, so convert node of type; ${currentElement::class.simpleName}") }
                     convertNode(currentElement, calculator)
                 }
             }
@@ -100,6 +109,7 @@ class GtvMerkleProofTreeFactory: MerkleProofTreeFactory<Gtv>()   {
             else -> throw IllegalStateException("Cannot handle $currentElement")
         }
     }
+
 
     override fun buildNodeOfCorrectType(currentNode: Node, left: MerkleProofElement, right: MerkleProofElement): ProofNode {
         return when (currentNode) {
@@ -113,10 +123,10 @@ class GtvMerkleProofTreeFactory: MerkleProofTreeFactory<Gtv>()   {
     private fun extractSearchablePathElement(currentNode: SubTreeRootNode<Gtv>): SearchableGtvPathElement? {
         val pathElem = currentNode.getPathElement()
         return if (pathElem != null) {
-            logger.debug("SubTreeRootNode with pathElem: $pathElem")
+            if (logger.isTraceEnabled) { logger.trace("SubTreeRootNode with pathElem: $pathElem") }
             (pathElem as GtvPathElement).previous
         } else {
-            logger.debug("SubTreeRootNode without pathElem")
+            if (logger.isTraceEnabled) { logger.trace("SubTreeRootNode without pathElem") }
             null
         }
 
@@ -180,16 +190,16 @@ class GtvMerkleProofTreeFactory: MerkleProofTreeFactory<Gtv>()   {
     private fun deserializePathElement(src: Gtv): SearchableGtvPathElement? {
         return when(src) {
             is GtvString -> {
-                if (logger.isDebugEnabled) { logger.debug("Deserialize proof path dict key : ${src.string}") }
+                if (logger.isTraceEnabled) { logger.trace("Deserialize proof path dict key : ${src.string}") }
                 DictGtvPathElement(null, src.string)
             }
             is GtvInteger -> {
                 val l = src.integer.toLong()
                 if (l != GtvMerkleBasics.UNKNOWN_COLLECTION_POSITION) {
-                    if (logger.isDebugEnabled) { logger.debug("Deserialize proof path array path index : $l") }
+                    if (logger.isTraceEnabled) { logger.trace("Deserialize proof path array path index : $l") }
                     ArrayGtvPathElement(null, l.toInt())
                 } else {
-                    if (logger.isDebugEnabled) { logger.debug("No path element for this GTV: ${src.type}") }
+                    if (logger.isTraceEnabled) { logger.trace("No path element for this GTV: ${src.type}") }
                     null
                 }
             }

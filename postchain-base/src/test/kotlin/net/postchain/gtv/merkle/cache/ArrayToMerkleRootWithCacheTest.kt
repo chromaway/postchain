@@ -33,7 +33,7 @@ class ArrayToMerkleRootWithCacheTest {
         val gtvInnerArr = ArrayToGtvBinaryTreeHelper.buildGtvArrInnerOf3()
         val root1 = gtvInnerArr.merkleHash(calculator)
 
-        val maxTotalLookups = 3 + 1 // The outer GtvArray must be counted too
+        val maxTotalLookups = 3  // The outer GtvArray is not counted
         val cacheMisses1 = maxTotalLookups
         checkStats(0, 0, cacheMisses1, memoization)
 
@@ -79,15 +79,15 @@ class ArrayToMerkleRootWithCacheTest {
                         "                        / \\                                     \n" +
                         "- - - - - - - - - - - - 1 9 - - - - - - - - - - - - - - - - - - "  */
 
-        val maxTotalLookups2 = 7 + 1 // The outer GtvArr must be counted too
-        val potentialHits = 3 // 1, 3, and the entire inner array
+        val maxTotalLookups2 = (7 -1) + 3  // The outer(only has 6 vals) and inner
+        val potentialHits = 2 + 3
         val realTotalHits = potentialHits // We expect all to succeed
-        val newMisses = (maxTotalLookups2 - realTotalHits) // 8 - 3 = 5
+        val newMisses = (maxTotalLookups2 - realTotalHits) // 9 - 5 = 4
 
         val cacheLocalHist2 = 0 // We are not re-using the instances
         val cacheGlobalHits2 = realTotalHits - cacheLocalHist2
-        val cacheMisses2 = cacheMisses1 + newMisses  // 4 + 5
-        checkStats(cacheLocalHist2, cacheGlobalHits2, cacheMisses2, memoization) // 0, 3, 9
+        val cacheMisses2 = cacheMisses1 + newMisses  // 3 + 4
+        checkStats(cacheLocalHist2, cacheGlobalHits2, cacheMisses2, memoization) // 0, 5, 7
 
 
     }

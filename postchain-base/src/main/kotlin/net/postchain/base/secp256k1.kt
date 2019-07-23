@@ -126,11 +126,12 @@ fun secp256k1_ecdh(privKey: ByteArray, pubKey: ByteArray): ByteArray {
  *
  * (See super class for doc)
  */
-class Secp256k1SigMaker(val pubKey: ByteArray, val privKey: ByteArray, val digestFun: (ByteArray) -> Hash): SigMaker {
+class Secp256k1SigMaker(val pubKey: ByteArray, val privKey: ByteArray, val digestFun: (ByteArray) -> Hash) : SigMaker {
     override fun signMessage(msg: ByteArray): Signature {
-        val digestedMsg =digestFun(msg)
+        val digestedMsg = digestFun(msg)
         return signDigest(digestedMsg)
     }
+
     override fun signDigest(digest: Hash): Signature {
         return Signature(pubKey, secp256k1_sign(digest, privKey))
     }

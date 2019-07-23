@@ -51,7 +51,8 @@ import kotlin.test.assertEquals
 
 class ArrayToMerkleProofTreeTest {
 
-    val proofFactory =GtvMerkleProofTreeFactory()
+    private val ln = System.lineSeparator()
+    private val proofFactory =GtvMerkleProofTreeFactory()
 
     // ---------------------
     // 1. First we test to build a proof where the value-to-be-proved a primitive type value in the array.
@@ -68,8 +69,8 @@ class ArrayToMerkleProofTreeTest {
         val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf1()
 
         val expectedTree =
-                " +   \n" +
-                "/ \\ \n" +
+                " +   $ln" +
+                "/ \\ $ln" +
                 "*1 0000000000000000000000000000000000000000000000000000000000000000"
 
         val merkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
@@ -90,20 +91,20 @@ class ArrayToMerkleProofTreeTest {
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
         //println("Serilalized: $serialize")
 
-        val expectedSerialization = "GtvArray(array=[\n" +
-                "  GtvInteger(integer=103), \n" +  // 103 =  node type is array
-                "  GtvInteger(integer=1), \n" +  // lenght of array
-                "  GtvInteger(integer=-10),\n" + // (no path/position given)
-                "  GtvArray(array=[\n" +
-                "    GtvInteger(integer=101), \n" + // 101 = value to prove
-                "    GtvInteger(integer=0), \n" + //path/position = 0
-                "    GtvInteger(integer=1)\n" + // Actual value
-                "  ]), \n" +
-                "  GtvArray(array=[\n" +
-                "    GtvInteger(integer=100), \n" + // 100 = hash
-                "    GtvByteArray(bytearray=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])\n" +
-                "  ])\n" +
-                "])\n"
+        val expectedSerialization = "GtvArray(array=[$ln" +
+                "  GtvInteger(integer=103), $ln" +  // 103 =  node type is array
+                "  GtvInteger(integer=1), $ln" +  // lenght of array
+                "  GtvInteger(integer=-10),$ln" + // (no path/position given)
+                "  GtvArray(array=[$ln" +
+                "    GtvInteger(integer=101), $ln" + // 101 = value to prove
+                "    GtvInteger(integer=0), $ln" + //path/position = 0
+                "    GtvInteger(integer=1)$ln" + // Actual value
+                "  ]), $ln" +
+                "  GtvArray(array=[$ln" +
+                "    GtvInteger(integer=100), $ln" + // 100 = hash
+                "    GtvByteArray(bytearray=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])$ln" +
+                "  ])$ln" +
+                "])$ln"
         Assert.assertEquals(stripWhite(expectedSerialization), stripWhite(serialize.toString())) // Not really needed, Can be removed
 
         // Serialize -> deserialize
@@ -139,11 +140,11 @@ class ArrayToMerkleProofTreeTest {
         // 0002050206  <-- Combined hash of 3 and 4.
 
         val expectedTree =
-                "   +       \n" +
-                "  / \\   \n" +
-                " /   \\  \n" +
-                " +   0103050306   \n" +
-                "/ \\     \n" +
+                "   +       $ln" +
+                "  / \\   $ln" +
+                " /   \\  $ln" +
+                " +   0103050306   $ln" +
+                "/ \\     $ln" +
                 "*1 0203 - - "
 
         val merkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
@@ -164,27 +165,27 @@ class ArrayToMerkleProofTreeTest {
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
         //println("Serilalized: $serialize")
 
-        val expectedSerialization = "GtvArray(array=[\n" +
-                "  GtvInteger(integer=103), \n" +// 103 = array head node type
-                "  GtvInteger(integer=4), \n" + // length of array
-                "  GtvInteger(integer=-10), \n" + // no path elem
-                "  GtvArray(array=[\n" +
-                "    GtvInteger(integer=102), \n" +
-                "    GtvArray(array=[\n" +
-                "      GtvInteger(integer=101), \n" +// 101 = value to prove
-                "      GtvInteger(integer=0), \n" + // path elem = 0
-                "      GtvInteger(integer=1)\n" +
-                "    ]), \n" +
-                "    GtvArray(array=[\n" +
-                "      GtvInteger(integer=100), \n" +// 100 = hash
-                "      GtvByteArray(bytearray=[2, 3])\n" +
-                "    ])\n" +
-                "  ]), \n" +
-                "  GtvArray(array=[\n" +
-                "    GtvInteger(integer=100), \n" +// 100 = hash
-                "    GtvByteArray(bytearray=[1, 3, 5, 3, 6])\n" +
-                "  ])\n" +
-                "])\n"
+        val expectedSerialization = "GtvArray(array=[$ln" +
+                "  GtvInteger(integer=103), $ln" +// 103 = array head node type
+                "  GtvInteger(integer=4), $ln" + // length of array
+                "  GtvInteger(integer=-10), $ln" + // no path elem
+                "  GtvArray(array=[$ln" +
+                "    GtvInteger(integer=102), $ln" +
+                "    GtvArray(array=[$ln" +
+                "      GtvInteger(integer=101), $ln" +// 101 = value to prove
+                "      GtvInteger(integer=0), $ln" + // path elem = 0
+                "      GtvInteger(integer=1)$ln" +
+                "    ]), $ln" +
+                "    GtvArray(array=[$ln" +
+                "      GtvInteger(integer=100), $ln" +// 100 = hash
+                "      GtvByteArray(bytearray=[2, 3])$ln" +
+                "    ])$ln" +
+                "  ]), $ln" +
+                "  GtvArray(array=[$ln" +
+                "    GtvInteger(integer=100), $ln" +// 100 = hash
+                "    GtvByteArray(bytearray=[1, 3, 5, 3, 6])$ln" +
+                "  ])$ln" +
+                "])$ln"
 
         Assert.assertEquals(stripWhite(expectedSerialization), stripWhite(serialize.toString())) // Not really needed, Can be removed
 
@@ -224,16 +225,16 @@ class ArrayToMerkleProofTreeTest {
         // 00 + [00 + 02070208 + 0108 ]
         // 00 + [00020702080108 ]
         // 00 +  01030803090209
-        val expectedTree = "       +               \n" +
-                "      / \\       \n" +
-                "     /   \\      \n" +
-                "    /     \\     \n" +
-                "   /       \\    \n" +
-                "   +       0102040804090309       \n" +
-                "  / \\           \n" +
-                " /   \\          \n" +
-                " 0103030304   +   .   .   \n" +
-                "    / \\         \n" +
+        val expectedTree = "       +               $ln" +
+                "      / \\       $ln" +
+                "     /   \\      $ln" +
+                "    /     \\     $ln" +
+                "   /       \\    $ln" +
+                "   +       0102040804090309       $ln" +
+                "  / \\           $ln" +
+                " /   \\          $ln" +
+                " 0103030304   +   .   .   $ln" +
+                "    / \\         $ln" +
                 "- - 0204 *4 - - - - "
 
         val merkleProofTree:GtvMerkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
@@ -254,33 +255,33 @@ class ArrayToMerkleProofTreeTest {
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
         //println("Serilalized: $serialize")
 
-        val expectedSerialization = "GtvArray(array=[\n" +
-                "  GtvInteger(integer=103),\n" + // 103 = array head node type
-                "  GtvInteger(integer=7),\n" + // length of array
-                "  GtvInteger(integer=-10),\n" + // no path elem
-                "  GtvArray(array=[\n" +
-                "    GtvInteger(integer=102),\n" + // 102 = dummy node
-                "    GtvArray(array=[\n" +
-                "      GtvInteger(integer=100),\n" + // 100 = hash
-                "      GtvByteArray(bytearray=[1, 3, 3, 3, 4])]),\n" +
-                "      GtvArray(array=[\n" +
-                "        GtvInteger(integer=102),\n" + // 102 = dummy node
-                "        GtvArray(array=[\n" +
-                "          GtvInteger(integer=100),\n" +  // 100 = hash
-                "          GtvByteArray(bytearray=[2, 4])\n" +
-                "        ]),\n" +
-                "        GtvArray(array=[\n" +
-                "          GtvInteger(integer=101),\n" + // 101 = value to prove
-                "          GtvInteger(integer=3),\n" + // path elem = 3
-                "          GtvInteger(integer=4)\n" +
-                "        ])\n" +
-                "      ])\n" +
-                "    ]),\n" +
-                "    GtvArray(array=[\n" +
-                "      GtvInteger(integer=100),\n" + // 100 = hash
-                "      GtvByteArray(bytearray=[1, 2, 4, 8, 4, 9, 3, 9])\n" +
-                "    ])\n" +
-                "  ])\n"
+        val expectedSerialization = "GtvArray(array=[$ln" +
+                "  GtvInteger(integer=103),$ln" + // 103 = array head node type
+                "  GtvInteger(integer=7),$ln" + // length of array
+                "  GtvInteger(integer=-10),$ln" + // no path elem
+                "  GtvArray(array=[$ln" +
+                "    GtvInteger(integer=102),$ln" + // 102 = dummy node
+                "    GtvArray(array=[$ln" +
+                "      GtvInteger(integer=100),$ln" + // 100 = hash
+                "      GtvByteArray(bytearray=[1, 3, 3, 3, 4])]),$ln" +
+                "      GtvArray(array=[$ln" +
+                "        GtvInteger(integer=102),$ln" + // 102 = dummy node
+                "        GtvArray(array=[$ln" +
+                "          GtvInteger(integer=100),$ln" +  // 100 = hash
+                "          GtvByteArray(bytearray=[2, 4])$ln" +
+                "        ]),$ln" +
+                "        GtvArray(array=[$ln" +
+                "          GtvInteger(integer=101),$ln" + // 101 = value to prove
+                "          GtvInteger(integer=3),$ln" + // path elem = 3
+                "          GtvInteger(integer=4)$ln" +
+                "        ])$ln" +
+                "      ])$ln" +
+                "    ]),$ln" +
+                "    GtvArray(array=[$ln" +
+                "      GtvInteger(integer=100),$ln" + // 100 = hash
+                "      GtvByteArray(bytearray=[1, 2, 4, 8, 4, 9, 3, 9])$ln" +
+                "    ])$ln" +
+                "  ])$ln"
 
         Assert.assertEquals(stripWhite(expectedSerialization), stripWhite(serialize.toString())) // Not really needed, Can be removed
 
@@ -311,16 +312,16 @@ class ArrayToMerkleProofTreeTest {
         val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf7()
 
         val expectedTree =
-                "       +               \n" +
-                "      / \\       \n" +
-                "     /   \\      \n" +
-                "    /     \\     \n" +
-                "   /       \\    \n" +
-                "   +       +       \n" +
-                "  / \\     / \\   \n" +
-                " /   \\   /   \\  \n" +
-                " 0103030304   +   0103070308   *7   \n" +
-                "    / \\         \n" +
+                "       +               $ln" +
+                "      / \\       $ln" +
+                "     /   \\      $ln" +
+                "    /     \\     $ln" +
+                "   /       \\    $ln" +
+                "   +       +       $ln" +
+                "  / \\     / \\   $ln" +
+                " /   \\   /   \\  $ln" +
+                " 0103030304   +   0103070308   *7   $ln" +
+                "    / \\         $ln" +
                 "- - 0204 *4 - - - - "
 
         val merkleProofTree = orgGtvArr.generateProof(gtvPaths, calculator)
@@ -351,45 +352,44 @@ class ArrayToMerkleProofTreeTest {
         val gtvPath = GtvPathFactory.buildFromArrayOfPointers(path)
         val gtvPaths = GtvPathSet(setOf(gtvPath))
         val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrOf7WithInner3()
-
-
+        
         val expectedTree =
-                "                               +                                                               \n" +
-                "                              / \\                               \n" +
-                "                             /   \\                              \n" +
-                "                            /     \\                             \n" +
-                "                           /       \\                            \n" +
-                "                          /         \\                           \n" +
-                "                         /           \\                          \n" +
-                "                        /             \\                         \n" +
-                "                       /               \\                        \n" +
-                "                      /                 \\                       \n" +
-                "                     /                   \\                      \n" +
-                "                    /                     \\                     \n" +
-                "                   /                       \\                    \n" +
-                "                  /                         \\                   \n" +
-                "                 /                           \\                  \n" +
-                "                /                             \\                 \n" +
-                "               /                               \\                \n" +
-                "               +                               0102040804090309                               \n" +
-                "              / \\                                               \n" +
-                "             /   \\                                              \n" +
-                "            /     \\                                             \n" +
-                "           /       \\                                            \n" +
-                "          /         \\                                           \n" +
-                "         /           \\                                          \n" +
-                "        /             \\                                         \n" +
-                "       /               \\                                        \n" +
-                "       0103030304               +               .               .               \n" +
-                "                      / \\                                       \n" +
-                "                     /   \\                                      \n" +
-                "                    /     \\                                     \n" +
-                "                   /       \\                                    \n" +
-                "   .       .       0204       *       .       .       .       .       \n" +
-                "                          / \\                                   \n" +
-                "                         /   \\                                  \n" +
-                " .   .   .   .   .   .   +   0204   .   .   .   .   .   .   .   .   \n" +
-                "                        / \\                                     \n" +
+                "                               +                                                               $ln" +
+                "                              / \\                               $ln" +
+                "                             /   \\                              $ln" +
+                "                            /     \\                             $ln" +
+                "                           /       \\                            $ln" +
+                "                          /         \\                           $ln" +
+                "                         /           \\                          $ln" +
+                "                        /             \\                         $ln" +
+                "                       /               \\                        $ln" +
+                "                      /                 \\                       $ln" +
+                "                     /                   \\                      $ln" +
+                "                    /                     \\                     $ln" +
+                "                   /                       \\                    $ln" +
+                "                  /                         \\                   $ln" +
+                "                 /                           \\                  $ln" +
+                "                /                             \\                 $ln" +
+                "               /                               \\                $ln" +
+                "               +                               0102040804090309                               $ln" +
+                "              / \\                                               $ln" +
+                "             /   \\                                              $ln" +
+                "            /     \\                                             $ln" +
+                "           /       \\                                            $ln" +
+                "          /         \\                                           $ln" +
+                "         /           \\                                          $ln" +
+                "        /             \\                                         $ln" +
+                "       /               \\                                        $ln" +
+                "       0103030304               +               .               .               $ln" +
+                "                      / \\                                       $ln" +
+                "                     /   \\                                      $ln" +
+                "                    /     \\                                     $ln" +
+                "                   /       \\                                    $ln" +
+                "   .       .       0204       *       .       .       .       .       $ln" +
+                "                          / \\                                   $ln" +
+                "                         /   \\                                  $ln" +
+                " .   .   .   .   .   .   +   0204   .   .   .   .   .   .   .   .   $ln" +
+                "                        / \\                                     $ln" +
                 "- - - - - - - - - - - - 0202 *9 - - - - - - - - - - - - - - - - - - "
 
 
@@ -423,16 +423,16 @@ class ArrayToMerkleProofTreeTest {
         // == 08020404040C0305
 
         val expectedTree =
-                "       +               \n" +
-                "      / \\       \n" +
-                "     /   \\      \n" +
-                "    /     \\     \n" +
-                "   /       \\    \n" +
-                "   +       0102040804090309       \n" +
-                "  / \\           \n" +
-                " /   \\          \n" +
-                " 0103030304   +   .   .   \n" +
-                "    / \\         \n" +
+                "       +               $ln" +
+                "      / \\       $ln" +
+                "     /   \\      $ln" +
+                "    /     \\     $ln" +
+                "   /       \\    $ln" +
+                "   +       0102040804090309       $ln" +
+                "  / \\           $ln" +
+                " /   \\          $ln" +
+                " 0103030304   +   .   .   $ln" +
+                "    / \\         $ln" +
                 "- - *3 08020404040C0305 - - - - "
 
 
@@ -465,16 +465,16 @@ class ArrayToMerkleProofTreeTest {
         val gtvPaths = GtvPathSet(setOf(gtvPath))
         val orgGtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrOf7WithInner3()
 
-        val expectedTree ="       +               \n" +
-                "      / \\       \n" +
-                "     /   \\      \n" +
-                "    /     \\     \n" +
-                "   /       \\    \n" +
-                "   +       0102040804090309       \n" +
-                "  / \\           \n" +
-                " /   \\          \n" +
-                " 0103030304   +   .   .   \n" +
-                "    / \\         \n" +
+        val expectedTree ="       +               $ln" +
+                "      / \\       $ln" +
+                "     /   \\      $ln" +
+                "    /     \\     $ln" +
+                "   /       \\    $ln" +
+                "   +       0102040804090309       $ln" +
+                "  / \\           $ln" +
+                " /   \\          $ln" +
+                " 0103030304   +   .   .   $ln" +
+                "    / \\         $ln" +
                 "- - 0204 *GtvArray(array=[GtvInteger(integer=1), GtvInteger(integer=9), GtvInteger(integer=3)]) - - - - "
 
 
@@ -496,38 +496,38 @@ class ArrayToMerkleProofTreeTest {
         val serialize: GtvArray = merkleProofTree.serializeToGtv()
         println("Serilalized: $serialize")
 
-        val expectedSerialization = "GtvArray(array=[\n" +
-                "  GtvInteger(integer=103), \n" + // 103 = array head node type
-                "  GtvInteger(integer=7), \n" + // length of array
-                "  GtvInteger(integer=-10), \n" + // no path elem
-                "  GtvArray(array=[\n" +
-                "    GtvInteger(integer=102), \n" + // 102 = dummy node
-                "    GtvArray(array=[\n" +
-                "      GtvInteger(integer=100), \n" + // 100 = hash
-                "      GtvByteArray(bytearray=[1, 3, 3, 3, 4])\n" +
-                "    ]),\n" +
-                "    GtvArray(array=[\n" +
-                "      GtvInteger(integer=102), \n" + // 102 = dummy node
-                "      GtvArray(array=[\n" +
-                "        GtvInteger(integer=100), \n" + // 100 = hash
-                "        GtvByteArray(bytearray=[2, 4])\n" +
-                "      ]), \n" +
-                "      GtvArray(array=[\n" +
-                "        GtvInteger(integer=101), \n" + // 101 = value to prove
-                "        GtvInteger(integer=3), \n" + // path elem = 2
-                "        GtvArray(array=[\n" +  // Here the value to prove is a regular GtvArray. Interesting to see that this is deserialized propely (i.e. kept)
-                "          GtvInteger(integer=1), \n" +
-                "          GtvInteger(integer=9), \n" +
-                "          GtvInteger(integer=3)\n" +
-                "        ])\n" +
-                "      ])\n" +
-                "    ])\n" +
-                "  ]), \n" +
-                "  GtvArray(array=[\n" +
-                "    GtvInteger(integer=100), \n" + // 100 = hash
-                "    GtvByteArray(bytearray=[1, 2, 4, 8, 4, 9, 3, 9])\n" +
-                "  ])\n" +
-                "])\n"
+        val expectedSerialization = "GtvArray(array=[$ln" +
+                "  GtvInteger(integer=103), $ln" + // 103 = array head node type
+                "  GtvInteger(integer=7), $ln" + // length of array
+                "  GtvInteger(integer=-10), $ln" + // no path elem
+                "  GtvArray(array=[$ln" +
+                "    GtvInteger(integer=102), $ln" + // 102 = dummy node
+                "    GtvArray(array=[$ln" +
+                "      GtvInteger(integer=100), $ln" + // 100 = hash
+                "      GtvByteArray(bytearray=[1, 3, 3, 3, 4])$ln" +
+                "    ]),$ln" +
+                "    GtvArray(array=[$ln" +
+                "      GtvInteger(integer=102), $ln" + // 102 = dummy node
+                "      GtvArray(array=[$ln" +
+                "        GtvInteger(integer=100), $ln" + // 100 = hash
+                "        GtvByteArray(bytearray=[2, 4])$ln" +
+                "      ]), $ln" +
+                "      GtvArray(array=[$ln" +
+                "        GtvInteger(integer=101), $ln" + // 101 = value to prove
+                "        GtvInteger(integer=3), $ln" + // path elem = 2
+                "        GtvArray(array=[$ln" +  // Here the value to prove is a regular GtvArray. Interesting to see that this is deserialized propely (i.e. kept)
+                "          GtvInteger(integer=1), $ln" +
+                "          GtvInteger(integer=9), $ln" +
+                "          GtvInteger(integer=3)$ln" +
+                "        ])$ln" +
+                "      ])$ln" +
+                "    ])$ln" +
+                "  ]), $ln" +
+                "  GtvArray(array=[$ln" +
+                "    GtvInteger(integer=100), $ln" + // 100 = hash
+                "    GtvByteArray(bytearray=[1, 2, 4, 8, 4, 9, 3, 9])$ln" +
+                "  ])$ln" +
+                "])$ln"
 
         Assert.assertEquals(stripWhite(expectedSerialization), stripWhite(serialize.toString())) // Not really needed, Can be removed
 

@@ -31,3 +31,5 @@ class DummyModule1 : AbstractDummyModule()
 class DummyModule2 : AbstractDummyModule()
 
 class DummyModule3 : AbstractDummyModule()
+
+class DummyModule4 : AbstractDummyModule()

@@ -31,17 +31,17 @@ object GtvVirtualFactory: KLogging() {
      * @return a [GtvVirtual] that corresponds to the original [Gtv]
      */
     fun buildGtvVirtual(proofTree: GtvMerkleProofTree): GtvVirtual {
-        if (logger.isDebugEnabled) {
-            logger.debug("--------------------------------------------")
-            logger.debug("--- Converting proof tree to virtual GTV ---")
-            logger.debug("--------------------------------------------")
+        if (logger.isTraceEnabled) {
+            logger.trace("--------------------------------------------")
+            logger.trace("--- Converting proof tree to virtual GTV ---")
+            logger.trace("--------------------------------------------")
         }
         val res = buildGtvVirtualInner(proofTree.root)
-        if (logger.isDebugEnabled) {
-            logger.debug("Virtual GTV Built: $res")
-            logger.debug("--------------------------------------------")
-            logger.debug("--- /Converting proof tree to virtual GTV --")
-            logger.debug("--------------------------------------------")
+        if (logger.isTraceEnabled) {
+            logger.trace("Virtual GTV Built: $res")
+            logger.trace("--------------------------------------------")
+            logger.trace("--- /Converting proof tree to virtual GTV --")
+            logger.trace("--------------------------------------------")
         }
         return res
     }
@@ -71,11 +71,11 @@ object GtvVirtualFactory: KLogging() {
     fun buildGtvVirtualArray(arrHeadElement: ProofNodeGtvArrayHead, isRoot: Boolean = false): GtvVirtualArray {
         return if (isRoot) {
             val tmpSet = handleArrLeftAndRight(arrHeadElement.left, arrHeadElement.right)
-            if (logger.isDebugEnabled) { logger.debug("Building root array (found ${tmpSet.innerSet.size} elements).") }
+            if (logger.isTraceEnabled) { logger.trace("Building root array (found ${tmpSet.innerSet.size} elements).") }
             tmpSet.buildGtvVirtualArray(arrHeadElement, arrHeadElement.size)
         } else {
             val tmpSet = buildGtvVirtualArrayInner(arrHeadElement)
-            if (logger.isDebugEnabled) { logger.debug("Building array (found ${tmpSet.innerSet.size} elements).") }
+            if (logger.isTraceEnabled) { logger.trace("Building array (found ${tmpSet.innerSet.size} elements).") }
             tmpSet.buildGtvVirtualArray(arrHeadElement, arrHeadElement.size)
         }
     }
@@ -101,14 +101,14 @@ object GtvVirtualFactory: KLogging() {
                 val index = getIndex(currentElement.pathElem!!)
                 val tmpMap = handleLDictLeftAndRight(currentElement.left, currentElement.right)
                 val dict = GtvVirtualDictionary(currentElement, tmpMap, currentElement.size)
-                if (logger.isDebugEnabled) { logger.debug("Put virtual dict (size: ${dict.getSize()} ) in array at pos $index.") }
+                if (logger.isTraceEnabled) { logger.trace("Put virtual dict (size: ${dict.getSize()} ) in array at pos $index.") }
                 ArrayIndexAndGtvList(index, dict)
             }
             is ProofNodeGtvArrayHead -> {                                     // Valuable leaf (at the the beginning of a new array-tree)
                 val index = getIndex(currentElement.pathElem!!)
                 val tmpSet = handleArrLeftAndRight(currentElement.left, currentElement.right)
                 val arr = tmpSet.buildGtvVirtualArray(currentElement, currentElement.size)
-                if (logger.isDebugEnabled) { logger.debug("Put virtual array (size: ${arr.getSize()} ) in array at pos $index..") }
+                if (logger.isTraceEnabled) { logger.trace("Put virtual array (size: ${arr.getSize()} ) in array at pos $index..") }
                 ArrayIndexAndGtvList(index, arr)
             }
             is ProofNode -> {                                                 // Meaningless intermediary (does not represent anything in the GtvVirtual)
@@ -134,11 +134,11 @@ object GtvVirtualFactory: KLogging() {
     fun buildGtvVirtualDictionary(dictHeadElement: ProofNodeGtvDictHead, isRoot: Boolean = false): GtvVirtualDictionary {
         return if (isRoot) {
             val tmpMap = handleLDictLeftAndRight(dictHeadElement.left, dictHeadElement.right)
-            if (logger.isDebugEnabled) { logger.debug("Building root dict (found ${tmpMap.keys.size} elements).") }
+            if (logger.isTraceEnabled) { logger.trace("Building root dict (found ${tmpMap.keys.size} elements).") }
             GtvVirtualDictionary(dictHeadElement, tmpMap, dictHeadElement.size)
         } else {
             val tmpMap = buildGtvVirtualDictionaryInner(dictHeadElement)
-            if (logger.isDebugEnabled) { logger.debug("Building dict (found ${tmpMap.keys.size} elements).") }
+            if (logger.isTraceEnabled) { logger.trace("Building dict (found ${tmpMap.keys.size} elements).") }
             GtvVirtualDictionary(dictHeadElement, tmpMap, dictHeadElement.size)
         }
     }
@@ -162,14 +162,14 @@ object GtvVirtualFactory: KLogging() {
                 val key = (currentElement.pathElem as DictGtvPathElement).key
                 val dictMap = handleLDictLeftAndRight(currentElement.left, currentElement.right)
                 val dict = GtvVirtualDictionary(currentElement, dictMap, currentElement.size)
-                if (logger.isDebugEnabled) { logger.debug("Put virtual dict (size: ${dict.getSize()} ) in array at key: $key.") }
+                if (logger.isTraceEnabled) { logger.trace("Put virtual dict (size: ${dict.getSize()} ) in array at key: $key.") }
                 mutableMapOf(Pair(key, dict))
             }
             is ProofNodeGtvArrayHead -> {                                                  // Valuable leaf (at the the beginning of a new array-tree)
                 val key = (currentElement.pathElem as DictGtvPathElement).key
                 val tmpSet = handleArrLeftAndRight(currentElement.left, currentElement.right)
                 val arr = tmpSet.buildGtvVirtualArray(currentElement, currentElement.size)
-                if (logger.isDebugEnabled) { logger.debug("Put virtual array (size: ${arr.getSize()} ) in array at key: $key.") }
+                if (logger.isTraceEnabled) { logger.trace("Put virtual array (size: ${arr.getSize()} ) in array at key: $key.") }
                 mutableMapOf(Pair(key, arr))
             }
             is ProofNode -> {                                                              // Meaningless intermediary (does not represent anything in the GtvVirtual)

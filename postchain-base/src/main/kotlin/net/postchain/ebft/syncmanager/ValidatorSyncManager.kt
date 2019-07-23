@@ -5,8 +5,8 @@ package net.postchain.ebft.syncmanager
 import mu.KLogging
 import net.postchain.common.toHex
 import net.postchain.core.*
-import net.postchain.ebft.*
 import net.postchain.core.Signature
+import net.postchain.ebft.*
 import net.postchain.ebft.message.*
 import net.postchain.ebft.message.BlockData
 import net.postchain.ebft.message.Transaction
@@ -52,19 +52,18 @@ private class StatusSender(
     }
 }
 
-const val StatusLogInterval = 10000L
-
 /**
  * The ValidatorSyncManager handles communications with our peers.
  */
 class ValidatorSyncManager(
+        private val blockchainProcessName: String,
         private val signers: List<ByteArray>,
         private val statusManager: StatusManager,
         private val blockManager: BlockManager,
         private val blockDatabase: BlockDatabase,
         private val communicationManager: CommunicationManager<Message>,
         private val txQueue: TransactionQueue,
-        val blockchainConfiguration: BlockchainConfiguration
+        private val blockchainConfiguration: BlockchainConfiguration
 ) : SyncManagerBase {
     private val revoltTracker = RevoltTracker(10000, statusManager)
     private val statusSender = StatusSender(1000, statusManager, communicationManager)
@@ -76,26 +75,26 @@ class ValidatorSyncManager(
 
     companion object : KLogging()
 
-    private val nodes = communicationManager.peers().map { XPeerID(it.pubKey) }
+    //    private val nodes = communicationManager.peers().map { XPeerID(it.pubKey) }
+    private val signersIds = signers.map { XPeerID(it) }
 
-    private fun getPeerIndex(peerID: XPeerID): Int {
-        return nodes.indexOf(peerID)
-    }
+    private fun indexOfValidator(peerId: XPeerID): Int = signersIds.indexOf(peerId)
+    //        return nodes.indexOf(peerID)
 
-    // get n-th validator node XPeerID
-    private fun validatorAtIndex(n: Int): XPeerID {
-        return XPeerID(signers[n])
-    }
+    private fun validatorAtIndex(index: Int): XPeerID = signersIds[index]
 
     /**
      * Handle incoming messages
      */
     private fun dispatchMessages() {
         for (packet in communicationManager.getPackets()) {
-            val xPeerId = packet.first
-            val nodeIndex = getPeerIndex(xPeerId)
-            val message = packet.second
-            logger.debug { "Received message type ${message.javaClass.simpleName} from node $nodeIndex" }
+            val (xPeerId, message) = packet
+
+            val nodeIndex = indexOfValidator(xPeerId)
+            if (nodeIndex == -1) continue
+
+            logger.trace { "[$blockchainProcessName]: Received message type ${message.javaClass.simpleName} from node $nodeIndex" }
+
             try {
                 when (message) {
                     // same case for replica and validator node
@@ -116,9 +115,9 @@ class ValidatorSyncManager(
                                     val signature = Signature(message.sig.subjectID, message.sig.data)
                                     val smBlockRID = this.statusManager.myStatus.blockRID
                                     if (smBlockRID == null) {
-                                        logger.info("Received signature not needed")
+                                        logger.info("[$blockchainProcessName]: Received signature not needed")
                                     } else if (!smBlockRID.contentEquals(message.blockRID)) {
-                                        logger.info("Receive signature for a different block")
+                                        logger.info("[$blockchainProcessName]: Receive signature for a different block")
                                     } else if (this.blockDatabase.verifyBlockSignature(signature)) {
                                         this.statusManager.onCommitSignature(nodeIndex, message.blockRID, signature)
                                     }
@@ -141,7 +140,7 @@ class ValidatorSyncManager(
                     }
                 }
             } catch (e: Exception) {
-                logger.error("Couldn't handle message $message. Ignoring and continuing", e)
+                logger.error("[$blockchainProcessName]: Couldn't handle message $message. Ignoring and continuing", e)
             }
         }
     }
@@ -169,7 +168,7 @@ class ValidatorSyncManager(
     private fun sendBlockSignature(nodeIndex: Int, blockRID: ByteArray) {
         val currentBlock = this.blockManager.currentBlock
         if (currentBlock != null && currentBlock.header.blockRID.contentEquals(blockRID)) {
-            if(!statusManager.myStatus.blockRID!!.contentEquals(currentBlock.header.blockRID)) {
+            if (!statusManager.myStatus.blockRID!!.contentEquals(currentBlock.header.blockRID)) {
                 throw ProgrammerMistake("status manager block RID (${statusManager.myStatus.blockRID!!.toHex()}) out of sync with current block RID (${currentBlock.header.blockRID.toHex()})")
             }
             val signature = statusManager.getCommitSignature()
@@ -186,7 +185,7 @@ class ValidatorSyncManager(
             val packet = BlockSignature(blockRID, net.postchain.ebft.message.Signature(it.subjectID, it.data))
             communicationManager.sendPacket(packet, validatorAtIndex(nodeIndex))
         } fail {
-            logger.debug("Error sending BlockSignature", it)
+            logger.debug("[$blockchainProcessName]: Error sending BlockSignature", it)
         }
     }
 
@@ -205,7 +204,7 @@ class ValidatorSyncManager(
                     it.witness!!.getRawData()
             )
             communicationManager.sendPacket(packet, xPeerId)
-        } fail { logger.debug("Error sending CompleteBlock", it) }
+        } fail { logger.debug("[$blockchainProcessName]: Error sending CompleteBlock", it) }
     }
 
     /**
@@ -229,7 +228,7 @@ class ValidatorSyncManager(
      */
     private fun selectRandomNode(match: (NodeStatus) -> Boolean): Int? {
         val matchingIndexes = mutableListOf<Int>()
-        statusManager.nodeStatuses.forEachIndexed{ index, status ->
+        statusManager.nodeStatuses.forEachIndexed { index, status ->
             if (match(status)) matchingIndexes.add(index)
         }
         if (matchingIndexes.isEmpty()) return null
@@ -244,7 +243,7 @@ class ValidatorSyncManager(
      */
     private fun fetchBlockAtHeight(height: Long) {
         val nodeIndex = selectRandomNode { it.height > height } ?: return
-        logger.debug("Fetching block at height $height from node $nodeIndex")
+        logger.debug("[$blockchainProcessName]: Fetching block at height $height from node $nodeIndex")
         communicationManager.sendPacket(GetBlockAtHeight(height), validatorAtIndex(nodeIndex))
     }
 
@@ -256,7 +255,7 @@ class ValidatorSyncManager(
      */
     private fun fetchCommitSignatures(blockRID: ByteArray, nodes: Array<Int>) {
         val message = GetBlockSignature(blockRID)
-        logger.debug("Fetching commit signature for block with RID ${blockRID.toHex()} from nodes ${Arrays.toString(nodes)}")
+        logger.debug("[$blockchainProcessName]: Fetching commit signature for block with RID ${blockRID.toHex()} from nodes ${Arrays.toString(nodes)}")
         nodes.forEach {
             communicationManager.sendPacket(message, validatorAtIndex(it))
         }
@@ -272,7 +271,7 @@ class ValidatorSyncManager(
         val nodeIndex = selectRandomNode {
             it.height == height && (it.blockRID?.contentEquals(blockRID) ?: false)
         } ?: return
-        logger.debug("Fetching unfinished block with RID ${blockRID.toHex()} from node $nodeIndex ")
+        logger.debug("[$blockchainProcessName]: Fetching unfinished block with RID ${blockRID.toHex()} from node $nodeIndex ")
         communicationManager.sendPacket(GetUnfinishedBlock(blockRID), validatorAtIndex(nodeIndex))
     }
 
@@ -305,14 +304,15 @@ class ValidatorSyncManager(
     /**
      * Log status of all nodes including their latest block RID and if they have the signature or not
      */
-    fun logStatus() {
+    private fun logStatus() {
         for ((idx, ns) in statusManager.nodeStatuses.withIndex()) {
             val blockRID = ns.blockRID
             val haveSignature = statusManager.commitSignatures[idx] != null
             logger.info {
-                "Node ${idx} he:${ns.height} ro:${ns.round} st:${ns.state}" +
-                        " ${if (ns.revolting) "R" else ""} blockRID=${if (blockRID == null) "null" else blockRID.toHex()}" +
-                        " havesig:${haveSignature}"
+                "[$blockchainProcessName]: node:$idx he:${ns.height} ro:${ns.round} st:${ns.state}" +
+                        (if (ns.revolting) " R" else "") +
+                        " blockRID:${blockRID?.toHex() ?: "null"}" +
+                        " havesig:$haveSignature"
             }
         }
     }

@@ -4,7 +4,7 @@ import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 
 interface SynchronizationInfrastructure : Shutdownable {
-    fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess
+    fun makeBlockchainProcess(processName: String, engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess
 }
 
 interface BlockchainInfrastructure : SynchronizationInfrastructure {
