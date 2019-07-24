@@ -25,14 +25,18 @@ class SQLModuleIntegrationTest: IntegrationTest() {
         return b.serialize()
     }
 
-    @Test
-    fun testBuildBlock() {
+    private fun overrideConfig() {
         configOverrides.setProperty("blockchain.1.configurationfactory",
                 GTXBlockchainConfigurationFactory::class.qualifiedName)
         configOverrides.setProperty("blockchain.1.gtx.modules",
                 listOf(SQLGTXModuleFactory::class.qualifiedName))
         configOverrides.setProperty("blockchain.1.gtx.sqlmodules",
                 listOf(javaClass.getResource("sqlmodule1.sql").file))
+    }
+
+    @Test
+    fun testBuildBlock() {
+        overrideConfig()
         val node = createDataLayer(0)
 
         enqueueTx(node, makeTx(0, "k", "v"), 0)
@@ -72,4 +76,35 @@ class SQLModuleIntegrationTest: IntegrationTest() {
         println(result)
     }
 
+    @Test
+    fun testQueryWithMultipleParams() {
+        overrideConfig()
+        val node = createDataLayer(0)
+        enqueueTx(node, makeTx(0, "k", "v"), 0)
+        buildBlockAndCommit(node)
+        verifyBlockchainTransactions(node)
+
+        val gson = make_gtx_gson()
+        var result = node.blockQueries.query("""{type: 'test_get_value', q_key: 'k', q_value : 'v'}""").get()
+        var gtxResult = gson.fromJson<GTXValue>(result, GTXValue::class.java)
+        assertEquals(1, gtxResult.getSize())
+    }
+
+    @Test
+    fun testQuerySupportNullableValue() {
+        overrideConfig()
+        val node = createDataLayer(0)
+
+        enqueueTx(node, makeTx(0, "k", "v"), 0)
+        buildBlockAndCommit(node)
+        verifyBlockchainTransactions(node)
+
+        var result = node.blockQueries.query("""{type: 'test_null_value'}""").get()
+        val gson = make_gtx_gson()
+        var gtxResult = gson.fromJson<GTXValue>(result, GTXValue::class.java)
+
+        val hit0 = gtxResult.get(0).asDict()
+        assertNotNull(hit0.get("val"))
+        assertEquals(GTXNull, hit0.get("val"))
+    }
 }
