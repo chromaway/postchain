@@ -3,8 +3,8 @@
 package net.postchain.modules.ft
 
 import net.postchain.core.EContext
-import net.postchain.gtx.GTXValue
-import net.postchain.gtx.decodeGTXValue
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvDecoder.decodeGtv
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.MapListHandler
 import org.apache.commons.dbutils.handlers.ScalarHandler
@@ -28,10 +28,10 @@ open class BaseDBOps: FTDBOps {
                 allowNeg)
     }
 
-    override fun getDescriptor(ctx: EContext, accountID: ByteArray): GTXValue? {
+    override fun getDescriptor(ctx: EContext, accountID: ByteArray): Gtv? {
         val res = r.query(ctx.conn, "SELECT ft_get_account_desc(?, ?)",
                 nullableByteArrayRes, ctx.chainID, accountID)
-        return if (res == null) null else decodeGTXValue(res)
+        return if (res == null) null else decodeGtv(res)
     }
 
     override fun registerAccount(ctx: OpEContext, accountID: ByteArray, accountType: Int, accountDesc: ByteArray) {

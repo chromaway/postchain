@@ -1,6 +1,6 @@
 package net.postchain.integrationtest.reconnection
 
-import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_ID
+import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.integrationtest.assertChainNotStarted
 import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.assertNodeConnectedWith
@@ -46,7 +46,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
             awaitBuiltBlock(it, 0)
         }
         // * Asserting height is 0 for all peers
-        await().atMost(Duration.FIVE_SECONDS)
+        await().atMost(Duration.TEN_SECONDS.multiply(3))
                 .untilAsserted {
                     Assert.assertEquals(0, queries(nodes[0]) { it.getBestHeight() })
                     Assert.assertEquals(0, queries(nodes[1]) { it.getBestHeight() })
@@ -60,7 +60,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
             awaitBuiltBlock(it, 1)
         }
         // * Asserting height is 1 for all peers
-        await().atMost(Duration.FIVE_SECONDS)
+        await().atMost(Duration.TEN_SECONDS.multiply(3))
                 .untilAsserted {
                     Assert.assertEquals(1, queries(nodes[0]) { it.getBestHeight() })
                     Assert.assertEquals(1, queries(nodes[1]) { it.getBestHeight() })
@@ -81,9 +81,9 @@ class FourPeersReconnectionTest : ReconnectionTest() {
                     nodes[3].assertChainNotStarted()
 
                     // network topology is that peer 3 is disconnected from interconnected peers 0, 1, 2
-                    nodes[0].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[1], nodes[2])
-                    nodes[1].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[0], nodes[2])
-                    nodes[2].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[1], nodes[0])
+                    nodes[0].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[1], nodes[2])
+                    nodes[1].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[0], nodes[2])
+                    nodes[2].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[1], nodes[0])
 //                    nodes[3].assertNodeConnectedWith(...) // No assertion because chain already disconnected
                 }
 
@@ -101,10 +101,10 @@ class FourPeersReconnectionTest : ReconnectionTest() {
                     nodes[3].assertChainStarted()
 
                     // network topology is that peers 0, 1, 2, 3 are interconnected
-                    nodes[0].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[1], nodes[2], nodes[3])
-                    nodes[1].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[0], nodes[2], nodes[3])
-                    nodes[2].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[1], nodes[0], nodes[3])
-                    nodes[3].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[1], nodes[2], nodes[0])
+                    nodes[0].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[1], nodes[2], nodes[3])
+                    nodes[1].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[0], nodes[2], nodes[3])
+                    nodes[2].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[1], nodes[0], nodes[3])
+                    nodes[3].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[1], nodes[2], nodes[0])
                 }
 
         /* It's not correct to assert that height is -1 for peer 3
@@ -117,7 +117,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
             awaitBuiltBlock(it, 2)
         }
         // * Asserting height is 2 for all peers
-        await().atMost(Duration.FIVE_SECONDS)
+        await().atMost(Duration.TEN_SECONDS.multiply(3))
                 .untilAsserted {
                     Assert.assertEquals(2, queries(nodes[0]) { it.getBestHeight() })
                     Assert.assertEquals(2, queries(nodes[1]) { it.getBestHeight() })

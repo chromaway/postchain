@@ -2,12 +2,15 @@ package net.postchain.api.rest.json
 
 import com.google.gson.*
 import net.postchain.base.ConfirmationProof
-import net.postchain.base.Side
 import net.postchain.common.toHex
 import net.postchain.core.MultiSigBlockWitness
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.make_gtv_gson
 import java.lang.reflect.Type
 
 internal class ConfirmationProofSerializer : JsonSerializer<ConfirmationProof> {
+
+    val gson = make_gtv_gson()
 
     override fun serialize(src: ConfirmationProof?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
         val proof = JsonObject()
@@ -25,14 +28,8 @@ internal class ConfirmationProofSerializer : JsonSerializer<ConfirmationProof> {
             sigs.add(sig)
         }
         proof.add("signatures", sigs)
-        val path = JsonArray()
-        src.merklePath.forEach {
-            val pathElement = JsonObject()
-            pathElement.addProperty("side", if (it.side == Side.LEFT) 0 else 1)
-            pathElement.addProperty("hash", it.hash.toHex())
-            path.add(pathElement)
-        }
-        proof.add("merklePath", path)
+        val merkleProofTree = gson.toJsonTree(src.proof.serializeToGtv(), Gtv::class.java) // TODO: Feels like I'm mixing two styles here?
+        proof.add("merkleProofTree", merkleProofTree)
         return proof
     }
 }

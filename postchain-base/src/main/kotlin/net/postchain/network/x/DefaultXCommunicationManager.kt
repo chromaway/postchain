@@ -4,7 +4,7 @@ import mu.KLogging
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerInfo
 import net.postchain.base.peerId
-import net.postchain.common.toHex
+import net.postchain.devtools.PeerNameHelper.peerName
 import net.postchain.network.CommunicationManager
 import net.postchain.network.XPacketDecoder
 import net.postchain.network.XPacketEncoder
@@ -15,7 +15,8 @@ class DefaultXCommunicationManager<PacketType>(
         val chainID: Long,
         val blockchainRID: ByteArray,
         private val packetEncoder: XPacketEncoder<PacketType>,
-        private val packetDecoder: XPacketDecoder<PacketType>
+        private val packetDecoder: XPacketDecoder<PacketType>,
+        val processName: String = ""
 ) : CommunicationManager<PacketType> {
 
     companion object : KLogging()
@@ -45,6 +46,8 @@ class DefaultXCommunicationManager<PacketType>(
     }
 
     override fun sendPacket(packet: PacketType, recipient: XPeerID) {
+        logger.trace { "[$processName]: sendPacket($packet, ${peerName(recipient.toString())})" }
+
         val peers: List<XPeerID> = config.peerInfo.map(PeerInfo::peerId)
         require(recipient in peers) {
             "CommunicationManager.sendPacket(): recipient not found among peers"
@@ -61,6 +64,8 @@ class DefaultXCommunicationManager<PacketType>(
     }
 
     override fun broadcastPacket(packet: PacketType) {
+        logger.trace { "[$processName]: broadcastPacket($packet)" }
+
         connectionManager.broadcastPacket(
                 { packetEncoder.encodePacket(packet) },
                 chainID)

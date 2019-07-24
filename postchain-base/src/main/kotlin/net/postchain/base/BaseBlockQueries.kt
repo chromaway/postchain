@@ -4,7 +4,8 @@ package net.postchain.base
 
 import mu.KLogging
 import net.postchain.core.*
-import net.postchain.gtx.GTXValue
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.task
 
@@ -14,9 +15,9 @@ import nl.komponents.kovenant.task
  * @param txHash The transaction hash the proof applies to
  * @param header The block header the [txHash] is supposedly in
  * @param witness The block witness
- * @param merklePath A Merkle path describing the branch from [txHash] to the root hash of the Merkle tree located in [header]
+ * @param proof a proof including [txHash] (in its raw form)
  */
-class ConfirmationProof(val txHash: ByteArray, val header: ByteArray, val witness: BlockWitness, val merklePath: MerklePath)
+class ConfirmationProof(val txHash: ByteArray, val header: ByteArray, val witness: BlockWitness, val proof: GtvMerkleProofTree)
 
 /**
  * A collection of methods for various blockchain-related queries. Each query is called with the wrapping method [runOp]
@@ -75,7 +76,7 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
      */
     override fun getBlockTransactionRids(blockRID: ByteArray): Promise<List<ByteArray>, Exception> {
         return runOp {
-            val height = blockStore.getBlockHeight(it, blockRID)
+            val height = blockStore.getBlockHeightFromOwnBlockchain(it, blockRID)
             if (height == null) {
                 //Shouldn't this be UserMistake?
                 throw ProgrammerMistake("BlockRID does not exist")
@@ -100,9 +101,9 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
         }
     }
 
-    override fun getBlockRids(height: Long): Promise<List<ByteArray>, Exception> {
+    override fun getBlockRids(height: Long): Promise<ByteArray?, Exception> {
         return runOp {
-            blockStore.getBlockRIDs(it, height).toList()
+            blockStore.getBlockRID(it, height)
         }
     }
 
@@ -116,7 +117,7 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
         return Promise.ofFail(UserMistake("Queries are not supported"))
     }
 
-    override fun query(name: String, args: GTXValue): Promise<GTXValue, Exception> {
+    override fun query(name: String, args: Gtv): Promise<Gtv, Exception> {
         return Promise.ofFail(UserMistake("Queries are not supported"))
     }
 
@@ -126,8 +127,8 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
             val decodedWitness = blockchainConfiguration.decodeWitness(material.witness)
             val decodedBlockHeader = blockchainConfiguration.decodeBlockHeader(material.header) as BaseBlockHeader
 
-            val merklePath = decodedBlockHeader.merklePath(material.txHash, material.txHashes)
-            ConfirmationProof(material.txHash, material.header, decodedWitness, merklePath)
+            val merkleProofTree = decodedBlockHeader.merklePath(material.txHash, material.txHashes)
+            ConfirmationProof(material.txHash.byteArray, material.header, decodedWitness, merkleProofTree)
         }
     }
 
@@ -147,14 +148,7 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
      */
     override fun getBlockAtHeight(height: Long): Promise<BlockDataWithWitness, Exception> {
         return runOp {
-            val blockRIDs = blockStore.getBlockRIDs(it, height)
-            if (blockRIDs.size == 0) {
-                throw UserMistake("No block at height $height")
-            }
-            if (blockRIDs.size > 1) {
-                throw ProgrammerMistake("Multiple blocks at height $height found")
-            }
-            val blockRID = blockRIDs[0]
+            val blockRID = blockStore.getBlockRID(it, height) ?: throw UserMistake("No block at height $height")
             val headerBytes = blockStore.getBlockHeader(it, blockRID)
             val witnessBytes = blockStore.getWitnessData(it, blockRID)
             val txBytes = blockStore.getBlockTransactions(it, blockRID)

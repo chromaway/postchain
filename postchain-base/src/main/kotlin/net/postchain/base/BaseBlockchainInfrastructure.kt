@@ -5,7 +5,8 @@ import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.base.data.BaseTransactionQueue
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
-import net.postchain.gtx.decodeGTXValue
+import net.postchain.gtv.GtvDictionary
+import net.postchain.gtv.GtvFactory
 
 class BaseBlockchainInfrastructure(
         private val nodeConfigProvider: NodeConfigurationProvider,
@@ -14,13 +15,13 @@ class BaseBlockchainInfrastructure(
 ) : BlockchainInfrastructure {
 
     val cryptoSystem = SECP256K1CryptoSystem()
-    val blockSigner: Signer
+    val blockSigMaker: SigMaker
     val subjectID: ByteArray
 
     init {
         val privKey = nodeConfigProvider.getConfiguration().privKeyByteArray
         val pubKey = secp256k1_derivePubKey(privKey)
-        blockSigner = cryptoSystem.makeSigner(pubKey, privKey)
+        blockSigMaker = cryptoSystem.buildSigMaker(pubKey, privKey)
         subjectID = pubKey
     }
 
@@ -40,8 +41,8 @@ class BaseBlockchainInfrastructure(
             context
         }
 
-        val gtxData = decodeGTXValue(rawConfigurationData)
-        val confData = BaseBlockchainConfigurationData(gtxData, actualContext, blockSigner)
+        val gtxData = GtvFactory.decodeGtv(rawConfigurationData)
+        val confData = BaseBlockchainConfigurationData(gtxData as GtvDictionary, actualContext, blockSigMaker)
 
         val bcfClass = Class.forName(confData.data["configurationfactory"]!!.asString())
         val factory = (bcfClass.newInstance() as BlockchainConfigurationFactory)
@@ -55,12 +56,13 @@ class BaseBlockchainInfrastructure(
         val tq = BaseTransactionQueue(
                 (configuration as BaseBlockchainConfiguration)
                         .configData.getBlockBuildingStrategy()?.get("queuecapacity")?.asInteger()?.toInt() ?: 2500)
+
         return BaseBlockchainEngine(configuration, storage, configuration.chainID, tq)
                 .apply { initializeDB() }
     }
 
-    override fun makeBlockchainProcess(engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
-        return synchronizationInfrastructure.makeBlockchainProcess(engine, restartHandler)
+    override fun makeBlockchainProcess(processName: String, engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
+        return synchronizationInfrastructure.makeBlockchainProcess(processName, engine, restartHandler)
                 .also(apiInfrastructure::connectProcess)
     }
 }

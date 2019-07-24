@@ -2,7 +2,7 @@ CREATE DOMAIN gtx_signer as bytea;
 CREATE DOMAIN gtx_signers as bytea[];
 
 CREATE TYPE gtx_ctx as (
-    chain_id BIGINT,
+    chain_iid BIGINT,
     tx_iid BIGINT,
     op_index INT
 );

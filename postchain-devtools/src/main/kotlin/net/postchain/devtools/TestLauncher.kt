@@ -10,9 +10,10 @@ import net.postchain.core.UserMistake
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
-import net.postchain.gtx.gtx
+import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtv.GtvNull
+import net.postchain.gtv.gtvml.GtvMLParser
 import net.postchain.gtx.gtxml.GTXMLTransactionParser
-import net.postchain.gtx.gtxml.GTXMLValueParser
 import net.postchain.gtx.gtxml.TransactionContext
 import java.io.File
 import java.io.StringReader
@@ -58,7 +59,7 @@ class TestLauncher : IntegrationTest() {
         nodeConfig.setProperty("database.schema", nodeConfig.getProperty("test.database.schema"))
         */
 
-        val blockchainConfig = GTXMLValueParser.parseGTXMLValue(
+        val blockchainConfig = GtvMLParser.parseGtvML(
                 File(blockchainConfigFile).readText())
 
         val chainId = nodeConfigProvider.getConfiguration().activeChainIds.first().toLong()
@@ -120,18 +121,18 @@ class TestLauncher : IntegrationTest() {
         val txContext = TransactionContext(
                 blockchainRID?.hexStringToByteArray(),
                 mapOf(
-                        "user1pub" to gtx(pubKey(0)),
-                        "user2pub" to gtx(user2pub),
-                        "user3pub" to gtx(user3pub),
-                        "Alice" to gtx(pubKey(0)),
-                        "Bob" to gtx(user2pub),
-                        "Claire" to gtx(user3pub)
+                        "user1pub" to gtv(pubKey(0)),
+                        "user2pub" to gtv(user2pub),
+                        "user3pub" to gtv(user3pub),
+                        "Alice" to gtv(pubKey(0)),
+                        "Bob" to gtv(user2pub),
+                        "Claire" to gtv(user3pub)
                 ),
                 true,
                 mapOf(
-                        pubKey(0).byteArrayKeyOf() to cryptoSystem.makeSigner(pubKey(0), privKey(0)),
-                        user2pub.byteArrayKeyOf() to cryptoSystem.makeSigner(user2pub, user2priv),
-                        user3pub.byteArrayKeyOf() to cryptoSystem.makeSigner(user3pub, user3priv)
+                        pubKey(0).byteArrayKeyOf() to cryptoSystem.buildSigMaker(pubKey(0), privKey(0)),
+                        user2pub.byteArrayKeyOf() to cryptoSystem.buildSigMaker(user2pub, user2priv),
+                        user3pub.byteArrayKeyOf() to cryptoSystem.buildSigMaker(user3pub, user3priv)
                 )
         )
 
@@ -144,7 +145,7 @@ class TestLauncher : IntegrationTest() {
             val enqueued = mutableListOf<EnqueuedTx>()
             for ((txIdx, txXml) in block.transaction.withIndex()) {
                 try {
-                    val gtxData = GTXMLTransactionParser.parseGTXMLTransaction(txXml, txContext)
+                    val gtxData = GTXMLTransactionParser.parseGTXMLTransaction(txXml, txContext, cryptoSystem)
                     val tx = enqueueTx(node, gtxData.serialize(), blockNum)
                     enqueued.add(EnqueuedTx(
                             txIdx.toLong(), tx!!.getRID(), txXml.isFailure

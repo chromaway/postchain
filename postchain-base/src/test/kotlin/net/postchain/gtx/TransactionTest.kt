@@ -5,6 +5,7 @@ package net.postchain.gtx
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.gtv.GtvFactory.gtv
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -12,9 +13,9 @@ val myCS = SECP256K1CryptoSystem()
 
 fun makeNOPGTX(): ByteArray {
     val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(0)), myCS)
-    b.addOperation("nop", arrayOf(gtx(42)))
+    b.addOperation("nop", arrayOf(gtv(42)))
     b.finish()
-    b.sign(myCS.makeSigner(pubKey(0), privKey(0)))
+    b.sign(myCS.buildSigMaker(pubKey(0), privKey(0)))
     return b.serialize()
 }
 

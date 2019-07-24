@@ -19,7 +19,7 @@ class ThreeTxStrategy(
     private val index = -1
 
     override fun shouldBuildBlock(): Boolean {
-        logger.debug { "Node $index shouldBuildBlock? ${txQueue.getTransactionQueueSize()}" }
+        logger.debug { "PNode $index shouldBuildBlock? ${txQueue.getTransactionQueueSize()}" }
         return txQueue.getTransactionQueueSize() >= 3
     }
 
@@ -29,11 +29,11 @@ class ThreeTxStrategy(
 
     override fun blockCommitted(blockData: BlockData) {
         blocks.add(blockData)
-        logger.debug { "Node $index committed height ${blocks.size}" }
+        logger.debug { "PNode $index committed height ${blocks.size}" }
     }
 
     fun awaitCommitted(blockHeight: Int) {
-        logger.debug { "Node $index awaiting committed $blockHeight" }
+        logger.debug { "PNode $index awaiting committed $blockHeight" }
         while (committedHeight < blockHeight) {
             blocks.take()
             committedHeight++

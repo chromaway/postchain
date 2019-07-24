@@ -2,6 +2,7 @@
 
 package net.postchain.base
 
+import net.postchain.base.merkle.Hash
 import net.postchain.core.Signature
 import org.spongycastle.crypto.digests.SHA256Digest
 import org.spongycastle.crypto.ec.CustomNamedCurves
@@ -121,6 +122,22 @@ fun secp256k1_ecdh(privKey: ByteArray, pubKey: ByteArray): ByteArray {
 }
 
 /**
+ * A factory for signatures using the elliptic curve secp256k1
+ *
+ * (See super class for doc)
+ */
+class Secp256k1SigMaker(val pubKey: ByteArray, val privKey: ByteArray, val digestFun: (ByteArray) -> Hash) : SigMaker {
+    override fun signMessage(msg: ByteArray): Signature {
+        val digestedMsg = digestFun(msg)
+        return signDigest(digestedMsg)
+    }
+
+    override fun signDigest(digest: Hash): Signature {
+        return Signature(pubKey, secp256k1_sign(digest, privKey))
+    }
+}
+
+/**
  * A collection of cryptographic functions based on the elliptic curve secp256k1
  */
 class SECP256K1CryptoSystem : CryptoSystem {
@@ -138,15 +155,14 @@ class SECP256K1CryptoSystem : CryptoSystem {
     }
 
     /**
-     * Create a function to be used for signing data based on supplied key parameters
+     * Builds logic to be used for signing data based on supplied key parameters
      *
      * @param pubkey The public key used to verify the signature
      * @param privKey The private key used to create the signature
-     * @return A function to be used to sign specified [data] with [privkey]
+     * @return a class to be used to sign specified [data] with [privkey]
      */
-    override fun makeSigner(pubKey: ByteArray, privKey: ByteArray): Signer {
-        return { data ->
-            Signature(pubKey, secp256k1_sign(digest(data), privKey))  }
+    override fun buildSigMaker(pubKey: ByteArray, privKey: ByteArray): SigMaker {
+        return Secp256k1SigMaker(pubKey, privKey, ::digest)
     }
 
     /**

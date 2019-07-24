@@ -6,8 +6,8 @@ import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.Transaction
 import net.postchain.gtx.GTXDataBuilder
-import net.postchain.gtx.GTXValue
-import net.postchain.gtx.gtx
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.modules.ft.AccountUtil
 import net.postchain.modules.ft.BasicAccount
 import net.postchain.devtools.IntegrationTest
@@ -39,20 +39,20 @@ open class FTIntegrationTest : IntegrationTest() {
     fun makeRegisterTx(accountDescs: Array<ByteArray>, registrator: Int): ByteArray {
         val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(registrator)), myCS)
         for (desc in accountDescs) {
-            b.addOperation("ft_register", arrayOf(gtx(desc)))
+            b.addOperation("ft_register", arrayOf(gtv(desc)))
         }
         b.finish()
-        b.sign(myCS.makeSigner(pubKey(registrator), privKey(registrator)))
+        b.sign(myCS.buildSigMaker(pubKey(registrator), privKey(registrator)))
         return b.serialize()
     }
 
     fun makeIssueTx(issuerIdx: Int, issuerID: ByteArray, recipientID: ByteArray, assetID: String, amout: Long): ByteArray {
         val b = GTXDataBuilder(testBlockchainRID, arrayOf(issuerPubKeys[issuerIdx]), myCS)
         b.addOperation("ft_issue", arrayOf(
-                gtx(issuerID), gtx(assetID), gtx(amout), gtx(recipientID)
+                gtv(issuerID), gtv(assetID), gtv(amout), gtv(recipientID)
         ))
         b.finish()
-        b.sign(myCS.makeSigner(issuerPubKeys[issuerIdx], issuerPrivKeys[issuerIdx]))
+        b.sign(myCS.buildSigMaker(issuerPubKeys[issuerIdx], issuerPrivKeys[issuerIdx]))
         return b.serialize()
     }
 
@@ -74,20 +74,20 @@ open class FTIntegrationTest : IntegrationTest() {
                        memo1: String? = null, memo2: String? = null): ByteArray {
         val b = GTXDataBuilder(testBlockchainRID, arrayOf(senderPubKey), myCS)
 
-        val args = mutableListOf<GTXValue>()
-        args.add(gtx(gtx(gtx(senderID), gtx(assetID), gtx(amout)))) // inputs
+        val args = mutableListOf<Gtv>()
+        args.add(gtv(gtv(gtv(senderID), gtv(assetID), gtv(amout)))) // inputs
 
-        val output = mutableListOf<GTXValue>(gtx(recipientID), gtx(assetID), gtx(amout))
+        val output = mutableListOf<Gtv>(gtv(recipientID), gtv(assetID), gtv(amout))
         if (memo2 != null) {
-            output.add(gtx("memo" to gtx(memo2)))
+            output.add(gtv("memo" to gtv(memo2)))
         }
-        args.add(gtx(gtx(*output.toTypedArray()))) // outputs
+        args.add(gtv(gtv(*output.toTypedArray()))) // outputs
         if (memo1 != null) {
-            args.add(gtx("memo" to gtx(memo1)))
+            args.add(gtv("memo" to gtv(memo1)))
         }
         b.addOperation("ft_transfer", args.toTypedArray())
         b.finish()
-        b.sign(myCS.makeSigner(senderPubKey, senderPrivKey))
+        b.sign(myCS.buildSigMaker(senderPubKey, senderPrivKey))
         return b.serialize()
     }
 

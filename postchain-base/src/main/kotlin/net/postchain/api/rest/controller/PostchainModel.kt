@@ -8,16 +8,11 @@ import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
 import net.postchain.base.BaseBlockQueries
 import net.postchain.base.ConfirmationProof
-import net.postchain.base.data.DatabaseAccess
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
-import net.postchain.core.BlockDetail
-import net.postchain.core.TransactionFactory
-import net.postchain.core.TransactionQueue
-import net.postchain.core.TransactionStatus.CONFIRMED
-import net.postchain.core.TransactionStatus.UNKNOWN
-import net.postchain.core.UserMistake
-import net.postchain.gtx.GTXValue
+import net.postchain.core.*
+import net.postchain.core.TransactionStatus.*
+import net.postchain.gtv.Gtv
 
 open class PostchainModel(
         val txQueue: TransactionQueue,
@@ -65,14 +60,21 @@ open class PostchainModel(
                 CONFIRMED else UNKNOWN
         }
 
-        return ApiStatus(status)
+        return if (status == REJECTED) {
+            val exception = txQueue.getRejectionReason(txRID.bytes.byteArrayKeyOf())
+            ApiStatus(status, exception?.message)
+        } else {
+            ApiStatus(status)
+        }
     }
 
     override fun query(query: Query): QueryResult {
         return QueryResult(blockQueries.query(query.json).get())
     }
 
-    override fun query(query: GTXValue): GTXValue {
+    override fun query(query: Gtv): Gtv {
         return blockQueries.query(query[0]!!.asString(), query[1]).get()
     }
+
+    override fun nodeQuery(subQuery: String): String = throw NotSupported("NotSupported: $subQuery")
 }

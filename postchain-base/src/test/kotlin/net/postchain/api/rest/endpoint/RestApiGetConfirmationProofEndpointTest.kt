@@ -7,7 +7,16 @@ import net.postchain.api.rest.model.TxRID
 import net.postchain.base.BaseBlockWitness
 import net.postchain.base.ConfirmationProof
 import net.postchain.base.MerklePath
+import net.postchain.base.merkle.proof.MerkleProofElement
+import net.postchain.base.merkle.proof.ProofValueLeaf
 import net.postchain.common.hexStringToByteArray
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
+import net.postchain.gtv.merkle.proof.ProofNodeGtvArrayHead
+import net.postchain.gtv.merkle.proof.ProofValueGtvLeaf
+import net.postchain.gtv.path.ArrayGtvPathElement
+import net.postchain.gtv.path.SearchableGtvPathElement
 import org.easymock.EasyMock.*
 import org.hamcrest.Matchers.isEmptyString
 import org.hamcrest.core.IsEqual.equalTo
@@ -39,15 +48,29 @@ class RestApiGetConfirmationProofEndpointTest {
         restApi.stop()
     }
 
+    private fun buildDummyProof(): GtvMerkleProofTree {
+        val gtv1 = gtv(1)
+        val gtv2 = gtv(2)
+        val gtvList = listOf(gtv1, gtv2)
+        val rootProofElem = ProofNodeGtvArrayHead(
+                gtvList.size,
+                ProofValueGtvLeaf(gtv1, 0, ArrayGtvPathElement(null, 0)),
+                ProofValueGtvLeaf(gtv2, 0, ArrayGtvPathElement(null, 1))
+        )
+        return GtvMerkleProofTree(rootProofElem)
+    }
+
     @Test
     fun test_getConfirmationProof_ok() {
+
         val expectedObject = ConfirmationProof(
                 txHashHex.toByteArray(),
                 byteArrayOf(0x0a, 0x0b, 0x0c),
                 BaseBlockWitness(
                         byteArrayOf(0x0b),
                         arrayOf()),
-                MerklePath())
+                buildDummyProof()
+                )
 
         expect(model.getConfirmationProof(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(expectedObject)
@@ -60,7 +83,7 @@ class RestApiGetConfirmationProofEndpointTest {
                 .body("hash", org.hamcrest.Matchers.not(isEmptyString()))
                 .body("blockHeader", equalTo("0A0B0C"))
                 .body("signatures.size()", equalTo(0))
-                .body("merklePath.size()", equalTo(0))
+                .body("merkleProofTree.size()", equalTo(5))
 
         verify(model)
     }

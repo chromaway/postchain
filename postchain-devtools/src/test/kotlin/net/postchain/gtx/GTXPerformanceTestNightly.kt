@@ -6,11 +6,15 @@ import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import mu.KLogging
 import net.postchain.base.SECP256K1CryptoSystem
+import net.postchain.common.hexStringToByteArray
 import net.postchain.configurations.GTXTestModule
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
+import net.postchain.gtv.GtvFactory
+import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtx.factory.GtxTransactionDataFactory
 import net.postchain.devtools.PostchainTestNode
 import net.postchain.ebft.worker.ValidatorWorker
 import org.junit.Assert
@@ -23,6 +27,8 @@ class GTXPerformanceTestNightly : IntegrationTest() {
 
     companion object : KLogging()
 
+    val expectedBcRid = "78967BAA4768CBCEF11C508326FFB13A956689FCB6DC3BA17F4B895CBB1577A3".hexStringToByteArray()
+
     private fun strategy(node: PostchainTestNode): OnDemandBlockBuildingStrategy {
         return node
                 .getBlockchainInstance()
@@ -32,9 +38,9 @@ class GTXPerformanceTestNightly : IntegrationTest() {
 
     private fun makeTestTx(id: Long, value: String): ByteArray {
         val b = GTXDataBuilder(net.postchain.devtools.gtx.testBlockchainRID, arrayOf(pubKey(0)), net.postchain.devtools.gtx.myCS)
-        b.addOperation("gtx_test", arrayOf(gtx(id), gtx(value)))
+        b.addOperation("gtx_test", arrayOf(gtv(id), gtv(value)))
         b.finish()
-        b.sign(net.postchain.devtools.gtx.myCS.makeSigner(pubKey(0), privKey(0)))
+        b.sign(net.postchain.devtools.gtx.myCS.buildSigMaker(pubKey(0), privKey(0)))
         return b.serialize()
     }
 
@@ -57,8 +63,10 @@ class GTXPerformanceTestNightly : IntegrationTest() {
         }
         var total = 0
         val nanoDelta = measureNanoTime {
-            for (tx in transactions) {
-                total += decodeGTXData(tx).operations.size
+            for (rawTx in transactions) {
+                val gtvData = GtvFactory.decodeGtv(rawTx)
+                val gtxData = GtxTransactionDataFactory.deserializeFromGtv(gtvData)
+                total += gtxData.transactionBodyData.operations.size
             }
         }
         Assert.assertTrue(total == 1000)
@@ -73,9 +81,10 @@ class GTXPerformanceTestNightly : IntegrationTest() {
         var total = 0
         val module = GTXTestModule()
         val cs = SECP256K1CryptoSystem()
+        val txFactory = GTXTransactionFactory(expectedBcRid ,module, cs)
         val nanoDelta = measureNanoTime {
-            for (tx in transactions) {
-                val ttx = GTXTransaction(tx, module, cs)
+            for (rawTx in transactions) {
+                val ttx =  txFactory.decodeTransaction(rawTx) as GTXTransaction
                 total += ttx.ops.size
             }
         }
@@ -91,9 +100,10 @@ class GTXPerformanceTestNightly : IntegrationTest() {
         var total = 0
         val module = GTXTestModule()
         val cs = SECP256K1CryptoSystem()
+        val txFactory = GTXTransactionFactory(expectedBcRid ,module, cs)
         val nanoDelta = measureNanoTime {
-            for (tx in transactions) {
-                val ttx = GTXTransaction(tx, module, cs)
+            for (rawTx in transactions) {
+                val ttx =  txFactory.decodeTransaction(rawTx) as GTXTransaction
                 total += ttx.ops.size
                 Assert.assertTrue(ttx.isCorrect())
             }

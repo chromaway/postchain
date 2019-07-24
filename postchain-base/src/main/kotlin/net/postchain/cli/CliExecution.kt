@@ -2,12 +2,13 @@ package net.postchain.cli
 
 import net.postchain.PostchainNode
 import net.postchain.base.BaseConfigurationDataStore
+import net.postchain.base.BlockchainRelatedInfo
 import net.postchain.base.data.BaseBlockStore
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.config.app.AppConfig
 import net.postchain.config.node.NodeConfigurationProviderFactory
-import net.postchain.gtx.encodeGTXValue
-import net.postchain.gtx.gtxml.GTXMLValueParser
+import net.postchain.gtv.GtvEncoder
+import net.postchain.gtv.gtvml.GtvMLParser
 import org.apache.commons.configuration2.ex.ConfigurationException
 import org.apache.commons.dbcp2.BasicDataSource
 import java.io.File
@@ -23,14 +24,14 @@ class CliExecution {
             chainId: Long,
             blockchainRID: String,
             blockchainConfigFile: String,
-            mode: AlreadyExistMode = AlreadyExistMode.IGNORE
+            mode: AlreadyExistMode = AlreadyExistMode.IGNORE,
+            givenDependencies:  List<BlockchainRelatedInfo> = listOf()
     ) {
-
         val encodedGtxValue = getEncodedGtxValueFromFile(blockchainConfigFile)
         runDBCommandBody(nodeConfigFile, chainId) { eContext ->
 
             fun init() {
-                BaseBlockStore().initialize(eContext, blockchainRID.hexStringToByteArray())
+                BaseBlockStore().initialize(eContext, blockchainRID.hexStringToByteArray(), givenDependencies)
                 BaseConfigurationDataStore.addConfigurationData(eContext, 0, encodedGtxValue)
             }
 
@@ -159,8 +160,8 @@ class CliExecution {
         }
     }
 
-    private fun getEncodedGtxValueFromFile(blockchainConfigFile: String): ByteArray {
-        val gtxValue = GTXMLValueParser.parseGTXMLValue(File(blockchainConfigFile).readText())
-        return encodeGTXValue(gtxValue)
+    private fun getEncodedGtxValueFromFile(blockchainConfigFile: String) :ByteArray {
+        val gtv =  GtvMLParser.parseGtvML(File(blockchainConfigFile).readText())
+        return GtvEncoder.encodeGtv(gtv)
     }
 }

@@ -6,12 +6,13 @@ import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.Transaction
+import net.postchain.gtx.*
+import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.gtv.GtvNull
 import net.postchain.gtx.GTXDataBuilder
-import net.postchain.gtx.GTXNull
-import net.postchain.gtx.gtx
 import org.junit.Assert
 import org.junit.Test
 
@@ -22,28 +23,28 @@ class GTXIntegrationTest : IntegrationTest() {
 
     fun makeNOPGTX(): ByteArray {
         val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(0)), myCS)
-        b.addOperation("nop", arrayOf(gtx(42)))
+        b.addOperation("nop", arrayOf(gtv(42)))
         b.finish()
-        b.sign(myCS.makeSigner(pubKey(0), privKey(0)))
+        b.sign(myCS.buildSigMaker(pubKey(0), privKey(0)))
         return b.serialize()
     }
 
     fun makeTestTx(id: Long, value: String): ByteArray {
         val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(0)), myCS)
-        b.addOperation("gtx_test", arrayOf(gtx(id), gtx(value)))
+        b.addOperation("gtx_test", arrayOf(gtv(id), gtv(value)))
         b.finish()
-        b.sign(myCS.makeSigner(pubKey(0), privKey(0)))
+        b.sign(myCS.buildSigMaker(pubKey(0), privKey(0)))
         return b.serialize()
     }
 
     fun makeTimeBTx(from: Long, to: Long?): ByteArray {
         val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(0)), myCS)
         b.addOperation("timeb", arrayOf(
-                gtx(from),
-                if (to != null) gtx(to) else GTXNull
+                gtv(from),
+                if (to != null) gtv(to) else GtvNull
         ))
         b.finish()
-        b.sign(myCS.makeSigner(pubKey(0), privKey(0)))
+        b.sign(myCS.buildSigMaker(pubKey(0), privKey(0)))
         return b.serialize()
     }
 

@@ -3,7 +3,8 @@
 package net.postchain.modules.ft
 
 import net.postchain.core.TxEContext
-import net.postchain.gtx.GTXValue
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvArray
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.MapListHandler
 
@@ -11,7 +12,7 @@ import org.apache.commons.dbutils.handlers.MapListHandler
 
 class AssuranceContract(
         override val accountID: ByteArray,
-        override val descriptor: GTXValue
+        override val descriptor: GtvArray
 ) : FTInputAccount, FTOutputAccount {
     override val skipUpdate = false
     val assetID = descriptor[2].asString()

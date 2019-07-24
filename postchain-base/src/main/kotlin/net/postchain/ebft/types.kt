@@ -72,6 +72,15 @@ class FetchBlockAtHeightIntent(val height: Long): BlockIntent() {
 }
 
 class FetchUnfinishedBlockIntent(val blockRID: ByteArray) : BlockIntent() {
+
+    fun isThisTheBlockWeAreWaitingFor(givenBlockRID: ByteArray?): Boolean {
+        if (givenBlockRID == null) {
+            return false
+        } else {
+            return Arrays.equals(blockRID, givenBlockRID)
+        }
+    }
+
     override fun equals(other: Any?): Boolean {
         if (!super.equals(other)) return false
         if (this === other) return true

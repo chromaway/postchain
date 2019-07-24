@@ -22,7 +22,7 @@ class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
         lastBlockTime = if (height == -1L) {
             System.currentTimeMillis()
         } else {
-            val blockRID = blockQueries.getBlockRids(height).get()[0]
+            val blockRID = blockQueries.getBlockRids(height).get()!!
             (blockQueries.getBlockHeader(blockRID).get() as BaseBlockHeader).timestamp
         }
     }

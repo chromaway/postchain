@@ -5,6 +5,8 @@ package net.postchain.base
 import net.postchain.base.data.BaseBlockBuilder
 import net.postchain.base.data.BaseBlockStore
 import net.postchain.base.data.BaseTransactionFactory
+import net.postchain.base.data.SQLDatabaseAccess
+import net.postchain.common.hexStringToByteArray
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.core.InitialBlockData
 import net.postchain.devtools.KeyPairHelper.privKey
@@ -20,17 +22,19 @@ class BaseBlockBuilderTest {
     val tf = BaseTransactionFactory()
     val db = mock(DatabaseAccess::class.java)
     val ctx = BaseEContext(mock(Connection::class.java), 2L, 0, db)
-    val bctx = BaseBlockEContext(ctx, 1, 10)
+    val bctx = BaseBlockEContext(ctx, 1, 10, mapOf())
+    val myMerkleRootHash = "46AF9064F12528CAD6A7C377204ACD0AC38CDC6912903E7DAB3703764C8DD5E5".hexStringToByteArray()
+    val myBlockchainRid = "bcRid".toByteArray()
     val dummy = ByteArray(32, { 0 })
     val subjects = arrayOf("test".toByteArray())
-    val signer = cryptoSystem.makeSigner(pubKey(0), privKey(0))
-    val bbb = BaseBlockBuilder(cryptoSystem, ctx, bbs, tf, subjects, signer)
+    val signer = cryptoSystem.buildSigMaker(pubKey(0), privKey(0))
+    val bbb = BaseBlockBuilder(cryptoSystem, ctx, bbs, tf, subjects, signer, listOf())
 
     @Test
     fun invalidMonotoneTimestamp() {
         val timestamp = 1L
-        val blockData = InitialBlockData(2, 2, dummy, 1, timestamp)
-        val header = BaseBlockHeader.make(cryptoSystem, blockData, dummy, timestamp)
+        val blockData = InitialBlockData(myBlockchainRid, 2, 2, dummy, 1, timestamp, arrayOf())
+        val header = BaseBlockHeader.make(cryptoSystem, blockData, myMerkleRootHash, timestamp)
         bbb.bctx = bctx
         bbb.initialBlockData = blockData
         assert(!bbb.validateBlockHeader(header).result)
@@ -39,8 +43,8 @@ class BaseBlockBuilderTest {
     @Test
     fun invalidMonotoneTimestampEquals() {
         val timestamp = 10L
-        val blockData = InitialBlockData(2, 2, dummy, 1, timestamp)
-        val header = BaseBlockHeader.make(cryptoSystem, blockData, dummy, timestamp)
+        val blockData = InitialBlockData(myBlockchainRid,2, 2, dummy, 1, timestamp, arrayOf())
+        val header = BaseBlockHeader.make(cryptoSystem, blockData, myMerkleRootHash, timestamp)
         bbb.bctx = bctx
         bbb.initialBlockData = blockData
         assert(!bbb.validateBlockHeader(header).result)
@@ -49,8 +53,8 @@ class BaseBlockBuilderTest {
     @Test
     fun validMonotoneTimestamp() {
         val timestamp = 100L
-        val blockData = InitialBlockData(2, 2, dummy, 1, timestamp)
-        val header = BaseBlockHeader.make(cryptoSystem, blockData, dummy, timestamp)
+        val blockData = InitialBlockData(myBlockchainRid,2, 2, dummy, 1, timestamp, arrayOf())
+        val header = BaseBlockHeader.make(cryptoSystem, blockData, myMerkleRootHash, timestamp)
         bbb.bctx = bctx
         bbb.initialBlockData = blockData
         assert(bbb.validateBlockHeader(header).result)

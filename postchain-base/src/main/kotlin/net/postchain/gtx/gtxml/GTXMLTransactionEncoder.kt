@@ -1,11 +1,12 @@
-package net.postchain.gtx.gtxml;
+package net.postchain.gtx.gtxml
 
 import net.postchain.base.gtxml.ObjectFactory
 import net.postchain.base.gtxml.OperationsType
 import net.postchain.base.gtxml.SignaturesType
 import net.postchain.base.gtxml.SignersType
 import net.postchain.common.toHex
-import net.postchain.gtx.GTXData
+import net.postchain.gtv.gtvml.GtvMLEncoder
+import net.postchain.gtx.GTXTransactionData
 import net.postchain.gtx.OpData
 import java.io.StringWriter
 import javax.xml.bind.JAXB
@@ -18,12 +19,12 @@ object GTXMLTransactionEncoder {
     /**
      * Encodes [GTXData] into XML format
      */
-    fun encodeXMLGTXTransaction(gtxData: GTXData): String {
+    fun encodeXMLGTXTransaction(gtxTxData: GTXTransactionData): String {
         val transactionType = objectFactory.createTransactionType()
-        transactionType.blockchainRID = gtxData.blockchainRID.toHex()
-        transactionType.signers = encodeSigners(gtxData.signers)
-        transactionType.operations = encodeOperations(gtxData.operations)
-        transactionType.signatures = encodeSignature(gtxData.signatures)
+        transactionType.blockchainRID = gtxTxData.transactionBodyData.blockchainRID.toHex()
+        transactionType.signers = encodeSigners(gtxTxData.transactionBodyData.signers)
+        transactionType.operations = encodeOperations(gtxTxData.transactionBodyData.operations)
+        transactionType.signatures = encodeSignature(gtxTxData.signatures)
 
         val jaxbElement = objectFactory.createTransaction(transactionType)
 
@@ -46,7 +47,7 @@ object GTXMLTransactionEncoder {
             operations.forEach {
                 val operationType = objectFactory.createOperationType()
                 operationType.name = it.opName
-                it.args.map(GTXMLValueEncoder::encodeGTXMLValueToJAXBElement)
+                it.args.map(GtvMLEncoder::encodeGTXMLValueToJAXBElement)
                         .toCollection(operationType.parameters)
                 this.operation.add(operationType)
             }

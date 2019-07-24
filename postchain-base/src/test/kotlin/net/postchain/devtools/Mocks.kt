@@ -2,13 +2,23 @@
 
 package net.postchain.devtools
 
-import net.postchain.base.CryptoSystem
-import net.postchain.base.Signer
-import net.postchain.base.Verifier
-import net.postchain.base.secp256k1_verify
+import net.postchain.base.*
+import net.postchain.base.merkle.Hash
 import net.postchain.core.Signature
 import java.security.MessageDigest
 import kotlin.experimental.xor
+
+
+class MockSigMaker(val pubKey: ByteArray, val privKey: ByteArray, val digestFun: (ByteArray) -> Hash): SigMaker {
+    override fun signMessage(msg: ByteArray): Signature {
+        val digestMsg = digestFun(msg)
+        return signDigest(digestMsg)
+    }
+    override fun signDigest(digest: Hash): Signature {
+        digest.forEachIndexed { index, byte -> byte xor pubKey[index] }
+        return Signature(pubKey, digest)
+    }
+}
 
 class MockCryptoSystem : CryptoSystem {
 
@@ -17,12 +27,8 @@ class MockCryptoSystem : CryptoSystem {
         return digest.digest(bytes)
     }
 
-    override fun makeSigner(pubKey: ByteArray, privKey: ByteArray): Signer {
-        return { data ->
-            val digest = digest(data)
-            digest.forEachIndexed { index, byte -> byte xor pubKey[index] }
-            Signature(pubKey, digest)
-        }
+    override fun buildSigMaker(pubKey: ByteArray, privKey: ByteArray): SigMaker {
+        return MockSigMaker(pubKey, privKey, ::digest)
     }
 
     override fun verifyDigest(ddigest: ByteArray, s: Signature): Boolean {
