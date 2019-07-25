@@ -49,9 +49,18 @@ AS $$
 SELECT cast(1 as BIGINT) as nbigint, 2 as ncount;
 $$ LANGUAGE sql;
 
+CREATE FUNCTION test_null_value(q_chain_id bigint)
+    RETURNS TABLE (val text)
+AS $$
+SELECT NULL
+FROM test_kv;
+$$ LANGUAGE sql;
+
 SELECT gtx_define_operation('test_set_value');
 SELECT gtx_define_query('test_get_value');
 SELECT gtx_define_query('test_get_keys');
 SELECT gtx_define_query('test_get_count');
+SELECT gtx_define_query('test_null_value');
+
 
 
