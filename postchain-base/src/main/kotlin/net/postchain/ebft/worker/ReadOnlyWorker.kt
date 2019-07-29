@@ -8,7 +8,7 @@ import net.postchain.core.NODE_ID_READ_ONLY
 import net.postchain.core.NodeStateTracker
 import net.postchain.core.RestartHandler
 import net.postchain.ebft.BaseBlockDatabase
-import net.postchain.ebft.message.EbftMessage
+import net.postchain.ebft.message.Message
 import net.postchain.ebft.syncmanager.ReplicaSyncManager
 import net.postchain.network.CommunicationManager
 
@@ -17,9 +17,10 @@ import net.postchain.network.CommunicationManager
  * @property updateLoop the main thread
  */
 class ReadOnlyWorker(
+        override val name: String,
         signers: List<ByteArray>,
         override val blockchainEngine: BlockchainEngine,
-        communicationManager: CommunicationManager<EbftMessage>,
+        val communicationManager: CommunicationManager<Message>,
         override val restartHandler: RestartHandler
 ) : AbstractBlockchainProcess() {
 
@@ -33,6 +34,7 @@ class ReadOnlyWorker(
                 blockchainEngine, blockchainEngine.getBlockQueries(), NODE_ID_READ_ONLY)
 
         syncManager = ReplicaSyncManager(
+                name,
                 signers,
                 communicationManager,
                 nodeStateTracker,
@@ -45,5 +47,10 @@ class ReadOnlyWorker(
                 communicationManager)
 
         startUpdateLoop(syncManager)
+    }
+
+    override fun shutdown() {
+        super.shutdown()
+        communicationManager.shutdown()
     }
 }

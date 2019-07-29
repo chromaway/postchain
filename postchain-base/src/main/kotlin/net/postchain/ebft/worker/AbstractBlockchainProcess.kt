@@ -1,5 +1,6 @@
 package net.postchain.ebft.worker
 
+import mu.KLogging
 import net.postchain.base.NetworkAwareTxQueue
 import net.postchain.core.*
 import net.postchain.ebft.BaseBlockDatabase
@@ -14,6 +15,7 @@ import kotlin.concurrent.thread
  */
 abstract class AbstractBlockchainProcess : BlockchainProcess {
 
+    abstract val name: String
     abstract val blockchainEngine: BlockchainEngine
     abstract val blockDatabase: BaseBlockDatabase
     abstract val syncManager: SyncManagerBase
@@ -22,6 +24,7 @@ abstract class AbstractBlockchainProcess : BlockchainProcess {
     abstract val restartHandler: RestartHandler
 
     private lateinit var updateLoop: Thread
+    companion object : KLogging()
 
     override fun getEngine() = blockchainEngine
 
@@ -30,11 +33,12 @@ abstract class AbstractBlockchainProcess : BlockchainProcess {
      * @param syncManager the syncronization manager
      */
     protected fun startUpdateLoop(syncManager: SyncManagerBase) {
-        updateLoop = thread(name = "updateLoop") {
+        updateLoop = thread(name = "updateLoop-$name") {
             while (!Thread.interrupted()) {
                 try {
                     syncManager.update()
                     if (blockchainEngine.isRestartNeeded) {
+                        logger.info("[$name]: Restarting of BlockchainProcess ${blockchainEngine.getConfiguration().chainID}")
                         restartHandler()
                     }
                 } catch (e: Exception) {

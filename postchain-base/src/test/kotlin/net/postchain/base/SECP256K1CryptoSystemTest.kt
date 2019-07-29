@@ -16,9 +16,9 @@ class SECP256K1CryptoSystemTest {
         for (i in 0..39) {
             random.nextBytes(privKey)
             val pubKey = secp256k1_derivePubKey(privKey)
-            val signer = SUT.makeSigner(pubKey, privKey)
+            val sigMaker = SUT.buildSigMaker(pubKey, privKey)
             val data = "Hello".toByteArray()
-            val signature = signer(data)
+            val signature = sigMaker.signMessage(data) // TODO: POS-04_sig ???
             val verifier = SUT.makeVerifier()
             assertTrue("Positive test failed for privkey ${privKey.toHex()}", verifier(data, signature))
             assertFalse("Negative test failed for privkey ${privKey.toHex()}", verifier("Hell0".toByteArray(), signature))

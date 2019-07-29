@@ -3,7 +3,7 @@ package net.postchain.modules.perftest
 import io.restassured.RestAssured.*
 import net.postchain.common.toHex
 import net.postchain.gtx.GTXDataBuilder
-import net.postchain.gtx.gtx
+import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.modules.ft.testBlockchainRID
 import net.postchain.devtools.modules.ft.FTIntegrationTest
 import org.junit.Test
@@ -27,9 +27,9 @@ class ClientManual : FTIntegrationTest() {
 
     fun makeTestTx(id: Long, value: String): ByteArray {
         val b = GTXDataBuilder(testBlockchainRID, arrayOf(alicePubKey), cryptoSystem)
-        b.addOperation("gtx_test", arrayOf(gtx(id), gtx(value)))
+        b.addOperation("gtx_test", arrayOf(gtv(id), gtv(value)))
         b.finish()
-        b.sign(cryptoSystem.makeSigner(alicePubKey, alicePrivKey))
+        b.sign(cryptoSystem.buildSigMaker(alicePubKey, alicePrivKey))
         return b.serialize()
     }
 
@@ -39,19 +39,19 @@ class ClientManual : FTIntegrationTest() {
     @Test
     fun testBombFT() {
         // Setup Alice's and Bob's accounts. Fun Alice with 100 TST
-        var nodeStarted = false;
+        var nodeStarted = false
         while (!nodeStarted) {
             try {
                 postTx(makeRegisterTx(arrayOf(aliceAccountDesc, bobAccountDesc), 1))
                 postTx(makeIssueTx(0, issuerID, aliceAccountID, assetID, 100))
-                nodeStarted = true;
+                nodeStarted = true
             } catch (e: Exception) {
                 Thread.sleep(10)
             }
         }
 
         val endTime = System.currentTimeMillis() + 600000
-        var i = 0;
+        var i = 0
         while (endTime > System.currentTimeMillis()) {
             postTx(makeTransferTx(alicePubKey, alicePrivKey, aliceAccountID, assetID, 10, bobAccountID, "A->B ${i}"))
             postTx(makeTransferTx(bobPubKey, bobPrivKey, bobAccountID, assetID, 10, aliceAccountID, memo1 = "B->A ${i++}"))

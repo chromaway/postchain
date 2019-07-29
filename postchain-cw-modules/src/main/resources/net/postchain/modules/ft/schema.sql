@@ -1,5 +1,5 @@
 CREATE TABLE ft_assets (
-  chain_id BIGINT NOT NULL,
+  chain_iid BIGINT NOT NULL,
   asset_iid SERIAL PRIMARY KEY,
   asset_id TEXT NOT NULL
 );
@@ -8,11 +8,11 @@ CREATE TABLE ft_accounts (
     account_iid BIGSERIAL PRIMARY KEY,
     tx_iid BIGINT NOT NULL REFERENCES transactions(tx_iid),
     op_index INT NOT NULL,
-    chain_id BIGINT NOT NULL,
+    chain_iid BIGINT NOT NULL,
     account_id BYTEA NOT NULL,
     account_type INT NOT NULL,
     account_desc BYTEA NOT NULL,
-    UNIQUE (chain_id, account_id)
+    UNIQUE (chain_iid, account_id)
 );
 
 CREATE TABLE ft_balances (
@@ -32,48 +32,48 @@ CREATE TABLE ft_history (
 );
 
 
-CREATE FUNCTION ft_register_account(chain_id BIGINT, tx_iid BIGINT, op_index INT, account_id BYTEA, account_type INT, account_desc BYTEA)
+CREATE FUNCTION ft_register_account(chain_iid BIGINT, tx_iid BIGINT, op_index INT, account_id BYTEA, account_type INT, account_desc BYTEA)
 RETURNS VOID AS $$
 BEGIN
-    INSERT INTO ft_accounts(chain_id, tx_iid, op_index, account_id, account_type, account_desc)
-    VALUES (chain_id, tx_iid, op_index, account_id, account_type, account_desc);
+    INSERT INTO ft_accounts(chain_iid, tx_iid, op_index, account_id, account_type, account_desc)
+    VALUES (chain_iid, tx_iid, op_index, account_id, account_type, account_desc);
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE FUNCTION ft_register_asset(chain_id BIGINT, asset_id TEXT)
+CREATE FUNCTION ft_register_asset(chain_iid BIGINT, asset_id TEXT)
 RETURNS VOID AS $$
 BEGIN
-    INSERT INTO ft_assets(chain_id, asset_id)
-    VALUES (chain_id, asset_id);
+    INSERT INTO ft_assets(chain_iid, asset_id)
+    VALUES (chain_iid, asset_id);
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE FUNCTION ft_find_account(chain_id_ BIGINT, account_id_ BYTEA)
+CREATE FUNCTION ft_find_account(chain_iid_ BIGINT, account_id_ BYTEA)
 RETURNS BIGINT AS $$
 BEGIN
   RETURN (SELECT account_iid FROM ft_accounts WHERE
-    chain_id = chain_id_ AND account_id = account_id_);
+    chain_iid = chain_iid_ AND account_id = account_id_);
  END;
 $$ LANGUAGE plpgsql;
 
-CREATE FUNCTION ft_get_account_desc (chain_id_ BIGINT, account_id_ BYTEA)
+CREATE FUNCTION ft_get_account_desc (chain_iid_ BIGINT, account_id_ BYTEA)
 RETURNS BYTEA AS $$
 BEGIN
     RETURN (SELECT account_desc FROM ft_accounts WHERE
-        chain_id = chain_id_ AND account_id = account_id_);
+        chain_iid = chain_iid_ AND account_id = account_id_);
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE FUNCTION ft_find_asset(chain_id_ BIGINT, asset_id_ TEXT)
+CREATE FUNCTION ft_find_asset(chain_iid_ BIGINT, asset_id_ TEXT)
 RETURNS BIGINT AS $$
 BEGIN
   RETURN (SELECT asset_iid FROM ft_assets WHERE
-   chain_id = chain_id_ AND asset_id = asset_id_);
+   chain_iid = chain_iid_ AND asset_id = asset_id_);
 END;
 $$ LANGUAGE  plpgsql;
 
 CREATE FUNCTION ft_update
-(chain_id BIGINT, tx_iid BIGINT, op_index INT, account_id BYTEA, asset_id TEXT, delta BIGINT,
+(chain_iid BIGINT, tx_iid BIGINT, op_index INT, account_id BYTEA, asset_id TEXT, delta BIGINT,
  memo TEXT, allowNegative BOOLEAN)
 RETURNS VOID AS $$
 DECLARE
@@ -81,8 +81,8 @@ DECLARE
   asset_iid_ BIGINT;
   balance_ BIGINT;
 BEGIN
-  asset_iid_ = ft_find_asset(chain_id, asset_id);
-  account_iid_ = ft_find_account(chain_id, account_id);
+  asset_iid_ = ft_find_asset(chain_iid, asset_id);
+  account_iid_ = ft_find_account(chain_iid, account_id);
   SELECT balance INTO balance_
     FROM ft_balances WHERE ft_balances.account_iid = account_iid_ AND ft_balances.asset_iid = asset_iid_;
 
@@ -106,15 +106,15 @@ $$ LANGUAGE plpgsql;
 
 --- Queries
 
-CREATE FUNCTION ft_get_balance (chain_id BIGINT, account_id BYTEA, asset_id TEXT)
+CREATE FUNCTION ft_get_balance (chain_iid BIGINT, account_id BYTEA, asset_id TEXT)
 RETURNS BIGINT AS $$
 DECLARE
   account_iid_ BIGINT;
   asset_iid_ BIGINT;
   balance_ BIGINT;
 BEGIN
-  asset_iid_ = ft_find_asset(chain_id, asset_id);
-  account_iid_ = ft_find_account(chain_id, account_id);
+  asset_iid_ = ft_find_asset(chain_iid, asset_id);
+  account_iid_ = ft_find_account(chain_iid, account_id);
   SELECT balance INTO balance_
     FROM ft_balances WHERE ft_balances.account_iid = account_iid_ AND ft_balances.asset_iid = asset_iid_;
 
@@ -126,7 +126,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE FUNCTION ft_get_history(chain_id BIGINT, account_id BYTEA, asset_id TEXT)
+CREATE FUNCTION ft_get_history(chain_iid BIGINT, account_id BYTEA, asset_id TEXT)
 RETURNS TABLE (
     delta BIGINT,
     tx_rid BYTEA,
@@ -138,8 +138,8 @@ DECLARE
   account_iid_ BIGINT;
   asset_iid_ BIGINT;
 BEGIN
-  asset_iid_ = ft_find_asset(chain_id, asset_id);
-  account_iid_ = ft_find_account(chain_id, account_id);
+  asset_iid_ = ft_find_asset(chain_iid, asset_id);
+  account_iid_ = ft_find_account(chain_iid, account_id);
 
   RETURN QUERY SELECT
      ft_history.delta,

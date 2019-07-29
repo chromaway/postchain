@@ -3,15 +3,15 @@ package net.postchain.modules.certificate
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.EContext
 import net.postchain.core.UserMistake
-import net.postchain.gtx.GTXValue
-import net.postchain.gtx.gtx
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvFactory.gtv
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.MapListHandler
 
 class CertificateEntry(val id: String, val name: String, val pubkey: ByteArray,
                        val expires: Long, val authority: ByteArray, val reason: ByteArray)
 
-fun getCertificatesQ(config: CertificateConfig, ctx: EContext, args: GTXValue): GTXValue {
+fun getCertificatesQ(config: CertificateConfig, ctx: EContext, args: Gtv): Gtv {
     val id = args["id"]?.asString()
     val pubkey = args["pubkey"]?.asByteArray(true)
     if (id == null && pubkey == null) throw UserMistake("Missing both id and pubkey")
@@ -55,12 +55,12 @@ fun getCertificatesQ(config: CertificateConfig, ctx: EContext, args: GTXValue): 
     }).toList()
 
     val ret = list.map {
-        gtx("id" to gtx(it.id),
-                "name" to gtx(it.name),
-                "pubkey" to gtx(it.pubkey),
-                "expires" to gtx(it.expires),
-                "authority" to gtx(it.authority),
-                "reason" to gtx(it.reason))
+        gtv("id" to gtv(it.id),
+                "name" to gtv(it.name),
+                "pubkey" to gtv(it.pubkey),
+                "expires" to gtv(it.expires),
+                "authority" to gtv(it.authority),
+                "reason" to gtv(it.reason))
     }.toTypedArray()
-    return gtx(*ret)
+    return gtv(*ret)
 }

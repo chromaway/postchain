@@ -79,7 +79,7 @@ class SingleNodeManual : IntegrationTest() {
         return node.getBlockchainInstance().getEngine().getBlockQueries().let { blockQueries ->
             val bestHeight = blockQueries.getBestHeight().get()
             var txCount = (0..bestHeight).fold(0) { count, height ->
-                val blockRid = blockQueries.getBlockRids(height).get()[0]
+                val blockRid = blockQueries.getBlockRids(height).get()!!
                 count + blockQueries.getBlockTransactionRids(blockRid).get().size
             }
 

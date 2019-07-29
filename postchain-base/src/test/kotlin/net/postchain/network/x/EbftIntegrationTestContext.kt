@@ -6,7 +6,7 @@ import net.postchain.ebft.EbftPacketDecoder
 import net.postchain.ebft.EbftPacketDecoderFactory
 import net.postchain.ebft.EbftPacketEncoder
 import net.postchain.ebft.EbftPacketEncoderFactory
-import net.postchain.ebft.message.EbftMessage
+import net.postchain.ebft.message.Message
 import net.postchain.network.netty2.NettyConnectorFactory
 import java.io.Closeable
 
@@ -16,7 +16,7 @@ class EbftIntegrationTestContext(
 ) : Closeable {
 
     val chainId = 1L
-    private val connectorFactory = NettyConnectorFactory<EbftMessage>()
+    private val connectorFactory = NettyConnectorFactory<Message>()
 
     val connectionManager = DefaultXConnectionManager(
             connectorFactory,

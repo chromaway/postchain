@@ -50,8 +50,8 @@ class BaseManagedBlockBuilder(
         }
     }
 
-    override fun begin() {
-        runOp { blockBuilder.begin() }
+    override fun begin(partialBlockHeader: BlockHeader?) {
+        runOp { blockBuilder.begin(partialBlockHeader) }
     }
 
     override fun appendTransaction(tx: Transaction) {

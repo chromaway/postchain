@@ -10,7 +10,7 @@ import net.postchain.configurations.GTXTestModule
 import net.postchain.gtx.EMPTY_SIGNATURE
 import net.postchain.gtx.GTXDataBuilder
 import net.postchain.gtx.GTXTransactionFactory
-import net.postchain.gtx.gtx
+import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import org.hamcrest.core.IsEqual.equalTo
@@ -47,9 +47,9 @@ class RestApiTestManual {
 
     private fun buildTestTx(id: Long, value: String): ByteArray {
         val b = GTXDataBuilder(EMPTY_SIGNATURE, arrayOf(pubKey(0)), cryptoSystem)
-        b.addOperation("gtx_test", arrayOf(gtx(id), gtx(value)))
+        b.addOperation("gtx_test", arrayOf(gtv(id), gtv(value)))
         b.finish()
-        b.sign(cryptoSystem.makeSigner(pubKey(0), privKey(0)))
+        b.sign(cryptoSystem.buildSigMaker(pubKey(0), privKey(0)))
         return b.serialize()
     }
 }

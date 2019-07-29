@@ -14,7 +14,7 @@ import net.postchain.core.BlockDetail
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.TransactionStatus
 import net.postchain.core.UserMistake
-import net.postchain.gtx.GTXValue
+import net.postchain.gtv.Gtv
 import org.junit.After
 import org.junit.Test
 
@@ -82,7 +82,7 @@ class RestApiMockForClientManual {
             }
         }
 
-        override fun getLatestBlocksUpTo(upTo: Long, n: Int): List<BlockDetail> {
+        override fun getLatestBlocksUpTo(upTo: Long, limit: Int): List<BlockDetail> {
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 
         }
@@ -98,9 +98,9 @@ class RestApiMockForClientManual {
             })
         }
 
-        override fun nodeQuery(subQuery: String): String = TODO()
-        override fun query(query: GTXValue): GTXValue {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        override fun query(query: Gtv): Gtv {        
+        	TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
+        override fun nodeQuery(subQuery: String): String = TODO()
     }
 }

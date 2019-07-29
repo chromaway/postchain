@@ -3,8 +3,8 @@ package net.postchain.modules.ft
 import net.postchain.common.toHex
 import net.postchain.core.Transaction
 import net.postchain.devtools.modules.ft.FTIntegrationTest
-import net.postchain.gtx.GTXValue
-import net.postchain.gtx.make_gtx_gson
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.make_gtv_gson
 import org.junit.Assert
 import org.junit.Test
 
@@ -95,8 +95,8 @@ class FTBasicIntegrationTest : FTIntegrationTest() {
                     "asset_id"="USD"
                    }""").get()
         println(history)
-        val gson = make_gtx_gson()
-        val historyGTX = gson.fromJson<GTXValue>(history, GTXValue::class.java)
+        val gson = make_gtv_gson()
+        val historyGTX = gson.fromJson<Gtv>(history, Gtv::class.java)
         Assert.assertEquals(5, historyGTX.asArray().size)
 
         val history2 = blockQueries.query(
@@ -105,7 +105,7 @@ class FTBasicIntegrationTest : FTIntegrationTest() {
                     "asset_id"="USD"
                    }""").get()
         println(history2)
-        val history2GTX = gson.fromJson<GTXValue>(history2, GTXValue::class.java)
+        val history2GTX = gson.fromJson<Gtv>(history2, Gtv::class.java)
         Assert.assertEquals(4, history2GTX.asArray().size)
     }
 }

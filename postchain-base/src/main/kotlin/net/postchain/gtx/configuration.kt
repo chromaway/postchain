@@ -2,16 +2,20 @@
 
 package net.postchain.gtx
 
+import mu.KLogging
 import net.postchain.base.BaseBlockQueries
 import net.postchain.base.BaseBlockchainConfigurationData
 import net.postchain.base.Storage
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.core.*
+import net.postchain.gtv.*
 import nl.komponents.kovenant.Promise
 
 open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationData, val module: GTXModule)
     : BaseBlockchainConfiguration(configData) {
     val txFactory = GTXTransactionFactory(blockchainRID, module, cryptoSystem)
+
+    companion object : KLogging()
 
     override fun getTransactionFactory(): TransactionFactory {
         return txFactory
@@ -19,6 +23,7 @@ open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationDat
 
     override fun initializeDB(ctx: EContext) {
         super.initializeDB(ctx)
+        logger.info("Running initialize DB of class GTXBlockchainConfiguration")
         GTXSchemaManager.initializeDB(ctx)
         module.initializeDB(ctx)
     }
@@ -26,18 +31,18 @@ open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationDat
     override fun makeBlockQueries(storage: Storage): BlockQueries {
         return object : BaseBlockQueries(this@GTXBlockchainConfiguration, storage, blockStore,
                 chainID, configData.subjectID) {
-            private val gson = make_gtx_gson()
+            private val gson = make_gtv_gson()
 
             override fun query(query: String): Promise<String, Exception> {
-                val gtxQuery = gson.fromJson<GTXValue>(query, GTXValue::class.java)
+                val gtxQuery = gson.fromJson<Gtv>(query, Gtv::class.java)
                 return runOp {
                     val type = gtxQuery.asDict()["type"] ?: throw UserMistake("Missing query type")
                     val queryResult = module.query(it, type.asString(), gtxQuery)
-                    gtxToJSON(queryResult, gson)
+                    gtvToJSON(queryResult, gson)
                 }
             }
 
-            override fun query(name: String, args: GTXValue): Promise<GTXValue, Exception> {
+            override fun query(name: String, args: Gtv): Promise<Gtv, Exception> {
                 return runOp {
                     module.query(it, name, args)
                 }
@@ -54,7 +59,7 @@ open class GTXBlockchainConfigurationFactory : BlockchainConfigurationFactory {
                 createGtxModule(configurationData.context.blockchainRID, configurationData.data))
     }
 
-    open fun createGtxModule(blockchainRID: ByteArray, data: GTXValue): GTXModule {
+    open fun createGtxModule(blockchainRID: ByteArray, data: Gtv): GTXModule {
         val gtxConfig = data["gtx"]!!
         val list = gtxConfig["modules"]!!.asArray().map { it.asString() }
         if (list.isEmpty()) {

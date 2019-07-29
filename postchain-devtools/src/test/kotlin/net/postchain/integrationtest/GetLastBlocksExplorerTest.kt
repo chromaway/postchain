@@ -1,66 +1,76 @@
 package net.postchain.integrationtest
 
-import net.postchain.api.rest.controller.Model
-import net.postchain.api.rest.model.ApiTx
+import assertk.assertions.hasSize
+import assertk.assertions.isEqualTo
+import assertk.assertions.isTrue
 import net.postchain.common.toHex
-import net.postchain.core.BlockDetail
+import net.postchain.core.Transaction
 import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.devtools.testinfra.TestTransaction
-import org.junit.Assert
+import org.awaitility.Awaitility.await
+import org.awaitility.Duration
 import org.junit.Test
 
 class GetLastBlocksExplorerTest : IntegrationTest() {
 
-    private fun tx(id: Int): ApiTx {
-        return ApiTx(TestTransaction(id).getRawData().toHex())
-    }
-
-    private fun apiModel(nodeIndex: Int): Model = nodes[nodeIndex].getRestApiModel()
-
     @Test
     fun buildOneBlock() {
-        val count = 2
-        configOverrides.setProperty("testpeerinfos", createPeerInfos(count))
-        val nodeConfig0 = "classpath:/net/postchain/rest_api/node0.properties"
-        val nodeConfig1 = "classpath:/net/postchain/rest_api/node1.properties"
-        val blockchainConfig = "/net/postchain/three_tx/blockchain_config.xml"
+        val nodesCount = 1
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+        val nodeConfig = "classpath:/net/postchain/rest_api/node0.properties"
+        val blockchainConfig = "/net/postchain/blockexplorer/blockchain_config.xml"
 
-        createSingleNode(0, 2, nodeConfig0, blockchainConfig)
-        createSingleNode(1, 2, nodeConfig1, blockchainConfig)
+        // Creating all nodes
+        createSingleNode(0, nodesCount, nodeConfig, blockchainConfig)
 
-        apiModel(0).postTransaction(tx(0))
+        // Asserting chain 1 is started for all nodes
+        await().atMost(Duration.TEN_SECONDS)
+                .untilAsserted {
+                    nodes.forEach { it.assertChainStarted() }
+                }
 
-        enqueueTx(nodes[0], tx(1).bytes, -1)
-        enqueueTx(nodes[1], tx(1).bytes, -1)
-        buildBlockAndCommit(nodes[0])
-        buildBlockAndCommit(nodes[1])
+        nodes[0].enqueueTxsAndAwaitBuiltBlock(DEFAULT_CHAIN_IID, 0, tx(0), tx(1))
+        nodes[0].enqueueTxsAndAwaitBuiltBlock(DEFAULT_CHAIN_IID, 1, tx(10), tx(11), tx(12))
+        nodes[0].enqueueTxsAndAwaitBuiltBlock(DEFAULT_CHAIN_IID, 2, tx(100), tx(101), tx(102))
 
-        buildBlockAndCommit(nodes[0])
-        buildBlockAndCommit(nodes[1])
+        // Asserting blocks and txs
+        val blocks = nodes[0].getRestApiModel().getLatestBlocksUpTo(Long.MAX_VALUE, 25)
+        assertk.assert(blocks).hasSize(3)
 
-        enqueueTx(nodes[1], tx(2).bytes, 1)
-        enqueueTx(nodes[0], tx(2).bytes, 1)
-        buildBlockAndCommit(nodes[1])
-        buildBlockAndCommit(nodes[0])
+        // Block #2
+        assertk.assert(blocks[0].height).isEqualTo(2L)
+        assertk.assert(blocks[0].transactions).hasSize(3)
+        assertk.assert(compareTx(blocks[0].transactions[0], tx(100))).isTrue()
+        assertk.assert(compareTx(blocks[0].transactions[1], tx(101))).isTrue()
+        assertk.assert(compareTx(blocks[0].transactions[2], tx(102))).isTrue()
 
-        val query0 = nodes[0].getRestApiModel().getLatestBlocksUpTo(Long.MAX_VALUE, 25)
-        val query1 = nodes[1].getRestApiModel().getLatestBlocksUpTo(Long.MAX_VALUE, 25)
+        // Block #1
+        assertk.assert(blocks[1].height).isEqualTo(1L)
+        assertk.assert(blocks[1].transactions).hasSize(3)
+        assertk.assert(compareTx(blocks[1].transactions[0], tx(10))).isTrue()
+        assertk.assert(compareTx(blocks[1].transactions[1], tx(11))).isTrue()
+        assertk.assert(compareTx(blocks[1].transactions[2], tx(12))).isTrue()
 
-        (0 until query0.size).forEach {
-            Assert.assertTrue(
-                    compareBlocks(query0[it], query1[it]))
-        }
+        // Block #0
+        assertk.assert(blocks[2].height).isEqualTo(0L)
+        assertk.assert(blocks[2].transactions).hasSize(2)
+        assertk.assert(compareTx(blocks[2].transactions[0], tx(0))).isTrue()
+        assertk.assert(compareTx(blocks[2].transactions[1], tx(1))).isTrue()
     }
 
-    private fun compareBlocks(block0: BlockDetail, block1: BlockDetail): Boolean {
-        if ((block0.height != block1.height) ||
-                (block0.transactions.size != block1.transactions.size)) return false
+    private fun tx(id: Int): TestTransaction = TestTransaction(id)
 
-        val thisTransactionsToHex = block0.transactions.map { transaction -> transaction.toHex() }
-        for (transaction in block1.transactions) {
-            if (!thisTransactionsToHex.contains(transaction.toHex())) return false
-        }
-
-        return true
+    private fun compareTx(actualTx: ByteArray, expectedTx: Transaction): Boolean {
+        return (actualTx.toHex() == expectedTx.getRawData().toHex())
+                .also {
+                    if (!it) {
+                        logger.error {
+                            "Transactions are not equal:\n" +
+                                    "\t actual:\t${actualTx.toHex()}\n" +
+                                    "\t expected:\t${expectedTx.getRawData().toHex()}"
+                        }
+                    }
+                }
     }
 }

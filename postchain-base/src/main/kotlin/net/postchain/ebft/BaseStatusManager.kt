@@ -10,8 +10,12 @@ import java.util.*
 /**
  * StatusManager manages the status of the consensus protocol
  */
-class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long)
-    : StatusManager {
+class BaseStatusManager(
+        val nodeCount: Int,
+        val myIndex: Int,
+        myNextHeight: Long
+): StatusManager {
+
     override val nodeStatuses = Array(nodeCount) { NodeStatus() }
     override val commitSignatures: Array<Signature?> = arrayOfNulls(nodeCount)
     override val myStatus: NodeStatus
@@ -38,7 +42,7 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
      * @return the number of nodes at the same state as the local node
      */
     private fun countNodes(state: NodeState, height: Long, blockRID: ByteArray?): Int {
-        var count: Int = 0
+        var count = 0
         for (ns in nodeStatuses) {
             if (ns.height == height && ns.state == state) {
                 if (blockRID == null) {
@@ -175,12 +179,11 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
     override fun onReceivedBlock(blockRID: ByteArray, mySignature: Signature): Boolean {
         val _intent = intent
         if (_intent is FetchUnfinishedBlockIntent) {
-            val needBlockRID = _intent.blockRID
-            if (Arrays.equals(blockRID, needBlockRID)) {
+            if (_intent.isThisTheBlockWeAreWaitingFor(blockRID)) {
                 acceptBlock(blockRID, mySignature)
                 return true
             } else {
-                logger.error("Received block which is irrelevant. Need ${needBlockRID.toHex()}, got ${blockRID.toHex()}")
+                logger.error("Received block which is irrelevant. Need ${_intent.blockRID.toHex()}, got ${blockRID.toHex()}")
                 return false
             }
         } else {
@@ -199,6 +202,10 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
         return ((myStatus.height + myStatus.round) % nodeCount).toInt()
     }
 
+    private fun isMyNodePrimary(): Boolean {
+        return primaryIndex() == this.myIndex
+    }
+
     /**
      * Run when new block has been built locally
      *
@@ -209,7 +216,7 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
     @Synchronized
     override fun onBuiltBlock(blockRID: ByteArray, mySignature: Signature): Boolean {
         if (intent is BuildBlockIntent) {
-            if (primaryIndex() != myIndex) {
+            if (!isMyNodePrimary()) {
                 logger.warn("Inconsistent state: building a block while not a primary")
                 return false
             }
@@ -277,8 +284,14 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
      */
     fun recomputeStatus() {
         for (i in 0..1000) {
-            if (!recomputeStatus1()) break
+            if (!shouldRecomputeStatusAgain()) break
         }
+    }
+
+
+    // Simple helper class to keep track of when our work is done
+    enum class FlowStatus {
+        JustRunOn, Continue, Break
     }
 
     /**
@@ -287,7 +300,7 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
      *
      * @return true if status is updated
      */
-    fun recomputeStatus1(): Boolean {
+    fun shouldRecomputeStatusAgain(): Boolean { // Not private bc unit test
 
         /**
          * Used to reset our block status when we are in HaveBlock state
@@ -301,8 +314,11 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
             resetCommitSignatures()
         }
 
-        // check if we have enough nodes who can participate in building a block
-        if (myStatus.state != NodeState.Prepared) {
+        /**
+         * If we find that the node status are ahead of us
+         * we might want to synch.
+         */
+        fun potentiallyDoSynch(): FlowStatus {
             var sameHeightCount: Int = 0
             var higherHeightCount: Int = 0
             for (ns in nodeStatuses) {
@@ -320,9 +336,9 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
 
                     if (_intent is FetchBlockAtHeightIntent) {
                         if (_intent.height == myStatus.height)
-                            return false
+                            return FlowStatus.Break
                         intent = FetchBlockAtHeightIntent(myStatus.height)
-                        return true
+                        return FlowStatus.Continue
                     }
 
                     if (myStatus.state == NodeState.HaveBlock) {
@@ -332,12 +348,16 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
 
                     // try fetching a block
                     this.intent = FetchBlockAtHeightIntent(myStatus.height)
-                    return true
+                    return FlowStatus.Continue
                 }
             }
+            return FlowStatus.JustRunOn
         }
 
-        if (myStatus.revolting) {
+        /**
+         * Handles possible revolts
+         */
+        fun potentiallyRevolt(): FlowStatus {
             var nHighRound: Int = 0
             var nRevolting: Int = 0
             for (ns in nodeStatuses) {
@@ -359,20 +379,33 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
                 myStatus.revolting = false
                 myStatus.round += 1
                 myStatus.serial += 1
-                return true
+                return FlowStatus.Continue
+            } else {
+                return FlowStatus.JustRunOn
             }
         }
 
-
-        if (myStatus.state === NodeState.HaveBlock) {
+        /**
+         * Takes care of the [HaveBlock] (second) state
+         * Will move to state [Prepared] if if enough nodes have reached our BlockRID
+         */
+        fun handleHaveBlockState(): Boolean {
             val count = countNodes(NodeState.HaveBlock, myStatus.height, myStatus.blockRID) +
                     countNodes(NodeState.Prepared, myStatus.height, myStatus.blockRID)
             if (count > this.quorum2f) {
                 myStatus.state = NodeState.Prepared
                 myStatus.serial += 1
                 return true
+            } else {
+                return false
             }
-        } else if (myStatus.state === NodeState.Prepared) {
+        }
+
+
+        /**
+         * Takes care of the [Prepared] (last) state
+         */
+        fun handlePreparedState(): Boolean {
             if (intent is CommitBlockIntent) return false
             val count = commitSignatures.count { it != null }
             if (count > this.quorum2f) {
@@ -414,8 +447,17 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
                     }
                 }
             }
-        } else if (myStatus.state == NodeState.WaitBlock) {
-            if (primaryIndex() == this.myIndex) {
+        }
+
+        /**
+         * Takes care of the [WaitBlock] (initial) state
+         * If: I'm the "primary" node,
+         *     Then: It will by my job to build the block (set intent to [BuildBlockIntent])
+         * Else: some other node is building the block, I have to wait until they send me the block
+         *       that the primary node has
+         */
+        fun handleWaitBlockState(): Boolean {
+            if (isMyNodePrimary()) {
                 if (intent !is BuildBlockIntent) {
                     intent = BuildBlockIntent
                     return true
@@ -425,15 +467,41 @@ class BaseStatusManager(val nodeCount: Int, val myIndex: Int, myNextHeight: Long
                 if (primaryBlockRID != null) {
                     val _intent = intent
                     if (!(_intent is FetchUnfinishedBlockIntent &&
-                                    Arrays.equals(_intent.blockRID, myStatus.blockRID))) {
+                          _intent.isThisTheBlockWeAreWaitingFor(myStatus.blockRID))) {
                         intent = FetchUnfinishedBlockIntent(primaryBlockRID)
                         return true
                     }
                 }
             }
+            return false
         }
-        return false
 
+
+        // We should make sure we have enough nodes who can participate in building a block.
+        // (If we are in [Perpared] state we ignore this check, it has been done before we got here)
+        if (myStatus.state != NodeState.Prepared) {
+            when (potentiallyDoSynch()) {
+                FlowStatus.Break -> return false
+                FlowStatus.Continue -> return true
+                // FlowStatus.JustRunOn -> // nothing, just go on
+            }
+        }
+
+        // Are we interested in checking for revolt?
+        if (myStatus.revolting) {
+            when (potentiallyRevolt()) {
+                FlowStatus.Break -> return false
+                FlowStatus.Continue -> return true
+                // FlowStatus.JustRunOn -> // nothing, just go on
+            }
+        }
+
+        // Handle the different states
+        when (myStatus.state) {
+            NodeState.HaveBlock -> return handleHaveBlockState()
+            NodeState.Prepared -> return handlePreparedState()
+            NodeState.WaitBlock -> return handleWaitBlockState()
+        }
     }
 
 }

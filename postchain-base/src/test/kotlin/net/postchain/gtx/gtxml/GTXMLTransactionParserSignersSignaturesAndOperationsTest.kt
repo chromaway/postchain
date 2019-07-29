@@ -4,7 +4,9 @@ import assertk.assert
 import assertk.assertions.isEqualTo
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.UserMistake
+import net.postchain.devtools.MockCryptoSystem
 import net.postchain.gtx.*
+import net.postchain.gtv.*
 import org.junit.Test
 
 class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
@@ -13,169 +15,182 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
     fun parseGTXMLTransaction_successfully() {
         val xml = javaClass.getResource("/net/postchain/gtx/gtxml/parse/tx_full.xml").readText()
 
-        val expected = GTXData(
+        val expectedBody = GTXTransactionBodyData(
                 "23213213".hexStringToByteArray(),
+                arrayOf(
+                        OpData("ft_transfer",
+                                arrayOf(
+                                        GtvString("hello"),
+                                        GtvString("hello2"),
+                                        GtvString("hello3"),
+                                        GtvInteger(42),
+                                        GtvInteger(43))),
+                        OpData("ft_transfer",
+                                arrayOf(
+                                        GtvString("HELLO"),
+                                        GtvString("HELLO2"),
+                                        GtvInteger(142),
+                                        GtvInteger(143)))
+                ),
                 arrayOf(
                         byteArrayOf(0x12, 0x38, 0x71, 0x23),
                         byteArrayOf(0x12, 0x38, 0x71, 0x24)
-                ),
-                arrayOf(
-                        byteArrayOf(0x34, 0x56, 0x78, 0x54),
-                        byteArrayOf(0x34, 0x56, 0x78, 0x55)
-                ),
-                arrayOf(
-                        OpData("ft_transfer",
-                                arrayOf(
-                                        StringGTXValue("hello"),
-                                        StringGTXValue("hello2"),
-                                        StringGTXValue("hello3"),
-                                        IntegerGTXValue(42),
-                                        IntegerGTXValue(43))),
-                        OpData("ft_transfer",
-                                arrayOf(
-                                        StringGTXValue("HELLO"),
-                                        StringGTXValue("HELLO2"),
-                                        IntegerGTXValue(142),
-                                        IntegerGTXValue(143)))
                 )
         )
 
-        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty())
+        val expectedTx = GTXTransactionData(expectedBody,
+                arrayOf(
+                        byteArrayOf(0x34, 0x56, 0x78, 0x54),
+                        byteArrayOf(0x34, 0x56, 0x78, 0x55)
+                )
+        )
 
-        assert(actual).isEqualTo(expected)
+        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty(), MockCryptoSystem())
+
+        assert(actual).isEqualTo(expectedTx)
     }
 
     @Test
     fun parseGTXMLTransaction_with_empty_all_sections_successfully() {
         val xml = javaClass.getResource("/net/postchain/gtx/gtxml/parse/tx_empty.xml").readText()
 
-        val expected = GTXData(
+        val expectedBody = GTXTransactionBodyData(
                 "23213213".hexStringToByteArray(),
-                arrayOf(),
                 arrayOf(),
                 arrayOf()
         )
 
-        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty())
+        val expectedTx = GTXTransactionData(expectedBody, arrayOf())
 
-        assert(actual).isEqualTo(expected)
+        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty(), MockCryptoSystem())
+
+        assert(actual).isEqualTo(expectedTx)
     }
 
     @Test
     fun parseGTXMLTransaction_with_empty_signers_and_signatures_successfully() {
         val xml = javaClass.getResource("/net/postchain/gtx/gtxml/parse/tx_empty_signers_and_signatures.xml").readText()
 
-        val expected = GTXData(
+        val expectedBody = GTXTransactionBodyData(
                 "23213213".hexStringToByteArray(),
-                arrayOf(),
-                arrayOf(),
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
-                                        StringGTXValue("hello"),
-                                        StringGTXValue("hello2"),
-                                        StringGTXValue("hello3"),
-                                        IntegerGTXValue(42),
-                                        IntegerGTXValue(43))),
+                                        GtvString("hello"),
+                                        GtvString("hello2"),
+                                        GtvString("hello3"),
+                                        GtvInteger(42),
+                                        GtvInteger(43))),
                         OpData("ft_transfer",
                                 arrayOf(
-                                        StringGTXValue("HELLO"),
-                                        StringGTXValue("HELLO2"),
-                                        IntegerGTXValue(142),
-                                        IntegerGTXValue(143)))
-                )
+                                        GtvString("HELLO"),
+                                        GtvString("HELLO2"),
+                                        GtvInteger(142),
+                                        GtvInteger(143)))
+                ),
+                arrayOf()
         )
 
-        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty())
+        val expectedTx = GTXTransactionData(expectedBody, arrayOf())
 
-        assert(actual).isEqualTo(expected)
+        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty(), MockCryptoSystem())
+
+        assert(actual).isEqualTo(expectedTx)
     }
 
     @Test
     fun parseGTXMLTransaction_with_empty_operations_successfully() {
         val xml = javaClass.getResource("/net/postchain/gtx/gtxml/parse/tx_empty_operations.xml").readText()
 
-        val expected = GTXData(
+        val expectedBody = GTXTransactionBodyData(
                 "23213213".hexStringToByteArray(),
+                arrayOf(),
                 arrayOf(
                         byteArrayOf(0x12, 0x38, 0x71, 0x23),
                         byteArrayOf(0x12, 0x38, 0x71, 0x24)
-                ),
+                )
+        )
+        val expectedTx = GTXTransactionData(expectedBody,
                 arrayOf(
                         byteArrayOf(0x34, 0x56, 0x78, 0x54),
                         byteArrayOf(0x34, 0x56, 0x78, 0x55)
-                ),
-                arrayOf()
+                )
         )
 
-        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty())
+        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty(), MockCryptoSystem())
 
-        assert(actual).isEqualTo(expected)
+        assert(actual).isEqualTo(expectedTx)
     }
 
     @Test
     fun parseGTXMLTransaction_with_empty_operation_parameters_successfully() {
         val xml = javaClass.getResource("/net/postchain/gtx/gtxml/parse/tx_empty_operation_parameters.xml").readText()
 
-        val expected = GTXData(
+        val expectedBody = GTXTransactionBodyData(
                 "23213213".hexStringToByteArray(),
+                arrayOf(OpData("ft_transfer", arrayOf())),
                 arrayOf(
                         byteArrayOf(0x12, 0x38, 0x71, 0x23),
                         byteArrayOf(0x12, 0x38, 0x71, 0x24)
-                ),
+                )
+        )
+
+        val expectedTx = GTXTransactionData(expectedBody,
                 arrayOf(
                         byteArrayOf(0x34, 0x56, 0x78, 0x54),
                         byteArrayOf(0x34, 0x56, 0x78, 0x55)
-                ),
-                arrayOf(OpData("ft_transfer", arrayOf()))
+                )
         )
 
-        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty())
+        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty(), MockCryptoSystem())
 
-        assert(actual).isEqualTo(expected)
+        assert(actual).isEqualTo(expectedTx)
     }
 
     @Test
     fun parseGTXMLTransaction_in_context_with_params_in_all_sections_successfully() {
         val xml = javaClass.getResource("/net/postchain/gtx/gtxml/parse/tx_full_params.xml").readText()
 
-        val expected = GTXData(
+        val expectedBody = GTXTransactionBodyData(
                 "23213213".hexStringToByteArray(),
+                arrayOf(OpData("ft_transfer",
+                        arrayOf(GtvString("hello"),
+                                GtvString("my string param"),
+                                GtvInteger(123),
+                                GtvByteArray(byteArrayOf(0x0A, 0x0B, 0x0C)))
+                )),
                 arrayOf(
                         byteArrayOf(0x12, 0x38, 0x71, 0x23),
                         byteArrayOf(0x12, 0x38, 0x71, 0x24),
                         byteArrayOf(0x01, 0x02, 0x03)
-                ),
+                )
+        )
+
+        val expectedTx = GTXTransactionData(expectedBody,
                 arrayOf(
                         byteArrayOf(0x34, 0x56, 0x78, 0x54),
                         byteArrayOf(0x0A, 0x0B, 0x0C, 0x0D),
                         byteArrayOf(0x0E, 0x0F)
-                ),
-                arrayOf(OpData("ft_transfer",
-                        arrayOf(StringGTXValue("hello"),
-                                StringGTXValue("my string param"),
-                                IntegerGTXValue(123),
-                                ByteArrayGTXValue(byteArrayOf(0x0A, 0x0B, 0x0C)))
-                ))
+                )
         )
 
         val context = TransactionContext(
                 null,
                 mapOf(
-                        "param_signer" to ByteArrayGTXValue(byteArrayOf(0x01, 0x02, 0x03)),
+                        "param_signer" to GtvByteArray(byteArrayOf(0x01, 0x02, 0x03)),
 
-                        "param_string" to StringGTXValue("my string param"),
-                        "param_int" to IntegerGTXValue(123),
-                        "param_bytearray" to ByteArrayGTXValue(byteArrayOf(0x0A, 0x0B, 0x0C)),
+                        "param_string" to GtvString("my string param"),
+                        "param_int" to GtvInteger(123),
+                        "param_bytearray" to GtvByteArray(byteArrayOf(0x0A, 0x0B, 0x0C)),
 
-                        "param_signature_1" to ByteArrayGTXValue(byteArrayOf(0x0A, 0x0B, 0x0C, 0x0D)),
-                        "param_signature_2" to ByteArrayGTXValue(byteArrayOf(0x0E, 0x0F))
+                        "param_signature_1" to GtvByteArray(byteArrayOf(0x0A, 0x0B, 0x0C, 0x0D)),
+                        "param_signature_2" to GtvByteArray(byteArrayOf(0x0E, 0x0F))
                 )
         )
 
-        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, context)
+        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, context, MockCryptoSystem())
 
-        assert(actual).isEqualTo(expected)
+        assert(actual).isEqualTo(expectedTx)
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -183,7 +198,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
         val xml = javaClass.getResource("/net/postchain/gtx/gtxml/parse/tx_full_params_not_found.xml").readText()
 
         GTXMLTransactionParser.parseGTXMLTransaction(
-                xml, TransactionContext.empty())
+                xml, TransactionContext.empty(), MockCryptoSystem())
     }
 
     @Test(expected = UserMistake::class)
@@ -193,11 +208,11 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
         val context = TransactionContext(
                 null,
                 mapOf(
-                        "param_foo" to StringGTXValue("my string param")
+                        "param_foo" to GtvString("my string param")
                 )
         )
 
-        GTXMLTransactionParser.parseGTXMLTransaction(xml, context)
+        GTXMLTransactionParser.parseGTXMLTransaction(xml, context, MockCryptoSystem())
     }
 
     @Test(expected = UserMistake::class)
@@ -207,11 +222,11 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
         val context = TransactionContext(
                 null,
                 mapOf(
-                        "param_foo" to StringGTXValue("my string param")
+                        "param_foo" to GtvString("my string param")
                 )
         )
 
-        GTXMLTransactionParser.parseGTXMLTransaction(xml, context)
+        GTXMLTransactionParser.parseGTXMLTransaction(xml, context, MockCryptoSystem())
     }
 
     @Test
@@ -219,54 +234,55 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
         val xml = javaClass.getResource(
                 "/net/postchain/gtx/gtxml/parse/tx_params_is_compound_of_parameter_of_operation.xml").readText()
 
-        val expected = GTXData(
+        val expectedBody = GTXTransactionBodyData(
                 "23213213".hexStringToByteArray(),
-                arrayOf(),
-                arrayOf(),
                 arrayOf(
                         OpData("ft_transfer",
-                                arrayOf(ArrayGTXValue(arrayOf(
-                                        StringGTXValue("foo"),
-                                        ArrayGTXValue(arrayOf(
-                                                StringGTXValue("foo"),
-                                                StringGTXValue("bar")
+                                arrayOf(GtvArray(arrayOf(
+                                        GtvString("foo"),
+                                        GtvArray(arrayOf(
+                                                GtvString("foo"),
+                                                GtvString("bar")
                                         )),
-                                        DictGTXValue(mapOf(
-                                                "key2" to StringGTXValue("42"),
-                                                "key1" to IntegerGTXValue(42),
-                                                "key3" to ArrayGTXValue(arrayOf(
-                                                        StringGTXValue("hello"),
-                                                        IntegerGTXValue(42)))
+                                        GtvDictionary.build(mapOf(
+                                                "key2" to GtvString("42"),
+                                                "key1" to GtvInteger(42),
+                                                "key3" to GtvArray(arrayOf(
+                                                        GtvString("hello"),
+                                                        GtvInteger(42)))
                                         ))
                                 )))
                         )
-                )
+                ),
+                arrayOf()
         )
+
+        val expectedTx = GTXTransactionData( expectedBody, arrayOf())
 
         val context = TransactionContext(
                 null,
                 mapOf("param_compound" to
-                        ArrayGTXValue(arrayOf(
-                                StringGTXValue("foo"),
-                                ArrayGTXValue(arrayOf(
-                                        StringGTXValue("foo"),
-                                        StringGTXValue("bar")
+                        GtvArray(arrayOf(
+                                GtvString("foo"),
+                                GtvArray(arrayOf(
+                                        GtvString("foo"),
+                                        GtvString("bar")
                                 )),
-                                DictGTXValue(mapOf(
-                                        "key1" to IntegerGTXValue(42),
-                                        "key2" to StringGTXValue("42"),
-                                        "key3" to ArrayGTXValue(arrayOf(
-                                                StringGTXValue("hello"),
-                                                IntegerGTXValue(42)
+                                GtvDictionary.build(mapOf(
+                                        "key1" to GtvInteger(42),
+                                        "key2" to GtvString("42"),
+                                        "key3" to GtvArray(arrayOf(
+                                                GtvString("hello"),
+                                                GtvInteger(42)
                                         ))
                                 ))
                         ))
                 )
         )
 
-        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, context)
+        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, context, MockCryptoSystem())
 
-        assert(actual).isEqualTo(expected)
+        assert(actual).isEqualTo(expectedTx)
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -275,7 +291,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                 "/net/postchain/gtx/gtxml/parse/tx_signers_and_signatures_incompatibility__signers_more_than_signatures.xml")
                 .readText()
 
-        GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty())
+        GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty(), MockCryptoSystem())
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -284,7 +300,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                 "/net/postchain/gtx/gtxml/parse/tx_signers_and_signatures_incompatibility__signers_less_than_signatures.xml")
                 .readText()
 
-        GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty())
+        GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty(), MockCryptoSystem())
     }
 
     @Test
@@ -293,23 +309,26 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                 "/net/postchain/gtx/gtxml/parse/tx_signers_and_signatures_incompatibility__no_signatures_element.xml")
                 .readText()
 
-        val expected = GTXData(
+        val expectedBody = GTXTransactionBodyData(
                 "23213213".hexStringToByteArray(),
+                arrayOf(),
                 arrayOf(
                         byteArrayOf(0x12, 0x38, 0x71, 0x23),
                         byteArrayOf(0x12, 0x38, 0x71, 0x24),
                         byteArrayOf(0x12, 0x38, 0x71, 0x25)
-                ),
+                )
+        )
+
+        val expectedTx = GTXTransactionData(expectedBody,
                 arrayOf(
                         byteArrayOf(),
                         byteArrayOf(),
                         byteArrayOf()
-                ),
-                arrayOf()
+                )
         )
 
-        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty())
+        val actual = GTXMLTransactionParser.parseGTXMLTransaction(xml, TransactionContext.empty(), MockCryptoSystem())
 
-        assert(actual).isEqualTo(expected)
+        assert(actual).isEqualTo(expectedTx)
     }
 }

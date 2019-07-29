@@ -13,8 +13,17 @@ class BaseApiInfrastructure(nodeConfigProvider: NodeConfigurationProvider) : Api
 
     val restApi: RestApi? = with(nodeConfigProvider.getConfiguration()) {
         if (restApiPort != -1) {
-            if (restApiSsl) RestApi(restApiPort, restApiBasePath, restApiSslCertificate, restApiSslCertificatePassword)
-            else RestApi(restApiPort, restApiBasePath)
+            if (restApiSsl) {
+                RestApi(
+                        restApiPort,
+                        restApiBasePath,
+                        restApiSslCertificate,
+                        restApiSslCertificatePassword)
+            } else {
+                RestApi(
+                        restApiPort,
+                        restApiBasePath)
+            }
         } else {
             null
         }

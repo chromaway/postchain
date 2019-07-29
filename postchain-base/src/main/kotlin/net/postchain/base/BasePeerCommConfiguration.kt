@@ -18,7 +18,9 @@ class BasePeerCommConfiguration(override val peerInfo: Array<PeerInfo>,
     override fun myPeerInfo(): PeerInfo = resolvePeer(pubKey)
             ?: throw UserMistake("Unknown pubKey detected: ${pubKey.toHex()}")
 
-    override fun signer(): Signer = cryptoSystem.makeSigner(pubKey, privKey)
+    override fun sigMaker(): SigMaker {
+        return cryptoSystem.buildSigMaker(pubKey, privKey)
+    }
 
     override fun verifier(): Verifier = cryptoSystem.makeVerifier()
 }

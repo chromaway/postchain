@@ -2,49 +2,58 @@
 
 package net.postchain.ebft.messages
 
+import net.postchain.ebft.message.BlockSignature
+import net.postchain.ebft.message.GetBlockAtHeight
+import net.postchain.ebft.message.Message
+import net.postchain.ebft.message.Signature
+import net.postchain.ebft.message.Status
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.io.ByteArrayOutputStream
 
 class MessagesTest {
     @Test
     fun testGetBlockAtHeight() {
-        val mess = net.postchain.ebft.messages.GetBlockAtHeight()
-        mess.height =29
-        val out = ByteArrayOutputStream()
-        mess.der_encode(out)
+        val mess = GetBlockAtHeight(29)
+        val encoded = mess.encode()
 
-        val result = net.postchain.ebft.messages.GetBlockAtHeight.der_decode(out.toByteArray().inputStream())
-        assertEquals(29, result.height)
+        val result = Message.decode<GetBlockAtHeight>(encoded)
+        assertEquals(mess.height, result.height)
     }
 
     @Test
     fun testBlockSignature() {
-        val mess = net.postchain.ebft.messages.BlockSignature()
-        mess.blockRID = ByteArray(32, {it.toByte()})
-        val sig = net.postchain.ebft.messages.Signature()
-        sig.data = ByteArray(40, {(it+1).toByte()})
-        sig.subjectID = ByteArray(33, {it.toByte()})
-        mess.signature = sig
-        val out = ByteArrayOutputStream()
-        mess.der_encode(out)
+        val blockRID = ByteArray(32){it.toByte()}
+        val subjectID = ByteArray(33) {it.toByte()}
+        val data = ByteArray(40){(it+1).toByte()}
+        val sig = Signature(subjectID, data)
+        val mess = BlockSignature(blockRID, sig)
+        val encoded = mess.encode()
 
-        val result = net.postchain.ebft.messages.BlockSignature.der_decode(out.toByteArray().inputStream())
+        val result = Message.decode<BlockSignature>(encoded)
         assertArrayEquals(mess.blockRID, result.blockRID)
-        assertArrayEquals(mess.signature.subjectID, result.signature.subjectID)
-        assertArrayEquals(mess.signature.data, result.signature.data)
+        assertArrayEquals(mess.sig.subjectID, result.sig.subjectID)
+        assertArrayEquals(mess.sig.data, result.sig.data)
     }
 
     @Test
-    fun testMessage() {
-        val gbah = net.postchain.ebft.messages.GetBlockAtHeight()
-        gbah.height = 19
-        val mess = net.postchain.ebft.messages.Message.getBlockAtHeight(gbah)
-        val out = ByteArrayOutputStream()
-        mess.der_encode(out)
+    fun testStatus() {
+        val blockRID = ByteArray(32){it.toByte()}
+        val height = 123321L
+        val revolting = true
+        val round = 1L
+        val serial = 123456L
+        val state = 123
 
-        val result = net.postchain.ebft.messages.Message.der_decode(out.toByteArray().inputStream())
-        assertEquals(mess.getBlockAtHeight.height, result.getBlockAtHeight.height)
+        val status = Status(blockRID, height, revolting, round, serial, state)
+        val encoded = status.encode()
+        val expected = Message.decode<Status>(encoded)
+
+        assertArrayEquals(status.blockRID, expected.blockRID)
+        assertEquals(status.height, expected.height)
+        assertEquals(status.revolting, expected.revolting)
+        assertEquals(status.round, expected.round)
+        assertEquals(status.serial, expected.serial)
+        assertEquals(status.state, expected.state)
     }
 }

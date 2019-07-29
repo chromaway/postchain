@@ -14,6 +14,7 @@ import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.test.assertNotNull
 
 open class FullEbftTestNightlyCore : IntegrationTest() {
 
@@ -53,10 +54,10 @@ open class FullEbftTestNightlyCore : IntegrationTest() {
 
             for (height in 0..referenceHeight) {
                 logger.info { "Verifying height $height" }
-                val rids = queries.getBlockRids(height).get()
-                assertEquals(1, rids.size)
+                val rid = queries.getBlockRids(height).get()
+                assertNotNull(rid)
 
-                val txs = queries.getBlockTransactionRids(rids[0]).get()
+                val txs = queries.getBlockTransactionRids(rid!!).get()
                 assertEquals(txPerBlock, txs.size)
 
                 for (tx in 0 until txPerBlock) {
