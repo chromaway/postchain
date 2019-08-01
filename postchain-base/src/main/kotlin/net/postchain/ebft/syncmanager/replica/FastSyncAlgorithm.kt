@@ -11,7 +11,6 @@ import net.postchain.ebft.message.GetBlockAtHeight
 import net.postchain.ebft.message.Message
 import net.postchain.ebft.message.Status
 import net.postchain.ebft.syncmanager.decodeBlockDataWithWitness
-import net.postchain.ebft.syncmanager.replica.ReplicaTelemetry
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
 import java.lang.Integer.max
@@ -19,7 +18,7 @@ import java.lang.Integer.min
 import java.util.*
 
 class FastSyncAlgorithm(
-        private val blockchainProcessName: String,
+        blockchainProcessName: String,
         signers: List<ByteArray>,
         private val communicationManager: CommunicationManager<Message>,
         private val blockDatabase: BlockDatabase,
