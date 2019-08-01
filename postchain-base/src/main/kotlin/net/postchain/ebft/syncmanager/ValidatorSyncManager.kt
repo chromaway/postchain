@@ -147,7 +147,8 @@ class ValidatorSyncManager(
                                         logger.error("Failed to add block to database. Resetting state...", e)
                                         // reset state to last known from database
                                         val currentBlockHeight = blockQueries.getBestHeight().get()
-                                        statusManager.fastForwardHeight(currentBlockHeight + 1)
+                                        statusManager.fastForwardHeight(currentBlockHeight)
+                                        blockManager.currentBlock = null
                                     }
                                 }
                                 is UnfinishedBlock -> {
@@ -348,9 +349,12 @@ class ValidatorSyncManager(
         if(useFastSyncAlgorithm) {
             fastSyncAlgorithm.sync()
             if(fastSyncAlgorithm.isUpToDate()){
+                // turn off fast sync, reset current block to null, and query for the last known state from db to prevent
+                // possible race conditions
                 useFastSyncAlgorithm = false
                 val currentBlockHeight = blockQueries.getBestHeight().get()
-                statusManager.fastForwardHeight(currentBlockHeight + 1)
+                statusManager.fastForwardHeight(currentBlockHeight)
+                blockManager.currentBlock = null
             }
         } else {
 

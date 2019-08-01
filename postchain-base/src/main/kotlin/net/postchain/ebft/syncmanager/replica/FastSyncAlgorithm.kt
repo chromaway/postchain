@@ -53,7 +53,7 @@ class FastSyncAlgorithm(
 
     fun isUpToDate(): Boolean {
         val highest = nodeStatuses().map { it.height }.max()?: Long.MAX_VALUE
-        return if((highest - blockHeight) > blockHeightAheadCount) {
+        return if(blockHeight == -1L || ((highest - blockHeight) > blockHeightAheadCount)) {
             false
         } else {
             parallelRequestsState.clear()
@@ -71,7 +71,11 @@ class FastSyncAlgorithm(
             blocks.peek().height.let {
                 when {
                     it <= blockHeight -> blocks.remove()
-                    it == blockHeight + 1 -> commitBlock(blocks.remove().block)
+                    it == blockHeight + 1 ->
+                        if(!isUpToDate()){
+                            // to prevent outstanding blocks to commit when fast sync is turned off.
+                            commitBlock(blocks.remove().block)
+                        } else Unit
                     else -> Unit
                 }
             }
