@@ -33,8 +33,12 @@ open class PostchainModel(
         }
         TimeLog.end("PostchainModel.postTransaction().isCorrect", nonce)
         nonce = TimeLog.startSumConc("PostchainModel.postTransaction().enqueue")
-        if (!txQueue.enqueue(decodedTransaction))
-            throw OverloadedException("Transaction queue is full")
+        when(txQueue.enqueue(decodedTransaction)) {
+            TransactionResult.FULL -> throw OverloadedException("Transaction queue is full")
+            TransactionResult.INVALID -> throw InvalidTnxException("Transaction is invalid")
+            TransactionResult.DUPLICATE -> throw DuplicateTnxException("Transaction already in queue")
+            TransactionResult.UNKNOWN -> throw UserMistake("Unknown error")
+        }
         TimeLog.end("PostchainModel.postTransaction().enqueue", nonce)
     }
 
