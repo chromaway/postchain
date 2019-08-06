@@ -34,7 +34,7 @@ Configuration:
     Logger:
 
     - name: net.postchain
-      level: all
+      level: debug
       additivity: false
       AppenderRef:
       - ref: ConsoleAppender
