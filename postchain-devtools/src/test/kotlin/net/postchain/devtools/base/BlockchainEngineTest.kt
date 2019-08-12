@@ -18,6 +18,7 @@ class BlockchainEngineTest : IntegrationTest() {
 
     @Test
     fun testBuildBlock() {
+        configOverrides.setProperty("infrastructure", "base/test")
         val node = createNode(0, "/net/postchain/blocks/blockchain_config.xml")
         val txQueue = node.getBlockchainInstance().getEngine().getTransactionQueue()
 
