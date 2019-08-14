@@ -6,10 +6,7 @@ import net.postchain.core.BlockchainConfiguration
 import net.postchain.core.ProgrammerMistake
 import net.postchain.ebft.BlockDatabase
 import net.postchain.ebft.NodeStatus
-import net.postchain.ebft.message.CompleteBlock
-import net.postchain.ebft.message.GetBlockAtHeight
-import net.postchain.ebft.message.Message
-import net.postchain.ebft.message.Status
+import net.postchain.ebft.message.*
 import net.postchain.ebft.syncmanager.decodeBlockDataWithWitness
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
@@ -96,12 +93,31 @@ class FastSyncAlgorithm(
         }
     }
 
+    /**
+     * Send message to node including the block at [height]. This is a response to the [fetchBlockAtHeight] request.
+     *
+     * @param xPeerId XPeerID of receiving node
+     * @param height requested block height
+     */
+    private fun sendBlockAtHeight(xPeerId: XPeerID, height: Long) {
+        val blockAtHeight = blockDatabase.getBlockAtHeight(height)
+        blockAtHeight success {
+            val packet = CompleteBlock(
+                    BlockData(it.header.rawData, it.transactions),
+                    height,
+                    it.witness!!.getRawData()
+            )
+            communicationManager.sendPacket(packet, xPeerId)
+        } fail { fastSyncAlgorithmTelemetry.fatal("Error sending CompleteBlock", it) }
+    }
+
     private fun dispatchMessages() {
         for (packet in communicationManager.getPackets()) {
             val xPeerId = packet.first
             val message = packet.second
             try {
                 when (message) {
+                    is GetBlockAtHeight -> sendBlockAtHeight(xPeerId, message.height)
                     is CompleteBlock -> {
                         if (!doesQueueContainsBlock(message.height) && message.height > blockHeight) {
                             blocks.offer(
