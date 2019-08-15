@@ -50,6 +50,7 @@ class GTXIntegrationTest : IntegrationTest() {
 
     @Test
     fun testBuildBlock() {
+        configOverrides.setProperty("infrastructure", "base/test")
         val node = createNode(0, "/net/postchain/gtx_it/blockchain_config.xml")
 
         fun enqueueTx(data: ByteArray): Transaction? {
