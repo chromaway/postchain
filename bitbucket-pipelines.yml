@@ -3,6 +3,8 @@ pipelines:
   default:
     - step:
         max-time: 60
+        caches:
+          - maven
         script:
           - mvn -B -P ci clean install
         services: 
