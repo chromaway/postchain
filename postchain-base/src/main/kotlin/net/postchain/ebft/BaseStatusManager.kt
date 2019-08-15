@@ -198,6 +198,7 @@ class BaseStatusManager(
         if (intent is BuildBlockIntent) {
             if (!isMyNodePrimary()) {
                 logger.warn("Inconsistent state: building a block while not a primary")
+                intent = DoNothingIntent
                 return false
             }
             acceptBlock(blockRID, mySignature)
@@ -451,11 +452,17 @@ class BaseStatusManager(
                         intent = FetchUnfinishedBlockIntent(primaryBlockRID)
                         return true
                     }
+                } else {
+                    if (intent == DoNothingIntent)
+                        return false
+                    else {
+                        intent = DoNothingIntent
+                        return true
+                    }
                 }
             }
             return false
         }
-
 
         // We should make sure we have enough nodes who can participate in building a block.
         // (If we are in [Perpared] state we ignore this check, it has been done before we got here)
@@ -463,7 +470,7 @@ class BaseStatusManager(
             when (potentiallyDoSynch()) {
                 FlowStatus.Break -> return false
                 FlowStatus.Continue -> return true
-                // FlowStatus.JustRunOn -> // nothing, just go on
+                FlowStatus.JustRunOn -> Unit// nothing, just go on
             }
         }
 
@@ -472,7 +479,7 @@ class BaseStatusManager(
             when (potentiallyRevolt()) {
                 FlowStatus.Break -> return false
                 FlowStatus.Continue -> return true
-                // FlowStatus.JustRunOn -> // nothing, just go on
+                FlowStatus.JustRunOn -> Unit// nothing, just go on
             }
         }
 
