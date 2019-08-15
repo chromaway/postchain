@@ -50,6 +50,7 @@ class NettyClientPeerConnection<PacketType>(
         packetHandler?.invoke(
                 Transport.unwrapMessage(msg as ByteBuf),
                 peerInfo.peerId())
+        (msg as ByteBuf).release()
     }
 
     override fun accept(handler: XPacketHandler) {

@@ -18,10 +18,15 @@ Configuration:
     File:
       name: FileAppender
       fileName: "${logs}/${logfile}"
+      filePattern: "${logs}/archive/${logfile}.%d{yyyy-MM-dd-hh-mm}.gz"
+      Policies:
+        SizeBasedTriggeringPolicy:
+          size: 10MB
+        DefaultRollOverStrategy:
+          max: 10
       PatternLayout:
         # pattern: "[%X{node-id}] %-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
         pattern: "%-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
-
 
   Loggers:
 

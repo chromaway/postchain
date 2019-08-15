@@ -77,7 +77,7 @@
         <dependency>
             <groupId>com.willowtreeapps.assertk</groupId>
             <artifactId>assertk</artifactId>
-            <version>RELEASE</version>
+            <version>0.10</version>
             <scope>test</scope>
         </dependency>
 
