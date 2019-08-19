@@ -34,7 +34,7 @@ class StorageBuilder {
             // Read DataSource
             val readDataSource = createBasicDataSource(nodeConfig).apply {
                 defaultAutoCommit = true
-                maxTotal = 2
+                maxTotal = 200
                 defaultReadOnly = true
             }
 
@@ -42,7 +42,7 @@ class StorageBuilder {
             val writeDataSource = createBasicDataSource(nodeConfig).apply {
                 maxWaitMillis = 0
                 defaultAutoCommit = false
-                maxTotal = 1
+                maxTotal = 100
             }
 
             createTablesIfNotExists(writeDataSource, db)
