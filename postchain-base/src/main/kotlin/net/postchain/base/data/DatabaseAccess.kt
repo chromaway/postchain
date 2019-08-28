@@ -75,6 +75,8 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
         const val TABLE_PEERINFOS_FIELD_HOST = "host"
         const val TABLE_PEERINFOS_FIELD_PORT = "port"
         const val TABLE_PEERINFOS_FIELD_PUBKEY = "pub_key"
+        const val TABLE_PEERINFOS_FIELD_CREATED_AT = "created_at"
+        const val TABLE_PEERINFOS_FIELD_UPDATED_AT = "updated_at"
     }
 
     override fun insertBlock(ctx: EContext, height: Long): Long {
