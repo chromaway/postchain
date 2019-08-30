@@ -58,9 +58,10 @@ open class BaseBlockchainProcessManager(
                 logger.debug { "[${nodeName()}]: BlockchainEngine has been created: chainId:$chainId" }
 
                 blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(nodeName(), engine) {
-                    executor.execute {
-                        startBlockchain(chainId)
-                    }
+                    if (isRestartNeeded(chainId)) {
+                        startBlockchainAsync(chainId)
+                        true
+                    } else false
                 }
                 logger.debug { "[${nodeName()}]: BlockchainProcess has been launched: chainId:$chainId" }
 

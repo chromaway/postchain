@@ -71,28 +71,6 @@ class ValidatorWorker(
         startUpdateLoop(syncManager)
     }
 
-    /**
-     * Create and run the [updateLoop] thread
-     *
-     * @param syncManager the syncronization manager
-     */
-    private fun startUpdateLoop(syncManager: SyncManagerBase) {
-        updateLoop = thread(name = "updateLoop") {
-            while (!Thread.interrupted()) {
-                try {
-                    syncManager.update()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-
-                try {
-                    Thread.sleep(20)
-                } catch (e: InterruptedException) {
-                    Thread.currentThread().interrupt()
-                }
-            }
-        }
-    }
 
     /**
      * Stop the postchain node

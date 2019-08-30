@@ -48,14 +48,14 @@ class EBFTSynchronizationInfrastructure(val nodeConfigProvider: NodeConfiguratio
                     blockchainConfig.signers,
                     engine,
                     blockchainConfig.configData.context.nodeID,
-                    buildXCommunicationManager(blockchainConfig),
+                    buildXCommunicationManager(processName, blockchainConfig),
                     restartHandler)
         } else {
             ReadOnlyWorker(
                     processName,
                     blockchainConfig.signers,
                     engine,
-                    buildXCommunicationManager(blockchainConfig),
+                    buildXCommunicationManager(processName, blockchainConfig),
                     restartHandler)
         }
     }
