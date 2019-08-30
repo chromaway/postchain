@@ -1,9 +1,7 @@
 package net.postchain.config.node
 
 import net.postchain.base.PeerInfo
-import net.postchain.config.SimpleDatabaseConnector
 import net.postchain.config.app.AppConfig
-import net.postchain.config.app.AppConfigDbLayer
 
 class ManagedNodeConfigurationProvider(
         private val appConfig: AppConfig
