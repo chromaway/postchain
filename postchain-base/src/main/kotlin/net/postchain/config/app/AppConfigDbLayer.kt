@@ -4,15 +4,19 @@ import net.postchain.base.PeerInfo
 import net.postchain.base.data.SQLCommandsFactory
 import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS
+import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_CREATED_AT
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_HOST
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_PORT
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_PUBKEY
+import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_UPDATED_AT
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.MapListHandler
 import org.apache.commons.dbutils.handlers.ScalarHandler
 import java.sql.Connection
+import java.sql.Timestamp
+import java.time.Instant
 
 class AppConfigDbLayer(
         private val appConfig: AppConfig,
@@ -61,20 +65,32 @@ class AppConfigDbLayer(
             PeerInfo(
                     it[TABLE_PEERINFOS_FIELD_HOST] as String,
                     it[TABLE_PEERINFOS_FIELD_PORT] as Int,
-                    (it[TABLE_PEERINFOS_FIELD_PUBKEY] as String).hexStringToByteArray())
+                    (it[TABLE_PEERINFOS_FIELD_PUBKEY] as String).hexStringToByteArray(),
+                    Instant.ofEpochMilli((it[TABLE_PEERINFOS_FIELD_CREATED_AT] as Timestamp).time),
+                    Instant.ofEpochMilli((it[TABLE_PEERINFOS_FIELD_UPDATED_AT] as Timestamp).time))
         }.toTypedArray()
     }
 
-    fun addPeerInfo(host: String, port: Int, pubKey: String): Boolean {
+    fun addPeerInfo(host: String, port: Int, pubKey: String, createdAt: Instant? = null, updatedAt: Instant? = null): Boolean {
+        val tsCreated = getTimestamp(createdAt)
+        val tsUpdated = getTimestamp(updatedAt)
         return QueryRunner().insert(
                 connection,
                 "INSERT INTO $TABLE_PEERINFOS " +
-                        "($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT, $TABLE_PEERINFOS_FIELD_PUBKEY) " +
-                        "VALUES (?, ?, ?) " +
-                        "ON CONFLICT ($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT) " +
-                        "DO UPDATE SET $TABLE_PEERINFOS_FIELD_PUBKEY = ? " +
-                        "RETURNING true",
-                ScalarHandler<Boolean>(), host, port, pubKey, pubKey)
+                        "($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT, $TABLE_PEERINFOS_FIELD_PUBKEY, $TABLE_PEERINFOS_FIELD_CREATED_AT, $TABLE_PEERINFOS_FIELD_UPDATED_AT) " +
+                        "VALUES (?, ?, ?, ?, ?) ",
+                ScalarHandler<Boolean>(), host, port, pubKey, tsCreated, tsUpdated)
+    }
+
+    fun updatePeerInfo(host: String, port: Int, pubKey: String, updatedAt: Instant? = null): Boolean {
+        val tsUpdated = getTimestamp(updatedAt)
+        val updated = QueryRunner().update(
+                connection,
+                "UPDATE $TABLE_PEERINFOS " +
+                        "SET $TABLE_PEERINFOS_FIELD_HOST = ?, $TABLE_PEERINFOS_FIELD_PORT = ?, $TABLE_PEERINFOS_FIELD_UPDATED_AT = ? " +
+                        "WHERE $TABLE_PEERINFOS_FIELD_PUBKEY = ?",
+                ScalarHandler<Int>(), host, port, tsUpdated, pubKey)
+        return (updated >= 1)
     }
 
     fun removePeerInfo(pubKey: String): Array<PeerInfo> {
@@ -93,6 +109,14 @@ class AppConfigDbLayer(
         }
 
         return result.toTypedArray()
+    }
+
+    private fun getTimestamp(time: Instant? = null): Timestamp {
+        return if (time == null) {
+            Timestamp(Instant.now().toEpochMilli())
+        } else {
+            Timestamp(time.toEpochMilli())
+        }
     }
 
     private fun createSchemaIfNotExists(connection: Connection) {

@@ -40,7 +40,8 @@ object PostgreSQLCommands : SQLCommands {
             " ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_HOST} text NOT NULL" +
             ", ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_PORT} integer NOT NULL" +
             ", ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_PUBKEY} text NOT NULL" +
-            ", UNIQUE (${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_HOST}, ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_PORT})" +
+            ", ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_CREATED_AT} timestamp NOT NULL" +
+            ", ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_UPDATED_AT} timestamp NOT NULL" +
             ")"
 
     override val createTableMeta: String = "CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)"
