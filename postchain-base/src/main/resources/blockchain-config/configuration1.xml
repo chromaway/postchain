@@ -1,24 +1,43 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <dict>
     <entry key="blockstrategy">
+        <!--
+        This block strategy is the default one if no config is made
+        maxblocktime=30000 (milliseconds)
+        blockdelay=1000 (milliseconds)
+        -->
         <dict>
             <entry key="name">
                 <string>net.postchain.base.BaseBlockBuildingStrategy</string>
             </entry>
+            <entry key="maxblocktime"><int>10</int></entry>
+            <entry key="blockdelay"><int>10</int></entry>
         </dict>
     </entry>
     <entry key="configurationfactory">
+        <!--
+        This is the main blockchain configuration class for chain 1
+        Examples:
+        * Single node GTX: SingleNodeGtxBlockchainConfigurationFactory
+        * Normal Gtx: GTXBlockchainConfigurationFactory
+        -->
         <string>net.postchain.gtx.GTXBlockchainConfigurationFactory</string>
     </entry>
     <entry key="signers">
         <array>
             <bytea>0350FE40766BC0CE8D08B3F5B810E49A8352FDD458606BD5FAFE5ACDCDC8FF3F57</bytea>
+            <bytea>035676109C54B9A16D271ABEB4954316A40A32BCCE023AC14C8E26E958AA68FBA9</bytea>
+            <bytea>03F811D3E806E6D093A4BCCE49C145BA78F9A4B2FBD167753ECAB2A13530B081F8</bytea>
+            <bytea>03EF3F5BE98D499B048BA28B247036B611A1CED7FCF87C17C8B5CA3B3CE1EE23A4</bytea>
         </array>
     </entry>
-    <entry key="blocksigningprivkey">
-        <bytea>3132333435363738393031323334353637383930313233343536373839303131</bytea>
-    </entry>
     <entry key="gtx">
+        <!--
+        If multiple GTX modules are used, allowoverrides will decide if query- and operation names of
+        modules are overridable. If false (default) an error will be thrown on startup if two or more
+        modules have name collisions. If true, The last module with a colliding name will take precedence
+        (blockchain.1.gtx.allowoverrides=true).
+        -->
         <dict>
             <entry key="modules">
                 <array>
