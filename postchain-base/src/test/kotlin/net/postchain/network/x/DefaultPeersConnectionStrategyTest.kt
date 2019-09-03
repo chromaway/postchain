@@ -3,10 +3,7 @@ package net.postchain.network.x
 import assertk.assert
 import assertk.assertions.isEqualTo
 import com.nhaarman.mockitokotlin2.*
-import net.postchain.base.PeerCommConfiguration
-import net.postchain.base.PeerInfo
-import net.postchain.base.SECP256K1CryptoSystem
-import net.postchain.base.secp256k1_derivePubKey
+import net.postchain.base.*
 import org.junit.Before
 import org.junit.Test
 
@@ -53,7 +50,7 @@ class DefaultPeersConnectionStrategyTest {
     fun will_result_in_exception_when_no_peers_provided() {
         // Mock
         val config: PeerCommConfiguration = mock {
-            on { peerInfo } doReturn arrayOf()
+            on { networkNodes } doReturn NetworkNodes.buildNetworkNodesDummy()
         }
         val action: (PeerInfo) -> Unit = mock { Unit }
 
@@ -67,9 +64,9 @@ class DefaultPeersConnectionStrategyTest {
     @Test
     fun no_peers_interactions_when_two_peers_and_pubkey1_provided() {
         // Mock
+        val x = NetworkNodes.buildNetworkNodes(setOf(peer1, peer2), XPeerID(pubKey1))
         val config: PeerCommConfiguration = mock {
-            on { peerInfo } doReturn arrayOf(peer1, peer2)
-            on { pubKey } doReturn pubKey1
+            on { networkNodes } doReturn x
         }
         val action: (PeerInfo) -> Unit = mock { Unit }
 
@@ -84,8 +81,7 @@ class DefaultPeersConnectionStrategyTest {
     fun peer1_interaction_when_two_peers_and_pubkey2_provided() {
         // Mock
         val config: PeerCommConfiguration = mock {
-            on { peerInfo } doReturn arrayOf(peer1, peer2)
-            on { pubKey } doReturn pubKey2
+            on { networkNodes } doReturn NetworkNodes.buildNetworkNodes(setOf(peer1, peer2), XPeerID(pubKey2))
         }
 
         val action: (PeerInfo) -> Unit = mock { Unit }
@@ -104,8 +100,7 @@ class DefaultPeersConnectionStrategyTest {
     fun peer1_2_3_interactions_when_four_peers_and_pubkey4_provided() {
         // Mock
         val config: PeerCommConfiguration = mock {
-            on { peerInfo } doReturn arrayOf(peer1, peer2, peer3, peer4)
-            on { pubKey } doReturn pubKey4
+            on { networkNodes } doReturn NetworkNodes.buildNetworkNodes(setOf(peer1, peer2, peer3, peer4), XPeerID(pubKey4))
         }
 
         val action: (PeerInfo) -> Unit = mock { Unit }
@@ -122,12 +117,11 @@ class DefaultPeersConnectionStrategyTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test(expected = KotlinNullPointerException::class)
     fun will_result_in_exception_when_myIndex_too_big() {
         // Mock
         val config: PeerCommConfiguration = mock {
-            on { peerInfo } doReturn arrayOf(peer1, peer2)
-            on { pubKey } doReturn ByteArray(0)
+            on { networkNodes } doReturn NetworkNodes.buildNetworkNodes(setOf(peer1, peer2), XPeerID(ByteArray(0)))
         }
 
         val action: (PeerInfo) -> Unit = mock { Unit }

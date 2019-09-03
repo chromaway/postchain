@@ -25,7 +25,7 @@ class DefaultXCommunicationManager1PeerIT {
     private val peerInfo = PeerInfo("localhost", 3331, pubKey)
 
     private fun startTestContext(peers: Array<PeerInfo>, pubKey: ByteArray): EbftIntegrationTestContext {
-        val peerConfiguration = BasePeerCommConfiguration(
+        val peerConfiguration = BasePeerCommConfiguration.build(
                 peers, cryptoSystem, privKey, pubKey)
 
         return EbftIntegrationTestContext(peerConfiguration, blockchainRid)

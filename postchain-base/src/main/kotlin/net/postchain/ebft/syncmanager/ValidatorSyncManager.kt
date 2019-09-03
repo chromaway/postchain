@@ -3,6 +3,7 @@
 package net.postchain.ebft.syncmanager
 
 import mu.KLogging
+import net.postchain.base.NetworkNodes
 import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.core.Signature
@@ -93,6 +94,7 @@ class ValidatorSyncManager(
             val (xPeerId, message) = packet
 
             val nodeIndex = indexOfValidator(xPeerId)
+            val isReadOnlyNode = nodeIndex == -1 // This must be a read-only node since not in the validator list
 
             logger.trace { "[$blockchainProcessName]: Received message type ${message.javaClass.simpleName} from node $nodeIndex" }
 
@@ -101,7 +103,7 @@ class ValidatorSyncManager(
                     // same case for replica and validator node
                     is GetBlockAtHeight -> sendBlockAtHeight(xPeerId, message.height)
                     else -> {
-                        if (nodeIndex != NODE_ID_READ_ONLY) {
+                        if (!isReadOnlyNode) {
                             // validator consensus logic
                             when (message) {
                                 is Status -> {

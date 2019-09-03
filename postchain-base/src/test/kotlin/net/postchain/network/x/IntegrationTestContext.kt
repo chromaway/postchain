@@ -11,7 +11,7 @@ class IntegrationTestContext(
         peerInfos: Array<PeerInfo>,
         myIndex: Int
 ) {
-    val peerCommunicationConfig = BasePeerCommConfiguration(
+    val peerCommunicationConfig = BasePeerCommConfiguration.build(
             peerInfos, mock(), KeyPairHelper.privKey(myIndex), KeyPairHelper.pubKey(myIndex))
 
     val connectionManager = DefaultXConnectionManager(

@@ -3,6 +3,7 @@ package net.postchain.config.node
 import net.postchain.base.PeerInfo
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
+import net.postchain.network.x.XPeerID
 import org.apache.commons.configuration2.Configuration
 
 open class NodeConfig(private val appConfig: AppConfig) {
@@ -79,8 +80,7 @@ open class NodeConfig(private val appConfig: AppConfig) {
     /**
      * Peers
      */
-    open val peerInfos: Array<PeerInfo> = arrayOf()
-
+    open val peerInfoMap: Map<XPeerID, PeerInfo> = mapOf()
 
     /**
      * Active Chains

@@ -50,7 +50,7 @@ class CommandPeerInfoImport : Command {
         val appConfig = AppConfig.fromPropertiesFile(nodeConfigFile)
         val nodeConfig = LegacyNodeConfigurationProvider(appConfig).getConfiguration()
 
-        return if (nodeConfig.peerInfos.isEmpty()) {
+        return if (nodeConfig.peerInfoMap.isEmpty()) {
             emptyArray()
 
         } else {
@@ -58,7 +58,7 @@ class CommandPeerInfoImport : Command {
                 val imported = mutableListOf<PeerInfo>()
 
                 val dbLayer = AppConfigDbLayer(appConfig, connection)
-                nodeConfig.peerInfos.forEach { peerInfo ->
+                nodeConfig.peerInfoMap.values.forEach { peerInfo ->
                     val found = dbLayer.findPeerInfo(peerInfo.host, peerInfo.port, null)
                     if (found.isEmpty()) {
                         val added = dbLayer.addPeerInfo(

@@ -36,8 +36,6 @@ class DefaultXCommunicationManager<PacketType>(
         connectionManager.connectChain(peerConfig, true)
     }
 
-    override fun peers(): Array<PeerInfo> = config.peerInfo
-
     @Synchronized
     override fun getPackets(): MutableList<Pair<XPeerID, PacketType>> {
         val currentQueue = inboundPackets

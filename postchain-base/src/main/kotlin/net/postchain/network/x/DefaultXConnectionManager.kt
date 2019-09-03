@@ -181,8 +181,9 @@ class DefaultXConnectionManager<PacketType>(
             return null
         }
 
-        // TODO: test if connection is wanted
-        return if (chain.connections[descriptor.peerId] != null) {
+        return if (!peerCommConfiguration.networkNodes.isNodeBehavingWell(descriptor.peerId, System.currentTimeMillis())) {
+            null // The peer is too much trouble, don't accept
+        } else if (chain.connections[descriptor.peerId] != null) {
             logger.debug { "[${myPeerId()}]: Peer already connected: peerId = ${peerName(descriptor.peerId)}" }
             null
         } else {

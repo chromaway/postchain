@@ -33,7 +33,7 @@ class NodeConfigTest {
         assertk.assert(nodeConfig.restApiSslCertificate).isEmpty()
         assertk.assert(nodeConfig.restApiSslCertificatePassword).isEmpty()
 
-        assertk.assert(nodeConfig.peerInfos).isEmpty()
+        assertk.assert(nodeConfig.peerInfoMap.entries).isEmpty()
 
         assertk.assert(nodeConfig.activeChainIds).isEmpty()
     }
