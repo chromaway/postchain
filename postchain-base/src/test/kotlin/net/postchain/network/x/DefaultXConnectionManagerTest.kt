@@ -142,7 +142,7 @@ class DefaultXConnectionManagerTest {
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(1 + (2 - 1) * 2)).commConfiguration
         verify(chainPeerConfig, times(1 + 1 * 2 + 1)).blockchainRID
-        verify(communicationConfig, times(2 + 2 + 2)).networkNodes
+        verify(communicationConfig, times(2)).networkNodes
 
         connectionManager.shutdown()
     }
@@ -235,7 +235,7 @@ class DefaultXConnectionManagerTest {
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(1 + (2 - 1) * 2)).commConfiguration
         verify(chainPeerConfig, times(1 + 2 + 1)).blockchainRID
-        verify(communicationConfig, times(2 + 2 + 2)).networkNodes
+        verify(communicationConfig, times(3)).networkNodes
 
         connectionManager.shutdown()
     }

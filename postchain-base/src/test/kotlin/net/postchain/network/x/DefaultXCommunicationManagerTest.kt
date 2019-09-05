@@ -144,13 +144,14 @@ class DefaultXCommunicationManagerTest {
         // Given
         val peerInfo1Mock: PeerInfo = spy(peerInfo1)
         val connectionManager: XConnectionManager = mock()
-        val peerCommunicationConfig: PeerCommConfiguration = mock {
-            on { networkNodes } doReturn NetworkNodes.buildNetworkNodes(setOf(peerInfo1Mock, peerInfo2), XPeerID(pubKey2))
+        val config = object: PeerCommConfigurationDummy() {
+            override val networkNodes =NetworkNodes.buildNetworkNodes(setOf(peerInfo1Mock, peerInfo2), XPeerID(pubKey2))
+            override val pubKey = pubKey2
         }
 
         // When
         val communicationManager = DefaultXCommunicationManager<Int>(
-                connectionManager, peerCommunicationConfig, CHAIN_ID, blockchainRid, mock(), mock()
+                connectionManager, config, CHAIN_ID, blockchainRid, mock(), mock()
         )
                 .apply {
                     init()

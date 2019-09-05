@@ -19,7 +19,7 @@ import net.postchain.network.x.XPeerID
  *      much they bother us.
  */
 class NetworkNodes(
-        private val myself: PeerInfo,
+        val myself: PeerInfo,
         private val peerInfoMap: Map<XPeerID, PeerInfo>,
         private val readOnlyNodeContacts: MutableMap<XPeerID, Int>) {
 
@@ -40,7 +40,11 @@ class NetworkNodes(
                     peerMap[peerId] = peer
                 }
             }
-            return NetworkNodes(me!!, peerMap.toMap(), mutableMapOf())
+            if (me == null) {
+                throw IllegalArgumentException("We didn't find our peer ID (${myKey.byteArray.toHex()}) in the list of given peers. ")
+            } else {
+                return NetworkNodes(me, peerMap.toMap(), mutableMapOf())
+            }
         }
 
         // Only for testing

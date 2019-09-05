@@ -1,11 +1,9 @@
 package net.postchain.network.x
 
-import assertk.assert
-import assertk.assertions.isEqualTo
-import com.nhaarman.mockitokotlin2.*
 import net.postchain.base.*
 import org.junit.Before
 import org.junit.Test
+import kotlin.test.assertEquals
 
 class DefaultPeersConnectionStrategyTest {
 
@@ -48,83 +46,67 @@ class DefaultPeersConnectionStrategyTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun will_result_in_exception_when_no_peers_provided() {
-        // Mock
-        val config: PeerCommConfiguration = mock {
-            on { networkNodes } doReturn NetworkNodes.buildNetworkNodesDummy()
+        val config = object: PeerCommConfigurationDummy() {
+            override val networkNodes = NetworkNodes.buildNetworkNodesDummy()
         }
-        val action: (PeerInfo) -> Unit = mock { Unit }
+
+        var portList: MutableList<Int> = mutableListOf<Int>()
+        val action: (PeerInfo) -> Unit =  { portList.add(it.port) }
 
         // When
         DefaultPeersConnectionStrategy.forEach(config, action)
 
         // Then
-        verify(action, never()).invoke(any())
+        assertEquals(0, portList.size)
     }
 
-    @Test
-    fun no_peers_interactions_when_two_peers_and_pubkey1_provided() {
-        // Mock
-        val x = NetworkNodes.buildNetworkNodes(setOf(peer1, peer2), XPeerID(pubKey1))
-        val config: PeerCommConfiguration = mock {
-            on { networkNodes } doReturn x
-        }
-        val action: (PeerInfo) -> Unit = mock { Unit }
-
-        // When
-        DefaultPeersConnectionStrategy.forEach(config, action)
-
-        // Then
-        verify(action, never()).invoke(any())
-    }
 
     @Test
     fun peer1_interaction_when_two_peers_and_pubkey2_provided() {
-        // Mock
-        val config: PeerCommConfiguration = mock {
-            on { networkNodes } doReturn NetworkNodes.buildNetworkNodes(setOf(peer1, peer2), XPeerID(pubKey2))
+        val config = object: PeerCommConfigurationDummy() {
+            override val networkNodes =NetworkNodes.buildNetworkNodes(setOf(peer1, peer2), XPeerID(pubKey2))
+            override val pubKey = pubKey2
         }
 
-        val action: (PeerInfo) -> Unit = mock { Unit }
+        var portList: MutableList<Int> = mutableListOf<Int>()
+        val action: (PeerInfo) -> Unit =  { portList.add(it.port) }
 
         // When
         DefaultPeersConnectionStrategy.forEach(config, action)
 
         // Then
-        argumentCaptor<PeerInfo>().apply {
-            verify(action).invoke(capture())
-            assert(firstValue.port).isEqualTo(3331)
-        }
+        assertEquals(1, portList.size)
+        assertEquals(3331, portList[0])
     }
 
     @Test
     fun peer1_2_3_interactions_when_four_peers_and_pubkey4_provided() {
-        // Mock
-        val config: PeerCommConfiguration = mock {
-            on { networkNodes } doReturn NetworkNodes.buildNetworkNodes(setOf(peer1, peer2, peer3, peer4), XPeerID(pubKey4))
+        val config = object: PeerCommConfigurationDummy() {
+            override val networkNodes =NetworkNodes.buildNetworkNodes(setOf(peer1, peer2, peer3, peer4), XPeerID(pubKey4))
+            override val pubKey = pubKey4
         }
 
-        val action: (PeerInfo) -> Unit = mock { Unit }
+        var portList: MutableList<Int> = mutableListOf<Int>()
+        val action: (PeerInfo) -> Unit =  { portList.add(it.port) }
 
         // When
         DefaultPeersConnectionStrategy.forEach(config, action)
 
         // Then
-        argumentCaptor<PeerInfo>().apply {
-            verify(action, times(3)).invoke(capture())
-            assert(firstValue.port).isEqualTo(3331)
-            assert(secondValue.port).isEqualTo(3332)
-            assert(thirdValue.port).isEqualTo(3333)
-        }
+        assertEquals(3, portList.size)
+        assertEquals(3331, portList[0])
+        assertEquals(3332, portList[1])
+        assertEquals(3333, portList[2])
     }
 
-    @Test(expected = KotlinNullPointerException::class)
+    @Test(expected = IllegalArgumentException::class)
     fun will_result_in_exception_when_myIndex_too_big() {
-        // Mock
-        val config: PeerCommConfiguration = mock {
-            on { networkNodes } doReturn NetworkNodes.buildNetworkNodes(setOf(peer1, peer2), XPeerID(ByteArray(0)))
+        val config = object: PeerCommConfigurationDummy() {
+            override val networkNodes =NetworkNodes.buildNetworkNodes(setOf(peer1, peer2), XPeerID(ByteArray(0)))
         }
 
-        val action: (PeerInfo) -> Unit = mock { Unit }
+        var portList: MutableList<Int> = mutableListOf<Int>()
+        val action: (PeerInfo) -> Unit =  { portList.add(it.port) }
 
         // When
         DefaultPeersConnectionStrategy.forEach(config, action)

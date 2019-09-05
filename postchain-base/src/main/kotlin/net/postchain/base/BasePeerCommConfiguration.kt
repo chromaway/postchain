@@ -15,10 +15,9 @@ class BasePeerCommConfiguration(override val networkNodes: NetworkNodes,
 
     companion object {
         fun build(peerInfoArray: Array<PeerInfo>,
-                              cryptoSystem: CryptoSystem,
-                                privKey: ByteArray,
-                                pubKey: ByteArray): BasePeerCommConfiguration {
-
+                  cryptoSystem: CryptoSystem,
+                  privKey: ByteArray,
+                  pubKey: ByteArray): BasePeerCommConfiguration {
 
             val peers: Collection<PeerInfo> = peerInfoArray.toSet()
             val nn = NetworkNodes.buildNetworkNodes(peers, ByteArrayKey(pubKey))
@@ -26,10 +25,9 @@ class BasePeerCommConfiguration(override val networkNodes: NetworkNodes,
         }
 
         fun build(peerInfoMap: Map<XPeerID, PeerInfo>,
-                              cryptoSystem: CryptoSystem,
-                                privKey: ByteArray,
-                                pubKey: ByteArray): BasePeerCommConfiguration {
-
+                  cryptoSystem: CryptoSystem,
+                  privKey: ByteArray,
+                  pubKey: ByteArray): BasePeerCommConfiguration {
 
             val nn = NetworkNodes.buildNetworkNodes(peerInfoMap.values, ByteArrayKey(pubKey))
             return BasePeerCommConfiguration(nn, cryptoSystem, privKey, pubKey)
@@ -41,8 +39,7 @@ class BasePeerCommConfiguration(override val networkNodes: NetworkNodes,
         return networkNodes[peerID]
     }
 
-    override fun myPeerInfo(): PeerInfo = resolvePeer(pubKey)
-            ?: throw UserMistake("Unknown pubKey detected: ${pubKey.toHex()}")
+    override fun myPeerInfo(): PeerInfo = networkNodes.myself
 
     override fun sigMaker(): SigMaker {
         return cryptoSystem.buildSigMaker(pubKey, privKey)

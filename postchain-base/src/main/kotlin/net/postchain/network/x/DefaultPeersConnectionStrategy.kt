@@ -11,7 +11,7 @@ object DefaultPeersConnectionStrategy : PeersConnectionStrategy {
     }
 
     private fun validate(configuration: PeerCommConfiguration) {
-        require(!configuration.networkNodes.hasPeers()) {
+        require(configuration.networkNodes.hasPeers()) {
             "Invalid PeerCommConfiguration: no peers loaded from configuration file"
         }
     }
