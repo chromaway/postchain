@@ -6,7 +6,7 @@ import assertk.assertions.isNotEmpty
 import assertk.assertions.isTrue
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
-import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_ID
+import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.enqueueTxs
 import net.postchain.integrationtest.enqueueTxsAndAwaitBuiltBlock
@@ -47,16 +47,16 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
 
 
         // Adding chain1's blockchainConfig2 with DummyModule2 at different heights to all nodes
-        nodes[0].addConfiguration(DEFAULT_CHAIN_ID, 5, blockchainConfig2)
-        nodes[1].addConfiguration(DEFAULT_CHAIN_ID, 6, blockchainConfig2)
-        nodes[2].addConfiguration(DEFAULT_CHAIN_ID, 7, blockchainConfig2)
-        nodes[3].addConfiguration(DEFAULT_CHAIN_ID, 8, blockchainConfig2)
+        nodes[0].addConfiguration(DEFAULT_CHAIN_IID, 5, blockchainConfig2)
+        nodes[1].addConfiguration(DEFAULT_CHAIN_IID, 6, blockchainConfig2)
+        nodes[2].addConfiguration(DEFAULT_CHAIN_IID, 7, blockchainConfig2)
+        nodes[3].addConfiguration(DEFAULT_CHAIN_IID, 8, blockchainConfig2)
 
         // Again: Adding chain1's blockchainConfig3 with DummyModule3 at height 7 to all nodes
-        nodes[0].addConfiguration(DEFAULT_CHAIN_ID, 10, blockchainConfig3)
-        nodes[1].addConfiguration(DEFAULT_CHAIN_ID, 10, blockchainConfig3)
-        nodes[2].addConfiguration(DEFAULT_CHAIN_ID, 10, blockchainConfig3)
-        nodes[3].addConfiguration(DEFAULT_CHAIN_ID, 10, blockchainConfig3)
+        nodes[0].addConfiguration(DEFAULT_CHAIN_IID, 10, blockchainConfig3)
+        nodes[1].addConfiguration(DEFAULT_CHAIN_IID, 10, blockchainConfig3)
+        nodes[2].addConfiguration(DEFAULT_CHAIN_IID, 10, blockchainConfig3)
+        nodes[3].addConfiguration(DEFAULT_CHAIN_IID, 10, blockchainConfig3)
 
 
         // Asserting chain 1 is started for all nodes
@@ -116,8 +116,8 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
 
         // Adding blockchain configs with DummyModule2, DummyModule3, DummyModule4
         // at height 2, 5, 7 to all nodes
-        nodes.forEach { it.addConfiguration(DEFAULT_CHAIN_ID, 2, blockchainConfig2) }
-        nodes.forEach { it.addConfiguration(DEFAULT_CHAIN_ID, 5, blockchainConfig3) }
+        nodes.forEach { it.addConfiguration(DEFAULT_CHAIN_IID, 2, blockchainConfig2) }
+        nodes.forEach { it.addConfiguration(DEFAULT_CHAIN_IID, 5, blockchainConfig3) }
 
         // Asserting chain 1 is started for all nodes
         await().atMost(Duration.TEN_SECONDS)
@@ -126,7 +126,7 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
                 }
 
         // Building a block 0 with two txs via node 0
-        nodes[0].enqueueTxsAndAwaitBuiltBlock(DEFAULT_CHAIN_ID, 0, tx(0), tx(1))
+        nodes[0].enqueueTxsAndAwaitBuiltBlock(DEFAULT_CHAIN_IID, 0, tx(0), tx(1))
 
         // Awaiting a reconfiguring at height 2
         awaitReconfiguration(2)
@@ -141,7 +141,7 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
                 }
 
         // Building a block 2 with three txs via node 0
-        nodes[0].enqueueTxsAndAwaitBuiltBlock(DEFAULT_CHAIN_ID, 2, tx(2), tx(3), tx(4))
+        nodes[0].enqueueTxsAndAwaitBuiltBlock(DEFAULT_CHAIN_IID, 2, tx(2), tx(3), tx(4))
 
         // Awaiting a reconfiguring at height 5
         awaitReconfiguration(5)
@@ -156,10 +156,10 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
                 }
 
         // Asserting equality of tx charts of all nodes
-        val chart0 = buildTxChart(nodes[0], DEFAULT_CHAIN_ID)
-        JSONAssert.assertEquals(chart0, buildTxChart(nodes[1], DEFAULT_CHAIN_ID), JSONCompareMode.NON_EXTENSIBLE)
-        JSONAssert.assertEquals(chart0, buildTxChart(nodes[2], DEFAULT_CHAIN_ID), JSONCompareMode.NON_EXTENSIBLE)
-        JSONAssert.assertEquals(chart0, buildTxChart(nodes[3], DEFAULT_CHAIN_ID), JSONCompareMode.NON_EXTENSIBLE)
+        val chart0 = buildTxChart(nodes[0], DEFAULT_CHAIN_IID)
+        JSONAssert.assertEquals(chart0, buildTxChart(nodes[1], DEFAULT_CHAIN_IID), JSONCompareMode.NON_EXTENSIBLE)
+        JSONAssert.assertEquals(chart0, buildTxChart(nodes[2], DEFAULT_CHAIN_IID), JSONCompareMode.NON_EXTENSIBLE)
+        JSONAssert.assertEquals(chart0, buildTxChart(nodes[3], DEFAULT_CHAIN_IID), JSONCompareMode.NON_EXTENSIBLE)
 
         // Asserting blocks and txs of chart
         val jsonChar0 = ObjectMapper().readTree(chart0)
@@ -208,9 +208,9 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
 
         // Adding blockchain configs with DummyModule2, DummyModule3, DummyModule4
         // at height 2, 5, 7 to all nodes
-        nodes.forEach { it.addConfiguration(DEFAULT_CHAIN_ID, 2, blockchainConfig2) }
-        nodes.forEach { it.addConfiguration(DEFAULT_CHAIN_ID, 5, blockchainConfig3) }
-        nodes.forEach { it.addConfiguration(DEFAULT_CHAIN_ID, 8, blockchainConfig4) }
+        nodes.forEach { it.addConfiguration(DEFAULT_CHAIN_IID, 2, blockchainConfig2) }
+        nodes.forEach { it.addConfiguration(DEFAULT_CHAIN_IID, 5, blockchainConfig3) }
+        nodes.forEach { it.addConfiguration(DEFAULT_CHAIN_IID, 8, blockchainConfig4) }
 
         // Asserting chain 1 is started for all nodes
         await().atMost(Duration.TEN_SECONDS)
@@ -224,7 +224,7 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
         val txTimer = timer(name = "txTimer", period = 500) {
             if (txId < 100) {
                 // Enqueueing txs via node0 and node1
-                if (nodes[txId % 2].enqueueTxs(DEFAULT_CHAIN_ID, tx(txId))) {
+                if (nodes[txId % 2].enqueueTxs(DEFAULT_CHAIN_IID, tx(txId))) {
                     ++txId
                 }
             } else {
@@ -245,15 +245,15 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
 
                     // Building tx charts of the minimum (common) length for all nodes
                     val commonHeight = nodes.map { node ->
-                        node.query(DEFAULT_CHAIN_ID) { it.getBestHeight() } ?: -1L
+                        node.query(DEFAULT_CHAIN_IID) { it.getBestHeight() } ?: -1L
                     }.min() ?: -1L
 
                     assertk.assert(commonHeight > 0L).isTrue()
 
-                    val chart0 = buildTxChart(nodes[0], DEFAULT_CHAIN_ID, commonHeight)
-                    val chart1 = buildTxChart(nodes[1], DEFAULT_CHAIN_ID, commonHeight)
-                    val chart2 = buildTxChart(nodes[2], DEFAULT_CHAIN_ID, commonHeight)
-                    val chart3 = buildTxChart(nodes[3], DEFAULT_CHAIN_ID, commonHeight)
+                    val chart0 = buildTxChart(nodes[0], DEFAULT_CHAIN_IID, commonHeight)
+                    val chart1 = buildTxChart(nodes[1], DEFAULT_CHAIN_IID, commonHeight)
+                    val chart2 = buildTxChart(nodes[2], DEFAULT_CHAIN_IID, commonHeight)
+                    val chart3 = buildTxChart(nodes[3], DEFAULT_CHAIN_IID, commonHeight)
 
                     JSONAssert.assertEquals(chart0, chart1, JSONCompareMode.NON_EXTENSIBLE)
                     JSONAssert.assertEquals(chart0, chart2, JSONCompareMode.NON_EXTENSIBLE)
@@ -266,7 +266,7 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
         await().atMost(Duration.TEN_SECONDS.multiply(2))
                 .untilAsserted {
                     // Asserting all txs
-                    val txs = collectAllTxs(nodes[0], DEFAULT_CHAIN_ID)
+                    val txs = collectAllTxs(nodes[0], DEFAULT_CHAIN_IID)
                             .asSequence()
                             .map { (it as TestTransaction).id }
                             .toSet()

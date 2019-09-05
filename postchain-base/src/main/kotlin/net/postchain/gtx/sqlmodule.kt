@@ -30,7 +30,12 @@ fun makeSQLQueryDesc(opName: String, argNames: Array<String>, argTypes: Array<St
         throw UserMistake("Cannot define SQL op ${opName}: wrong parameter list")
 
     val args = convertArgs(fixedArgNames, argTypes, opName)
-    val query = "SELECT * FROM ${opName} (?${Array(args.size, { ",?" }).joinToString(", ")})"
+
+    val query = if (args.size == 0) {
+        "SELECT * FROM ${opName} (?)"
+    } else {
+        "SELECT * FROM ${opName} (?, ${Array(args.size, { "?" }).joinToString()})"
+    }
     return SQLOpDesc(opName, query, args.toTypedArray())
 }
 
@@ -41,7 +46,12 @@ fun makeSQLOpDesc(opName: String, argNames: Array<String>, argTypes: Array<Strin
         throw UserMistake("Cannot define SQL op ${opName}: gtx_ctx must be the first parameter")
 
     val args = convertArgs(argNames, argTypes, opName)
-    val query = "SELECT ${opName} (?::gtx_ctx, ${Array(args.size, { "?" }).joinToString(", ")})"
+
+    val query = if (args.size == 0) {
+        "SELECT ${opName} (?::gtx_ctx)"
+    } else {
+        "SELECT ${opName} (?::gtx_ctx, ${Array(args.size, { "?" }).joinToString()})"
+    }
     return SQLOpDesc(opName, query, args.toTypedArray())
 }
 
@@ -160,6 +170,7 @@ class SQLGTXModule(private val moduleFiles: Array<String>) : GTXModule {
                     is Int, is Long, is Short, is Byte -> gtv((dbValue as Number).toLong())
                     is String -> gtv(dbValue)
                     is ByteArray -> gtv(dbValue)
+                    null -> GtvNull
                     else -> throw ProgrammerMistake("Unsupported return type" +
                             " ${dbValue.javaClass.simpleName} of column ${it.key} " +
                             "from query ${name}")

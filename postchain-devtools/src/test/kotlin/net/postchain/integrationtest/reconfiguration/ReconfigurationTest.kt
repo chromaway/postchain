@@ -2,7 +2,7 @@ package net.postchain.integrationtest.reconfiguration
 
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.PostchainTestNode
-import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_ID
+import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.devtools.testinfra.TestBlockchainConfiguration
 import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.devtools.testinfra.TestTransactionFactory
@@ -19,15 +19,15 @@ open class ReconfigurationTest : IntegrationTest() {
     protected fun tx(id: Int): TestTransaction = TestTransaction(id)
 
     protected fun blockTxsIds(node: PostchainTestNode, height: Long): Set<Int> {
-        val blockRids = node.query(DEFAULT_CHAIN_ID) { it.getBlockRids(height) }
+        val blockRids = node.query(DEFAULT_CHAIN_IID) { it.getBlockRids(height) }
         assertNotNull(blockRids)
 
-        val txsRids = node.query(DEFAULT_CHAIN_ID) { it.getBlockTransactionRids(blockRids!!) }
+        val txsRids = node.query(DEFAULT_CHAIN_IID) { it.getBlockTransactionRids(blockRids!!) }
         assertNotNull(txsRids)
 
         val txFactory = TestTransactionFactory()
         return txsRids!!.asSequence().map { txRid ->
-            val tx = node.query(DEFAULT_CHAIN_ID) { it.getTransaction(txRid) }
+            val tx = node.query(DEFAULT_CHAIN_IID) { it.getTransaction(txRid) }
             assertNotNull(tx)
 
             (txFactory.decodeTransaction(tx!!.getRawData()) as TestTransaction).id
@@ -35,14 +35,14 @@ open class ReconfigurationTest : IntegrationTest() {
     }
 
     protected fun awaitReconfiguration(height: Long) {
-        nodes.first().buildBlocksUpTo(DEFAULT_CHAIN_ID, height - 1)
-        while (nodes.any { it.awaitedHeight(DEFAULT_CHAIN_ID) < height });
+        nodes.first().buildBlocksUpTo(DEFAULT_CHAIN_IID, height - 1)
+        while (nodes.any { it.awaitedHeight(DEFAULT_CHAIN_IID) < height });
     }
 
-    protected fun getModules(nodeIndex: Int, chainId: Long = DEFAULT_CHAIN_ID): Array<GTXModule> =
+    protected fun getModules(nodeIndex: Int, chainId: Long = DEFAULT_CHAIN_IID): Array<GTXModule> =
             getModules(nodes[nodeIndex], chainId)
 
-    protected fun getModules(node: PostchainTestNode, chainId: Long = DEFAULT_CHAIN_ID): Array<GTXModule> {
+    protected fun getModules(node: PostchainTestNode, chainId: Long = DEFAULT_CHAIN_IID): Array<GTXModule> {
         val configuration = node.retrieveBlockchain(chainId)
                 ?.getEngine()
                 ?.getConfiguration()

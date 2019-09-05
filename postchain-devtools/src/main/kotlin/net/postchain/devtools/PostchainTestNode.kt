@@ -15,7 +15,6 @@ import net.postchain.core.BlockchainProcess
 import net.postchain.core.NODE_ID_TODO
 import net.postchain.gtv.GtvEncoder.encodeGtv
 import net.postchain.gtv.Gtv
-import org.apache.commons.configuration2.Configuration
 
 class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider, preWipeDatabase: Boolean) : PostchainNode(nodeConfigProvider) {
 
@@ -30,7 +29,7 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider, preWipeDa
     }
 
     companion object : KLogging() {
-        const val DEFAULT_CHAIN_ID = 1L
+        const val DEFAULT_CHAIN_IID = 1L
     }
 
     private fun initDb(chainId: Long, blockchainRid: ByteArray) {
@@ -63,7 +62,7 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider, preWipeDa
     }
 
     fun startBlockchain() {
-        startBlockchain(DEFAULT_CHAIN_ID)
+        startBlockchain(DEFAULT_CHAIN_IID)
     }
 
     override fun shutdown() {
@@ -72,7 +71,7 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider, preWipeDa
     }
 
     fun getRestApiModel(): Model {
-        val blockchainProcess = processManager.retrieveBlockchain(DEFAULT_CHAIN_ID)!!
+        val blockchainProcess = processManager.retrieveBlockchain(DEFAULT_CHAIN_IID)!!
         return ((blockchainInfrastructure as BaseBlockchainInfrastructure).apiInfrastructure as BaseApiInfrastructure)
                 .restApi?.retrieveModel(blockchainRID(blockchainProcess))!!
     }
@@ -82,27 +81,27 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider, preWipeDa
                 .restApi?.actualPort() ?: 0
     }
 
-    fun getBlockchainInstance(chainId: Long = DEFAULT_CHAIN_ID): BlockchainProcess {
+    fun getBlockchainInstance(chainId: Long = DEFAULT_CHAIN_IID): BlockchainProcess {
         return processManager.retrieveBlockchain(chainId) as BlockchainProcess
     }
 
-    fun retrieveBlockchain(chainId: Long = DEFAULT_CHAIN_ID): BlockchainProcess? {
+    fun retrieveBlockchain(chainId: Long = DEFAULT_CHAIN_IID): BlockchainProcess? {
         return processManager.retrieveBlockchain(chainId)
     }
 
-    fun transactionQueue(chainId: Long = DEFAULT_CHAIN_ID): TransactionQueue {
+    fun transactionQueue(chainId: Long = DEFAULT_CHAIN_IID): TransactionQueue {
         return getBlockchainInstance(chainId).getEngine().getTransactionQueue()
     }
 
-    fun blockQueries(chainId: Long = DEFAULT_CHAIN_ID): BlockQueries {
+    fun blockQueries(chainId: Long = DEFAULT_CHAIN_IID): BlockQueries {
         return getBlockchainInstance(chainId).getEngine().getBlockQueries()
     }
 
-    fun blockBuildingStrategy(chainId: Long = DEFAULT_CHAIN_ID): BlockBuildingStrategy {
+    fun blockBuildingStrategy(chainId: Long = DEFAULT_CHAIN_IID): BlockBuildingStrategy {
         return getBlockchainInstance(chainId).getEngine().getBlockBuildingStrategy()
     }
 
-    fun networkTopology(chainId: Long = DEFAULT_CHAIN_ID): Map<String, String> {
+    fun networkTopology(chainId: Long = DEFAULT_CHAIN_IID): Map<String, String> {
         // TODO: [et]: Fix type casting
         return ((blockchainInfrastructure as BaseBlockchainInfrastructure)
                 .synchronizationInfrastructure as EBFTSynchronizationInfrastructure)

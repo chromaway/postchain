@@ -1,4 +1,4 @@
-image: maven:3.5-jdk-8-alpine
+image: maven:3.6-jdk-8-alpine
 pipelines:
   default:
     - step:

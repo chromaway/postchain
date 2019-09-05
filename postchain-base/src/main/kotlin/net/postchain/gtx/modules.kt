@@ -62,7 +62,7 @@ class CompositeGTXModule (val modules: Array<GTXModule>, val allowOverrides: Boo
         if (opData.opName in opmap) {
             return opmap[opData.opName]!!.makeTransactor(opData)
         } else {
-            throw UserMistake("Unknown operation")
+            throw UserMistake("Unknown operation: ${opData.opName}")
         }
     }
 
@@ -78,7 +78,7 @@ class CompositeGTXModule (val modules: Array<GTXModule>, val allowOverrides: Boo
         if (name in qmap) {
             return qmap[name]!!.query(ctxt, name, args)
         } else {
-            throw UserMistake("Unknown query")
+            throw UserMistake("Unknown query: ${name}")
         }
     }
 

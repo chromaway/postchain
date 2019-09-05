@@ -1,14 +1,13 @@
 package net.postchain.ebft.syncmanager
 
-import net.postchain.core.BlockDataWithWitness
-import net.postchain.core.BlockQueries
-import net.postchain.core.BlockchainConfiguration
-import net.postchain.core.ProgrammerMistake
+import net.postchain.core.*
 import net.postchain.ebft.BlockDatabase
+import net.postchain.ebft.NodeStatus
 import net.postchain.ebft.message.CompleteBlock
 import net.postchain.ebft.message.GetBlockAtHeight
 import net.postchain.ebft.message.Message
 import net.postchain.ebft.message.Status
+import net.postchain.ebft.rest.contract.serialize
 import net.postchain.ebft.syncmanager.replica.IncomingBlock
 import net.postchain.ebft.syncmanager.replica.IssuedRequestTimer
 import net.postchain.ebft.syncmanager.replica.ReplicaTelemetry
@@ -21,6 +20,7 @@ class ReplicaSyncManager(
         private val blockchainProcessName: String,
         signers: List<ByteArray>,
         private val communicationManager: CommunicationManager<Message>,
+        private val nodeStateTracker: NodeStateTracker,
         private val blockDatabase: BlockDatabase,
         val blockQueries: BlockQueries,
         private val blockchainConfiguration: BlockchainConfiguration
@@ -40,6 +40,8 @@ class ReplicaSyncManager(
 
     override fun update() {
         replicaLogger.logCurrentState(blockHeight, parallelRequestsState, blocks)
+        nodeStateTracker.blockHeight = blockHeight
+        nodeStateTracker.nodeStatuses = replicaLogger.nodeStatuses().map { it.serialize() }.toTypedArray()
         checkBlock()
         processState()
         dispatchMessages()
@@ -124,6 +126,10 @@ class ReplicaSyncManager(
                         }
                     }
                     is Status -> {
+                        val nodeStatus = NodeStatus(message.height, message.serial)
+                        val index = validatorNodes.indexOf(xPeerId)
+                        replicaLogger.reportNodeStatus(index, nodeStatus)
+
                         if (xPeerId in validatorNodes) {
                             nodesWithBlocks[xPeerId] = message.height - 1
                         }

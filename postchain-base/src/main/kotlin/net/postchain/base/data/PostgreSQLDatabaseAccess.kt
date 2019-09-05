@@ -9,7 +9,7 @@ class PostgreSQLDatabaseAccess(sqlCommands: SQLCommands) : SQLDatabaseAccess(sql
     override fun insertBlock(ctx: EContext, height: Long): Long {
         return queryRunner.query(
                 ctx.conn,
-                "INSERT INTO blocks (chain_id, block_height) VALUES (?, ?) RETURNING block_iid",
+                "INSERT INTO blocks (chain_iid, block_height) VALUES (?, ?) RETURNING block_iid",
                 longRes,
                 ctx.chainID,
                 height)
@@ -18,7 +18,7 @@ class PostgreSQLDatabaseAccess(sqlCommands: SQLCommands) : SQLDatabaseAccess(sql
     override fun insertTransaction(ctx: BlockEContext, tx: Transaction): Long {
         return queryRunner.query(
                 ctx.conn,
-                "INSERT INTO transactions (chain_id, tx_rid, tx_data, tx_hash, block_iid) VALUES (?, ?, ?, ?, ?) RETURNING tx_iid",
+                "INSERT INTO transactions (chain_iid, tx_rid, tx_data, tx_hash, block_iid) VALUES (?, ?, ?, ?, ?) RETURNING tx_iid",
                 longRes,
                 ctx.chainID,
                 tx.getRID(),

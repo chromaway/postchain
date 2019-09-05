@@ -51,6 +51,7 @@ class NettyServerPeerConnection<PacketType>(
                 packetHandler?.invoke(message, peerConnectionDescriptor!!.peerId)
             }
         }
+        (msg as ByteBuf).release()
     }
 
     override fun channelActive(ctx: ChannelHandlerContext?) {

@@ -15,13 +15,18 @@ Configuration:
       PatternLayout:
         # pattern: "[%X{node-id}] %-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
         pattern: "%-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
-    File:
+    RollingFile:
       name: FileAppender
       fileName: "${logs}/${logfile}"
+      filePattern: "${logs}/${logfile}.%d{yyyy-MM-dd-hh-mm}.log"
+      Policies:
+        SizeBasedTriggeringPolicy:
+          size: 1 MB
+      DefaultRollOverStrategy:
+          max: 10
       PatternLayout:
         # pattern: "[%X{node-id}] %-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
         pattern: "%-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
-
 
   Loggers:
 
@@ -34,7 +39,7 @@ Configuration:
     Logger:
 
     - name: net.postchain
-      level: all
+      level: debug
       additivity: false
       AppenderRef:
       - ref: ConsoleAppender

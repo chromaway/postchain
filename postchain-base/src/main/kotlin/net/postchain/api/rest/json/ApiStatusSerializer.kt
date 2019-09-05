@@ -9,5 +9,8 @@ internal class ApiStatusSerializer : JsonSerializer<ApiStatus> {
     override fun serialize(src: ApiStatus?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement =
             JsonObject().apply {
                 add("status", JsonPrimitive(src!!.status))
+                src.rejectReason?.let {
+                    add("rejectReason", JsonPrimitive(src.rejectReason))
+                }
             }
 }
