@@ -5,9 +5,8 @@ import net.postchain.common.toHex
 import net.postchain.core.ByteArrayKey
 import net.postchain.network.x.XPeerID
 
-
 /**
- * Network nodes can be either peers or nodes that just want to read your data.
+ * Network nodes can be either signers or nodes that just want to read your data.
  * The purpose of this class is to wrap both these entities
  *
  * The "read-only" nodes do not have to be known by the validator node, but we need some sort of
@@ -60,8 +59,15 @@ class NetworkNodes(
     operator fun get(key: XPeerID): PeerInfo? = peerInfoMap[key]
     operator fun get(key: ByteArray): PeerInfo? = peerInfoMap[ByteArrayKey(key)]
 
-    fun runActionOnPeers(action: (PeerInfo) -> Unit) {
-        peerInfoMap.values.forEach(action)
+    /**
+     * Will run an action once for all peers. The trick for connections is to not make it happen twice.
+     *
+     * @param filterFun is the function that picks the peers who we should do the action on.
+     *                    (The reason we filter is that it is enough to have only ONE peer in a connection do the action)
+     * @param action is the action to perform
+     */
+    fun filterAndRunActionOnPeers(filterFun: (Map<XPeerID, PeerInfo>, myKey: XPeerID) -> Set<PeerInfo>, action: (PeerInfo) -> Unit) {
+        filterFun(peerInfoMap, XPeerID(myself.pubKey)).forEach(action)
     }
 
 

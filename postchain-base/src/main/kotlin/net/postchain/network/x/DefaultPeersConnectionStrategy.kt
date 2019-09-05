@@ -2,6 +2,7 @@ package net.postchain.network.x
 
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerInfo
+import net.postchain.common.toHex
 
 object DefaultPeersConnectionStrategy : PeersConnectionStrategy {
 
@@ -16,7 +17,20 @@ object DefaultPeersConnectionStrategy : PeersConnectionStrategy {
         }
     }
 
+    /**
+     * This is the implementation this strategy uses for how to decide what peer should interract (usually connect)
+     * with other peers.
+     *
+     * Here we use the string version of the public key of the peer to make sure no double connects are done.
+     */
+    fun getPeersThatShouldDoAction(peerMap: Map<XPeerID, PeerInfo>, myKey: XPeerID): Set<PeerInfo> {
+        val myKeyAsString = myKey.byteArray.toHex()
+        val keysAsStringMap: Map<String, PeerInfo> = peerMap.map{ it.key.byteArray.toHex() to it.value }.toMap()
+
+        return keysAsStringMap.filter { myKeyAsString.compareTo(it.key) > 0 }.values.toSet()
+    }
+
     private fun runEachPeerAction(configuration: PeerCommConfiguration, action: (PeerInfo) -> Unit) {
-        configuration.networkNodes.runActionOnPeers(action)
+        configuration.networkNodes.filterAndRunActionOnPeers(DefaultPeersConnectionStrategy::getPeersThatShouldDoAction, action)
     }
 }
