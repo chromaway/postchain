@@ -3,6 +3,7 @@ package net.postchain.base
 import mu.KLogging
 import net.postchain.common.toHex
 import net.postchain.core.ByteArrayKey
+import net.postchain.core.UserMistake
 import net.postchain.network.x.XPeerID
 
 /**
@@ -29,6 +30,9 @@ class NetworkNodes(
         const val DAY_IN_MILLIS = 24 * 60 * 60 * 1000
 
         fun buildNetworkNodes(peers: Collection<PeerInfo>, myKey: XPeerID): NetworkNodes {
+            if (peers.size < 1) {
+                throw UserMistake("No peers have been configured for the network. Cannot proceed.")
+            }
             var me: PeerInfo? = null
             val peerMap = mutableMapOf<XPeerID, PeerInfo>()
             for (peer in peers) {
@@ -40,7 +44,7 @@ class NetworkNodes(
                 }
             }
             if (me == null) {
-                throw IllegalArgumentException("We didn't find our peer ID (${myKey.byteArray.toHex()}) in the list of given peers. ")
+                throw UserMistake("We didn't find our peer ID (${myKey.byteArray.toHex()}) in the list of given peers. Check the configuration for the node.")
             } else {
                 return NetworkNodes(me, peerMap.toMap(), mutableMapOf())
             }
@@ -67,7 +71,8 @@ class NetworkNodes(
      * @param action is the action to perform
      */
     fun filterAndRunActionOnPeers(filterFun: (Map<XPeerID, PeerInfo>, myKey: XPeerID) -> Set<PeerInfo>, action: (PeerInfo) -> Unit) {
-        filterFun(peerInfoMap, XPeerID(myself.pubKey)).forEach(action)
+        val filtered = filterFun(peerInfoMap, XPeerID(myself.pubKey))
+        filtered.forEach(action)
     }
 
 

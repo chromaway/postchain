@@ -12,9 +12,10 @@ object DefaultPeersConnectionStrategy : PeersConnectionStrategy {
     }
 
     private fun validate(configuration: PeerCommConfiguration) {
-        require(configuration.networkNodes.hasPeers()) {
+        // We are allowed to go on with only one peer, this node itself, and it will not be in the peer list
+        /*require(configuration.networkNodes.hasPeers()) {
             "Invalid PeerCommConfiguration: no peers loaded from configuration file"
-        }
+        } */
     }
 
     /**
