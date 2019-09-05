@@ -18,11 +18,11 @@ fun PostchainTestNode.addBlockchainAndStart(chainId: Long, blockchainRid: ByteAr
     startBlockchain(chainId)
 }
 
-fun PostchainTestNode.assertChainStarted(chainId: Long = PostchainTestNode.DEFAULT_CHAIN_ID) {
+fun PostchainTestNode.assertChainStarted(chainId: Long = PostchainTestNode.DEFAULT_CHAIN_IID) {
     assertk.assert(retrieveBlockchain(chainId)).isNotNull()
 }
 
-fun PostchainTestNode.assertChainNotStarted(chainId: Long = PostchainTestNode.DEFAULT_CHAIN_ID) {
+fun PostchainTestNode.assertChainNotStarted(chainId: Long = PostchainTestNode.DEFAULT_CHAIN_IID) {
     assertk.assert(retrieveBlockchain(chainId)).isNull()
 }
 

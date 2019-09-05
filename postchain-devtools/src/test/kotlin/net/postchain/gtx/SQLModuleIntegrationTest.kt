@@ -24,8 +24,10 @@ class SQLModuleIntegrationTest : IntegrationTest() {
         }
     }
 
+
     @Test
     fun testBuildBlock() {
+        configOverrides.setProperty("infrastructure", "base/test")
         val node = createNode(0, "/net/postchain/gtx/blockchain_config.xml")
 
         enqueueTx(node, makeTx(0, "k", "v"), 0)
@@ -80,4 +82,36 @@ class SQLModuleIntegrationTest : IntegrationTest() {
         println(result2)
     }
 
+    @Test
+    fun testQueryWithMultipleParams() {
+        configOverrides.setProperty("infrastructure", "base/test")
+        val node = createNode(0, "/net/postchain/gtx/blockchain_config.xml")
+        enqueueTx(node, makeTx(0, "k", "v"), 0)
+        buildBlockAndCommit(node)
+        verifyBlockchainTransactions(node)
+        val blockQueries = node.getBlockchainInstance().getEngine().getBlockQueries()
+        val gson = make_gtv_gson()
+        var result = blockQueries.query("""{type: 'test_get_value', q_key: 'k', q_value : 'v'}""").get()
+        var gtxResult = gson.fromJson<Gtv>(result, Gtv::class.java) as GtvArray
+        assertEquals(1, gtxResult.getSize())
+    }
+
+    @Test
+    fun testQuerySupportNullableValue() {
+        configOverrides.setProperty("infrastructure", "base/test")
+        val node = createNode(0, "/net/postchain/gtx/blockchain_config.xml")
+
+        enqueueTx(node, makeTx(0, "k", "v"), 0)
+        buildBlockAndCommit(node)
+        verifyBlockchainTransactions(node)
+
+        val blockQueries = node.getBlockchainInstance().getEngine().getBlockQueries()
+        var result = blockQueries.query("""{type: 'test_null_value'}""").get()
+        val gson = make_gtv_gson()
+        var gtxResult = gson.fromJson<Gtv>(result, Gtv::class.java)
+
+        val hit0 = gtxResult.get(0).asDict()
+        assertNotNull(hit0.get("val"))
+        assertEquals(GtvNull, hit0.get("val"))
+    }
 }

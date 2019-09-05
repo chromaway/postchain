@@ -59,10 +59,11 @@ class CommandPeerInfoImport : Command {
 
                 val dbLayer = AppConfigDbLayer(appConfig, connection)
                 nodeConfig.peerInfos.forEach { peerInfo ->
-                    val found = dbLayer.findPeerInfo(peerInfo.host, peerInfo.port, null)
-                    if (found.isEmpty()) {
+                    val found = (dbLayer.findPeerInfo(peerInfo.host, peerInfo.port, null).isNotEmpty()
+                            || dbLayer.findPeerInfo(null, null, peerInfo.pubKey.toHex()).isNotEmpty())
+                    if (!found) {
                         val added = dbLayer.addPeerInfo(
-                                peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex())
+                                peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex(), peerInfo.createdAt, peerInfo.updatedAt)
 
                         if (added) {
                             imported.add(peerInfo)

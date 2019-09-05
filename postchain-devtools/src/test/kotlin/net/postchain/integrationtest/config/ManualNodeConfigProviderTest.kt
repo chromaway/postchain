@@ -4,16 +4,18 @@ import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import net.postchain.base.PeerInfo
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS
+import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_CREATED_AT
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_HOST
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_PORT
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_PUBKEY
+import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_UPDATED_AT
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.config.SimpleDatabaseConnector
 import net.postchain.config.app.AppConfig
 import net.postchain.config.app.AppConfigDbLayer
 import net.postchain.devtools.IntegrationTest
-import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_ID
+import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.assertNodeConnectedWith
 import org.apache.commons.dbutils.QueryRunner
@@ -24,6 +26,8 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import java.sql.Connection
+import java.sql.Timestamp
+import java.time.Instant
 
 class ManualNodeConfigProviderTest : IntegrationTest() {
 
@@ -82,10 +86,10 @@ class ManualNodeConfigProviderTest : IntegrationTest() {
                     nodes.forEach { it.assertChainStarted() }
 
                     // network topology is that peer 3 is disconnected from interconnected peers 0, 1, 2
-                    nodes[0].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[1], nodes[2], nodes[3])
-                    nodes[1].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[0], nodes[2], nodes[3])
-                    nodes[2].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[1], nodes[0], nodes[3])
-                    nodes[3].assertNodeConnectedWith(DEFAULT_CHAIN_ID, nodes[1], nodes[2], nodes[0])
+                    nodes[0].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[1], nodes[2], nodes[3])
+                    nodes[1].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[0], nodes[2], nodes[3])
+                    nodes[2].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[1], nodes[0], nodes[3])
+                    nodes[3].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[1], nodes[2], nodes[0])
                 }
     }
 
@@ -103,13 +107,13 @@ class ManualNodeConfigProviderTest : IntegrationTest() {
         val appConfig = buildAppConfig(nodeIndex)
 
         fun insertPeerInfo(connection: Connection, peerInfo: PeerInfo) {
+            val ts = Timestamp(Instant.now().toEpochMilli())
             QueryRunner().insert(
                     connection,
                     "INSERT INTO $TABLE_PEERINFOS " +
-                            "($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT, $TABLE_PEERINFOS_FIELD_PUBKEY) " +
-                            "VALUES (?, ?, ?) " +
-                            "ON CONFLICT ($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT) DO NOTHING",
-                    ScalarHandler<Long>(), peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex())
+                            "($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT, $TABLE_PEERINFOS_FIELD_PUBKEY, $TABLE_PEERINFOS_FIELD_CREATED_AT, $TABLE_PEERINFOS_FIELD_UPDATED_AT) " +
+                            "VALUES (?, ?, ?, ?, ?)",
+                    ScalarHandler<Long>(), peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex(), ts, ts)
         }
 
         SimpleDatabaseConnector(appConfig)

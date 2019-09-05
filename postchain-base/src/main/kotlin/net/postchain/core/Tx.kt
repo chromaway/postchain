@@ -17,8 +17,19 @@ interface Transaction : Transactor {
     fun getHash(): ByteArray // hash of transaction content
 }
 
-enum class TransactionStatus {
-    UNKNOWN, REJECTED, WAITING, CONFIRMED
+enum class TransactionStatus(val status: String) {
+    UNKNOWN("unknown"),
+    WAITING("waiting"),
+    CONFIRMED("confirmed"),
+    REJECTED("rejected")
+}
+
+enum class TransactionResult(val code: Int) {
+    OK(0),
+    FULL(1),
+    DUPLICATE(2),
+    INVALID(3),
+    UNKNOWN(9999)
 }
 
 interface TransactionFactory {
@@ -27,7 +38,7 @@ interface TransactionFactory {
 
 interface TransactionQueue {
     fun takeTransaction(): Transaction?
-    fun enqueue(tx: Transaction): Boolean
+    fun enqueue(tx: Transaction): TransactionResult
     fun getTransactionStatus(txHash: ByteArray): TransactionStatus
     fun getTransactionQueueSize(): Int
     fun removeAll(transactionsToRemove: Collection<Transaction>)

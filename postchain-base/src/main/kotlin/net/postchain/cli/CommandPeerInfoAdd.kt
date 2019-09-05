@@ -2,6 +2,7 @@ package net.postchain.cli
 
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
+import net.postchain.base.PeerInfo
 import net.postchain.config.SimpleDatabaseConnector
 import net.postchain.config.app.AppConfig
 import net.postchain.config.app.AppConfigDbLayer
@@ -62,31 +63,40 @@ class CommandPeerInfoAdd : Command {
     fun peerinfoAdd(nodeConfigFile: String, host: String, port: Int, pubKey: String, mode: AlreadyExistMode): Boolean {
         val appConfig = AppConfig.fromPropertiesFile(nodeConfigFile)
         val connector = SimpleDatabaseConnector(appConfig)
+        var peerinfos = arrayOf<PeerInfo>()
 
-        return when (mode) {
-            AlreadyExistMode.ERROR -> {
-                connector.withWriteConnection { connection ->
-                    val peerinfos = AppConfigDbLayer(appConfig, connection).findPeerInfo(
-                            host, port, null)
+        connector.withReadConnection { connection ->
+            peerinfos = AppConfigDbLayer(appConfig, connection).findPeerInfo(
+                    host, port, null)
+            if (!peerinfos.isEmpty()) {
+                throw CliError.Companion.CliException("Peerinfo with port, host already exists.")
+            }
 
-                    if (!peerinfos.isEmpty()) {
-                        throw CliError.Companion.CliException(
-                                "Peerinfo with port, host already exists. Use -f flag to force addition.")
-                    } else {
-                        AppConfigDbLayer(appConfig, connection).addPeerInfo(
-                                host, port, pubKey)
+            peerinfos = AppConfigDbLayer(appConfig, connection).findPeerInfo(
+                    null, null, pubKey)
+        }
+
+        if (!peerinfos.isEmpty()) {
+            return when (mode) {
+                AlreadyExistMode.ERROR -> {
+                    throw CliError.Companion.CliException("Peerinfo with pubkey already exists. Using -f to force update")
+                }
+                AlreadyExistMode.FORCE -> {
+                    connector.withWriteConnection { connection ->
+                        AppConfigDbLayer(appConfig, connection).updatePeerInfo(host, port, pubKey)
                     }
                 }
+                else -> false
             }
-
-            AlreadyExistMode.FORCE -> {
-                connector.withWriteConnection { connection ->
-                    AppConfigDbLayer(appConfig, connection).addPeerInfo(
-                            host, port, pubKey)
+        } else {
+            return when (mode) {
+                AlreadyExistMode.ERROR, AlreadyExistMode.FORCE -> {
+                    connector.withWriteConnection { connection ->
+                        AppConfigDbLayer(appConfig, connection).addPeerInfo(host, port, pubKey)
+                    }
                 }
+                else -> false
             }
-
-            else -> false
         }
     }
 }

@@ -6,7 +6,7 @@ import assertk.assertions.isTrue
 import net.postchain.common.toHex
 import net.postchain.core.Transaction
 import net.postchain.devtools.IntegrationTest
-import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_ID
+import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.devtools.testinfra.TestTransaction
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
@@ -30,9 +30,9 @@ class GetLastBlocksExplorerTest : IntegrationTest() {
                     nodes.forEach { it.assertChainStarted() }
                 }
 
-        nodes[0].enqueueTxsAndAwaitBuiltBlock(DEFAULT_CHAIN_ID, 0, tx(0), tx(1))
-        nodes[0].enqueueTxsAndAwaitBuiltBlock(DEFAULT_CHAIN_ID, 1, tx(10), tx(11), tx(12))
-        nodes[0].enqueueTxsAndAwaitBuiltBlock(DEFAULT_CHAIN_ID, 2, tx(100), tx(101), tx(102))
+        nodes[0].enqueueTxsAndAwaitBuiltBlock(DEFAULT_CHAIN_IID, 0, tx(0), tx(1))
+        nodes[0].enqueueTxsAndAwaitBuiltBlock(DEFAULT_CHAIN_IID, 1, tx(10), tx(11), tx(12))
+        nodes[0].enqueueTxsAndAwaitBuiltBlock(DEFAULT_CHAIN_IID, 2, tx(100), tx(101), tx(102))
 
         // Asserting blocks and txs
         val blocks = nodes[0].getRestApiModel().getLatestBlocksUpTo(Long.MAX_VALUE, 25)
