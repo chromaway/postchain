@@ -16,7 +16,7 @@ class SinglePeerReconnectionTest : ReconnectionTest() {
     fun testSinglePeer() {
         val nodesCount = 1
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-        val blockchainConfig = "/net/postchain/reconnection/blockchain_config_1.xml"
+        val blockchainConfig = "/net/postchain/devtools/reconnection/blockchain_config_1.xml"
 
         // Creating all peers
         createSingleNode(

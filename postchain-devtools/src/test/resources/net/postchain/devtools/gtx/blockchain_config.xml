@@ -42,7 +42,7 @@
             </entry>
             <entry key="sqlmodules">
                 <array>
-                    <string>classpath:/net/postchain/gtx/sqlmodule1.sql</string>
+                    <string>classpath:/net/postchain/devtools/gtx/sqlmodule1.sql</string>
                 </array>
             </entry>
         </dict>

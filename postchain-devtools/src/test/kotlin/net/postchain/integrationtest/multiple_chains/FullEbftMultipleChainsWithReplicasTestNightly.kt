@@ -45,8 +45,8 @@ class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
                         "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/replica0.properties"
                 ),
                 arrayOf(
-                        "/net/postchain/multiple_chains/ebft_nightly/five_nodes/blockchain_config_1.xml",
-                        "/net/postchain/multiple_chains/ebft_nightly/five_nodes/blockchain_config_2.xml"
+                        "/net/postchain/devtools/multiple_chains/ebft_nightly/five_nodes/blockchain_config_1.xml",
+                        "/net/postchain/devtools/multiple_chains/ebft_nightly/five_nodes/blockchain_config_2.xml"
                 ))
     }
 

@@ -18,7 +18,7 @@ import java.nio.file.Paths
 class CliIntegrationTest {
 
     private fun fullPath(name: String): String {
-        return Paths.get(javaClass.getResource("/net/postchain/cli/${name}").toURI()).toString()
+        return Paths.get(javaClass.getResource("/net/postchain/devtools/cli/${name}").toURI()).toString()
     }
 
     @Test

@@ -121,7 +121,7 @@ class GTXPerformanceTestNightly : IntegrationTest() {
     fun runXNodesWithYTxPerBlock(nodeCount: Int, txPerBlock: Int) {
         val blocksCount = 2
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
-        createNodes(nodeCount, "/net/postchain/performance/blockchain_config_$nodeCount.xml")
+        createNodes(nodeCount, "/net/postchain/devtools/performance/blockchain_config_$nodeCount.xml")
 
         var txId = 0
         val statusManager = (nodes[0].getBlockchainInstance() as ValidatorWorker).statusManager

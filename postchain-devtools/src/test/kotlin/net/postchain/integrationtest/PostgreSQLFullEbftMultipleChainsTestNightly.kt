@@ -27,8 +27,8 @@ class PostgreSQLFullEbftMultipleChainsTestNightly : FullEbftMultipleChainsTestNi
                         "classpath:/net/postchain/multiple_chains/ebft_nightly/single_node/node0.properties"
                 ),
                 arrayOf(
-                        "/net/postchain/multiple_chains/ebft_nightly/single_node/blockchain_config_1.xml",
-                        "/net/postchain/multiple_chains/ebft_nightly/single_node/blockchain_config_2.xml"
+                        "/net/postchain/devtools/multiple_chains/ebft_nightly/single_node/blockchain_config_1.xml",
+                        "/net/postchain/devtools/multiple_chains/ebft_nightly/single_node/blockchain_config_2.xml"
                 ))
     }
 
@@ -50,8 +50,8 @@ class PostgreSQLFullEbftMultipleChainsTestNightly : FullEbftMultipleChainsTestNi
                         "classpath:/net/postchain/multiple_chains/ebft_nightly/two_nodes/node1.properties"
                 ),
                 arrayOf(
-                        "/net/postchain/multiple_chains/ebft_nightly/two_nodes/blockchain_config_1.xml",
-                        "/net/postchain/multiple_chains/ebft_nightly/two_nodes/blockchain_config_2.xml"
+                        "/net/postchain/devtools/multiple_chains/ebft_nightly/two_nodes/blockchain_config_1.xml",
+                        "/net/postchain/devtools/multiple_chains/ebft_nightly/two_nodes/blockchain_config_2.xml"
                 ))
     }
 
@@ -76,8 +76,8 @@ class PostgreSQLFullEbftMultipleChainsTestNightly : FullEbftMultipleChainsTestNi
                         "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/node4.properties"
                 ),
                 arrayOf(
-                        "/net/postchain/multiple_chains/ebft_nightly/five_nodes/blockchain_config_1.xml",
-                        "/net/postchain/multiple_chains/ebft_nightly/five_nodes/blockchain_config_2.xml"
+                        "/net/postchain/devtools/multiple_chains/ebft_nightly/five_nodes/blockchain_config_1.xml",
+                        "/net/postchain/devtools/multiple_chains/ebft_nightly/five_nodes/blockchain_config_2.xml"
                 ))
     }
 

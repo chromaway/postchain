@@ -39,17 +39,17 @@ class MixedFourPeersTest : IntegrationTest() {
         val chainId1 = 1L
         val blockchainRid1 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3".hexStringToByteArray()
         val blockchainConfig1_1 = readBlockchainConfig(
-                "/net/postchain/mixed_test/four_peers/blockchain_config_1_1.xml")
+                "/net/postchain/devtools/mixed_test/four_peers/blockchain_config_1_1.xml")
         val blockchainConfig1_2 = readBlockchainConfig(
-                "/net/postchain/mixed_test/four_peers/blockchain_config_1_2.xml")
+                "/net/postchain/devtools/mixed_test/four_peers/blockchain_config_1_2.xml")
 
         // chain 2 (peers 0, 1, 2)
         val chainId2 = 2L
         val blockchainRid2 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a4".hexStringToByteArray()
         val blockchainConfig2_1 = readBlockchainConfig(
-                "/net/postchain/mixed_test/four_peers/blockchain_config_2_1.xml")
+                "/net/postchain/devtools/mixed_test/four_peers/blockchain_config_2_1.xml")
         val blockchainConfig2_2 = readBlockchainConfig(
-                "/net/postchain/mixed_test/four_peers/blockchain_config_2_2.xml")
+                "/net/postchain/devtools/mixed_test/four_peers/blockchain_config_2_2.xml")
 
         // Creating all peers w/o chains
         createMultipleChainNodes(nodesCount, nodeConfigsFilenames, arrayOf())

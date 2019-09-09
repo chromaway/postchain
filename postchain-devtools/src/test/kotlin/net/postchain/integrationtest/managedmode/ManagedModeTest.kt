@@ -9,7 +9,7 @@ class ManagedModeTest : IntegrationTest() {
     @Test
     fun launchingOf_SingleNodeSingleSigner_withSystemChainOnly_isSuccessful() {
         val nodeConfig = "classpath:/net/postchain/managedmode/node0.properties"
-        val blockchainConfig = "/net/postchain/managedmode/blockchain_config_1.xml"
+        val blockchainConfig = "/net/postchain/devtools/managedmode/blockchain_config_1.xml"
 
         // Creating all nodes
         createSingleNode(0, 1, nodeConfig, blockchainConfig)

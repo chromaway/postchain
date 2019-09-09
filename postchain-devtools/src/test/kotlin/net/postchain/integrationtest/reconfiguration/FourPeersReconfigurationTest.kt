@@ -34,11 +34,11 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
         )
 
         // Chains configs
-        val blockchainConfig1 = "/net/postchain/reconfiguration/four_peers/modules/blockchain_config_1.xml"
+        val blockchainConfig1 = "/net/postchain/devtools/reconfiguration/four_peers/modules/blockchain_config_1.xml"
         val blockchainConfig2 = readBlockchainConfig(
-                "/net/postchain/reconfiguration/four_peers/modules/blockchain_config_2.xml")
+                "/net/postchain/devtools/reconfiguration/four_peers/modules/blockchain_config_2.xml")
         val blockchainConfig3 = readBlockchainConfig(
-                "/net/postchain/reconfiguration/four_peers/modules/blockchain_config_3.xml")
+                "/net/postchain/devtools/reconfiguration/four_peers/modules/blockchain_config_3.xml")
 
         // Creating all nodes
         nodeConfigsFilenames.forEachIndexed { i, nodeConfig ->
@@ -103,11 +103,11 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
         )
 
         // Chains configs
-        val blockchainConfig1 = "/net/postchain/reconfiguration/four_peers/signers/blockchain_config_1.xml"
+        val blockchainConfig1 = "/net/postchain/devtools/reconfiguration/four_peers/signers/blockchain_config_1.xml"
         val blockchainConfig2 = readBlockchainConfig(
-                "/net/postchain/reconfiguration/four_peers/signers/blockchain_config_2.xml")
+                "/net/postchain/devtools/reconfiguration/four_peers/signers/blockchain_config_2.xml")
         val blockchainConfig3 = readBlockchainConfig(
-                "/net/postchain/reconfiguration/four_peers/signers/blockchain_config_3.xml")
+                "/net/postchain/devtools/reconfiguration/four_peers/signers/blockchain_config_3.xml")
 
         // Creating all nodes
         nodeConfigsFilenames.forEachIndexed { i, nodeConfig ->
@@ -193,13 +193,13 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
         )
 
         // Chains configs
-        val blockchainConfig1 = "/net/postchain/reconfiguration/four_peers/signers2/blockchain_config_1.xml"
+        val blockchainConfig1 = "/net/postchain/devtools/reconfiguration/four_peers/signers2/blockchain_config_1.xml"
         val blockchainConfig2 = readBlockchainConfig(
-                "/net/postchain/reconfiguration/four_peers/signers2/blockchain_config_2.xml")
+                "/net/postchain/devtools/reconfiguration/four_peers/signers2/blockchain_config_2.xml")
         val blockchainConfig3 = readBlockchainConfig(
-                "/net/postchain/reconfiguration/four_peers/signers2/blockchain_config_3.xml")
+                "/net/postchain/devtools/reconfiguration/four_peers/signers2/blockchain_config_3.xml")
         val blockchainConfig4 = readBlockchainConfig(
-                "/net/postchain/reconfiguration/four_peers/signers2/blockchain_config_4.xml")
+                "/net/postchain/devtools/reconfiguration/four_peers/signers2/blockchain_config_4.xml")
 
         // Creating all nodes
         nodeConfigsFilenames.forEachIndexed { i, nodeConfig ->

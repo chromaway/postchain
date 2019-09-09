@@ -28,7 +28,7 @@ class SQLModuleIntegrationTest : IntegrationTest() {
     @Test
     fun testBuildBlock() {
         configOverrides.setProperty("infrastructure", "base/test")
-        val node = createNode(0, "/net/postchain/gtx/blockchain_config.xml")
+        val node = createNode(0, "/net/postchain/devtools/gtx/blockchain_config.xml")
 
         enqueueTx(node, makeTx(0, "k", "v"), 0)
         buildBlockAndCommit(node)
@@ -85,7 +85,7 @@ class SQLModuleIntegrationTest : IntegrationTest() {
     @Test
     fun testQueryWithMultipleParams() {
         configOverrides.setProperty("infrastructure", "base/test")
-        val node = createNode(0, "/net/postchain/gtx/blockchain_config.xml")
+        val node = createNode(0, "/net/postchain/devtools/gtx/blockchain_config.xml")
         enqueueTx(node, makeTx(0, "k", "v"), 0)
         buildBlockAndCommit(node)
         verifyBlockchainTransactions(node)
@@ -99,7 +99,7 @@ class SQLModuleIntegrationTest : IntegrationTest() {
     @Test
     fun testQuerySupportNullableValue() {
         configOverrides.setProperty("infrastructure", "base/test")
-        val node = createNode(0, "/net/postchain/gtx/blockchain_config.xml")
+        val node = createNode(0, "/net/postchain/devtools/gtx/blockchain_config.xml")
 
         enqueueTx(node, makeTx(0, "k", "v"), 0)
         buildBlockAndCommit(node)

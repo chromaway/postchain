@@ -26,7 +26,7 @@ class SinglePeerMultipleChainsOperationsTest : IntegrationTest() {
         val chainId1 = 1L
         val blockchainRid1 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3".hexStringToByteArray()
         val blockchainConfig1 = readBlockchainConfig(
-                "/net/postchain/multiple_chains/chains_ops/single_peer/blockchain_config_1.xml")
+                "/net/postchain/devtools/multiple_chains/chains_ops/single_peer/blockchain_config_1.xml")
 
         // Asserting that chain 1 is not started
         nodes[0].assertChainNotStarted(chainId1)
@@ -62,13 +62,13 @@ class SinglePeerMultipleChainsOperationsTest : IntegrationTest() {
         val chainId1 = 1L
         val blockchainRid1 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3".hexStringToByteArray()
         val blockchainConfig1 = readBlockchainConfig(
-                "/net/postchain/multiple_chains/chains_ops/single_peer/blockchain_config_1.xml")
+                "/net/postchain/devtools/multiple_chains/chains_ops/single_peer/blockchain_config_1.xml")
 
         // chain 2
         val chainId2 = 2L
         val blockchainRid2 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a4".hexStringToByteArray()
         val blockchainConfig2 = readBlockchainConfig(
-                "/net/postchain/multiple_chains/chains_ops/single_peer/blockchain_config_2.xml")
+                "/net/postchain/devtools/multiple_chains/chains_ops/single_peer/blockchain_config_2.xml")
 
         // Asserting that chain1 and chain2 Are not started
         nodes[0].assertChainNotStarted(chainId1)

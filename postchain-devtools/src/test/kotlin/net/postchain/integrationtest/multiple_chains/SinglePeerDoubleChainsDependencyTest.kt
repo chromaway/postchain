@@ -25,8 +25,8 @@ class SinglePeerDoubleChainsDependencyTest: MultiNodeDoubleChainBlockTestHelper(
                         "classpath:/net/postchain/multiple_chains/dependent_bcs/single_peer/node0bc2.properties"
                 ),
                 arrayOf(
-                        "/net/postchain/multiple_chains/dependent_bcs/single_peer/blockchain_config_1.xml",
-                        "/net/postchain/multiple_chains/dependent_bcs/single_peer/blockchain_config_2.xml"
+                        "/net/postchain/devtools/multiple_chains/dependent_bcs/single_peer/blockchain_config_1.xml",
+                        "/net/postchain/devtools/multiple_chains/dependent_bcs/single_peer/blockchain_config_2.xml"
                 )
         )
         val txList = runXNodesWithYTxPerBlock( 1, 1, chainList)
@@ -48,7 +48,7 @@ class SinglePeerDoubleChainsDependencyTest: MultiNodeDoubleChainBlockTestHelper(
                             "classpath:/net/postchain/multiple_chains/dependent_bcs/single_peer/node0bc1dep.properties"
                     ),
                     arrayOf(
-                            "/net/postchain/multiple_chains/dependent_bcs/single_peer/blockchain_config_bad_dependency.xml"
+                            "/net/postchain/devtools/multiple_chains/dependent_bcs/single_peer/blockchain_config_bad_dependency.xml"
                     )
             )
 
@@ -73,8 +73,8 @@ class SinglePeerDoubleChainsDependencyTest: MultiNodeDoubleChainBlockTestHelper(
                         "classpath:/net/postchain/multiple_chains/dependent_bcs/single_peer/node0bc2dep.properties"
                 ),
                 arrayOf(
-                        "/net/postchain/multiple_chains/dependent_bcs/single_peer/blockchain_config_1.xml",
-                        "/net/postchain/multiple_chains/dependent_bcs/single_peer/blockchain_config_2_depends_on_1.xml"
+                        "/net/postchain/devtools/multiple_chains/dependent_bcs/single_peer/blockchain_config_1.xml",
+                        "/net/postchain/devtools/multiple_chains/dependent_bcs/single_peer/blockchain_config_2_depends_on_1.xml"
                 )
         )
 
@@ -82,8 +82,6 @@ class SinglePeerDoubleChainsDependencyTest: MultiNodeDoubleChainBlockTestHelper(
         runXNodesAssertions( 2, 10, chainList, txList)
 
     }
-
-
 
 }
 

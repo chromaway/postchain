@@ -15,7 +15,7 @@ class FourPeersReconnectionTest : ReconnectionTest() {
     fun test4Peers() {
         val nodesCount = 4
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-        val blockchainConfig = "/net/postchain/reconnection/blockchain_config_4.xml"
+        val blockchainConfig = "/net/postchain/devtools/reconnection/blockchain_config_4.xml"
         val nodeConfigsFilenames = arrayOf(
                 "classpath:/net/postchain/reconnection/node0.properties",
                 "classpath:/net/postchain/reconnection/node1.properties",

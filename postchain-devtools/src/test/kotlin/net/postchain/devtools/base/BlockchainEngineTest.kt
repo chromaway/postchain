@@ -19,7 +19,7 @@ class BlockchainEngineTest : IntegrationTest() {
     @Test
     fun testBuildBlock() {
         configOverrides.setProperty("infrastructure", "base/test")
-        val node = createNode(0, "/net/postchain/blocks/blockchain_config.xml")
+        val node = createNode(0, "/net/postchain/devtools/blocks/blockchain_config.xml")
         val txQueue = node.getBlockchainInstance().getEngine().getTransactionQueue()
 
         txQueue.enqueue(TestTransaction(0))
@@ -57,7 +57,7 @@ class BlockchainEngineTest : IntegrationTest() {
 
     @Test
     fun testLoadUnfinishedEmptyBlock() {
-        val (node0, node1) = createNodes(2, "/net/postchain/blocks/blockchain_config_2.xml")
+        val (node0, node1) = createNodes(2, "/net/postchain/devtools/blocks/blockchain_config_2.xml")
 
         val blockData = createBlockWithTxAndCommit(node0, 0)
 
@@ -69,7 +69,7 @@ class BlockchainEngineTest : IntegrationTest() {
 
     @Test
     fun testLoadUnfinishedBlock2tx() {
-        val (node0, node1) = createNodes(2, "/net/postchain/blocks/blockchain_config_2.xml")
+        val (node0, node1) = createNodes(2, "/net/postchain/devtools/blocks/blockchain_config_2.xml")
 
         val blockData = createBlockWithTxAndCommit(node0, 2)
         loadUnfinishedAndCommit(node1, blockData)
@@ -81,7 +81,7 @@ class BlockchainEngineTest : IntegrationTest() {
 
     @Test
     fun testMultipleLoadUnfinishedBlocks() {
-        val (node0, node1) = createNodes(2, "/net/postchain/blocks/blockchain_config_2.xml")
+        val (node0, node1) = createNodes(2, "/net/postchain/devtools/blocks/blockchain_config_2.xml")
 
         for (i in 0..10) {
             val blockData = createBlockWithTxAndCommit(node0, 2, i * 2)
@@ -95,7 +95,7 @@ class BlockchainEngineTest : IntegrationTest() {
 
     @Test
     fun testLoadUnfinishedBlockTxFail() {
-        val (node0, node1) = createNodes(2, "/net/postchain/blocks/blockchain_config_2.xml")
+        val (node0, node1) = createNodes(2, "/net/postchain/devtools/blocks/blockchain_config_2.xml")
 
         val blockData = createBlockWithTxAndCommit(node0, 2)
 
@@ -122,7 +122,7 @@ class BlockchainEngineTest : IntegrationTest() {
 
     @Test
     fun testLoadUnfinishedBlockInvalidHeader() {
-        val (node0, node1) = createNodes(2, "/net/postchain/blocks/blockchain_config_2.xml")
+        val (node0, node1) = createNodes(2, "/net/postchain/devtools/blocks/blockchain_config_2.xml")
 
         val blockData = createBlockWithTxAndCommit(node0, 2)
         blockData.header.prevBlockRID[0]++
@@ -138,7 +138,7 @@ class BlockchainEngineTest : IntegrationTest() {
 
     @Test
     fun testAddBlock() {
-        val (node0, node1) = createNodes(2, "/net/postchain/blocks/blockchain_config_2.xml")
+        val (node0, node1) = createNodes(2, "/net/postchain/devtools/blocks/blockchain_config_2.xml")
 
         val blockBuilder = createBlockWithTx(node0, 2)
         val witness = commitBlock(blockBuilder)

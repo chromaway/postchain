@@ -45,7 +45,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         val nodeCount = 3
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
         configOverrides.setProperty("api.port", 0)
-        createNodes(nodeCount, "/net/postchain/api/blockchain_config.xml")
+        createNodes(nodeCount, "/net/postchain/devtools/api/blockchain_config.xml")
 
         testStatusGet("/tx/$blockchainRID/$txHashHex", 404)
         testStatusGet("/tx/$blockchainRID/$txHashHex/status", 200) {
@@ -70,7 +70,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         val txPerBlock = 1
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         configOverrides.setProperty("api.port", 0)
-        createNodes(nodesCount, "/net/postchain/api/blockchain_config_1.xml")
+        createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_1.xml")
 
         buildBlockAndCommit(nodes[0])
         val query = """{"queries": [{"type"="gtx_test_get_value", "txRID"="abcd"},
@@ -90,7 +90,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         val txPerBlock = 1
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         configOverrides.setProperty("api.port", 0)
-        createNodes(nodesCount, "/net/postchain/api/blockchain_config_1.xml")
+        createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_1.xml")
 
         buildBlockAndCommit(nodes[0])
 
@@ -118,7 +118,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 //        createEbftNodes(nodeCount)
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
         configOverrides.setProperty("api.port", 0)
-        createNodes(nodeCount, "/net/postchain/api/blockchain_config.xml")
+        createNodes(nodeCount, "/net/postchain/devtools/api/blockchain_config.xml")
 
         var blockHeight = 0
         var currentId = 0
@@ -155,7 +155,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         val nodesCount = 1
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         configOverrides.setProperty("api.port", 0)
-        createNodes(nodesCount, "/net/postchain/api/blockchain_config_rejected.xml")
+        createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_rejected.xml")
 
         val builder = GTXDataBuilder(blockchainRIDBytes, arrayOf(KeyPairHelper.pubKey(0)), cryptoSystem)
         builder.addOperation("gtx_test", arrayOf(gtv(1L), gtv("rejectMe")))

@@ -50,7 +50,7 @@ class PostChainClientTest : IntegrationTest() {
     @Test
     fun makingAndPostingTransaction_SignedTransactionGiven_PostsSuccessfully() {
         // Mock
-        createTestNodes(1, "/net/postchain/api/blockchain_config_1.xml")
+        createTestNodes(1, "/net/postchain/devtools/api/blockchain_config_1.xml")
         val client = spy(createPostChainClient())
         val txBuilder = client.makeTransaction()
 
@@ -64,7 +64,7 @@ class PostChainClientTest : IntegrationTest() {
     @Test(expected = ProgrammerMistake::class)
     fun makingAndPostingSyncTransaction_UnsignedTransactionGiven_throws_Exception() {
         // Mock
-        createTestNodes(1, "/net/postchain/api/blockchain_config_1.xml")
+        createTestNodes(1, "/net/postchain/devtools/api/blockchain_config_1.xml")
         val client = spy(createPostChainClient())
         val txBuilder = client.makeTransaction()
 
@@ -75,7 +75,7 @@ class PostChainClientTest : IntegrationTest() {
     @Test
     fun makingAndPostingSyncTransaction_SignedTransactionGiven_PostsSuccessfully() {
         // Mock
-        createTestNodes(1, "/net/postchain/api/blockchain_config_1.xml")
+        createTestNodes(1, "/net/postchain/devtools/api/blockchain_config_1.xml")
         val client = spy(createPostChainClient())
         val txBuilder = client.makeTransaction()
 
@@ -92,7 +92,7 @@ class PostChainClientTest : IntegrationTest() {
 
     @Test
     fun testPostTransactionApiConfirmLevelNoWait() {
-        createTestNodes(1, "/net/postchain/api/blockchain_config_1.xml")
+        createTestNodes(1, "/net/postchain/devtools/api/blockchain_config_1.xml")
         val builder = createGtxDataBuilder()
         val client = createPostChainClient()
         val result = client.postTransactionSync(builder, ConfirmationLevel.NO_WAIT)
@@ -101,7 +101,7 @@ class PostChainClientTest : IntegrationTest() {
 
     @Test
     fun testPostTransactionApiConfirmLevelNoWaitPromise() {
-        createTestNodes(1, "/net/postchain/api/blockchain_config_1.xml")
+        createTestNodes(1, "/net/postchain/devtools/api/blockchain_config_1.xml")
         val builder = createGtxDataBuilder()
         val client = createPostChainClient()
         client.postTransaction(builder, ConfirmationLevel.NO_WAIT).success { resp ->
@@ -111,7 +111,7 @@ class PostChainClientTest : IntegrationTest() {
 
     @Test
     fun testPostTransactionApiConfirmLevelUnverified() {
-        createTestNodes(3, "/net/postchain/api/blockchain_config.xml")
+        createTestNodes(3, "/net/postchain/devtools/api/blockchain_config.xml")
         val builder = createGtxDataBuilder()
         val client = createPostChainClient()
         val result = client.postTransactionSync(builder, ConfirmationLevel.UNVERIFIED)
@@ -120,7 +120,7 @@ class PostChainClientTest : IntegrationTest() {
 
     @Test
     fun testPostTransactionApiConfirmLevelUnverifiedPromise() {
-        createTestNodes(3, "/net/postchain/api/blockchain_config.xml")
+        createTestNodes(3, "/net/postchain/devtools/api/blockchain_config.xml")
         val builder = createGtxDataBuilder()
         val client = createPostChainClient()
         client.postTransaction(builder, ConfirmationLevel.UNVERIFIED).success { resp ->
@@ -130,7 +130,7 @@ class PostChainClientTest : IntegrationTest() {
 
     @Test
     fun testQueryGtxClientApiPromise() {
-        createTestNodes(3, "/net/postchain/api/blockchain_config.xml")
+        createTestNodes(3, "/net/postchain/devtools/api/blockchain_config.xml")
         val builder = createGtxDataBuilder()
         val client = createPostChainClient()
         client.postTransactionSync(builder, ConfirmationLevel.UNVERIFIED)
