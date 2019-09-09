@@ -48,6 +48,11 @@ class DefaultXCommunicationManager<PacketType>(
     override fun sendPacket(packet: PacketType, recipient: XPeerID) {
         logger.trace { "[$processName]: sendPacket($packet, ${peerName(recipient.toString())})" }
 
+        val peers: List<XPeerID> = config.peerInfo.map(PeerInfo::peerId)
+        require(recipient in peers) {
+            "CommunicationManager.sendPacket(): recipient not found among peers"
+        }
+
         require(XPeerID(config.pubKey) != recipient) {
             "CommunicationManager.sendPacket(): sender can not be the recipient"
         }
