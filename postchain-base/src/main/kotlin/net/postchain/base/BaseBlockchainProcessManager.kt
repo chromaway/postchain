@@ -98,7 +98,7 @@ open class BaseBlockchainProcessManager(
     override fun shutdown() {
         executor.shutdownNow()
         executor.awaitTermination(1000, TimeUnit.MILLISECONDS)
-        blockchainProcesses.forEach { _, process -> process.shutdown() }
+        blockchainProcesses.forEach { (_, process) -> process.shutdown() }
         blockchainProcesses.clear()
         blockchainProcessesLoggers.forEach { _, t ->
             t.cancel()

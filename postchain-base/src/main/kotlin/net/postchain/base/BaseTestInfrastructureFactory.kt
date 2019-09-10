@@ -41,7 +41,10 @@ class BaseTestInfrastructureFactory : InfrastructureFactory {
             nodeConfigProvider: NodeConfigurationProvider,
             blockchainInfrastructure: BlockchainInfrastructure
     ): BlockchainProcessManager {
-        return BaseBlockchainProcessManager(blockchainInfrastructure, nodeConfigProvider,
+
+        return BaseBlockchainProcessManager(
+                blockchainInfrastructure,
+                nodeConfigProvider,
                 makeBlockchainConfigurationProvider(nodeConfigProvider))
     }
 }

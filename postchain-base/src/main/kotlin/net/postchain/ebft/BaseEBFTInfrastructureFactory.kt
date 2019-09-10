@@ -31,7 +31,6 @@ open class BaseEBFTInfrastructureFactory : InfrastructureFactory {
         return BaseBlockchainProcessManager(
                 blockchainInfrastructure,
                 nodeConfigProvider,
-                makeBlockchainConfigurationProvider(nodeConfigProvider)
-        )
+                makeBlockchainConfigurationProvider(nodeConfigProvider))
     }
 }
