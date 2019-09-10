@@ -69,6 +69,7 @@ open class BaseBlockchainProcessManager(
                         period = 3000,
                         action = { logPeerTopology(chainId) }
                 )
+                logPeerTopology(chainId)
                 logger.info("[${nodeName()}]: Blockchain has been started: chainId:$chainId")
 
             } else {
@@ -113,7 +114,7 @@ open class BaseBlockchainProcessManager(
     }
 
     // FYI: [et]: For integration testing. Will be removed or refactored later
-    private fun logPeerTopology(chainId: Long) {
+    fun logPeerTopology(chainId: Long) {
         // TODO: [et]: Fix links to EBFT entities
         val topology = ((blockchainInfrastructure as BaseBlockchainInfrastructure)
                 .synchronizationInfrastructure as EBFTSynchronizationInfrastructure)
@@ -130,7 +131,7 @@ open class BaseBlockchainProcessManager(
                     .replace(">s", ">${peerName(it.key)}")
         }
 
-        logger.trace {
+        logger.debug {
             "[${nodeName()}]: Topology: ${prettyTopology.values}"
         }
     }

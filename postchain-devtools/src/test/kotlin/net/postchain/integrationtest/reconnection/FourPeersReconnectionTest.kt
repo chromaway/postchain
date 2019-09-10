@@ -91,7 +91,6 @@ class FourPeersReconnectionTest : ReconnectionTest() {
         nodes.removeAt(3)
 
         println("Re-boring peer 3")
-        // Re-boring peer 1
         createSingleNode(3, nodesCount, nodeConfigsFilenames[1], blockchainConfig)
 
         // Asserting that

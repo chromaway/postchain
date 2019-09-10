@@ -3,6 +3,7 @@ package net.postchain.network.x
 import mu.KLogging
 import net.postchain.base.CryptoSystem
 import net.postchain.base.PeerCommConfiguration
+import net.postchain.common.ExponentialDelay
 import net.postchain.common.toHex
 import net.postchain.core.ByteArrayKey
 import net.postchain.core.ProgrammerMistake
@@ -41,6 +42,9 @@ class DefaultXConnectionManager<PacketType>(
     private val chains: MutableMap<Long, Chain> = mutableMapOf()
     private val chainIDforBlockchainRID = mutableMapOf<ByteArrayKey, Long>()
     private var isShutDown = false
+
+    private val peerToDelayMap: MutableMap<XPeerID, ExponentialDelay> = mutableMapOf()
+
 
     @Synchronized
     override fun shutdown() {
@@ -182,13 +186,15 @@ class DefaultXConnectionManager<PacketType>(
         }
 
         return if (!peerCommConfiguration.networkNodes.isNodeBehavingWell(descriptor.peerId, System.currentTimeMillis())) {
-            null // The peer is too much trouble, don't accept
+            logger.debug { "[${myPeerId()}]: Peer not behaving well, so ignore: peerId = ${peerName(descriptor.peerId)}" }
+            null
         } else if (chain.connections[descriptor.peerId] != null) {
             logger.debug { "[${myPeerId()}]: Peer already connected: peerId = ${peerName(descriptor.peerId)}" }
             null
         } else {
             chain.connections[descriptor.peerId] = connection
             logger.debug { "[${myPeerId()}]: Peer connected: peerId = ${peerName(descriptor.peerId)}" }
+            peerToDelayMap.remove(descriptor.peerId) // We are connected, with means we must clear the re-connect delay
             chain.peerConfig.packetHandler
         }
     }
@@ -232,7 +238,14 @@ class DefaultXConnectionManager<PacketType>(
     }
 
     private fun reconnect(peerConfig: XChainPeerConfiguration, peerId: XPeerID) {
-        Timer("Reconnecting").schedule(5000) {
+        // Make sure there is an [ExponentialDelay] instance for this peer
+        var delay = peerToDelayMap[peerId]
+        if (delay == null) {
+            delay = ExponentialDelay()
+            peerToDelayMap[peerId] = delay
+        }
+
+        Timer("Reconnecting").schedule(delay.getDelayMillis()) {
             logger.debug { "[${myPeerId()}]: Reconnecting to peer: peerId = ${peerName(peerId)}" }
             connectorConnectPeer(peerConfig, peerId)
         }

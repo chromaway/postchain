@@ -10,9 +10,12 @@ import net.postchain.devtools.testinfra.TestOneOpGtxTransaction
 import net.postchain.gtx.GTXTransaction
 import net.postchain.gtx.GTXTransactionFactory
 import net.postchain.integrationtest.assertChainStarted
+import net.postchain.integrationtest.assertNodeConnectedWith
+import net.postchain.integrationtest.multiple_chains.FullEbftMultipleChainsTestNightly
 import org.awaitility.Awaitility
 import org.awaitility.Duration
 import org.junit.Assert
+import kotlin.random.Random
 import kotlin.test.assertNotNull
 
 open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
@@ -51,6 +54,27 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
                         chainList.forEach(node::assertChainStarted)
                     }
                 }
+
+        if (nodes.size > 1) {
+            logger.debug("---Asserting all chains are connected -------------------------")
+            // We don't need to assert all connections, just check some random connections
+            Awaitility.await().atMost(Duration.TEN_SECONDS)
+                    .untilAsserted {
+                        nodes.forEachIndexed { i, node ->
+                            logger.debug("Node $i")
+                            var randNode = Random.nextInt(nodesCount)
+                            while (randNode == i) {
+                                randNode = Random.nextInt(nodesCount) // Cannot be connected to itself, so pic new value
+                            }
+                            val x = this.nodes[randNode]
+                            chainList.forEach { chain ->
+                                logger.debug("Wait for (node $i, chain $chain) to be connected to node $randNode")
+                                nodes[i].assertNodeConnectedWith(chain, x)
+                            }
+                        }
+                    }
+        }
+
 
     }
 
