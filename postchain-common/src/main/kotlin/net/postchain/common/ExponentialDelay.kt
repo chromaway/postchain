@@ -5,7 +5,7 @@ package net.postchain.common
  */
 class ExponentialDelay (
          val MAX_DELAY_MILLIS: Long = 60000, // Default 1 min max delay
-         var delayCounterMillis: Long = 20L  // Default we begin with a delay of 20 milliseconds
+         var delayCounterMillis: Long = 100L  // Default we begin with a delay of 20 milliseconds
     ) {
         private var executionCounter = 0L // Number of times we've done this
 
