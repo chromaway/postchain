@@ -69,7 +69,6 @@ open class BaseBlockchainProcessManager(
                         period = 3000,
                         action = { logPeerTopology(chainId) }
                 )
-                logPeerTopology(chainId)
                 logger.info("[${nodeName()}]: Blockchain has been started: chainId:$chainId")
 
             } else {
