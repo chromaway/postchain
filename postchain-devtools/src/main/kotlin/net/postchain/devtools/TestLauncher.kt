@@ -2,16 +2,17 @@ package net.postchain.devtools
 
 import com.google.gson.GsonBuilder
 import mu.KLogging
+import net.postchain.StorageBuilder
 import net.postchain.base.gtxml.TestType
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
 import net.postchain.config.node.NodeConfigurationProviderFactory
+import net.postchain.core.NODE_ID_TODO
 import net.postchain.core.UserMistake
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.gtv.GtvFactory.gtv
-import net.postchain.gtv.GtvNull
 import net.postchain.gtv.gtvml.GtvMLParser
 import net.postchain.gtx.gtxml.GTXMLTransactionParser
 import net.postchain.gtx.gtxml.TransactionContext
@@ -46,8 +47,8 @@ class TestLauncher : IntegrationTest() {
     }
 
     private fun createTestNode(configFile: String, blockchainRid: ByteArray, blockchainConfigFile: String): PostchainTestNode {
-        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
-                AppConfig.fromPropertiesFile(configFile))
+        val appConfig = AppConfig.fromPropertiesFile(configFile)
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(appConfig)
 
         /*
         // TODO: Fix this hack
@@ -64,7 +65,10 @@ class TestLauncher : IntegrationTest() {
 
         val chainId = nodeConfigProvider.getConfiguration().activeChainIds.first().toLong()
 
-        return PostchainTestNode(nodeConfigProvider, true).apply {
+        // Wiping of database
+        StorageBuilder.buildStorage(appConfig, NODE_ID_TODO, true).close()
+
+        return PostchainTestNode(nodeConfigProvider).apply {
             addBlockchain(chainId, blockchainRid, blockchainConfig)
             startBlockchain()
             nodes.add(this)

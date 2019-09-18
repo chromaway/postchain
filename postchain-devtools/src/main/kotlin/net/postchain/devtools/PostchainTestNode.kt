@@ -11,12 +11,10 @@ import net.postchain.common.toHex
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
 import net.postchain.ebft.EBFTSynchronizationInfrastructure
-import net.postchain.core.BlockchainProcess
-import net.postchain.core.NODE_ID_TODO
-import net.postchain.gtv.GtvEncoder.encodeGtv
 import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvEncoder.encodeGtv
 
-class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider, preWipeDatabase: Boolean) : PostchainNode(nodeConfigProvider) {
+class PostchainTestNode(val nodeConfigProvider: NodeConfigurationProvider) : PostchainNode(nodeConfigProvider) {
 
     private val storage: Storage
     val pubKey: String
@@ -24,7 +22,7 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider, preWipeDa
 
     init {
         val nodeConfig = nodeConfigProvider.getConfiguration()
-        storage = StorageBuilder.buildStorage(nodeConfig, NODE_ID_TODO, preWipeDatabase)
+        storage = StorageBuilder.buildStorage(nodeConfig.appConfig, NODE_ID_TODO)
         pubKey = nodeConfig.pubKey
     }
 

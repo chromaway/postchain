@@ -9,8 +9,12 @@ import net.postchain.core.MultiSigBlockWitness
 import net.postchain.core.Signature
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.PostchainTestNode
+import net.postchain.devtools.testinfra.TestBlockchainConfiguration
 import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.gtv.Gtv
+import net.postchain.gtx.CompositeGTXModule
+import net.postchain.gtx.GTXBlockchainConfiguration
+import net.postchain.gtx.GTXModule
 import nl.komponents.kovenant.Promise
 
 fun PostchainTestNode.addBlockchainAndStart(chainId: Long, blockchainRid: ByteArray, blockchainConfig: Gtv) {
@@ -43,6 +47,10 @@ fun PostchainTestNode.blockSignatures(chainId: Long, height: Long): Array<Signat
     assertNotNull(block)
     return (block!!.witness as? MultiSigBlockWitness)
             ?.getSignatures() ?: emptyArray()
+}
+
+fun PostchainTestNode.currentHeight(chainId: Long): Long {
+    return query(chainId) { it.getBestHeight() } ?: -1L
 }
 
 fun PostchainTestNode.awaitedHeight(chainId: Long): Long {
@@ -78,4 +86,21 @@ fun PostchainTestNode.enqueueTxs(chainId: Long, vararg txs: TestTransaction): Bo
 fun PostchainTestNode.enqueueTxsAndAwaitBuiltBlock(chainId: Long, height: Long, vararg txs: TestTransaction) {
     enqueueTxs(chainId, *txs)
     awaitBuiltBlock(chainId, height)
+}
+
+fun PostchainTestNode.getModules(chainId: Long = PostchainTestNode.DEFAULT_CHAIN_IID): Array<GTXModule> {
+    val configuration = retrieveBlockchain(chainId)
+            ?.getEngine()
+            ?.getConfiguration()
+
+    return when (configuration) {
+        is GTXBlockchainConfiguration -> collectModules(configuration.module)
+        is TestBlockchainConfiguration -> collectModules(configuration.module)
+        else -> emptyArray()
+    }
+}
+
+private fun collectModules(module: GTXModule): Array<GTXModule> {
+    return (module as? CompositeGTXModule)?.modules
+            ?: arrayOf(module)
 }

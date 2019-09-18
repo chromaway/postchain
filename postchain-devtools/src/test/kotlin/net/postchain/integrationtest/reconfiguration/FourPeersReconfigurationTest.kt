@@ -7,10 +7,7 @@ import assertk.assertions.isTrue
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
-import net.postchain.integrationtest.assertChainStarted
-import net.postchain.integrationtest.enqueueTxs
-import net.postchain.integrationtest.enqueueTxsAndAwaitBuiltBlock
-import net.postchain.integrationtest.query
+import net.postchain.integrationtest.*
 import net.postchain.integrationtest.reconfiguration.TxChartHelper.buildTxChart
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
@@ -68,16 +65,16 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
 
         // Asserting blockchainConfig1 with DummyModule1 is loaded y all nodes
         nodes.forEach { node ->
-            assertk.assert(getModules(node)).isNotEmpty()
-            assertk.assert(getModules(node).first()).isInstanceOf(DummyModule1::class)
+            assertk.assert(node.getModules()).isNotEmpty()
+            assertk.assert(node.getModules().first()).isInstanceOf(DummyModule1::class)
         }
 
         // Asserting blockchainConfig2 with DummyModule2 is loaded by all nodes
         await().atMost(Duration.TEN_SECONDS.multiply(3))
                 .untilAsserted {
                     nodes.forEach { node ->
-                        assertk.assert(getModules(node)).isNotEmpty()
-                        assertk.assert(getModules(node).first()).isInstanceOf(DummyModule2::class)
+                        assertk.assert(node.getModules()).isNotEmpty()
+                        assertk.assert(node.getModules().first()).isInstanceOf(DummyModule2::class)
                     }
                 }
 
@@ -85,8 +82,8 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
         await().atMost(Duration.TEN_SECONDS.multiply(3))
                 .untilAsserted {
                     nodes.forEach { node ->
-                        assertk.assert(getModules(node)).isNotEmpty()
-                        assertk.assert(getModules(node).first()).isInstanceOf(DummyModule3::class)
+                        assertk.assert(node.getModules()).isNotEmpty()
+                        assertk.assert(node.getModules().first()).isInstanceOf(DummyModule3::class)
                     }
                 }
     }
@@ -135,8 +132,8 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
         await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
                     nodes.forEach { node ->
-                        assertk.assert(getModules(node)).isNotEmpty()
-                        assertk.assert(getModules(node).first()).isInstanceOf(DummyModule2::class)
+                        assertk.assert(node.getModules()).isNotEmpty()
+                        assertk.assert(node.getModules().first()).isInstanceOf(DummyModule2::class)
                     }
                 }
 
@@ -150,8 +147,8 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
         await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
                     nodes.forEach { node ->
-                        assertk.assert(getModules(node)).isNotEmpty()
-                        assertk.assert(getModules(node).first()).isInstanceOf(DummyModule3::class)
+                        assertk.assert(node.getModules()).isNotEmpty()
+                        assertk.assert(node.getModules().first()).isInstanceOf(DummyModule3::class)
                     }
                 }
 

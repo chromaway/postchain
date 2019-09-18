@@ -24,11 +24,11 @@ class CliIntegrationTest {
     @Test
     fun testModule() {
         val nodeConfigPath = fullPath("node-config.properties")
-        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
-                AppConfig.fromPropertiesFile(nodeConfigPath))
+        val appConfig = AppConfig.fromPropertiesFile(nodeConfigPath)
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(appConfig)
 
         // this wipes the data base!
-        StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration(), NODE_ID_NA, true)
+        StorageBuilder.buildStorage(appConfig, NODE_ID_NA, true)
 
         // add-blockchain goes here
         val chainId: Long = 1;
@@ -55,11 +55,11 @@ class CliIntegrationTest {
     @Test
     fun testModuleWithSAPDatabase() {
         val nodeConfigPath = fullPath("node-config-saphana.properties")
-        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
-                AppConfig.fromPropertiesFile(nodeConfigPath))
+        val appConfig = AppConfig.fromPropertiesFile(nodeConfigPath)
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(appConfig)
 
         // this wipes the data base!
-        StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration(), NODE_ID_NA, true)
+        StorageBuilder.buildStorage(appConfig, NODE_ID_NA, true)
 
         // add-blockchain goes here
         val chainId: Long = 1;
@@ -86,11 +86,11 @@ class CliIntegrationTest {
     @Test
     fun testAddConfiguration() {
         val nodeConfigPath = fullPath("node-config.properties")
-        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
-                AppConfig.fromPropertiesFile(nodeConfigPath))
+        val appConfig = AppConfig.fromPropertiesFile(nodeConfigPath)
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(appConfig)
 
         // this wipes the data base!
-        StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration(), NODE_ID_NA, true)
+        StorageBuilder.buildStorage(appConfig, NODE_ID_NA, true)
 
         // add-blockchain goes here
         val chainId = 1L

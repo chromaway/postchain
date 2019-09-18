@@ -20,7 +20,7 @@ open class BaseBlockchainProcessManager(
 ) : BlockchainProcessManager {
 
     val nodeConfig = nodeConfigProvider.getConfiguration()
-    val storage = StorageBuilder.buildStorage(nodeConfig, NODE_ID_TODO)
+    val storage = StorageBuilder.buildStorage(nodeConfig.appConfig, NODE_ID_TODO)
     private val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
     // FYI: [et]: For integration testing. Will be removed or refactored later
     private val blockchainProcessesLoggers = mutableMapOf<Long, Timer>()

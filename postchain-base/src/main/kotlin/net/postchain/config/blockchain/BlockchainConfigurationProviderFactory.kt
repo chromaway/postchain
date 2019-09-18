@@ -4,6 +4,7 @@ import net.postchain.config.blockchain.BlockchainConfigProviders.Managed
 import net.postchain.config.blockchain.BlockchainConfigProviders.Manual
 import net.postchain.config.node.NodeConfigurationProvider
 
+@Deprecated("TODO: Deprecated for Managed Mode")
 object BlockchainConfigurationProviderFactory {
 
     fun createProvider(nodeConfigProvider: NodeConfigurationProvider): BlockchainConfigurationProvider {

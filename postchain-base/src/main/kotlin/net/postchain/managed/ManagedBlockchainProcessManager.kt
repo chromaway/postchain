@@ -27,13 +27,20 @@ class ManagedBlockchainProcessManager(
 
     override fun startBlockchain(chainId: Long) {
         if (chainId == 0L) {
-            val chain0BlockQueries = makeChain0BlockQueries()
-            val dataSource = useChain0BlockQueries(chain0BlockQueries)
-            (blockchainConfigProvider as ManagedBlockchainConfigurationProvider).setDataSource(dataSource)
+            val dataSource = useChain0BlockQueries(makeChain0BlockQueries())
+
+            // Setting up managed data source to the nodeConfig
             if (nodeConfigProvider is ManagedNodeConfigurationProvider) {
                 nodeConfigProvider.setPeerInfoDataSource(dataSource)
             } else {
                 logger.warn { "Node config is not managed, no peer info updates possible" }
+            }
+
+            // Setting up managed data source to the blockchainConfig
+            if (blockchainConfigProvider is ManagedBlockchainConfigurationProvider) {
+                blockchainConfigProvider.setDataSource(dataSource)
+            } else {
+                logger.warn { "Blockchain config is not managed" }
             }
         }
 
@@ -54,7 +61,7 @@ class ManagedBlockchainProcessManager(
             val context = BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null)
             val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(configuration, context)
             blockchainConfig.initializeDB(eContext)
-            val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration(), NODE_ID_NA)
+            val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration().appConfig, NODE_ID_NA)
             blockQueries = blockchainConfig.makeBlockQueries(storage)
             true
         }
@@ -65,6 +72,7 @@ class ManagedBlockchainProcessManager(
     private fun startUpdaterThread() {
         if (updaterThreadStarted) return
         updaterThreadStarted = true
+
         executor.scheduleWithFixedDelay(
                 {
                     try {
@@ -76,12 +84,13 @@ class ManagedBlockchainProcessManager(
                         logger.error("Unhandled exception in manager.runPeriodic", e)
                     }
                 },
-                10, 10, TimeUnit.SECONDS
-        )
+                10, 10, TimeUnit.SECONDS)
     }
 
+
+
     /**
-     * Manager class
+     * ============== Manager class ==============
      */
 
     private val queryRunner = QueryRunner()
@@ -132,8 +141,10 @@ class ManagedBlockchainProcessManager(
                 )
             }
         }
-        if (reload)
+
+        if (reload) {
             startBlockchainAsync(0)
+        }
     }
 
     fun runPeriodic(ctx: EContext) {
@@ -141,7 +152,12 @@ class ManagedBlockchainProcessManager(
         val reloadBlockchains = (lastPeerListVersion != null) && (lastPeerListVersion != peerListVersion)
         lastPeerListVersion = peerListVersion
 
+        logger.error { "Reloading of blockchains ${if (reloadBlockchains) "are" else "are not"} required" }
+
+        // TODO: [et2]: Rename
+        // Restart chain0
         maybeUpdateChain0(ctx, reloadBlockchains)
+        // Restart chain1, 2, ...
         applyBlockchainList(ctx, dataSource.computeBlockchainList(ctx), reloadBlockchains)
     }
 }

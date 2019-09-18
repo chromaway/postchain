@@ -5,7 +5,7 @@ import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
 import org.apache.commons.configuration2.Configuration
 
-open class NodeConfig(private val appConfig: AppConfig) {
+open class NodeConfig(val appConfig: AppConfig) {
 
     private val config: Configuration
         get() = appConfig.config

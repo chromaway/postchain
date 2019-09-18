@@ -16,7 +16,7 @@ class DefaultXCommunicationManager<PacketType>(
         val blockchainRID: ByteArray,
         private val packetEncoder: XPacketEncoder<PacketType>,
         private val packetDecoder: XPacketDecoder<PacketType>,
-        val processName: String = ""
+        private val processName: String = ""
 ) : CommunicationManager<PacketType> {
 
     companion object : KLogging()

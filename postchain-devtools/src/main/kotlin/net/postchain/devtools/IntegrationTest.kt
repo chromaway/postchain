@@ -3,11 +3,12 @@
 package net.postchain.devtools
 
 import mu.KLogging
+import net.postchain.StorageBuilder
 import net.postchain.base.PeerInfo
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
-import net.postchain.config.node.NodeConfigurationProvider
+import net.postchain.config.node.NodeConfig
 import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.core.*
 import net.postchain.devtools.KeyPairHelper.privKey
@@ -145,19 +146,30 @@ open class IntegrationTest {
     protected fun createSingleNode(
             nodeIndex: Int,
             totalNodesCount: Int,
-            nodeConfig: String,
+            nodeConfigFilename: String,
             blockchainConfigFilename: String,
-            preWipeDatabase: Boolean = true
+            preWipeDatabase: Boolean = true,
+            setupAction: (appConfig: AppConfig, nodeConfig: NodeConfig) -> Unit = { _, _ -> Unit }
     ): PostchainTestNode {
 
-        val nodeConfigProvider = createNodeConfig(nodeIndex, totalNodesCount, nodeConfig)
+        val appConfig = createAppConfig(nodeIndex, totalNodesCount, nodeConfigFilename)
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(appConfig)
         val nodeConfig = nodeConfigProvider.getConfiguration()
+
         nodesNames[nodeConfig.pubKey] = "$nodeIndex"
         val blockchainConfig = readBlockchainConfig(blockchainConfigFilename)
         val chainId = nodeConfig.activeChainIds.first().toLong()
         val blockchainRid = blockchainRids[chainId]!!.hexStringToByteArray()
 
-        return PostchainTestNode(nodeConfigProvider, preWipeDatabase)
+        // Wiping of database
+        if (preWipeDatabase) {
+            StorageBuilder.buildStorage(appConfig, NODE_ID_TODO, true).close()
+        }
+
+        // Performing setup action
+        setupAction(appConfig, nodeConfig)
+
+        return PostchainTestNode(nodeConfigProvider)
                 .apply {
                     addBlockchain(chainId, blockchainRid, blockchainConfig)
                     startBlockchain(chainId)
@@ -206,12 +218,19 @@ open class IntegrationTest {
             preWipeDatabase: Boolean = true
     ): PostchainTestNode {
 
-        val nodeConfigProvider = createNodeConfig(nodeIndex, nodeCount, nodeConfigFilename)
+        val appConfig = createAppConfig(nodeIndex, nodeCount, nodeConfigFilename)
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(appConfig)
+
         //require(nodeConfigProvider.getConfiguration().activeChainIds.size == blockchainConfigFilenames.size) {
         //    "The nodes config must have the same number of active chains as the number of specified BC config files."
         //}
 
-        val node = PostchainTestNode(nodeConfigProvider, preWipeDatabase)
+        // Wiping of database
+        if (preWipeDatabase) {
+            StorageBuilder.buildStorage(appConfig, NODE_ID_TODO, true).close()
+        }
+
+        val node = PostchainTestNode(nodeConfigProvider)
                 .also { nodes.add(it) }
 
         nodeConfigProvider.getConfiguration().activeChainIds
@@ -232,8 +251,9 @@ open class IntegrationTest {
                 javaClass.getResource(blockchainConfigFilename).readText())
     }
 
-    protected fun createNodeConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
-            : NodeConfigurationProvider {
+    protected fun createAppConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
+            : net.postchain.config.app.AppConfig {
+//            : NodeConfigurationProvider {
 
         // Read first file directly via the builder
         val params = Parameters()
@@ -261,17 +281,18 @@ open class IntegrationTest {
                 baseConfig.setProperty("node.$i.port", port++)
                 baseConfig.setProperty("node.$i.pubkey", pubKeyHex(i))
             }
-        }
 
-        baseConfig.setProperty("messaging.privkey", privKeyHex(nodeIndex))
-        baseConfig.setProperty("messaging.pubkey", pubKeyHex(nodeIndex))
+            baseConfig.setProperty("messaging.privkey", privKeyHex(nodeIndex))
+            baseConfig.setProperty("messaging.pubkey", pubKeyHex(nodeIndex))
+        }
 
         val appConfig = CompositeConfiguration().apply {
             addConfiguration(configOverrides)
             addConfiguration(baseConfig)
         }
 
-        return NodeConfigurationProviderFactory.createProvider(AppConfig(appConfig))
+//        return NodeConfigurationProviderFactory.createProvider(AppConfig(appConfig))
+        return AppConfig(appConfig)
     }
 
     protected fun gtxConfigSigners(nodeCount: Int = 1): Gtv {

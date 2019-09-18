@@ -1,7 +1,6 @@
 package net.postchain.base
 
-import net.postchain.config.blockchain.BlockchainConfigurationProvider
-import net.postchain.config.blockchain.BlockchainConfigurationProviderFactory
+import net.postchain.config.blockchain.ManualBlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
 
@@ -25,10 +24,6 @@ class TestSynchronizationInfrastructure : SynchronizationInfrastructure {
 }
 
 class BaseTestInfrastructureFactory : InfrastructureFactory {
-    override fun makeBlockchainConfigurationProvider(nodeConfigProvider: NodeConfigurationProvider): BlockchainConfigurationProvider {
-        return BlockchainConfigurationProviderFactory.createProvider(nodeConfigProvider)
-    }
-
 
     override fun makeBlockchainInfrastructure(nodeConfigProvider: NodeConfigurationProvider): BlockchainInfrastructure {
         return BaseBlockchainInfrastructure(
@@ -45,6 +40,7 @@ class BaseTestInfrastructureFactory : InfrastructureFactory {
         return BaseBlockchainProcessManager(
                 blockchainInfrastructure,
                 nodeConfigProvider,
-                makeBlockchainConfigurationProvider(nodeConfigProvider))
+                ManualBlockchainConfigurationProvider()
+        )
     }
 }

@@ -71,15 +71,20 @@ class AppConfigDbLayer(
         }.toTypedArray()
     }
 
+    fun addPeerInfo(peerInfo: PeerInfo): Boolean {
+        return addPeerInfo(peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex())
+    }
+
     fun addPeerInfo(host: String, port: Int, pubKey: String, createdAt: Instant? = null, updatedAt: Instant? = null): Boolean {
         val tsCreated = getTimestamp(createdAt)
         val tsUpdated = getTimestamp(updatedAt)
-        return QueryRunner().insert(
+        return pubKey == QueryRunner().insert(
                 connection,
                 "INSERT INTO $TABLE_PEERINFOS " +
                         "($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT, $TABLE_PEERINFOS_FIELD_PUBKEY, $TABLE_PEERINFOS_FIELD_CREATED_AT, $TABLE_PEERINFOS_FIELD_UPDATED_AT) " +
-                        "VALUES (?, ?, ?, ?, ?) ",
-                ScalarHandler<Boolean>(), host, port, pubKey, tsCreated, tsUpdated)
+                        "VALUES (?, ?, ?, ?, ?) " +
+                        "RETURNING $TABLE_PEERINFOS_FIELD_PUBKEY",
+                ScalarHandler<String>(), host, port, pubKey, tsCreated, tsUpdated)
     }
 
     fun updatePeerInfo(host: String, port: Int, pubKey: String, updatedAt: Instant? = null): Boolean {

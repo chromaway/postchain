@@ -6,7 +6,12 @@ import java.time.Instant
 // TODO: Will be replaced by XPeerId
 typealias PeerID = ByteArray
 
-open class PeerInfo(val host: String, open val port: Int, val pubKey: ByteArray, val createdAt: Instant? = null, val updatedAt: Instant? = null)
+open class PeerInfo(
+        val host: String,
+        open val port: Int,
+        val pubKey: ByteArray,
+        val createdAt: Instant? = null,
+        val updatedAt: Instant? = null)
 
 /**
  * Returns [XPeerID] for given [PeerInfo.pubKey] object

@@ -46,8 +46,8 @@ class DefaultXConnectionManager<PacketType>(
     override fun shutdown() {
         isShutDown = true
 
-        chains.forEach { _, chain ->
-            chain.connections.forEach { _, conn -> conn.close() }
+        chains.forEach { (_, chain) ->
+            chain.connections.forEach { (_, conn) -> conn.close() }
         }
         chains.clear()
 
@@ -220,14 +220,15 @@ class DefaultXConnectionManager<PacketType>(
     }
 
     override fun getPeersTopology(chainID: Long): Map<XPeerID, String> {
-        val chain = chains[chainID] ?: throw ProgrammerMistake("Chain ID not found: $chainID")
-        return chain.connections
-                .mapValues { peerToConnection ->
+        return chains[chainID]
+                ?.connections
+                ?.mapValues { peerToConnection ->
                     when (peerToConnection.value) {
                         is NettyClientPeerConnection<*> -> "c>s" // TODO: Fix this
                         else -> "s<c" // TODO: Fix this
                     }
                 }
+                ?: emptyMap()
     }
 
     private fun reconnect(peerConfig: XChainPeerConfiguration, peerId: XPeerID) {

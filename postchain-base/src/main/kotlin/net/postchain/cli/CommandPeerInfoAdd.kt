@@ -76,7 +76,7 @@ class CommandPeerInfoAdd : Command {
                     null, null, pubKey)
         }
 
-        if (!peerinfos.isEmpty()) {
+        if (peerinfos.isNotEmpty()) {
             return when (mode) {
                 AlreadyExistMode.ERROR -> {
                     throw CliError.Companion.CliException("Peerinfo with pubkey already exists. Using -f to force update")
