@@ -92,6 +92,7 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
                 }
     }
 
+    @Ignore
     @Test
     fun reconfigurationAtHeight_whenSignersAreChanged_isSuccessful() {
         val nodesCount = 4
