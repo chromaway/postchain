@@ -130,7 +130,7 @@ open class BaseBlockchainProcessManager(
                     .replace(">s", ">${peerName(it.key)}")
         }
 
-        logger.debug {
+        logger.trace {
             "[${nodeName()}]: Topology: ${prettyTopology.values}"
         }
     }
