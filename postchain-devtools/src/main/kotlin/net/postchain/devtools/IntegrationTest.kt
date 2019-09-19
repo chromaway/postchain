@@ -14,6 +14,7 @@ import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.privKeyHex
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.KeyPairHelper.pubKeyHex
+import net.postchain.devtools.utils.configuration.NodeNameWithBlockchains
 import net.postchain.devtools.utils.configuration.UniversalFileLocationStrategy
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvFactory.gtv
@@ -166,6 +167,13 @@ open class IntegrationTest {
                 }
     }
 
+    /**
+     * Starts [count] nodes with the same number of chains for each node
+     *
+     * @param count is the number of nodes
+     * @param nodeConfigsFilenames an array with one config file path per node
+     * @param blockchainConfigsFilenames an array with one config file path per blockchain
+     */
     protected fun createMultipleChainNodes(
             count: Int,
             nodeConfigsFilenames: Array<String>,
@@ -176,6 +184,25 @@ open class IntegrationTest {
 
         return Array(count) {
             createMultipleChainNode(it, count, nodeConfigsFilenames[it], *blockchainConfigsFilenames)
+        }
+    }
+
+    /**
+     * Starts the nodes with the number of chains different for each node
+     *
+     * @param count is the number of nodes
+     * @param nodeConfigsFilenamesAndBlockchainConfigsFilenames an array with pairs, mapping the node to the actual blockchain file paths to run on this node.
+     */
+    protected fun createMultipleChainNodesWithVariableNumberOfChains(
+            count: Int,
+            nodeNameWithBlockchainsArr: Array<NodeNameWithBlockchains>
+    ): Array<PostchainTestNode> {
+
+        require(count == nodeNameWithBlockchainsArr.size) { "Must have as many nodes in the array as specified" }
+
+        return Array(count) {
+            val bcFilenames: List<String> = nodeNameWithBlockchainsArr[it].getFilenames()
+            createMultipleChainNode(it, count, nodeNameWithBlockchainsArr[it].nodeFileName, *(bcFilenames.toTypedArray()))
         }
     }
 
@@ -234,13 +261,22 @@ open class IntegrationTest {
     protected fun createNodeConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
             : NodeConfigurationProvider {
 
+        val file = File(configFile)
+        /*
+        if (file.isFile) {
+            throw IllegalArgumentException("Node conf file on path: $configFile cannot be found.")
+        } else {
+            logger.debug("Node conf file found: $configFile")
+        }
+         */
+
         // Read first file directly via the builder
         val params = Parameters()
                 .fileBased()
 //                .setLocationStrategy(ClasspathLocationStrategy())
                 .setLocationStrategy(UniversalFileLocationStrategy())
                 .setListDelimiterHandler(DefaultListDelimiterHandler(','))
-                .setFile(File(configFile))
+                .setFile(file)
 
         val baseConfig = FileBasedConfigurationBuilder(PropertiesConfiguration::class.java)
                 .configure(params)

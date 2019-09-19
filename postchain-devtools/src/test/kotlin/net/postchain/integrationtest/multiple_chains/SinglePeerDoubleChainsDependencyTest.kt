@@ -4,6 +4,7 @@ import mu.KLogging
 import net.postchain.core.BadDataMistake
 import net.postchain.core.BadDataType
 import net.postchain.util.MultiNodeDoubleChainBlockTestHelper
+import net.postchain.devtools.TxCache
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
@@ -22,15 +23,16 @@ class SinglePeerDoubleChainsDependencyTest: MultiNodeDoubleChainBlockTestHelper(
                 1,
                 chainList,
                 arrayOf(
-                        "classpath:/net/postchain/multiple_chains/dependent_bcs/single_peer/node0bc2.properties"
+                        "classpath:/net/postchain/multiple_chains/dependent_bcs/single_peer/node0bc2dep1.properties"
                 ),
                 arrayOf(
                         "/net/postchain/multiple_chains/dependent_bcs/single_peer/blockchain_config_1.xml",
                         "/net/postchain/multiple_chains/dependent_bcs/single_peer/blockchain_config_2.xml"
                 )
         )
-        val txList = runXNodesWithYTxPerBlock( 1, 1, chainList)
-        runXNodesAssertions( 1, 1, chainList, txList)
+        val txCache = TxCache(mutableMapOf())
+        runXNodesWithYTxPerBlock( 1, 1, chainList, txCache)
+        runXNodesAssertions( 1, 1, chainList, txCache)
     }
 
     /**
@@ -70,7 +72,7 @@ class SinglePeerDoubleChainsDependencyTest: MultiNodeDoubleChainBlockTestHelper(
                 1,
                 chainList,
                 arrayOf(
-                        "classpath:/net/postchain/multiple_chains/dependent_bcs/single_peer/node0bc2dep.properties"
+                        "classpath:/net/postchain/multiple_chains/dependent_bcs/single_peer/node0bc2dep1.properties"
                 ),
                 arrayOf(
                         "/net/postchain/multiple_chains/dependent_bcs/single_peer/blockchain_config_1.xml",
@@ -78,8 +80,9 @@ class SinglePeerDoubleChainsDependencyTest: MultiNodeDoubleChainBlockTestHelper(
                 )
         )
 
-        val txList = runXNodesWithYTxPerBlock( 2, 10, chainList)
-        runXNodesAssertions( 2, 10, chainList, txList)
+        val txCache = TxCache(mutableMapOf())
+        runXNodesWithYTxPerBlock( 2, 10, chainList, txCache)
+        runXNodesAssertions( 2, 10, chainList, txCache)
 
     }
 
