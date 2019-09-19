@@ -6,7 +6,7 @@ import net.postchain.config.app.AppConfig
 import net.postchain.config.app.AppConfigDbLayer
 import net.postchain.network.x.XPeerID
 
-class ManualNodeConfigurationProvider(private val appConfig: AppConfig) : NodeConfigurationProvider {
+open class ManualNodeConfigurationProvider(private val appConfig: AppConfig) : NodeConfigurationProvider {
 
     override fun getConfiguration(): NodeConfig {
         return object : NodeConfig(appConfig) {
