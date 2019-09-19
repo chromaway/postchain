@@ -14,6 +14,7 @@ import net.postchain.integrationtest.query
 import net.postchain.integrationtest.reconfiguration.TxChartHelper.buildTxChart
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
+import org.junit.Ignore
 import org.junit.Test
 import org.skyscreamer.jsonassert.JSONAssert
 import org.skyscreamer.jsonassert.JSONCompareMode
@@ -181,6 +182,8 @@ class FourPeersReconfigurationTest : ReconfigurationTest() {
         assertk.assert((jsonChar0.at("/blocks/4/tx") as ArrayNode).size()).isEqualTo(0)
     }
 
+    // TODO: Olle fix for POS-76
+    @Ignore
     @Test
     fun reconfigurationAtHeight_withBaseBlockBuildingStrategy_withManyTxs_whenSignersAreChanged_isSuccessful() {
         val nodesCount = 4

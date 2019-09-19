@@ -5,6 +5,7 @@ import net.postchain.devtools.utils.configuration.NodeChain
 import net.postchain.util.MultiNodeDoubleChainBlockTestHelper
 import net.postchain.devtools.utils.configuration.NodeNameWithBlockchains
 import net.postchain.devtools.TxCache
+import org.junit.Ignore
 import org.junit.Test
 
 
@@ -22,6 +23,8 @@ class ReadOnlyNodeConnectsToPeerWithDependencyTest : MultiNodeDoubleChainBlockTe
     /**
      * One BC depend on another BC.
      */
+    // TODO: Olle fix for POS-76
+    @Ignore
     @Test
     fun testHappyDependency() {
         val chainList = listOf(1L, 2L)
