@@ -39,7 +39,8 @@ object SAPHanaSQLCommands : SQLCommands {
             " ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_HOST} VARCHAR(255) NOT NULL" +
             ", ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_PORT} BIGINT NOT NULL" +
             ", ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_PUBKEY} VARCHAR(255) NOT NULL" +
-            ", UNIQUE (${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_HOST}, ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_PORT})" +
+            ", ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_CREATED_AT} TIMESTAMP NOT NULL" +
+            ", ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_UPDATED_AT} TIMESTAMP NOT NULL" +
             ")"
 
     override val createTableMeta: String = "CREATE TABLE meta (key VARCHAR(255) PRIMARY KEY, value VARCHAR(1000))"

@@ -7,6 +7,7 @@ import net.postchain.base.*
 import net.postchain.base.merkle.Hash
 import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.getBFTRequiredSignatureCount
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtv.merkleHash
@@ -124,7 +125,7 @@ open class BaseBlockBuilder(
         if (!(blockWitness is MultiSigBlockWitness)) {
             throw ProgrammerMistake("Invalid BlockWitness impelmentation.")
         }
-        val witnessBuilder = BaseBlockWitnessBuilder(cryptoSystem, _blockData!!.header, subjects, getRequiredSigCount())
+        val witnessBuilder = BaseBlockWitnessBuilder(cryptoSystem, _blockData!!.header, subjects, getBFTRequiredSignatureCount(subjects.size))
         for (signature in blockWitness.getSignatures()) {
             witnessBuilder.applySignature(signature)
         }
@@ -206,28 +207,9 @@ open class BaseBlockBuilder(
             throw ProgrammerMistake("Block is not finalized yet.")
         }
 
-        val witnessBuilder = BaseBlockWitnessBuilder(cryptoSystem, _blockData!!.header, subjects, getRequiredSigCount())
+        val witnessBuilder = BaseBlockWitnessBuilder(cryptoSystem, _blockData!!.header, subjects, getBFTRequiredSignatureCount(subjects.size))
         witnessBuilder.applySignature(blockSigMaker.signDigest(_blockData!!.header.blockRID)) // TODO: POS-04_sig
         return witnessBuilder
-    }
-
-    /**
-     * Return the number of signature required for a finalized block to be deemed valid
-     *
-     * @return An integer representing the threshold value
-     */
-    protected open fun getRequiredSigCount(): Int {
-        val requiredSigs: Int
-        if (subjects.size == 1)
-            requiredSigs = 1
-        else if (subjects.size == 3) {
-            requiredSigs = 3
-        } else {
-            val maxFailedNodes = Math.floor(((subjects.size - 1) / 3).toDouble())
-            //return signers.signers.length - maxFailedNodes;
-            requiredSigs = 2 * maxFailedNodes.toInt() + 1
-        }
-        return requiredSigs
     }
 
 }

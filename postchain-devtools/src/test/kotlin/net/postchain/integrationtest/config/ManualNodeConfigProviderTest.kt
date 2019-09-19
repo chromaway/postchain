@@ -4,9 +4,11 @@ import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import net.postchain.base.PeerInfo
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS
+import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_CREATED_AT
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_HOST
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_PORT
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_PUBKEY
+import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_UPDATED_AT
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.config.SimpleDatabaseConnector
@@ -24,6 +26,8 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import java.sql.Connection
+import java.sql.Timestamp
+import java.time.Instant
 
 class ManualNodeConfigProviderTest : IntegrationTest() {
 
@@ -103,13 +107,13 @@ class ManualNodeConfigProviderTest : IntegrationTest() {
         val appConfig = buildAppConfig(nodeIndex)
 
         fun insertPeerInfo(connection: Connection, peerInfo: PeerInfo) {
+            val ts = Timestamp(Instant.now().toEpochMilli())
             QueryRunner().insert(
                     connection,
                     "INSERT INTO $TABLE_PEERINFOS " +
-                            "($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT, $TABLE_PEERINFOS_FIELD_PUBKEY) " +
-                            "VALUES (?, ?, ?) " +
-                            "ON CONFLICT ($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT) DO NOTHING",
-                    ScalarHandler<Long>(), peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex())
+                            "($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT, $TABLE_PEERINFOS_FIELD_PUBKEY, $TABLE_PEERINFOS_FIELD_CREATED_AT, $TABLE_PEERINFOS_FIELD_UPDATED_AT) " +
+                            "VALUES (?, ?, ?, ?, ?)",
+                    ScalarHandler<Long>(), peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex(), ts, ts)
         }
 
         SimpleDatabaseConnector(appConfig)
