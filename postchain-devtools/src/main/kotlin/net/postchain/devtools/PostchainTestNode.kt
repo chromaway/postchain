@@ -14,15 +14,15 @@ import net.postchain.ebft.EBFTSynchronizationInfrastructure
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvEncoder.encodeGtv
 
-class PostchainTestNode(val nodeConfigProvider: NodeConfigurationProvider) : PostchainNode(nodeConfigProvider) {
+class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider) : PostchainNode(nodeConfigProvider) {
 
-    private val storage: Storage
+    private val testStorage: Storage
     val pubKey: String
     private var isInitialized = false
 
     init {
         val nodeConfig = nodeConfigProvider.getConfiguration()
-        storage = StorageBuilder.buildStorage(nodeConfig.appConfig, NODE_ID_TODO)
+        testStorage = StorageBuilder.buildStorage(nodeConfig.appConfig, NODE_ID_TODO)
         pubKey = nodeConfig.pubKey
     }
 
@@ -32,7 +32,7 @@ class PostchainTestNode(val nodeConfigProvider: NodeConfigurationProvider) : Pos
 
     private fun initDb(chainId: Long, blockchainRid: ByteArray) {
         // TODO: [et]: Is it necessary here after StorageBuilder.buildStorage() redesign?
-        withWriteConnection(storage, chainId) { eContext ->
+        withWriteConnection(testStorage, chainId) { eContext ->
             with(DatabaseAccess.of(eContext)) {
                 initialize(eContext.conn, expectedDbVersion = 1)
                 checkBlockchainRID(eContext, blockchainRid)
@@ -52,7 +52,7 @@ class PostchainTestNode(val nodeConfigProvider: NodeConfigurationProvider) : Pos
     fun addConfiguration(chainId: Long, height: Long, blockchainConfig: Gtv) {
         check(isInitialized) { "PostchainNode is not initialized" }
 
-        withWriteConnection(storage, chainId) { eContext ->
+        withWriteConnection(testStorage, chainId) { eContext ->
             BaseConfigurationDataStore.addConfigurationData(
                     eContext, height, encodeGtv(blockchainConfig))
             true
@@ -65,7 +65,7 @@ class PostchainTestNode(val nodeConfigProvider: NodeConfigurationProvider) : Pos
 
     override fun shutdown() {
         super.shutdown()
-        storage.close()
+        testStorage.close()
     }
 
     fun getRestApiModel(): Model {

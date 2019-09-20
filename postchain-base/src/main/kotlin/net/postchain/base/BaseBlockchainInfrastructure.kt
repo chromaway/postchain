@@ -51,7 +51,7 @@ class BaseBlockchainInfrastructure(
     }
 
     override fun makeBlockchainEngine(configuration: BlockchainConfiguration): BaseBlockchainEngine {
-        val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration().appConfig, -1) // TODO: nodeID
+        val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration().appConfig, NODE_ID_TODO)
         // TODO: [et]: Maybe extract 'queuecapacity' param from ''
         val tq = BaseTransactionQueue(
                 (configuration as BaseBlockchainConfiguration)
@@ -64,5 +64,9 @@ class BaseBlockchainInfrastructure(
     override fun makeBlockchainProcess(processName: String, engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
         return synchronizationInfrastructure.makeBlockchainProcess(processName, engine, restartHandler)
                 .also(apiInfrastructure::connectProcess)
+    }
+
+    override fun makeStorage(): Storage {
+        return StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration().appConfig, NODE_ID_TODO)
     }
 }
