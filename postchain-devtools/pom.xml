@@ -28,6 +28,12 @@
             <artifactId>postchain-common</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>net.postchain</groupId>
+            <artifactId>postchain-client</artifactId>
+            <version>3.0.1-SNAPSHOT</version>
+        </dependency>
+
         <!-- Kotlin -->
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
