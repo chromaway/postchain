@@ -5,8 +5,8 @@ import net.postchain.base.PeerInfo
 import net.postchain.core.EContext
 import net.postchain.gtv.*
 import net.postchain.gtx.SimpleGTXModule
-import net.postchain.integrationtest.managedmode.PeerInfos.Companion.peerInfo0
-import net.postchain.integrationtest.managedmode.PeerInfos.Companion.peerInfo1
+import net.postchain.integrationtest.managedmode.TestPeerInfos.Companion.peerInfo0
+import net.postchain.integrationtest.managedmode.TestPeerInfos.Companion.peerInfo1
 
 open class ManagedTestModule(node: Nodes) : SimpleGTXModule<ManagedTestModule.Companion.Nodes>(
         node,
@@ -28,7 +28,7 @@ open class ManagedTestModule(node: Nodes) : SimpleGTXModule<ManagedTestModule.Co
             Node0, Node1
         }
 
-        private val stage0 = 0 until 15
+        private val stage0 = -1 until 15
         private val stage1 = 15 until 30
 
         fun queryGetPeerInfos(node: Nodes, eContext: EContext, args: Gtv): Gtv {
@@ -40,16 +40,18 @@ open class ManagedTestModule(node: Nodes) : SimpleGTXModule<ManagedTestModule.Co
                 logger.error { "in range 1" }
 
             val peerInfos = when (argCurrentHeight(args)) {
+
                 in stage0 -> {
                     when (node) {
                         Nodes.Node0 -> arrayOf(peerInfo0)
                         Nodes.Node1 -> arrayOf(peerInfo1)
                     }
                 }
+
                 in stage1 -> {
-                    logger.error { "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@2" }
                     arrayOf(peerInfo0, peerInfo1)
                 }
+
                 else -> emptyArray()
             }
 
@@ -108,3 +110,4 @@ open class ManagedTestModule(node: Nodes) : SimpleGTXModule<ManagedTestModule.Co
 class ManagedTestModule0() : ManagedTestModule(Companion.Nodes.Node0)
 
 class ManagedTestModule1() : ManagedTestModule(Companion.Nodes.Node1)
+

@@ -30,6 +30,7 @@ interface BlockchainProcessManager : Shutdownable {
     fun startBlockchain(chainId: Long)
     fun retrieveBlockchain(chainId: Long): BlockchainProcess?
     fun stopBlockchain(chainId: Long)
+    fun getBlockchains(): Set<Long>
 }
 
 typealias RestartHandler = () -> Boolean

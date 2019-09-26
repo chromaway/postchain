@@ -38,3 +38,32 @@ Configuration:
       AppenderRef:
       - ref: ConsoleAppender
       - ref: FileAppender
+
+    - name: net.postchain.ebft.BaseBlockDatabase
+      level: warn
+      additivity: false
+      AppenderRef:
+      - ref: ConsoleAppender
+      - ref: FileAppender
+
+    - name: net.postchain.base.data.BaseBlockBuilder
+      level: warn
+      additivity: false
+      AppenderRef:
+      - ref: ConsoleAppender
+      - ref: FileAppender
+
+    - name: net.postchain.base.BaseBlockchainEngine
+      level: warn
+      additivity: false
+      AppenderRef:
+      - ref: ConsoleAppender
+      - ref: FileAppender
+
+    - name: net.postchain.base.data.SQLDatabaseAccess
+      level: warn
+      additivity: false
+      AppenderRef:
+      - ref: ConsoleAppender
+      - ref: FileAppender
+

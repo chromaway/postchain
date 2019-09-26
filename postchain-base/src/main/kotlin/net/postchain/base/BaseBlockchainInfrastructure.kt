@@ -53,11 +53,11 @@ class BaseBlockchainInfrastructure(
     override fun makeBlockchainEngine(configuration: BlockchainConfiguration): BaseBlockchainEngine {
         val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration().appConfig, NODE_ID_TODO)
         // TODO: [et]: Maybe extract 'queuecapacity' param from ''
-        val tq = BaseTransactionQueue(
+        val transactionQueue = BaseTransactionQueue(
                 (configuration as BaseBlockchainConfiguration)
                         .configData.getBlockBuildingStrategy()?.get("queuecapacity")?.asInteger()?.toInt() ?: 2500)
 
-        return BaseBlockchainEngine(configuration, storage, configuration.chainID, tq)
+        return BaseBlockchainEngine(configuration, storage, configuration.chainID, transactionQueue)
                 .apply { initializeDB() }
     }
 

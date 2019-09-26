@@ -95,6 +95,10 @@ open class BaseBlockchainProcessManager(
         }
     }
 
+    override fun getBlockchains(): Set<Long> {
+        return blockchainProcesses.keys
+    }
+
     override fun shutdown() {
         executor.shutdownNow()
         executor.awaitTermination(1000, TimeUnit.MILLISECONDS)
@@ -105,7 +109,6 @@ open class BaseBlockchainProcessManager(
             t.purge()
         }
         storage.close()
-        blockchainInfrastructure.shutdown()
     }
 
     private fun nodeName(): String {

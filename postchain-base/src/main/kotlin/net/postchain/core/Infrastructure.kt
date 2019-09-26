@@ -36,3 +36,7 @@ enum class Infrastructures(val secondName: String) {
     BaseEbft("base/ebft"),
     BaseTest("base/test")
 }
+
+interface InfrastructureFactoryProvider {
+    fun createInfrastructureFactory(nodeConfigProvider: NodeConfigurationProvider): InfrastructureFactory
+}

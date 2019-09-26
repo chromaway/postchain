@@ -42,7 +42,7 @@ class EBFTSynchronizationInfrastructure(val nodeConfigProvider: NodeConfiguratio
 
         engine.setRestartHandler(restartHandler)
 
-        return if(blockchainConfig.configData.context.nodeID != NODE_ID_READ_ONLY) {
+        return if (blockchainConfig.configData.context.nodeID != NODE_ID_READ_ONLY) {
             ValidatorWorker(
                     processName,
                     blockchainConfig.signers,

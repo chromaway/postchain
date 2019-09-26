@@ -3,7 +3,7 @@ package net.postchain.integrationtest.managedmode
 import net.postchain.base.PeerInfo
 import net.postchain.common.hexStringToByteArray
 
-class PeerInfos {
+class TestPeerInfos {
 
     companion object {
 
