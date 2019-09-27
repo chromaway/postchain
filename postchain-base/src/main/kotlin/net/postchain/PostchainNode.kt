@@ -129,7 +129,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
 
         // Reloading
         if (reloadBlockchains) {
-            withWriteConnection(storage, 0) { ctx ->
+            withWriteConnection(storage, 0) { ctx0 ->
                 val blockchains = processManager.getBlockchains()
 
                 val pubKey = nodeConfigProvider.getConfiguration().pubKey
@@ -146,7 +146,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
 
                 // Starting blockchains
                 //  * chain 0
-                loadChain0Configuration(ctx)
+                loadChain0Configuration(ctx0)
                 startBlockchain(0L)
                 //  * other chains
                 blockchains
@@ -158,15 +158,15 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         }
     }
 
-    private fun loadChain0Configuration(ctx: EContext) {
-        val dbAccess = DatabaseAccess.of(ctx)
-        val brid = dbAccess.getBlockchainRID(ctx)!!
-        val height = dbAccess.getLastBlockHeight(ctx)
+    private fun loadChain0Configuration(ctx0: EContext) {
+        val dbAccess = DatabaseAccess.of(ctx0)
+        val brid = dbAccess.getBlockchainRID(ctx0)!!
+        val height = dbAccess.getLastBlockHeight(ctx0)
         val nextConfigHeight = dataSource.findNextConfigurationHeight(brid, height)
         if (nextConfigHeight != null) {
-            if (BaseConfigurationDataStore.findConfiguration(ctx, nextConfigHeight) != nextConfigHeight) {
+            if (BaseConfigurationDataStore.findConfiguration(ctx0, nextConfigHeight) != nextConfigHeight) {
                 val config = dataSource.getConfiguration(brid, nextConfigHeight)!!
-                BaseConfigurationDataStore.addConfigurationData(ctx, nextConfigHeight, config)
+                BaseConfigurationDataStore.addConfigurationData(ctx0, nextConfigHeight, config)
             }
         }
     }

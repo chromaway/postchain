@@ -4,6 +4,7 @@ import mu.KLogging
 import net.postchain.base.PeerInfo
 import net.postchain.core.EContext
 import net.postchain.gtv.*
+import net.postchain.gtv.gtvml.GtvMLParser
 import net.postchain.gtx.SimpleGTXModule
 import net.postchain.integrationtest.managedmode.TestPeerInfos.Companion.peerInfo0
 import net.postchain.integrationtest.managedmode.TestPeerInfos.Companion.peerInfo1
@@ -85,12 +86,23 @@ open class ManagedTestModule(node: Nodes) : SimpleGTXModule<ManagedTestModule.Co
 
         fun queryGetConfiguration(node: Nodes, eContext: EContext, args: Gtv): Gtv {
             logger.error { "Query: nm_get_blockchain_configuration" }
-            return GtvByteArray(byteArrayOf())
+
+            val blockchainConfigFilename = when (node) {
+                Nodes.Node0 -> "/net/postchain/devtools/managedmode/blockchain_config_0_height_15.xml"
+                Nodes.Node1 -> "/net/postchain/devtools/managedmode/blockchain_config_1_height_15.xml"
+            }
+
+            val gtvConfig = GtvMLParser.parseGtvML(
+                    javaClass.getResource(blockchainConfigFilename).readText())
+
+            val encodedGtvConfig = GtvEncoder.encodeGtv(gtvConfig)
+
+            return GtvFactory.gtv(encodedGtvConfig)
         }
 
         fun queryFindNextConfigurationHeight(node: Nodes, eContext: EContext, args: Gtv): Gtv {
             logger.error { "Query: nm_find_next_configuration_height" }
-            return GtvInteger(0) // GtvNull()
+            return GtvInteger(15)
         }
 
         private fun argCurrentHeight(args: Gtv): Long {

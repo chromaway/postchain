@@ -252,8 +252,7 @@ open class IntegrationTest {
     }
 
     protected fun createAppConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
-            : net.postchain.config.app.AppConfig {
-//            : NodeConfigurationProvider {
+            : AppConfig {
 
         // Read first file directly via the builder
         val params = Parameters()
@@ -291,7 +290,6 @@ open class IntegrationTest {
             addConfiguration(baseConfig)
         }
 
-//        return NodeConfigurationProviderFactory.createProvider(AppConfig(appConfig))
         return AppConfig(appConfig)
     }
 
