@@ -19,6 +19,7 @@ import net.postchain.gtv.*
  */
 object GtvMerkleHashCache {
 
+    val enabled : Boolean = true
     val defaultSizeOf1MB = 1000000 // TODO: Make this configurable
     val defaultNumberOfLookupsBeforePrune = 100 // Not that important, no need to configure
 
@@ -95,6 +96,8 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
      * @return the merkle root hash we for the given src
      */
     override fun findMerkleHash(src: Gtv): MerkleHashSummary? {
+        if (!GtvMerkleHashCache.enabled) return null
+
         var retMerkleHashSummary: MerkleHashSummary? = null
 
         if (!(src is GtvPrimitive)) {
@@ -156,6 +159,8 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
      */
     @Synchronized
     override fun add(src: Gtv, newSummary: MerkleHashSummary) {
+        if (!GtvMerkleHashCache.enabled) return
+
         if (!(src is GtvPrimitive)) {
             logger.warn("Who is adding a ${src.type} to the cache?")
             return
@@ -215,7 +220,7 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
         try {
             val allInteraction = localCacheHits + globalCacheHits + cacheMisses
             if (allInteraction.rem(TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS) == 0L) {
-                logger.debug("Time to check if cache is too big. size: $totalSizeInBytes Bytes")
+                //logger.debug("Time to check if cache is too big. size: $totalSizeInBytes Bytes")
 
                 // Let's see if we should prune
                 if (totalSizeInBytes > MAX_CACHE_SIZE_BYTES) {
