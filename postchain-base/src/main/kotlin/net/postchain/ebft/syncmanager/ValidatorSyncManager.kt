@@ -14,6 +14,7 @@ import net.postchain.ebft.message.Transaction
 import net.postchain.ebft.rest.contract.serialize
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
+import nl.komponents.kovenant.task
 import java.util.*
 
 fun decodeBlockDataWithWitness(block: CompleteBlock, bc: BlockchainConfiguration)
@@ -155,11 +156,12 @@ class ValidatorSyncManager(
      * @param message message including the transaction
      */
     private fun handleTransaction(index: Int, message: Transaction) {
-        val tx = blockchainConfiguration.getTransactionFactory().decodeTransaction(message.data)
-        if (!tx.isCorrect()) {
-            throw UserMistake("Transaction ${tx.getRID()} is not correct")
+        // TODO: reject if queue is full
+        task {
+            val tx = blockchainConfiguration.getTransactionFactory().decodeTransaction(message.data)
+            txQueue.enqueue(tx)
         }
-        txQueue.enqueue(tx)
+
     }
 
     /**
