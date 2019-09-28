@@ -104,15 +104,23 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
             sequentialLoadUnfinishedBlock(block)
     }
 
+    private fun smartDecodeTransaction(txData: ByteArray): Transaction {
+        var tx = bc.getTransactionFactory().decodeTransaction(txData)
+        val tx2 = tq.findTransaction(ByteArrayKey(tx.getRID()))
+        if (tx2 != null && tx2.getHash().contentEquals(tx.getHash())) {
+            // if transaction is identical (has same hash) then use transaction
+            // from queue, which is already verified
+            tx = tx2
+        }
+        if (!tx.isCorrect()) throw UserMistake("Transaction is not correct")
+        return tx
+    }
+
     private fun parallelLoadUnfinishedBlock(block: BlockData): ManagedBlockBuilder {
         val tStart = System.nanoTime()
         val factory = bc.getTransactionFactory()
         val transactions = block.transactions.map { txData ->
-            task {
-                val tx = factory.decodeTransaction(txData)
-                if (!tx.isCorrect()) throw UserMistake("Transaction is not correct")
-                tx
-            }
+            task { smartDecodeTransaction(txData) }
         }
 
         val blockBuilder = makeBlockBuilder()
@@ -140,11 +148,12 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
     private fun sequentialLoadUnfinishedBlock(block: BlockData): ManagedBlockBuilder {
         val tStart = System.nanoTime()
         val blockBuilder = makeBlockBuilder()
-        val factory = bc.getTransactionFactory()
         blockBuilder.begin(block.header)
 
         val tBegin = System.nanoTime()
-        block.transactions.forEach { blockBuilder.appendTransaction(factory.decodeTransaction(it)) }
+        block.transactions.forEach { blockBuilder.appendTransaction(
+                smartDecodeTransaction(it)
+        ) }
         val tEnd = System.nanoTime()
 
         blockBuilder.finalizeAndValidate(block.header)
