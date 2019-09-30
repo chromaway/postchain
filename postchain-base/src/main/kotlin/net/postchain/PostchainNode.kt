@@ -81,6 +81,10 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         executor.shutdownNow()
         executor.awaitTermination(1000, TimeUnit.MILLISECONDS)
 
+        halt()
+    }
+
+    private fun halt() {
         // FYI: Order is important
         processManager.shutdown()
         blockchainInfrastructure.shutdown()
@@ -118,7 +122,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
                     try {
                         runPeriodic()
                     } catch (e: Exception) {
-                        logger.error("Unhandled exception in manager.runPeriodic", e)
+                        logger.error("Unhandled exception in PostchainNode.runPeriodic()", e)
                     }
                 },
                 10, 10, TimeUnit.SECONDS)
@@ -142,7 +146,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
                 }
 
                 // Shutting down
-                shutdown()
+                halt()
 
                 // Starting BlockchainInfrastructure and ProcessManager
                 initialize()
