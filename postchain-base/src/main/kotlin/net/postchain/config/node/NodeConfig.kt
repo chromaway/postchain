@@ -3,6 +3,8 @@ package net.postchain.config.node
 import net.postchain.base.PeerInfo
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
+import net.postchain.core.Infrastructures
+import net.postchain.network.x.XPeerID
 import org.apache.commons.configuration2.Configuration
 
 open class NodeConfig(val appConfig: AppConfig) {
@@ -18,8 +20,8 @@ open class NodeConfig(val appConfig: AppConfig) {
         get() = config.getString("configuration.provider.blockchain", "")
 
     val infrastructure: String
-        // base/ebft | base/test
-        get() = config.getString("infrastructure", "")
+        // "base/ebft" is the default
+        get() = config.getString("infrastructure", Infrastructures.BaseEbft.secondName.toLowerCase())
 
 
     /**
@@ -79,11 +81,12 @@ open class NodeConfig(val appConfig: AppConfig) {
     /**
      * Peers
      */
-    open val peerInfos: Array<PeerInfo> = arrayOf()
-
+    open val peerInfoMap: Map<XPeerID, PeerInfo> = mapOf()
 
     /**
      * Active Chains
+     *
+     * Note: This is only needed for tests (asked Tykulov about it)
      */
     val activeChainIds: Array<String>
         get() = config.getStringArray("activechainids")

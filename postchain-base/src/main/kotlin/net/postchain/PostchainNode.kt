@@ -133,9 +133,9 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
                 val blockchains = processManager.getBlockchains()
 
                 val pubKey = nodeConfigProvider.getConfiguration().pubKey
-                val peerInfos = nodeConfigProvider.getConfiguration().peerInfos
+                val peerInfos = nodeConfigProvider.getConfiguration().peerInfoMap
                 logger.error {
-                    "\n\n\n" + pubKey + " @ " + peerInfos.map { it.pubKey.byteArrayKeyOf() }.toTypedArray().contentToString()
+                    "\n\n\n" + pubKey + " @ " + peerInfos.keys.toTypedArray().contentToString()
                 }
 
                 // Shutting down

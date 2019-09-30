@@ -71,6 +71,10 @@ class ValidatorWorker(
         startUpdateLoop(syncManager)
     }
 
+
+    /**
+     * Stop the postchain node
+     */
     override fun shutdown() {
         super.shutdown()
         communicationManager.shutdown()

@@ -3,6 +3,7 @@
 package net.postchain.ebft.syncmanager
 
 import mu.KLogging
+import net.postchain.base.NetworkNodes
 import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.core.Signature
@@ -13,6 +14,7 @@ import net.postchain.ebft.message.Transaction
 import net.postchain.ebft.rest.contract.serialize
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
+import nl.komponents.kovenant.task
 import java.util.*
 
 fun decodeBlockDataWithWitness(block: CompleteBlock, bc: BlockchainConfiguration)
@@ -93,7 +95,7 @@ class ValidatorSyncManager(
             val (xPeerId, message) = packet
 
             val nodeIndex = indexOfValidator(xPeerId)
-            if (nodeIndex == -1) continue
+            val isReadOnlyNode = nodeIndex == -1 // This must be a read-only node since not in the validator list
 
             logger.trace { "[$blockchainProcessName]: Received message type ${message.javaClass.simpleName} from node $nodeIndex" }
 
@@ -102,7 +104,7 @@ class ValidatorSyncManager(
                     // same case for replica and validator node
                     is GetBlockAtHeight -> sendBlockAtHeight(xPeerId, message.height)
                     else -> {
-                        if (nodeIndex != NODE_ID_READ_ONLY) {
+                        if (!isReadOnlyNode) {
                             // validator consensus logic
                             when (message) {
                                 is Status -> {
@@ -154,11 +156,12 @@ class ValidatorSyncManager(
      * @param message message including the transaction
      */
     private fun handleTransaction(index: Int, message: Transaction) {
-        val tx = blockchainConfiguration.getTransactionFactory().decodeTransaction(message.data)
-        if (!tx.isCorrect()) {
-            throw UserMistake("Transaction ${tx.getRID()} is not correct")
+        // TODO: reject if queue is full
+        task {
+            val tx = blockchainConfiguration.getTransactionFactory().decodeTransaction(message.data)
+            txQueue.enqueue(tx)
         }
-        txQueue.enqueue(tx)
+
     }
 
     /**

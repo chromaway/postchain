@@ -4,6 +4,7 @@ import assertk.assert
 import assertk.assertions.isEqualTo
 import assertk.assertions.isSameAs
 import com.nhaarman.mockitokotlin2.*
+import net.postchain.base.NetworkNodes
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerInfo
 import net.postchain.base.peerId
@@ -37,7 +38,7 @@ class DefaultXCommunicationManagerTest {
         // Given
         val connectionManager: XConnectionManager = mock()
         val peerCommunicationConfig: PeerCommConfiguration = mock {
-            on { peerInfo } doReturn arrayOf()
+            on { networkNodes } doReturn NetworkNodes.buildNetworkNodesDummy()
         }
         val packetEncoder: XPacketEncoder<Int> = mock()
         val packetDecoder: XPacketDecoder<Int> = mock()
@@ -66,7 +67,7 @@ class DefaultXCommunicationManagerTest {
         // Given
         val connectionManager: XConnectionManager = mock()
         val peerCommunicationConfig: PeerCommConfiguration = mock {
-            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+            on { networkNodes } doReturn NetworkNodes.buildNetworkNodes(setOf(peerInfo1, peerInfo2), XPeerID(pubKey1))
             on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
             on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
         }
@@ -97,7 +98,7 @@ class DefaultXCommunicationManagerTest {
         // Given
         val connectionManager: XConnectionManager = mock()
         val peerCommunicationConfig: PeerCommConfiguration = mock {
-            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+            on { networkNodes } doReturn NetworkNodes.buildNetworkNodes(setOf(peerInfo1, peerInfo2), XPeerID(pubKey1))
         }
 
         // When
@@ -113,7 +114,7 @@ class DefaultXCommunicationManagerTest {
         // Given
         val connectionManager: XConnectionManager = mock()
         val peerCommunicationConfig: PeerCommConfiguration = mock {
-            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+            on { networkNodes } doReturn NetworkNodes.buildNetworkNodes(setOf(peerInfo1, peerInfo2), XPeerID(pubKey1))
         }
 
         // When
@@ -128,8 +129,7 @@ class DefaultXCommunicationManagerTest {
     fun sendPacket_will_result_in_exception_if_my_XPeerID_was_given() {
         // Given
         val peersConfig: PeerCommConfiguration = mock {
-            on { pubKey } doReturn pubKey2
-            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+            on { networkNodes } doReturn NetworkNodes.buildNetworkNodes(setOf(peerInfo1, peerInfo2), XPeerID(pubKey2))
         }
 
         // When / Then exception
@@ -144,14 +144,14 @@ class DefaultXCommunicationManagerTest {
         // Given
         val peerInfo1Mock: PeerInfo = spy(peerInfo1)
         val connectionManager: XConnectionManager = mock()
-        val peerCommunicationConfig: PeerCommConfiguration = mock {
-            on { peerInfo } doReturn arrayOf(peerInfo1Mock, peerInfo2)
-            on { pubKey } doReturn pubKey2
+        val config = object: PeerCommConfigurationDummy() {
+            override val networkNodes =NetworkNodes.buildNetworkNodes(setOf(peerInfo1Mock, peerInfo2), XPeerID(pubKey2))
+            override val pubKey = pubKey2
         }
 
         // When
         val communicationManager = DefaultXCommunicationManager<Int>(
-                connectionManager, peerCommunicationConfig, CHAIN_ID, blockchainRid, mock(), mock()
+                connectionManager, config, CHAIN_ID, blockchainRid, mock(), mock()
         )
                 .apply {
                     init()
@@ -160,7 +160,7 @@ class DefaultXCommunicationManagerTest {
 
         // Then
         verify(connectionManager).sendPacket(any(), eq(CHAIN_ID), eq(peerInfo1.peerId()))
-        verify(peerCommunicationConfig, times(1)).peerInfo
+        //verify(peerCommunicationConfig, times(1)).networkNodes
         verify(peerInfo1Mock).pubKey
 
         communicationManager.shutdown()

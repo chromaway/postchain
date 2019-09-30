@@ -61,17 +61,16 @@ class EBFTSynchronizationInfrastructure(val nodeConfigProvider: NodeConfiguratio
     }
 
     private fun validateConfigurations(nodeConfig: NodeConfig, blockchainConfig: BaseBlockchainConfiguration) {
-        val nodePeers = nodeConfig.peerInfos.map { it.pubKey.byteArrayKeyOf() }
         val chainPeers = blockchainConfig.signers.map { it.byteArrayKeyOf() }
 
-        require(chainPeers.all { nodePeers.contains(it) }) {
+        require(chainPeers.all { nodeConfig.peerInfoMap.contains(it) }) {
             "Invalid blockchain config: unreachable signers have been detected"
         }
     }
 
     private fun buildXCommunicationManager(processName: String, blockchainConfig: BaseBlockchainConfiguration): CommunicationManager<Message> {
-        val communicationConfig = BasePeerCommConfiguration(
-                nodeConfig.peerInfos,
+        val communicationConfig = BasePeerCommConfiguration.build(
+                nodeConfig.peerInfoMap,
                 SECP256K1CryptoSystem(),
                 nodeConfig.privKeyByteArray,
                 nodeConfig.pubKey.hexStringToByteArray())
@@ -91,8 +90,8 @@ class EBFTSynchronizationInfrastructure(val nodeConfigProvider: NodeConfiguratio
     }
 
     private fun buildPeerCommConfiguration(nodeConfig: NodeConfig): PeerCommConfiguration {
-        return BasePeerCommConfiguration(
-                nodeConfig.peerInfos,
+        return BasePeerCommConfiguration.build(
+                nodeConfig.peerInfoMap,
                 SECP256K1CryptoSystem(),
                 nodeConfig.privKeyByteArray,
                 nodeConfig.pubKey.hexStringToByteArray())

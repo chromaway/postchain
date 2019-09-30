@@ -4,8 +4,10 @@ interface PeerResolver {
     fun resolvePeer(peerID: PeerID): PeerInfo?
 }
 
+
+
 interface PeerCommConfiguration : PeerResolver {
-    val peerInfo: Array<PeerInfo>
+    val networkNodes: NetworkNodes
     val pubKey: ByteArray
     fun myPeerInfo(): PeerInfo
     fun sigMaker(): SigMaker

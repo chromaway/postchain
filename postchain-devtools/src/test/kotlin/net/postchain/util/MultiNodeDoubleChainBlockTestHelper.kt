@@ -6,13 +6,17 @@ import net.postchain.common.toHex
 import net.postchain.configurations.GTXTestModule
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
+import net.postchain.devtools.PostchainTestNode
+import net.postchain.devtools.TxCache
 import net.postchain.devtools.testinfra.TestOneOpGtxTransaction
-import net.postchain.gtx.GTXTransaction
+import net.postchain.devtools.utils.configuration.NodeNameWithBlockchains
 import net.postchain.gtx.GTXTransactionFactory
 import net.postchain.integrationtest.assertChainStarted
+import net.postchain.integrationtest.assertNodeConnectedWith
 import org.awaitility.Awaitility
 import org.awaitility.Duration
 import org.junit.Assert
+import kotlin.random.Random
 import kotlin.test.assertNotNull
 
 open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
@@ -31,6 +35,14 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
         return nodes[nodeId].blockBuildingStrategy(chainId) as OnDemandBlockBuildingStrategy
     }
 
+    /**
+     * Starts the nodes and the same amount of chains for every node
+     *
+     * @param nodesCount = number of nodes
+     * @param chainList chains all nodes are using
+     * @param nodeConfigsFilenames = filenames for node conf
+     * @param blockchainConfigsFilenames = filenames for bc conf
+     */
     fun runXNodes(
             nodesCount: Int,
             chainList: List<Long>,
@@ -40,7 +52,7 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
 
         // Creating node with two chains
-        logger.debug("---Creating node with two chains ----------------------------")
+        logger.debug("---Creating node with many chains ----------------------------")
         createMultipleChainNodes(nodesCount, nodeConfigsFilenames, blockchainConfigsFilenames)
 
         // Asserting all chains are started
@@ -52,56 +64,157 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
                     }
                 }
 
+        if (nodes.size > 1) {
+            logger.debug("---Asserting all chains are connected -------------------------")
+            // We don't need to assert all connections, just check some random connections
+            Awaitility.await().atMost(Duration.TEN_SECONDS)
+                    .untilAsserted {
+                        nodes.forEachIndexed { i, node ->
+                            logger.debug("Node $i")
+                            var randNode = Random.nextInt(nodesCount)
+                            while (randNode == i) {
+                                randNode = Random.nextInt(nodesCount) // Cannot be connected to itself, so pic new value
+                            }
+                            val x = this.nodes[randNode]
+                            chainList.forEach { chain ->
+                                logger.debug("Wait for (node $i, chain $chain) to be connected to node $randNode")
+                                nodes[i].assertNodeConnectedWith(chain, x)
+                            }
+                        }
+                    }
+        }
+
+
     }
 
     /**
-     * Note that we are enqueing real GTX TXs here.
+     * Starts the nodes with the given number of chains different for each node
+     *
+     * @param nodesCount = number of nodes
+     * @param nodeNameWithBlockchainsArr = what chains each node has
+     * @param chainsInCommon = what chains are in common for all nodes
+     */
+    fun runXNodesWithDifferentNumberOfChainsPerNode(
+            nodesCount: Int,
+            nodeNameWithBlockchainsArr: Array<NodeNameWithBlockchains>,
+            chainsInCommon: List<Long>
+
+    ) {
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+
+        // Creating node with two chains
+        logger.debug("---Creating node with custom number of chains ----------------------------")
+        createMultipleChainNodesWithVariableNumberOfChains(nodesCount, nodeNameWithBlockchainsArr)
+
+        // Asserting all chains are started
+        // (This is a bit more complicated since we have different chains per node)
+        logger.debug("---Asserting all chains are started -------------------------")
+        Awaitility.await().atMost(Duration.TEN_SECONDS)
+                .untilAsserted {
+                    nodes.forEachIndexed { i, node ->
+                                nodeNameWithBlockchainsArr[i].getChainIds().forEach{ node::assertChainStarted }
+                    }
+                }
+
+        if (nodes.size > 1) {
+            logger.debug("---Asserting all chains are connected -------------------------")
+            // We don't need to assert all connections, just check some random connections
+            Awaitility.await().atMost(Duration.TEN_SECONDS)
+                    .untilAsserted {
+                        nodes.forEachIndexed { i, node ->
+                            logger.debug("Assert connection for Node: $i")
+                            val nodeNameWithBlockchains = nodeNameWithBlockchainsArr[i]
+
+                            // TODO: NOTE: Here we assume that all nodes are connected EVEN THOUGH they might not have a common chain
+                            var randNode = Random.nextInt(nodesCount)
+                            while (randNode == i) {
+                                randNode = Random.nextInt(nodesCount) // Cannot be connected to itself, so pic new value
+                            }
+                            val x = this.nodes[randNode]
+                            chainsInCommon.forEach { chain ->
+                                logger.debug("Wait for (node $i, chain $chain) to be connected to node $randNode")
+                                nodes[i].assertNodeConnectedWith(chain, x)
+                            }
+                        }
+                    }
+        }
+    }
+
+
+
+
+    /**
+     * Note that we are enqueueing real GTX TXs here.
      *
      * @param blocksCount number of blocks to build
      * @param txPerBlock number of TX in each block
      * @param chainList all BC we will use
-     * @param factoryMap a factory per BC
+     * @param nodeNameWithBlockchainsArr = null if all nodes have the same chains, else with a value
      */
     fun runXNodesWithYTxPerBlock(
             blocksCount: Int,
             txPerBlock: Int,
-            chainList: List<Long>
-    ): List<GTXTransaction> {
+            chainList: List<Long>,
+            txCache: TxCache,
+            nodeNameWithBlockchainsArr: Array<NodeNameWithBlockchains>? = null
+    ) {
 
         // Enqueueing txs
         logger.debug("---Enqueueing txs --------------------------------------------")
-        val retList = mutableListOf<GTXTransaction>()
         var txId = 0
         for (block in 0 until blocksCount) {
-            (0 until txPerBlock).forEach { _ ->
+            for (blockIndex in 0 until txPerBlock) {
                 val currentTxId = txId++
                 logger.debug("+++++++++++++++++++++++++++++++++++++++++++")
                 logger.debug("++++ block: $block, txId: $txId +++++++")
                 logger.debug("+++++++++++++++++++++++++++++++++++++++++++")
-                nodes.forEach { node ->
-                    chainList.forEach { chain ->
-                        logger.debug("++++ block: $block, txId: $txId, node: $node, chain: $chain")
-                        val tx = TestOneOpGtxTransaction(factoryMap[chain]!!, currentTxId).getGTXTransaction()
-                        retList.add(tx)
-                        node.transactionQueue(chain).enqueue(tx)
+                nodes.forEachIndexed { i, node ->
+
+                    if (nodeNameWithBlockchainsArr != null) {
+                         nodeNameWithBlockchainsArr[i].getChainIds().forEach { chain ->
+                             enqueueTx(chain, currentTxId, txCache, block, blockIndex, node)
+                         }
+                    } else {
+                        chainList.forEach { chain ->
+                            enqueueTx(chain, currentTxId, txCache, block, blockIndex, node)
+                        }
                     }
                 }
             }
 
             nodes.indices.forEach { nodeId ->
-                chainList.forEach { chain ->
-                    logger.debug("-------------------------------------------")
-                    logger.info { "Node: $nodeId, chain: $chain -> Trigger block" }
-                    logger.debug("-------------------------------------------")
-                    strategyOf(nodeId, chain).buildBlocksUpTo(block.toLong())
-                    logger.debug("-------------------------------------------")
-                    logger.info { "Node: $nodeId, chain: $chain -> Await committed" }
-                    logger.debug("-------------------------------------------")
-                    strategyOf(nodeId, chain).awaitCommitted(block)
+                if (nodeNameWithBlockchainsArr != null) {
+                    nodeNameWithBlockchainsArr[nodeId].getWritableChainIds().forEach { chain ->
+                        buildBlocks(nodeId, chain, block) // The block we can build ourselves
+                    }
+                    nodeNameWithBlockchainsArr[nodeId].getReadOnlyChainIds().forEach { chain ->
+                          // The blocks we must fetch form the node
+                    }
+                } else {
+                    chainList.forEach { chain ->
+                        buildBlocks(nodeId, chain, block)
+                    }
                 }
             }
         }
-        return retList
+    }
+
+    private fun buildBlocks(nodeId: Int, chain: Long, block: Int) {
+        logger.debug("-------------------------------------------")
+        logger.info { "Node: $nodeId, chain: $chain -> Trigger block" }
+        logger.debug("-------------------------------------------")
+        strategyOf(nodeId, chain).buildBlocksUpTo(block.toLong())
+        logger.debug("-------------------------------------------")
+        logger.info { "Node: $nodeId, chain: $chain -> Await committed" }
+        logger.debug("-------------------------------------------")
+        strategyOf(nodeId, chain).awaitCommitted(block)
+    }
+
+    private fun enqueueTx(chain: Long, currentTxId: Int, txCache: TxCache, height: Int, blockIndex: Int, node: PostchainTestNode) {
+        logger.debug("++++ block-height: $height, block-index: $blockIndex, node: $node, chain: $chain")
+        val tx = TestOneOpGtxTransaction(factoryMap[chain]!!, currentTxId).getGTXTransaction()
+        txCache.addTx(tx, chain.toInt(), height, blockIndex)
+        node.transactionQueue(chain).enqueue(tx)
     }
 
 
@@ -109,43 +222,60 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
             blocksCount: Int,
             txPerBlock: Int,
             chainList: List<Long>,
-            txList: List<GTXTransaction>
+            txCache: TxCache,
+            nodeNameWithBlockchainsArr: Array<NodeNameWithBlockchains>? = null
     ) {
         logger.debug("---Assertions -------------------------------------------------")
-        val txCache = TxCache(txList)
         // Assertions
+
         val expectedHeight = (blocksCount - 1).toLong()
+        //logger.debug("Nr of nodes: ${nodes.size}, total nr of blocks: $blocksCount => expected height: $expectedHeight")
+
         nodes.forEachIndexed { nodeId, node ->
-            chainList.forEach { chain ->
-                logger.info { "Assertions: node: $nodeId, chain: $chain, expectedHeight: $expectedHeight" }
-
-                val queries = node.blockQueries(chain)
-
-                // Asserting best height equals to 1
-                Assert.assertEquals(expectedHeight, queries.getBestHeight().get())
-
-                for (height in 0..expectedHeight) {
-                    logger.info { "Verifying height $height" }
-
-                    // Asserting uniqueness of block at height
-                    val blockRids = queries.getBlockRids(height).get()
-                    assertNotNull(blockRids)
-
-                    // Asserting txs count
-                    val txs = queries.getBlockTransactionRids(blockRids!!).get()
-                    Assert.assertEquals(txPerBlock, txs.size)
-
-                    // Asserting txs content
-                    for (tx in 0 until txPerBlock) {
-                        val txPos = height.toInt() * txPerBlock + tx
-                        val expectedTxRid = txCache.getCachedTxRid(chain.toInt(), chainList.size, height.toInt(), txPerBlock, tx)
-
-                        //val expectedTx = TestTransaction(height.toInt() * txPerBlock + tx)
-                        val realTxRid = txs[tx]
-                        logger.debug("Real TX RID: ${realTxRid.toHex()}")
-                        Assert.assertArrayEquals(expectedTxRid, realTxRid)
-                    }
+            if (nodeNameWithBlockchainsArr != null) {
+                val chains = nodeNameWithBlockchainsArr[nodeId].getChainIds()
+                chains.forEach {chain ->
+                    assertChainForNode(nodeId, chain, expectedHeight, node, txPerBlock, txCache)
                 }
+
+            } else {
+                chainList.forEach { chain ->
+                    assertChainForNode(nodeId, chain, expectedHeight, node, txPerBlock, txCache)
+                }
+            }
+        }
+    }
+
+    private fun assertChainForNode(nodeId: Int, chain: Long, expectedHeight: Long, node: PostchainTestNode, txPerBlock: Int, txCache: TxCache) {
+        logger.info { "Assertions: node: $nodeId, chain: $chain, expectedHeight: $expectedHeight" }
+
+        val queries = node.blockQueries(chain)
+
+        // Asserting best height equals to expected
+        val best = queries.getBestHeight().get()
+        Assert.assertEquals(expectedHeight, best)
+
+        for (height in 0..expectedHeight) {
+            logger.info { "Verifying height $height" }
+
+            // Asserting uniqueness of block at height
+            val blockRids = queries.getBlockRids(height).get()
+            assertNotNull(blockRids)
+
+            // Asserting txs count
+            val txs = queries.getBlockTransactionRids(blockRids!!).get()
+            Assert.assertEquals(txPerBlock, txs.size)
+
+            // Asserting txs content
+            for (tx in 0 until txPerBlock) {
+                //val txPos = height.toInt() * txPerBlock + tx
+                //val expectedTxRid = txCache.getCachedTxRid(chain.toInt(), numberOfChains, height.toInt(), txPerBlock, tx)
+                val expectedTxRid = txCache.getCachedTxRid(chain.toInt(), height.toInt(), tx)
+
+                //val expectedTx = TestTransaction(height.toInt() * txPerBlock + tx)
+                val realTxRid = txs[tx]
+                logger.debug("Real TX RID: ${realTxRid.toHex()}")
+                Assert.assertArrayEquals(expectedTxRid, realTxRid)
             }
         }
     }

@@ -114,11 +114,10 @@ class GTXPerformanceTestNightly : IntegrationTest() {
 
     @Test
     @Parameters(
-            "1, 100", "1, 1000"
-/*            "3, 100", "4, 100", "10, 100",
-            "4, 1000"*/
+            "1, 1000, 0", "1, 1000, 1",
+            "4, 1000, 0", "4, 1000, 1"
     )
-    fun runXNodesWithYTxPerBlock(nodeCount: Int, txPerBlock: Int) {
+    fun runXNodesWithYTxPerBlockBuildOnly(nodeCount: Int, txPerBlock: Int, mode: Int) {
         val blocksCount = 2
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
         createNodes(nodeCount, "/net/postchain/devtools/performance/blockchain_config_$nodeCount.xml")
@@ -126,24 +125,29 @@ class GTXPerformanceTestNightly : IntegrationTest() {
         var txId = 0
         val statusManager = (nodes[0].getBlockchainInstance() as ValidatorWorker).statusManager
         for (i in 0 until blocksCount) {
-            for (tx in 0 until txPerBlock) {
-                val txFactory = nodes[statusManager.primaryIndex()]
-                        .getBlockchainInstance()
-                        .getEngine()
-                        .getConfiguration()
-                        .getTransactionFactory()
+            val txs = (1..txPerBlock).map { makeTestTx(1, (txId++).toString()) }
 
-                val tx = makeTestTx(1, (txId++).toString())
-                nodes[statusManager.primaryIndex()]
-                        .getBlockchainInstance()
-                        .getEngine()
-                        .getTransactionQueue()
-                        .enqueue(txFactory.decodeTransaction(tx))
-            }
+            val engine = nodes[statusManager.primaryIndex()]
+                    .getBlockchainInstance()
+                    .getEngine()
+            val txFactory = engine
+                    .getConfiguration()
+                    .getTransactionFactory()
+            val queue = engine.getTransactionQueue()
 
-            val nanoDelta = measureNanoTime {
-                nodes.forEach { strategy(it).buildBlocksUpTo(i.toLong()) }
-                nodes.forEach { strategy(it).awaitCommitted(i) }
+            val nanoDelta = if (mode == 0) {
+                txs.forEach {
+                    queue.enqueue(txFactory.decodeTransaction(it)) }
+                measureNanoTime {
+                    nodes.forEach { strategy(it).buildBlocksUpTo(i.toLong()) }
+                    nodes.forEach { strategy(it).awaitCommitted(i) }
+                }
+            } else {
+                measureNanoTime {
+                    txs.forEach { queue.enqueue(txFactory.decodeTransaction(it)) }
+                    nodes.forEach { strategy(it).buildBlocksUpTo(i.toLong()) }
+                    nodes.forEach { strategy(it).awaitCommitted(i) }
+                }
             }
 
             println("Time elapsed: ${nanoDelta / 1000000} ms")

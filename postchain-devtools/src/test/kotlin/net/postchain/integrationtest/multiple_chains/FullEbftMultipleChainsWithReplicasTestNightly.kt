@@ -8,6 +8,7 @@ import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.integrationtest.assertChainStarted
+import net.postchain.integrationtest.assertNodeConnectedWith
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration.TEN_SECONDS
 import org.junit.Assert.assertArrayEquals
@@ -15,6 +16,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.random.Random
 import kotlin.test.assertNotNull
 
 @RunWith(JUnitParamsRunner::class)
@@ -74,6 +76,26 @@ class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
                         chains.forEach(node::assertChainStarted)
                     }
                 }
+
+
+        // Asserting all chains are connected
+        // We don't need to assert all connections, just check some random connections
+        if (nodes.size > 1) {
+            await().atMost(TEN_SECONDS)
+                    .untilAsserted {
+                        nodes.forEachIndexed { i, node ->
+                            var randNode = Random.nextInt(nodes.size)
+                            while (randNode == i) {
+                                randNode = Random.nextInt(nodes.size) // Cannot be connected to itself, so pic new value
+                            }
+                            val x = this.nodes[randNode]
+                            chains.forEach { chain ->
+                                logger.debug("Wait for (node $i, chain $chain) to be connected to node $randNode")
+                                nodes[i].assertNodeConnectedWith(chain, x)
+                            }
+                        }
+                    }
+        }
 
         // Enqueueing txs
         var txId = 0

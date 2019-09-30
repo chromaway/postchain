@@ -40,11 +40,11 @@ class DefaultXCommunicationManager2PeersIT {
 
         // Creating
         context1 = EbftIntegrationTestContext(
-                BasePeerCommConfiguration(peers, cryptoSystem, privKey1, pubKey1),
+                BasePeerCommConfiguration.build(peers, cryptoSystem, privKey1, pubKey1),
                 blockchainRid)
 
         context2 = EbftIntegrationTestContext(
-                BasePeerCommConfiguration(peers, cryptoSystem, privKey2, pubKey2),
+                BasePeerCommConfiguration.build(peers, cryptoSystem, privKey2, pubKey2),
                 blockchainRid)
 
         // Initializing
