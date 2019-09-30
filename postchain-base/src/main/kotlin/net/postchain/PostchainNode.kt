@@ -78,6 +78,9 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
     }
 
     override fun shutdown() {
+        executor.shutdownNow()
+        executor.awaitTermination(1000, TimeUnit.MILLISECONDS)
+
         // FYI: Order is important
         processManager.shutdown()
         blockchainInfrastructure.shutdown()

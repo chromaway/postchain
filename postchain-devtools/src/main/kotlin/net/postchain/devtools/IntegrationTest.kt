@@ -85,9 +85,6 @@ open class IntegrationTest {
         expectedSuccessRids = mutableMapOf()
         configOverrides.clear()
         System.gc()
-
-        // FYI: For testing only
-        Thread.sleep(1000)
     }
 
     // TODO: [et]: Check out nullability for return value
