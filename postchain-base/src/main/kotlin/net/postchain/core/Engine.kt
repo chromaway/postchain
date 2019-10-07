@@ -1,7 +1,13 @@
 package net.postchain.core
 
+import java.util.concurrent.locks.Lock
+
 interface Shutdownable {
     fun shutdown()
+}
+
+interface Synchronizable {
+    var synchronizer: Lock
 }
 
 /**
@@ -23,7 +29,7 @@ interface BlockchainProcess : Shutdownable {
     fun getEngine(): BlockchainEngine
 }
 
-interface BlockchainProcessManager : Shutdownable {
+interface BlockchainProcessManager : Shutdownable, Synchronizable {
     fun startBlockchainAsync(chainId: Long)
     fun startBlockchain(chainId: Long)
     fun retrieveBlockchain(chainId: Long): BlockchainProcess?

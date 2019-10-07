@@ -8,16 +8,22 @@ import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
 import net.postchain.devtools.PeerNameHelper.peerName
 import net.postchain.ebft.EBFTSynchronizationInfrastructure
+import java.lang.Exception
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.timer
+import kotlin.concurrent.withLock
 
 open class BaseBlockchainProcessManager(
         protected val blockchainInfrastructure: BlockchainInfrastructure,
         protected val nodeConfigProvider: NodeConfigurationProvider,
         protected val blockchainConfigProvider: BlockchainConfigurationProvider
 ) : BlockchainProcessManager {
+
+    override var synchronizer: Lock = ReentrantLock()
 
     val nodeConfig = nodeConfigProvider.getConfiguration()
     val storage = StorageBuilder.buildStorage(nodeConfig.appConfig, NODE_ID_TODO)
@@ -29,8 +35,14 @@ open class BaseBlockchainProcessManager(
     companion object : KLogging()
 
     override fun startBlockchainAsync(chainId: Long) {
+//        Exception().printStackTrace()
+
         executor.execute {
-            startBlockchain(chainId)
+            try {
+                startBlockchain(chainId)
+            } catch (e: Exception) {
+                logger.error(e) { e.message }
+            }
         }
     }
 
@@ -41,41 +53,43 @@ open class BaseBlockchainProcessManager(
     }
 
     override fun startBlockchain(chainId: Long) {
-        stopBlockchain(chainId)
+        synchronizer.withLock {
+            stopBlockchain(chainId)
 
-        logger.info("[${nodeName()}]: Starting of Blockchain: chainId:$chainId")
+            logger.info("[${nodeName()}]: Starting of Blockchain: chainId:$chainId")
 
-        withReadConnection(storage, chainId) { eContext ->
-            val configuration = blockchainConfigProvider.getConfiguration(eContext, chainId)
-            if (configuration != null) {
-                val blockchainRID = DatabaseAccess.of(eContext).getBlockchainRID(eContext)!! // TODO: [et]: Fix Kotlin NPE
-                val context = BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null)
+            withReadConnection(storage, chainId) { eContext ->
+                val configuration = blockchainConfigProvider.getConfiguration(eContext, chainId)
+                if (configuration != null) {
+                    val blockchainRID = DatabaseAccess.of(eContext).getBlockchainRID(eContext)!! // TODO: [et]: Fix Kotlin NPE
+                    val context = BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null)
 
-                val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(configuration, context)
-                logger.debug { "[${nodeName()}]: BlockchainConfiguration has been created: chainId:$chainId" }
+                    val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(configuration, context)
+                    logger.debug { "[${nodeName()}]: BlockchainConfiguration has been created: chainId:$chainId" }
 
-                val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig)
-                logger.debug { "[${nodeName()}]: BlockchainEngine has been created: chainId:$chainId" }
+                    val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig)
+                    logger.debug { "[${nodeName()}]: BlockchainEngine has been created: chainId:$chainId" }
 
-                blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(nodeName(), engine) {
-                    if (isRestartNeeded(chainId)) {
-                        startBlockchainAsync(chainId)
-                        true
-                    } else false
+                    blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(nodeName(), engine) {
+                        if (isRestartNeeded(chainId)) {
+                            startBlockchainAsync(chainId)
+                            true
+                        } else false
+                    }
+                    logger.debug { "[${nodeName()}]: BlockchainProcess has been launched: chainId:$chainId" }
+
+                    blockchainProcessesLoggers[chainId] = timer(
+                            period = 3000,
+                            action = { logPeerTopology(chainId) }
+                    )
+                    logger.info("[${nodeName()}]: Blockchain has been started: chainId:$chainId")
+
+                } else {
+                    logger.error("[${nodeName()}]: Can't start Blockchain chainId:$chainId due to configuration is absent")
                 }
-                logger.debug { "[${nodeName()}]: BlockchainProcess has been launched: chainId:$chainId" }
 
-                blockchainProcessesLoggers[chainId] = timer(
-                        period = 3000,
-                        action = { logPeerTopology(chainId) }
-                )
-                logger.info("[${nodeName()}]: Blockchain has been started: chainId:$chainId")
-
-            } else {
-                logger.error("[${nodeName()}]: Can't start Blockchain chainId:$chainId due to configuration is absent")
+                Unit
             }
-
-            Unit
         }
     }
 
@@ -84,14 +98,18 @@ open class BaseBlockchainProcessManager(
     }
 
     override fun stopBlockchain(chainId: Long) {
-        blockchainProcesses.remove(chainId)?.also {
-            logger.info("[${nodeName()}]: Stopping of Blockchain: chainId:$chainId")
-            it.shutdown()
-        }
+        synchronizer.withLock {
+            //            Exception().printStackTrace()
 
-        blockchainProcessesLoggers.remove(chainId)?.also {
-            it.cancel()
-            it.purge()
+            blockchainProcesses.remove(chainId)?.also {
+                logger.info("[${nodeName()}]: Stopping of Blockchain: chainId:$chainId")
+                it.shutdown()
+            }
+
+            blockchainProcessesLoggers.remove(chainId)?.also {
+                it.cancel()
+                it.purge()
+            }
         }
     }
 
@@ -104,7 +122,7 @@ open class BaseBlockchainProcessManager(
         executor.awaitTermination(1000, TimeUnit.MILLISECONDS)
         blockchainProcesses.forEach { (_, process) -> process.shutdown() }
         blockchainProcesses.clear()
-        blockchainProcessesLoggers.forEach { _, t ->
+        blockchainProcessesLoggers.forEach { (_, t) ->
             t.cancel()
             t.purge()
         }

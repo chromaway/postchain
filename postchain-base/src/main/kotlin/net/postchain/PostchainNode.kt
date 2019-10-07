@@ -16,25 +16,28 @@ import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.ScalarHandler
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 /**
- * Postchain node instantiates infrastructure and blockchain
- * process manager.
+ * Postchain node instantiates infrastructure and blockchain process manager.
  */
+@Suppress("UNUSED_VARIABLE")
 open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Shutdownable {
 
     lateinit var processManager: BlockchainProcessManager
     protected lateinit var blockchainInfrastructure: BlockchainInfrastructure
     protected lateinit var blockchainConfigProvider: BlockchainConfigurationProvider
     protected lateinit var storage: Storage
+    protected var synchronizer = ReentrantLock()
 
     // New members
-    lateinit var dataSource: ManagedNodeDataSource
+    private lateinit var dataSource: ManagedNodeDataSource
     private val queryRunner = QueryRunner()
     private val longRes = ScalarHandler<Long>()
-    var lastPeerListVersion: Long? = null
-    var updaterThreadStarted = false
-    protected val executor = Executors.newSingleThreadScheduledExecutor()
+    private var lastPeerListVersion: Long? = null
+    private var updaterThreadStarted = false
+    private val executor = Executors.newSingleThreadScheduledExecutor()
     ///
 
     companion object : KLogging()
@@ -50,6 +53,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         storage = blockchainInfrastructure.makeStorage()
         processManager = infrastructureFactory.makeProcessManager(
                 nodeConfigProvider, blockchainInfrastructure, blockchainConfigProvider)
+        processManager.synchronizer = synchronizer
     }
 
     fun startBlockchain(chainID: Long) {
@@ -68,6 +72,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         }
 
         processManager.startBlockchain(chainID)
+
         if (chainID == 0L) {
             startUpdaterThread()
         }
@@ -113,6 +118,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         return GTXManagedNodeDataSource(blockQueries!!, nodeConfigProvider.getConfiguration())
     }
 
+    private var i = 0
     private fun startUpdaterThread() {
         if (updaterThreadStarted) return
         updaterThreadStarted = true
@@ -120,7 +126,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         executor.scheduleWithFixedDelay(
                 {
                     try {
-                        runPeriodic()
+                        runPeriodic(++i)
                     } catch (e: Exception) {
                         logger.error("Unhandled exception in PostchainNode.runPeriodic()", e)
                     }
@@ -128,57 +134,122 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
                 10, 10, TimeUnit.SECONDS)
     }
 
-    private fun runPeriodic() {
+    private fun runPeriodic(i: Int) {
+        synchronizer.withLock {
+            runPeriodicImpl(i)
+        }
+    }
+
+    private fun runPeriodicImpl(i: Int) {
+//        logger.error { "@@@ [${nodeConfigProvider.getConfiguration().pubKey.takeLast(4)}] BEGIN $i" }
+
         val peerListVersion = dataSource.getPeerListVersion()
         val reloadBlockchains = (lastPeerListVersion != null) && (lastPeerListVersion != peerListVersion)
         lastPeerListVersion = peerListVersion
         logger.error { "Reloading of blockchains ${if (reloadBlockchains) "are" else "are not"} required" }
 
+        // Making some preparation
+        // * Loading chain0 configuration
+//        loadChain0Configuration()
+        // * Retrieving blockchains list to launch
+        val toLaunch = retrieveBlockchainsToLaunch()
+
         // Reloading
         if (reloadBlockchains) {
-            withWriteConnection(storage, 0) { ctx0 ->
-                val blockchains = processManager.getBlockchains()
-
+            // FYI: For testing only. It can be deleted later.
+            logger.error {
                 val pubKey = nodeConfigProvider.getConfiguration().pubKey
                 val peerInfos = nodeConfigProvider.getConfiguration().peerInfoMap
-                logger.error {
-                    "\n\n\n" + pubKey + " @ " + peerInfos.keys.toTypedArray().contentToString()
+                "runPeriodic: " + pubKey + " @ " + peerInfos.keys.toTypedArray().contentToString()
+            }
+
+            // TODO: [et]: COMMENT: Shutting down
+            halt()
+
+            // Starting BlockchainInfrastructure and ProcessManager
+            initialize()
+
+            // Starting blockchains: at first chain0, then the rest
+            loadChain0Configuration()
+            startBlockchain(0L)
+            toLaunch.filter { it != 0L }.forEach { startBlockchain(it) }
+
+        } else {
+//            loadChain0Configuration()
+
+            /*
+            val launched = processManager.getBlockchains()
+
+            // Launching new blockchains
+            toLaunch.filter { processManager.retrieveBlockchain(it) == null }
+//                    .forEach(processManager::startBlockchain)
+                    .forEach {
+                        logger.error { "\n\n\n### $it" }
+                        processManager.startBlockchain(it)
+                    }
+
+            // Stopping launched blockchains
+            launched.filterNot(toLaunch::contains)
+                    .filter { processManager.retrieveBlockchain(it) != null }
+//                    .forEach(processManager::stopBlockchain)
+                    .forEach {
+                        logger.error { "\n\n\n###### $it" }
+                        processManager.stopBlockchain(it)
+                    }
+
+             */
+        }
+
+//        logger.error { "@@@ [${nodeConfigProvider.getConfiguration().pubKey.takeLast(4)}] END $i" }
+    }
+
+    private fun loadChain0Configuration() {
+        withWriteConnection(storage, 0) { ctx0 ->
+            val dbAccess = DatabaseAccess.of(ctx0)
+            val brid = dbAccess.getBlockchainRID(ctx0)!!
+            val height = dbAccess.getLastBlockHeight(ctx0)
+            val nextConfigHeight = dataSource.findNextConfigurationHeight(brid, height)
+            if (nextConfigHeight != null) {
+                if (BaseConfigurationDataStore.findConfiguration(ctx0, nextConfigHeight) != nextConfigHeight) {
+                    val config = dataSource.getConfiguration(brid, nextConfigHeight)!!
+                    BaseConfigurationDataStore.addConfigurationData(ctx0, nextConfigHeight, config)
                 }
-
-                // Shutting down
-                halt()
-
-                // Starting BlockchainInfrastructure and ProcessManager
-                initialize()
-
-                // Starting blockchains
-                //  * chain 0
-                loadChain0Configuration(ctx0)
-                startBlockchain(0L)
-                //  * other chains
-                blockchains
-                        .filter { it != 0L }
-                        .forEach { startBlockchain(it) }
-
-                true
             }
+
+            true
         }
     }
 
-    private fun loadChain0Configuration(ctx0: EContext) {
-        val dbAccess = DatabaseAccess.of(ctx0)
-        val brid = dbAccess.getBlockchainRID(ctx0)!!
-        val height = dbAccess.getLastBlockHeight(ctx0)
-        val nextConfigHeight = dataSource.findNextConfigurationHeight(brid, height)
-        if (nextConfigHeight != null) {
-            if (BaseConfigurationDataStore.findConfiguration(ctx0, nextConfigHeight) != nextConfigHeight) {
-                val config = dataSource.getConfiguration(brid, nextConfigHeight)!!
-                BaseConfigurationDataStore.addConfigurationData(ctx0, nextConfigHeight, config)
-            }
+    private fun retrieveBlockchainsToLaunch(): Array<Long> {
+        val blockchains = mutableListOf<Long>()
+
+        withWriteConnection(storage, 0) { ctx0 ->
+            val dba = DatabaseAccess.of(ctx0)
+            dataSource.computeBlockchainList(ctx0)
+                    .map { brid ->
+                        val chainIid = dba.getChainId(ctx0, brid)
+                        if (chainIid == null) {
+                            val newChainId = maxOf(
+                                    queryRunner.query(ctx0.conn, "SELECT MAX(chain_id) FROM blockchains", longRes) + 1,
+                                    100)
+                            val newCtx = BaseEContext(ctx0.conn, newChainId, ctx0.nodeID, dba)
+                            dba.checkBlockchainRID(newCtx, brid)
+                            newChainId
+                        } else {
+                            chainIid
+                        }
+                    }
+                    .forEach {
+                        blockchains.add(it)
+                    }
+
+            true
         }
+
+        return blockchains.toTypedArray()
     }
 
-    /*
+/*
 // TODO: [et2]: Rename
 // Restart chain0
 maybeUpdateChain0(ctx, reloadBlockchains)

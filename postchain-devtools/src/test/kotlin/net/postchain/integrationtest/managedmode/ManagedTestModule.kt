@@ -1,11 +1,12 @@
 package net.postchain.integrationtest.managedmode
 
 import mu.KLogging
-import net.postchain.base.PeerInfo
 import net.postchain.core.EContext
 import net.postchain.gtv.*
 import net.postchain.gtv.gtvml.GtvMLParser
 import net.postchain.gtx.SimpleGTXModule
+import net.postchain.integrationtest.managedmode.TestModulesHelper.argCurrentHeight
+import net.postchain.integrationtest.managedmode.TestModulesHelper.peerInfoToGtv
 import net.postchain.integrationtest.managedmode.TestPeerInfos.Companion.peerInfo0
 import net.postchain.integrationtest.managedmode.TestPeerInfos.Companion.peerInfo1
 
@@ -81,6 +82,14 @@ open class ManagedTestModule(node: Nodes) : SimpleGTXModule<ManagedTestModule.Co
 
         fun queryComputeBlockchainList(node: Nodes, eContext: EContext, args: Gtv): Gtv {
             logger.error { "Query: nm_compute_blockchain_list" }
+
+            /*
+            // TODO: [et]: Extract this
+            val blockchain0Rid = "0000000000000000000000000000000000000000000000000000000000000000"
+            val gtvBlockchain0Rid = GtvFactory.gtv(blockchain0Rid.hexStringToByteArray())
+            return GtvArray(arrayOf(gtvBlockchain0Rid))
+             */
+
             return GtvArray(emptyArray())
         }
 
@@ -102,18 +111,10 @@ open class ManagedTestModule(node: Nodes) : SimpleGTXModule<ManagedTestModule.Co
 
         fun queryFindNextConfigurationHeight(node: Nodes, eContext: EContext, args: Gtv): Gtv {
             logger.error { "Query: nm_find_next_configuration_height" }
-            return GtvInteger(15)
-        }
 
-        private fun argCurrentHeight(args: Gtv): Long {
-            return args["current_height"]!!.asInteger()
-        }
-
-        private fun peerInfoToGtv(peerInfo: PeerInfo): Gtv {
-            return GtvFactory.gtv(
-                    GtvFactory.gtv(peerInfo.host),
-                    GtvFactory.gtv(peerInfo.port.toLong()),
-                    GtvFactory.gtv(peerInfo.pubKey))
+            return if (args["height"]!!.asInteger() < 15)
+                GtvInteger(15)
+            else GtvNull
         }
     }
 
