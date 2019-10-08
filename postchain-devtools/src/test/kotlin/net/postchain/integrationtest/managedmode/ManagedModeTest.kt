@@ -10,13 +10,11 @@ import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.getModules
 import org.awaitility.Awaitility
 import org.awaitility.Duration
-import org.junit.Ignore
 import org.junit.Test
 
 class ManagedModeTest : IntegrationTest() {
 
     @Test
-    @Ignore
     fun singlePeer_loadsBlockchainConfigurationFromManagedDataSource_and_reconfigures() {
         val nodeConfig0 = "classpath:/net/postchain/managedmode/node0.properties"
         val blockchainConfig0 = "/net/postchain/devtools/managedmode/blockchain_config_reconfiguring_0.xml"
@@ -99,8 +97,6 @@ class ManagedModeTest : IntegrationTest() {
                     assertk.assert(nodes[0].networkTopology(0L)).hasSize(1)
                     assertk.assert(nodes[1].networkTopology(0L)).hasSize(1)
                 }
-
-        logger.error { "\n\n\n\n\n====================================================================" }
     }
 
 }

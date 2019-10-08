@@ -38,3 +38,4 @@ interface BlockchainProcessManager : Shutdownable, Synchronizable {
 }
 
 typealias RestartHandler = () -> Boolean
+

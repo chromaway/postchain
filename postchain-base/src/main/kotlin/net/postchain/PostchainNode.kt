@@ -38,6 +38,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
     private var lastPeerListVersion: Long? = null
     private var updaterThreadStarted = false
     private val executor = Executors.newSingleThreadScheduledExecutor()
+    private val executor2 = Executors.newSingleThreadExecutor()
     ///
 
     companion object : KLogging()
@@ -52,7 +53,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         blockchainConfigProvider = infrastructureFactory.makeBlockchainConfigurationProvider()
         storage = blockchainInfrastructure.makeStorage()
         processManager = infrastructureFactory.makeProcessManager(
-                nodeConfigProvider, blockchainInfrastructure, blockchainConfigProvider)
+                nodeConfigProvider, blockchainInfrastructure, blockchainConfigProvider, restartHandlerFactory())
         processManager.synchronizer = synchronizer
     }
 
@@ -73,9 +74,9 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
 
         processManager.startBlockchain(chainID)
 
-        if (chainID == 0L) {
+        /*if (chainID == 0L) {
             startUpdaterThread()
-        }
+        }*/
     }
 
     fun stopBlockchain(chainID: Long) {
@@ -86,6 +87,9 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         executor.shutdownNow()
         executor.awaitTermination(1000, TimeUnit.MILLISECONDS)
 
+        executor2.shutdownNow()
+        executor2.awaitTermination(1000, TimeUnit.MILLISECONDS)
+
         halt()
     }
 
@@ -95,8 +99,69 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         blockchainInfrastructure.shutdown()
     }
 
+    private fun restartHandlerFactory(): (chainId: Long) -> RestartHandler {
+        return { chainId ->
+            {
+                // Preloading blockchain configuration
+                loadBlockchainConfiguration(chainId)
 
-    ////////////////////////////////////////
+                // Checking out for a peers set changes
+                val peerListVersion = dataSource.getPeerListVersion()
+                val reloadBlockchains = (lastPeerListVersion != null) && (lastPeerListVersion != peerListVersion)
+                lastPeerListVersion = peerListVersion
+                logger.error { "Reloading of blockchains ${if (reloadBlockchains) "are" else "are not"} required" }
+
+                if (reloadBlockchains) {
+                    reloadBlockchainsAsync()
+                    true
+
+                } else {
+                    // Checking out for a chain configuration changes
+                    val reloadBlockchainConfig = withReadConnection(storage, chainId) { eContext ->
+                        (blockchainConfigProvider.needsConfigurationChange(eContext, chainId))
+                    }
+
+                    if (reloadBlockchainConfig) {
+                        reloadBlockchainConfigAsync(chainId)
+                        true
+                    } else {
+                        false
+                    }
+                }
+            }
+        }
+    }
+
+    private fun reloadBlockchainsAsync() {
+        executor2.submit {
+            val toLaunch = retrieveBlockchainsToLaunch()
+
+            // Reloading
+            // FYI: For testing only. It can be deleted later.
+            logger.error {
+                val pubKey = nodeConfigProvider.getConfiguration().pubKey
+                val peerInfos = nodeConfigProvider.getConfiguration().peerInfoMap
+                "runPeriodic: " + pubKey + " @ " + peerInfos.keys.toTypedArray().contentToString()
+            }
+
+            // TODO: [et]: COMMENT: Shutting down
+            halt()
+
+            // Starting BlockchainInfrastructure and ProcessManager
+            initialize()
+
+            // Starting blockchains: at first chain0, then the rest
+//            loadBlockchainConfiguration(0L)
+            startBlockchain(0L)
+            toLaunch.filter { it != 0L }.forEach { startBlockchain(it) }
+        }
+    }
+
+    private fun reloadBlockchainConfigAsync(chainId: Long) {
+        executor2.submit {
+            processManager.startBlockchain(chainId)
+        }
+    }
 
     private fun buildChain0ManagedDataSource(): ManagedNodeDataSource {
         val chainId = 0L
@@ -143,6 +208,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
     private fun runPeriodicImpl(i: Int) {
 //        logger.error { "@@@ [${nodeConfigProvider.getConfiguration().pubKey.takeLast(4)}] BEGIN $i" }
 
+
         val peerListVersion = dataSource.getPeerListVersion()
         val reloadBlockchains = (lastPeerListVersion != null) && (lastPeerListVersion != peerListVersion)
         lastPeerListVersion = peerListVersion
@@ -170,7 +236,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
             initialize()
 
             // Starting blockchains: at first chain0, then the rest
-            loadChain0Configuration()
+            loadBlockchainConfiguration(0L)
             startBlockchain(0L)
             toLaunch.filter { it != 0L }.forEach { startBlockchain(it) }
 
@@ -203,16 +269,16 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
 //        logger.error { "@@@ [${nodeConfigProvider.getConfiguration().pubKey.takeLast(4)}] END $i" }
     }
 
-    private fun loadChain0Configuration() {
-        withWriteConnection(storage, 0) { ctx0 ->
-            val dbAccess = DatabaseAccess.of(ctx0)
-            val brid = dbAccess.getBlockchainRID(ctx0)!!
-            val height = dbAccess.getLastBlockHeight(ctx0)
+    private fun loadBlockchainConfiguration(chainId: Long) {
+        withWriteConnection(storage, chainId) { ctx ->
+            val dbAccess = DatabaseAccess.of(ctx)
+            val brid = dbAccess.getBlockchainRID(ctx)!!
+            val height = dbAccess.getLastBlockHeight(ctx)
             val nextConfigHeight = dataSource.findNextConfigurationHeight(brid, height)
             if (nextConfigHeight != null) {
-                if (BaseConfigurationDataStore.findConfiguration(ctx0, nextConfigHeight) != nextConfigHeight) {
+                if (BaseConfigurationDataStore.findConfiguration(ctx, nextConfigHeight) != nextConfigHeight) {
                     val config = dataSource.getConfiguration(brid, nextConfigHeight)!!
-                    BaseConfigurationDataStore.addConfigurationData(ctx0, nextConfigHeight, config)
+                    BaseConfigurationDataStore.addConfigurationData(ctx, nextConfigHeight, config)
                 }
             }
 
@@ -249,4 +315,3 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         return blockchains.toTypedArray()
     }
 }
- 

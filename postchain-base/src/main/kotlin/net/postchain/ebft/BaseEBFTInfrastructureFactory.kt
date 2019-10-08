@@ -9,6 +9,7 @@ import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.BlockchainInfrastructure
 import net.postchain.core.BlockchainProcessManager
 import net.postchain.core.InfrastructureFactory
+import net.postchain.core.RestartHandler
 
 open class BaseEBFTInfrastructureFactory : InfrastructureFactory {
 
@@ -26,12 +27,14 @@ open class BaseEBFTInfrastructureFactory : InfrastructureFactory {
     override fun makeProcessManager(
             nodeConfigProvider: NodeConfigurationProvider,
             blockchainInfrastructure: BlockchainInfrastructure,
-            blockchainConfigurationProvider: BlockchainConfigurationProvider
+            blockchainConfigurationProvider: BlockchainConfigurationProvider,
+            restartHandlerFactory: (chainId: Long) -> RestartHandler
     ): BlockchainProcessManager {
 
         return BaseBlockchainProcessManager(
                 blockchainInfrastructure,
                 nodeConfigProvider,
-                blockchainConfigurationProvider)
+                blockchainConfigurationProvider,
+                restartHandlerFactory)
     }
 }

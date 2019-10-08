@@ -28,7 +28,8 @@ interface InfrastructureFactory {
     fun makeBlockchainInfrastructure(nodeConfigProvider: NodeConfigurationProvider): BlockchainInfrastructure
     fun makeProcessManager(nodeConfigProvider: NodeConfigurationProvider,
                            blockchainInfrastructure: BlockchainInfrastructure,
-                           blockchainConfigurationProvider: BlockchainConfigurationProvider
+                           blockchainConfigurationProvider: BlockchainConfigurationProvider,
+                           restartHandlerFactory: (chainId: Long) -> RestartHandler
     ): BlockchainProcessManager
 }
 

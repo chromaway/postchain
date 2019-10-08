@@ -16,10 +16,10 @@ fun ms(n1: Long, n2: Long): Long {
     return (n2 - n1) / 1000000
 }
 
-open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
+open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainConfiguration,
                                 val storage: Storage,
                                 private val chainID: Long,
-                                private val tq: TransactionQueue,
+                                private val transactionQueue: TransactionQueue,
                                 private val useParallelDecoding: Boolean = true
 ) : BlockchainEngine {
 
@@ -38,24 +38,24 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
 
         logger.debug("Initialize DB - begin")
         withWriteConnection(storage, chainID) { ctx ->
-            bc.initializeDB(ctx)
+            blockchainConfiguration.initializeDB(ctx)
             true
         }
 
         // BlockQueries should be instantiated only after
         // database is initialized
-        blockQueries = bc.makeBlockQueries(storage)
-        strategy = bc.getBlockBuildingStrategy(blockQueries, tq)
+        blockQueries = blockchainConfiguration.makeBlockQueries(storage)
+        strategy = blockchainConfiguration.getBlockBuildingStrategy(blockQueries, transactionQueue)
         initialized = true
         logger.debug("Initialize DB - end")
     }
 
-    override fun setRestartHandler(rh: RestartHandler) {
-        restartHandler = rh
+    override fun setRestartHandler(handler: RestartHandler) {
+        restartHandler = handler
     }
 
     override fun getTransactionQueue(): TransactionQueue {
-        return tq
+        return transactionQueue
     }
 
     override fun getBlockQueries(): BlockQueries {
@@ -67,7 +67,7 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
     }
 
     override fun getConfiguration(): BlockchainConfiguration {
-        return bc
+        return blockchainConfiguration
     }
 
     override fun shutdown() {
@@ -80,15 +80,14 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
         if (closed) throw ProgrammerMistake("Engine is already closed")
         val eContext = storage.openWriteConnection(chainID) // TODO: Close eContext
 
-        return BaseManagedBlockBuilder(eContext, storage, bc.makeBlockBuilder(eContext), { },
+        return BaseManagedBlockBuilder(eContext, storage, blockchainConfiguration.makeBlockBuilder(eContext), { },
                 {
                     val blockBuilder = it as AbstractBlockBuilder
-                    tq.removeAll(blockBuilder.transactions)
+                    transactionQueue.removeAll(blockBuilder.transactions)
                     strategy.blockCommitted(blockBuilder.getBlockData())
                     if (restartHandler()) {
                         closed = true
                     }
-
                 })
     }
 
@@ -105,8 +104,8 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
     }
 
     private fun smartDecodeTransaction(txData: ByteArray): Transaction {
-        var tx = bc.getTransactionFactory().decodeTransaction(txData)
-        val tx2 = tq.findTransaction(ByteArrayKey(tx.getRID()))
+        var tx = blockchainConfiguration.getTransactionFactory().decodeTransaction(txData)
+        val tx2 = transactionQueue.findTransaction(ByteArrayKey(tx.getRID()))
         if (tx2 != null && tx2.getHash().contentEquals(tx.getHash())) {
             // if transaction is identical (has same hash) then use transaction
             // from queue, which is already verified
@@ -118,7 +117,7 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
 
     private fun parallelLoadUnfinishedBlock(block: BlockData): ManagedBlockBuilder {
         val tStart = System.nanoTime()
-        val factory = bc.getTransactionFactory()
+        val factory = blockchainConfiguration.getTransactionFactory()
         val transactions = block.transactions.map { txData ->
             task { smartDecodeTransaction(txData) }
         }
@@ -191,7 +190,7 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
         while (true) {
             logger.debug("Checking transaction queue")
             TimeLog.startSum("BaseBlockchainEngine.buildBlock().takeTransaction")
-            val tx = tq.takeTransaction()
+            val tx = transactionQueue.takeTransaction()
             TimeLog.end("BaseBlockchainEngine.buildBlock().takeTransaction")
             if (tx != null) {
                 logger.debug("Appending transaction ${tx.getRID().toHex()}")
@@ -200,7 +199,7 @@ open class BaseBlockchainEngine(private val bc: BlockchainConfiguration,
                 TimeLog.end("BaseBlockchainEngine.buildBlock().maybeApppendTransaction")
                 if (exception != null) {
                     nRejects += 1
-                    tq.rejectTransaction(tx, exception)
+                    transactionQueue.rejectTransaction(tx, exception)
                 } else {
                     nTransactions += 1
                     // tx is fine, consider stopping

@@ -8,7 +8,6 @@ import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
 import net.postchain.devtools.PeerNameHelper.peerName
 import net.postchain.ebft.EBFTSynchronizationInfrastructure
-import java.lang.Exception
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -20,7 +19,8 @@ import kotlin.concurrent.withLock
 open class BaseBlockchainProcessManager(
         protected val blockchainInfrastructure: BlockchainInfrastructure,
         protected val nodeConfigProvider: NodeConfigurationProvider,
-        protected val blockchainConfigProvider: BlockchainConfigurationProvider
+        protected val blockchainConfigProvider: BlockchainConfigurationProvider,
+        protected val restartHandlerFactory: (chainId: Long) -> RestartHandler
 ) : BlockchainProcessManager {
 
     override var synchronizer: Lock = ReentrantLock()
@@ -70,12 +70,8 @@ open class BaseBlockchainProcessManager(
                     val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig)
                     logger.debug { "[${nodeName()}]: BlockchainEngine has been created: chainId:$chainId" }
 
-                    blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(nodeName(), engine) {
-                        if (isRestartNeeded(chainId)) {
-                            startBlockchainAsync(chainId)
-                            true
-                        } else false
-                    }
+                    blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(
+                            nodeName(), engine, restartHandlerFactory(chainId))
                     logger.debug { "[${nodeName()}]: BlockchainProcess has been launched: chainId:$chainId" }
 
                     blockchainProcessesLoggers[chainId] = timer(

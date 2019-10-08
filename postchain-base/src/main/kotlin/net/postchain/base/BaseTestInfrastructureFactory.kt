@@ -40,12 +40,14 @@ class BaseTestInfrastructureFactory : InfrastructureFactory {
     override fun makeProcessManager(
             nodeConfigProvider: NodeConfigurationProvider,
             blockchainInfrastructure: BlockchainInfrastructure,
-            blockchainConfigurationProvider: BlockchainConfigurationProvider
+            blockchainConfigurationProvider: BlockchainConfigurationProvider,
+            restartHandlerFactory: (chainId: Long) -> RestartHandler
     ): BlockchainProcessManager {
 
         return BaseBlockchainProcessManager(
                 blockchainInfrastructure,
                 nodeConfigProvider,
-                blockchainConfigurationProvider)
+                blockchainConfigurationProvider,
+                restartHandlerFactory)
     }
 }

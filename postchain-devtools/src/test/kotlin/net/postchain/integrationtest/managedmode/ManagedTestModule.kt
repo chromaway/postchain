@@ -112,8 +112,8 @@ open class ManagedTestModule(node: Nodes) : SimpleGTXModule<ManagedTestModule.Co
         fun queryFindNextConfigurationHeight(node: Nodes, eContext: EContext, args: Gtv): Gtv {
             logger.error { "Query: nm_find_next_configuration_height" }
 
-            return if (args["height"]!!.asInteger() < 15)
-                GtvInteger(15)
+            return if (args["height"]!!.asInteger() < 16)
+                GtvInteger(16)
             else GtvNull
         }
     }
