@@ -64,8 +64,8 @@ class ManagedModeTest : IntegrationTest() {
     fun twoSeparatePeers_receiveEachOtherInPeerInfos_and_ConnectToEachOther() {
         val nodeConfig0 = "classpath:/net/postchain/managedmode/node0.properties"
         val nodeConfig1 = "classpath:/net/postchain/managedmode/node1.properties"
-        val blockchainConfig0 = "/net/postchain/devtools/managedmode/blockchain_config_0.xml"
-        val blockchainConfig1 = "/net/postchain/devtools/managedmode/blockchain_config_1.xml"
+        val blockchainConfig0 = "/net/postchain/devtools/managedmode/blockchain_config_two_peers_connect_0.xml"
+        val blockchainConfig1 = "/net/postchain/devtools/managedmode/blockchain_config_two_peers_connect_1.xml"
 
         // Creating node0
         createSingleNode(0, 1, nodeConfig0, blockchainConfig0) { appConfig, _ ->

@@ -6,11 +6,12 @@ import net.postchain.gtv.*
 import net.postchain.gtv.gtvml.GtvMLParser
 import net.postchain.gtx.SimpleGTXModule
 import net.postchain.integrationtest.managedmode.TestModulesHelper.argCurrentHeight
+import net.postchain.integrationtest.managedmode.TestModulesHelper.gtvBlockchain0Rid
 import net.postchain.integrationtest.managedmode.TestModulesHelper.peerInfoToGtv
 import net.postchain.integrationtest.managedmode.TestPeerInfos.Companion.peerInfo0
 import net.postchain.integrationtest.managedmode.TestPeerInfos.Companion.peerInfo1
 
-open class ManagedTestModule(node: Nodes) : SimpleGTXModule<ManagedTestModule.Companion.Nodes>(
+open class ManagedTestModuleTwoPeersConnect(node: Nodes) : SimpleGTXModule<ManagedTestModuleTwoPeersConnect.Companion.Nodes>(
         node,
         mapOf(),
         mapOf(
@@ -82,23 +83,15 @@ open class ManagedTestModule(node: Nodes) : SimpleGTXModule<ManagedTestModule.Co
 
         fun queryComputeBlockchainList(node: Nodes, eContext: EContext, args: Gtv): Gtv {
             logger.error { "Query: nm_compute_blockchain_list" }
-
-            /*
-            // TODO: [et]: Extract this
-            val blockchain0Rid = "0000000000000000000000000000000000000000000000000000000000000000"
-            val gtvBlockchain0Rid = GtvFactory.gtv(blockchain0Rid.hexStringToByteArray())
-            return GtvArray(arrayOf(gtvBlockchain0Rid))
-             */
-
-            return GtvArray(emptyArray())
+            return GtvArray(arrayOf(gtvBlockchain0Rid()))
         }
 
         fun queryGetConfiguration(node: Nodes, eContext: EContext, args: Gtv): Gtv {
             logger.error { "Query: nm_get_blockchain_configuration" }
 
             val blockchainConfigFilename = when (node) {
-                Nodes.Node0 -> "/net/postchain/devtools/managedmode/blockchain_config_0_height_15.xml"
-                Nodes.Node1 -> "/net/postchain/devtools/managedmode/blockchain_config_1_height_15.xml"
+                Nodes.Node0 -> "/net/postchain/devtools/managedmode/blockchain_config_two_peers_connect_0_height_15.xml"
+                Nodes.Node1 -> "/net/postchain/devtools/managedmode/blockchain_config_two_peers_connect_1_height_15.xml"
             }
 
             val gtvConfig = GtvMLParser.parseGtvML(
@@ -120,7 +113,7 @@ open class ManagedTestModule(node: Nodes) : SimpleGTXModule<ManagedTestModule.Co
 
 }
 
-class ManagedTestModule0() : ManagedTestModule(Companion.Nodes.Node0)
+class ManagedTestModuleTwoPeersConnect0() : ManagedTestModuleTwoPeersConnect(Companion.Nodes.Node0)
 
-class ManagedTestModule1() : ManagedTestModule(Companion.Nodes.Node1)
+class ManagedTestModuleTwoPeersConnect1() : ManagedTestModuleTwoPeersConnect(Companion.Nodes.Node1)
 
