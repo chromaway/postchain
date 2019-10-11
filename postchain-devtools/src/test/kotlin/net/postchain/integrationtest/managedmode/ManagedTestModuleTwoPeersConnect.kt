@@ -6,6 +6,7 @@ import net.postchain.gtv.*
 import net.postchain.gtv.gtvml.GtvMLParser
 import net.postchain.gtx.SimpleGTXModule
 import net.postchain.integrationtest.managedmode.TestModulesHelper.argCurrentHeight
+import net.postchain.integrationtest.managedmode.TestModulesHelper.argHeight
 import net.postchain.integrationtest.managedmode.TestModulesHelper.gtvBlockchain0Rid
 import net.postchain.integrationtest.managedmode.TestModulesHelper.peerInfoToGtv
 import net.postchain.integrationtest.managedmode.TestPeerInfos.Companion.peerInfo0
@@ -105,7 +106,7 @@ open class ManagedTestModuleTwoPeersConnect(node: Nodes) : SimpleGTXModule<Manag
         fun queryFindNextConfigurationHeight(node: Nodes, eContext: EContext, args: Gtv): Gtv {
             logger.error { "Query: nm_find_next_configuration_height" }
 
-            return if (args["height"]!!.asInteger() < 16)
+            return if (argHeight(args) < 16)
                 GtvInteger(16)
             else GtvNull
         }

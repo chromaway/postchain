@@ -30,16 +30,9 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
     protected lateinit var blockchainConfigProvider: BlockchainConfigurationProvider
     protected lateinit var storage: Storage
     protected var synchronizer = ReentrantLock()
-
-    // New members
     private lateinit var dataSource: ManagedNodeDataSource
-    private val queryRunner = QueryRunner()
-    private val longRes = ScalarHandler<Long>()
     private var lastPeerListVersion: Long? = null
-    private var updaterThreadStarted = false
-    private val executor = Executors.newSingleThreadScheduledExecutor()
-    private val executor2 = Executors.newSingleThreadExecutor()
-    ///
+    private val executor = Executors.newSingleThreadExecutor()
 
     companion object : KLogging()
 
@@ -73,10 +66,6 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         }
 
         processManager.startBlockchain(chainID)
-
-        /*if (chainID == 0L) {
-            startUpdaterThread()
-        }*/
     }
 
     fun stopBlockchain(chainID: Long) {
@@ -86,9 +75,6 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
     override fun shutdown() {
         executor.shutdownNow()
         executor.awaitTermination(1000, TimeUnit.MILLISECONDS)
-
-        executor2.shutdownNow()
-        executor2.awaitTermination(1000, TimeUnit.MILLISECONDS)
 
         halt()
     }
@@ -102,30 +88,43 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
     private fun restartHandlerFactory(): (chainId: Long) -> RestartHandler {
         return { chainId ->
             {
-                // Preloading blockchain configuration
-                loadBlockchainConfiguration(chainId)
+                synchronizer.withLock {
+                    // Preloading blockchain configuration
+                    loadBlockchainConfiguration(chainId)
 
-                // Checking out for a peers set changes
-                val peerListVersion = dataSource.getPeerListVersion()
-                val reloadBlockchains = (lastPeerListVersion != null) && (lastPeerListVersion != peerListVersion)
-                lastPeerListVersion = peerListVersion
-                logger.error { "Reloading of blockchains ${if (reloadBlockchains) "are" else "are not"} required" }
+                    // Checking out for a peers set changes
+                    val peerListVersion = dataSource.getPeerListVersion()
+                    val reloadBlockchains = (lastPeerListVersion != null) && (lastPeerListVersion != peerListVersion)
+                    lastPeerListVersion = peerListVersion
+                    logger.error { "Reloading of blockchains ${if (reloadBlockchains) "are" else "are not"} required" }
 
-                if (reloadBlockchains) {
-                    reloadBlockchainsAsync()
-                    true
-
-                } else {
-                    // Checking out for a chain configuration changes
-                    val reloadBlockchainConfig = withReadConnection(storage, chainId) { eContext ->
-                        (blockchainConfigProvider.needsConfigurationChange(eContext, chainId))
-                    }
-
-                    if (reloadBlockchainConfig) {
-                        reloadBlockchainConfigAsync(chainId)
+                    if (reloadBlockchains) {
+                        reloadBlockchainsAsync()
                         true
+
                     } else {
-                        false
+                        val toLaunch = retrieveBlockchainsToLaunch()
+                        val launched = processManager.getBlockchains()
+
+                        // Checking out for a chain configuration changes
+                        val reloadBlockchainConfig = withReadConnection(storage, chainId) { eContext ->
+                            (blockchainConfigProvider.needsConfigurationChange(eContext, chainId))
+                        }
+
+                        if (chainId == 0L) {
+                            // Launching blockchain 0
+                            val reloadChan0 = 0L in toLaunch && (0L !in launched || reloadBlockchainConfig)
+                            startStopBlockchainsAsync(toLaunch, launched, reloadChan0)
+                            reloadChan0
+
+                        } else {
+                            if (reloadBlockchainConfig) {
+                                reloadBlockchainConfigAsync(chainId)
+                                true
+                            } else {
+                                false
+                            }
+                        }
                     }
                 }
             }
@@ -133,7 +132,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
     }
 
     private fun reloadBlockchainsAsync() {
-        executor2.submit {
+        executor.submit {
             val toLaunch = retrieveBlockchainsToLaunch()
 
             // Reloading
@@ -141,7 +140,10 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
             logger.error {
                 val pubKey = nodeConfigProvider.getConfiguration().pubKey
                 val peerInfos = nodeConfigProvider.getConfiguration().peerInfoMap
-                "runPeriodic: " + pubKey + " @ " + peerInfos.keys.toTypedArray().contentToString()
+                "reloadBlockchainsAsync: " +
+                        "pubKey: $pubKey" +
+                        ", peerInfos: ${peerInfos.keys.toTypedArray().contentToString()}, " +
+                        ", chains to launch: ${toLaunch.contentDeepToString()}"
             }
 
             // TODO: [et]: COMMENT: Shutting down
@@ -151,14 +153,38 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
             initialize()
 
             // Starting blockchains: at first chain0, then the rest
-//            loadBlockchainConfiguration(0L)
             startBlockchain(0L)
             toLaunch.filter { it != 0L }.forEach { startBlockchain(it) }
         }
     }
 
+    private fun startStopBlockchainsAsync(toLaunch: Array<Long>, launched: Set<Long>, reloadChain0: Boolean) {
+        executor.submit {
+            // Launching blockchain 0
+            if (reloadChain0) {
+                processManager.startBlockchain(0L)
+            }
+
+            // Launching new blockchains except blockchain 0
+            toLaunch.filter { it != 0L }
+                    .filter { processManager.retrieveBlockchain(it) == null }
+                    .forEach {
+                        logger.info { "Blockchain will be started: chainId: $it" }
+                        processManager.startBlockchain(it)
+                    }
+
+            // Stopping launched blockchains
+            launched.filterNot(toLaunch::contains)
+                    .filter { processManager.retrieveBlockchain(it) != null }
+                    .forEach {
+                        logger.info { "Blockchain will be stopped: chainId: $it" }
+                        processManager.stopBlockchain(it)
+                    }
+        }
+    }
+
     private fun reloadBlockchainConfigAsync(chainId: Long) {
-        executor2.submit {
+        executor.submit {
             processManager.startBlockchain(chainId)
         }
     }
@@ -181,92 +207,6 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         }
 
         return GTXManagedNodeDataSource(blockQueries!!, nodeConfigProvider.getConfiguration())
-    }
-
-    private var i = 0
-    private fun startUpdaterThread() {
-        if (updaterThreadStarted) return
-        updaterThreadStarted = true
-
-        executor.scheduleWithFixedDelay(
-                {
-                    try {
-                        runPeriodic(++i)
-                    } catch (e: Exception) {
-                        logger.error("Unhandled exception in PostchainNode.runPeriodic()", e)
-                    }
-                },
-                10, 10, TimeUnit.SECONDS)
-    }
-
-    private fun runPeriodic(i: Int) {
-        synchronizer.withLock {
-            runPeriodicImpl(i)
-        }
-    }
-
-    private fun runPeriodicImpl(i: Int) {
-//        logger.error { "@@@ [${nodeConfigProvider.getConfiguration().pubKey.takeLast(4)}] BEGIN $i" }
-
-
-        val peerListVersion = dataSource.getPeerListVersion()
-        val reloadBlockchains = (lastPeerListVersion != null) && (lastPeerListVersion != peerListVersion)
-        lastPeerListVersion = peerListVersion
-        logger.error { "Reloading of blockchains ${if (reloadBlockchains) "are" else "are not"} required" }
-
-        // Making some preparation
-        // * Loading chain0 configuration
-//        loadChain0Configuration()
-        // * Retrieving blockchains list to launch
-        val toLaunch = retrieveBlockchainsToLaunch()
-
-        // Reloading
-        if (reloadBlockchains) {
-            // FYI: For testing only. It can be deleted later.
-            logger.error {
-                val pubKey = nodeConfigProvider.getConfiguration().pubKey
-                val peerInfos = nodeConfigProvider.getConfiguration().peerInfoMap
-                "runPeriodic: " + pubKey + " @ " + peerInfos.keys.toTypedArray().contentToString()
-            }
-
-            // TODO: [et]: COMMENT: Shutting down
-            halt()
-
-            // Starting BlockchainInfrastructure and ProcessManager
-            initialize()
-
-            // Starting blockchains: at first chain0, then the rest
-            loadBlockchainConfiguration(0L)
-            startBlockchain(0L)
-            toLaunch.filter { it != 0L }.forEach { startBlockchain(it) }
-
-        } else {
-//            loadChain0Configuration()
-
-            /*
-            val launched = processManager.getBlockchains()
-
-            // Launching new blockchains
-            toLaunch.filter { processManager.retrieveBlockchain(it) == null }
-//                    .forEach(processManager::startBlockchain)
-                    .forEach {
-                        logger.error { "\n\n\n### $it" }
-                        processManager.startBlockchain(it)
-                    }
-
-            // Stopping launched blockchains
-            launched.filterNot(toLaunch::contains)
-                    .filter { processManager.retrieveBlockchain(it) != null }
-//                    .forEach(processManager::stopBlockchain)
-                    .forEach {
-                        logger.error { "\n\n\n###### $it" }
-                        processManager.stopBlockchain(it)
-                    }
-
-             */
-        }
-
-//        logger.error { "@@@ [${nodeConfigProvider.getConfiguration().pubKey.takeLast(4)}] END $i" }
     }
 
     private fun loadBlockchainConfiguration(chainId: Long) {
@@ -296,7 +236,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
                         val chainIid = dba.getChainId(ctx0, brid)
                         if (chainIid == null) {
                             val newChainId = maxOf(
-                                    queryRunner.query(ctx0.conn, "SELECT MAX(chain_id) FROM blockchains", longRes) + 1,
+                                    QueryRunner().query(ctx0.conn, "SELECT MAX(chain_iid) FROM blockchains", ScalarHandler<Long>()) + 1,
                                     100)
                             val newCtx = BaseEContext(ctx0.conn, newChainId, ctx0.nodeID, dba)
                             dba.checkBlockchainRID(newCtx, brid)

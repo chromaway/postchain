@@ -35,8 +35,6 @@ open class BaseBlockchainProcessManager(
     companion object : KLogging()
 
     override fun startBlockchainAsync(chainId: Long) {
-//        Exception().printStackTrace()
-
         executor.execute {
             try {
                 startBlockchain(chainId)
@@ -54,37 +52,42 @@ open class BaseBlockchainProcessManager(
 
     override fun startBlockchain(chainId: Long) {
         synchronizer.withLock {
-            stopBlockchain(chainId)
+            try {
+                stopBlockchain(chainId)
 
-            logger.info("[${nodeName()}]: Starting of Blockchain: chainId:$chainId")
+                logger.info("[${nodeName()}]: Starting of Blockchain: chainId: $chainId")
 
-            withReadConnection(storage, chainId) { eContext ->
-                val configuration = blockchainConfigProvider.getConfiguration(eContext, chainId)
-                if (configuration != null) {
-                    val blockchainRID = DatabaseAccess.of(eContext).getBlockchainRID(eContext)!! // TODO: [et]: Fix Kotlin NPE
-                    val context = BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null)
+                withReadConnection(storage, chainId) { eContext ->
+                    val configuration = blockchainConfigProvider.getConfiguration(eContext, chainId)
+                    if (configuration != null) {
+                        val blockchainRID = DatabaseAccess.of(eContext).getBlockchainRID(eContext)!! // TODO: [et]: Fix Kotlin NPE
+                        val context = BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null)
 
-                    val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(configuration, context)
-                    logger.debug { "[${nodeName()}]: BlockchainConfiguration has been created: chainId:$chainId" }
+                        val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(configuration, context)
+                        logger.debug { "[${nodeName()}]: BlockchainConfiguration has been created: chainId: $chainId" }
 
-                    val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig)
-                    logger.debug { "[${nodeName()}]: BlockchainEngine has been created: chainId:$chainId" }
+                        val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig)
+                        logger.debug { "[${nodeName()}]: BlockchainEngine has been created: chainId: $chainId" }
 
-                    blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(
-                            nodeName(), engine, restartHandlerFactory(chainId))
-                    logger.debug { "[${nodeName()}]: BlockchainProcess has been launched: chainId:$chainId" }
+                        blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(
+                                nodeName(), engine, restartHandlerFactory(chainId))
+                        logger.debug { "[${nodeName()}]: BlockchainProcess has been launched: chainId: $chainId" }
 
-                    blockchainProcessesLoggers[chainId] = timer(
-                            period = 3000,
-                            action = { logPeerTopology(chainId) }
-                    )
-                    logger.info("[${nodeName()}]: Blockchain has been started: chainId:$chainId")
+                        blockchainProcessesLoggers[chainId] = timer(
+                                period = 3000,
+                                action = { logPeerTopology(chainId) }
+                        )
+                        logger.info("[${nodeName()}]: Blockchain has been started: chainId: $chainId")
 
-                } else {
-                    logger.error("[${nodeName()}]: Can't start Blockchain chainId:$chainId due to configuration is absent")
+                    } else {
+                        logger.error("[${nodeName()}]: Can't start Blockchain chainId: $chainId due to configuration is absent")
+                    }
+
+                    Unit
                 }
 
-                Unit
+            } catch (e: Exception) {
+                logger.error(e) { e.message }
             }
         }
     }
@@ -95,10 +98,9 @@ open class BaseBlockchainProcessManager(
 
     override fun stopBlockchain(chainId: Long) {
         synchronizer.withLock {
-            //            Exception().printStackTrace()
+            logger.info("[${nodeName()}]: Stopping of Blockchain: chainId: $chainId")
 
             blockchainProcesses.remove(chainId)?.also {
-                logger.info("[${nodeName()}]: Stopping of Blockchain: chainId:$chainId")
                 it.shutdown()
             }
 
@@ -106,6 +108,8 @@ open class BaseBlockchainProcessManager(
                 it.cancel()
                 it.purge()
             }
+
+            logger.info("[${nodeName()}]: Blockchain has been stopped: chainId: $chainId")
         }
     }
 

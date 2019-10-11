@@ -56,11 +56,6 @@ open class IntegrationTest {
     val configOverrides = MapConfiguration(mutableMapOf<String, String>())
     val cryptoSystem = SECP256K1CryptoSystem()
     var gtxConfig: Gtv? = null
-    protected val blockchainRids = mapOf(
-            0L to "0000000000000000000000000000000000000000000000000000000000000000",
-            1L to "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3",
-            2L to "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a4"
-    )
 
     // PeerInfos must be shared between all nodes because
     // a listening node will update the PeerInfo port after
@@ -72,6 +67,14 @@ open class IntegrationTest {
         const val BASE_PORT = 9870
         const val DEFAULT_CONFIG_FILE = "config.properties"
         const val DEFAULT_BLOCKCHAIN_CONFIG_FILE = "blockchain_config.xml"
+
+        val BLOCKCHAIN_RIDS = mapOf(
+                0L to "0000000000000000000000000000000000000000000000000000000000000000",
+                1L to "78967BAA4768CBCEF11C508326FFB13A956689FCB6DC3BA17F4B895CBB1577A3",
+                2L to "78967BAA4768CBCEF11C508326FFB13A956689FCB6DC3BA17F4B895CBB1577A4",
+                100L to "78967BAA4768CBCEF11C508326FFB13A956689FCB6DC3BA17F4B895CBB000100",
+                101L to "78967BAA4768CBCEF11C508326FFB13A956689FCB6DC3BA17F4B895CBB000101"
+        )
     }
 
     @After
@@ -160,7 +163,7 @@ open class IntegrationTest {
         nodesNames[nodeConfig.pubKey] = "$nodeIndex"
         val blockchainConfig = readBlockchainConfig(blockchainConfigFilename)
         val chainId = nodeConfig.activeChainIds.first().toLong()
-        val blockchainRid = blockchainRids[chainId]!!.hexStringToByteArray()
+        val blockchainRid = BLOCKCHAIN_RIDS[chainId]!!.hexStringToByteArray()
 
         // Wiping of database
         if (preWipeDatabase) {
@@ -263,7 +266,7 @@ open class IntegrationTest {
         nodeConfigProvider.getConfiguration().activeChainIds
                 .filter(String::isNotEmpty)
                 .forEachIndexed { i, chainId ->
-                    val blockchainRid = blockchainRids[chainId.toLong()]!!.hexStringToByteArray()
+                    val blockchainRid = BLOCKCHAIN_RIDS[chainId.toLong()]!!.hexStringToByteArray()
                     val filename = blockchainConfigFilenames[i]
                     val blockchainConfig = readBlockchainConfig(filename)
                     node.addBlockchain(chainId.toLong(), blockchainRid, blockchainConfig)

@@ -22,8 +22,8 @@ import kotlin.test.assertNotNull
 open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
 
     private val gtxTestModule =  GTXTestModule()
-    private val factory1 = GTXTransactionFactory(blockchainRids[1L]!!.hexStringToByteArray(), gtxTestModule, cryptoSystem)
-    private val factory2 = GTXTransactionFactory(blockchainRids[2L]!!.hexStringToByteArray(), gtxTestModule, cryptoSystem)
+    private val factory1 = GTXTransactionFactory(BLOCKCHAIN_RIDS[1L]!!.hexStringToByteArray(), gtxTestModule, cryptoSystem)
+    private val factory2 = GTXTransactionFactory(BLOCKCHAIN_RIDS[2L]!!.hexStringToByteArray(), gtxTestModule, cryptoSystem)
     private val factoryMap = mapOf(
             1L to factory1,
             2L to factory2)

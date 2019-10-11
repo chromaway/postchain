@@ -6,16 +6,19 @@ import net.postchain.config.SimpleDatabaseConnector
 import net.postchain.config.app.AppConfigDbLayer
 import net.postchain.devtools.IntegrationTest
 import net.postchain.hasSize
+import net.postchain.integrationtest.assertChainNotStarted
 import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.getModules
+import net.postchain.integrationtest.reconfiguration.DummyModule2
 import org.awaitility.Awaitility
+import org.awaitility.Awaitility.fieldIn
 import org.awaitility.Duration
 import org.junit.Test
 
 class ManagedModeTest : IntegrationTest() {
 
     @Test
-    fun singlePeer_loadsBlockchainConfigurationFromManagedDataSource_and_reconfigures() {
+    fun singlePeer_loadsBlockchain0Configuration_fromManagedDataSource_and_reconfigures() {
         val nodeConfig0 = "classpath:/net/postchain/managedmode/node0.properties"
         val blockchainConfig0 = "/net/postchain/devtools/managedmode/blockchain_config_reconfiguring_0.xml"
 
@@ -61,7 +64,55 @@ class ManagedModeTest : IntegrationTest() {
     }
 
     @Test
-    fun twoSeparatePeers_receiveEachOtherInPeerInfos_and_ConnectToEachOther() {
+    fun singlePeer_launchesChain100AtHeight5_then_launchesChain101AtHeight10_then_stopsChain101AtHeight15() {
+        val nodeConfig0 = "classpath:/net/postchain/managedmode/node0.properties"
+        val blockchainConfig0 = "/net/postchain/devtools/managedmode/singlepeer_launches_and_stops_chains/blockchain_config_0_height_0.xml"
+
+        // Creating node0
+        createSingleNode(0, 1, nodeConfig0, blockchainConfig0) { appConfig, _ ->
+            val dbConnector = SimpleDatabaseConnector(appConfig)
+            dbConnector.withWriteConnection { connection ->
+                AppConfigDbLayer(appConfig, connection).addPeerInfo(TestPeerInfos.peerInfo0)
+            }
+        }
+
+        // Asserting chain 0 is started and chain 1 and 2 are not
+        nodes[0].assertChainStarted(0L)
+        nodes[0].assertChainNotStarted(100L)
+        nodes[0].assertChainNotStarted(101L)
+
+        // Asserting chain 0, 100 are started and chain 101 is not
+        Awaitility.await().atMost(Duration.ONE_MINUTE)
+                .untilAsserted {
+                    nodes[0].assertChainStarted(0L)
+                    nodes[0].assertChainStarted(100L)
+                    nodes[0].assertChainNotStarted(101L)
+                }
+
+        // Asserting chain 0, 100, 101 are started
+        Awaitility.await().atMost(Duration.ONE_MINUTE)
+                .untilAsserted {
+                    nodes[0].assertChainStarted(0L)
+                    nodes[0].assertChainStarted(100L)
+                    nodes[0].assertChainStarted(101L)
+                }
+
+        // Asserting chain 0, 101 are started and chain 100 is not
+        Awaitility.await().atMost(Duration.ONE_MINUTE)
+                .untilAsserted {
+                    nodes[0].assertChainStarted(0L)
+                    nodes[0].assertChainNotStarted(100L)
+                    nodes[0].assertChainStarted(101L)
+
+                    // Asserting stage of blockchain:0 is stage3 (15 < height < 20)
+                    assertk.assert(nodes[0].getModules(0L)).isNotEmpty()
+                    assertk.assert(nodes[0].getModules(0L).first()).isInstanceOf(
+                            ManagedTestModuleSinglePeerLaunchesAndStopsChains3::class)
+                }
+    }
+
+    @Test
+    fun twoSeparatePeers_receiveEachOtherInPeerInfos_and_connectToEachOther() {
         val nodeConfig0 = "classpath:/net/postchain/managedmode/node0.properties"
         val nodeConfig1 = "classpath:/net/postchain/managedmode/node1.properties"
         val blockchainConfig0 = "/net/postchain/devtools/managedmode/blockchain_config_two_peers_connect_0.xml"
@@ -98,5 +149,4 @@ class ManagedModeTest : IntegrationTest() {
                     assertk.assert(nodes[1].networkTopology(0L)).hasSize(1)
                 }
     }
-
 }

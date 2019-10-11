@@ -5,6 +5,7 @@ import net.postchain.core.EContext
 import net.postchain.gtv.*
 import net.postchain.gtv.gtvml.GtvMLParser
 import net.postchain.gtx.SimpleGTXModule
+import net.postchain.integrationtest.managedmode.TestModulesHelper.argHeight
 import net.postchain.integrationtest.managedmode.TestModulesHelper.gtvBlockchain0Rid
 import net.postchain.integrationtest.managedmode.TestModulesHelper.peerInfoToGtv
 import net.postchain.integrationtest.managedmode.TestPeerInfos.Companion.peerInfo0
@@ -50,9 +51,9 @@ open class ManagedTestModuleReconfiguring(val stage: Int) : SimpleGTXModule<Unit
         fun queryGetConfiguration(unit: Unit, eContext: EContext, args: Gtv): Gtv {
             logger.error { "Query: nm_get_blockchain_configuration" }
 
-            logger.warn { "height: ${args["height"]!!.asInteger()}" }
+            logger.warn { "height: ${argHeight(args)}" }
 
-            val blockchainConfigFilename = when (args["height"]!!.asInteger()) {
+            val blockchainConfigFilename = when (argHeight(args)) {
                 15L -> "/net/postchain/devtools/managedmode/blockchain_config_reconfiguring_15.xml"
                 30L -> "/net/postchain/devtools/managedmode/blockchain_config_reconfiguring_30.xml"
                 45L -> "/net/postchain/devtools/managedmode/blockchain_config_reconfiguring_45.xml"
@@ -69,7 +70,7 @@ open class ManagedTestModuleReconfiguring(val stage: Int) : SimpleGTXModule<Unit
 
         fun queryFindNextConfigurationHeight(unit: Unit, eContext: EContext, args: Gtv): Gtv {
             logger.error { "Query: nm_find_next_configuration_height" }
-            return when (args["height"]!!.asInteger()) {
+            return when (argHeight(args)) {
                 in stage0 -> GtvInteger(15)
                 in stage1 -> GtvInteger(30)
                 in stage2 -> GtvInteger(45)

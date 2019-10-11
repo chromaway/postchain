@@ -21,7 +21,7 @@ class SinglePeerReconfigurationTest : ReconfigurationTest() {
         val appConfig = createAppConfig(0, 1, DEFAULT_CONFIG_FILE)
         val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(appConfig)
         val chainId = nodeConfigProvider.getConfiguration().activeChainIds.first().toLong()
-        val blockchainRid = blockchainRids[chainId]!!.hexStringToByteArray()
+        val blockchainRid = BLOCKCHAIN_RIDS[chainId]!!.hexStringToByteArray()
 
         // Chains configs
         val blockchainConfig1 = readBlockchainConfig(
