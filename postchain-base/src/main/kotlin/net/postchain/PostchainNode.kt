@@ -22,7 +22,6 @@ import kotlin.concurrent.withLock
 /**
  * Postchain node instantiates infrastructure and blockchain process manager.
  */
-@Suppress("UNUSED_VARIABLE")
 open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Shutdownable {
 
     lateinit var processManager: BlockchainProcessManager
@@ -50,7 +49,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         processManager.synchronizer = synchronizer
     }
 
-    fun startBlockchain(chainID: Long) {
+    fun startBlockchain(chainID: Long): Boolean {
         if (chainID == 0L) {
             dataSource = buildChain0ManagedDataSource()
 
@@ -65,7 +64,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
                     ?: logger.warn { "Blockchain config is not managed" }
         }
 
-        processManager.startBlockchain(chainID)
+        return processManager.startBlockchain(chainID)
     }
 
     fun stopBlockchain(chainID: Long) {
@@ -86,47 +85,58 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
     }
 
     private fun restartHandlerFactory(): (chainId: Long) -> RestartHandler {
+
+        fun restartHandlerChain0(): Boolean {
+            return synchronizer.withLock {
+                // Preloading blockchain configuration
+                loadBlockchainConfiguration(0L)
+
+                // Checking out for a peers set changes
+                val peerListVersion = dataSource.getPeerListVersion()
+                val reloadBlockchains = (lastPeerListVersion != null) && (lastPeerListVersion != peerListVersion)
+                lastPeerListVersion = peerListVersion
+                logger.error { "Reloading of blockchains ${if (reloadBlockchains) "are" else "are not"} required" }
+
+                if (reloadBlockchains) {
+                    reloadBlockchainsAsync()
+                    true
+
+                } else {
+                    val toLaunch = retrieveBlockchainsToLaunch()
+                    val launched = processManager.getBlockchains()
+
+                    // Checking out for a chain configuration changes
+                    val reloadBlockchainConfig = withReadConnection(storage, 0L) { eContext ->
+                        (blockchainConfigProvider.needsConfigurationChange(eContext, 0L))
+                    }
+
+                    // Launching blockchain 0
+                    val reloadChan0 = 0L in toLaunch && (0L !in launched || reloadBlockchainConfig)
+                    startStopBlockchainsAsync(toLaunch, launched, reloadChan0)
+                    reloadChan0
+                }
+            }
+        }
+
+        fun restartHandler(chainId: Long): Boolean {
+            return synchronizer.withLock {
+                // Checking out for a chain configuration changes
+                val reloadBlockchainConfig = withReadConnection(storage, chainId) { eContext ->
+                    (blockchainConfigProvider.needsConfigurationChange(eContext, chainId))
+                }
+
+                if (reloadBlockchainConfig) {
+                    reloadBlockchainConfigAsync(chainId)
+                    true
+                } else {
+                    false
+                }
+            }
+        }
+
         return { chainId ->
             {
-                synchronizer.withLock {
-                    // Preloading blockchain configuration
-                    loadBlockchainConfiguration(chainId)
-
-                    // Checking out for a peers set changes
-                    val peerListVersion = dataSource.getPeerListVersion()
-                    val reloadBlockchains = (lastPeerListVersion != null) && (lastPeerListVersion != peerListVersion)
-                    lastPeerListVersion = peerListVersion
-                    logger.error { "Reloading of blockchains ${if (reloadBlockchains) "are" else "are not"} required" }
-
-                    if (reloadBlockchains) {
-                        reloadBlockchainsAsync()
-                        true
-
-                    } else {
-                        val toLaunch = retrieveBlockchainsToLaunch()
-                        val launched = processManager.getBlockchains()
-
-                        // Checking out for a chain configuration changes
-                        val reloadBlockchainConfig = withReadConnection(storage, chainId) { eContext ->
-                            (blockchainConfigProvider.needsConfigurationChange(eContext, chainId))
-                        }
-
-                        if (chainId == 0L) {
-                            // Launching blockchain 0
-                            val reloadChan0 = 0L in toLaunch && (0L !in launched || reloadBlockchainConfig)
-                            startStopBlockchainsAsync(toLaunch, launched, reloadChan0)
-                            reloadChan0
-
-                        } else {
-                            if (reloadBlockchainConfig) {
-                                reloadBlockchainConfigAsync(chainId)
-                                true
-                            } else {
-                                false
-                            }
-                        }
-                    }
-                }
+                if (chainId == 0L) restartHandlerChain0() else restartHandler(chainId)
             }
         }
     }

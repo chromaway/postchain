@@ -50,8 +50,8 @@ open class BaseBlockchainProcessManager(
         }
     }
 
-    override fun startBlockchain(chainId: Long) {
-        synchronizer.withLock {
+    override fun startBlockchain(chainId: Long): Boolean {
+        return synchronizer.withLock {
             try {
                 stopBlockchain(chainId)
 
@@ -83,11 +83,12 @@ open class BaseBlockchainProcessManager(
                         logger.error("[${nodeName()}]: Can't start Blockchain chainId: $chainId due to configuration is absent")
                     }
 
-                    Unit
+                    true
                 }
 
             } catch (e: Exception) {
                 logger.error(e) { e.message }
+                false
             }
         }
     }

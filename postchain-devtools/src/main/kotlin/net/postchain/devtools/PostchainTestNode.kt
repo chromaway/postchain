@@ -27,6 +27,7 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider) : Postcha
     }
 
     companion object : KLogging() {
+        const val SYSTEM_CHAIN_IID = 0L
         const val DEFAULT_CHAIN_IID = 1L
     }
 

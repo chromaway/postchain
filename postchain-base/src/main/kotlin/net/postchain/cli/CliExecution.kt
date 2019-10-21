@@ -5,6 +5,8 @@ import net.postchain.base.BaseConfigurationDataStore
 import net.postchain.base.BlockchainRelatedInfo
 import net.postchain.base.data.BaseBlockStore
 import net.postchain.base.data.DatabaseAccess
+import net.postchain.common.hexStringToByteArray
+import net.postchain.common.toHex
 import net.postchain.config.app.AppConfig
 import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.gtv.GtvEncoder
@@ -14,8 +16,6 @@ import org.apache.commons.dbcp2.BasicDataSource
 import java.io.File
 import java.sql.Connection
 import java.sql.SQLException
-import net.postchain.common.hexStringToByteArray
-import net.postchain.common.toHex
 
 class CliExecution {
 
@@ -25,7 +25,7 @@ class CliExecution {
             blockchainRID: String,
             blockchainConfigFile: String,
             mode: AlreadyExistMode = AlreadyExistMode.IGNORE,
-            givenDependencies:  List<BlockchainRelatedInfo> = listOf()
+            givenDependencies: List<BlockchainRelatedInfo> = listOf()
     ) {
         val encodedGtxValue = getEncodedGtxValueFromFile(blockchainConfigFile)
         runDBCommandBody(nodeConfigFile, chainId) { eContext ->
@@ -105,7 +105,7 @@ class CliExecution {
                 AppConfig.fromPropertiesFile(nodeConfigFile))
 
         with(PostchainNode(nodeConfigProvider)) {
-            chainIDs.forEach(::startBlockchain)
+            chainIDs.forEach { startBlockchain(it) }
         }
     }
 
@@ -160,8 +160,8 @@ class CliExecution {
         }
     }
 
-    private fun getEncodedGtxValueFromFile(blockchainConfigFile: String) :ByteArray {
-        val gtv =  GtvMLParser.parseGtvML(File(blockchainConfigFile).readText())
+    private fun getEncodedGtxValueFromFile(blockchainConfigFile: String): ByteArray {
+        val gtv = GtvMLParser.parseGtvML(File(blockchainConfigFile).readText())
         return GtvEncoder.encodeGtv(gtv)
     }
 }
