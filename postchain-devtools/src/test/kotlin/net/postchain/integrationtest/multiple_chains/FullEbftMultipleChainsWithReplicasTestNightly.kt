@@ -9,6 +9,7 @@ import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.assertNodeConnectedWith
+import net.postchain.util.NodesTestHelper.selectAnotherRandNode
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration.TEN_SECONDS
 import org.junit.Assert.assertArrayEquals
@@ -16,7 +17,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.random.Random
 import kotlin.test.assertNotNull
 
 @RunWith(JUnitParamsRunner::class)
@@ -83,15 +83,11 @@ class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
         if (nodes.size > 1) {
             await().atMost(TEN_SECONDS)
                     .untilAsserted {
-                        nodes.forEachIndexed { i, node ->
-                            var randNode = Random.nextInt(nodes.size)
-                            while (randNode == i) {
-                                randNode = Random.nextInt(nodes.size) // Cannot be connected to itself, so pic new value
-                            }
-                            val x = this.nodes[randNode]
+                        nodes.forEachIndexed { i, _ ->
+                            val randNode = selectAnotherRandNode(i, nodes.size)
                             chains.forEach { chain ->
                                 logger.debug("Wait for (node $i, chain $chain) to be connected to node $randNode")
-                                nodes[i].assertNodeConnectedWith(chain, x)
+                                nodes[i].assertNodeConnectedWith(chain, nodes[randNode])
                             }
                         }
                     }

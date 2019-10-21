@@ -13,22 +13,22 @@ import net.postchain.devtools.utils.configuration.NodeNameWithBlockchains
 import net.postchain.gtx.GTXTransactionFactory
 import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.assertNodeConnectedWith
+import net.postchain.util.NodesTestHelper.selectAnotherRandNode
 import org.awaitility.Awaitility
 import org.awaitility.Duration
 import org.junit.Assert
-import kotlin.random.Random
 import kotlin.test.assertNotNull
 
-open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
+open class MultiNodeDoubleChainBlockTestHelper : IntegrationTest() {
 
-    private val gtxTestModule =  GTXTestModule()
+    private val gtxTestModule = GTXTestModule()
     private val factory1 = GTXTransactionFactory(BLOCKCHAIN_RIDS[1L]!!.hexStringToByteArray(), gtxTestModule, cryptoSystem)
     private val factory2 = GTXTransactionFactory(BLOCKCHAIN_RIDS[2L]!!.hexStringToByteArray(), gtxTestModule, cryptoSystem)
     private val factoryMap = mapOf(
             1L to factory1,
             2L to factory2)
 
-    companion object: KLogging()
+    companion object : KLogging()
 
 
     private fun strategyOf(nodeId: Int, chainId: Long): OnDemandBlockBuildingStrategy {
@@ -69,16 +69,12 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
             // We don't need to assert all connections, just check some random connections
             Awaitility.await().atMost(Duration.TEN_SECONDS)
                     .untilAsserted {
-                        nodes.forEachIndexed { i, node ->
+                        nodes.forEachIndexed { i, _ ->
                             logger.debug("Node $i")
-                            var randNode = Random.nextInt(nodesCount)
-                            while (randNode == i) {
-                                randNode = Random.nextInt(nodesCount) // Cannot be connected to itself, so pic new value
-                            }
-                            val x = this.nodes[randNode]
+                            val randNode = selectAnotherRandNode(i, nodesCount)
                             chainList.forEach { chain ->
                                 logger.debug("Wait for (node $i, chain $chain) to be connected to node $randNode")
-                                nodes[i].assertNodeConnectedWith(chain, x)
+                                nodes[i].assertNodeConnectedWith(chain, nodes[randNode])
                             }
                         }
                     }
@@ -112,7 +108,7 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
         Awaitility.await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
                     nodes.forEachIndexed { i, node ->
-                                nodeNameWithBlockchainsArr[i].getChainIds().forEach{ node::assertChainStarted }
+                        nodeNameWithBlockchainsArr[i].getChainIds().forEach { node::assertChainStarted }
                     }
                 }
 
@@ -123,24 +119,17 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
                     .untilAsserted {
                         nodes.forEachIndexed { i, node ->
                             logger.debug("Assert connection for Node: $i")
-                            val nodeNameWithBlockchains = nodeNameWithBlockchainsArr[i]
 
                             // TODO: NOTE: Here we assume that all nodes are connected EVEN THOUGH they might not have a common chain
-                            var randNode = Random.nextInt(nodesCount)
-                            while (randNode == i) {
-                                randNode = Random.nextInt(nodesCount) // Cannot be connected to itself, so pic new value
-                            }
-                            val x = this.nodes[randNode]
+                            val randNode = selectAnotherRandNode(i, nodesCount)
                             chainsInCommon.forEach { chain ->
                                 logger.debug("Wait for (node $i, chain $chain) to be connected to node $randNode")
-                                nodes[i].assertNodeConnectedWith(chain, x)
+                                nodes[i].assertNodeConnectedWith(chain, nodes[randNode])
                             }
                         }
                     }
         }
     }
-
-
 
 
     /**
@@ -171,9 +160,9 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
                 nodes.forEachIndexed { i, node ->
 
                     if (nodeNameWithBlockchainsArr != null) {
-                         nodeNameWithBlockchainsArr[i].getChainIds().forEach { chain ->
-                             enqueueTx(chain, currentTxId, txCache, block, blockIndex, node)
-                         }
+                        nodeNameWithBlockchainsArr[i].getChainIds().forEach { chain ->
+                            enqueueTx(chain, currentTxId, txCache, block, blockIndex, node)
+                        }
                     } else {
                         chainList.forEach { chain ->
                             enqueueTx(chain, currentTxId, txCache, block, blockIndex, node)
@@ -188,7 +177,7 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
                         buildBlocks(nodeId, chain, block) // The block we can build ourselves
                     }
                     nodeNameWithBlockchainsArr[nodeId].getReadOnlyChainIds().forEach { chain ->
-                          // The blocks we must fetch form the node
+                        // The blocks we must fetch form the node
                     }
                 } else {
                     chainList.forEach { chain ->
@@ -234,7 +223,7 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
         nodes.forEachIndexed { nodeId, node ->
             if (nodeNameWithBlockchainsArr != null) {
                 val chains = nodeNameWithBlockchainsArr[nodeId].getChainIds()
-                chains.forEach {chain ->
+                chains.forEach { chain ->
                     assertChainForNode(nodeId, chain, expectedHeight, node, txPerBlock, txCache)
                 }
 
