@@ -1,6 +1,5 @@
 package net.postchain.integrationtest.managedmode
 
-import mu.KLogging
 import net.postchain.core.EContext
 import net.postchain.gtv.*
 import net.postchain.gtv.gtvml.GtvMLParser
@@ -11,6 +10,7 @@ import net.postchain.integrationtest.managedmode.TestModulesHelper.gtvBlockchain
 import net.postchain.integrationtest.managedmode.TestModulesHelper.peerInfoToGtv
 import net.postchain.integrationtest.managedmode.TestPeerInfos.Companion.peerInfo0
 import net.postchain.integrationtest.managedmode.TestPeerInfos.Companion.peerInfo1
+import net.postchain.util.TestKLogging
 
 open class ManagedTestModuleTwoPeersConnect(node: Nodes) : SimpleGTXModule<ManagedTestModuleTwoPeersConnect.Companion.Nodes>(
         node,
@@ -26,7 +26,7 @@ open class ManagedTestModuleTwoPeersConnect(node: Nodes) : SimpleGTXModule<Manag
 
     override fun initializeDB(ctx: EContext) {}
 
-    companion object : KLogging() {
+    companion object : TestKLogging(LogLevel.DEBUG) {
 
         enum class Nodes {
             Node0, Node1
@@ -36,12 +36,12 @@ open class ManagedTestModuleTwoPeersConnect(node: Nodes) : SimpleGTXModule<Manag
         private val stage1 = 15 until 30
 
         fun queryGetPeerInfos(node: Nodes, eContext: EContext, args: Gtv): Gtv {
-            logger.error { "Query: nm_get_peer_infos" }
+            logger.log { "Query: nm_get_peer_infos" }
 
             if (argCurrentHeight(args) in stage0)
-                logger.error { "in range 0" }
+                logger.log { "in range 0" }
             if (argCurrentHeight(args) in stage1)
-                logger.error { "in range 1" }
+                logger.log { "in range 1" }
 
             val peerInfos = when (argCurrentHeight(args)) {
 
@@ -66,12 +66,12 @@ open class ManagedTestModuleTwoPeersConnect(node: Nodes) : SimpleGTXModule<Manag
         }
 
         fun queryGetPeerListVersion(node: Nodes, eContext: EContext, args: Gtv): Gtv {
-            logger.error { "Query: nm_get_peer_list_version" }
+            logger.log { "Query: nm_get_peer_list_version" }
 
             if (argCurrentHeight(args) in stage0)
-                logger.error { "in range 0" }
+                logger.log { "in range 0" }
             if (argCurrentHeight(args) in stage1)
-                logger.error { "in range 1" }
+                logger.log { "in range 1" }
 
             val version = when (argCurrentHeight(args)) {
                 in stage0 -> 1
@@ -83,12 +83,12 @@ open class ManagedTestModuleTwoPeersConnect(node: Nodes) : SimpleGTXModule<Manag
         }
 
         fun queryComputeBlockchainList(node: Nodes, eContext: EContext, args: Gtv): Gtv {
-            logger.error { "Query: nm_compute_blockchain_list" }
+            logger.log { "Query: nm_compute_blockchain_list" }
             return GtvArray(arrayOf(gtvBlockchain0Rid()))
         }
 
         fun queryGetConfiguration(node: Nodes, eContext: EContext, args: Gtv): Gtv {
-            logger.error { "Query: nm_get_blockchain_configuration" }
+            logger.log { "Query: nm_get_blockchain_configuration" }
 
             val blockchainConfigFilename = when (node) {
                 Nodes.Node0 -> "/net/postchain/devtools/managedmode/blockchain_config_two_peers_connect_0_height_15.xml"
@@ -104,7 +104,7 @@ open class ManagedTestModuleTwoPeersConnect(node: Nodes) : SimpleGTXModule<Manag
         }
 
         fun queryFindNextConfigurationHeight(node: Nodes, eContext: EContext, args: Gtv): Gtv {
-            logger.error { "Query: nm_find_next_configuration_height" }
+            logger.log { "Query: nm_find_next_configuration_height" }
 
             return if (argHeight(args) < 16)
                 GtvInteger(16)

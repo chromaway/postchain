@@ -1,6 +1,5 @@
 package net.postchain.integrationtest.managedmode
 
-import mu.KLogging
 import net.postchain.core.EContext
 import net.postchain.devtools.IntegrationTest.Companion.BLOCKCHAIN_RIDS
 import net.postchain.gtv.*
@@ -12,6 +11,7 @@ import net.postchain.integrationtest.managedmode.TestModulesHelper.argHeight
 import net.postchain.integrationtest.managedmode.TestModulesHelper.gtvBlockchainRid
 import net.postchain.integrationtest.managedmode.TestModulesHelper.peerInfoToGtv
 import net.postchain.integrationtest.managedmode.TestPeerInfos.Companion.peerInfo0
+import net.postchain.util.TestKLogging
 
 open class ManagedTestModuleSinglePeerLaunchesAndStopsChains(val stage: Int) : SimpleGTXModule<Unit>(
         Unit,
@@ -27,7 +27,7 @@ open class ManagedTestModuleSinglePeerLaunchesAndStopsChains(val stage: Int) : S
 
     override fun initializeDB(ctx: EContext) {}
 
-    companion object : KLogging() {
+    companion object : TestKLogging(LogLevel.DEBUG) {
 
         private val stage0 = -1 until 5
         private val stage1 = 5 until 10
@@ -35,19 +35,19 @@ open class ManagedTestModuleSinglePeerLaunchesAndStopsChains(val stage: Int) : S
         private val stage3 = 15 until 20
 
         fun queryGetPeerInfos(unit: Unit, eContext: EContext, args: Gtv): Gtv {
-            logger.error { "Query: nm_get_peer_infos" }
+            logger.log { "Query: nm_get_peer_infos" }
             return GtvArray(arrayOf(
                     peerInfoToGtv(peerInfo0))
             )
         }
 
         fun queryGetPeerListVersion(unit: Unit, eContext: EContext, args: Gtv): Gtv {
-            logger.error { "Query: nm_get_peer_list_version" }
+            logger.log { "Query: nm_get_peer_list_version" }
             return GtvInteger(1L)
         }
 
         fun queryComputeBlockchainList(unit: Unit, eContext: EContext, args: Gtv): Gtv {
-            logger.error { "Query: nm_compute_blockchain_list" }
+            logger.log { "Query: nm_compute_blockchain_list" }
 
             val chainIds = when (argCurrentHeight(args)) {
                 in stage0 -> arrayOf(0L)
@@ -58,14 +58,14 @@ open class ManagedTestModuleSinglePeerLaunchesAndStopsChains(val stage: Int) : S
 //                else -> arrayOf(0L, 100L, 101L)
             }
 
-            logger.error { "@@@: ${chainIds.contentToString()}" }
+            logger.log { "@@@: ${chainIds.contentToString()}" }
 
             return GtvArray(
                     chainIds.map(::gtvBlockchainRid).toTypedArray())
         }
 
         fun queryGetConfiguration(unit: Unit, eContext: EContext, args: Gtv): Gtv {
-            logger.error {
+            logger.log {
                 "Query: nm_get_blockchain_configuration: " +
                         "height: ${argHeight(args)}, " +
                         "blockchainRid: ${argBlockchainRid(args)}"
@@ -99,7 +99,7 @@ open class ManagedTestModuleSinglePeerLaunchesAndStopsChains(val stage: Int) : S
         }
 
         fun queryFindNextConfigurationHeight(unit: Unit, eContext: EContext, args: Gtv): Gtv {
-            logger.error { "Query: nm_find_next_configuration_height" }
+            logger.log { "Query: nm_find_next_configuration_height" }
             return when (argHeight(args)) {
                 in stage0 -> GtvInteger(5)
                 in stage1 -> GtvInteger(10)

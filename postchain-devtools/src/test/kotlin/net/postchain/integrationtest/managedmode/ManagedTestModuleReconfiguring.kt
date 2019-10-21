@@ -9,6 +9,7 @@ import net.postchain.integrationtest.managedmode.TestModulesHelper.argHeight
 import net.postchain.integrationtest.managedmode.TestModulesHelper.gtvBlockchain0Rid
 import net.postchain.integrationtest.managedmode.TestModulesHelper.peerInfoToGtv
 import net.postchain.integrationtest.managedmode.TestPeerInfos.Companion.peerInfo0
+import net.postchain.util.TestKLogging
 
 open class ManagedTestModuleReconfiguring(val stage: Int) : SimpleGTXModule<Unit>(
         Unit,
@@ -24,7 +25,7 @@ open class ManagedTestModuleReconfiguring(val stage: Int) : SimpleGTXModule<Unit
 
     override fun initializeDB(ctx: EContext) {}
 
-    companion object : KLogging() {
+    companion object : TestKLogging(LogLevel.DEBUG) {
 
         private val stage0 = -1 until 15
         private val stage1 = 15 until 30
@@ -32,26 +33,26 @@ open class ManagedTestModuleReconfiguring(val stage: Int) : SimpleGTXModule<Unit
         private val stage3 = 45 until 60
 
         fun queryGetPeerInfos(unit: Unit, eContext: EContext, args: Gtv): Gtv {
-            logger.error { "Query: nm_get_peer_infos" }
+            logger.log { "Query: nm_get_peer_infos" }
             return GtvArray(arrayOf(
                     peerInfoToGtv(peerInfo0))
             )
         }
 
         fun queryGetPeerListVersion(unit: Unit, eContext: EContext, args: Gtv): Gtv {
-            logger.error { "Query: nm_get_peer_list_version" }
+            logger.log { "Query: nm_get_peer_list_version" }
             return GtvInteger(1L)
         }
 
         fun queryComputeBlockchainList(unit: Unit, eContext: EContext, args: Gtv): Gtv {
-            logger.error { "Query: nm_compute_blockchain_list" }
+            logger.log { "Query: nm_compute_blockchain_list" }
             return GtvArray(arrayOf(gtvBlockchain0Rid()))
         }
 
         fun queryGetConfiguration(unit: Unit, eContext: EContext, args: Gtv): Gtv {
-            logger.error { "Query: nm_get_blockchain_configuration" }
+            logger.log { "Query: nm_get_blockchain_configuration" }
 
-            logger.warn { "height: ${argHeight(args)}" }
+            logger.log { "height: ${argHeight(args)}" }
 
             val blockchainConfigFilename = when (argHeight(args)) {
                 15L -> "/net/postchain/devtools/managedmode/blockchain_config_reconfiguring_15.xml"
@@ -60,7 +61,7 @@ open class ManagedTestModuleReconfiguring(val stage: Int) : SimpleGTXModule<Unit
                 else -> "an unreachable branch"
             }
 
-            logger.warn { "blockchainConfigFilename: $blockchainConfigFilename" }
+            logger.log { "blockchainConfigFilename: $blockchainConfigFilename" }
 
             val gtvConfig = GtvMLParser.parseGtvML(
                     javaClass.getResource(blockchainConfigFilename).readText())
@@ -69,7 +70,7 @@ open class ManagedTestModuleReconfiguring(val stage: Int) : SimpleGTXModule<Unit
         }
 
         fun queryFindNextConfigurationHeight(unit: Unit, eContext: EContext, args: Gtv): Gtv {
-            logger.error { "Query: nm_find_next_configuration_height" }
+            logger.log { "Query: nm_find_next_configuration_height" }
             return when (argHeight(args)) {
                 in stage0 -> GtvInteger(15)
                 in stage1 -> GtvInteger(30)
