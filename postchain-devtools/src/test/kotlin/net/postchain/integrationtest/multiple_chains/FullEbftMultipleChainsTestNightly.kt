@@ -57,7 +57,7 @@ open class FullEbftMultipleChainsTestNightly : IntegrationTest() {
         // Asserting all chains are connected
         // We don't need to assert all connections, just check some random connections
         if (nodesCount > 1) {
-            await().atMost(TEN_SECONDS.multiply(2))
+            await().atMost(TEN_SECONDS.multiply(3))
                     .untilAsserted {
                         nodes.forEachIndexed { i, _ ->
                             val randNode = selectAnotherRandNode(i, nodesCount)
