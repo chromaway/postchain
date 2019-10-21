@@ -8,6 +8,7 @@ import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.assertNodeConnectedWith
 import net.postchain.util.NodesTestHelper.selectAnotherRandNode
 import org.awaitility.Awaitility.await
+import org.awaitility.Duration.ONE_MINUTE
 import org.awaitility.Duration.TEN_SECONDS
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -57,7 +58,7 @@ open class FullEbftMultipleChainsTestNightly : IntegrationTest() {
         // Asserting all chains are connected
         // We don't need to assert all connections, just check some random connections
         if (nodesCount > 1) {
-            await().atMost(TEN_SECONDS.multiply(3))
+            await().atMost(ONE_MINUTE)
                     .untilAsserted {
                         nodes.forEachIndexed { i, _ ->
                             val randNode = selectAnotherRandNode(i, nodesCount)
