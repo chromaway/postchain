@@ -14,8 +14,7 @@ class ManagedNodeConfigurationProvider(
     }
 
     override fun getPeerInfoCollection(appConfig: AppConfig): Array<PeerInfo> {
-        return managedPeerSource
-                ?.getPeerInfos()
-                ?: super.getPeerInfoCollection(appConfig)
+        return super.getPeerInfoCollection(appConfig) +
+                (managedPeerSource?.getPeerInfos() ?: emptyArray())
     }
 }
