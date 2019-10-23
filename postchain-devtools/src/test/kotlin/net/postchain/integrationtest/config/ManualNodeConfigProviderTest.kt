@@ -4,11 +4,10 @@ import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import net.postchain.base.PeerInfo
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS
-import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_CREATED_AT
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_HOST
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_PORT
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_PUBKEY
-import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_UPDATED_AT
+import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_TIMESTAMP
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.config.SimpleDatabaseConnector
@@ -111,9 +110,9 @@ class ManualNodeConfigProviderTest : IntegrationTest() {
             QueryRunner().insert(
                     connection,
                     "INSERT INTO $TABLE_PEERINFOS " +
-                            "($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT, $TABLE_PEERINFOS_FIELD_PUBKEY, $TABLE_PEERINFOS_FIELD_CREATED_AT, $TABLE_PEERINFOS_FIELD_UPDATED_AT) " +
-                            "VALUES (?, ?, ?, ?, ?)",
-                    ScalarHandler<Long>(), peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex(), ts, ts)
+                            "($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT, $TABLE_PEERINFOS_FIELD_PUBKEY, $TABLE_PEERINFOS_FIELD_TIMESTAMP) " +
+                            "VALUES (?, ?, ?, ?)",
+                    ScalarHandler<Long>(), peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex(), ts)
         }
 
         SimpleDatabaseConnector(appConfig)

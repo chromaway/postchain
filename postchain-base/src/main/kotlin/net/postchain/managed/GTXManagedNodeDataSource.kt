@@ -6,6 +6,7 @@ import net.postchain.core.BlockQueries
 import net.postchain.core.EContext
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvFactory
+import java.time.Instant
 
 class GTXManagedNodeDataSource(val queries: BlockQueries, val nodeConfig: NodeConfig) : ManagedNodeDataSource {
 
@@ -17,7 +18,8 @@ class GTXManagedNodeDataSource(val queries: BlockQueries, val nodeConfig: NodeCo
                     PeerInfo(
                             pia[0].asString(),
                             pia[1].asInteger().toInt(),
-                            pia[2].asByteArray()
+                            pia[2].asByteArray(),
+                            Instant.ofEpochMilli(if (pia[3].isNull()) 0 else pia[3].asInteger())
                     )
                 }
                 .toTypedArray()

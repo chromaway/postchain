@@ -63,7 +63,7 @@ class CommandPeerInfoImport : Command {
                             || dbLayer.findPeerInfo(null, null, peerInfo.pubKey.toHex()).isNotEmpty())
                     if (!found) {
                         val added = dbLayer.addPeerInfo(
-                                peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex(), peerInfo.createdAt, peerInfo.updatedAt)
+                                peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex(), peerInfo.timestamp)
 
                         if (added) {
                             imported.add(peerInfo)

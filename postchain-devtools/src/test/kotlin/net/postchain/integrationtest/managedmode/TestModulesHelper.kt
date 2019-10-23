@@ -26,7 +26,8 @@ object TestModulesHelper {
         return GtvFactory.gtv(
                 GtvFactory.gtv(peerInfo.host),
                 GtvFactory.gtv(peerInfo.port.toLong()),
-                GtvFactory.gtv(peerInfo.pubKey))
+                GtvFactory.gtv(peerInfo.pubKey),
+                GtvFactory.gtv(peerInfo.timestamp?.toEpochMilli() ?: 0))
     }
 
     fun peerInfoAsString(peerInfos: Array<PeerInfo>): String {
