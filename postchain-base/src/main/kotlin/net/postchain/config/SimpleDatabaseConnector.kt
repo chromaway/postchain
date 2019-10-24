@@ -4,9 +4,9 @@ import net.postchain.config.app.AppConfig
 import org.apache.commons.dbcp2.BasicDataSource
 import java.sql.Connection
 
-class SimpleDatabaseConnector(private val appConfig: AppConfig) {
+class SimpleDatabaseConnector(private val appConfig: AppConfig) : DatabaseConnector {
 
-    fun <Result> withReadConnection(action: (Connection) -> Result): Result {
+    override fun <Result> withReadConnection(action: (Connection) -> Result): Result {
         val connection = openReadConnection()
 
         try {
@@ -16,7 +16,7 @@ class SimpleDatabaseConnector(private val appConfig: AppConfig) {
         }
     }
 
-    fun <Result> withWriteConnection(action: (Connection) -> Result): Result {
+    override fun <Result> withWriteConnection(action: (Connection) -> Result): Result {
         val connection = openWriteConnection()
 
         try {
@@ -26,19 +26,19 @@ class SimpleDatabaseConnector(private val appConfig: AppConfig) {
         }
     }
 
-    fun openReadConnection(): Connection {
+    override fun openReadConnection(): Connection {
         return createReadDataSource(appConfig).connection
     }
 
-    fun closeReadConnection(connection: Connection) {
+    override fun closeReadConnection(connection: Connection) {
         connection.close()
     }
 
-    fun openWriteConnection(): Connection {
+    override fun openWriteConnection(): Connection {
         return createWriteDataSource(appConfig).connection
     }
 
-    fun closeWriteConnection(connection: Connection, commit: Boolean = true) {
+    override fun closeWriteConnection(connection: Connection, commit: Boolean) {
         if (commit) {
             connection.commit()
         } else {
