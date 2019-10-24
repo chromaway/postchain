@@ -2,10 +2,14 @@ package net.postchain.config.node
 
 import assertk.assertions.containsExactly
 import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isSameAs
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import net.postchain.base.PeerInfo
+import net.postchain.base.peerId
 import net.postchain.common.hexStringToByteArray
+import net.postchain.config.app.AppConfig
 import net.postchain.config.app.AppConfigDbLayer
 import org.junit.Test
 import java.time.Instant
@@ -18,6 +22,30 @@ class ManagedNodeConfigurationProviderTest {
     private val peerInfo1New = PeerInfo("127.0.0.1", 9901, "BBBB".hexStringToByteArray(), Instant.now())
     private val peerInfo2 = PeerInfo("127.0.0.1", 9902, "CCCC".hexStringToByteArray(), Instant.EPOCH)
     private val peerInfo2New = PeerInfo("127.0.0.1", 9902, "CCCC".hexStringToByteArray(), Instant.now())
+
+    @Test
+    fun testGetConfiguration() {
+        // Expected
+        val expected = arrayOf(peerInfo0, peerInfo1)
+        val actual = mapOf(
+                peerInfo1.peerId() to peerInfo1,
+                peerInfo0.peerId() to peerInfo0)
+
+        // Mock
+        val appConfig = AppConfig(mock())
+        val mockAppConfigDbLayer: AppConfigDbLayer = mock {
+            on { getPeerInfoCollection() } doReturn expected
+        }
+
+        // SUT
+        val provider = ManualNodeConfigurationProvider(
+                appConfig, { MockDatabaseConnector() }, { _, _ -> mockAppConfigDbLayer })
+
+        // Assert
+        val config = provider.getConfiguration()
+        assertk.assert(config.appConfig).isSameAs(appConfig)
+        assertk.assert(config.peerInfoMap).isEqualTo(actual)
+    }
 
     /**
      * Implementation of most tests
@@ -51,7 +79,7 @@ class ManagedNodeConfigurationProviderTest {
     }
 
     @Test
-    fun manualProvider_returns_noPeers_AND_managedDataSource_returns_noPeers() {
+    fun getPeerInfoCollection__manualProvider_returns_noPeers_AND_managedDataSource_returns_noPeers() {
         mock_then_buildSUT_then_assertPeerInfoCollection(
                 emptyArray(),
                 emptyArray(),
@@ -60,7 +88,7 @@ class ManagedNodeConfigurationProviderTest {
     }
 
     @Test
-    fun manualProvider_returns_singlePeer_AND_managedDataSource_returns_noPeers() {
+    fun getPeerInfoCollection__manualProvider_returns_singlePeer_AND_managedDataSource_returns_noPeers() {
         mock_then_buildSUT_then_assertPeerInfoCollection(
                 arrayOf(peerInfo2),
                 emptyArray(),
@@ -69,7 +97,7 @@ class ManagedNodeConfigurationProviderTest {
     }
 
     @Test
-    fun manualProvider_returns_twoPeers_AND_managedDataSource_returns_noPeers() {
+    fun getPeerInfoCollection__manualProvider_returns_twoPeers_AND_managedDataSource_returns_noPeers() {
         mock_then_buildSUT_then_assertPeerInfoCollection(
                 arrayOf(peerInfo0, peerInfo1),
                 emptyArray(),
@@ -78,7 +106,7 @@ class ManagedNodeConfigurationProviderTest {
     }
 
     @Test
-    fun provider_returns_managedPeerInfos_iff_managedDataSource_isNotNull() {
+    fun getPeerInfoCollection__provider_returns_managedPeerInfos_iff_managedDataSource_isNotNull() {
         // Mock
         val mockAppConfigDbLayer: AppConfigDbLayer = mock {
             on { getPeerInfoCollection() } doReturn emptyArray()
@@ -118,7 +146,7 @@ class ManagedNodeConfigurationProviderTest {
     }
 
     @Test
-    fun manualProvider_returns_noPeers_AND_managedDataSource_returns_singlePeer() {
+    fun getPeerInfoCollection__manualProvider_returns_noPeers_AND_managedDataSource_returns_singlePeer() {
         mock_then_buildSUT_then_assertPeerInfoCollection(
                 emptyArray(),
                 arrayOf(peerInfo2),
@@ -127,7 +155,7 @@ class ManagedNodeConfigurationProviderTest {
     }
 
     @Test
-    fun manualProvider_returns_singlePeer_AND_managedDataSource_returns_twoOtherPeers() {
+    fun getPeerInfoCollection__manualProvider_returns_singlePeer_AND_managedDataSource_returns_twoOtherPeers() {
         mock_then_buildSUT_then_assertPeerInfoCollection(
                 arrayOf(peerInfo2),
                 arrayOf(peerInfo0, peerInfo1),
@@ -136,7 +164,7 @@ class ManagedNodeConfigurationProviderTest {
     }
 
     @Test
-    fun manualProvider_returns_singlePeer_AND_managedDataSource_returns_theSame() {
+    fun getPeerInfoCollection__manualProvider_returns_singlePeer_AND_managedDataSource_returns_theSame() {
         mock_then_buildSUT_then_assertPeerInfoCollection(
                 arrayOf(peerInfo0),
                 arrayOf(peerInfo0),
@@ -145,7 +173,7 @@ class ManagedNodeConfigurationProviderTest {
     }
 
     @Test
-    fun manualProvider_returns_twoPeers_AND_managedDataSource_returns_theSame() {
+    fun getPeerInfoCollection__manualProvider_returns_twoPeers_AND_managedDataSource_returns_theSame() {
         mock_then_buildSUT_then_assertPeerInfoCollection(
                 arrayOf(peerInfo0, peerInfo2),
                 arrayOf(peerInfo0, peerInfo2),
@@ -154,7 +182,7 @@ class ManagedNodeConfigurationProviderTest {
     }
 
     @Test
-    fun manualProvider_returns_singlePeer_AND_managedDataSource_returns_theSamePeerButNewer() {
+    fun getPeerInfoCollection__manualProvider_returns_singlePeer_AND_managedDataSource_returns_theSamePeerButNewer() {
         mock_then_buildSUT_then_assertPeerInfoCollection(
                 arrayOf(peerInfo0),
                 arrayOf(peerInfo0New),
@@ -163,7 +191,7 @@ class ManagedNodeConfigurationProviderTest {
     }
 
     @Test
-    fun manualProvider_returns_singlePeer_AND_managedDataSource_returns_theSamePeerButOlder() {
+    fun getPeerInfoCollection__manualProvider_returns_singlePeer_AND_managedDataSource_returns_theSamePeerButOlder() {
         mock_then_buildSUT_then_assertPeerInfoCollection(
                 arrayOf(peerInfo0New),
                 arrayOf(peerInfo0),
@@ -172,7 +200,7 @@ class ManagedNodeConfigurationProviderTest {
     }
 
     @Test
-    fun manualProvider_returns_twoPeers_AND_managedDataSource_returns_threePeersNewerOrOlder() {
+    fun getPeerInfoCollection__manualProvider_returns_twoPeers_AND_managedDataSource_returns_threePeersNewerOrOlder() {
         mock_then_buildSUT_then_assertPeerInfoCollection(
                 arrayOf(peerInfo0, peerInfo1New),
                 arrayOf(peerInfo0New, peerInfo1, peerInfo2New),

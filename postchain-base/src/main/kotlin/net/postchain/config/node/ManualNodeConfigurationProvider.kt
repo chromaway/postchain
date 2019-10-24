@@ -1,6 +1,7 @@
 package net.postchain.config.node
 
 import net.postchain.base.PeerInfo
+import net.postchain.base.peerId
 import net.postchain.config.DatabaseConnector
 import net.postchain.config.app.AppConfig
 import net.postchain.config.app.AppConfigDbLayer
@@ -20,7 +21,7 @@ open class ManualNodeConfigurationProvider(
     }
 
     private fun getPeerInfoMap(appConfig: AppConfig): Map<XPeerID, PeerInfo> =
-            getPeerInfoCollection(appConfig).map { XPeerID(it.pubKey) to it }.toMap()
+            getPeerInfoCollection(appConfig).associateBy(PeerInfo::peerId)
 
     open fun getPeerInfoCollection(appConfig: AppConfig): Array<PeerInfo> {
         return databaseConnector(appConfig).withWriteConnection { connection ->
