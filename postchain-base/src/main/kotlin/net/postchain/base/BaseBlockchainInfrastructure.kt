@@ -30,10 +30,6 @@ class BaseBlockchainInfrastructure(
         apiInfrastructure.shutdown()
     }
 
-    override fun parseConfigurationString(rawData: String, format: String): ByteArray {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
     override fun makeBlockchainConfiguration(rawConfigurationData: ByteArray, context: BlockchainContext): BlockchainConfiguration {
         val actualContext = if (context.nodeRID == null) {
             BaseBlockchainContext(context.blockchainRID, context.nodeID, context.chainID, subjectID)

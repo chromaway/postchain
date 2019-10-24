@@ -9,9 +9,6 @@ interface SynchronizationInfrastructure : Shutdownable {
 }
 
 interface BlockchainInfrastructure : SynchronizationInfrastructure {
-    @Deprecated("TODO: Remove it after Managed Mode is done")
-    fun parseConfigurationString(rawData: String, format: String): ByteArray
-
     fun makeBlockchainConfiguration(rawConfigurationData: ByteArray, context: BlockchainContext): BlockchainConfiguration
     fun makeBlockchainEngine(configuration: BlockchainConfiguration): BlockchainEngine
 
