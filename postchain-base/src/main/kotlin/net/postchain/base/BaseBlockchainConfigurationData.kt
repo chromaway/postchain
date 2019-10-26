@@ -63,6 +63,11 @@ class BaseBlockchainConfigurationData(
         }
     }
 
+    fun getMaxTransactionSize() : Long {
+        val gtxDict = data["gtx"]
+        return gtxDict?.get("max_transaction_size")?.asInteger() ?: 1
+    }
+
     companion object {
 
         @Deprecated("Deprecated in v2.4.4. Will be deleted in v3.0")
