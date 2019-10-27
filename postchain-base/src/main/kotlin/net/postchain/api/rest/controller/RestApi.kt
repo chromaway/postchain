@@ -133,8 +133,11 @@ class RestApi(
             }
             http.post("/tx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
                 val n = TimeLog.startSumConc("RestApi.buildRouter().postTx")
-                logger.debug("Request body: ${request.body()}")
                 val tx = toTransaction(request)
+                val maxLength = if (tx.bytes.size > 200) 200 else tx.bytes.size
+                logger.debug("""
+                    Request body : {"tx": "${tx.bytes.sliceArray(0..maxLength-1).toHex()}" } 
+                """.trimIndent())
                 if (!tx.tx.matches(Regex("[0-9a-fA-F]{2,}"))) {
                     throw UserMistake("Invalid tx format. Expected {\"tx\": <hexString>}")
                 }
