@@ -147,33 +147,4 @@ class PostChainClientTest : IntegrationTest() {
             assertEquals(resp.asString(), randomStr)
         }
     }
-
-    @Test
-    fun testMaxTransactionSizeOver() {
-
-        var data3MB = "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,when an unknown printer took a galley of type and scrambled it to make a type specimen book.It has survived not only five centuries, but also the leap into electronic typesetting,remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages,and more recently with desktop"
-
-        for ( i in 1..13) {
-            data3MB += data3MB
-        }
-
-        println(data3MB.byteInputStream().readBytes().size)
-        createTestNodes(3, "/net/postchain/devtools/api/blockchain_config_max_transaction_size.xml")
-        val builder = createGtxDataBuilder(data3MB)
-        val client = createPostChainClient()
-        val result = client.postTransactionSync(builder, ConfirmationLevel.UNVERIFIED)
-        assertEquals(TransactionStatus.REJECTED, result.status)
-    }
-
-    @Test
-    fun testMaxTransactionSizeOk() {
-        createTestNodes(3, "/net/postchain/devtools/api/blockchain_config_max_transaction_size.xml")
-        val builder = createGtxDataBuilder()
-        val client = createPostChainClient()
-        val result = client.postTransactionSync(builder, ConfirmationLevel.UNVERIFIED)
-        assertEquals(TransactionStatus.CONFIRMED, result.status)
-    }
-
-
-
 }

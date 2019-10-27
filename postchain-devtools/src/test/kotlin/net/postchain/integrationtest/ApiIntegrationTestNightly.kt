@@ -6,6 +6,7 @@ import io.restassured.RestAssured.given
 import net.postchain.base.gtv.BlockHeaderDataFactory
 import net.postchain.base.merkle.Hash
 import net.postchain.common.RestTools
+import net.postchain.common.RestTools.awaitConfirmed
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.configurations.GTXTestModule
@@ -157,10 +158,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         configOverrides.setProperty("api.port", 0)
         createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_rejected.xml")
 
-        val builder = GTXDataBuilder(blockchainRIDBytes, arrayOf(KeyPairHelper.pubKey(0)), cryptoSystem)
-        builder.addOperation("gtx_test", arrayOf(gtv(1L), gtv("rejectMe")))
-        builder.finish()
-        builder.sign(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)))
+        val builder = createBuilder("rejectMe")
 
         // post transaction
         testStatusPost(
@@ -187,6 +185,50 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
             JSONAssert.assertEquals(expected, body, JSONCompareMode.STRICT)
         }
+    }
+
+    @Test
+    fun testMaxTransactionSizeOverConfiguration() {
+        val nodesCount = 3
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+        configOverrides.setProperty("api.port", 0)
+        createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_max_transaction_size.xml")
+
+        var data3MB = "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,when an unknown printer took a galley of type and scrambled it to make a type specimen book.It has survived not only five centuries, but also the leap into electronic typesetting,remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages,and more recently with desktop"
+
+        for ( i in 1..13) {
+            data3MB += data3MB
+        }
+
+        val builder = createBuilder(data3MB)
+
+        // post transaction
+        testStatusPost(
+                0,
+                "/tx/$blockchainRID",
+                "{\"tx\": \"${builder.serialize().toHex()}\"}",
+                500)
+    }
+
+    @Test
+    fun testMaxTransactionSizeOk() {
+        val nodesCount = 3
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+        configOverrides.setProperty("api.port", 0)
+        createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_max_transaction_size.xml")
+
+        var dummyData = "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,when an unknown printer took a galley of type and scrambled it to make a type specimen book.It has survived not only five centuries, but also the leap into electronic typesetting,remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages,and more recently with desktop"
+
+        val builder = createBuilder(dummyData)
+
+        // post transaction
+        testStatusPost(
+                0,
+                "/tx/$blockchainRID",
+                "{\"tx\": \"${builder.serialize().toHex()}\"}",
+                200)
+
+        awaitConfirmed(blockchainRID, builder.getDigestForSigning())
     }
 
     /**
@@ -360,5 +402,13 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                 .post(path)
                 .then()
                 .statusCode(expectedStatus)
+    }
+
+    private fun createBuilder(value: String) : GTXDataBuilder {
+        val builder = GTXDataBuilder(blockchainRIDBytes, arrayOf(KeyPairHelper.pubKey(0)), cryptoSystem)
+        builder.addOperation("gtx_test", arrayOf(gtv(1L), gtv(value)))
+        builder.finish()
+        builder.sign(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)))
+        return builder
     }
 }
