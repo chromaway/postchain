@@ -3,7 +3,6 @@
 package net.postchain.ebft.syncmanager
 
 import mu.KLogging
-import net.postchain.base.NetworkNodes
 import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.core.Signature
@@ -313,11 +312,13 @@ class ValidatorSyncManager(
         for ((idx, ns) in statusManager.nodeStatuses.withIndex()) {
             val blockRID = ns.blockRID
             val haveSignature = statusManager.commitSignatures[idx] != null
-            logger.info {
-                "[$blockchainProcessName]: node:$idx he:${ns.height} ro:${ns.round} st:${ns.state}" +
-                        (if (ns.revolting) " R" else "") +
-                        " blockRID:${blockRID?.toHex() ?: "null"}" +
-                        " havesig:$haveSignature"
+            if (logger.isDebugEnabled) {
+                logger.debug {
+                    "[$blockchainProcessName]: node:$idx he:${ns.height} ro:${ns.round} st:${ns.state}" +
+                            (if (ns.revolting) " R" else "") +
+                            " blockRID:${blockRID?.toHex() ?: "null"}" +
+                            " havesig:$haveSignature"
+                }
             }
         }
     }

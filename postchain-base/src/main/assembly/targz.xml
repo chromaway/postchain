@@ -12,13 +12,13 @@
             <source>
                 target/${project.artifactId}-${project.version}-${executable-classifier}.jar
             </source>
-            <outputDirectory>/lib</outputDirectory>
+            <outputDirectory>./lib</outputDirectory>
         </file>
     </files>
     <fileSets>
         <fileSet>
             <directory>${project.build.scriptSourceDirectory}</directory>
-            <outputDirectory>/</outputDirectory>
+            <outputDirectory>./</outputDirectory>
             <includes>
                 <include>*.sh</include>
             </includes>
@@ -27,7 +27,7 @@
         </fileSet>
         <fileSet>
             <directory>src/main/resources/config</directory>
-            <outputDirectory>/demo-config</outputDirectory>
+            <outputDirectory>./demo-config</outputDirectory>
         </fileSet>
     </fileSets>
 </assembly>

@@ -150,9 +150,11 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
         blockBuilder.begin(block.header)
 
         val tBegin = System.nanoTime()
-        block.transactions.forEach { blockBuilder.appendTransaction(
-                smartDecodeTransaction(it)
-        ) }
+        block.transactions.forEach {
+            blockBuilder.appendTransaction(
+                    smartDecodeTransaction(it)
+            )
+        }
         val tEnd = System.nanoTime()
 
         blockBuilder.finalizeAndValidate(block.header)
@@ -224,9 +226,8 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
         if (LOG_STATS) {
             val netRate = (nTransactions * 1000000000L) / (tEnd - tBegin)
             val grossRate = (nTransactions * 1000000000L) / (tDone - tStart)
-            logger.info("""Block is finalized, $nTransactions + $nRejects transactions, \
-                ${ms(tStart, tDone)} ms, $netRate net tps, $grossRate gross tps"""
-            )
+            logger.info("Block is finalized: accepted tx: $nTransactions, rejected tx: $nRejects; " +
+                    "${ms(tStart, tDone)} ms, $netRate net tps, $grossRate gross tps")
         } else {
             logger.info("Block is finalized")
         }

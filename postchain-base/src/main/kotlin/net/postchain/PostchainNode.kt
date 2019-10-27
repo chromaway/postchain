@@ -95,7 +95,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
                 val peerListVersion = dataSource.getPeerListVersion()
                 val reloadBlockchains = (lastPeerListVersion != null) && (lastPeerListVersion != peerListVersion)
                 lastPeerListVersion = peerListVersion
-                logger.info { "Reloading of blockchains ${if (reloadBlockchains) "are" else "are not"} required" }
+                logger.debug { "Reloading of blockchains ${if (reloadBlockchains) "are" else "are not"} required" }
 
                 if (reloadBlockchains) {
                     reloadBlockchainsAsync()

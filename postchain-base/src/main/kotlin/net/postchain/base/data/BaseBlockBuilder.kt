@@ -32,7 +32,7 @@ open class BaseBlockBuilder(
         val subjects: Array<ByteArray>,
         val blockSigMaker: SigMaker,
         val blockchainRelatedInfoDependencyList: List<BlockchainRelatedInfo>
-): AbstractBlockBuilder(eContext, store, txFactory) {
+) : AbstractBlockBuilder(eContext, store, txFactory) {
 
     companion object : KLogging()
 
@@ -46,7 +46,7 @@ open class BaseBlockBuilder(
     fun computeRootHash(): ByteArray {
         val digests = rawTransactions.map { txFactory.decodeTransaction(it).getHash() }
 
-        val gtvArr = gtv(digests.map {gtv(it)})
+        val gtvArr = gtv(digests.map { gtv(it) })
 
         return gtvArr.merkleHash(calc)
     }
@@ -64,16 +64,19 @@ open class BaseBlockBuilder(
         }
 
         val rootHash = computeRootHash()
-        if (logger.isDebugEnabled) {
-            logger.debug("Create Block header. Root hash: ${rootHash.toHex()}, "+
-                    " prev block: ${initialBlockData.prevBlockRID.toHex()} ," +
-                    " height = ${initialBlockData.height} ")
+        val blockHeader = BaseBlockHeader.make(cryptoSystem, initialBlockData, rootHash, timestamp)
+        if (/*logger.isDebugEnabled*/true) {
+//            logger.debug {
+            logger.info {
+                "Block header created: " +
+                        "root-hash: ${rootHash.toHex()}" +
+                        ", block-rid: ${blockHeader.blockRID.toHex()}" +
+                        ", prev-block-rid: ${initialBlockData.prevBlockRID.toHex()}" +
+                        ", height: ${initialBlockData.height}"
+            }
         }
-        val bh = BaseBlockHeader.make(cryptoSystem, initialBlockData, rootHash , timestamp)
-        if (logger.isDebugEnabled) {
-            logger.debug("Block header created with block RID: ${bh.blockRID.toHex()}.")
-        }
-        return bh
+
+        return blockHeader
     }
 
     /**
@@ -93,7 +96,7 @@ open class BaseBlockBuilder(
         return when {
             !Arrays.equals(header.prevBlockRID, initialBlockData.prevBlockRID) ->
                 ValidationResult(false, "header.prevBlockRID != initialBlockData.prevBlockRID," +
-                        "( ${header.prevBlockRID.toHex()} != ${initialBlockData.prevBlockRID.toHex()} ), "+
+                        "( ${header.prevBlockRID.toHex()} != ${initialBlockData.prevBlockRID.toHex()} ), " +
                         " height: ${header.blockHeaderRec.getHeight()} and ${initialBlockData.height} ")
 
             header.blockHeaderRec.getHeight() != initialBlockData.height ->
