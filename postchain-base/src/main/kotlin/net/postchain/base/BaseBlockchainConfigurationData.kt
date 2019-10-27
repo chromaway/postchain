@@ -36,6 +36,12 @@ class BaseBlockchainConfigurationData(
         return data["blockstrategy"]
     }
 
+    // unit is MB
+    fun getMaxBlockSize() : Long {
+        val stratDict = data["blockstrategy"]
+        return stratDict?.get("maxblocksize")?.asInteger() ?: 20
+    }
+
     fun getDependenciesAsList(): List<BlockchainRelatedInfo> {
         val dep = data["dependencies"]
         return if (dep != null) {

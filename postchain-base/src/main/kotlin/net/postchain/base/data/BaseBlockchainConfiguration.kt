@@ -48,7 +48,7 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
     ): BlockBuilder {
         addChainIDToDependencies(ctx) // We wait until now with this, b/c now we have an EContext
         return BaseBlockBuilder(
-                cryptoSystem, ctx, blockStore, getTransactionFactory(), signers, blockSigMaker, bcRelatedInfosDependencyList)
+                cryptoSystem, ctx, blockStore, getTransactionFactory(), signers, blockSigMaker, bcRelatedInfosDependencyList, configData.getMaxBlockSize())
     }
 
     /**

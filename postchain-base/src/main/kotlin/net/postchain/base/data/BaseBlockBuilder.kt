@@ -11,6 +11,7 @@ import net.postchain.getBFTRequiredSignatureCount
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtv.merkleHash
+import java.lang.Exception
 import java.util.*
 
 /**
@@ -31,7 +32,8 @@ open class BaseBlockBuilder(
         txFactory: TransactionFactory,
         val subjects: Array<ByteArray>,
         val blockSigMaker: SigMaker,
-        val blockchainRelatedInfoDependencyList: List<BlockchainRelatedInfo>
+        val blockchainRelatedInfoDependencyList: List<BlockchainRelatedInfo>,
+        val maxBlockSize : Long = 20
 ): AbstractBlockBuilder(eContext, store, txFactory) {
 
     companion object : KLogging()
@@ -210,6 +212,16 @@ open class BaseBlockBuilder(
         val witnessBuilder = BaseBlockWitnessBuilder(cryptoSystem, _blockData!!.header, subjects, getBFTRequiredSignatureCount(subjects.size))
         witnessBuilder.applySignature(blockSigMaker.signDigest(_blockData!!.header.blockRID)) // TODO: POS-04_sig
         return witnessBuilder
+    }
+
+    override fun appendTransaction(tx: Transaction) {
+        super.appendTransaction(tx)
+        val blockSize = transactions.map { t -> t.getHash().size }.sum()
+
+        if (blockSize > maxBlockSize * 1024 * 1024) {
+            throw Exception("block size exceeds max block size ${maxBlockSize} MB")
+        }
+
     }
 
 }
