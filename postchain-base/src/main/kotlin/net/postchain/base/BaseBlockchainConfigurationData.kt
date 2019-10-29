@@ -42,6 +42,11 @@ class BaseBlockchainConfigurationData(
         return stratDict?.get("maxblocksize")?.asInteger() ?: 20
     }
 
+    fun getMaxBlockTransactions() : Long {
+        val stratDict = data["blockstrategy"]
+        return stratDict?.get("maxblocktransactions")?.asInteger() ?: 100
+    }
+
     fun getDependenciesAsList(): List<BlockchainRelatedInfo> {
         val dep = data["dependencies"]
         return if (dep != null) {

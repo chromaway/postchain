@@ -33,7 +33,8 @@ open class BaseBlockBuilder(
         val subjects: Array<ByteArray>,
         val blockSigMaker: SigMaker,
         val blockchainRelatedInfoDependencyList: List<BlockchainRelatedInfo>,
-        val maxBlockSize : Long = 20
+        val maxBlockSize : Long = 20,
+        val maxBlockTransactions : Long = 100
 ): AbstractBlockBuilder(eContext, store, txFactory) {
 
     companion object : KLogging()
@@ -216,12 +217,12 @@ open class BaseBlockBuilder(
 
     override fun appendTransaction(tx: Transaction) {
         super.appendTransaction(tx)
-        val blockSize = transactions.map { t -> t.getHash().size }.sum()
-
-        if (blockSize > maxBlockSize * 1024 * 1024) {
+        val blockSize = transactions.map { t -> t.getRawData().size }.sum()
+        if (blockSize >= maxBlockSize * 1024 * 1024) {
             throw Exception("block size exceeds max block size ${maxBlockSize} MB")
+        } else if (transactions.size >= maxBlockTransactions) {
+            throw Exception("Number of transactions exceeds max ${maxBlockTransactions} transactions in block")
         }
-
     }
 
 }

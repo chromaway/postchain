@@ -187,50 +187,6 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         }
     }
 
-    @Test
-    fun testMaxTransactionSizeOverConfiguration() {
-        val nodesCount = 3
-        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-        configOverrides.setProperty("api.port", 0)
-        createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_max_transaction_size.xml")
-
-        var data3MB = "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,when an unknown printer took a galley of type and scrambled it to make a type specimen book.It has survived not only five centuries, but also the leap into electronic typesetting,remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages,and more recently with desktop"
-
-        for ( i in 1..13) {
-            data3MB += data3MB
-        }
-
-        val builder = createBuilder(data3MB)
-
-        // post transaction
-        testStatusPost(
-                0,
-                "/tx/$blockchainRID",
-                "{\"tx\": \"${builder.serialize().toHex()}\"}",
-                500)
-    }
-
-    @Test
-    fun testMaxTransactionSizeOk() {
-        val nodesCount = 3
-        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-        configOverrides.setProperty("api.port", 0)
-        createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_max_transaction_size.xml")
-
-        var dummyData = "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,when an unknown printer took a galley of type and scrambled it to make a type specimen book.It has survived not only five centuries, but also the leap into electronic typesetting,remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages,and more recently with desktop"
-
-        val builder = createBuilder(dummyData)
-
-        // post transaction
-        testStatusPost(
-                0,
-                "/tx/$blockchainRID",
-                "{\"tx\": \"${builder.serialize().toHex()}\"}",
-                200)
-
-        awaitConfirmed(blockchainRID, builder.getDigestForSigning())
-    }
-
     /**
      * Will create and post a transaction to the servers
      *
