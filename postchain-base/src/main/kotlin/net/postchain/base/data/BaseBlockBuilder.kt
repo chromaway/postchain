@@ -219,10 +219,16 @@ open class BaseBlockBuilder(
         super.appendTransaction(tx)
         val blockSize = transactions.map { t -> t.getRawData().size }.sum()
         if (blockSize >= maxBlockSize * 1024 * 1024) {
-            throw Exception("block size exceeds max block size ${maxBlockSize} MB")
+            throw UserMistake("block size exceeds max block size ${maxBlockSize} MB")
         } else if (transactions.size >= maxBlockTransactions) {
-            throw Exception("Number of transactions exceeds max ${maxBlockTransactions} transactions in block")
+            throw UserMistake("Number of transactions exceeds max ${maxBlockTransactions} transactions in block")
         }
     }
 
+
+    fun validateMaxBlockTransactions() {
+        if (transactions.size >= maxBlockTransactions) {
+            throw UserMistake("Number of transactions exceeds max ${maxBlockTransactions} transactions in block")
+        }
+    }
 }

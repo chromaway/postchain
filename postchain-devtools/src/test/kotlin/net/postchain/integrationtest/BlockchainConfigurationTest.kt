@@ -42,20 +42,6 @@ class BlockchainConfigurationTest : IntegrationTest() {
     }
 
     @Test
-    fun testMaxBlockTransactions() {
-        configOverrides.setProperty("infrastructure", "base/test")
-        val node = createNode(0, "/net/postchain/devtools/blocks/blockchain_config_max_block_size.xml")
-        val txQueue = node.getBlockchainInstance().getEngine().getTransactionQueue()
-
-        // over max transaction is 10
-        for (i in 1..11) {
-            txQueue.enqueue(buildTransaction("test-${i}"))
-        }
-        buildBlockAndCommit(node)
-        println(getBestHeight(node))
-    }
-
-    @Test
     fun testMaxTransactionSize() {
         configOverrides.setProperty("infrastructure", "base/test")
         val node = createNode(0, "/net/postchain/devtools/blocks/blockchain_config_max_transaction_size.xml")
