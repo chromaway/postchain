@@ -131,6 +131,7 @@ class RestApi(
 
                 "OK"
             }
+
             http.post("/tx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
                 val n = TimeLog.startSumConc("RestApi.buildRouter().postTx")
                 logger.debug("Request body: ${request.body()}")
@@ -142,6 +143,7 @@ class RestApi(
                 TimeLog.end("RestApi.buildRouter().postTx", n)
                 "{}"
             }
+
             http.get("/tx/$PARAM_BLOCKCHAIN_RID/$PARAM_HASH_HEX", "application/json", { request, _ ->
                 runTxActionOnModel(request) { model, txRID ->
                     model.getTransaction(txRID)

@@ -93,11 +93,11 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
 
                 // Checking out for a peers set changes
                 val peerListVersion = dataSource.getPeerListVersion()
-                val reloadBlockchains = (lastPeerListVersion != null) && (lastPeerListVersion != peerListVersion)
+                val doReload = (lastPeerListVersion != null) && (lastPeerListVersion != peerListVersion)
                 lastPeerListVersion = peerListVersion
-                logger.debug { "Reloading of blockchains ${if (reloadBlockchains) "are" else "are not"} required" }
 
-                if (reloadBlockchains) {
+                if (doReload) {
+                    logger.info { "Reloading of blockchains are required" }
                     reloadBlockchainsAsync()
                     true
 
@@ -105,9 +105,9 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
                     val toLaunch = retrieveBlockchainsToLaunch()
                     val launched = processManager.getBlockchains()
 
-                    // Checking out for a chain configuration changes
+                    // Checking out for a chain0 configuration changes
                     val reloadBlockchainConfig = withReadConnection(storage, 0L) { eContext ->
-                        (blockchainConfigProvider.needsConfigurationChange(eContext, 0L))
+                        blockchainConfigProvider.needsConfigurationChange(eContext, 0L)
                     }
 
                     // Launching blockchain 0
@@ -163,8 +163,13 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
             initialize()
 
             // Starting blockchains: at first chain0, then the rest
+            logger.info { "Launching blockchain 0" }
             startBlockchain(0L)
-            toLaunch.filter { it != 0L }.forEach { startBlockchain(it) }
+
+            toLaunch.filter { it != 0L }.forEach {
+                logger.info { "Launching blockchain $it" }
+                startBlockchain(it)
+            }
         }
     }
 
@@ -172,6 +177,8 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         executor.submit {
             // Launching blockchain 0
             if (reloadChain0) {
+                logger.info { "Reloading of blockchain 0 is required" }
+                logger.info { "Launching blockchain 0" }
                 processManager.startBlockchain(0L)
             }
 
@@ -179,7 +186,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
             toLaunch.filter { it != 0L }
                     .filter { processManager.retrieveBlockchain(it) == null }
                     .forEach {
-                        logger.info { "Blockchain will be started: chainId: $it" }
+                        logger.info { "Launching blockchain $it" }
                         processManager.startBlockchain(it)
                     }
 
@@ -187,7 +194,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
             launched.filterNot(toLaunch::contains)
                     .filter { processManager.retrieveBlockchain(it) != null }
                     .forEach {
-                        logger.info { "Blockchain will be stopped: chainId: $it" }
+                        logger.info { "Stopping blockchain $it" }
                         processManager.stopBlockchain(it)
                     }
         }
@@ -226,7 +233,12 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
             val height = dbAccess.getLastBlockHeight(ctx)
             val nextConfigHeight = dataSource.findNextConfigurationHeight(brid, height)
             if (nextConfigHeight != null) {
+                logger.info { "Next config height fount in managed-mode module: $nextConfigHeight" }
                 if (BaseConfigurationDataStore.findConfiguration(ctx, nextConfigHeight) != nextConfigHeight) {
+                    logger.info {
+                        "Configuration for the height $nextConfigHeight is not fount in ConfigurationDataStore " +
+                                "and will be loaded into it from managed-mode module"
+                    }
                     val config = dataSource.getConfiguration(brid, nextConfigHeight)!!
                     BaseConfigurationDataStore.addConfigurationData(ctx, nextConfigHeight, config)
                 }
