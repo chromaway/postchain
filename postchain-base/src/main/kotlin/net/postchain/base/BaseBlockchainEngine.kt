@@ -7,6 +7,7 @@ import net.postchain.base.data.BaseManagedBlockBuilder
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.devtools.PeerNameHelper.shortBrid
 import nl.komponents.kovenant.task
 import java.lang.Long.max
 
@@ -117,7 +118,6 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
 
     private fun parallelLoadUnfinishedBlock(block: BlockData): ManagedBlockBuilder {
         val tStart = System.nanoTime()
-        val factory = blockchainConfiguration.getTransactionFactory()
         val transactions = block.transactions.map { txData ->
             task { smartDecodeTransaction(txData) }
         }
@@ -226,7 +226,8 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
         if (LOG_STATS) {
             val netRate = (nTransactions * 1000000000L) / (tEnd - tBegin)
             val grossRate = (nTransactions * 1000000000L) / (tDone - tStart)
-            logger.info("Block is finalized: accepted tx: $nTransactions, rejected tx: $nRejects; " +
+            logger.info("Chain: ${shortBrid(blockchainConfiguration.blockchainRID)}: " +
+                    "Block is finalized: accepted tx: $nTransactions, rejected tx: $nRejects; " +
                     "${ms(tStart, tDone)} ms, $netRate net tps, $grossRate gross tps")
         } else {
             logger.info("Block is finalized")

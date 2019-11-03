@@ -8,6 +8,7 @@ import net.postchain.base.Storage
  */
 interface BlockchainConfiguration {
     val chainID: Long
+    val blockchainRID: ByteArray
     val traits: Set<String>
 
     fun decodeBlockHeader(rawBlockHeader: ByteArray): BlockHeader

@@ -28,7 +28,7 @@ class BaseBlockBuilderTest {
     val dummy = ByteArray(32, { 0 })
     val subjects = arrayOf("test".toByteArray())
     val signer = cryptoSystem.buildSigMaker(pubKey(0), privKey(0))
-    val bbb = BaseBlockBuilder(cryptoSystem, ctx, bbs, tf, subjects, signer, listOf())
+    val bbb = BaseBlockBuilder(myBlockchainRid, cryptoSystem, ctx, bbs, tf, subjects, signer, listOf())
 
     @Test
     fun invalidMonotoneTimestamp() {

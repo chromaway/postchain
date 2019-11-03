@@ -7,6 +7,7 @@ import net.postchain.base.*
 import net.postchain.base.merkle.Hash
 import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.devtools.PeerNameHelper.shortBrid
 import net.postchain.getBFTRequiredSignatureCount
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
@@ -25,6 +26,7 @@ import java.util.*
  * @property blockSigMaker used to produce signatures on blocks for local node
  */
 open class BaseBlockBuilder(
+        val blockchainRID: ByteArray,
         val cryptoSystem: CryptoSystem,
         eContext: EContext,
         store: BlockStore,
@@ -68,7 +70,8 @@ open class BaseBlockBuilder(
         if (/*logger.isDebugEnabled*/true) {
 //            logger.debug {
             logger.info {
-                "Block header created: " +
+                "Chain: ${shortBrid(blockchainRID)}" +
+                        ", block header created: " +
                         "root-hash: ${rootHash.toHex()}" +
                         ", block-rid: ${blockHeader.blockRID.toHex()}" +
                         ", prev-block-rid: ${initialBlockData.prevBlockRID.toHex()}" +
@@ -94,7 +97,7 @@ open class BaseBlockBuilder(
 
         val computedMerkleRoot = computeRootHash()
         return when {
-            !Arrays.equals(header.prevBlockRID, initialBlockData.prevBlockRID) ->
+            !header.prevBlockRID.contentEquals(initialBlockData.prevBlockRID) ->
                 ValidationResult(false, "header.prevBlockRID != initialBlockData.prevBlockRID," +
                         "( ${header.prevBlockRID.toHex()} != ${initialBlockData.prevBlockRID.toHex()} ), " +
                         " height: ${header.blockHeaderRec.getHeight()} and ${initialBlockData.height} ")

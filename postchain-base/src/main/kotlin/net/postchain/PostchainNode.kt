@@ -120,6 +120,11 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
 
         fun restartHandler(chainId: Long): Boolean {
             return synchronizer.withLock {
+                // Preloading blockchain configuration
+                if (inManagedMode()) {
+                    loadBlockchainConfiguration(chainId)
+                }
+
                 // Checking out for a chain configuration changes
                 val reloadBlockchainConfig = withReadConnection(storage, chainId) { eContext ->
                     (blockchainConfigProvider.needsConfigurationChange(eContext, chainId))
@@ -275,5 +280,10 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         }
 
         return blockchains.toTypedArray()
+    }
+
+    // TODO: [POS-90]: Redesign this
+    private fun inManagedMode(): Boolean {
+        return ::dataSource.isInitialized
     }
 }

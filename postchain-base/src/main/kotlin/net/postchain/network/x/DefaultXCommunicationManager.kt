@@ -2,8 +2,6 @@ package net.postchain.network.x
 
 import mu.KLogging
 import net.postchain.base.PeerCommConfiguration
-import net.postchain.base.PeerInfo
-import net.postchain.base.peerId
 import net.postchain.common.toHex
 import net.postchain.devtools.PeerNameHelper.peerName
 import net.postchain.network.CommunicationManager
@@ -72,7 +70,7 @@ class DefaultXCommunicationManager<PacketType>(
     private fun decodeAndEnqueue(peerID: XPeerID, packet: ByteArray) {
         // packet decoding should not be synchronized so we can make
         // use of parallel processing in different threads
-        logger.trace ("receiving a packet from peer: ${peerID.byteArray.toHex()}")
+        logger.trace("receiving a packet from peer: ${peerID.byteArray.toHex()}")
         val decodedPacket = packetDecoder.decodePacket(peerID.byteArray, packet)
         synchronized(this) {
             logger.trace("Successfully decoded the package, now adding it ")

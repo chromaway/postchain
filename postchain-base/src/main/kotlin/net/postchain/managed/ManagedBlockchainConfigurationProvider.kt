@@ -37,6 +37,10 @@ class ManagedBlockchainConfigurationProvider : BlockchainConfigurationProvider {
             return (nextConfigHeight != null) && (nextConfigHeight == height + 1)
         }
 
+        return systemProvider.needsConfigurationChange(eContext, chainId)
+
+        // TODO: [POS-90]: Fix this
+        /*
         return if (chainId == 0L) {
             systemProvider.needsConfigurationChange(eContext, chainId)
         } else {
@@ -46,6 +50,7 @@ class ManagedBlockchainConfigurationProvider : BlockchainConfigurationProvider {
                 throw IllegalStateException("Using managed blockchain configuration provider before it's properly initialized")
             }
         }
+         */
     }
 
     private fun getConfigurationFromDataSource(eContext: EContext): ByteArray? {

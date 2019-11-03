@@ -35,10 +35,10 @@ class BaseBlockBuilderValidationTest {
     val db = mock(DatabaseAccess::class.java)
     val ctx = BaseEContext(mockedConn, 2L, 0, db)
     val bctx = BaseBlockEContext(ctx, 1, 10, mapOf())
-    val bbb = BaseBlockBuilder(cryptoSystem, ctx, bbs, tf, subjects, sigMaker, listOf())
+    val bbb = BaseBlockBuilder("0000".hexStringToByteArray(), cryptoSystem, ctx, bbs, tf, subjects, sigMaker, listOf())
 
     @Test
-    fun validateBlokcHeader_valid() {
+    fun validateBlockHeader_valid() {
         val timestamp = 100L
         val blockData = InitialBlockData(myBlockchainRid,2, 2, empty32Bytes, 1, timestamp, null)
         val header = BaseBlockHeader.make(cryptoSystem, blockData, rootHash, timestamp)
