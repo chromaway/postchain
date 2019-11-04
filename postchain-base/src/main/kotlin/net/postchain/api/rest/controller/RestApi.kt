@@ -5,6 +5,7 @@ package net.postchain.api.rest.controller
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import mu.KLogging
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_HEADERS
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_METHODS
@@ -26,6 +27,7 @@ import net.postchain.common.toHex
 import net.postchain.core.UserMistake
 import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.GtvFactory
+import spark.QueryParamsMap
 import spark.Request
 import spark.Service
 
@@ -179,6 +181,11 @@ class RestApi(
                 handleQueries(request)
             }
 
+            // direct query
+            http.get("/dquery/$PARAM_BLOCKCHAIN_RID") { request, _ ->
+                handleDirectQuery(request)
+            }
+
             http.post("/query_gtx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
                 handleGTXQueries(request)
             }
@@ -235,6 +242,16 @@ class RestApi(
         return model(request)
                 .query(Query(request.body()))
                 .json
+    }
+
+    private fun handleDirectQuery(request: Request) : String {
+        val queryMap = request.queryMap()
+        val map = queryMap.toMap()
+        val json = JsonObject()
+        map.keys.forEach {
+            json.addProperty(it, queryMap.value(it))
+        }
+        return model(request).query(Query(gson.toJson(json))).json
     }
 
     private fun handleQueries(request: Request): String {
