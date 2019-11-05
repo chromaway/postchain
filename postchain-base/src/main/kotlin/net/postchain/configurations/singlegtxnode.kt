@@ -2,6 +2,7 @@
 
 package net.postchain.configurations
 
+import net.postchain.common.hexStringToByteArray
 import net.postchain.core.EContext
 import net.postchain.core.TxEContext
 import net.postchain.core.UserMistake
@@ -59,5 +60,21 @@ CREATE TABLE gtx_test_value(tx_iid BIGINT PRIMARY KEY, value TEXT NOT NULL)
             """)
             GTXSchemaManager.setModuleVersion(ctx, moduleName, 0)
         }
+    }
+}
+
+//  Test Direct Query purpose
+class TestDQueryModule : SimpleGTXModule<Unit>(Unit,
+        mapOf(),
+        mapOf("get_picture" to { u, ctxt, args ->
+            val id = (args as GtvDictionary).get("id")
+            if (id == null) {
+                throw UserMistake("get_picture can not take id as null")
+            }
+            gtv(gtv("image/png"), gtv("0123456708090A0B0C0D0E0F".hexStringToByteArray()))
+        })
+) {
+    override fun initializeDB(ctx: EContext) {
+
     }
 }

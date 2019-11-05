@@ -181,7 +181,7 @@ class RestApi(
                 handleQueries(request)
             }
 
-            // direct query
+            // direct query. That should be used as example: <img src="http://node/dquery/brid?type=get_picture&id=4555" />
             http.get("/dquery/$PARAM_BLOCKCHAIN_RID") { request, _ ->
                 handleDirectQuery(request)
             }

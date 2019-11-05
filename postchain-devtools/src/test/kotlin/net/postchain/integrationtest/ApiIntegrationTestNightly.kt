@@ -28,6 +28,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.skyscreamer.jsonassert.JSONAssert
 import org.skyscreamer.jsonassert.JSONCompareMode
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import kotlin.test.assertTrue
 
 class ApiIntegrationTestNightly : IntegrationTest() {
@@ -61,6 +63,23 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         val tx = postGtxTransaction(factory, 1, blockHeight, nodeCount)
 
         awaitConfirmed(blockchainRID, tx!!.getRID())
+    }
+
+    @Test
+    fun testDirectQueryApi() {
+        val nodesCount = 1
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+        configOverrides.setProperty("api.port", 0)
+        createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_dquery.xml")
+
+        buildBlockAndCommit(nodes[0])
+
+        given().port(nodes[0].getRestApiHttpPort())
+                .get("/dquery/$blockchainRID?type=get_picture&id=1234")
+                .then()
+                .statusCode(200)
+                .body(IsEqual.equalTo("[\"image/png\",\"0123456708090A0B0C0D0E0F\"]"))
+
     }
 
     @Test
