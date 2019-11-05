@@ -65,7 +65,7 @@ class CommandPeerInfoAdd : Command {
         val connector = SimpleDatabaseConnector(appConfig)
         var peerinfos = arrayOf<PeerInfo>()
 
-        connector.withReadConnection { connection ->
+        connector.withWriteConnection { connection ->
             peerinfos = AppConfigDbLayer(appConfig, connection).findPeerInfo(
                     host, port, null)
             if (!peerinfos.isEmpty()) {
