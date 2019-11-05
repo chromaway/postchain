@@ -36,11 +36,9 @@ class EBFTSynchronizationInfrastructure(val nodeConfigProvider: NodeConfiguratio
         connectionManager.shutdown()
     }
 
-    override fun makeBlockchainProcess(processName: String, engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
+    override fun makeBlockchainProcess(processName: String, engine: BlockchainEngine): BlockchainProcess {
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
         validateConfigurations(nodeConfig, blockchainConfig)
-
-        engine.setRestartHandler(restartHandler)
 
         return if (blockchainConfig.configData.context.nodeID != NODE_ID_READ_ONLY) {
             ValidatorWorker(
@@ -48,15 +46,13 @@ class EBFTSynchronizationInfrastructure(val nodeConfigProvider: NodeConfiguratio
                     blockchainConfig.signers,
                     engine,
                     blockchainConfig.configData.context.nodeID,
-                    buildXCommunicationManager(processName, blockchainConfig),
-                    restartHandler)
+                    buildXCommunicationManager(processName, blockchainConfig))
         } else {
             ReadOnlyWorker(
                     processName,
                     blockchainConfig.signers,
                     engine,
-                    buildXCommunicationManager(processName, blockchainConfig),
-                    restartHandler)
+                    buildXCommunicationManager(processName, blockchainConfig))
         }
     }
 

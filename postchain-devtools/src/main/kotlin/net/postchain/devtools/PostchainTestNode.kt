@@ -49,7 +49,6 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider) : Postcha
         addConfiguration(chainId, 0, blockchainConfig)
     }
 
-
     fun addConfiguration(chainId: Long, height: Long, blockchainConfig: Gtv) {
         check(isInitialized) { "PostchainNode is not initialized" }
 

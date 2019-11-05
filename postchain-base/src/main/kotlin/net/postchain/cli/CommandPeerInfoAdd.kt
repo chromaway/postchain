@@ -52,7 +52,7 @@ class CommandPeerInfoAdd : Command {
             val mode = if (force) AlreadyExistMode.FORCE else AlreadyExistMode.ERROR
             val added = peerinfoAdd(nodeConfigFile, host, port, pubKey, mode)
             return when {
-                added -> Ok("Peerinfo has been added")
+                added -> Ok("Peerinfo has been added successfully")
                 else -> Ok("Peerinfo hasn't been added")
             }
         } catch (e: CliError.Companion.CliException) {

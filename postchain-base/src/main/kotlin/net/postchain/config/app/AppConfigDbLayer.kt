@@ -22,11 +22,6 @@ class AppConfigDbLayer(
         private val connection: Connection
 ) {
 
-    init {
-        createSchemaIfNotExists(connection)
-        createTablesIfNotExists(appConfig, connection)
-    }
-
     fun getPeerInfoCollection(): Array<PeerInfo> {
         return findPeerInfo(null, null, null)
     }
@@ -71,10 +66,14 @@ class AppConfigDbLayer(
     }
 
     fun addPeerInfo(peerInfo: PeerInfo): Boolean {
+        checkRequirements()
+
         return addPeerInfo(peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex())
     }
 
     fun addPeerInfo(host: String, port: Int, pubKey: String, timestamp: Instant? = null): Boolean {
+        checkRequirements()
+
         val time = getTimestamp(timestamp)
         return pubKey == QueryRunner().insert(
                 connection,
@@ -86,6 +85,8 @@ class AppConfigDbLayer(
     }
 
     fun updatePeerInfo(host: String, port: Int, pubKey: String, timestamp: Instant? = null): Boolean {
+        checkRequirements()
+
         val time = getTimestamp(timestamp)
         val updated = QueryRunner().update(
                 connection,
@@ -98,6 +99,8 @@ class AppConfigDbLayer(
     }
 
     fun removePeerInfo(pubKey: String): Array<PeerInfo> {
+        checkRequirements()
+
         val result = mutableListOf<PeerInfo>()
 
         val queryRunner = QueryRunner()
@@ -123,12 +126,12 @@ class AppConfigDbLayer(
         }
     }
 
-    private fun createSchemaIfNotExists(connection: Connection) {
+    private fun checkRequirements() {
+        // Create schema if not exists
         QueryRunner().update(connection, "CREATE SCHEMA IF NOT EXISTS ${appConfig.databaseSchema}")
         connection.commit()
-    }
 
-    private fun createTablesIfNotExists(appConfig: AppConfig, connection: Connection) {
+        // Create tables if not exists
         val sqlCommands = SQLCommandsFactory.getSQLCommands(appConfig.databaseDriverclass)
         SQLDatabaseAccess(sqlCommands).initialize(connection, expectedDbVersion = 1) // TODO: [et]: Extract version
         connection.commit()

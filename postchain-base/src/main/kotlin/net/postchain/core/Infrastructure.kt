@@ -5,12 +5,12 @@ import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 
 interface SynchronizationInfrastructure : Shutdownable {
-    fun makeBlockchainProcess(processName: String, engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess
+    fun makeBlockchainProcess(processName: String, engine: BlockchainEngine): BlockchainProcess
 }
 
 interface BlockchainInfrastructure : SynchronizationInfrastructure {
     fun makeBlockchainConfiguration(rawConfigurationData: ByteArray, context: BlockchainContext): BlockchainConfiguration
-    fun makeBlockchainEngine(configuration: BlockchainConfiguration): BlockchainEngine
+    fun makeBlockchainEngine(configuration: BlockchainConfiguration, restartHandler: RestartHandler): BlockchainEngine
 
     fun makeStorage(): Storage
 }
@@ -25,8 +25,7 @@ interface InfrastructureFactory {
     fun makeBlockchainInfrastructure(nodeConfigProvider: NodeConfigurationProvider): BlockchainInfrastructure
     fun makeProcessManager(nodeConfigProvider: NodeConfigurationProvider,
                            blockchainInfrastructure: BlockchainInfrastructure,
-                           blockchainConfigurationProvider: BlockchainConfigurationProvider,
-                           restartHandlerFactory: (chainId: Long) -> RestartHandler
+                           blockchainConfigurationProvider: BlockchainConfigurationProvider
     ): BlockchainProcessManager
 }
 

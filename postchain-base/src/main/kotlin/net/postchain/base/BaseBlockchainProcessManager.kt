@@ -9,6 +9,7 @@ import net.postchain.core.*
 import net.postchain.devtools.PeerNameHelper.peerName
 import net.postchain.ebft.EBFTSynchronizationInfrastructure
 import java.util.*
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock
@@ -19,18 +20,17 @@ import kotlin.concurrent.withLock
 open class BaseBlockchainProcessManager(
         protected val blockchainInfrastructure: BlockchainInfrastructure,
         protected val nodeConfigProvider: NodeConfigurationProvider,
-        protected val blockchainConfigProvider: BlockchainConfigurationProvider,
-        protected val restartHandlerFactory: (chainId: Long) -> RestartHandler
+        protected val blockchainConfigProvider: BlockchainConfigurationProvider
 ) : BlockchainProcessManager {
 
     override var synchronizer: Lock = ReentrantLock()
 
     val nodeConfig = nodeConfigProvider.getConfiguration()
     val storage = StorageBuilder.buildStorage(nodeConfig.appConfig, NODE_ID_TODO)
-    private val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
+    protected val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
     // FYI: [et]: For integration testing. Will be removed or refactored later
     private val blockchainProcessesLoggers = mutableMapOf<Long, Timer>()
-    protected val executor = Executors.newSingleThreadScheduledExecutor()
+    protected val executor: ExecutorService = Executors.newSingleThreadScheduledExecutor()
 
     companion object : KLogging()
 
@@ -41,12 +41,6 @@ open class BaseBlockchainProcessManager(
             } catch (e: Exception) {
                 logger.error(e) { e.message }
             }
-        }
-    }
-
-    protected fun isRestartNeeded(chainId: Long): Boolean {
-        return withReadConnection(storage, chainId) { eContext ->
-            (blockchainConfigProvider.needsConfigurationChange(eContext, chainId))
         }
     }
 
@@ -66,11 +60,10 @@ open class BaseBlockchainProcessManager(
                         val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(configuration, context)
                         logger.debug { "[${nodeName()}]: BlockchainConfiguration has been created: chainId: $chainId" }
 
-                        val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig)
+                        val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig, restartHandler(chainId))
                         logger.debug { "[${nodeName()}]: BlockchainEngine has been created: chainId: $chainId" }
 
-                        blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(
-                                nodeName(), engine, restartHandlerFactory(chainId))
+                        blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(nodeName(), engine)
                         logger.debug { "[${nodeName()}]: BlockchainProcess has been launched: chainId: $chainId" }
 
                         blockchainProcessesLoggers[chainId] = timer(
@@ -114,20 +107,33 @@ open class BaseBlockchainProcessManager(
         }
     }
 
-    override fun getBlockchains(): Set<Long> {
-        return blockchainProcesses.keys
-    }
-
     override fun shutdown() {
         executor.shutdownNow()
         executor.awaitTermination(1000, TimeUnit.MILLISECONDS)
+
         blockchainProcesses.forEach { (_, process) -> process.shutdown() }
         blockchainProcesses.clear()
+
         blockchainProcessesLoggers.forEach { (_, t) ->
             t.cancel()
             t.purge()
         }
+
         storage.close()
+    }
+
+    override fun restartHandler(chainId: Long): RestartHandler {
+        return {
+            val doRestart = withReadConnection(storage, chainId) { eContext ->
+                blockchainConfigProvider.needsConfigurationChange(eContext, chainId)
+            }
+
+            if (doRestart) {
+                startBlockchainAsync(chainId)
+            }
+
+            doRestart
+        }
     }
 
     private fun nodeName(): String {
