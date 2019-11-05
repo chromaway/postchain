@@ -152,12 +152,12 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
 
             // Reloading
             // FYI: For testing only. It can be deleted later.
-            logger.error {
+            logger.info {
                 val pubKey = nodeConfigProvider.getConfiguration().pubKey
                 val peerInfos = nodeConfigProvider.getConfiguration().peerInfoMap
                 "reloadBlockchainsAsync: " +
                         "pubKey: $pubKey" +
-                        ", peerInfos: ${peerInfos.keys.toTypedArray().contentToString()}, " +
+                        ", peerInfos: ${peerInfos.keys.toTypedArray().contentToString()} " +
                         ", chains to launch: ${toLaunch.contentDeepToString()}"
             }
 

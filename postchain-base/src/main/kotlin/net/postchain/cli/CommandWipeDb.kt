@@ -19,8 +19,8 @@ class CommandWipeDb : Command {
     override fun execute(): CliResult {
         return try {
             val appConfig = AppConfig.fromPropertiesFile(nodeConfigFile)
-            StorageBuilder.buildStorage(appConfig, NODE_ID_NA, true)
-            Ok("Wipe database successfully")
+            StorageBuilder.buildStorage(appConfig, NODE_ID_NA, true).close()
+            Ok("Database has been wiped successfully")
         } catch (e: CliError.Companion.CliException) {
             CliError.CommandNotAllowed(message = e.message)
         }
