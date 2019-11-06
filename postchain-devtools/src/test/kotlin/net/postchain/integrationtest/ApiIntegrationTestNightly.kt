@@ -30,6 +30,7 @@ import org.skyscreamer.jsonassert.JSONAssert
 import org.skyscreamer.jsonassert.JSONCompareMode
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.util.*
 import kotlin.test.assertTrue
 
 class ApiIntegrationTestNightly : IntegrationTest() {
@@ -78,7 +79,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                 .get("/dquery/$blockchainRID?type=get_picture&id=1234")
                 .then()
                 .statusCode(200)
-                .body(IsEqual.equalTo("[\"image/png\",\"0123456708090A0B0C0D0E0F\"]"))
+                .body(IsEqual.equalTo("data:image/png;base64,QUJDRA=="))
 
     }
 

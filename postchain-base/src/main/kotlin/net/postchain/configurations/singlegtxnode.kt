@@ -11,6 +11,8 @@ import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.ScalarHandler
+import java.io.FileInputStream
+import java.util.*
 
 private val r = QueryRunner()
 private val nullableStringReader = ScalarHandler<String?>()
@@ -71,7 +73,7 @@ class TestDQueryModule : SimpleGTXModule<Unit>(Unit,
             if (id == null) {
                 throw UserMistake("get_picture can not take id as null")
             }
-            gtv(gtv("image/png"), gtv("0123456708090A0B0C0D0E0F".hexStringToByteArray()))
+            gtv(gtv("image/png"), gtv("abcd".hexStringToByteArray()))
         })
 ) {
     override fun initializeDB(ctx: EContext) {

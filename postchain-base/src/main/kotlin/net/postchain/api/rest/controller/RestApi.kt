@@ -2,10 +2,7 @@
 
 package net.postchain.api.rest.controller
 
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
+import com.google.gson.*
 import mu.KLogging
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_HEADERS
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_METHODS
@@ -30,6 +27,7 @@ import net.postchain.gtv.GtvFactory
 import spark.QueryParamsMap
 import spark.Request
 import spark.Service
+import java.util.*
 
 /**
  * Contains information on the rest API, such as network parameters and available queries
@@ -251,7 +249,18 @@ class RestApi(
         map.keys.forEach {
             json.addProperty(it, queryMap.value(it))
         }
-        return model(request).query(Query(gson.toJson(json))).json
+        val jsonStr = model(request).query(Query(gson.toJson(json))).json
+
+        val array = JsonParser().parse(jsonStr).asJsonArray
+
+        if (array.size() < 2) {
+            throw UserMistake("Response should have 2 parts: content-type and content")
+        }
+
+        val contentType = array[0].asString
+        val content = Base64.getEncoder().encodeToString(array[1].asString.toByteArray())
+
+        return "data:${contentType};base64,${content}"
     }
 
     private fun handleQueries(request: Request): String {
