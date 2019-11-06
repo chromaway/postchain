@@ -258,7 +258,7 @@ class RestApi(
         }
 
         val contentType = array[0].asString
-        val content = Base64.getEncoder().encodeToString(array[1].asString.toByteArray())
+        val content = Base64.getEncoder().encodeToString(array[1].asString.hexStringToByteArray())
 
         return "data:${contentType};base64,${content}"
     }
