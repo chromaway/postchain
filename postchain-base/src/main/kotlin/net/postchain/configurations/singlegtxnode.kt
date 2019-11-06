@@ -73,7 +73,7 @@ class TestDQueryModule : SimpleGTXModule<Unit>(Unit,
             if (id == null) {
                 throw UserMistake("get_picture can not take id as null")
             }
-            gtv(gtv("image/png"), gtv("abcd".hexStringToByteArray()))
+            gtv(gtv("image/png"), gtv("abcd".toByteArray()))
         })
 ) {
     override fun initializeDB(ctx: EContext) {
