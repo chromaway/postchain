@@ -17,6 +17,9 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.timer
 import kotlin.concurrent.withLock
 
+/**
+ * Will run many chains as [BlockchainProcess]:es and keep them in a map.
+ */
 open class BaseBlockchainProcessManager(
         protected val blockchainInfrastructure: BlockchainInfrastructure,
         protected val nodeConfigProvider: NodeConfigurationProvider,
@@ -34,6 +37,11 @@ open class BaseBlockchainProcessManager(
 
     companion object : KLogging()
 
+    /**
+     * Put the startup operation of chainId in the [Executor]'s work queue.
+     *
+     * @param chainId is the chain to start.
+     */
     override fun startBlockchainAsync(chainId: Long) {
         executor.execute {
             try {
@@ -44,6 +52,12 @@ open class BaseBlockchainProcessManager(
         }
     }
 
+    /**
+     * Will stop the chain and then start it as a [BlockchainProcess].
+     *
+     * @param chainId is the chain to start
+     * @return true if success.
+     */
     override fun startBlockchain(chainId: Long): Boolean {
         return synchronizer.withLock {
             try {
@@ -90,6 +104,11 @@ open class BaseBlockchainProcessManager(
         return blockchainProcesses[chainId]
     }
 
+    /**
+     * Will call "shutdown()" on the [BlockchainProcess] and remove it from the list.
+     *
+     * @param chainId is the chain to be stopped.
+     */
     override fun stopBlockchain(chainId: Long) {
         synchronizer.withLock {
             logger.info("[${nodeName()}]: Stopping of Blockchain: chainId: $chainId")
@@ -122,6 +141,12 @@ open class BaseBlockchainProcessManager(
         storage.close()
     }
 
+    /**
+     * Checks for configuration changes, and then does a async reboot of the given chain.
+     *
+     * @return a newly created [RestartHandler]. This method will be much more complex is
+     * the sublcass [ManagedBlockchainProcessManager].
+     */
     override fun restartHandler(chainId: Long): RestartHandler {
         return {
             val doRestart = withReadConnection(storage, chainId) { eContext ->

@@ -37,5 +37,6 @@ interface BlockchainProcessManager : Shutdownable, Synchronizable {
     fun restartHandler(chainId: Long): RestartHandler
 }
 
+// A return value of "true" means a restart is needed.
 typealias RestartHandler = () -> Boolean
 
