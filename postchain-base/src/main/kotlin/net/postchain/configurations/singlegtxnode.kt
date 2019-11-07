@@ -73,7 +73,7 @@ class TestDQueryModule : SimpleGTXModule<Unit>(Unit,
                 if (id == null) {
                     throw UserMistake("get_front_page can not take id as null")
                 }
-                gtv(gtv("text/html"), gtv("<h1>it works!</h1>".toByteArray()))
+                gtv(gtv("text/html"), gtv("<h1>it works!</h1>"))
             },
               "get_picture" to { u, ctxt, args ->
                     val id = (args as GtvDictionary).get("id")

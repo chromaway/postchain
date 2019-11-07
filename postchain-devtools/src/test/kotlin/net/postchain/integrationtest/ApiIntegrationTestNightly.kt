@@ -87,13 +87,13 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
         val expect2 = "<h1>it works!</h1>"
 
-        val byteArray2 = given().port(nodes[0].getRestApiHttpPort())
+        val text = given().port(nodes[0].getRestApiHttpPort())
                 .get("/dquery/$blockchainRID?type=get_front_page&id=1234")
                 .then()
                 .statusCode(200)
-                .extract().asByteArray()
+                .extract().asString()
 
-        assertEquals(expect2, String(byteArray2))
+        assertEquals(expect2, text)
     }
 
     @Test

@@ -246,7 +246,7 @@ class RestApi(
                 .json
     }
 
-    private fun handleDirectQuery(request: Request, response: Response) : ByteArray {
+    private fun handleDirectQuery(request: Request, response: Response) : Any {
         val queryMap = request.queryMap()
         val type = gtv(queryMap.value("type"))
         val args = GtvDictionary.build(queryMap.toMap().mapValues {
@@ -260,7 +260,14 @@ class RestApi(
         }
         // first element is content-type
         response.type(array[0].asString())
-        return array[1].asByteArray()
+        val content = array[1]
+        if (content.type == GtvType.STRING) {
+            return content.asString()
+        } else if (content.type == GtvType.BYTEARRAY) {
+            return content.asByteArray()
+        } else {
+            throw UserMistake("Unexpected content")
+        }
     }
 
     private fun handleQueries(request: Request): String {
