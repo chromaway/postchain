@@ -248,16 +248,12 @@ class RestApi(
 
     private fun handleDirectQuery(request: Request, response: Response) : ByteArray {
         val queryMap = request.queryMap()
-        val map = queryMap.toMap()
-        val gtvs = mutableListOf<Gtv>()
-        gtvs.add(gtv(queryMap.value("type")))
-        map.keys.forEach {
-            if (it != "type") {
-                gtvs.add(gtv(it to gtv(queryMap.value(it))))
-            }
-        }
-        val gtxQuery = GtvEncoder.encodeGtv(gtv(gtvs))
-        val array = model(request).query(GtvDecoder.decodeGtv(gtxQuery)).asArray()
+        val type = gtv(queryMap.value("type"))
+        val args = GtvDictionary.build(queryMap.toMap().mapValues {
+            gtv(queryMap.value(it.key))
+        })
+        val gtvQuery = GtvEncoder.encodeGtv(gtv(type, args))
+        val array = model(request).query(GtvDecoder.decodeGtv(gtvQuery)).asArray()
 
         if (array.size < 2) {
             throw UserMistake("Response should have two parts: content-type and content")
