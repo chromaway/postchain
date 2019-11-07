@@ -75,14 +75,15 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
         buildBlockAndCommit(nodes[0])
 
-        val content = Base64.getEncoder().encodeToString("abcd".toByteArray())
+        val expect = "abcd"
 
-        given().port(nodes[0].getRestApiHttpPort())
+        val byteArray = given().port(nodes[0].getRestApiHttpPort())
                 .get("/dquery/$blockchainRID?type=get_picture&id=1234")
                 .then()
                 .statusCode(200)
-                .body(IsEqual.equalTo("data:image/png;base64,${content}"))
+                .extract().asByteArray()
 
+        assertEquals(expect, String(byteArray))
     }
 
     @Test

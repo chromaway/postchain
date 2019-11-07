@@ -22,10 +22,14 @@ import net.postchain.common.TimeLog
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.UserMistake
+import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.GtvFactory
+import net.postchain.gtv.*
+import net.postchain.gtv.GtvFactory.gtv
 import spark.QueryParamsMap
 import spark.Request
+import spark.Response
 import spark.Service
 import java.util.*
 
@@ -180,8 +184,8 @@ class RestApi(
             }
 
             // direct query. That should be used as example: <img src="http://node/dquery/brid?type=get_picture&id=4555" />
-            http.get("/dquery/$PARAM_BLOCKCHAIN_RID") { request, _ ->
-                handleDirectQuery(request)
+            http.get("/dquery/$PARAM_BLOCKCHAIN_RID") { request, response ->
+                handleDirectQuery(request, response)
             }
 
             http.post("/query_gtx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
@@ -242,25 +246,25 @@ class RestApi(
                 .json
     }
 
-    private fun handleDirectQuery(request: Request) : String {
+    private fun handleDirectQuery(request: Request, response: Response) : ByteArray {
         val queryMap = request.queryMap()
         val map = queryMap.toMap()
-        val json = JsonObject()
+        val gtvs = mutableListOf<Gtv>()
+        gtvs.add(gtv(queryMap.value("type")))
         map.keys.forEach {
-            json.addProperty(it, queryMap.value(it))
+            if (it != "type") {
+                gtvs.add(gtv(it to gtv(queryMap.value(it))))
+            }
         }
-        val jsonStr = model(request).query(Query(gson.toJson(json))).json
+        val gtxQuery = GtvEncoder.encodeGtv(gtv(gtvs))
+        val array = model(request).query(GtvDecoder.decodeGtv(gtxQuery)).asArray()
 
-        val array = JsonParser().parse(jsonStr).asJsonArray
-
-        if (array.size() < 2) {
-            throw UserMistake("Response should have 2 parts: content-type and content")
+        if (array.size < 2) {
+            throw UserMistake("Response should have two parts: content-type and content")
         }
-
-        val contentType = array[0].asString
-        val content = Base64.getEncoder().encodeToString(array[1].asString.hexStringToByteArray())
-
-        return "data:${contentType};base64,${content}"
+        // first element is content-type
+        response.type(array[0].asString())
+        return array[1].asByteArray()
     }
 
     private fun handleQueries(request: Request): String {
