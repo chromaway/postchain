@@ -75,7 +75,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
         buildBlockAndCommit(nodes[0])
 
-        val expect = "abcd"
+        val expect1 = "abcd"
 
         val byteArray = given().port(nodes[0].getRestApiHttpPort())
                 .get("/dquery/$blockchainRID?type=get_picture&id=1234")
@@ -83,7 +83,17 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                 .statusCode(200)
                 .extract().asByteArray()
 
-        assertEquals(expect, String(byteArray))
+        assertEquals(expect1, String(byteArray))
+
+        val expect2 = "<h1>it works!</h1>"
+
+        val byteArray2 = given().port(nodes[0].getRestApiHttpPort())
+                .get("/dquery/$blockchainRID?type=get_front_page&id=1234")
+                .then()
+                .statusCode(200)
+                .extract().asByteArray()
+
+        assertEquals(expect2, String(byteArray2))
     }
 
     @Test

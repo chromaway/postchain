@@ -68,13 +68,22 @@ CREATE TABLE gtx_test_value(tx_iid BIGINT PRIMARY KEY, value TEXT NOT NULL)
 //  Test Direct Query purpose
 class TestDQueryModule : SimpleGTXModule<Unit>(Unit,
         mapOf(),
-        mapOf("get_picture" to { u, ctxt, args ->
-            val id = (args as GtvDictionary).get("id")
-            if (id == null) {
-                throw UserMistake("get_picture can not take id as null")
+        mapOf("get_front_page" to { u, ctxt, args ->
+                val id = (args as GtvDictionary).get("id")
+                if (id == null) {
+                    throw UserMistake("get_front_page can not take id as null")
+                }
+                gtv(gtv("text/html"), gtv("<h1>it works!</h1>".toByteArray()))
+            },
+              "get_picture" to { u, ctxt, args ->
+                    val id = (args as GtvDictionary).get("id")
+                    if (id == null) {
+                        throw UserMistake("get_picture can not take id as null")
+                    }
+                 gtv(gtv("image/png"), gtv("abcd".toByteArray()))
             }
-            gtv(gtv("image/png"), gtv("abcd".toByteArray()))
-        })
+        )
+
 ) {
     override fun initializeDB(ctx: EContext) {
 
