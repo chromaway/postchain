@@ -2,9 +2,6 @@ package net.postchain.cli
 
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
-import io.github.novacrypto.bip39.MnemonicGenerator
-import io.github.novacrypto.bip39.Words
-import io.github.novacrypto.bip39.wordlists.English
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.base.secp256k1_derivePubKey
 import net.postchain.common.toHex
