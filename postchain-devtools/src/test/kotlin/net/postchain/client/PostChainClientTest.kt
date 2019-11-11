@@ -12,7 +12,6 @@ import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtx.GTXDataBuilder
-import nl.komponents.kovenant.deferred
 import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals
