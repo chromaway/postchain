@@ -43,7 +43,7 @@ interface DatabaseAccess {
     fun getLatestBlocksUpTo(ctx: EContext, upTo: Long, n: Int): List<BlockInfoExt>
 
     // Blockchain configurations
-    fun findConfiguration(context: EContext, height: Long): Long?
+    fun findConfigurationHeightForBlock(context: EContext, height: Long): Long?
 
     fun getConfigurationData(context: EContext, height: Long): ByteArray?
     fun addConfigurationData(context: EContext, height: Long, data: ByteArray)
@@ -335,7 +335,7 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
         }
     }
 
-    override fun findConfiguration(context: EContext, height: Long): Long? {
+    override fun findConfigurationHeightForBlock(context: EContext, height: Long): Long? {
         return queryRunner.query(context.conn,
                 "SELECT height FROM configurations WHERE chain_iid= ? AND height <= ? " +
                         "ORDER BY height DESC LIMIT 1",
