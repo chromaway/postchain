@@ -7,8 +7,9 @@
         blockdelay=1000 (milliseconds)
         -->
         <dict>
+            <!-- 1mb -->
             <entry key="maxblocksize">
-                <int>1</int>
+                <int>1048576</int>
             </entry>
             <entry key="name">
                 <string>net.postchain.base.BaseBlockBuildingStrategy</string>

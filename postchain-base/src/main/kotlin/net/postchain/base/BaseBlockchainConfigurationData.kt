@@ -36,10 +36,10 @@ class BaseBlockchainConfigurationData(
         return data["blockstrategy"]
     }
 
-    // unit is MB
+    // default is 20mb
     fun getMaxBlockSize() : Long {
         val stratDict = data["blockstrategy"]
-        return stratDict?.get("maxblocksize")?.asInteger() ?: 20
+        return stratDict?.get("maxblocksize")?.asInteger() ?: 20*1024*1024
     }
 
     fun getMaxBlockTransactions() : Long {
@@ -74,9 +74,10 @@ class BaseBlockchainConfigurationData(
         }
     }
 
+    // default is 1mb
     fun getMaxTransactionSize() : Long {
         val gtxDict = data["gtx"]
-        return gtxDict?.get("max_transaction_size")?.asInteger() ?: 1
+        return gtxDict?.get("max_transaction_size")?.asInteger() ?: 1024*1024
     }
 
     companion object {

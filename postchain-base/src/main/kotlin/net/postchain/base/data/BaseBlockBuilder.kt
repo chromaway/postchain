@@ -35,13 +35,15 @@ open class BaseBlockBuilder(
         val subjects: Array<ByteArray>,
         val blockSigMaker: SigMaker,
         val blockchainRelatedInfoDependencyList: List<BlockchainRelatedInfo>,
-        val maxBlockSize : Long = 20,
+        val maxBlockSize : Long = 20*1024*1024, // 20mb
         val maxBlockTransactions : Long = 100
 ): AbstractBlockBuilder(eContext, store, txFactory) {
 
     companion object : KLogging()
 
     private val calc = GtvMerkleHashCalculator(cryptoSystem)
+
+    private var blockSize : Long = 0L
 
     /**
      * Computes the root hash for the Merkle tree of transactions currently in a block
@@ -223,8 +225,8 @@ open class BaseBlockBuilder(
 
     override fun appendTransaction(tx: Transaction) {
         super.appendTransaction(tx)
-        val blockSize = transactions.map { t -> t.getRawData().size }.sum()
-        if (blockSize >= maxBlockSize * 1024 * 1024) {
+        blockSize = transactions.map { t -> t.getRawData().size.toLong() }.sum()
+        if (blockSize >= maxBlockSize) {
             throw UserMistake("block size exceeds max block size ${maxBlockSize} MB")
         } else if (transactions.size >= maxBlockTransactions) {
             throw UserMistake("Number of transactions exceeds max ${maxBlockTransactions} transactions in block")
@@ -232,9 +234,4 @@ open class BaseBlockBuilder(
     }
 
 
-    fun validateMaxBlockTransactions() {
-        if (transactions.size >= maxBlockTransactions) {
-            throw UserMistake("Number of transactions exceeds max ${maxBlockTransactions} transactions in block")
-        }
-    }
 }

@@ -17,12 +17,12 @@ import java.lang.Exception
  * Idea is that we can build a [GTXTransaction] from different layers.
  * The most normal way would be to build from binary, but sometimes we might have deserialized the binary data already
  */
-class GTXTransactionFactory(val blockchainRID: ByteArray, val module: GTXModule, val cs: CryptoSystem, val maxTransactionSize : Long = 1) : TransactionFactory {
+class GTXTransactionFactory(val blockchainRID: ByteArray, val module: GTXModule, val cs: CryptoSystem, val maxTransactionSize : Long = 1024*1024) : TransactionFactory {
 
     val gtvMerkleHashCalculator = GtvMerkleHashCalculator(cs) // Here we are using the standard cache
 
     override fun decodeTransaction(data: ByteArray): Transaction {
-        if (data.size > maxTransactionSize * 1024 * 1024 ) {
+        if (data.size > maxTransactionSize ) {
             throw Exception("Transaction size exceeds max transaction size ${maxTransactionSize} MB")
         }
         return internalBuild(data)

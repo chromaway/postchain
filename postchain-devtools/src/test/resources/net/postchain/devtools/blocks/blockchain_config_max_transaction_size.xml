@@ -36,7 +36,8 @@
         -->
         <dict>
             <entry key="max_transaction_size">
-                <int>2</int>
+                <!-- 2mb -->
+                <int>2097152</int>
             </entry>
             <entry key="modules">
                 <array>
