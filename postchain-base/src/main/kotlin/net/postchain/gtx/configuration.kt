@@ -23,7 +23,7 @@ open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationDat
 
     override fun initializeDB(ctx: EContext) {
         super.initializeDB(ctx)
-        logger.info("Running initialize DB of class GTXBlockchainConfiguration")
+        logger.debug("Running initialize DB of class GTXBlockchainConfiguration")
         GTXSchemaManager.initializeDB(ctx)
         module.initializeDB(ctx)
     }

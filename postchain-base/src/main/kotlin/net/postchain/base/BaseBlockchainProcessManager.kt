@@ -9,6 +9,7 @@ import net.postchain.core.*
 import net.postchain.devtools.PeerNameHelper.peerName
 import net.postchain.ebft.EBFTSynchronizationInfrastructure
 import java.util.*
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock
@@ -16,24 +17,31 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.timer
 import kotlin.concurrent.withLock
 
+/**
+ * Will run many chains as [BlockchainProcess]:es and keep them in a map.
+ */
 open class BaseBlockchainProcessManager(
         protected val blockchainInfrastructure: BlockchainInfrastructure,
         protected val nodeConfigProvider: NodeConfigurationProvider,
-        protected val blockchainConfigProvider: BlockchainConfigurationProvider,
-        protected val restartHandlerFactory: (chainId: Long) -> RestartHandler
+        protected val blockchainConfigProvider: BlockchainConfigurationProvider
 ) : BlockchainProcessManager {
 
     override var synchronizer: Lock = ReentrantLock()
 
     val nodeConfig = nodeConfigProvider.getConfiguration()
     val storage = StorageBuilder.buildStorage(nodeConfig.appConfig, NODE_ID_TODO)
-    private val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
+    protected val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
     // FYI: [et]: For integration testing. Will be removed or refactored later
     private val blockchainProcessesLoggers = mutableMapOf<Long, Timer>()
-    protected val executor = Executors.newSingleThreadScheduledExecutor()
+    protected val executor: ExecutorService = Executors.newSingleThreadScheduledExecutor()
 
     companion object : KLogging()
 
+    /**
+     * Put the startup operation of chainId in the [Executor]'s work queue.
+     *
+     * @param chainId is the chain to start.
+     */
     override fun startBlockchainAsync(chainId: Long) {
         executor.execute {
             try {
@@ -44,12 +52,12 @@ open class BaseBlockchainProcessManager(
         }
     }
 
-    protected fun isRestartNeeded(chainId: Long): Boolean {
-        return withReadConnection(storage, chainId) { eContext ->
-            (blockchainConfigProvider.needsConfigurationChange(eContext, chainId))
-        }
-    }
-
+    /**
+     * Will stop the chain and then start it as a [BlockchainProcess].
+     *
+     * @param chainId is the chain to start
+     * @return true if success.
+     */
     override fun startBlockchain(chainId: Long): Boolean {
         return synchronizer.withLock {
             try {
@@ -66,11 +74,10 @@ open class BaseBlockchainProcessManager(
                         val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(configuration, context)
                         logger.debug { "[${nodeName()}]: BlockchainConfiguration has been created: chainId: $chainId" }
 
-                        val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig)
+                        val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig, restartHandler(chainId))
                         logger.debug { "[${nodeName()}]: BlockchainEngine has been created: chainId: $chainId" }
 
-                        blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(
-                                nodeName(), engine, restartHandlerFactory(chainId))
+                        blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(nodeName(), engine)
                         logger.debug { "[${nodeName()}]: BlockchainProcess has been launched: chainId: $chainId" }
 
                         blockchainProcessesLoggers[chainId] = timer(
@@ -97,6 +104,11 @@ open class BaseBlockchainProcessManager(
         return blockchainProcesses[chainId]
     }
 
+    /**
+     * Will call "shutdown()" on the [BlockchainProcess] and remove it from the list.
+     *
+     * @param chainId is the chain to be stopped.
+     */
     override fun stopBlockchain(chainId: Long) {
         synchronizer.withLock {
             logger.info("[${nodeName()}]: Stopping of Blockchain: chainId: $chainId")
@@ -114,20 +126,39 @@ open class BaseBlockchainProcessManager(
         }
     }
 
-    override fun getBlockchains(): Set<Long> {
-        return blockchainProcesses.keys
-    }
-
     override fun shutdown() {
         executor.shutdownNow()
         executor.awaitTermination(1000, TimeUnit.MILLISECONDS)
+
         blockchainProcesses.forEach { (_, process) -> process.shutdown() }
         blockchainProcesses.clear()
+
         blockchainProcessesLoggers.forEach { (_, t) ->
             t.cancel()
             t.purge()
         }
+
         storage.close()
+    }
+
+    /**
+     * Checks for configuration changes, and then does a async reboot of the given chain.
+     *
+     * @return a newly created [RestartHandler]. This method will be much more complex is
+     * the sublcass [ManagedBlockchainProcessManager].
+     */
+    override fun restartHandler(chainId: Long): RestartHandler {
+        return {
+            val doRestart = withReadConnection(storage, chainId) { eContext ->
+                blockchainConfigProvider.needsConfigurationChange(eContext, chainId)
+            }
+
+            if (doRestart) {
+                startBlockchainAsync(chainId)
+            }
+
+            doRestart
+        }
     }
 
     private fun nodeName(): String {

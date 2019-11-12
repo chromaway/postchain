@@ -6,8 +6,8 @@ import net.postchain.core.EContext
 
 object BaseConfigurationDataStore : ConfigurationDataStore {
 
-    override fun findConfiguration(context: EContext, height: Long): Long? {
-        return DatabaseAccess.of(context).findConfiguration(context, height)
+    override fun findConfigurationHeightForBlock(context: EContext, height: Long): Long? {
+        return DatabaseAccess.of(context).findConfigurationHeightForBlock(context, height)
     }
 
     override fun getConfigurationData(context: EContext, height: Long): ByteArray? {

@@ -30,10 +30,6 @@ class BaseBlockchainInfrastructure(
         apiInfrastructure.shutdown()
     }
 
-    override fun parseConfigurationString(rawData: String, format: String): ByteArray {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
     override fun makeBlockchainConfiguration(rawConfigurationData: ByteArray, context: BlockchainContext): BlockchainConfiguration {
         val actualContext = if (context.nodeRID == null) {
             BaseBlockchainContext(context.blockchainRID, context.nodeID, context.chainID, subjectID)
@@ -50,7 +46,7 @@ class BaseBlockchainInfrastructure(
         return factory.makeBlockchainConfiguration(confData)
     }
 
-    override fun makeBlockchainEngine(configuration: BlockchainConfiguration): BaseBlockchainEngine {
+    override fun makeBlockchainEngine(configuration: BlockchainConfiguration, restartHandler: RestartHandler): BaseBlockchainEngine {
         val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration().appConfig, NODE_ID_TODO)
         // TODO: [et]: Maybe extract 'queuecapacity' param from ''
         val transactionQueue = BaseTransactionQueue(
@@ -58,11 +54,14 @@ class BaseBlockchainInfrastructure(
                         .configData.getBlockBuildingStrategy()?.get("queuecapacity")?.asInteger()?.toInt() ?: 2500)
 
         return BaseBlockchainEngine(configuration, storage, configuration.chainID, transactionQueue)
-                .apply { initializeDB() }
+                .apply {
+                    setRestartHandler(restartHandler)
+                    initializeDB()
+                }
     }
 
-    override fun makeBlockchainProcess(processName: String, engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
-        return synchronizationInfrastructure.makeBlockchainProcess(processName, engine, restartHandler)
+    override fun makeBlockchainProcess(processName: String, engine: BlockchainEngine): BlockchainProcess {
+        return synchronizationInfrastructure.makeBlockchainProcess(processName, engine)
                 .also(apiInfrastructure::connectProcess)
     }
 

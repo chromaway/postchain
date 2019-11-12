@@ -2,6 +2,7 @@
 
 package net.postchain.configurations
 
+import net.postchain.common.hexStringToByteArray
 import net.postchain.core.EContext
 import net.postchain.core.TxEContext
 import net.postchain.core.UserMistake
@@ -10,6 +11,8 @@ import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.ScalarHandler
+import java.io.FileInputStream
+import java.util.*
 
 private val r = QueryRunner()
 private val nullableStringReader = ScalarHandler<String?>()
@@ -59,5 +62,30 @@ CREATE TABLE gtx_test_value(tx_iid BIGINT PRIMARY KEY, value TEXT NOT NULL)
             """)
             GTXSchemaManager.setModuleVersion(ctx, moduleName, 0)
         }
+    }
+}
+
+//  Test Direct Query purpose
+class TestDQueryModule : SimpleGTXModule<Unit>(Unit,
+        mapOf(),
+        mapOf("get_front_page" to { u, ctxt, args ->
+                val id = (args as GtvDictionary).get("id")
+                if (id == null) {
+                    throw UserMistake("get_front_page can not take id as null")
+                }
+                gtv(gtv("text/html"), gtv("<h1>it works!</h1>"))
+            },
+              "get_picture" to { u, ctxt, args ->
+                    val id = (args as GtvDictionary).get("id")
+                    if (id == null) {
+                        throw UserMistake("get_picture can not take id as null")
+                    }
+                 gtv(gtv("image/png"), gtv("abcd".toByteArray()))
+            }
+        )
+
+) {
+    override fun initializeDB(ctx: EContext) {
+
     }
 }

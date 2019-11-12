@@ -84,7 +84,7 @@ class CompositeGTXModule(val modules: Array<GTXModule>, val allowOverrides: Bool
 
     override fun initializeDB(ctx: EContext) {
         for (module in modules) {
-            logger.info("Initialize DB for module: $module") // TODO: Should probably write the module name here
+            logger.debug("Initialize DB for module: $module") // TODO: Should probably write the module name here
             module.initializeDB(ctx)
         }
         val _opmap = mutableMapOf<String, GTXModule>()

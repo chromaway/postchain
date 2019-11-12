@@ -2,7 +2,10 @@ package net.postchain.ebft.worker
 
 import mu.KLogging
 import net.postchain.base.NetworkAwareTxQueue
-import net.postchain.core.*
+import net.postchain.core.BlockQueries
+import net.postchain.core.BlockchainEngine
+import net.postchain.core.BlockchainProcess
+import net.postchain.core.NodeStateTracker
 import net.postchain.ebft.BaseBlockDatabase
 import net.postchain.ebft.syncmanager.SyncManagerBase
 import kotlin.concurrent.thread
@@ -21,9 +24,9 @@ abstract class AbstractBlockchainProcess : BlockchainProcess {
     abstract val syncManager: SyncManagerBase
     abstract val nodeStateTracker: NodeStateTracker
     abstract val networkAwareTxQueue: NetworkAwareTxQueue
-    abstract val restartHandler: RestartHandler
 
     private lateinit var updateLoop: Thread
+
     companion object : KLogging()
 
     override fun getEngine() = blockchainEngine

@@ -123,7 +123,7 @@ class CliExecution {
                             actual: ${chainIdBlockchainRid.toHex()}
                     """.trimIndent())
                 }
-                BaseConfigurationDataStore.findConfiguration(eContext, 0) == null -> {
+                BaseConfigurationDataStore.findConfigurationHeightForBlock(eContext, 0) == null -> {
                     throw CliError.Companion.CliException("No configuration found")
                 }
                 else -> {

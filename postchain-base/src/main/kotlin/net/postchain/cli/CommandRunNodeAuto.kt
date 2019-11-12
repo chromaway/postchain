@@ -4,6 +4,7 @@ import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
+import java.io.File
 import java.nio.file.Paths
 
 @Parameters(commandDescription = "Run Node Auto")
@@ -46,28 +47,30 @@ class CommandRunNodeAuto : Command {
         return try {
             if (chains.exists()) {
                 cliExecution.waitDb(50, 1000, nodeConfigFile)
-                chains.listFiles().forEach {
-                    if (it.isDirectory) {
-                        val chainId = it.name.toLong()
-                        chainIds.add(chainId)
-                        val brid = Paths.get(it.absolutePath, BLOCKCHAIN_RID_FILE).toFile().readLines().first()
+                chains.listFiles()
+                        ?.filter(File::isDirectory)
+                        ?.forEach { dir ->
+                            val chainId = dir.name.toLong()
+                            chainIds.add(chainId)
+                            val brid = Paths.get(dir.absolutePath, BLOCKCHAIN_RID_FILE).toFile().readLines().first()
 
-                        it.listFiles().forEach {
-                            if (it.extension == "xml") {
-                                val blockchainConfigFile = it.absolutePath
-                                val height = (it.nameWithoutExtension.split(".")[0]).toLong()
-                                if (height.toInt() == 0) {
-                                    cliExecution.addBlockchain(nodeConfigFile, chainId, brid, blockchainConfigFile)
-                                } else {
-                                    cliExecution.addConfiguration(nodeConfigFile, blockchainConfigFile, chainId, height)
-                                }
-                            }
+                            dir.listFiles()
+                                    ?.filter { it.extension == "xml" }
+                                    ?.forEach { file ->
+                                        val blockchainConfigFile = file.absolutePath
+                                        val height = (file.nameWithoutExtension.split(".")[0]).toLong()
+                                        if (height.toInt() == 0) {
+                                            cliExecution.addBlockchain(
+                                                    nodeConfigFile, chainId, brid, blockchainConfigFile)
+                                        } else {
+                                            cliExecution.addConfiguration(
+                                                    nodeConfigFile, blockchainConfigFile, chainId, height)
+                                        }
+                                    }
                         }
-                    }
-                }
             }
 
-            cliExecution.runNode(nodeConfigFile, chainIds)
+            cliExecution.runNode(nodeConfigFile, chainIds.sorted())
             Ok("Postchain node launching is done", isLongRunning = true)
 
         } catch (e: CliError.Companion.CliException) {

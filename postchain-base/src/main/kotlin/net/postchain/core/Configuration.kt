@@ -8,6 +8,7 @@ import net.postchain.base.Storage
  */
 interface BlockchainConfiguration {
     val chainID: Long
+    val blockchainRID: ByteArray
     val traits: Set<String>
 
     fun decodeBlockHeader(rawBlockHeader: ByteArray): BlockHeader
@@ -20,7 +21,7 @@ interface BlockchainConfiguration {
 }
 
 interface ConfigurationDataStore {
-    fun findConfiguration(context: EContext, height: Long): Long?
+    fun findConfigurationHeightForBlock(context: EContext, height: Long): Long?
     fun getConfigurationData(context: EContext, height: Long): ByteArray?
     fun addConfigurationData(context: EContext, height: Long, data: ByteArray)
 }

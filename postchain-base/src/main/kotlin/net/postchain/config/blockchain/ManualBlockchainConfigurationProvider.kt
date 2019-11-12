@@ -11,8 +11,8 @@ class ManualBlockchainConfigurationProvider : BlockchainConfigurationProvider {
 
     override fun needsConfigurationChange(eContext: EContext, chainId: Long): Boolean {
         val lastHeight = DatabaseAccess.of(eContext).getLastBlockHeight(eContext)
-        val currentConfigHeight = BaseConfigurationDataStore.findConfiguration(eContext, lastHeight)
-        val nextConfigHeight = BaseConfigurationDataStore.findConfiguration(eContext, lastHeight + 1)
+        val currentConfigHeight = BaseConfigurationDataStore.findConfigurationHeightForBlock(eContext, lastHeight)
+        val nextConfigHeight = BaseConfigurationDataStore.findConfigurationHeightForBlock(eContext, lastHeight + 1)
 
         logger.debug { "lastHeight: $lastHeight, currentConfigHeight: $currentConfigHeight, nextConfigHeight: $nextConfigHeight" }
 
@@ -21,7 +21,7 @@ class ManualBlockchainConfigurationProvider : BlockchainConfigurationProvider {
 
     override fun getConfiguration(eContext: EContext, chainId: Long): ByteArray? {
         val lastHeight = DatabaseAccess.of(eContext).getLastBlockHeight(eContext)
-        val nextHeight = BaseConfigurationDataStore.findConfiguration(eContext, lastHeight + 1)
+        val nextHeight = BaseConfigurationDataStore.findConfigurationHeightForBlock(eContext, lastHeight + 1)
         return nextHeight?.let {
             BaseConfigurationDataStore.getConfigurationData(eContext, it)!!
         }

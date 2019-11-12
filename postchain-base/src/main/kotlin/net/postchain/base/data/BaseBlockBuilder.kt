@@ -7,6 +7,7 @@ import net.postchain.base.*
 import net.postchain.base.merkle.Hash
 import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.devtools.PeerNameHelper.shortBrid
 import net.postchain.getBFTRequiredSignatureCount
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
@@ -26,6 +27,7 @@ import java.util.*
  * @property blockSigMaker used to produce signatures on blocks for local node
  */
 open class BaseBlockBuilder(
+        val blockchainRID: ByteArray,
         val cryptoSystem: CryptoSystem,
         eContext: EContext,
         store: BlockStore,
@@ -49,7 +51,7 @@ open class BaseBlockBuilder(
     fun computeRootHash(): ByteArray {
         val digests = rawTransactions.map { txFactory.decodeTransaction(it).getHash() }
 
-        val gtvArr = gtv(digests.map {gtv(it)})
+        val gtvArr = gtv(digests.map { gtv(it) })
 
         return gtvArr.merkleHash(calc)
     }
@@ -67,16 +69,20 @@ open class BaseBlockBuilder(
         }
 
         val rootHash = computeRootHash()
-        if (logger.isDebugEnabled) {
-            logger.debug("Create Block header. Root hash: ${rootHash.toHex()}, "+
-                    " prev block: ${initialBlockData.prevBlockRID.toHex()} ," +
-                    " height = ${initialBlockData.height} ")
+        val blockHeader = BaseBlockHeader.make(cryptoSystem, initialBlockData, rootHash, timestamp)
+        if (/*logger.isDebugEnabled*/true) {
+//            logger.debug {
+            logger.info {
+                "Chain: ${shortBrid(blockchainRID)}" +
+                        ", block header created: " +
+                        "root-hash: ${rootHash.toHex()}" +
+                        ", block-rid: ${blockHeader.blockRID.toHex()}" +
+                        ", prev-block-rid: ${initialBlockData.prevBlockRID.toHex()}" +
+                        ", height: ${initialBlockData.height}"
+            }
         }
-        val bh = BaseBlockHeader.make(cryptoSystem, initialBlockData, rootHash , timestamp)
-        if (logger.isDebugEnabled) {
-            logger.debug("Block header created with block RID: ${bh.blockRID.toHex()}.")
-        }
-        return bh
+
+        return blockHeader
     }
 
     /**
@@ -94,9 +100,9 @@ open class BaseBlockBuilder(
 
         val computedMerkleRoot = computeRootHash()
         return when {
-            !Arrays.equals(header.prevBlockRID, initialBlockData.prevBlockRID) ->
+            !header.prevBlockRID.contentEquals(initialBlockData.prevBlockRID) ->
                 ValidationResult(false, "header.prevBlockRID != initialBlockData.prevBlockRID," +
-                        "( ${header.prevBlockRID.toHex()} != ${initialBlockData.prevBlockRID.toHex()} ), "+
+                        "( ${header.prevBlockRID.toHex()} != ${initialBlockData.prevBlockRID.toHex()} ), " +
                         " height: ${header.blockHeaderRec.getHeight()} and ${initialBlockData.height} ")
 
             header.blockHeaderRec.getHeight() != initialBlockData.height ->

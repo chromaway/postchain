@@ -17,7 +17,8 @@ class TestBlockchainProcess(val _engine: BlockchainEngine) : BlockchainProcess {
 
 
 class TestSynchronizationInfrastructure : SynchronizationInfrastructure {
-    override fun makeBlockchainProcess(processName: String, engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
+
+    override fun makeBlockchainProcess(processName: String, engine: BlockchainEngine): BlockchainProcess {
         return TestBlockchainProcess(engine)
     }
 
@@ -40,14 +41,12 @@ class BaseTestInfrastructureFactory : InfrastructureFactory {
     override fun makeProcessManager(
             nodeConfigProvider: NodeConfigurationProvider,
             blockchainInfrastructure: BlockchainInfrastructure,
-            blockchainConfigurationProvider: BlockchainConfigurationProvider,
-            restartHandlerFactory: (chainId: Long) -> RestartHandler
+            blockchainConfigurationProvider: BlockchainConfigurationProvider
     ): BlockchainProcessManager {
 
         return BaseBlockchainProcessManager(
                 blockchainInfrastructure,
                 nodeConfigProvider,
-                blockchainConfigurationProvider,
-                restartHandlerFactory)
+                blockchainConfigurationProvider)
     }
 }
