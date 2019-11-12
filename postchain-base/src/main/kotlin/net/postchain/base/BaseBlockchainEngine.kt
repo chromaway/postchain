@@ -123,9 +123,6 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
         }
 
         val blockBuilder = makeBlockBuilder()
-        //if (blockBuilder is BaseBlockBuilder) {
-        //(blockBuilder as BaseBlockBuilder).validateMaxBlockTransactions()
-        //}
         blockBuilder.begin(block.header)
 
         val tBegin = System.nanoTime()
@@ -150,9 +147,6 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
     private fun sequentialLoadUnfinishedBlock(block: BlockData): ManagedBlockBuilder {
         val tStart = System.nanoTime()
         val blockBuilder = makeBlockBuilder()
-//        if (blockBuilder is BaseBlockBuilder) {
-//            blockBuilder.validateMaxBlockTransactions()
-//        }
         blockBuilder.begin(block.header)
 
         val tBegin = System.nanoTime()

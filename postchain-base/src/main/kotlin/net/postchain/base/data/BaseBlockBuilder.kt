@@ -227,7 +227,7 @@ open class BaseBlockBuilder(
         super.appendTransaction(tx)
         blockSize = transactions.map { t -> t.getRawData().size.toLong() }.sum()
         if (blockSize >= maxBlockSize) {
-            throw UserMistake("block size exceeds max block size ${maxBlockSize} MB")
+            throw UserMistake("block size exceeds max block size ${maxBlockSize} bytes")
         } else if (transactions.size >= maxBlockTransactions) {
             throw UserMistake("Number of transactions exceeds max ${maxBlockTransactions} transactions in block")
         }
