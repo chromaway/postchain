@@ -10,6 +10,7 @@ import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.ScalarHandler
+import java.lang.Exception
 import kotlin.concurrent.withLock
 
 class ManagedBlockchainProcessManager(
@@ -28,22 +29,29 @@ class ManagedBlockchainProcessManager(
     companion object : KLogging()
 
     override fun startBlockchain(chainId: Long): Boolean {
-        if (chainId == 0L) {
-            dataSource = buildChain0ManagedDataSource()
+        try {
 
-            logger.info { "${nodeConfigProvider.javaClass}" }
+            if (chainId == 0L) {
+                dataSource = buildChain0ManagedDataSource()
 
-            // Setting up managed data source to the nodeConfig
-            (nodeConfigProvider as? ManagedNodeConfigurationProvider)
-                    ?.setPeerInfoDataSource(dataSource)
-                    ?: logger.warn { "Node config is not managed, no peer info updates possible" }
+                logger.info { "${nodeConfigProvider.javaClass}" }
 
-            logger.info { "${blockchainConfigProvider.javaClass}" }
+                // Setting up managed data source to the nodeConfig
+                (nodeConfigProvider as? ManagedNodeConfigurationProvider)
+                        ?.setPeerInfoDataSource(dataSource)
+                        ?: logger.warn { "Node config is not managed, no peer info updates possible" }
 
-            // Setting up managed data source to the blockchainConfig
-            (blockchainConfigProvider as? ManagedBlockchainConfigurationProvider)
-                    ?.setDataSource(dataSource)
-                    ?: logger.warn { "Blockchain config is not managed" }
+                logger.info { "${blockchainConfigProvider.javaClass}" }
+
+                // Setting up managed data source to the blockchainConfig
+                (blockchainConfigProvider as? ManagedBlockchainConfigurationProvider)
+                        ?.setDataSource(dataSource)
+                        ?: logger.warn { "Blockchain config is not managed" }
+            }
+
+        } catch (e: Exception) {
+        	// TODO: [POS-90]: Improve error handling here
+            logger.error { e.message }
         }
 
         return super.startBlockchain(chainId)
@@ -135,6 +143,7 @@ class ManagedBlockchainProcessManager(
 
             // Reloading
             // FYI: For testing only. It can be deleted later.
+            /*
             logger.info {
                 val pubKey = nodeConfigProvider.getConfiguration().pubKey
                 val peerInfos = nodeConfigProvider.getConfiguration().peerInfoMap
@@ -143,6 +152,7 @@ class ManagedBlockchainProcessManager(
                         ", peerInfos: ${peerInfos.keys.toTypedArray().contentToString()} " +
                         ", chains to launch: ${toLaunch.contentDeepToString()}"
             }
+             */
 
             // Starting blockchains: at first chain0, then the rest
             logger.info { "Launching blockchain 0" }

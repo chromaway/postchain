@@ -11,15 +11,18 @@ import java.time.Instant
 class GTXManagedNodeDataSource(val queries: BlockQueries, val nodeConfig: NodeConfig) : ManagedNodeDataSource {
 
     override fun getPeerInfos(): Array<PeerInfo> {
+        // TODO: [POS-90]: Implement correct error processing
+
         val res = queries.query("nm_get_peer_infos", buildArgs())
         return res.get().asArray()
-                .map {
-                    val pia = it.asArray()
+                .map { it.asDict() }
+                .filter { it.containsKey("host") && it.containsKey("port") && it.containsKey("pubkey") }
+                .map { pid ->
                     PeerInfo(
-                            pia[0].asString(),
-                            pia[1].asInteger().toInt(),
-                            pia[2].asByteArray(),
-                            Instant.ofEpochMilli(if (pia[3].isNull()) 0 else pia[3].asInteger())
+                            pid.getValue("host").asString(),
+                            pid.getValue("port").asInteger().toInt(),
+                            pid.getValue("pubkey").asByteArray(),
+                            Instant.ofEpochMilli(if (!pid.containsKey("timestamp")) 0L else pid.getValue("timestamp").asInteger())
                     )
                 }
                 .toTypedArray()

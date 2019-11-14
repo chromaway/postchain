@@ -89,6 +89,10 @@ open class NodeConfig(val appConfig: AppConfig) {
      * Note: This is only needed for tests (asked Tykulov about it)
      */
     val activeChainIds: Array<String>
-        get() = config.getStringArray("activechainids")
-
+        get() {
+            return if (config.containsKey("activechainids"))
+                config.getStringArray("activechainids")
+            else
+                emptyArray()
+        }
 }

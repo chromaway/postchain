@@ -7,11 +7,11 @@ import net.postchain.base.*
 import net.postchain.base.merkle.Hash
 import net.postchain.common.toHex
 import net.postchain.core.*
-import net.postchain.devtools.PeerNameHelper.shortBrid
 import net.postchain.getBFTRequiredSignatureCount
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtv.merkleHash
+import java.lang.Long.max
 import java.util.*
 
 /**
@@ -45,7 +45,7 @@ open class BaseBlockBuilder(
      *
      * @return The Merkle tree root hash
      */
-    fun computeRootHash(): ByteArray {
+    fun computeMerkleRootHash(): ByteArray {
         val digests = rawTransactions.map { txFactory.decodeTransaction(it).getHash() }
 
         val gtvArr = gtv(digests.map { gtv(it) })
@@ -59,27 +59,10 @@ open class BaseBlockBuilder(
      * @return Block header
      */
     override fun makeBlockHeader(): BlockHeader {
-        var timestamp = System.currentTimeMillis()
-        if (timestamp <= initialBlockData.timestamp) {
-            // if our time is behind the timestamp of most recent block, do a minimal increment
-            timestamp = initialBlockData.timestamp + 1
-        }
-
-        val rootHash = computeRootHash()
-        val blockHeader = BaseBlockHeader.make(cryptoSystem, initialBlockData, rootHash, timestamp)
-        if (/*logger.isDebugEnabled*/true) {
-//            logger.debug {
-            logger.info {
-                "Chain: ${shortBrid(blockchainRID)}" +
-                        ", block header created: " +
-                        "root-hash: ${rootHash.toHex()}" +
-                        ", block-rid: ${blockHeader.blockRID.toHex()}" +
-                        ", prev-block-rid: ${initialBlockData.prevBlockRID.toHex()}" +
-                        ", height: ${initialBlockData.height}"
-            }
-        }
-
-        return blockHeader
+        // If our time is behind the timestamp of most recent block, do a minimal increment
+        val timestamp = max(System.currentTimeMillis(), initialBlockData.timestamp + 1)
+        val rootHash = computeMerkleRootHash()
+        return BaseBlockHeader.make(cryptoSystem, initialBlockData, rootHash, timestamp)
     }
 
     /**
@@ -95,7 +78,7 @@ open class BaseBlockBuilder(
     override fun validateBlockHeader(blockHeader: BlockHeader): ValidationResult {
         val header = blockHeader as BaseBlockHeader
 
-        val computedMerkleRoot = computeRootHash()
+        val computedMerkleRoot = computeMerkleRootHash()
         return when {
             !header.prevBlockRID.contentEquals(initialBlockData.prevBlockRID) ->
                 ValidationResult(false, "header.prevBlockRID != initialBlockData.prevBlockRID," +

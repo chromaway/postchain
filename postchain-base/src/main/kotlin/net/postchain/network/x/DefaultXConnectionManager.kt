@@ -61,8 +61,8 @@ class DefaultXConnectionManager<PacketType>(
     @Synchronized
     override fun connectChain(peerConfig: XChainPeerConfiguration, autoConnectAll: Boolean) {
         logger.debug {
-            "[${myPeerId()}]: Connecting chain: ${peerConfig.chainID} " +
-                    "BcRID: ${peerConfig.blockchainRID.toHex()}"
+            "[${myPeerId()}]: Connecting chain: ${peerConfig.chainID}" +
+                    ", blockchainRID: ${peerConfig.blockchainRID.toHex()}"
         }
 
         if (isShutDown) throw ProgrammerMistake("Already shut down")
@@ -88,7 +88,7 @@ class DefaultXConnectionManager<PacketType>(
     }
 
     private fun connectorConnectPeer(peerConfig: XChainPeerConfiguration, peerId: XPeerID) {
-        logger.debug { "[${myPeerId()}]: Connecting chain peer: chain = ${peerConfig.chainID}, peer = ${peerName(peerId)}" }
+        logger.info { "[${myPeerId()}]: Connecting chain peer: chain = ${peerConfig.chainID}, peer = ${peerName(peerId)}" }
 
         val peerConnectionDescriptor = XPeerConnectionDescriptor(
                 peerId,
@@ -103,7 +103,6 @@ class DefaultXConnectionManager<PacketType>(
 
         task {
             connector.connectPeer(peerConnectionDescriptor, peerInfo, packetEncoder)
-            logger.debug { "[${myPeerId()}]: Chain peer connected: chain = ${peerConfig.chainID}, peer = $peerId" }
         }
     }
 
@@ -137,7 +136,7 @@ class DefaultXConnectionManager<PacketType>(
     override fun broadcastPacket(data: LazyPacket, chainID: Long) {
         // TODO: lazypacket might be computed multiple times
         val chain = chains[chainID] ?: throw ProgrammerMistake("Chain ID not found: $chainID")
-        chain.connections.forEach { _, conn ->
+        chain.connections.forEach { (_, conn) ->
             conn.sendPacket(data)
         }
     }
@@ -172,9 +171,9 @@ class DefaultXConnectionManager<PacketType>(
 
     @Synchronized
     override fun onPeerConnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection): XPacketHandler? {
-        logger.debug {
-            "[${myPeerId()}]: onPeerConnected: peerId = ${peerName(descriptor.peerId)}, " +
-                    "connection = ${connection.javaClass.simpleName}, BcRID: ${descriptor.blockchainRID}"
+        logger.info {
+            "[${myPeerId()}]: Peer connected: peerId = ${peerName(descriptor.peerId)}" +
+                    ", blockchainRID: ${descriptor.blockchainRID}"
         }
 
         val chainID = chainIDforBlockchainRID[descriptor.blockchainRID]
@@ -201,12 +200,12 @@ class DefaultXConnectionManager<PacketType>(
 
     @Synchronized
     override fun onPeerDisconnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection) {
-        logger.debug { "[${myPeerId()}]: onPeerDisconnected: peerId = ${peerName(descriptor.peerId)}" }
+        logger.debug { "[${myPeerId()}]: Peer disconnected: peerId = ${peerName(descriptor.peerId)}" }
 
         val chainID = chainIDforBlockchainRID[descriptor.blockchainRID]
         val chain = if (chainID != null) chains[chainID] else null
         if (chain == null) {
-            logger.warn("[${myPeerId()}]: onPeerDisconnected: Chain not found by blockchainRID = ${descriptor.blockchainRID} / chainID = $chainID")
+            logger.warn("[${myPeerId()}]: Peer disconnected: chain not found by blockchainRID = ${descriptor.blockchainRID} / chainID = $chainID")
             return
         }
 
@@ -222,8 +221,6 @@ class DefaultXConnectionManager<PacketType>(
                 reconnect(chain.peerConfig, descriptor.peerId)
             }
         }
-
-        logger.debug { "[${myPeerId()}]: onPeerDisconnected: Peer disconnected: peerId = ${peerName(descriptor.peerId)}" }
     }
 
     override fun getPeersTopology(chainID: Long): Map<XPeerID, String> {
@@ -239,20 +236,23 @@ class DefaultXConnectionManager<PacketType>(
     }
 
     private fun reconnect(peerConfig: XChainPeerConfiguration, peerId: XPeerID) {
-        // Make sure there is an [ExponentialDelay] instance for this peer
-        var delay = peerToDelayMap[peerId]
-        if (delay == null) {
-            delay = ExponentialDelay()
-            peerToDelayMap[peerId] = delay
-        }
-
-        logger.debug { "[${myPeerId()}]: Reconnecting in ${delay.getDelayMillis()} milliseconds to peer: peerId = ${peerName(peerId)}" }
+        val delay = peerToDelayMap.computeIfAbsent(peerId) { ExponentialDelay() }
+        val (timeUnit, timeDelay) = prettyDelay(delay)
+        logger.info { "[${myPeerId()}]: Reconnecting in $timeDelay $timeUnit to peer: peerId = ${peerName(peerId)}" }
         Timer("Reconnecting").schedule(delay.getDelayMillis()) {
-            logger.debug { "[${myPeerId()}]: Reconnecting to peer: peerId = ${peerName(peerId)}" }
+            logger.info { "[${myPeerId()}]: Reconnecting to peer: peerId = ${peerName(peerId)}" }
             connectorConnectPeer(peerConfig, peerId)
         }
     }
 
     private fun myPeerId(): String =
             peerName(peerCommConfiguration.myPeerInfo().pubKey)
+
+    private fun prettyDelay(delay: ExponentialDelay): Pair<String, Long> {
+        return if (delay.getDelayMillis() < 1000) {
+            "milliseconds" to delay.getDelayMillis()
+        } else {
+            "seconds" to delay.getDelayMillis() / 1000
+        }
+    }
 }

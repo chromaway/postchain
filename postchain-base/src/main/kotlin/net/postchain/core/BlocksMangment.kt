@@ -76,7 +76,7 @@ interface BlockQueries {
 interface BlockBuilder {
     fun begin(partialBlockHeader: BlockHeader?)
     fun appendTransaction(tx: Transaction)
-    fun finalizeBlock()
+    fun finalizeBlock(): BlockHeader
     fun finalizeAndValidate(blockHeader: BlockHeader)
     fun getBlockData(): BlockData
     fun getBlockWitnessBuilder(): BlockWitnessBuilder?
