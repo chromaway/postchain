@@ -14,7 +14,7 @@ import net.postchain.ebft.EBFTSynchronizationInfrastructure
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvEncoder.encodeGtv
 
-class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider) : PostchainNode(nodeConfigProvider) {
+class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider, preWipeDatabase: Boolean = false) : PostchainNode(nodeConfigProvider) {
 
     private val testStorage: Storage
     val pubKey: String
@@ -22,7 +22,7 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider) : Postcha
 
     init {
         val nodeConfig = nodeConfigProvider.getConfiguration()
-        testStorage = StorageBuilder.buildStorage(nodeConfig.appConfig, NODE_ID_TODO)
+        testStorage = StorageBuilder.buildStorage(nodeConfig.appConfig, NODE_ID_TODO, preWipeDatabase)
         pubKey = nodeConfig.pubKey
     }
 
