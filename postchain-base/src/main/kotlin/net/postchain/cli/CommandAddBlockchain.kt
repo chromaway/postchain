@@ -25,6 +25,7 @@ class CommandAddBlockchain : Command {
             required = true)
     private var chainId = 0L
 
+    // TODO Olle Should probably remove this option, bc we're no longer using this input value. Could break tests
     @Parameter(
             names = ["-brid", "--blockchain-rid"],
             description = "Blockchain global ID",
@@ -51,7 +52,7 @@ class CommandAddBlockchain : Command {
         return try {
             val cliExecution = CliExecution()
             val mode = if (force) AlreadyExistMode.FORCE else AlreadyExistMode.ERROR
-            cliExecution.addBlockchain(nodeConfigFile, chainId, blockchainRID, blockchainConfigFile, mode);
+            cliExecution.addBlockchain(nodeConfigFile, chainId, blockchainConfigFile, mode)
             Ok("Configuration has been added successfully")
         } catch (e: CliError.Companion.CliException) {
             CliError.CommandNotAllowed(message = e.message)

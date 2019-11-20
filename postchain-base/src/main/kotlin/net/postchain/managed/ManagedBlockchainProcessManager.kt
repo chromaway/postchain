@@ -56,7 +56,7 @@ class ManagedBlockchainProcessManager(
     /**
      * Check if this is the "chain zero" and if so we need to set the dataSource in a few objects before we go on.
      */
-    override fun startBlockchain(chainId: Long): Boolean {
+    override fun startBlockchain(chainId: Long): ByteArray? {
         if (chainId == 0L) {
             dataSource = buildChain0ManagedDataSource()
 
@@ -163,9 +163,13 @@ class ManagedBlockchainProcessManager(
         withWriteConnection(storage, chainId) { eContext ->
             val configuration = blockchainConfigProvider.getConfiguration(eContext, chainId)
                     ?: throw ProgrammerMistake("chain0 configuration not found")
-            val blockchainRID = DatabaseAccess.of(eContext).getBlockchainRID(eContext)!! // TODO: [et]: Fix Kotlin NPE
-            val context = BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null)
-            val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(configuration, context)
+
+            val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(
+                    configuration,
+                    eContext,
+                    NODE_ID_AUTO,
+                    chainId)
+
             blockchainConfig.initializeDB(eContext)
 
             val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration().appConfig, NODE_ID_NA)
@@ -254,14 +258,14 @@ class ManagedBlockchainProcessManager(
     private fun loadBlockchainConfiguration(chainId: Long) {
         withWriteConnection(storage, chainId) { ctx ->
             val dbAccess = DatabaseAccess.of(ctx)
-            val brid = dbAccess.getBlockchainRID(ctx)!!
+            val brid = dbAccess.getBlockchainRID(ctx)!! // We can only load chains this way if we know their BC RID.
             val height = dbAccess.getLastBlockHeight(ctx)
             val nextConfigHeight = dataSource.findNextConfigurationHeight(brid, height)
             if (nextConfigHeight != null) {
-                logger.info { "Next config height fount in managed-mode module: $nextConfigHeight" }
+                logger.info { "Next config height found in managed-mode module: $nextConfigHeight" }
                 if (BaseConfigurationDataStore.findConfigurationHeightForBlock(ctx, nextConfigHeight) != nextConfigHeight) {
                     logger.info {
-                        "Configuration for the height $nextConfigHeight is not fount in ConfigurationDataStore " +
+                        "Configuration for the height $nextConfigHeight is not found in ConfigurationDataStore " +
                                 "and will be loaded into it from managed-mode module"
                     }
                     val config = dataSource.getConfiguration(brid, nextConfigHeight)!!

@@ -300,7 +300,7 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
                 ctx.chainID)
 
         if (rid == null) {
-            logger.debug("Blockchain RID: ${blockchainRID.toHex()} doesn't exist in DB, so we add it.")
+            logger.info("Blockchain RID: ${blockchainRID.toHex()} doesn't exist in DB, so we add it.")
             queryRunner.update(
                     ctx.conn,
                     "INSERT INTO blockchains (chain_iid, blockchain_rid) values (?, ?)",

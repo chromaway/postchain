@@ -32,9 +32,8 @@ class CliIntegrationTest {
 
         // add-blockchain goes here
         val chainId: Long = 1;
-        val brid = File(fullPath("brid.txt")).readText()
         val blockChainConfig = fullPath("blockchain_config_4_signers.xml")
-        CliExecution().addBlockchain(nodeConfigPath, chainId, brid, blockChainConfig, AlreadyExistMode.FORCE)
+        val brid = CliExecution().addBlockchain(nodeConfigPath, chainId, blockChainConfig, AlreadyExistMode.FORCE)
 
         val node = PostchainNode(nodeConfigProvider)
         node.startBlockchain(chainId)
@@ -65,7 +64,7 @@ class CliIntegrationTest {
         val chainId: Long = 1;
         val brid = File(fullPath("brid.txt")).readText()
         val blockChainConfig = fullPath("blockchain_config_4_signers.xml")
-        CliExecution().addBlockchain(nodeConfigPath, chainId, brid, blockChainConfig, AlreadyExistMode.FORCE)
+        CliExecution().addBlockchain(nodeConfigPath, chainId, blockChainConfig, AlreadyExistMode.FORCE)
 
         val node = PostchainNode(nodeConfigProvider)
         node.startBlockchain(chainId)
@@ -94,10 +93,9 @@ class CliIntegrationTest {
 
         // add-blockchain goes here
         val chainId = 1L
-        val brid = File(fullPath("brid.txt")).readText()
         val blockChainConfig = fullPath("blockchain_config.xml")
         val cliExecution = CliExecution()
-        cliExecution.addBlockchain(nodeConfigPath, chainId, brid, blockChainConfig, AlreadyExistMode.FORCE)
+        val brid = cliExecution.addBlockchain(nodeConfigPath, chainId, blockChainConfig, AlreadyExistMode.FORCE)
 
         // start blockchain with one signer first
         val node = PostchainNode(nodeConfigProvider)

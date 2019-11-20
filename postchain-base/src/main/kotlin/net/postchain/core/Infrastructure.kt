@@ -9,7 +9,11 @@ interface SynchronizationInfrastructure : Shutdownable {
 }
 
 interface BlockchainInfrastructure : SynchronizationInfrastructure {
-    fun makeBlockchainConfiguration(rawConfigurationData: ByteArray, context: BlockchainContext): BlockchainConfiguration
+    fun makeBlockchainConfiguration(  rawConfigurationData: ByteArray,
+                                      eContext: EContext,
+                                      nodeID: Int,
+                                      chainID: Long
+    ): BlockchainConfiguration
     fun makeBlockchainEngine(configuration: BlockchainConfiguration, restartHandler: RestartHandler): BlockchainEngine
 
     fun makeStorage(): Storage

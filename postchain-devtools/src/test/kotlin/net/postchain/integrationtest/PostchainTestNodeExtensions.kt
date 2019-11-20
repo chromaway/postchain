@@ -18,7 +18,8 @@ import net.postchain.gtx.GTXModule
 import nl.komponents.kovenant.Promise
 
 fun PostchainTestNode.addBlockchainAndStart(chainId: Long, blockchainRid: ByteArray, blockchainConfig: Gtv) {
-    addBlockchain(chainId, blockchainRid, blockchainConfig)
+    val bcRid = addBlockchain(chainId, blockchainConfig)
+    mapBlockchainRID(chainId, bcRid)
     startBlockchain(chainId)
 }
 

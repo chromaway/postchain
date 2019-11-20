@@ -18,7 +18,7 @@ class BaseBlockchainConfigurationData(
     init {
         context = BaseBlockchainContext(
                 partialContext.blockchainRID,
-                resolveNodeID(partialContext),
+                resolveNodeID(partialContext.nodeID),
                 partialContext.chainID,
                 partialContext.nodeRID)
     }
@@ -144,8 +144,8 @@ class BaseBlockchainConfigurationData(
         }
     }
 
-    private fun resolveNodeID(partialContext: BlockchainContext): Int {
-        return if (partialContext.nodeID == NODE_ID_AUTO) {
+    private fun resolveNodeID(nodeID: Int): Int {
+        return if (nodeID == NODE_ID_AUTO) {
             if (subjectID == null) {
                 NODE_ID_READ_ONLY
             } else {
@@ -154,7 +154,7 @@ class BaseBlockchainConfigurationData(
                         .let { i -> if (i == -1) NODE_ID_READ_ONLY else i }
             }
         } else {
-            partialContext.nodeID
+            nodeID
         }
     }
 }

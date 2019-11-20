@@ -5,11 +5,10 @@ import net.postchain.base.BaseConfigurationDataStore
 import net.postchain.base.BlockchainRelatedInfo
 import net.postchain.base.data.BaseBlockStore
 import net.postchain.base.data.DatabaseAccess
-import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.config.app.AppConfig
 import net.postchain.config.node.NodeConfigurationProviderFactory
-import net.postchain.gtv.GtvEncoder
+import net.postchain.gtv.Gtv
 import net.postchain.gtv.gtvml.GtvMLParser
 import org.apache.commons.configuration2.ex.ConfigurationException
 import org.apache.commons.dbcp2.BasicDataSource
@@ -19,25 +18,29 @@ import java.sql.SQLException
 
 class CliExecution {
 
+    /**
+     * @return blockchain RID
+     */
     fun addBlockchain(
             nodeConfigFile: String,
             chainId: Long,
-            blockchainRID: String,
             blockchainConfigFile: String,
             mode: AlreadyExistMode = AlreadyExistMode.IGNORE,
             givenDependencies: List<BlockchainRelatedInfo> = listOf()
-    ) {
-        val encodedGtxValue = getEncodedGtxValueFromFile(blockchainConfigFile)
+    ): ByteArray {
+        val gtvBcConf = getGtvFromFile(blockchainConfigFile)
+        var bcRID: ByteArray? = null
         runDBCommandBody(nodeConfigFile, chainId) { eContext ->
 
-            fun init() {
-                BaseBlockStore().initialize(eContext, blockchainRID.hexStringToByteArray(), givenDependencies)
-                BaseConfigurationDataStore.addConfigurationData(eContext, 0, encodedGtxValue)
+            fun init(): ByteArray {
+                val bcRid = BaseConfigurationDataStore.addConfigurationData(eContext, 0, gtvBcConf)
+                BaseBlockStore().initialValidation(eContext, givenDependencies)
+                return bcRid
             }
 
             val db = DatabaseAccess.of(eContext)
 
-            when (mode) {
+            bcRID = when (mode) {
                 AlreadyExistMode.ERROR -> {
                     if (db.getBlockchainRID(eContext) == null) {
                         init()
@@ -52,12 +55,11 @@ class CliExecution {
                 }
 
                 else -> {
-                    if (db.getBlockchainRID(eContext) == null) {
-                        init()
-                    }
+                    db.getBlockchainRID(eContext) ?: init()
                 }
             }
         }
+        return bcRID!!
     }
 
     fun addConfiguration(
@@ -68,11 +70,11 @@ class CliExecution {
             mode: AlreadyExistMode = AlreadyExistMode.IGNORE
     ) {
 
-        val encodedGtxValue = getEncodedGtxValueFromFile(blockchainConfigFile)
+        val gtvBcConf = getGtvFromFile(blockchainConfigFile)
         runDBCommandBody(nodeConfigFile, chainId) { eContext ->
 
             fun init() {
-                BaseConfigurationDataStore.addConfigurationData(eContext, height, encodedGtxValue)
+                BaseConfigurationDataStore.addConfigurationData(eContext, height, gtvBcConf)
             }
 
             when (mode) {
@@ -160,8 +162,7 @@ class CliExecution {
         }
     }
 
-    private fun getEncodedGtxValueFromFile(blockchainConfigFile: String): ByteArray {
-        val gtv = GtvMLParser.parseGtvML(File(blockchainConfigFile).readText())
-        return GtvEncoder.encodeGtv(gtv)
+    private fun getGtvFromFile(blockchainConfigFile: String): Gtv {
+        return GtvMLParser.parseGtvML(File(blockchainConfigFile).readText())
     }
 }

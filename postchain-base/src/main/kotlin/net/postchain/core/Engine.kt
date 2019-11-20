@@ -31,7 +31,7 @@ interface BlockchainProcess : Shutdownable {
 
 interface BlockchainProcessManager : Shutdownable, Synchronizable {
     fun startBlockchainAsync(chainId: Long)
-    fun startBlockchain(chainId: Long): Boolean
+    fun startBlockchain(chainId: Long): ByteArray?
     fun retrieveBlockchain(chainId: Long): BlockchainProcess?
     fun stopBlockchain(chainId: Long)
     fun restartHandler(chainId: Long): RestartHandler

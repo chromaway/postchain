@@ -24,7 +24,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
                 nodeConfigProvider, blockchainInfrastructure, blockchainConfigProvider)
     }
 
-    fun startBlockchain(chainId: Long): Boolean {
+    fun startBlockchain(chainId: Long): ByteArray? {
         return processManager.startBlockchain(chainId)
     }
 

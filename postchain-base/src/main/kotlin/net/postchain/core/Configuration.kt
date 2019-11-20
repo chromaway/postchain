@@ -1,6 +1,7 @@
 package net.postchain.core
 
 import net.postchain.base.Storage
+import net.postchain.gtv.Gtv
 
 /**
  * BlockchainConfiguration is a stateless objects which describes
@@ -23,7 +24,8 @@ interface BlockchainConfiguration {
 interface ConfigurationDataStore {
     fun findConfigurationHeightForBlock(context: EContext, height: Long): Long?
     fun getConfigurationData(context: EContext, height: Long): ByteArray?
-    fun addConfigurationData(context: EContext, height: Long, data: ByteArray)
+    fun addConfigurationData(context: EContext, height: Long, binData: ByteArray): ByteArray
+    fun addConfigurationData(context: EContext, height: Long, gtvData: Gtv): ByteArray
 }
 
 interface BlockchainConfigurationFactory {

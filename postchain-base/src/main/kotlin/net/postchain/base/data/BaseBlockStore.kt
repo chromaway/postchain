@@ -141,8 +141,9 @@ class BaseBlockStore : BlockStore {
         return DatabaseAccess.of(ctx).isTransactionConfirmed(ctx, txRID)
     }
 
-    fun initialize(ctx: EContext, blockchainRID: ByteArray, dependencies:  List<BlockchainRelatedInfo>) {
-        DatabaseAccess.of(ctx).checkBlockchainRID(ctx, blockchainRID)
+    fun initialValidation(ctx: EContext, dependencies:  List<BlockchainRelatedInfo>) {
+        // At this point we must have stored BC RID
+        DatabaseAccess.of(ctx).getBlockchainRID(ctx) ?: throw IllegalStateException("Cannot initialize block store for a chain without a RID")
 
         // Verify all dependencies
         for (dep in dependencies) {

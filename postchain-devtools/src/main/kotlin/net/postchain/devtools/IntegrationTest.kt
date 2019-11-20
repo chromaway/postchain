@@ -163,7 +163,6 @@ open class IntegrationTest {
         nodesNames[nodeConfig.pubKey] = "$nodeIndex"
         val blockchainConfig = readBlockchainConfig(blockchainConfigFilename)
         val chainId = nodeConfig.activeChainIds.first().toLong()
-        val blockchainRid = BLOCKCHAIN_RIDS[chainId]!!.hexStringToByteArray()
 
         // Wiping of database
         if (preWipeDatabase) {
@@ -175,7 +174,8 @@ open class IntegrationTest {
 
         return PostchainTestNode(nodeConfigProvider)
                 .apply {
-                    addBlockchain(chainId, blockchainRid, blockchainConfig)
+                    val blockchainRid = addBlockchain(chainId, blockchainConfig)
+                    mapBlockchainRID(chainId, blockchainRid)
                     startBlockchain(chainId)
                 }
                 .also {
@@ -266,10 +266,10 @@ open class IntegrationTest {
         nodeConfigProvider.getConfiguration().activeChainIds
                 .filter(String::isNotEmpty)
                 .forEachIndexed { i, chainId ->
-                    val blockchainRid = BLOCKCHAIN_RIDS[chainId.toLong()]!!.hexStringToByteArray()
                     val filename = blockchainConfigFilenames[i]
                     val blockchainConfig = readBlockchainConfig(filename)
-                    node.addBlockchain(chainId.toLong(), blockchainRid, blockchainConfig)
+                    val blockchainRid = node.addBlockchain(chainId.toLong(), blockchainConfig)
+                    node.mapBlockchainRID(chainId.toLong(), blockchainRid)
                     node.startBlockchain(chainId.toLong())
                 }
 
