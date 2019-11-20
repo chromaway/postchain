@@ -19,11 +19,11 @@ object BaseConfigurationDataStore : KLogging(), ConfigurationDataStore {
         return DatabaseAccess.of(context).getConfigurationData(context, height)
     }
 
-    override fun addConfigurationData(context: EContext, height: Long, binData: ByteArray): ByteArray {
+    override fun addConfigurationData(context: EContext, height: Long, binData: ByteArray): BlockchainRid {
         return addConfigurationDataInternal(context, height, binData, GtvFactory.decodeGtv(binData))
     }
 
-    override fun addConfigurationData(context: EContext, height: Long, gtvData: Gtv): ByteArray {
+    override fun addConfigurationData(context: EContext, height: Long, gtvData: Gtv): BlockchainRid {
         return addConfigurationDataInternal(context, height, GtvEncoder.encodeGtv(gtvData), gtvData)
     }
 
@@ -44,7 +44,7 @@ object BaseConfigurationDataStore : KLogging(), ConfigurationDataStore {
             height: Long,
             binData: ByteArray,
             gtvData: Gtv
-    ): ByteArray {
+    ): BlockchainRid {
         val bcRidInDB = DatabaseAccess.of(context).getBlockchainRID(context)
         val bcRid = if (height > 0L) {
             bcRidInDB ?: throw IllegalStateException("Chain ${context.chainID} doesn't have a BC RID, but must have since we are creating a configuration for height $height")

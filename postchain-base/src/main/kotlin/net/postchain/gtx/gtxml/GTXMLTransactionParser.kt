@@ -2,6 +2,7 @@
 
 package net.postchain.gtx.gtxml
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.CryptoSystem
 import net.postchain.base.SigMaker
 import net.postchain.base.gtxml.OperationsType
@@ -23,7 +24,7 @@ import java.io.StringReader
 import javax.xml.bind.JAXB
 import javax.xml.bind.JAXBElement
 
-class TransactionContext(val blockchainRID: ByteArray?,
+class TransactionContext(val blockchainRID: BlockchainRid?,
                          val params: Map<String, Gtv> = mapOf(),
                          val autoSign: Boolean = false,
                          val signers: Map<ByteArrayKey, SigMaker> = mapOf()) {
@@ -88,16 +89,17 @@ object GTXMLTransactionParser {
         }
     }
 
-    private fun parseBlockchainRID(blockchainRID: String?, contextBlockchainRID: ByteArray?): ByteArray {
+    private fun parseBlockchainRID(blockchainRID: String?, contextBlockchainRID: BlockchainRid?): BlockchainRid {
         return if (blockchainRID.isNullOrEmpty()) {
-            contextBlockchainRID ?: ByteArray(0)
+            contextBlockchainRID ?: BlockchainRid.EMPTY_RID
         } else {
-            blockchainRID!!.hexStringToByteArray()
-                    .takeIf { contextBlockchainRID == null || it.contentEquals(contextBlockchainRID) }
+            val data = blockchainRID!!.hexStringToByteArray()
+                    .takeIf { contextBlockchainRID == null || it.contentEquals(contextBlockchainRID.data) }
                     ?: throw IllegalArgumentException(
                             "BlockchainRID = '$blockchainRID' of parsed xml transaction is not equal to " +
                                     "TransactionContext.blockchainRID = '${contextBlockchainRID!!.toHex()}'"
                     )
+            BlockchainRid(data)
         }
     }
 

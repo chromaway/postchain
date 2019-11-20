@@ -2,6 +2,7 @@
 
 package net.postchain.gtx
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.Signature
@@ -14,7 +15,7 @@ import org.junit.Test
 
 // TODO: figure out why we get different results
 // val testBlockchainRID = SECP256K1CryptoSystem().digest("Test blockchainRID".toByteArray())
-val testBlockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3".hexStringToByteArray()
+val testBlockchainRID = BlockchainRid.buildFromHex("78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3")
 
 fun mustThrowError(msg: String, code: () -> Unit) {
     try {

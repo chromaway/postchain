@@ -3,6 +3,7 @@ package net.postchain.cli
 import net.postchain.PostchainNode
 import net.postchain.base.BaseConfigurationDataStore
 import net.postchain.base.BlockchainRelatedInfo
+import net.postchain.base.BlockchainRid
 import net.postchain.base.data.BaseBlockStore
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.common.toHex
@@ -27,12 +28,12 @@ class CliExecution {
             blockchainConfigFile: String,
             mode: AlreadyExistMode = AlreadyExistMode.IGNORE,
             givenDependencies: List<BlockchainRelatedInfo> = listOf()
-    ): ByteArray {
+    ): BlockchainRid {
         val gtvBcConf = getGtvFromFile(blockchainConfigFile)
-        var bcRID: ByteArray? = null
+        var bcRID: BlockchainRid? = null
         runDBCommandBody(nodeConfigFile, chainId) { eContext ->
 
-            fun init(): ByteArray {
+            fun init(): BlockchainRid {
                 val bcRid = BaseConfigurationDataStore.addConfigurationData(eContext, 0, gtvBcConf)
                 BaseBlockStore().initialValidation(eContext, givenDependencies)
                 return bcRid

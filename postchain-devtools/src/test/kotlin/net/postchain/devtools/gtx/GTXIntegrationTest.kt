@@ -2,6 +2,7 @@
 
 package net.postchain.devtools.gtx
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
@@ -16,7 +17,7 @@ import net.postchain.gtx.GTXDataBuilder
 import org.junit.Assert
 import org.junit.Test
 
-val testBlockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3".hexStringToByteArray()
+val testBlockchainRID = BlockchainRid.buildFromHex("78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3")
 val myCS = SECP256K1CryptoSystem()
 
 class GTXIntegrationTest : IntegrationTest() {

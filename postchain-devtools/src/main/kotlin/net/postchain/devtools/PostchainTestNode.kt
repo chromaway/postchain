@@ -18,7 +18,7 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider) : Postcha
     private val testStorage: Storage
     val pubKey: String
     private var isInitialized = false
-    private val blockchainRidMap = mutableMapOf<Long, ByteArray>() // Used to keep track of the BC RIDs of the chains
+    private val blockchainRidMap = mutableMapOf<Long, BlockchainRid>() // Used to keep track of the BC RIDs of the chains
 
     init {
         val nodeConfig = nodeConfigProvider.getConfiguration()
@@ -43,12 +43,12 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider) : Postcha
         isInitialized = true
     }
 
-    fun addBlockchain(chainId: Long, blockchainConfig: Gtv): ByteArray {
+    fun addBlockchain(chainId: Long, blockchainConfig: Gtv): BlockchainRid {
         initDb(chainId)
         return addConfiguration(chainId, 0, blockchainConfig)
     }
 
-    fun addConfiguration(chainId: Long, height: Long, blockchainConfig: Gtv): ByteArray {
+    fun addConfiguration(chainId: Long, height: Long, blockchainConfig: Gtv): BlockchainRid {
         check(isInitialized) { "PostchainNode is not initialized" }
 
         return withReadWriteConnection(testStorage, chainId) { eContext: EContext ->
@@ -57,7 +57,7 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider) : Postcha
         }
     }
 
-    fun startBlockchain(): ByteArray? {
+    fun startBlockchain(): BlockchainRid? {
         return startBlockchain(DEFAULT_CHAIN_IID)
     }
 
@@ -107,7 +107,7 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider) : Postcha
                 }
     }
 
-    fun mapBlockchainRID(chainId: Long, bcRID: ByteArray) {
+    fun mapBlockchainRID(chainId: Long, bcRID: BlockchainRid) {
         blockchainRidMap[chainId] = bcRID
     }
 

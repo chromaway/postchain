@@ -1,5 +1,6 @@
 package net.postchain.gtx
 
+import net.postchain.base.BlockchainRid
 import net.postchain.core.*
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.MapListHandler
@@ -259,7 +260,7 @@ class SQLGTXModule(private val moduleFiles: Array<String>) : GTXModule {
 }
 
 class SQLGTXModuleFactory : GTXModuleFactory {
-    override fun makeModule(data: Gtv, blockchainRID: ByteArray): GTXModule {
+    override fun makeModule(data: Gtv, blockchainRID: BlockchainRid): GTXModule {
         return SQLGTXModule(
                 data["gtx"]!!["sqlmodules"]
                         ?.asArray()

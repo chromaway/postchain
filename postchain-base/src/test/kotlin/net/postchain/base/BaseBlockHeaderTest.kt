@@ -9,7 +9,7 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class BaseBlockHeaderTest {
-    val blockchainRID = "bcRid".toByteArray()
+    val blockchainRID = BlockchainRid("bcRid".toByteArray())
     val prevBlockRID0 = ByteArray(32, {if (it==31) 99 else 0}) // This is incorrect. Should include 99 at the end
     val cryptoSystem = SECP256K1CryptoSystem()
 
@@ -40,20 +40,20 @@ class BaseBlockHeaderTest {
 
         assertTrue(
                 decodedHeader.checkIfAllBlockchainDependenciesArePresent(listOf(
-                BlockchainRelatedInfo( ByteArray(32, {1}), "hello", 1L),
-                BlockchainRelatedInfo( ByteArray(32, {2}), "World", 2L)
+                BlockchainRelatedInfo( BlockchainRid.buildRepeat(1), "hello", 1L),
+                BlockchainRelatedInfo( BlockchainRid.buildRepeat(2), "World", 2L)
                 ))
         )
         assertFalse(
                 decodedHeader.checkIfAllBlockchainDependenciesArePresent(listOf(
-                BlockchainRelatedInfo( ByteArray(32, {1}), "hello", 1L),
-                BlockchainRelatedInfo( ByteArray(32, {2}), "cruel", 2L),
-                BlockchainRelatedInfo( ByteArray(32, {3}), "World", 3L)
+                BlockchainRelatedInfo( BlockchainRid.buildRepeat(1), "hello", 1L),
+                BlockchainRelatedInfo( BlockchainRid.buildRepeat(2), "cruel", 2L),
+                BlockchainRelatedInfo( BlockchainRid.buildRepeat(3), "World", 3L)
                 ))
         )
     }
 
-    private fun createHeader(blockchainRid: ByteArray, blockIID: Long, chainId: Long, prevBlockRid: ByteArray, height: Long): BlockHeader {
+    private fun createHeader(blockchainRid: BlockchainRid, blockIID: Long, chainId: Long, prevBlockRid: ByteArray, height: Long): BlockHeader {
         val rootHash = ByteArray(32, {0})
         val timestamp = 10000L + height
         val dependencies = createBlockchainDependencies()

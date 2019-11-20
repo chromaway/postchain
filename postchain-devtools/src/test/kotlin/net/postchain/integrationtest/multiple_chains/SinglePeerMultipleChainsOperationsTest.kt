@@ -32,7 +32,7 @@ class SinglePeerMultipleChainsOperationsTest : IntegrationTest() {
         nodes[0].assertChainNotStarted(chainId1)
 
         // Adding chain 1
-        nodes[0].addBlockchainAndStart(chainId1, blockchainRid1, blockchainConfig1)
+        nodes[0].addBlockchainAndStart(chainId1, blockchainConfig1)
 
         // Asserting chain 1 is started
         await().atMost(Duration.TEN_SECONDS)
@@ -75,7 +75,7 @@ class SinglePeerMultipleChainsOperationsTest : IntegrationTest() {
         nodes[0].assertChainNotStarted(chainId2)
 
         // Adding chain 1
-        nodes[0].addBlockchainAndStart(chainId1, blockchainRid1, blockchainConfig1)
+        nodes[0].addBlockchainAndStart(chainId1, blockchainConfig1)
         // Asserting chain 1 is started and chain 2 is not
         await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
@@ -84,7 +84,7 @@ class SinglePeerMultipleChainsOperationsTest : IntegrationTest() {
                 }
 
         // Adding chain 2
-        nodes[0].addBlockchainAndStart(chainId2, blockchainRid2, blockchainConfig2)
+        nodes[0].addBlockchainAndStart(chainId2, blockchainConfig2)
         // Asserting chain 2 is started too
         await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {

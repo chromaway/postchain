@@ -3,6 +3,7 @@ package net.postchain.devtools
 import com.google.gson.GsonBuilder
 import mu.KLogging
 import net.postchain.StorageBuilder
+import net.postchain.base.BlockchainRid
 import net.postchain.base.gtxml.TestType
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
@@ -46,7 +47,7 @@ class TestLauncher : IntegrationTest() {
         }
     }
 
-    private fun createTestNode(configFile: String, blockchainRid: ByteArray, blockchainConfigFile: String): PostchainTestNode {
+    private fun createTestNode(configFile: String, blockchainRid: BlockchainRid, blockchainConfigFile: String): PostchainTestNode {
         val appConfig = AppConfig.fromPropertiesFile(configFile)
         val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(appConfig)
 
@@ -95,15 +96,16 @@ class TestLauncher : IntegrationTest() {
     }
 
     private fun _runXMLGTXTests(xml: String,
-                                blockchainRID: String,
+                                blockchainRIDStr: String,
                                 nodeConfigFile: String? = null,
                                 blockchainConfigFile: String? = null
     ): TestOutput {
+        val blockchainRID = BlockchainRid.buildFromHex(blockchainRIDStr)
         val node: PostchainTestNode
         val testType: TestType
         try {
             // TODO: Resolve nullability here and above: !! vs ?.
-            node = createTestNode(nodeConfigFile!!, blockchainRID.hexStringToByteArray(), blockchainConfigFile!!)
+            node = createTestNode(nodeConfigFile!!, blockchainRID, blockchainConfigFile!!)
         } catch (e: Exception) {
             return TestOutput(false, false, e, listOf())
         }
@@ -124,7 +126,7 @@ class TestLauncher : IntegrationTest() {
         val user3priv = privKey(2)
 
         val txContext = TransactionContext(
-                blockchainRID?.hexStringToByteArray(),
+                blockchainRID,
                 mapOf(
                         "user1pub" to gtv(pubKey(0)),
                         "user2pub" to gtv(user2pub),

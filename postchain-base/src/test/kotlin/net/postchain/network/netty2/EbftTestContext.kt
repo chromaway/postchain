@@ -3,6 +3,7 @@ package net.postchain.network.netty2
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
+import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.ebft.EbftPacketDecoder
 import net.postchain.ebft.EbftPacketEncoder
@@ -10,7 +11,7 @@ import net.postchain.ebft.message.Message
 import net.postchain.network.x.XConnectorEvents
 import net.postchain.network.x.XPacketHandler
 
-class EbftTestContext(val config: PeerCommConfiguration, val blockchainRid: ByteArray) {
+class EbftTestContext(val config: PeerCommConfiguration, val blockchainRid: BlockchainRid) {
 
     val packets: XPacketHandler = mock()
 

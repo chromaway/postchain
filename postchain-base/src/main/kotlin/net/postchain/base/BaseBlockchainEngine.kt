@@ -7,7 +7,6 @@ import net.postchain.base.data.BaseManagedBlockBuilder
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
 import net.postchain.core.*
-import net.postchain.devtools.PeerNameHelper.shortBrid
 import nl.komponents.kovenant.task
 import java.lang.Long.max
 
@@ -226,7 +225,7 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
         if (LOG_STATS) {
             val netRate = (nTransactions * 1000000000L) / (tEnd - tBegin)
             val grossRate = (nTransactions * 1000000000L) / (tDone - tStart)
-            logger.info("Chain: ${shortBrid(blockchainConfiguration.blockchainRID)}: " +
+            logger.info("Chain: ${blockchainConfiguration.blockchainRID.toShortHex()}: " +
                     "Block is finalized: accepted tx: $nTransactions, rejected tx: $nRejects; " +
                     "${ms(tStart, tDone)} ms, $netRate net tps, $grossRate gross tps")
         } else {

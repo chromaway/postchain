@@ -6,6 +6,6 @@ import net.postchain.core.EContext
 interface ManagedNodeDataSource : PeerInfoDataSource {
     fun getPeerListVersion(): Long
     fun computeBlockchainList(ctx: EContext): List<ByteArray>
-    fun getConfiguration(blockchainRID: ByteArray, height: Long): ByteArray?
-    fun findNextConfigurationHeight(blockchainRID: ByteArray, height: Long): Long?
+    fun getConfiguration(blockchainRIDRaw: ByteArray, height: Long): ByteArray?
+    fun findNextConfigurationHeight(blockchainRIDRaw: ByteArray, height: Long): Long?
 }

@@ -2,6 +2,7 @@
 
 package net.postchain.ebft.message
 
+import net.postchain.base.BlockchainRid
 import net.postchain.common.toHex
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.UserMistake
@@ -42,7 +43,7 @@ abstract class Message(val type: Int) {
             val data =  GtvDecoder.decodeGtv(bytes) as GtvArray
             val type = data[0].asInteger().toInt()
             return when (type) {
-                MessageType.ID.ordinal -> Identification(data[1].asByteArray(), data[2].asByteArray(), data[3].asInteger()) as T
+                MessageType.ID.ordinal -> Identification(data[1].asByteArray(), BlockchainRid(data[2].asByteArray()), data[3].asInteger()) as T
                 MessageType.STATUS.ordinal -> Status(nullableBytearray(data[1]), data[2].asInteger(), data[3].asBoolean(), data[4].asInteger(), data[5].asInteger(), data[6].asInteger().toInt()) as T
                 MessageType.TX.ordinal -> Transaction(data[1].asByteArray()) as T
                 MessageType.SIG.ordinal -> Signature(data[1].asByteArray(), data[2].asByteArray()) as T
@@ -145,7 +146,7 @@ class UnfinishedBlock(val header: ByteArray, val transactions: List<ByteArray>):
     }
 }
 
-class Identification(val pubKey: ByteArray, val blockchainRID: ByteArray, val timestamp: Long): Message(MessageType.ID.ordinal) {
+class Identification(val pubKey: ByteArray, val blockchainRID: BlockchainRid, val timestamp: Long): Message(MessageType.ID.ordinal) {
 
     override fun toGtv(): Gtv {
         return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), GtvFactory.gtv(pubKey),

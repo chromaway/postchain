@@ -56,7 +56,7 @@ class ManagedBlockchainProcessManager(
     /**
      * Check if this is the "chain zero" and if so we need to set the dataSource in a few objects before we go on.
      */
-    override fun startBlockchain(chainId: Long): ByteArray? {
+    override fun startBlockchain(chainId: Long): BlockchainRid? {
         if (chainId == 0L) {
             dataSource = buildChain0ManagedDataSource()
 
@@ -260,7 +260,7 @@ class ManagedBlockchainProcessManager(
             val dbAccess = DatabaseAccess.of(ctx)
             val brid = dbAccess.getBlockchainRID(ctx)!! // We can only load chains this way if we know their BC RID.
             val height = dbAccess.getLastBlockHeight(ctx)
-            val nextConfigHeight = dataSource.findNextConfigurationHeight(brid, height)
+            val nextConfigHeight = dataSource.findNextConfigurationHeight(brid.data, height)
             if (nextConfigHeight != null) {
                 logger.info { "Next config height found in managed-mode module: $nextConfigHeight" }
                 if (BaseConfigurationDataStore.findConfigurationHeightForBlock(ctx, nextConfigHeight) != nextConfigHeight) {
@@ -268,7 +268,7 @@ class ManagedBlockchainProcessManager(
                         "Configuration for the height $nextConfigHeight is not found in ConfigurationDataStore " +
                                 "and will be loaded into it from managed-mode module"
                     }
-                    val config = dataSource.getConfiguration(brid, nextConfigHeight)!!
+                    val config = dataSource.getConfiguration(brid.data, nextConfigHeight)!!
                     BaseConfigurationDataStore.addConfigurationData(ctx, nextConfigHeight, config)
                 }
             }
@@ -292,13 +292,13 @@ class ManagedBlockchainProcessManager(
             val dba = DatabaseAccess.of(ctx0)
             dataSource.computeBlockchainList(ctx0)
                     .map { brid ->
-                        val chainIid = dba.getChainId(ctx0, brid)
+                        val chainIid = dba.getChainId(ctx0, BlockchainRid(brid))
                         if (chainIid == null) {
                             val newChainId = maxOf(
                                     QueryRunner().query(ctx0.conn, "SELECT MAX(chain_iid) FROM blockchains", ScalarHandler<Long>()) + 1,
                                     100)
                             val newCtx = BaseEContext(ctx0.conn, newChainId, ctx0.nodeID, dba)
-                            dba.checkBlockchainRID(newCtx, brid)
+                            dba.checkBlockchainRID(newCtx, BlockchainRid(brid))
                             newChainId
                         } else {
                             chainIid

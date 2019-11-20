@@ -5,6 +5,7 @@ package net.postchain.gtx
 import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import mu.KLogging
+import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.configurations.GTXTestModule
@@ -27,7 +28,7 @@ class GTXPerformanceTestNightly : IntegrationTest() {
 
     companion object : KLogging()
 
-    val expectedBcRid = "78967BAA4768CBCEF11C508326FFB13A956689FCB6DC3BA17F4B895CBB1577A3".hexStringToByteArray()
+    val expectedBcRid = BlockchainRid.buildFromHex( "78967BAA4768CBCEF11C508326FFB13A956689FCB6DC3BA17F4B895CBB1577A3")
 
     private fun strategy(node: PostchainTestNode): OnDemandBlockBuildingStrategy {
         return node

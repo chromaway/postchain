@@ -2,6 +2,7 @@ package net.postchain.gtx.gtxml
 
 import assertk.assert
 import assertk.assertions.isEqualTo
+import net.postchain.base.BlockchainRid
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.UserMistake
 import net.postchain.devtools.MockCryptoSystem
@@ -16,7 +17,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
         val xml = javaClass.getResource("/net/postchain/gtx/gtxml/parse/tx_full.xml").readText()
 
         val expectedBody = GTXTransactionBodyData(
-                "23213213".hexStringToByteArray(),
+                BlockchainRid.buildFromHex("23213213"),
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
@@ -55,7 +56,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
         val xml = javaClass.getResource("/net/postchain/gtx/gtxml/parse/tx_empty.xml").readText()
 
         val expectedBody = GTXTransactionBodyData(
-                "23213213".hexStringToByteArray(),
+                BlockchainRid.buildFromHex("23213213"),
                 arrayOf(),
                 arrayOf()
         )
@@ -72,7 +73,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
         val xml = javaClass.getResource("/net/postchain/gtx/gtxml/parse/tx_empty_signers_and_signatures.xml").readText()
 
         val expectedBody = GTXTransactionBodyData(
-                "23213213".hexStringToByteArray(),
+                BlockchainRid.buildFromHex("23213213"),
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
@@ -103,7 +104,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
         val xml = javaClass.getResource("/net/postchain/gtx/gtxml/parse/tx_empty_operations.xml").readText()
 
         val expectedBody = GTXTransactionBodyData(
-                "23213213".hexStringToByteArray(),
+                BlockchainRid.buildFromHex("23213213"),
                 arrayOf(),
                 arrayOf(
                         byteArrayOf(0x12, 0x38, 0x71, 0x23),
@@ -127,7 +128,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
         val xml = javaClass.getResource("/net/postchain/gtx/gtxml/parse/tx_empty_operation_parameters.xml").readText()
 
         val expectedBody = GTXTransactionBodyData(
-                "23213213".hexStringToByteArray(),
+                BlockchainRid.buildFromHex("23213213"),
                 arrayOf(OpData("ft_transfer", arrayOf())),
                 arrayOf(
                         byteArrayOf(0x12, 0x38, 0x71, 0x23),
@@ -152,7 +153,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
         val xml = javaClass.getResource("/net/postchain/gtx/gtxml/parse/tx_full_params.xml").readText()
 
         val expectedBody = GTXTransactionBodyData(
-                "23213213".hexStringToByteArray(),
+                BlockchainRid.buildFromHex("23213213"),
                 arrayOf(OpData("ft_transfer",
                         arrayOf(GtvString("hello"),
                                 GtvString("my string param"),
@@ -235,7 +236,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                 "/net/postchain/gtx/gtxml/parse/tx_params_is_compound_of_parameter_of_operation.xml").readText()
 
         val expectedBody = GTXTransactionBodyData(
-                "23213213".hexStringToByteArray(),
+                BlockchainRid.buildFromHex("23213213"),
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(GtvArray(arrayOf(
@@ -310,7 +311,7 @@ class GTXMLTransactionParserSignersSignaturesAndOperationsTest {
                 .readText()
 
         val expectedBody = GTXTransactionBodyData(
-                "23213213".hexStringToByteArray(),
+                BlockchainRid.buildFromHex("23213213"),
                 arrayOf(),
                 arrayOf(
                         byteArrayOf(0x12, 0x38, 0x71, 0x23),

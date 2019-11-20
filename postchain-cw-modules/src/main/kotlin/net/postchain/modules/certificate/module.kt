@@ -1,5 +1,6 @@
 package net.postchain.modules.certificate
 
+import net.postchain.base.BlockchainRid
 import net.postchain.core.EContext
 import net.postchain.gtx.*
 import net.postchain.gtv.*
@@ -22,7 +23,7 @@ class CertificateModule(val config: CertificateConfig) : SimpleGTXModule<Certifi
 }
 
 class BaseCertificateModuleFactory : GTXModuleFactory {
-    override fun makeModule(data: Gtv, blockchianRID: ByteArray): GTXModule {
+    override fun makeModule(data: Gtv, blockchianRID: BlockchainRid): GTXModule {
         return CertificateModule(makeBaseCertificateConfig(data, blockchianRID))
     }
 }

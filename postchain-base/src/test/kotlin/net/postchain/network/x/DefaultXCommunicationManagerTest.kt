@@ -4,10 +4,7 @@ import assertk.assert
 import assertk.assertions.isEqualTo
 import assertk.assertions.isSameAs
 import com.nhaarman.mockitokotlin2.*
-import net.postchain.base.NetworkNodes
-import net.postchain.base.PeerCommConfiguration
-import net.postchain.base.PeerInfo
-import net.postchain.base.peerId
+import net.postchain.base.*
 import net.postchain.network.XPacketDecoder
 import net.postchain.network.XPacketEncoder
 import org.junit.Before
@@ -15,7 +12,7 @@ import org.junit.Test
 
 class DefaultXCommunicationManagerTest {
 
-    private val blockchainRid = byteArrayOf(0x01)
+    private val blockchainRid = BlockchainRid(byteArrayOf(0x01))
     private lateinit var peerInfo1: PeerInfo
     private lateinit var peerInfo2: PeerInfo
 

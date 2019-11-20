@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
 
 class DefaultXConnectionManagerTest {
 
-    private val blockchainRid = byteArrayOf(0x01)
+    private val blockchainRid = BlockchainRid(byteArrayOf(0x01))
     private val cryptoSystem = SECP256K1CryptoSystem()
     private lateinit var connectorFactory: XConnectorFactory<Int>
 
@@ -38,8 +38,8 @@ class DefaultXConnectionManagerTest {
         peerInfo2 = PeerInfo("localhost", 3332, byteArrayOf(0x02))
         unknownPeerInfo = PeerInfo("localhost", 3333, byteArrayOf(0x03))
 
-        peerConnectionDescriptor1 = XPeerConnectionDescriptor(peerInfo1.peerId(), blockchainRid.byteArrayKeyOf())
-        peerConnectionDescriptor2 = XPeerConnectionDescriptor(peerInfo2.peerId(), blockchainRid.byteArrayKeyOf())
+        peerConnectionDescriptor1 = XPeerConnectionDescriptor(peerInfo1.peerId(), blockchainRid)
+        peerConnectionDescriptor2 = XPeerConnectionDescriptor(peerInfo2.peerId(), blockchainRid)
 
         val connector: XConnector<Int> = mock {
             on { connectPeer(any(), any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`

@@ -3,6 +3,7 @@
 package net.postchain.integrationtest
 
 import io.restassured.RestAssured.given
+import net.postchain.base.BlockchainRid
 import net.postchain.base.gtv.BlockHeaderDataFactory
 import net.postchain.base.merkle.Hash
 import net.postchain.common.RestTools
@@ -37,7 +38,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
     private val gson = JsonTools.buildGson()
     private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
-    private val blockchainRIDBytes = blockchainRID.hexStringToByteArray()
+    private val blockchainRIDBytes = BlockchainRid.buildFromHex(blockchainRID)
     private var txHashHex = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
     private val gtxTestModule = GTXTestModule()

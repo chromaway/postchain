@@ -2,13 +2,9 @@
 
 package net.postchain.base.data
 
-import net.postchain.base.BaseBlockHeader
 import mu.KLogging
-import net.postchain.base.BaseTxEContext
-import net.postchain.base.BlockchainRelatedInfo
-import net.postchain.base.ConfirmationProofMaterial
+import net.postchain.base.*
 import net.postchain.base.merkle.Hash
-import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.core.*
 
 /**
@@ -35,10 +31,10 @@ class BaseBlockStore : BlockStore {
         }
         val prevHeight = getLastBlockHeight(ctx)
         val prevTimestamp = getLastBlockTimestamp(ctx)
-        val blockchainRID: ByteArray = db.getBlockchainRID(ctx)
+        val blockchainRID = db.getBlockchainRID(ctx)
                     ?: throw UserMistake("Blockchain RID not found for chainId ${ctx.chainID}")
         val prevBlockRID = if (prevHeight == -1L) {
-            blockchainRID
+            blockchainRID.data
         } else {
             getBlockRID(ctx, prevHeight) ?: throw ProgrammerMistake("Previous block had no RID. Check your block writing code!")
         }
@@ -70,7 +66,7 @@ class BaseBlockStore : BlockStore {
         return DatabaseAccess.of(ctx).getBlockHeight(ctx, blockRID, chainId)
     }
 
-    override fun getChainId(ctx: EContext, blockchainRID: ByteArray): Long? {
+    override fun getChainId(ctx: EContext, blockchainRID: BlockchainRid): Long? {
         return DatabaseAccess.of(ctx).getChainId(ctx, blockchainRID)
     }
 
@@ -110,7 +106,7 @@ class BaseBlockStore : BlockStore {
         return DatabaseAccess.of(ctx).getLastBlockHeight(ctx)
     }
 
-    override fun getBlockHeightInfo(ctx: EContext, blockchainRID: ByteArray): Pair<Long, Hash>? {
+    override fun getBlockHeightInfo(ctx: EContext, blockchainRID: BlockchainRid): Pair<Long, Hash>? {
         return DatabaseAccess.of(ctx).getBlockHeightInfo(ctx, blockchainRID)
     }
 

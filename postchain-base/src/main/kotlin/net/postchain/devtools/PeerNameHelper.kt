@@ -11,7 +11,7 @@ object PeerNameHelper {
 
     fun peerName(peerId: XPeerID): String = shorten(peerId.toString())
 
-    fun shortBrid(brid: ByteArray): String = shorten(brid.toHex())
+    fun shortHash(byteArrayHash: ByteArray): String = shorten(byteArrayHash.toHex())
 
     private fun shorten(word: String) = word.run {
         "${take(2)}:${takeLast(2)}"

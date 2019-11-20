@@ -7,7 +7,6 @@ import net.postchain.base.*
 import net.postchain.base.merkle.Hash
 import net.postchain.common.toHex
 import net.postchain.core.*
-import net.postchain.devtools.PeerNameHelper.shortBrid
 import net.postchain.getBFTRequiredSignatureCount
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
@@ -26,7 +25,7 @@ import java.util.*
  * @property blockSigMaker used to produce signatures on blocks for local node
  */
 open class BaseBlockBuilder(
-        val blockchainRID: ByteArray,
+        val blockchainRID: BlockchainRid,
         val cryptoSystem: CryptoSystem,
         eContext: EContext,
         store: BlockStore,
@@ -70,7 +69,7 @@ open class BaseBlockBuilder(
         if (/*logger.isDebugEnabled*/true) {
 //            logger.debug {
             logger.info {
-                "Chain: ${shortBrid(blockchainRID)}" +
+                "Chain: ${blockchainRID.toShortHex()}" +
                         ", block header created: " +
                         "root-hash: ${rootHash.toHex()}" +
                         ", block-rid: ${blockHeader.blockRID.toHex()}" +

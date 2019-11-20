@@ -24,7 +24,7 @@ class BaseBlockBuilderTest {
     val ctx = BaseEContext(mock(Connection::class.java), 2L, 0, db)
     val bctx = BaseBlockEContext(ctx, 1, 10, mapOf())
     val myMerkleRootHash = "46AF9064F12528CAD6A7C377204ACD0AC38CDC6912903E7DAB3703764C8DD5E5".hexStringToByteArray()
-    val myBlockchainRid = "bcRid".toByteArray()
+    val myBlockchainRid = BlockchainRid("bcRid".toByteArray())
     val dummy = ByteArray(32, { 0 })
     val subjects = arrayOf("test".toByteArray())
     val signer = cryptoSystem.buildSigMaker(pubKey(0), privKey(0))

@@ -57,7 +57,7 @@ open class BaseBlockchainProcessManager(
      * @param chainId is the chain to start
      * @return the Blockchain's RID if successful, else null
      */
-    override fun startBlockchain(chainId: Long): ByteArray? {
+    override fun startBlockchain(chainId: Long): BlockchainRid? {
         return synchronizer.withLock {
             try {
                 stopBlockchain(chainId)

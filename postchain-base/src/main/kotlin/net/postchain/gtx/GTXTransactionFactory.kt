@@ -1,5 +1,6 @@
 package net.postchain.gtx
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.CryptoSystem
 import net.postchain.common.toHex
 import net.postchain.core.Transaction
@@ -16,7 +17,7 @@ import net.postchain.gtx.serializer.GtxTransactionDataSerializer
  * Idea is that we can build a [GTXTransaction] from different layers.
  * The most normal way would be to build from binary, but sometimes we might have deserialized the binary data already
  */
-class GTXTransactionFactory(val blockchainRID: ByteArray, val module: GTXModule, val cs: CryptoSystem) : TransactionFactory {
+class GTXTransactionFactory(val blockchainRID: BlockchainRid, val module: GTXModule, val cs: CryptoSystem) : TransactionFactory {
 
     val gtvMerkleHashCalculator = GtvMerkleHashCalculator(cs) // Here we are using the standard cache
 
@@ -53,7 +54,7 @@ class GTXTransactionFactory(val blockchainRID: ByteArray, val module: GTXModule,
 
         val body = gtxData.transactionBodyData
 
-        if (!body.blockchainRID.contentEquals(blockchainRID)) {
+        if (body.blockchainRID != blockchainRID) {
             throw UserMistake("Transaction has wrong blockchainRID: Should be: ${blockchainRID.toHex()}, but was: ${body.blockchainRID.toHex()} ")
         }
 

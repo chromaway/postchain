@@ -2,10 +2,7 @@ package net.postchain.network.x
 
 import assertk.assert
 import assertk.assertions.containsExactly
-import net.postchain.base.BasePeerCommConfiguration
-import net.postchain.base.PeerInfo
-import net.postchain.base.SECP256K1CryptoSystem
-import net.postchain.base.secp256k1_derivePubKey
+import net.postchain.base.*
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.ebft.message.GetBlockAtHeight
 import org.awaitility.Awaitility.await
@@ -17,7 +14,7 @@ import org.junit.Test
 class DefaultXCommunicationManager2PeersIT {
 
     private val cryptoSystem = SECP256K1CryptoSystem()
-    private val blockchainRid = ByteArray(64, Int::toByte)
+    private val blockchainRid = BlockchainRid.FULL_EMPTY_RID
 
     private lateinit var peerInfo1: PeerInfo
     private lateinit var peerInfo2: PeerInfo

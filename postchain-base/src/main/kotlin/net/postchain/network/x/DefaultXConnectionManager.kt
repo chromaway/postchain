@@ -1,6 +1,7 @@
 package net.postchain.network.x
 
 import mu.KLogging
+import net.postchain.base.BlockchainRid
 import net.postchain.base.CryptoSystem
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.common.ExponentialDelay
@@ -40,7 +41,7 @@ class DefaultXConnectionManager<PacketType>(
     }
 
     private val chains: MutableMap<Long, Chain> = mutableMapOf()
-    private val chainIDforBlockchainRID = mutableMapOf<ByteArrayKey, Long>()
+    private val chainIDforBlockchainRID = mutableMapOf<BlockchainRid, Long>()
     private var isShutDown = false
 
     private val peerToDelayMap: MutableMap<XPeerID, ExponentialDelay> = mutableMapOf()
@@ -73,8 +74,7 @@ class DefaultXConnectionManager<PacketType>(
             ok = false
         }
         chains[peerConfig.chainID] = Chain(peerConfig, autoConnectAll)
-        chainIDforBlockchainRID[peerConfig.blockchainRID.byteArrayKeyOf()] =
-                peerConfig.chainID
+        chainIDforBlockchainRID[peerConfig.blockchainRID] = peerConfig.chainID
 
         if (autoConnectAll) {
             peersConnectionStrategy.forEach(peerConfig.commConfiguration) {
@@ -92,7 +92,7 @@ class DefaultXConnectionManager<PacketType>(
 
         val peerConnectionDescriptor = XPeerConnectionDescriptor(
                 peerId,
-                peerConfig.blockchainRID.byteArrayKeyOf())
+                peerConfig.blockchainRID)
 
         val peerInfo = peerConfig.commConfiguration.resolvePeer(peerId.byteArray)
                 ?: throw ProgrammerMistake("Peer ID not found: ${peerId.byteArray.toHex()}")

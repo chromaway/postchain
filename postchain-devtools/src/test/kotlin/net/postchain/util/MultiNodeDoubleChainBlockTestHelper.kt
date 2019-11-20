@@ -1,6 +1,7 @@
 package net.postchain.util
 
 import mu.KLogging
+import net.postchain.base.BlockchainRid
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.configurations.GTXTestModule
@@ -22,8 +23,9 @@ import kotlin.test.assertNotNull
 open class MultiNodeDoubleChainBlockTestHelper : IntegrationTest() {
 
     private val gtxTestModule = GTXTestModule()
-    private val factory1 = GTXTransactionFactory(BLOCKCHAIN_RIDS[1L]!!.hexStringToByteArray(), gtxTestModule, cryptoSystem)
-    private val factory2 = GTXTransactionFactory(BLOCKCHAIN_RIDS[2L]!!.hexStringToByteArray(), gtxTestModule, cryptoSystem)
+    // TODO Olle POS-93 The bc RIDs will depend on the actual BC configuration being used. Not sure we can do it this way no sir.
+    private val factory1 = GTXTransactionFactory(BlockchainRid.buildFromHex(BLOCKCHAIN_RIDS[1L]!!), gtxTestModule, cryptoSystem)
+    private val factory2 = GTXTransactionFactory(BlockchainRid.buildFromHex(BLOCKCHAIN_RIDS[2L]!!), gtxTestModule, cryptoSystem)
     private val factoryMap = mapOf(
             1L to factory1,
             2L to factory2)

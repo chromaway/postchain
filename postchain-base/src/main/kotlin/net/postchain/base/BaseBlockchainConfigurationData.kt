@@ -48,7 +48,7 @@ class BaseBlockchainConfigurationData(
                     val nickname = elemArr[0] as GtvString
                     val blockchainRid = elemArr[1] as GtvByteArray
                     depList.add(
-                            BlockchainRelatedInfo(blockchainRid.bytearray, nickname.string, null)
+                            BlockchainRelatedInfo(BlockchainRid(blockchainRid.bytearray), nickname.string, null)
                     )
 
                 }
@@ -65,21 +65,6 @@ class BaseBlockchainConfigurationData(
 
     companion object {
 
-        @Deprecated("Deprecated in v2.4.4. Will be deleted in v3.0")
-        fun readFromCommonsConfiguration(config: Configuration, chainId: Long, blockchainRID: ByteArray, nodeID: Int):
-                BaseBlockchainConfigurationData {
-
-            val gtxConfig = convertConfigToGtv(config.subset("blockchain.$chainId")) as GtvDictionary
-            val cryptoSystem = SECP256K1CryptoSystem()
-            val privKey = gtxConfig["blocksigningprivkey"]!!.asByteArray()
-            val pubKey = secp256k1_derivePubKey(privKey)
-            val sigMaker = cryptoSystem.buildSigMaker(pubKey, privKey) // TODO: maybe take it from somewhere?
-
-            return BaseBlockchainConfigurationData(
-                    gtxConfig,
-                    BaseBlockchainContext(blockchainRID, nodeID, chainId, pubKey),
-                    sigMaker)
-        }
 
         @Deprecated("Deprecated in v2.4.4. Will be deleted in v3.0")
         private fun convertGTXConfigToGtv(config: Configuration): Gtv {

@@ -1,5 +1,6 @@
 package net.postchain.core
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.Storage
 import net.postchain.gtv.Gtv
 
@@ -9,7 +10,7 @@ import net.postchain.gtv.Gtv
  */
 interface BlockchainConfiguration {
     val chainID: Long
-    val blockchainRID: ByteArray
+    val blockchainRID: BlockchainRid
     val traits: Set<String>
 
     fun decodeBlockHeader(rawBlockHeader: ByteArray): BlockHeader
@@ -24,8 +25,8 @@ interface BlockchainConfiguration {
 interface ConfigurationDataStore {
     fun findConfigurationHeightForBlock(context: EContext, height: Long): Long?
     fun getConfigurationData(context: EContext, height: Long): ByteArray?
-    fun addConfigurationData(context: EContext, height: Long, binData: ByteArray): ByteArray
-    fun addConfigurationData(context: EContext, height: Long, gtvData: Gtv): ByteArray
+    fun addConfigurationData(context: EContext, height: Long, binData: ByteArray): BlockchainRid
+    fun addConfigurationData(context: EContext, height: Long, gtvData: Gtv): BlockchainRid
 }
 
 interface BlockchainConfigurationFactory {
