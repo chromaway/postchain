@@ -15,6 +15,9 @@ import net.postchain.gtx.GTXDataBuilder
 import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals
+import org.awaitility.Awaitility.await
+import org.awaitility.kotlin.matches
+import org.awaitility.kotlin.untilCallTo
 
 class PostChainClientTest : IntegrationTest() {
 
@@ -95,7 +98,7 @@ class PostChainClientTest : IntegrationTest() {
         val builder = createGtxDataBuilder()
         val client = createPostChainClient()
         val result = client.postTransactionSync(builder, ConfirmationLevel.NO_WAIT)
-        assertEquals(result.status, TransactionStatus.WAITING)
+        assertEquals(TransactionStatus.WAITING, result.status)
     }
 
     @Test
@@ -103,8 +106,11 @@ class PostChainClientTest : IntegrationTest() {
         createTestNodes(1, "/net/postchain/devtools/api/blockchain_config_1.xml")
         val builder = createGtxDataBuilder()
         val client = createPostChainClient()
-        client.postTransaction(builder, ConfirmationLevel.NO_WAIT).success { resp ->
-            assertEquals(resp.status, TransactionStatus.WAITING)
+
+        await().untilCallTo {
+            client.postTransaction(builder, ConfirmationLevel.NO_WAIT).get()
+        } matches {
+            resp -> resp?.status == TransactionStatus.WAITING
         }
     }
 
@@ -114,7 +120,7 @@ class PostChainClientTest : IntegrationTest() {
         val builder = createGtxDataBuilder()
         val client = createPostChainClient()
         val result = client.postTransactionSync(builder, ConfirmationLevel.UNVERIFIED)
-        assertEquals(result.status, TransactionStatus.CONFIRMED)
+        assertEquals(TransactionStatus.CONFIRMED, result.status)
     }
 
     @Test
@@ -122,8 +128,10 @@ class PostChainClientTest : IntegrationTest() {
         createTestNodes(3, "/net/postchain/devtools/api/blockchain_config.xml")
         val builder = createGtxDataBuilder()
         val client = createPostChainClient()
-        client.postTransaction(builder, ConfirmationLevel.UNVERIFIED).success { resp ->
-            assertEquals(resp.status, TransactionStatus.CONFIRMED)
+        await().untilCallTo {
+            client.postTransaction(builder, ConfirmationLevel.UNVERIFIED).get()
+        } matches {
+            resp -> resp?.status == TransactionStatus.CONFIRMED
         }
     }
 
@@ -134,8 +142,11 @@ class PostChainClientTest : IntegrationTest() {
         val client = createPostChainClient()
         client.postTransactionSync(builder, ConfirmationLevel.UNVERIFIED)
         val gtv = gtv("txRID" to gtv(builder.getDigestForSigning().toHex()))
-        client.query("gtx_test_get_value", gtv).success { resp ->
-            assertEquals(resp.asString(), randomStr)
+
+        await().untilCallTo {
+            client.query("gtx_test_get_value", gtv).get()
+        } matches {
+            resp -> resp?.asString() == randomStr
         }
     }
 }
