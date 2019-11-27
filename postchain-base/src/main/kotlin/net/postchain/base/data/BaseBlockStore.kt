@@ -143,10 +143,12 @@ class BaseBlockStore : BlockStore {
 
         // Verify all dependencies
         for (dep in dependencies) {
+            logger.debug("Validating")
             val chainId = DatabaseAccess.of(ctx).getChainId(ctx, dep.blockchainRid)
             if (chainId == null) {
                 throw BadDataMistake(BadDataType.BAD_CONFIGURATION,
-                        "Dependency given in configuration: ${dep.nickname} is missing in DB. Dependent blockchains must be added in correct order!")
+                        "Dependency given in configuration: ${dep.nickname} is missing in DB. Dependent blockchains must be added in correct order!" +
+                                " Dependency not found BC RID ${dep.blockchainRid.toHex()}")
             } else {
                 logger.info("initialize() - Verified BC dependency: ${dep.nickname} exists as chainID: = $chainId (before: ${dep.chainId}) ")
                 dep.chainId = chainId

@@ -2,6 +2,7 @@
 
 package net.postchain.devtools.modules.ft
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.Transaction
@@ -14,30 +15,45 @@ import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.PostchainTestNode
+import javax.management.Descriptor
 
-val testBlockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3".hexStringToByteArray()
+//val testBlockchainRID = BlockchainRid.buildFromHex("78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3")
 val myCS = SECP256K1CryptoSystem()
 
 open class FTIntegrationTest : IntegrationTest() {
 
     val issuerPubKeys = arrayOf(pubKey(0), pubKey(1))
     val issuerPrivKeys = arrayOf(privKey(0), privKey(1))
-    val accUtil = AccountUtil(net.postchain.devtools.modules.ft.testBlockchainRID, SECP256K1CryptoSystem())
-    val issuerID = accUtil.makeAccountID(accUtil.issuerAccountDesc(issuerPubKeys[0]))
     val aliceIdx = 1
     val bobIdx = 2
     val alicePubKey = pubKey(aliceIdx)
     val alicePrivKey = privKey(aliceIdx)
-    val aliceAccountDesc = BasicAccount.makeDescriptor(net.postchain.devtools.modules.ft.testBlockchainRID, alicePubKey)
-    val aliceAccountID = accUtil.makeAccountID(aliceAccountDesc)
     val bobPubKey = pubKey(bobIdx)
     val bobPrivKey = privKey(bobIdx)
-    val bobAccountDesc = BasicAccount.makeDescriptor(net.postchain.devtools.modules.ft.testBlockchainRID, bobPubKey)
-    val bobAccountID = accUtil.makeAccountID(bobAccountDesc)
-    val invalidAccountID = accUtil.makeAccountID("hello".toByteArray())
+
+    lateinit var accUtil: AccountUtil
+    lateinit var issuerID: ByteArray
+    lateinit var aliceAccountDesc: ByteArray
+    lateinit var aliceAccountID: ByteArray
+    lateinit var bobAccountDesc: ByteArray
+    lateinit var bobAccountID: ByteArray
+    lateinit var invalidAccountID: ByteArray
+
+    lateinit var testBlockchainRID: BlockchainRid
+
+    fun setBlockchainRid(bcRid: BlockchainRid) {
+        testBlockchainRID = bcRid
+        accUtil = AccountUtil(bcRid, SECP256K1CryptoSystem())
+        issuerID = accUtil.makeAccountID(accUtil.issuerAccountDesc(issuerPubKeys[0]))
+        aliceAccountDesc = BasicAccount.makeDescriptor(bcRid.data, alicePubKey)
+        aliceAccountID = accUtil.makeAccountID(aliceAccountDesc)
+        bobAccountDesc = BasicAccount.makeDescriptor(bcRid.data, bobPubKey)
+        bobAccountID = accUtil.makeAccountID(bobAccountDesc)
+        invalidAccountID = accUtil.makeAccountID("hello".toByteArray())
+    }
 
     fun makeRegisterTx(accountDescs: Array<ByteArray>, registrator: Int): ByteArray {
-        val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(registrator)), myCS)
+        val b = GTXDataBuilder(testBlockchainRID!!, arrayOf(pubKey(registrator)), myCS)
         for (desc in accountDescs) {
             b.addOperation("ft_register", arrayOf(gtv(desc)))
         }
@@ -47,7 +63,7 @@ open class FTIntegrationTest : IntegrationTest() {
     }
 
     fun makeIssueTx(issuerIdx: Int, issuerID: ByteArray, recipientID: ByteArray, assetID: String, amout: Long): ByteArray {
-        val b = GTXDataBuilder(testBlockchainRID, arrayOf(issuerPubKeys[issuerIdx]), myCS)
+        val b = GTXDataBuilder(testBlockchainRID!!, arrayOf(issuerPubKeys[issuerIdx]), myCS)
         b.addOperation("ft_issue", arrayOf(
                 gtv(issuerID), gtv(assetID), gtv(amout), gtv(recipientID)
         ))
@@ -72,7 +88,7 @@ open class FTIntegrationTest : IntegrationTest() {
                        amout: Long,
                        recipientID: ByteArray,
                        memo1: String? = null, memo2: String? = null): ByteArray {
-        val b = GTXDataBuilder(testBlockchainRID, arrayOf(senderPubKey), myCS)
+        val b = GTXDataBuilder(testBlockchainRID!!, arrayOf(senderPubKey), myCS)
 
         val args = mutableListOf<Gtv>()
         args.add(gtv(gtv(gtv(senderID), gtv(assetID), gtv(amout)))) // inputs

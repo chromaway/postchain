@@ -1,7 +1,7 @@
 package net.postchain.modules.ft
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
-import net.postchain.common.hexStringToByteArray
 import net.postchain.gtx.GTXTransaction
 import net.postchain.gtx.GTXTransactionFactory
 import net.postchain.devtools.KeyPairHelper.privKey
@@ -11,7 +11,7 @@ import org.junit.Assert
 import org.junit.Test
 import kotlin.system.measureNanoTime
 
-val testBlockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3".hexStringToByteArray()
+val testBlockchainRID = BlockchainRid.buildFromHex("78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3")
 val myCS = SECP256K1CryptoSystem()
 
 class FTPerfTestNightly : FTIntegrationTest() {
@@ -21,10 +21,10 @@ class FTPerfTestNightly : FTIntegrationTest() {
         val senderPriv = privKey(0)
         val senderPub = pubKey(0)
         val senderID = accUtil.makeAccountID(
-                BasicAccount.makeDescriptor(testBlockchainRID, senderPub)
+                BasicAccount.makeDescriptor(testBlockchainRID.data, senderPub)
         )
         val receiverID = accUtil.makeAccountID(
-                BasicAccount.makeDescriptor(testBlockchainRID, pubKey(1))
+                BasicAccount.makeDescriptor(testBlockchainRID.data, pubKey(1))
         )
         return (0..999).map {
             makeTransferTx(
@@ -32,6 +32,11 @@ class FTPerfTestNightly : FTIntegrationTest() {
                     it.toLong(), receiverID)
         }
     }
+
+    init {
+        this.setBlockchainRid(BlockchainRid.buildFromHex( "1121212121212121212121212121212121212121212121212121212121112212"))
+    }
+
 
     val accFactory = BaseAccountFactory(
             mapOf(

@@ -13,8 +13,8 @@ import kotlin.test.assertTrue
 class TxCacheTest {
     val cryptoSystem = SECP256K1CryptoSystem()
     protected val blockchainRids = mapOf(
-            1L to BlockchainRid.buildFromHex( "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"),
-            2L to BlockchainRid.buildFromHex("78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a4")
+            1L to BlockchainRid.buildFromHex( "AABBAABBAABBAABBAABBAABBAABBAABBAABBAABBAABBAABBAABBAABBAABBAABB"),
+            2L to BlockchainRid.buildFromHex("1001100110011001100110011001100110011001100110011001100110011001")
     )
     private val gtxTestModule =  GTXTestModule()
     private val factory1 = GTXTransactionFactory(blockchainRids[1L]!!, gtxTestModule, cryptoSystem)

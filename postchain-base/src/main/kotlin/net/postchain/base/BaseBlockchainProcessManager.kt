@@ -63,6 +63,9 @@ open class BaseBlockchainProcessManager(
                 stopBlockchain(chainId)
 
                 logger.info("[${nodeName()}]: Starting of Blockchain: chainId: $chainId")
+                if (chainId == 100L) {
+                    val x = 8
+                }
 
                 withReadConnection(storage, chainId) { eContext ->
                     val configuration = blockchainConfigProvider.getConfiguration(eContext, chainId)

@@ -301,13 +301,14 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
                 nullableByteArrayRes,
                 ctx.chainID)
 
+        logger.debug("chainId = ${ctx.chainID} = BC RID ${if(rid == null) { "null" } else {rid.toHex()} }")
         if (rid == null) {
             logger.info("Blockchain RID: ${blockchainRID.toHex()} doesn't exist in DB, so we add it.")
             queryRunner.update(
                     ctx.conn,
                     "INSERT INTO blockchains (chain_iid, blockchain_rid) values (?, ?)",
                     ctx.chainID,
-                    blockchainRID)
+                    blockchainRID.data)
 
         } else if (!rid.contentEquals(blockchainRID.data)) {
             throw UserMistake("The blockchainRID in db for chainId ${ctx.chainID} " +

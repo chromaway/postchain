@@ -1,5 +1,6 @@
 package net.postchain.devtools.modules.esplix
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
@@ -14,13 +15,13 @@ import net.postchain.modules.esplix_r4.computeMessageID
 import org.junit.Assert
 import org.junit.Test
 
-val testBlockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3".hexStringToByteArray()
+val testBlockchainRID = BlockchainRid.buildFromHex("78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3")
 val myCS = SECP256K1CryptoSystem()
 
 class EsplixIntegrationTest : IntegrationTest() {
 
-    fun makeCreateChainTx(creator: Int, nonce: ByteArray, payload: ByteArray): ByteArray {
-        val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(creator)), myCS)
+    fun makeCreateChainTx(creator: Int, nonce: ByteArray, payload: ByteArray, bcRid: BlockchainRid): ByteArray {
+        val b = GTXDataBuilder(bcRid, arrayOf(pubKey(creator)), myCS)
         b.addOperation("R4createChain", arrayOf(
                 gtv(nonce),
                 gtv(payload)))
@@ -30,8 +31,8 @@ class EsplixIntegrationTest : IntegrationTest() {
 
     }
 
-    fun makePostMessage(poster: Int, prevID: ByteArray, payload: ByteArray): ByteArray {
-        val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(poster)), myCS)
+    fun makePostMessage(poster: Int, prevID: ByteArray, payload: ByteArray, bcRid: BlockchainRid): ByteArray {
+        val b = GTXDataBuilder(bcRid, arrayOf(pubKey(poster)), myCS)
         b.addOperation("R4postMessage", arrayOf(
                 gtv(prevID),
                 gtv(payload)))
@@ -66,45 +67,48 @@ class EsplixIntegrationTest : IntegrationTest() {
 
         val payload = ByteArray(50) { 1 }
         val nonce = cryptoSystem.getRandomBytes(32)
+        val bcRid = node.getBlockchainRid(1L)!!
 
         val createChainTx = makeCreateChainTx(
                 creator,
                 nonce,
-                payload)
+                payload,
+                bcRid)
         buildBlockAndCommitWithTx(createChainTx)
 
         val chainID = computeChainID(cryptoSystem,
-                testBlockchainRID, nonce, payload,
+                bcRid.data, nonce, payload,
                 arrayOf(pubKey(creator))
         )
         val postmessageTx = makePostMessage(
                 creator,
                 chainID,
-                payload)
+                payload,
+                bcRid)
         buildBlockAndCommitWithTx(postmessageTx)
 
         val messageID = computeMessageID(cryptoSystem, chainID, payload, arrayOf(pubKey(creator)))
         val postMessageTx2 = makePostMessage(
                 user,
                 messageID,
-                payload
-        )
+                payload,
+                bcRid)
         buildBlockAndCommitWithTx(postMessageTx2)
 
         val messageID2 = computeMessageID(cryptoSystem, messageID, payload, arrayOf(pubKey(user)))
         val postMessageTx3 = makePostMessage(
                 creator,
                 messageID2,
-                payload
-        )
+                payload,
+                bcRid)
         buildBlockAndCommitWithTx(postMessageTx3)
 
         //Deliberately try to post a message that has the incorrect prevID
         val postMessageTx4 = makePostMessage(
                 creator,
                 ByteArray(32) { 0 },
-                payload
-        )
+                payload,
+                bcRid)
         buildBlockAndCommitWithTx(postMessageTx4, true)
 
         val msg1 = node.getBlockchainInstance().getEngine().getBlockQueries().query(

@@ -111,6 +111,12 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider) : Postcha
         blockchainRidMap[chainId] = bcRID
     }
 
+    /**
+     * Yeah I know this is a strange way of retrieving the BC RID, but plz change if you think of something better.
+     * (It's only for test, so I didn't ptu much thought into it. )
+     */
+    fun getBlockchainRid(chainId: Long): BlockchainRid? = blockchainRidMap[chainId]
+
     private fun blockchainRID(process: BlockchainProcess): String {
         return (process.getEngine().getConfiguration() as BaseBlockchainConfiguration) // TODO: [et]: Resolve type cast
                 .blockchainRID.toHex()

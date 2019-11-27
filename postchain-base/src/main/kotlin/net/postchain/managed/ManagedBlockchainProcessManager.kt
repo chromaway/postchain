@@ -4,6 +4,7 @@ import mu.KLogging
 import net.postchain.StorageBuilder
 import net.postchain.base.*
 import net.postchain.base.data.DatabaseAccess
+import net.postchain.common.toHex
 import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.ManagedNodeConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
@@ -90,6 +91,7 @@ class ManagedBlockchainProcessManager(
          * B: If not, we just check with chain zero what chains we need and run those.
          */
         fun restartHandlerChain0(): Boolean {
+            logger.debug("restartHandlerChain0() - start")
             return synchronizer.withLock {
                 // Preloading blockchain configuration
                 loadBlockchainConfiguration(0L)
@@ -102,6 +104,7 @@ class ManagedBlockchainProcessManager(
                 if (doReload) {
                     logger.info { "Reloading of blockchains are required" }
                     reloadBlockchainsAsync()
+                    logger.debug("restartHandlerChain0() - end 1")
                     true
 
                 } else {
@@ -116,6 +119,7 @@ class ManagedBlockchainProcessManager(
                     // Launching blockchain 0
                     val reloadChan0 = 0L in toLaunch && (0L !in launched || reloadBlockchainConfig)
                     startStopBlockchainsAsync(toLaunch, launched, reloadChan0)
+                    logger.debug("restartHandlerChain0() - end 2")
                     reloadChan0
                 }
             }
@@ -129,6 +133,7 @@ class ManagedBlockchainProcessManager(
          * @param chainId is the chain we should check (cannot be chain zero).
          */
         fun restartHandler(chainId: Long): Boolean {
+            logger.debug("restartHandler() - start")
             return synchronizer.withLock {
                 // Preloading blockchain configuration
                 if (inManagedMode()) {
@@ -142,8 +147,10 @@ class ManagedBlockchainProcessManager(
 
                 if (reloadBlockchainConfig) {
                     reloadBlockchainConfigAsync(chainId)
+                    logger.debug("restartHandler() - end")
                     true
                 } else {
+                    logger.debug("restartHandler() - end")
                     false
                 }
             }
@@ -218,12 +225,19 @@ class ManagedBlockchainProcessManager(
      * @param reloadChain0 is true if the chain zero must be restarted.
      */
     private fun startStopBlockchainsAsync(toLaunch: Array<Long>, launched: Set<Long>, reloadChain0: Boolean) {
+        logger.debug("startStopBlockchainsAsync() - start")
         executor.submit {
             // Launching blockchain 0
             if (reloadChain0) {
                 logger.info { "Reloading of blockchain 0 is required" }
                 logger.info { "Launching blockchain 0" }
                 startBlockchain(0L)
+            }
+
+            if (logger.isDebugEnabled()) {
+                val toL = toLaunch.map { it.toString() }.reduce { s1, s2 -> "$s1 , $s2" }
+                val l = launched.map { it.toString() }.reduce { s1, s2 -> "$s1 , $s2" }
+                logger.debug("Chains to launch: $toL. Chains already launched: $l")
             }
 
             // Launching new blockchains except blockchain 0
@@ -242,6 +256,7 @@ class ManagedBlockchainProcessManager(
                         stopBlockchain(it)
                     }
         }
+        logger.debug("startStopBlockchainsAsync() - end")
     }
 
     private fun reloadBlockchainConfigAsync(chainId: Long) {
@@ -256,6 +271,8 @@ class ManagedBlockchainProcessManager(
      * @param chainId is the chain we are interested in.
      */
     private fun loadBlockchainConfiguration(chainId: Long) {
+
+        logger.debug("loadBlockchainConfiguration() - start")
         withWriteConnection(storage, chainId) { ctx ->
             val dbAccess = DatabaseAccess.of(ctx)
             val brid = dbAccess.getBlockchainRID(ctx)!! // We can only load chains this way if we know their BC RID.
@@ -273,6 +290,7 @@ class ManagedBlockchainProcessManager(
                 }
             }
 
+            logger.debug("loadBlockchainConfiguration() - end")
             true
         }
     }
@@ -286,19 +304,22 @@ class ManagedBlockchainProcessManager(
      * @return all chainIids chain zero thinks we should run.
      */
     private fun retrieveBlockchainsToLaunch(): Array<Long> {
+        logger.debug("retrieveBlockchainsToLaunch() - start")
         val blockchains = mutableListOf<Long>()
 
         withWriteConnection(storage, 0) { ctx0 ->
             val dba = DatabaseAccess.of(ctx0)
             dataSource.computeBlockchainList(ctx0)
                     .map { brid ->
-                        val chainIid = dba.getChainId(ctx0, BlockchainRid(brid))
+                        val blockchainRid = BlockchainRid(brid)
+                        val chainIid = dba.getChainId(ctx0, blockchainRid)
+                        logger.debug("Computed bc list: chainIid: $chainIid,  BC RID: ${blockchainRid.toShortHex()}  ")
                         if (chainIid == null) {
                             val newChainId = maxOf(
                                     QueryRunner().query(ctx0.conn, "SELECT MAX(chain_iid) FROM blockchains", ScalarHandler<Long>()) + 1,
                                     100)
                             val newCtx = BaseEContext(ctx0.conn, newChainId, ctx0.nodeID, dba)
-                            dba.checkBlockchainRID(newCtx, BlockchainRid(brid))
+                            dba.checkBlockchainRID(newCtx, blockchainRid)
                             newChainId
                         } else {
                             chainIid
@@ -310,6 +331,7 @@ class ManagedBlockchainProcessManager(
 
             true
         }
+        logger.debug("retrieveBlockchainsToLaunch() - end")
 
         return blockchains.toTypedArray()
     }

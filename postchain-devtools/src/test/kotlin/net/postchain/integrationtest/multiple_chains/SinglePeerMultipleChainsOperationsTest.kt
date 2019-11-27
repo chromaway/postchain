@@ -24,7 +24,6 @@ class SinglePeerMultipleChainsOperationsTest : IntegrationTest() {
 
         // chain 1
         val chainId1 = 1L
-        val blockchainRid1 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3".hexStringToByteArray()
         val blockchainConfig1 = readBlockchainConfig(
                 "/net/postchain/devtools/multiple_chains/chains_ops/single_peer/blockchain_config_1.xml")
 
@@ -60,13 +59,11 @@ class SinglePeerMultipleChainsOperationsTest : IntegrationTest() {
 
         // chain 1
         val chainId1 = 1L
-        val blockchainRid1 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3".hexStringToByteArray()
         val blockchainConfig1 = readBlockchainConfig(
                 "/net/postchain/devtools/multiple_chains/chains_ops/single_peer/blockchain_config_1.xml")
 
         // chain 2
         val chainId2 = 2L
-        val blockchainRid2 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a4".hexStringToByteArray()
         val blockchainConfig2 = readBlockchainConfig(
                 "/net/postchain/devtools/multiple_chains/chains_ops/single_peer/blockchain_config_2.xml")
 

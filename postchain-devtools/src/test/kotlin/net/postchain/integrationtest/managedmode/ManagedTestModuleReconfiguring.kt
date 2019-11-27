@@ -63,10 +63,14 @@ open class ManagedTestModuleReconfiguring(val stage: Int) : SimpleGTXModule<Unit
 
             logger.log { "blockchainConfigFilename: $blockchainConfigFilename" }
 
-            val gtvConfig = GtvMLParser.parseGtvML(
-                    javaClass.getResource(blockchainConfigFilename).readText())
-            val encodedGtvConfig = GtvEncoder.encodeGtv(gtvConfig)
-            return GtvFactory.gtv(encodedGtvConfig)
+            if (blockchainConfigFilename == "an unreachable branch") {
+                return GtvNull
+            } else {
+                val gtvConfig = GtvMLParser.parseGtvML(
+                        javaClass.getResource(blockchainConfigFilename).readText())
+                val encodedGtvConfig = GtvEncoder.encodeGtv(gtvConfig)
+                return GtvFactory.gtv(encodedGtvConfig)
+            }
         }
 
         fun queryFindNextConfigurationHeight(unit: Unit, eContext: EContext, args: Gtv): Gtv {

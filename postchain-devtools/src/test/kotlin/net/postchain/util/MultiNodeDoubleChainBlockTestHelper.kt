@@ -23,13 +23,7 @@ import kotlin.test.assertNotNull
 open class MultiNodeDoubleChainBlockTestHelper : IntegrationTest() {
 
     private val gtxTestModule = GTXTestModule()
-    // TODO Olle POS-93 The bc RIDs will depend on the actual BC configuration being used. Not sure we can do it this way no sir.
-    private val factory1 = GTXTransactionFactory(BlockchainRid.buildFromHex(BLOCKCHAIN_RIDS[1L]!!), gtxTestModule, cryptoSystem)
-    private val factory2 = GTXTransactionFactory(BlockchainRid.buildFromHex(BLOCKCHAIN_RIDS[2L]!!), gtxTestModule, cryptoSystem)
-    private val factoryMap = mapOf(
-            1L to factory1,
-            2L to factory2)
-
+    private val factoryMap = mutableMapOf<Long, GTXTransactionFactory>() // Will be filled up after node start and used during TX creation.
     companion object : KLogging()
 
 
@@ -65,6 +59,12 @@ open class MultiNodeDoubleChainBlockTestHelper : IntegrationTest() {
                         chainList.forEach(node::assertChainStarted)
                     }
                 }
+
+        // At this point we know the BC RID so go ahead and create the TX factories
+        chainList.forEach {
+            val bcRid = nodes[0].getBlockchainRid(it)!! // Doesn't matter what node we take so I'm  just picking the first
+            factoryMap[it] = GTXTransactionFactory(bcRid, gtxTestModule, cryptoSystem)
+        }
 
         if (nodes.size > 1) {
             logger.debug("---Asserting all chains are connected -------------------------")
@@ -113,6 +113,13 @@ open class MultiNodeDoubleChainBlockTestHelper : IntegrationTest() {
                         nodeNameWithBlockchainsArr[i].getChainIds().forEach { node::assertChainStarted }
                     }
                 }
+
+        // At this point we know the BC RID so go ahead and create the TX factories
+        chainsInCommon.forEach {
+            val bcRid = nodes[0].getBlockchainRid(it)!! // I'm  just picking it from the first node I find.
+            factoryMap[it] = GTXTransactionFactory(bcRid, gtxTestModule, cryptoSystem)
+        }
+
 
         if (nodes.size > 1) {
             logger.debug("---Asserting all chains are connected -------------------------")

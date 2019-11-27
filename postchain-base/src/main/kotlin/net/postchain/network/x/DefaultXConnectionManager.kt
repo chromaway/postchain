@@ -63,7 +63,7 @@ class DefaultXConnectionManager<PacketType>(
     override fun connectChain(peerConfig: XChainPeerConfiguration, autoConnectAll: Boolean) {
         logger.debug {
             "[${myPeerId()}]: Connecting chain: ${peerConfig.chainID} " +
-                    "BcRID: ${peerConfig.blockchainRID.toHex()}"
+                    "BcRID: ${peerConfig.blockchainRID.toShortHex()}"
         }
 
         if (isShutDown) throw ProgrammerMistake("Already shut down")
