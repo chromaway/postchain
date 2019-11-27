@@ -188,6 +188,14 @@ class RestApi(
             http.get("/node/$PARAM_BLOCKCHAIN_RID/$SUBQUERY", "application/json") { request, _ ->
                 handleNodeStatusQueries(request)
             }
+
+            http.get("/_debug", "application/json") { request, _ ->
+                handleDebugQuery(request)
+            }
+
+            http.get("/_debug/$SUBQUERY", "application/json") { request, _ ->
+                handleDebugQuery(request)
+            }
         }
 
         http.awaitInitialization()
@@ -273,6 +281,11 @@ class RestApi(
         return model(request).nodeQuery(request.params(SUBQUERY))
     }
 
+    private fun handleDebugQuery(request: Request): String {
+        logger.debug("Request body: ${request.body()}")
+        return model0(request).debugQuery(request.params(SUBQUERY))
+    }
+
     private fun checkTxHashHex(request: Request): String {
         val hashHex = request.params(PARAM_HASH_HEX)
         if (!hashHex.matches(Regex("[0-9a-fA-F]{64}"))) {
@@ -307,6 +320,13 @@ class RestApi(
         val blockchainRID = checkBlockchainRID(request)
         return models[blockchainRID.toUpperCase()]
                 ?: throw NotFoundError("Can't find blockchain with blockchainRID: $blockchainRID")
+    }
+
+    // TODO: [POS-97]: Redesign this
+    private fun model0(request: Request): Model {
+        val chainZero = "0000000000000000000000000000000000000000000000000000000000000000"
+        return models[chainZero]
+                ?: throw NotFoundError("Can't find blockchain with blockchainRID: $chainZero")
     }
 
     private fun parseMultipleQueriesRequest(request: Request): JsonArray {

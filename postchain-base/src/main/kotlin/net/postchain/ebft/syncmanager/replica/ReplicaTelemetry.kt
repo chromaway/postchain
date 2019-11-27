@@ -70,4 +70,8 @@ class ReplicaTelemetry(private val blockchainProcessName: String) {
     fun fatal(message: String, throwable: Throwable) {
         consoleLogger(LogLevel.Error, message, throwable)
     }
+
+    fun debug(message: String) {
+        consoleLogger(LogLevel.Debug, message)
+    }
 }

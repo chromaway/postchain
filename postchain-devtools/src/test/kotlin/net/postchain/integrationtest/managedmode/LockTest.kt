@@ -1,5 +1,7 @@
 package net.postchain.integrationtest.managedmode
 
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonObject
 import mu.KLogging
 import org.junit.Test
 import java.util.concurrent.Executors
@@ -86,5 +88,36 @@ class LockTest {
 
         executor.shutdownNow()
         executor.awaitTermination(1000, TimeUnit.SECONDS)
+    }
+
+    @Test
+    fun test2() {
+        val gson = GsonBuilder().setPrettyPrinting().create()!!
+
+        val obj = mapOf(
+                "1" to mapOf(
+                        "11" to "111>0",
+                        "12" to "122<0"),
+                "2" to mapOf(
+                        "21" to "211>>0",
+                        "22" to "222&0"),
+                "3" to mapOf(
+                        "31" to "311<0",
+                        "32" to "322<111")
+        )
+
+        val json = JsonObject()
+                .apply {
+                    addProperty("version", "3.0.1")
+
+                    obj.forEach { (property, value) ->
+//                        addProperty(property, value.toString())
+                        add(property, gson.toJsonTree(value))
+                    }
+
+                }.let(gson::toJson)
+
+        println(json)
+        println(obj)
     }
 }

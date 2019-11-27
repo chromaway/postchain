@@ -5,13 +5,15 @@ import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.base.data.BaseTransactionQueue
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
+import net.postchain.debug.NodeDiagnosticContext
 import net.postchain.gtv.GtvDictionary
 import net.postchain.gtv.GtvFactory
 
 class BaseBlockchainInfrastructure(
         private val nodeConfigProvider: NodeConfigurationProvider,
         val synchronizationInfrastructure: SynchronizationInfrastructure,
-        val apiInfrastructure: ApiInfrastructure
+        val apiInfrastructure: ApiInfrastructure,
+        val nodeDiagnosticContext: NodeDiagnosticContext
 ) : BlockchainInfrastructure {
 
     val cryptoSystem = SECP256K1CryptoSystem()

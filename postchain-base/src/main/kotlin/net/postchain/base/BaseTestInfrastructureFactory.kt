@@ -4,6 +4,7 @@ import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.blockchain.ManualBlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
+import net.postchain.debug.NodeDiagnosticContext
 
 class TestBlockchainProcess(val _engine: BlockchainEngine) : BlockchainProcess {
     override fun getEngine(): BlockchainEngine {
@@ -31,22 +32,29 @@ class BaseTestInfrastructureFactory : InfrastructureFactory {
         return ManualBlockchainConfigurationProvider()
     }
 
-    override fun makeBlockchainInfrastructure(nodeConfigProvider: NodeConfigurationProvider): BlockchainInfrastructure {
+    override fun makeBlockchainInfrastructure(
+            nodeConfigProvider: NodeConfigurationProvider,
+            nodeDiagnosticContext: NodeDiagnosticContext
+    ): BlockchainInfrastructure {
+
+        val syncInfra = TestSynchronizationInfrastructure()
+        val apiInfra = BaseApiInfrastructure(nodeConfigProvider, nodeDiagnosticContext)
+
         return BaseBlockchainInfrastructure(
-                nodeConfigProvider,
-                TestSynchronizationInfrastructure(),
-                BaseApiInfrastructure(nodeConfigProvider))
+                nodeConfigProvider, syncInfra, apiInfra, nodeDiagnosticContext)
     }
 
     override fun makeProcessManager(
             nodeConfigProvider: NodeConfigurationProvider,
             blockchainInfrastructure: BlockchainInfrastructure,
-            blockchainConfigurationProvider: BlockchainConfigurationProvider
+            blockchainConfigurationProvider: BlockchainConfigurationProvider,
+            nodeDiagnosticContext: NodeDiagnosticContext
     ): BlockchainProcessManager {
 
         return BaseBlockchainProcessManager(
                 blockchainInfrastructure,
                 nodeConfigProvider,
-                blockchainConfigurationProvider)
+                blockchainConfigurationProvider,
+                nodeDiagnosticContext)
     }
 }

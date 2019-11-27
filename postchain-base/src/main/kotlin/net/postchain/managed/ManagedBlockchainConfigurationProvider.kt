@@ -18,12 +18,13 @@ class ManagedBlockchainConfigurationProvider : BlockchainConfigurationProvider {
         return if (chainId == 0L) {
             systemProvider.getConfiguration(eContext, chainId)
         } else {
-            if (::dataSource.isInitialized) {
-                check(eContext.chainID == chainId) { "chainID mismatch" }
-                getConfigurationFromDataSource(eContext)
-            } else {
-                throw IllegalStateException("Using managed blockchain configuration provider before it's properly initialized")
-            }
+            systemProvider.getConfiguration(eContext, chainId)
+                    ?: if (::dataSource.isInitialized) {
+                        check(eContext.chainID == chainId) { "chainID mismatch" }
+                        getConfigurationFromDataSource(eContext)
+                    } else {
+                        throw IllegalStateException("Using managed blockchain configuration provider before it's properly initialized")
+                    }
         }
     }
 

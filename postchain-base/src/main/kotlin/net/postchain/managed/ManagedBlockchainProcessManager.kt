@@ -8,19 +8,21 @@ import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.ManagedNodeConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
+import net.postchain.debug.NodeDiagnosticContext
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.ScalarHandler
-import java.lang.Exception
 import kotlin.concurrent.withLock
 
 class ManagedBlockchainProcessManager(
         blockchainInfrastructure: BlockchainInfrastructure,
         nodeConfigProvider: NodeConfigurationProvider,
-        blockchainConfigProvider: BlockchainConfigurationProvider
+        blockchainConfigProvider: BlockchainConfigurationProvider,
+        nodeDiagnosticContext: NodeDiagnosticContext
 ) : BaseBlockchainProcessManager(
         blockchainInfrastructure,
         nodeConfigProvider,
-        blockchainConfigProvider
+        blockchainConfigProvider,
+        nodeDiagnosticContext
 ) {
 
     private lateinit var dataSource: ManagedNodeDataSource
@@ -34,14 +36,16 @@ class ManagedBlockchainProcessManager(
             if (chainId == 0L) {
                 dataSource = buildChain0ManagedDataSource()
 
-                logger.info { "${nodeConfigProvider.javaClass}" }
+                // TODO: [POS-97]: Put this to DiagnosticContext
+                logger.debug { "${nodeConfigProvider.javaClass}" }
 
                 // Setting up managed data source to the nodeConfig
                 (nodeConfigProvider as? ManagedNodeConfigurationProvider)
                         ?.setPeerInfoDataSource(dataSource)
                         ?: logger.warn { "Node config is not managed, no peer info updates possible" }
 
-                logger.info { "${blockchainConfigProvider.javaClass}" }
+                // TODO: [POS-97]: Put this to DiagnosticContext
+                logger.debug { "${blockchainConfigProvider.javaClass}" }
 
                 // Setting up managed data source to the blockchainConfig
                 (blockchainConfigProvider as? ManagedBlockchainConfigurationProvider)
@@ -50,7 +54,7 @@ class ManagedBlockchainProcessManager(
             }
 
         } catch (e: Exception) {
-        	// TODO: [POS-90]: Improve error handling here
+            // TODO: [POS-90]: Improve error handling here
             logger.error { e.message }
         }
 
