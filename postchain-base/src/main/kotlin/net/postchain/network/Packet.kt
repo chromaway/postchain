@@ -1,10 +1,8 @@
 package net.postchain.network
 
-import jdk.nashorn.internal.ir.Block
 import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerID
-import net.postchain.core.ByteArrayKey
 
 interface XPacketEncoder<PacketType> {
     fun makeIdentPacket(forPeer: PeerID): ByteArray
