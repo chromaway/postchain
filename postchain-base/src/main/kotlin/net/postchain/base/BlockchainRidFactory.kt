@@ -4,7 +4,6 @@ import net.postchain.base.data.DatabaseAccess
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.EContext
-import net.postchain.devtools.PeerNameHelper
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtv.merkleHash
@@ -57,14 +56,18 @@ data class BlockchainRid(val data: ByteArray) {
          * @param b is the byte to be repeated
          */
         fun buildRepeat(b: Byte): BlockchainRid {
-            val bArr = ByteArray(64, {b})
+            val bArr = ByteArray(64) { b }
             return BlockchainRid(bArr)
         }
     }
 
     fun toHex() = data.toHex()
 
-    fun toShortHex() = PeerNameHelper.shortHash(data)
+    fun toShortHex(): String {
+        return toHex().run {
+            "${take(2)}:${takeLast(2)}"
+        }
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -80,7 +83,6 @@ data class BlockchainRid(val data: ByteArray) {
     override fun hashCode(): Int {
         return data.contentHashCode()
     }
-
 
     override fun toString(): String {
         return toHex()
