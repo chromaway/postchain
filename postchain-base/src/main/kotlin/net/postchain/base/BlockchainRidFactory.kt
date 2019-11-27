@@ -11,9 +11,6 @@ import net.postchain.gtv.merkleHash
 
 object BlockchainRidFactory {
 
-    // Chain0 has a fixed RID, to simplify communication between nodes in managed mode
-    val CHAIN0_RID = BlockchainRid.buildFromHex("0000000000000000000000000000000000000000000000000000000000000000")
-
     val cryptoSystem = SECP256K1CryptoSystem()
     val merkleHashCalculator = GtvMerkleHashCalculator(cryptoSystem)
 
@@ -36,13 +33,9 @@ object BlockchainRidFactory {
         return if (dbBcRid != null) {
             dbBcRid // We have it in the DB so don't do anything (if it's in here it must be correct)
         } else {
-            val newRid = if (eContext.chainID == 0L) {
-                CHAIN0_RID
-            } else {
-                // Need to calculate it the RID, and we do it the usual way (same as merkle root of block)
-                val bcRid = data.merkleHash(merkleHashCalculator)
-                BlockchainRid(bcRid)
-            }
+            // Need to calculate it the RID, and we do it the usual way (same as merkle root of block)
+            val bcBinary = data.merkleHash(merkleHashCalculator)
+            val newRid = BlockchainRid(bcBinary)
             DatabaseAccess.of(eContext).checkBlockchainRID(eContext, newRid)
             newRid
         }

@@ -32,6 +32,7 @@ class ManagedModeTest : IntegrationTest() {
 
         // Asserting chain 0 is started for node0
         nodes[0].assertChainStarted(0L)
+        val chain0Rid = nodes[0].getBlockchainRid(0L)
 
         // TODO: [et]: Change comment: Waiting for height 5 when a new peer will be added to PeerInfos
         Awaitility.await().atMost(Duration.ONE_MINUTE)
@@ -48,7 +49,6 @@ class ManagedModeTest : IntegrationTest() {
                             .isInstanceOf(ManagedTestModuleReconfiguring1::class)
                 }
 
-/*
         Awaitility.await().atMost(Duration.ONE_MINUTE)
                 .untilAsserted {
                     assertk.assert(nodes[0].getModules(0L)).isNotEmpty()
@@ -62,7 +62,6 @@ class ManagedModeTest : IntegrationTest() {
                     assertk.assert(nodes[0].getModules(0L).first())
                             .isInstanceOf(ManagedTestModuleReconfiguring3::class)
                 }
-                */
     }
 
     @Test
