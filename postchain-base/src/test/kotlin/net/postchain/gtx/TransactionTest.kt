@@ -2,6 +2,7 @@
 
 package net.postchain.gtx
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
@@ -11,8 +12,8 @@ import org.junit.Test
 
 val myCS = SECP256K1CryptoSystem()
 
-fun makeNOPGTX(): ByteArray {
-    val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(0)), myCS)
+fun makeNOPGTX(bcRid: BlockchainRid): ByteArray {
+    val b = GTXDataBuilder(bcRid, arrayOf(pubKey(0)), myCS)
     b.addOperation("nop", arrayOf(gtv(42)))
     b.finish()
     b.sign(myCS.buildSigMaker(pubKey(0), privKey(0)))
@@ -22,11 +23,11 @@ fun makeNOPGTX(): ByteArray {
 class GTXTransactionTest {
 
     val module = StandardOpsGTXModule()
-    val gtxData = makeNOPGTX()
+    val gtxData = makeNOPGTX(BlockchainRid.EMPTY_RID)
 
     @Test
     fun runtx() {
-        val factory = GTXTransactionFactory(testBlockchainRID, module, myCS)
+        val factory = GTXTransactionFactory(BlockchainRid.EMPTY_RID, module, myCS)
         val tx = factory.decodeTransaction(gtxData)
         assertTrue(tx.getRID().size > 1)
         assertTrue(tx.getRawData().size > 1)

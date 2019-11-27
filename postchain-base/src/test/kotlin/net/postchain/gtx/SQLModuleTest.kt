@@ -1,6 +1,7 @@
 package net.postchain.gtx
 
 import net.postchain.StorageBuilder
+import net.postchain.base.BlockchainRid
 import net.postchain.base.withWriteConnection
 import net.postchain.config.app.AppConfig
 import net.postchain.gtv.GtvFactory.gtv
@@ -20,7 +21,7 @@ class SQLModuleTest {
         )
 
         val mf = SQLGTXModuleFactory()
-        val module = mf.makeModule(config, testBlockchainRID)
+        val module = mf.makeModule(config, BlockchainRid.EMPTY_RID)
 
         val appConfig = AppConfig(getDatabaseConfig())
         val storage = StorageBuilder.buildStorage(appConfig, 0)
