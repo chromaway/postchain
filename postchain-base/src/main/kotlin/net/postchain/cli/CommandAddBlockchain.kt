@@ -25,7 +25,6 @@ class CommandAddBlockchain : Command {
             required = true)
     private var chainId = 0L
 
-    // TODO Olle Should probably remove this option, bc we're no longer using this input value. Could break tests
     @Parameter(
             names = ["-brid", "--blockchain-rid"],
             description = "Blockchain global ID",
@@ -48,6 +47,10 @@ class CommandAddBlockchain : Command {
     override fun execute(): CliResult {
         println("add-blockchain will be executed with options: " +
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
+
+        if (blockchainRID != "") {
+            println("WARNING: You specified Blockchain RID, but this is deprecated and will not be used. The Blockchain global ID will be calculated by the system!" )
+        }
 
         return try {
             val cliExecution = CliExecution()
