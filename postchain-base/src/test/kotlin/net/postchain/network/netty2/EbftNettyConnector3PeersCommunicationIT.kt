@@ -22,7 +22,7 @@ import org.junit.Test
 class EbftNettyConnector3PeersCommunicationIT {
 
     private val cryptoSystem = SECP256K1CryptoSystem()
-    private val blockchainRid = BlockchainRid.FULL_EMPTY_RID
+    private val blockchainRid = BlockchainRid.buildRepeat(0)
 
     private lateinit var peerInfo1: PeerInfo
     private lateinit var peerInfo2: PeerInfo

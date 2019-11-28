@@ -49,7 +49,7 @@ class GTXDataTest {
         val signerPriv = (0..3).map(::privKey)
         val crypto = SECP256K1CryptoSystem()
 
-        val b = GTXDataBuilder(BlockchainRid.FULL_EMPTY_RID, signerPub.slice(0..2).toTypedArray(), crypto)
+        val b = GTXDataBuilder(BlockchainRid.buildRepeat(0), signerPub.slice(0..2).toTypedArray(), crypto)
         addOperations(b, signerPub)
         b.finish()
         b.sign(crypto.buildSigMaker(signerPub[0], signerPriv[0]))

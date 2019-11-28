@@ -11,7 +11,7 @@ import org.junit.Test
 class DefaultXCommunicationManager1PeerIT {
 
     private val cryptoSystem = SECP256K1CryptoSystem()
-    private val blockchainRid = BlockchainRid.FULL_EMPTY_RID
+    private val blockchainRid = BlockchainRid.buildRepeat(0)
 
     private val privKey = cryptoSystem.getRandomBytes(32)
     private val pubKey = secp256k1_derivePubKey(privKey)

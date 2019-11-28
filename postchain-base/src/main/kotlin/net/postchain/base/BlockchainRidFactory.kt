@@ -46,7 +46,6 @@ data class BlockchainRid(val data: ByteArray) {
     companion object {
 
         val EMPTY_RID = BlockchainRid(ByteArray(0))
-        val FULL_EMPTY_RID = BlockchainRid(ByteArray(64, Int::toByte)) // This will actually have the same size as a real RID
 
         fun buildFromHex(str: String) = BlockchainRid(str.hexStringToByteArray())
 
