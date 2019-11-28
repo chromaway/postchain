@@ -94,13 +94,13 @@ class BaseBlockStore : BlockStore {
         val db = DatabaseAccess.of(ctx)
         val blocksInfo = db.getBlocks(ctx, blockHeight, asc, limit)
         return blocksInfo.map { blockInfo ->
-            val partialTxs = listOf<PartialTx>()
-            val transactions = listOf<ByteArray>()
+            var partialTxs = listOf<PartialTx>()
+            var transactions = listOf<ByteArray>()
 
             if(partialTx) {
-                db.getBlockPartialTransactions(ctx, blockInfo.blockRid)
+                partialTxs = db.getBlockPartialTransactions(ctx, blockInfo.blockRid)
             } else {
-                db.getBlockTransactions(ctx, blockInfo.blockRid)
+                transactions = db.getBlockTransactions(ctx, blockInfo.blockRid)
             }
 
             // Decode block header

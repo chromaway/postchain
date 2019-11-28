@@ -338,7 +338,7 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
     override fun getBlocks(context: EContext, blockHeight: Long, asc: Boolean, limit: Int): List<DatabaseAccess.BlockInfoExt> {
         val blocksInfo = queryRunner.query(context.conn,
                 "SELECT block_rid, block_height, block_header_data, block_witness, timestamp " +
-                        "FROM blocks WHERE block_height < ? " +
+                        "FROM blocks WHERE block_height ${if(asc) ">" else "<"} ? " +
                         "ORDER BY timestamp ${if(asc) "ASC" else "DESC"} " +
                         "LIMIT ?",
                 mapListHandler,
