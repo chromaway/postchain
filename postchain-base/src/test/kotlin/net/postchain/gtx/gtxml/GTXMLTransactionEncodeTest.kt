@@ -2,6 +2,7 @@ package net.postchain.gtx.gtxml
 
 import assertk.assert
 import assertk.assertions.isEqualTo
+import net.postchain.base.BlockchainRid
 import net.postchain.common.hexStringToByteArray
 import net.postchain.gtx.*
 import org.junit.Test
@@ -12,7 +13,7 @@ class GTXMLTransactionEncodeTest {
     @Test
     fun encodeXMLGTXTransaction_successfully() {
         val gtxTxBodyData = GTXTransactionBodyData(
-                "23213213".hexStringToByteArray(),
+                BlockchainRid.buildFromHex("23213213"),
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
@@ -51,7 +52,7 @@ class GTXMLTransactionEncodeTest {
     @Test
     fun encodeXMLGTXTransaction_empty_successfully() {
         val gtxTxBodyData = GTXTransactionBodyData(
-                "23213213".hexStringToByteArray(),
+                BlockchainRid.buildFromHex("23213213"),
                 arrayOf(),
                 arrayOf()
         )
@@ -68,7 +69,7 @@ class GTXMLTransactionEncodeTest {
     @Test
     fun encodeXMLGTXTransaction_with_empty_signers_and_signatures_successfully() {
         val gtxTxBodyData = GTXTransactionBodyData(
-                "23213213".hexStringToByteArray(),
+                BlockchainRid.buildFromHex("23213213"),
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
@@ -99,7 +100,7 @@ class GTXMLTransactionEncodeTest {
     @Test
     fun encodeXMLGTXTransaction_with_empty_operations_successfully() {
         val gtxTxBodyData = GTXTransactionBodyData(
-                "23213213".hexStringToByteArray(),
+                BlockchainRid.buildFromHex("23213213"),
                 arrayOf(),
                 arrayOf(
                         byteArrayOf(0x12, 0x38, 0x71, 0x23),
@@ -124,7 +125,7 @@ class GTXMLTransactionEncodeTest {
     @Test
     fun encodeXMLGTXTransaction_with_empty_operation_parameters_successfully() {
         val gtxTxBodyData = GTXTransactionBodyData(
-                "23213213".hexStringToByteArray(),
+                BlockchainRid.buildFromHex("23213213"),
                 arrayOf(
                         OpData("ft_transfer", arrayOf()),
                         OpData("ft_transfer", arrayOf())
@@ -152,7 +153,7 @@ class GTXMLTransactionEncodeTest {
     @Test
     fun encodeXMLGTXTransaction_compound_parameter_of_operation_successfully() {
         val gtxBodyData = GTXTransactionBodyData(
-                "23213213".hexStringToByteArray(),
+                BlockchainRid.buildFromHex("23213213"),
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(

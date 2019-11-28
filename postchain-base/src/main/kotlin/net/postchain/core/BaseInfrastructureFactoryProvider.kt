@@ -10,7 +10,8 @@ import net.postchain.ebft.BaseEBFTInfrastructureFactory
 class BaseInfrastructureFactoryProvider : InfrastructureFactoryProvider {
 
     override fun createInfrastructureFactory(nodeConfigProvider: NodeConfigurationProvider): InfrastructureFactory {
-        val factoryClass = when (val infrastructure = nodeConfigProvider.getConfiguration().infrastructure) {
+        val infrastructure = nodeConfigProvider.getConfiguration().infrastructure
+        val factoryClass = when (infrastructure) {
             Infrastructures.BaseEbft.secondName.toLowerCase() -> BaseEBFTInfrastructureFactory::class.java
             Infrastructures.BaseTest.secondName.toLowerCase() -> BaseTestInfrastructureFactory::class.java
             else -> Class.forName(infrastructure)

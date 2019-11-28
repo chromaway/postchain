@@ -1,12 +1,13 @@
 package net.postchain.gtx.serializer
 
+import net.postchain.base.BlockchainRid
+import net.postchain.common.hexStringToByteArray
 import net.postchain.gtv.GtvArray
 import net.postchain.gtv.GtvByteArray
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.GtvString
 import net.postchain.gtx.GTXTransactionBodyData
 import net.postchain.gtx.GTXTransactionData
-import net.postchain.gtx.GtxHelper
 import net.postchain.gtx.OpData
 import org.junit.Assert
 import org.junit.Test
@@ -15,9 +16,9 @@ class GtxDataSerializerTest {
 
     val op_name = "op_name"
     val op_args = listOf(1,2,3,4)
-    val blockchainRID: ByteArray = GtxHelper.convertToByteArray("222222")
-    val aliceSigner: ByteArray = GtxHelper.convertToByteArray("010101")
-    val aliceSignature: ByteArray = GtxHelper.convertToByteArray("DDDDDD")
+    val blockchainRID = BlockchainRid.buildFromHex("222222")
+    val aliceSigner: ByteArray = "010101".hexStringToByteArray()
+    val aliceSignature: ByteArray = "DDDDDD".hexStringToByteArray()
 
     @Test
     fun testBuildGtvFromGTXData_one_operation() {

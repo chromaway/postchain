@@ -16,6 +16,8 @@ class FTBasicIntegrationTest : FTIntegrationTest() {
         val node = createNode(0, "/net/postchain/ft_basic/blockchain_config.xml")
         val validTxs = mutableListOf<Transaction>()
         var currentBlockHeight = -1L
+        val bcRid = node.getBlockchainRid(1L)!!
+        setBlockchainRid(bcRid) // Yes it's ugly but this is old stuff
 
         fun makeSureBlockIsBuiltCorrectly() {
             currentBlockHeight += 1

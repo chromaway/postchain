@@ -27,7 +27,7 @@ class create_chain_op (val config: EsplixConfig, data: ExtOpData): GTXOperation(
     val nonce = data.args[0].asByteArray()
     val payload = data.args[1].asByteArray()
     val chainID = computeChainID(config.cryptoSystem,
-            data.blockchainRID, nonce, payload, data.signers)
+            data.blockchainRID.data, nonce, payload, data.signers)
 
     override fun isCorrect(): Boolean {
         if (data.args.size != 2)

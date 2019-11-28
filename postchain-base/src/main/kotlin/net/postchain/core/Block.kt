@@ -1,5 +1,7 @@
 package net.postchain.core
 
+import net.postchain.base.BlockchainRid
+
 
 interface BlockHeader {
     val prevBlockRID: ByteArray
@@ -53,7 +55,7 @@ interface MultiSigBlockWitness : BlockWitness {
  *           ("null" means this blockchain doesn't have any dependencies)
  */
 class InitialBlockData(
-        val blockchainRid: ByteArray,
+        val blockchainRid: BlockchainRid,
         val blockIID: Long,
         val chainID: Long,
         val prevBlockRID: ByteArray,

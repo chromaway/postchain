@@ -1,5 +1,6 @@
 package net.postchain.modules.esplix_r4
 
+import net.postchain.base.BlockchainRid
 import net.postchain.core.EContext
 import net.postchain.gtx.*
 import net.postchain.gtv.Gtv
@@ -24,7 +25,7 @@ class EsplixModule(val config: EsplixConfig) : SimpleGTXModule<EsplixConfig>(
 }
 
 class BaseEsplixModuleFactory : GTXModuleFactory {
-    override fun makeModule(data: Gtv, blockchainRID: ByteArray): GTXModule {
-        return EsplixModule(makeBaseEsplixConfig(data, blockchainRID))
+    override fun makeModule(data: Gtv, blockchainRID: BlockchainRid): GTXModule {
+        return EsplixModule(makeBaseEsplixConfig(data, blockchainRID.data))
     }
 }

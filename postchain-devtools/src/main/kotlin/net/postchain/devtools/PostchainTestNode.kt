@@ -12,17 +12,17 @@ import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
 import net.postchain.ebft.EBFTSynchronizationInfrastructure
 import net.postchain.gtv.Gtv
-import net.postchain.gtv.GtvEncoder.encodeGtv
 
-class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider) : PostchainNode(nodeConfigProvider) {
+class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider, preWipeDatabase: Boolean = false) : PostchainNode(nodeConfigProvider) {
 
     private val testStorage: Storage
     val pubKey: String
     private var isInitialized = false
+    private val blockchainRidMap = mutableMapOf<Long, BlockchainRid>() // Used to keep track of the BC RIDs of the chains
 
     init {
         val nodeConfig = nodeConfigProvider.getConfiguration()
-        testStorage = StorageBuilder.buildStorage(nodeConfig.appConfig, NODE_ID_TODO)
+        testStorage = StorageBuilder.buildStorage(nodeConfig.appConfig, NODE_ID_TODO, preWipeDatabase)
         pubKey = nodeConfig.pubKey
     }
 
@@ -31,12 +31,11 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider) : Postcha
         const val DEFAULT_CHAIN_IID = 1L
     }
 
-    private fun initDb(chainId: Long, blockchainRid: ByteArray) {
+    private fun initDb(chainId: Long) {
         // TODO: [et]: Is it necessary here after StorageBuilder.buildStorage() redesign?
         withWriteConnection(testStorage, chainId) { eContext ->
             with(DatabaseAccess.of(eContext)) {
                 initialize(eContext.conn, expectedDbVersion = 1)
-                checkBlockchainRID(eContext, blockchainRid)
             }
             true
         }
@@ -44,23 +43,22 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider) : Postcha
         isInitialized = true
     }
 
-    fun addBlockchain(chainId: Long, blockchainRid: ByteArray, blockchainConfig: Gtv) {
-        initDb(chainId, blockchainRid)
-        addConfiguration(chainId, 0, blockchainConfig)
+    fun addBlockchain(chainId: Long, blockchainConfig: Gtv): BlockchainRid {
+        initDb(chainId)
+        return addConfiguration(chainId, 0, blockchainConfig)
     }
 
-    fun addConfiguration(chainId: Long, height: Long, blockchainConfig: Gtv) {
+    fun addConfiguration(chainId: Long, height: Long, blockchainConfig: Gtv): BlockchainRid {
         check(isInitialized) { "PostchainNode is not initialized" }
 
-        withWriteConnection(testStorage, chainId) { eContext ->
+        return withReadWriteConnection(testStorage, chainId) { eContext: EContext ->
             BaseConfigurationDataStore.addConfigurationData(
-                    eContext, height, encodeGtv(blockchainConfig))
-            true
+                    eContext, height, blockchainConfig)
         }
     }
 
-    fun startBlockchain() {
-        startBlockchain(DEFAULT_CHAIN_IID)
+    fun startBlockchain(): BlockchainRid? {
+        return startBlockchain(DEFAULT_CHAIN_IID)
     }
 
     override fun shutdown() {
@@ -108,6 +106,16 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider) : Postcha
                     pubKeyToConnection.key.toString()
                 }
     }
+
+    fun mapBlockchainRID(chainId: Long, bcRID: BlockchainRid) {
+        blockchainRidMap[chainId] = bcRID
+    }
+
+    /**
+     * Yeah I know this is a strange way of retrieving the BC RID, but plz change if you think of something better.
+     * (It's only for test, so I didn't ptu much thought into it. )
+     */
+    fun getBlockchainRid(chainId: Long): BlockchainRid? = blockchainRidMap[chainId]
 
     private fun blockchainRID(process: BlockchainProcess): String {
         return (process.getEngine().getConfiguration() as BaseBlockchainConfiguration) // TODO: [et]: Resolve type cast

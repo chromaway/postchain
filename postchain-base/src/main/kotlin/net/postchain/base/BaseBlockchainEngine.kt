@@ -8,7 +8,6 @@ import net.postchain.base.gtv.BlockHeaderData
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
 import net.postchain.core.*
-import net.postchain.devtools.PeerNameHelper.shortBrid
 import net.postchain.gtv.GtvArray
 import net.postchain.gtv.GtvDecoder
 import nl.komponents.kovenant.task
@@ -246,5 +245,5 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
                 ", prev-block-rid: ${blockHeader.prevBlockRID.toHex()}"
     }
 
-    private fun shortChainName(): String = shortBrid(blockchainConfiguration.blockchainRID)
+    private fun shortChainName(): String = blockchainConfiguration.blockchainRID.toShortHex()
 }

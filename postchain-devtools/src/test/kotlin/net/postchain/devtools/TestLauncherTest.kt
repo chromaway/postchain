@@ -7,7 +7,7 @@ import org.junit.Test
 @Ignore
 class TestLauncherTest {
 
-    private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
+    private val blockchainRID = "101010101010101ABCDEF101010101010101ABCDEF101010101010101ABCDEF0"
 
     @Test
     fun runXMLGTXTests_nop() {

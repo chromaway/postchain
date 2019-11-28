@@ -1,11 +1,11 @@
 package net.postchain.network.x
 
 import mu.KLogging
+import net.postchain.base.BlockchainRid
 import net.postchain.base.CryptoSystem
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.common.ExponentialDelay
 import net.postchain.common.toHex
-import net.postchain.core.ByteArrayKey
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.devtools.PeerNameHelper.peerName
@@ -40,7 +40,7 @@ class DefaultXConnectionManager<PacketType>(
     }
 
     private val chains: MutableMap<Long, Chain> = mutableMapOf()
-    private val chainIDforBlockchainRID = mutableMapOf<ByteArrayKey, Long>()
+    private val chainIDforBlockchainRID = mutableMapOf<BlockchainRid, Long>()
     private var isShutDown = false
 
     private val peerToDelayMap: MutableMap<XPeerID, ExponentialDelay> = mutableMapOf()
@@ -62,7 +62,7 @@ class DefaultXConnectionManager<PacketType>(
     override fun connectChain(peerConfig: XChainPeerConfiguration, autoConnectAll: Boolean) {
         logger.debug {
             "[${myPeerId()}]: Connecting chain: ${peerConfig.chainID}" +
-                    ", blockchainRID: ${peerConfig.blockchainRID.toHex()}"
+                    ", blockchainRID: ${peerConfig.blockchainRID.toShortHex()}"
         }
 
         if (isShutDown) throw ProgrammerMistake("Already shut down")
@@ -73,8 +73,7 @@ class DefaultXConnectionManager<PacketType>(
             ok = false
         }
         chains[peerConfig.chainID] = Chain(peerConfig, autoConnectAll)
-        chainIDforBlockchainRID[peerConfig.blockchainRID.byteArrayKeyOf()] =
-                peerConfig.chainID
+        chainIDforBlockchainRID[peerConfig.blockchainRID] = peerConfig.chainID
 
         if (autoConnectAll) {
             peersConnectionStrategy.forEach(peerConfig.commConfiguration) {
@@ -92,7 +91,7 @@ class DefaultXConnectionManager<PacketType>(
 
         val peerConnectionDescriptor = XPeerConnectionDescriptor(
                 peerId,
-                peerConfig.blockchainRID.byteArrayKeyOf())
+                peerConfig.blockchainRID)
 
         val peerInfo = peerConfig.commConfiguration.resolvePeer(peerId.byteArray)
                 ?: throw ProgrammerMistake("Peer ID not found: ${peerId.byteArray.toHex()}")
@@ -225,7 +224,7 @@ class DefaultXConnectionManager<PacketType>(
 
     override fun getPeersTopology(): Map<String, Map<String, String>> {
         return chains
-                .mapKeys { (id, chain) -> id to chain.peerConfig.blockchainRID.byteArrayKeyOf().toString() }
+                .mapKeys { (id, chain) -> id to chain.peerConfig.blockchainRID.toHex() }
                 .mapValues { (idToRid, _) -> getPeersTopology(idToRid.first).mapKeys { (k, _) -> k.toString() } }
                 .mapKeys { (idToRid, _) -> idToRid.second }
     }

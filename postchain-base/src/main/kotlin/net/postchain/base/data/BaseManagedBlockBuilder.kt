@@ -111,11 +111,13 @@ class BaseManagedBlockBuilder(
     }
 
     override fun commit(blockWitness: BlockWitness?) {
+        logger.debug("${eContext.nodeID} committing block - start -------------------")
         runOp { blockBuilder.commit(blockWitness) }
         closed = true
         beforeCommit(blockBuilder)
         storage.closeWriteConnection(eContext, true)
         afterCommit(blockBuilder)
+        logger.debug("${eContext.nodeID} committing block - end -------------------")
     }
 
     override fun rollback() {

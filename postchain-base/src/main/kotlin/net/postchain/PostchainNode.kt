@@ -2,6 +2,7 @@
 
 package net.postchain
 
+import net.postchain.base.BlockchainRid
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.BaseInfrastructureFactoryProvider
 import net.postchain.core.BlockchainInfrastructure
@@ -30,7 +31,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         diagnosticContext.addProperty(DiagnosticProperty.PUB_KEY, nodeConfigProvider.getConfiguration().pubKey)
     }
 
-    fun startBlockchain(chainId: Long): Boolean {
+    fun startBlockchain(chainId: Long): BlockchainRid? {
         return processManager.startBlockchain(chainId)
     }
 

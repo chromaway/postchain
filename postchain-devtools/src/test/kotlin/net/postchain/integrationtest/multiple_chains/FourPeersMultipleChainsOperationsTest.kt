@@ -60,10 +60,10 @@ class FourPeersMultipleChainsOperationsTest : IntegrationTest() {
                 }
 
         // Launching chain 1 at all peers
-        nodes[0].addBlockchainAndStart(chainId1, blockchainRid1, blockchainConfig1)
-        nodes[1].addBlockchainAndStart(chainId1, blockchainRid1, blockchainConfig1)
-        nodes[2].addBlockchainAndStart(chainId1, blockchainRid1, blockchainConfig1)
-        nodes[3].addBlockchainAndStart(chainId1, blockchainRid1, blockchainConfig1)
+        nodes[0].addBlockchainAndStart(chainId1, blockchainConfig1)
+        nodes[1].addBlockchainAndStart(chainId1, blockchainConfig1)
+        nodes[2].addBlockchainAndStart(chainId1, blockchainConfig1)
+        nodes[3].addBlockchainAndStart(chainId1, blockchainConfig1)
         // Asserting that
         await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
@@ -81,9 +81,9 @@ class FourPeersMultipleChainsOperationsTest : IntegrationTest() {
                 }
 
         // Launching chain 2 at all peers
-        nodes[0].addBlockchainAndStart(chainId2, blockchainRid2, blockchainConfig2)
-        nodes[1].addBlockchainAndStart(chainId2, blockchainRid2, blockchainConfig2)
-        nodes[2].addBlockchainAndStart(chainId2, blockchainRid2, blockchainConfig2)
+        nodes[0].addBlockchainAndStart(chainId2, blockchainConfig2)
+        nodes[1].addBlockchainAndStart(chainId2, blockchainConfig2)
+        nodes[2].addBlockchainAndStart(chainId2, blockchainConfig2)
         // Asserting that
         await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {

@@ -2,9 +2,7 @@
 
 package net.postchain.api.rest.controller
 
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonElement
+import com.google.gson.*
 import mu.KLogging
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_HEADERS
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_METHODS
@@ -24,10 +22,16 @@ import net.postchain.common.TimeLog
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.UserMistake
+import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.GtvFactory
+import net.postchain.gtv.*
+import net.postchain.gtv.GtvFactory.gtv
+import spark.QueryParamsMap
 import spark.Request
+import spark.Response
 import spark.Service
+import java.util.*
 
 /**
  * Contains information on the rest API, such as network parameters and available queries
@@ -181,6 +185,11 @@ class RestApi(
                 handleQueries(request)
             }
 
+            // direct query. That should be used as example: <img src="http://node/dquery/brid?type=get_picture&id=4555" />
+            http.get("/dquery/$PARAM_BLOCKCHAIN_RID") { request, response ->
+                handleDirectQuery(request, response)
+            }
+
             http.post("/query_gtx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
                 handleGTXQueries(request)
             }
@@ -245,6 +254,30 @@ class RestApi(
         return model(request)
                 .query(Query(request.body()))
                 .json
+    }
+
+    private fun handleDirectQuery(request: Request, response: Response) : Any {
+        val queryMap = request.queryMap()
+        val type = gtv(queryMap.value("type"))
+        val args = GtvDictionary.build(queryMap.toMap().mapValues {
+            gtv(queryMap.value(it.key))
+        })
+        val gtvQuery = GtvEncoder.encodeGtv(gtv(type, args))
+        val array = model(request).query(GtvDecoder.decodeGtv(gtvQuery)).asArray()
+
+        if (array.size < 2) {
+            throw UserMistake("Response should have two parts: content-type and content")
+        }
+        // first element is content-type
+        response.type(array[0].asString())
+        val content = array[1]
+        if (content.type == GtvType.STRING) {
+            return content.asString()
+        } else if (content.type == GtvType.BYTEARRAY) {
+            return content.asByteArray()
+        } else {
+            throw UserMistake("Unexpected content")
+        }
     }
 
     private fun handleQueries(request: Request): String {

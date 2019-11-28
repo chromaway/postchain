@@ -56,12 +56,11 @@ class SinglePeerDoubleChainsDependencyTest : MultiNodeDoubleChainBlockTestHelper
                 .also { nodes.add(it) }
 
         // Launching blockchain
-        val blockchainRid = BLOCKCHAIN_RIDS[1L]!!.hexStringToByteArray()
         val blockchainConfig = readBlockchainConfig(blockchainConfigFilename)
-        node.addBlockchain(1L, blockchainRid, blockchainConfig)
+        val blockchainRid = node.addBlockchain(1L, blockchainConfig)
         assertk.assert {
             node.startBlockchain(1L)
-        }.returnedValue { isFalse() }
+        }.returnedValue { null }
     }
 
     /**

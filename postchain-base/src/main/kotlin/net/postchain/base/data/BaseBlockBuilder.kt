@@ -26,7 +26,7 @@ import java.util.*
  * @property blockSigMaker used to produce signatures on blocks for local node
  */
 open class BaseBlockBuilder(
-        val blockchainRID: ByteArray,
+        val blockchainRID: BlockchainRid,
         val cryptoSystem: CryptoSystem,
         eContext: EContext,
         store: BlockStore,

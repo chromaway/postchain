@@ -1,5 +1,6 @@
 package net.postchain.gtv
 
+import net.postchain.base.BlockchainRid
 import net.postchain.gtv.messages.DictPair
 import org.openmuc.jasn1.ber.types.string.BerUTF8String
 import java.math.BigInteger
@@ -33,6 +34,10 @@ object GtvFactory {
 
     fun gtv(ba: ByteArray): GtvByteArray {
         return GtvByteArray(ba)
+    }
+
+    fun gtv(ba: BlockchainRid): GtvByteArray {
+        return GtvByteArray(ba.data)
     }
 
     fun gtv(vararg a: Gtv): GtvArray {

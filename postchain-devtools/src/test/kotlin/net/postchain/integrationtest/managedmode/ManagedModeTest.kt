@@ -32,6 +32,7 @@ class ManagedModeTest : IntegrationTest() {
 
         // Asserting chain 0 is started for node0
         nodes[0].assertChainStarted(0L)
+        val chain0Rid = nodes[0].getBlockchainRid(0L)
 
         // TODO: [et]: Change comment: Waiting for height 5 when a new peer will be added to PeerInfos
         Awaitility.await().atMost(Duration.ONE_MINUTE)

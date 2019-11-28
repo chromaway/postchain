@@ -1,7 +1,6 @@
 package net.postchain.integrationtest.managedmode
 
 import net.postchain.core.EContext
-import net.postchain.devtools.IntegrationTest.Companion.BLOCKCHAIN_RIDS
 import net.postchain.gtv.*
 import net.postchain.gtv.gtvml.GtvMLParser
 import net.postchain.gtx.SimpleGTXModule
@@ -72,7 +71,7 @@ open class ManagedTestModuleSinglePeerLaunchesAndStopsChains(val stage: Int) : S
             }
 
             val blockchainConfigFilename = when (argBlockchainRid(args).toUpperCase()) {
-                BLOCKCHAIN_RIDS[0L] -> {
+                TestModulesHelper.BLOCKCHAIN_RIDS[0L] -> {
                     when (argHeight(args)) {
                         5L -> "/net/postchain/devtools/managedmode/singlepeer_launches_and_stops_chains/blockchain_config_0_height_5.xml"
                         10L -> "/net/postchain/devtools/managedmode/singlepeer_launches_and_stops_chains/blockchain_config_0_height_10.xml"
@@ -81,11 +80,11 @@ open class ManagedTestModuleSinglePeerLaunchesAndStopsChains(val stage: Int) : S
                     }
                 }
 
-                BLOCKCHAIN_RIDS[100L] -> {
+                TestModulesHelper.BLOCKCHAIN_RIDS[100L] -> {
                     "/net/postchain/devtools/managedmode/singlepeer_launches_and_stops_chains/blockchain_config_1.xml"
                 }
 
-                BLOCKCHAIN_RIDS[101L] -> {
+                TestModulesHelper.BLOCKCHAIN_RIDS[101L] -> {
                     "/net/postchain/devtools/managedmode/singlepeer_launches_and_stops_chains/blockchain_config_2.xml"
                 }
 

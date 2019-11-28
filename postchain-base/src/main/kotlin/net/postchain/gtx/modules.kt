@@ -3,6 +3,7 @@
 package net.postchain.gtx
 
 import mu.KLogging
+import net.postchain.base.BlockchainRid
 import net.postchain.core.EContext
 import net.postchain.core.Transactor
 import net.postchain.core.UserMistake
@@ -17,7 +18,7 @@ interface GTXModule {
 }
 
 interface GTXModuleFactory {
-    fun makeModule(config: Gtv, blockchainRID: ByteArray): GTXModule
+    fun makeModule(config: Gtv, blockchainRID: BlockchainRid): GTXModule
 }
 
 abstract class SimpleGTXModule<ConfT>(

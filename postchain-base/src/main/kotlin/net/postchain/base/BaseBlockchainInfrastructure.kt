@@ -32,14 +32,29 @@ class BaseBlockchainInfrastructure(
         apiInfrastructure.shutdown()
     }
 
-    override fun makeBlockchainConfiguration(rawConfigurationData: ByteArray, context: BlockchainContext): BlockchainConfiguration {
-        val actualContext = if (context.nodeRID == null) {
-            BaseBlockchainContext(context.blockchainRID, context.nodeID, context.chainID, subjectID)
-        } else {
-            context
-        }
+    /**
+     * Builds a [BlockchainConfiguration] instance from the given components
+     *
+     * @param rawConfigurationData is the byte array with the configuration.
+     * @param eContext is the DB context
+     * @param nodeID
+     * @param chainID
+     * @param initialBlockchainRID is null or a blokchain RID
+     * @return the newly created [BlockchainConfiguration]
+     */
+    override fun makeBlockchainConfiguration(
+            rawConfigurationData: ByteArray,
+            eContext: EContext,
+            nodeID: Int,
+            chainID: Long
+    ): BlockchainConfiguration {
 
         val gtxData = GtvFactory.decodeGtv(rawConfigurationData)
+
+        val blockchainRID = BlockchainRidFactory.resolveBlockchainRID(gtxData, eContext)
+
+        val actualContext = BaseBlockchainContext(blockchainRID, nodeID, chainID, subjectID)
+
         val confData = BaseBlockchainConfigurationData(gtxData as GtvDictionary, actualContext, blockSigMaker)
 
         val bcfClass = Class.forName(confData.data["configurationfactory"]!!.asString())

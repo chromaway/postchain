@@ -5,6 +5,7 @@ package net.postchain.gtx
 import mu.KLogging
 import net.postchain.base.BaseBlockQueries
 import net.postchain.base.BaseBlockchainConfigurationData
+import net.postchain.base.BlockchainRid
 import net.postchain.base.Storage
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.core.*
@@ -60,7 +61,7 @@ open class GTXBlockchainConfigurationFactory : BlockchainConfigurationFactory {
                 createGtxModule(configurationData.context.blockchainRID, configurationData.data))
     }
 
-    open fun createGtxModule(blockchainRID: ByteArray, data: Gtv): GTXModule {
+    open fun createGtxModule(blockchainRID: BlockchainRid, data: Gtv): GTXModule {
         val gtxConfig = data["gtx"]!!
         val list = gtxConfig["modules"]!!.asArray().map { it.asString() }
         if (list.isEmpty()) {
