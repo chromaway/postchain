@@ -48,8 +48,8 @@ open class PostchainModel(
                 ?.let { ApiTx(it.getRawData().toHex()) }
     }
 
-    override fun getLatestBlocksUpTo(upTo: Long, limit: Int): List<BlockDetail> {
-        return blockQueries.getLatestBlocksUpTo(upTo, limit).get()
+    override fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, partialTx: Boolean): List<BlockDetail> {
+        return blockQueries.getBlocks(blockHeight, asc, limit, partialTx).get()
     }
 
     override fun getConfirmationProof(txRID: TxRID): ConfirmationProof? {

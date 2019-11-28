@@ -90,15 +90,22 @@ class BaseBlockStore : BlockStore {
         return DatabaseAccess.of(ctx).getWitnessData(ctx, blockRID)
     }
 
-    override fun getLatestBlocksUpTo(ctx: EContext, upTo: Long, n: Int): List<BlockDetail> {
+    override fun getBlocks(ctx: EContext, blockHeight: Long, asc: Boolean, limit: Int, partialTx: Boolean): List<BlockDetail> {
         val db = DatabaseAccess.of(ctx)
-        val blocksInfo = db.getLatestBlocksUpTo(ctx, upTo, n)
+        val blocksInfo = db.getBlocks(ctx, blockHeight, asc, limit)
         return blocksInfo.map { blockInfo ->
-            val transactions = db.getBlockTransactions(ctx, blockInfo.blockRid)
+            val partialTxs = listOf<PartialTx>()
+            val transactions = listOf<ByteArray>()
+
+            if(partialTx) {
+                db.getBlockPartialTransactions(ctx, blockInfo.blockRid)
+            } else {
+                db.getBlockTransactions(ctx, blockInfo.blockRid)
+            }
 
             // Decode block header
             val blockHeaderDecoded = BaseBlockHeader(blockInfo.blockHeader, SECP256K1CryptoSystem())
-            BlockDetail(blockInfo.blockRid, blockHeaderDecoded.prevBlockRID, blockInfo.blockHeader, blockInfo.blockHeight, transactions, blockInfo.witness, blockInfo.timestamp)
+            BlockDetail(blockInfo.blockRid, blockHeaderDecoded.prevBlockRID, blockInfo.blockHeader, blockInfo.blockHeight, transactions, partialTxs, blockInfo.witness, blockInfo.timestamp)
         }
     }
 

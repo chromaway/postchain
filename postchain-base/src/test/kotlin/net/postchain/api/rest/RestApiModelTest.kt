@@ -9,6 +9,8 @@ import net.postchain.api.rest.json.JsonFactory
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
 import net.postchain.common.hexStringToByteArray
+import net.postchain.core.BlockDetail
+import net.postchain.core.PartialTx
 import net.postchain.ebft.NodeState
 import net.postchain.ebft.rest.contract.EBFTstateNodeStatusContract
 import org.easymock.EasyMock.*
@@ -217,5 +219,49 @@ class RestApiModelTest {
                 .assertThat().body(equalTo(gson.toJson(response).toString()))
 
       verify(model)
+    }
+
+    @Test
+    fun test_blocks_get_all() {
+        restApi.attachModel(blockchainRID1, model)
+        val response = listOf<BlockDetail>(
+                BlockDetail("blockRid001".toByteArray(), blockchainRID3.toByteArray(), "some header".toByteArray(), 0, listOf<ByteArray>(), listOf<PartialTx>(),"signatures".toByteArray(), 1574849700),
+                BlockDetail("blockRid002".toByteArray(), "blockRid001".toByteArray(), "some other header".toByteArray(), 1, listOf<ByteArray>("tx1".toByteArray()), listOf<PartialTx>(),"signatures".toByteArray(),1574849760),
+                BlockDetail("blockRid003".toByteArray(), "blockRid002".toByteArray(), "yet another header".toByteArray(), 2, listOf<ByteArray>(), listOf<PartialTx>(),"signatures".toByteArray(),1574849880),
+                BlockDetail("blockRid004".toByteArray(), "blockRid003".toByteArray(), "guess what? Another header".toByteArray(), 3, listOf<ByteArray>("tx2".toByteArray(), "tx3".toByteArray(), "tx4".toByteArray()), listOf<PartialTx>(),"signatures".toByteArray(),1574849940)
+        )
+        expect(model.getBlocks(Long.MAX_VALUE,  false, 25, false))
+                .andReturn(response)
+
+        replay(model)
+
+        given().basePath(basePath).port(restApi.actualPort())
+                .get("/blocks/$blockchainRID1?before_block=${Long.MAX_VALUE}&limit=${25}&txs=true")
+                .then()
+                .statusCode(200)
+                .assertThat().body(equalTo(gson.toJson(response).toString()))
+
+        verify(model)
+    }
+
+    @Test
+    fun test_blocks_get_last_2_partial() {
+        restApi.attachModel(blockchainRID1, model)
+        val response = listOf<BlockDetail>(
+                BlockDetail("blockRid003".toByteArray(), "blockRid002".toByteArray(), "yet another header".toByteArray(), 2, listOf<ByteArray>(), listOf<PartialTx>(),"signatures".toByteArray(),1574849880),
+                BlockDetail("blockRid004".toByteArray(), "blockRid003".toByteArray(), "guess what? Another header".toByteArray(), 3, listOf(), listOf<PartialTx >(PartialTx("hash2".toByteArray(), "tx2RID".toByteArray()), PartialTx("hash3".toByteArray(), "tx3RID".toByteArray()), PartialTx("hash4".toByteArray(), "tx4RID".toByteArray())), "signatures".toByteArray(),1574849940)
+        )
+        expect(model.getBlocks(Long.MAX_VALUE,  false, 2, true))
+                .andReturn(response)
+
+        replay(model)
+
+        given().basePath(basePath).port(restApi.actualPort())
+                .get("/blocks/$blockchainRID1?before_block=${3}&limit=${2}&txs=false")
+                .then()
+                .statusCode(200)
+                .assertThat().body(equalTo(gson.toJson(response).toString()))
+
+        verify(model)
     }
 }

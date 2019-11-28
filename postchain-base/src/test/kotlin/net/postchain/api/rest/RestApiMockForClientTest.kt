@@ -2,6 +2,7 @@
 
 package net.postchain.api.rest
 
+import com.sun.org.apache.xpath.internal.operations.Bool
 import mu.KLogging
 import net.postchain.api.rest.controller.*
 import net.postchain.api.rest.model.ApiStatus
@@ -10,10 +11,7 @@ import net.postchain.api.rest.model.TxRID
 import net.postchain.base.ConfirmationProof
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
-import net.postchain.core.BlockDetail
-import net.postchain.core.ProgrammerMistake
-import net.postchain.core.TransactionStatus
-import net.postchain.core.UserMistake
+import net.postchain.core.*
 import net.postchain.gtv.Gtv
 import org.junit.After
 import org.junit.Test
@@ -21,7 +19,7 @@ import org.junit.Test
 class RestApiMockForClientManual {
     val listenPort = 49545
     val basePath = "/basepath"
-    private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
+    private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a1"
     lateinit var restApi: RestApi
 
     companion object : KLogging()
@@ -43,6 +41,7 @@ class RestApiMockForClientManual {
 
 
     class MockModel : Model {
+        private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a1"
         val statusUnknown = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         val statusRejected = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         val statusConfirmed = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
@@ -82,11 +81,6 @@ class RestApiMockForClientManual {
             }
         }
 
-        override fun getLatestBlocksUpTo(upTo: Long, limit: Int): List<BlockDetail> {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-
-        }
-
         override fun query(query: Query): QueryResult {
             return QueryResult(when (query.json) {
                 """{"a":"oknullresponse","c":3}""" -> ""
@@ -102,5 +96,51 @@ class RestApiMockForClientManual {
         	TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
         override fun nodeQuery(subQuery: String): String = TODO()
+
+        override fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, partialTx: Boolean): List<BlockDetail> {
+            var blocks = listOf<BlockDetail>(
+                    BlockDetail(
+                            "blockRid001".toByteArray(),
+                            blockchainRID.toByteArray(), "some header".toByteArray(),
+                            0,
+                            listOf<ByteArray>(),
+                            listOf<PartialTx>(),
+                            "signatures".toByteArray(),
+                            1574849700),
+                    BlockDetail(
+                            "blockRid002".toByteArray(),
+                            "blockRid001".toByteArray(),
+                            "some other header".toByteArray(),
+                            1,
+                            listOf<ByteArray>("tx1".toByteArray()),
+                            listOf<PartialTx>(),
+                            "signatures".toByteArray(),
+                            1574849760),
+                    BlockDetail(
+                            "blockRid003".toByteArray(),
+                            "blockRid002".toByteArray(),
+                            "yet another header".toByteArray(),
+                            2,
+                            listOf<ByteArray>(),
+                            listOf<PartialTx>(),
+                            "signatures".toByteArray(),
+                            1574849880),
+                    BlockDetail(
+                            "blockRid004".toByteArray(),
+                            "blockRid003".toByteArray(),
+                            "guess what? Another header".toByteArray(),
+                            3,
+                            listOf<ByteArray>("tx2".toByteArray(), "tx3".toByteArray(), "tx4".toByteArray()),
+                            listOf<PartialTx>(),
+                            "signatures".toByteArray(),
+                            1574849940)
+            )
+            if (asc) {
+                blocks = blocks.sortedByDescending { blockDetail -> blockDetail.height }
+            } else {
+                blocks = blocks.sortedBy { blockDetail -> blockDetail.height }
+            }
+            return blocks.filter { blockDetail -> blockDetail.height < blockHeight }.subList(0, limit)
+        }
     }
 }

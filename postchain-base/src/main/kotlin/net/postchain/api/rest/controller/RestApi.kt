@@ -43,6 +43,10 @@ class RestApi(
         private val sslCertificatePassword: String? = null
 ) : Modellable {
 
+    val MAX_NUMBER_OF_BLOCKS_PER_REQUEST = 100
+    val DEFAULT_BLOCK_HEIGHT_REQUEST = Long.MAX_VALUE
+    val DEFAULT_ENTRY_RESULTS_REQUEST = 25
+
     companion object : KLogging()
 
     private val http = Service.ignite()!!
@@ -166,12 +170,11 @@ class RestApi(
                 }
             }, gson::toJson)
 
-            http.get("/query/$PARAM_BLOCKCHAIN_RID/blocks/latest/$PARAM_UP_TO/limit/$PARAM_LIMIT", { request, _ ->
+            http.get("/blocks/$PARAM_BLOCKCHAIN_RID", { request, _ ->
                 val model = model(request)
                 try {
-                    val upTo = request.params(PARAM_UP_TO).toLong()
-                    val limit = request.params(PARAM_LIMIT).toInt()
-                    model.getLatestBlocksUpTo(upTo, limit)
+                    val (blockHeight, asc, limit, partialTxs) = toBlocksParams(request)
+                    model.getBlocks(Long.MAX_VALUE, asc, limit, partialTxs)
                 } catch (e: NumberFormatException) {
                     throw BadFormatError("Format is not correct (Long, Int)")
                 }
@@ -200,6 +203,41 @@ class RestApi(
         }
 
         http.awaitInitialization()
+    }
+
+    data class BlocksParams(val blockHeight: Long, val order_asc: Boolean, val limit: Int, val txs: Boolean)
+    private fun  toBlocksParams (req: Request): BlocksParams {
+        var blockHeight = DEFAULT_BLOCK_HEIGHT_REQUEST
+        var order_asc: Boolean = false
+        var limit = DEFAULT_ENTRY_RESULTS_REQUEST // max number of blocks that is possible to request is 600
+        var txs = false
+
+        try {
+            val params = req.queryMap()
+
+            for((name, value) in params.toMap()) {
+                when(name) {
+                    "before_block" -> {
+                        blockHeight = value.get(0).toLongOrNull()?: blockHeight
+                        order_asc = false
+                    }
+                    "after_block" -> {
+                        blockHeight = value.get(0).toLongOrNull()?: blockHeight
+                        order_asc = true
+                    }
+                    "limit" -> {
+                        limit = value.get(0).toIntOrNull()?: limit
+                        limit = if(limit<0 || limit>MAX_NUMBER_OF_BLOCKS_PER_REQUEST) DEFAULT_ENTRY_RESULTS_REQUEST else limit
+                    }
+                    "txs" -> {
+                        txs = value.get(0) == "true"
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            throw UserMistake("Can't parse request ${req.url()} with query Params ${req.queryParams()} ", e)
+        }
+        return BlocksParams(blockHeight, order_asc, limit, !txs)
     }
 
     private fun toTransaction(req: Request): ApiTx {
