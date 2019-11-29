@@ -79,7 +79,7 @@ class ManualNodeConfigProviderTest : IntegrationTest() {
         }
 
         // Asserting that
-        await().atMost(Duration.TEN_SECONDS)
+        await().atMost(Duration.TEN_SECONDS.multiply(3))
                 .untilAsserted {
                     // chain is active for all peers
                     nodes.forEach { it.assertChainStarted() }
