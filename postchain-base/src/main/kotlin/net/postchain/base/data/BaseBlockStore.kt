@@ -94,18 +94,18 @@ class BaseBlockStore : BlockStore {
         val db = DatabaseAccess.of(ctx)
         val blocksInfo = db.getBlocks(ctx, blockHeight, asc, limit)
         return blocksInfo.map { blockInfo ->
-            var partialTxs = listOf<PartialTx>()
+            var txDetails = listOf<TxDetail>()
             var transactions = listOf<ByteArray>()
 
             if(partialTx) {
-                partialTxs = db.getBlockPartialTransactions(ctx, blockInfo.blockRid)
+                txDetails = db.getBlockPartialTransactions(ctx, blockInfo.blockRid)
             } else {
                 transactions = db.getBlockTransactions(ctx, blockInfo.blockRid)
             }
 
             // Decode block header
             val blockHeaderDecoded = BaseBlockHeader(blockInfo.blockHeader, SECP256K1CryptoSystem())
-            BlockDetail(blockInfo.blockRid, blockHeaderDecoded.prevBlockRID, blockInfo.blockHeader, blockInfo.blockHeight, transactions, partialTxs, blockInfo.witness, blockInfo.timestamp)
+            BlockDetail(blockInfo.blockRid, blockHeaderDecoded.prevBlockRID, blockInfo.blockHeader, blockInfo.blockHeight, transactions, txDetails, blockInfo.witness, blockInfo.timestamp)
         }
     }
 

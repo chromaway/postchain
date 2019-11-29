@@ -5,7 +5,7 @@ import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
 import net.postchain.base.ConfirmationProof
 import net.postchain.core.BlockDetail
-import net.postchain.core.PartialTx
+import net.postchain.core.TxDetail
 import net.postchain.gtv.Gtv
 
 interface Model {

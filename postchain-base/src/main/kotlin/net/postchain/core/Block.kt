@@ -18,9 +18,10 @@ open class BlockData(
  * BlockDetail returns a more in deep block overview
  * ATM it is mainly used to reply to explorer's queries
  */
-open class PartialTx (
+open class TxDetail (
     val rid: ByteArray,
-    val hash: ByteArray
+    val hash: ByteArray,
+    val data: ByteArray?
 )
 open class BlockDetail(
         val rid: ByteArray,
@@ -28,7 +29,7 @@ open class BlockDetail(
         val header: ByteArray,
         val height: Long,
         val transactions: List<ByteArray>,
-        val partialTransaction: List<PartialTx>,
+        val partialTransaction: List<TxDetail>,
         val witness: ByteArray,
         val timestamp: Long)
 

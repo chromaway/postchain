@@ -31,7 +31,6 @@ interface BlockStore {
     fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray
 
     fun getBlocks(ctx: EContext, blockHeight: Long, asc: Boolean, limit: Int, partialTx: Boolean): List<BlockDetail>
-
     fun getBlockHeader(ctx: EContext, blockRID: ByteArray): ByteArray
 
     fun getTxRIDsAtHeight(ctx: EContext, height: Long): Array<ByteArray>

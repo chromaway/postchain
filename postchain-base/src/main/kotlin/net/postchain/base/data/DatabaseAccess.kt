@@ -29,7 +29,7 @@ interface DatabaseAccess {
     fun getBlockRID(ctx: EContext, height: Long): ByteArray?
     fun getBlockHeader(ctx: EContext, blockRID: ByteArray): ByteArray
     fun getBlockTransactions(ctx: EContext, blockRID: ByteArray): List<ByteArray>
-    fun getBlockPartialTransactions(ctx: EContext, blockRID: ByteArray): List<PartialTx>
+    fun getBlockPartialTransactions(ctx: EContext, blockRID: ByteArray): List<TxDetail>
     fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray
     fun getLastBlockHeight(ctx: EContext): Long
     fun getLastBlockRid(ctx: EContext, chainId: Long): ByteArray?
@@ -130,7 +130,7 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
         return queryRunner.query(ctx.conn, sql, byteArrayListRes, blockRID, ctx.chainID)
     }
 
-    override fun getBlockPartialTransactions(ctx: EContext, blockRID: ByteArray): List<PartialTx> {
+    override fun getBlockPartialTransactions(ctx: EContext, blockRID: ByteArray): List<TxDetail> {
         val sql = """
             SELECT tx_rid, tx_hash
             FROM transactions t
@@ -141,7 +141,7 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
         return txs.map {tx ->
             val txRID = tx.get("tx_rid") as ByteArray
             val txHash = tx.get("tx_hash") as ByteArray
-            PartialTx(txRID, txHash)
+            TxDetail(txRID, txHash, null)
         }
 
     }

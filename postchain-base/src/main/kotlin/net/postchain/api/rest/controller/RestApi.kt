@@ -172,11 +172,12 @@ class RestApi(
 
             http.get("/blocks/$PARAM_BLOCKCHAIN_RID", { request, _ ->
                 val model = model(request)
+                // TODO Here there should not be any exception, the try and catch could be removed
                 try {
-                    val (blockHeight, asc, limit, partialTxs) = toBlocksParams(request)
-                    model.getBlocks(Long.MAX_VALUE, asc, limit, partialTxs)
-                } catch (e: NumberFormatException) {
-                    throw BadFormatError("Format is not correct (Long, Int)")
+                    val (blockHeight, asc, limit, partialTxs) = toQueryRequestParams(request)
+                    model.getBlocks(blockHeight, asc, limit, partialTxs)
+                } catch (e: java.lang.Exception) {
+                    throw UserMistake("Query format not correct")
                 }
             }, gson::toJson)
 
@@ -205,39 +206,41 @@ class RestApi(
         http.awaitInitialization()
     }
 
-    data class BlocksParams(val blockHeight: Long, val order_asc: Boolean, val limit: Int, val txs: Boolean)
-    private fun  toBlocksParams (req: Request): BlocksParams {
+    data class QueryRequestParams(val blockHeight: Long, val order_asc: Boolean, val limit: Int, val txs: Boolean, val fromTransaction: ByteArray?)
+
+    private fun toQueryRequestParams(req: Request): QueryRequestParams {
         var blockHeight = DEFAULT_BLOCK_HEIGHT_REQUEST
         var order_asc: Boolean = false
         var limit = DEFAULT_ENTRY_RESULTS_REQUEST // max number of blocks that is possible to request is 600
         var txs = false
+        var fromTransaction: ByteArray? = null
 
-        try {
-            val params = req.queryMap()
+        val params = req.queryMap()
 
-            for((name, value) in params.toMap()) {
-                when(name) {
-                    "before_block" -> {
-                        blockHeight = value.get(0).toLongOrNull()?: blockHeight
-                        order_asc = false
-                    }
-                    "after_block" -> {
-                        blockHeight = value.get(0).toLongOrNull()?: blockHeight
-                        order_asc = true
-                    }
-                    "limit" -> {
-                        limit = value.get(0).toIntOrNull()?: limit
-                        limit = if(limit<0 || limit>MAX_NUMBER_OF_BLOCKS_PER_REQUEST) DEFAULT_ENTRY_RESULTS_REQUEST else limit
-                    }
-                    "txs" -> {
-                        txs = value.get(0) == "true"
-                    }
+        for ((name, value) in params.toMap()) {
+            when (name) {
+                "before_block" -> {
+                    blockHeight = value.get(0).toLongOrNull() ?: blockHeight
+                    order_asc = false
+                }
+                "after_block" -> {
+                    blockHeight = value.get(0).toLongOrNull() ?: blockHeight
+                    order_asc = true
+                }
+                "limit" -> {
+                    limit = value.get(0).toIntOrNull() ?: limit
+                    limit = if (limit < 0 || limit > MAX_NUMBER_OF_BLOCKS_PER_REQUEST) DEFAULT_ENTRY_RESULTS_REQUEST else limit
+                }
+                "txs" -> {
+                    txs = value.get(0) == "true"
+                }
+                "from_transaction" -> {
+                    fromTransaction = value.get(0).hexStringToByteArray()
                 }
             }
-        } catch (e: Exception) {
-            throw UserMistake("Can't parse request ${req.url()} with query Params ${req.queryParams()} ", e)
         }
-        return BlocksParams(blockHeight, order_asc, limit, !txs)
+
+        return QueryRequestParams(blockHeight, order_asc, limit, !txs, fromTransaction)
     }
 
     private fun toTransaction(req: Request): ApiTx {
@@ -286,7 +289,7 @@ class RestApi(
                 .json
     }
 
-    private fun handleDirectQuery(request: Request, response: Response) : Any {
+    private fun handleDirectQuery(request: Request, response: Response): Any {
         val queryMap = request.queryMap()
         val type = gtv(queryMap.value("type"))
         val args = GtvDictionary.build(queryMap.toMap().mapValues {
