@@ -11,7 +11,7 @@ import net.postchain.gtv.merkleHash
 object BlockchainRidFactory {
 
     val cryptoSystem = SECP256K1CryptoSystem()
-    val merkleHashCalculator = GtvMerkleHashCalculator(cryptoSystem)
+    private val merkleHashCalculator = GtvMerkleHashCalculator(cryptoSystem)
 
     /**
      * Check if there is a Blockchain RID for this chain already
@@ -32,12 +32,22 @@ object BlockchainRidFactory {
         return if (dbBcRid != null) {
             dbBcRid // We have it in the DB so don't do anything (if it's in here it must be correct)
         } else {
-            // Need to calculate it the RID, and we do it the usual way (same as merkle root of block)
-            val bcBinary = data.merkleHash(merkleHashCalculator)
-            val newRid = BlockchainRid(bcBinary)
+            val newRid = calculateBlockchainRID(data)
             DatabaseAccess.of(eContext).checkBlockchainRID(eContext, newRid)
             newRid
         }
+    }
+
+    /**
+     * Calculates blockchain RID by the given blockchain configuration.
+     *
+     * @param data is the [Gtv] data of the configuration
+     * @return the blockchain RID
+     */
+    fun calculateBlockchainRID(data: Gtv): BlockchainRid {
+        // Need to calculate it the RID, and we do it the usual way (same as merkle root of block)
+        val bcBinary = data.merkleHash(merkleHashCalculator)
+        return BlockchainRid(bcBinary)
     }
 }
 

@@ -3,13 +3,13 @@ package net.postchain.devtools.cli
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
-import net.postchain.gtv.GtvEncoder
+import net.postchain.base.BlockchainRidFactory
 import net.postchain.gtv.gtvml.GtvMLParser
 import java.io.File
 
-class EncodeBlockchainConfigurationCommand : CliktCommand(
-        name = "encode-blockchain-config",
-        help = "Encodes blockchain configuration in GtxML format into binary format"
+class CalculateBlockchainRidCommand : CliktCommand(
+        name = "calculate-blockchain-rid",
+        help = "Calculates blockchain RID by blockchain configuration in GtxML format"
 ) {
 
     private val blockchainConfigFilename by option(
@@ -18,15 +18,13 @@ class EncodeBlockchainConfigurationCommand : CliktCommand(
     ).required()
 
     override fun run() {
-        println("GtxML file will be encoded to binary: $blockchainConfigFilename")
+        println("Blockchain RID will be calculated for: $blockchainConfigFilename")
 
         try {
-            val binaryFilename = "$blockchainConfigFilename.bin"
             val gtv = GtvMLParser.parseGtvML(File(blockchainConfigFilename).readText())
-            val binary = GtvEncoder.encodeGtv(gtv)
-            File(binaryFilename).writeBytes(binary)
+            val blockchainRid = BlockchainRidFactory.calculateBlockchainRID(gtv)
 
-            println("Binary file has been created: $binaryFilename")
+            println("Blockchain RID: $blockchainRid")
 
         } catch (e: Exception) {
             println("Error: ${e.message}")
