@@ -9,10 +9,9 @@ import net.postchain.hasSize
 import net.postchain.integrationtest.assertChainNotStarted
 import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.getModules
-import net.postchain.integrationtest.reconfiguration.DummyModule2
 import org.awaitility.Awaitility
-import org.awaitility.Awaitility.fieldIn
 import org.awaitility.Duration
+import org.junit.Ignore
 import org.junit.Test
 
 class ManagedModeTest : IntegrationTest() {
@@ -20,7 +19,7 @@ class ManagedModeTest : IntegrationTest() {
     @Test
     fun singlePeer_loadsBlockchain0Configuration_fromManagedDataSource_and_reconfigures() {
         val nodeConfig0 = "classpath:/net/postchain/managedmode/node0.properties"
-        val blockchainConfig0 = "/net/postchain/devtools/managedmode/blockchain_config_reconfiguring_0.xml"
+        val blockchainConfig0 = "/net/postchain/devtools/managedmode/singlepeer_loads_config_and_reconfigures/blockchain_config_reconfiguring_0.xml"
 
         // Creating node0
         createSingleNode(0, 1, nodeConfig0, blockchainConfig0) { appConfig, _ ->
@@ -113,11 +112,12 @@ class ManagedModeTest : IntegrationTest() {
     }
 
     @Test
+    @Ignore
     fun twoSeparatePeers_receiveEachOtherInPeerInfos_and_connectToEachOther() {
         val nodeConfig0 = "classpath:/net/postchain/managedmode/node0.properties"
         val nodeConfig1 = "classpath:/net/postchain/managedmode/node1.properties"
-        val blockchainConfig0 = "/net/postchain/devtools/managedmode/blockchain_config_two_peers_connect_0.xml"
-        val blockchainConfig1 = "/net/postchain/devtools/managedmode/blockchain_config_two_peers_connect_1.xml"
+        val blockchainConfig0 = "/net/postchain/devtools/managedmode/two_peers_connect_to_each_other/blockchain_config_two_peers_connect_0.xml"
+        val blockchainConfig1 = "/net/postchain/devtools/managedmode/two_peers_connect_to_each_other/blockchain_config_two_peers_connect_1.xml"
 
         // Creating node0
         createSingleNode(0, 1, nodeConfig0, blockchainConfig0) { appConfig, _ ->

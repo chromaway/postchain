@@ -15,14 +15,13 @@ class GTXManagedNodeDataSource(val queries: BlockQueries, val nodeConfig: NodeCo
 
         val res = queries.query("nm_get_peer_infos", buildArgs())
         return res.get().asArray()
-                .map { it.asDict() }
-                .filter { it.containsKey("host") && it.containsKey("port") && it.containsKey("pubkey") }
-                .map { pid ->
+                .map {
+                    val pia = it.asArray()
                     PeerInfo(
-                            pid.getValue("host").asString(),
-                            pid.getValue("port").asInteger().toInt(),
-                            pid.getValue("pubkey").asByteArray(),
-                            Instant.ofEpochMilli(if (!pid.containsKey("timestamp")) 0L else pid.getValue("timestamp").asInteger())
+                            pia[0].asString(),
+                            pia[1].asInteger().toInt(),
+                            pia[2].asByteArray(),
+                            Instant.ofEpochMilli(if (pia.size < 4) 0L else pia[3].asInteger())
                     )
                 }
                 .toTypedArray()
