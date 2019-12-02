@@ -1,8 +1,8 @@
 package net.postchain.network
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerID
-import net.postchain.core.ByteArrayKey
 
 interface XPacketEncoder<PacketType> {
     fun makeIdentPacket(forPeer: PeerID): ByteArray
@@ -10,7 +10,7 @@ interface XPacketEncoder<PacketType> {
 }
 
 interface XPacketEncoderFactory<PacketType> {
-    fun create(config: PeerCommConfiguration, blockchainRID: ByteArray): XPacketEncoder<PacketType>
+    fun create(config: PeerCommConfiguration, blockchainRID: BlockchainRid): XPacketEncoder<PacketType>
 }
 
 interface XPacketDecoder<PacketType> {
@@ -25,6 +25,6 @@ interface XPacketDecoderFactory<PacketType> {
 }
 
 data class IdentPacketInfo(val peerID: PeerID,
-                           val blockchainRID: ByteArray,
+                           val blockchainRID: BlockchainRid,
                            val sessionKey: ByteArray? = null,
                            val ephemeralPubKey: ByteArray? = null)

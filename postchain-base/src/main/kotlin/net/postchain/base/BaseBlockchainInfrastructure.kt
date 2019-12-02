@@ -5,13 +5,15 @@ import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.base.data.BaseTransactionQueue
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
+import net.postchain.debug.NodeDiagnosticContext
 import net.postchain.gtv.GtvDictionary
 import net.postchain.gtv.GtvFactory
 
 class BaseBlockchainInfrastructure(
         private val nodeConfigProvider: NodeConfigurationProvider,
         val synchronizationInfrastructure: SynchronizationInfrastructure,
-        val apiInfrastructure: ApiInfrastructure
+        val apiInfrastructure: ApiInfrastructure,
+        val nodeDiagnosticContext: NodeDiagnosticContext
 ) : BlockchainInfrastructure {
 
     val cryptoSystem = SECP256K1CryptoSystem()
@@ -30,14 +32,29 @@ class BaseBlockchainInfrastructure(
         apiInfrastructure.shutdown()
     }
 
-    override fun makeBlockchainConfiguration(rawConfigurationData: ByteArray, context: BlockchainContext): BlockchainConfiguration {
-        val actualContext = if (context.nodeRID == null) {
-            BaseBlockchainContext(context.blockchainRID, context.nodeID, context.chainID, subjectID)
-        } else {
-            context
-        }
+    /**
+     * Builds a [BlockchainConfiguration] instance from the given components
+     *
+     * @param rawConfigurationData is the byte array with the configuration.
+     * @param eContext is the DB context
+     * @param nodeID
+     * @param chainID
+     * @param initialBlockchainRID is null or a blokchain RID
+     * @return the newly created [BlockchainConfiguration]
+     */
+    override fun makeBlockchainConfiguration(
+            rawConfigurationData: ByteArray,
+            eContext: EContext,
+            nodeID: Int,
+            chainID: Long
+    ): BlockchainConfiguration {
 
         val gtxData = GtvFactory.decodeGtv(rawConfigurationData)
+
+        val blockchainRID = BlockchainRidFactory.resolveBlockchainRID(gtxData, eContext)
+
+        val actualContext = BaseBlockchainContext(blockchainRID, nodeID, chainID, subjectID)
+
         val confData = BaseBlockchainConfigurationData(gtxData as GtvDictionary, actualContext, blockSigMaker)
 
         val bcfClass = Class.forName(confData.data["configurationfactory"]!!.asString())

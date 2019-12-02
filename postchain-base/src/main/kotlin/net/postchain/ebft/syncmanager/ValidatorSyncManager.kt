@@ -102,8 +102,9 @@ class ValidatorSyncManager(
                 when (message) {
                     // same case for replica and validator node
                     is GetBlockAtHeight -> sendBlockAtHeight(xPeerId, message.height)
+
                     else -> {
-                        if (!isReadOnlyNode) {
+                        if (!isReadOnlyNode) { // TODO: [POS-90]: Is it necessary here `isReadOnlyNode`?
                             // validator consensus logic
                             when (message) {
                                 is Status -> {
@@ -137,6 +138,7 @@ class ValidatorSyncManager(
                                 is GetUnfinishedBlock -> sendUnfinishedBlock(nodeIndex)
                                 is GetBlockSignature -> sendBlockSignature(nodeIndex, message.blockRID)
                                 is Transaction -> handleTransaction(nodeIndex, message)
+
                                 else -> throw ProgrammerMistake("Unhandled type ${message::class}")
                             }
                         }

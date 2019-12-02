@@ -55,8 +55,8 @@ class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
                 return true
             }
             if (transactionQueueSize > lastTxSize) {
-                lastTxTime = System.currentTimeMillis()
                 lastTxSize = transactionQueueSize
+                lastTxTime = System.currentTimeMillis()
             }
             return false
         }

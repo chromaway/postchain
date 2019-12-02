@@ -2,6 +2,7 @@
 
 package net.postchain.modules.ft
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.CryptoSystem
 import net.postchain.core.UserMistake
 import net.postchain.gtv.GtvNull
@@ -18,7 +19,7 @@ import net.postchain.gtv.GtvFactory.gtv
  */
 interface FTAccount {
     val accountID: ByteArray
-    fun isCompatibleWithblockchainRID(blockchainRID: ByteArray): Boolean
+    fun isCompatibleWithblockchainRID(blockchainRID: BlockchainRid): Boolean
 }
 /**
  * An input account is the source account of a token transfer event
@@ -70,7 +71,7 @@ class SimpleOutputAccount(override val accountID: ByteArray): FTOutputAccount {
     override val descriptor = null
     override val skipUpdate = false
 
-    override fun isCompatibleWithblockchainRID(blockchainRID: ByteArray): Boolean {
+    override fun isCompatibleWithblockchainRID(blockchainRID: BlockchainRid): Boolean {
         return true
     }
 
@@ -185,9 +186,9 @@ class BasicAccountInput(override val accountID: ByteArray, override val descript
      * @blockchainRID reference to the blockchain
      * @return compatability status between the [blockchainRID] and the account
      */
-    override fun isCompatibleWithblockchainRID(blockchainRID: ByteArray): Boolean {
+    override fun isCompatibleWithblockchainRID(blockchainRID: BlockchainRid): Boolean {
         if (this.blockchainRID.isNull()) return true
-        else return this.blockchainRID.asByteArray().contentEquals(blockchainRID)
+        else return this.blockchainRID.asByteArray().contentEquals(blockchainRID.data)
     }
 
     /**
@@ -249,9 +250,9 @@ class NullAccountInput(override val accountID: ByteArray, override val descripto
      * @blockchainRID reference to the blockchain
      * @return compatability status between the [blockchainRID] and the account
      */
-    override fun isCompatibleWithblockchainRID(blockchainRID: ByteArray): Boolean {
+    override fun isCompatibleWithblockchainRID(blockchainRID: BlockchainRid): Boolean {
         if (this.blockchainRID.isNull()) return true
-        else return this.blockchainRID.asByteArray().contentEquals(blockchainRID)
+        else return this.blockchainRID.asByteArray().contentEquals(blockchainRID.data)
     }
 
     override fun verifyInput(ctx: OpEContext, dbops: FTDBOps, index: Int, data: CompleteTransferData): Boolean {
@@ -274,8 +275,8 @@ object NullAccount : AccountType(0, ::NullAccountInput, simpleOutputAccount) {
      * @param pubkey associated cryptographic public key for the issuer
      * @return the account descriptor
      */
-    fun makeDescriptor(blockchainRID: ByteArray?, pubKey: ByteArray): ByteArray {
-        val gtxBlockchainRID = if (blockchainRID == null) GtvNull else gtv(blockchainRID)
+    fun makeDescriptor(blockchainRID: BlockchainRid?, pubKey: ByteArray): ByteArray {
+        val gtxBlockchainRID = if (blockchainRID == null) GtvNull else gtv(blockchainRID.data)
         return encodeGtv(
                 gtv(gtv(code.toLong()), gtxBlockchainRID, gtv(pubKey))
         )
@@ -288,7 +289,7 @@ object NullAccount : AccountType(0, ::NullAccountInput, simpleOutputAccount) {
  * @param blockchainRID for referencing the blockchain
  * @param cs the cryptosystem to use
  */
-class AccountUtil(val blockchainRID: ByteArray, val cs: CryptoSystem) {
+class AccountUtil(val blockchainRID: BlockchainRid, val cs: CryptoSystem) {
 
     /**
      * Create the account ID which is the digest of the account descriptor

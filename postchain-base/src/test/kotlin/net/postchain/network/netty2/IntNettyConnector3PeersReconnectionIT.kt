@@ -4,6 +4,7 @@ import assertk.assert
 import assertk.assertions.isEqualTo
 import assertk.assertions.isIn
 import com.nhaarman.mockitokotlin2.*
+import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerInfo
 import net.postchain.base.peerId
 import net.postchain.core.byteArrayKeyOf
@@ -23,7 +24,7 @@ import org.junit.Test
  */
 class IntNettyConnector3PeersReconnectionIT {
 
-    private val blockchainRid = byteArrayOf(0x01)
+    private val blockchainRid = BlockchainRid(byteArrayOf(0x01))
     private lateinit var peerInfo1: PeerInfo
     private lateinit var peerInfo2: PeerInfo
     private lateinit var peerInfo3: PeerInfo
@@ -65,10 +66,10 @@ class IntNettyConnector3PeersReconnectionIT {
     fun testConnectDisconnectAndConnectAgain() {
         // Connecting
         // * 1 -> 2
-        val peerDescriptor2 = XPeerConnectionDescriptor(peerInfo2.peerId(), blockchainRid.byteArrayKeyOf())
+        val peerDescriptor2 = XPeerConnectionDescriptor(peerInfo2.peerId(), blockchainRid)
         context1.peer.connectPeer(peerDescriptor2, peerInfo2, context1.packetEncoder)
         // * 1 -> 3
-        val peerDescriptor3 = XPeerConnectionDescriptor(peerInfo3.peerId(), blockchainRid.byteArrayKeyOf())
+        val peerDescriptor3 = XPeerConnectionDescriptor(peerInfo3.peerId(), blockchainRid)
         context1.peer.connectPeer(peerDescriptor3, peerInfo3, context1.packetEncoder)
         // * 3 -> 2
         context3.peer.connectPeer(peerDescriptor2, peerInfo2, context3.packetEncoder)
@@ -143,7 +144,7 @@ class IntNettyConnector3PeersReconnectionIT {
 
         // Re-connecting
         // * 3 -> 1
-        val peerDescriptor1 = XPeerConnectionDescriptor(peerInfo1.peerId(), blockchainRid.byteArrayKeyOf())
+        val peerDescriptor1 = XPeerConnectionDescriptor(peerInfo1.peerId(), blockchainRid)
         context3.peer.connectPeer(peerDescriptor1, peerInfo1, context3.packetEncoder)
         // * 3 -> 2
         context3.peer.connectPeer(peerDescriptor2, peerInfo2, context3.packetEncoder)

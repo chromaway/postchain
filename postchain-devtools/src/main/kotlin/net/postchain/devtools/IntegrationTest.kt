@@ -68,13 +68,7 @@ open class IntegrationTest {
         const val DEFAULT_CONFIG_FILE = "config.properties"
         const val DEFAULT_BLOCKCHAIN_CONFIG_FILE = "blockchain_config.xml"
 
-        val BLOCKCHAIN_RIDS = mapOf(
-                0L to "0000000000000000000000000000000000000000000000000000000000000000",
-                1L to "78967BAA4768CBCEF11C508326FFB13A956689FCB6DC3BA17F4B895CBB1577A3",
-                2L to "78967BAA4768CBCEF11C508326FFB13A956689FCB6DC3BA17F4B895CBB1577A4",
-                100L to "78967BAA4768CBCEF11C508326FFB13A956689FCB6DC3BA17F4B895CBB000100",
-                101L to "78967BAA4768CBCEF11C508326FFB13A956689FCB6DC3BA17F4B895CBB000101"
-        )
+
     }
 
     @After
@@ -163,7 +157,6 @@ open class IntegrationTest {
         nodesNames[nodeConfig.pubKey] = "$nodeIndex"
         val blockchainConfig = readBlockchainConfig(blockchainConfigFilename)
         val chainId = nodeConfig.activeChainIds.first().toLong()
-        val blockchainRid = BLOCKCHAIN_RIDS[chainId]!!.hexStringToByteArray()
 
         // Wiping of database
         if (preWipeDatabase) {
@@ -175,7 +168,8 @@ open class IntegrationTest {
 
         return PostchainTestNode(nodeConfigProvider)
                 .apply {
-                    addBlockchain(chainId, blockchainRid, blockchainConfig)
+                    val blockchainRid = addBlockchain(chainId, blockchainConfig)
+                    mapBlockchainRID(chainId, blockchainRid)
                     startBlockchain(chainId)
                 }
                 .also {
@@ -266,10 +260,10 @@ open class IntegrationTest {
         nodeConfigProvider.getConfiguration().activeChainIds
                 .filter(String::isNotEmpty)
                 .forEachIndexed { i, chainId ->
-                    val blockchainRid = BLOCKCHAIN_RIDS[chainId.toLong()]!!.hexStringToByteArray()
                     val filename = blockchainConfigFilenames[i]
                     val blockchainConfig = readBlockchainConfig(filename)
-                    node.addBlockchain(chainId.toLong(), blockchainRid, blockchainConfig)
+                    val blockchainRid = node.addBlockchain(chainId.toLong(), blockchainConfig)
+                    node.mapBlockchainRID(chainId.toLong(), blockchainRid)
                     node.startBlockchain(chainId.toLong())
                 }
 

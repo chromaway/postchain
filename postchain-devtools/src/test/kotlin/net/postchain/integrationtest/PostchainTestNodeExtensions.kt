@@ -3,6 +3,7 @@ package net.postchain.integrationtest
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import junit.framework.Assert.assertNotNull
+import net.postchain.base.BlockchainRid
 import net.postchain.containsExactlyKeys
 import net.postchain.core.BlockQueries
 import net.postchain.core.MultiSigBlockWitness
@@ -17,8 +18,9 @@ import net.postchain.gtx.GTXBlockchainConfiguration
 import net.postchain.gtx.GTXModule
 import nl.komponents.kovenant.Promise
 
-fun PostchainTestNode.addBlockchainAndStart(chainId: Long, blockchainRid: ByteArray, blockchainConfig: Gtv) {
-    addBlockchain(chainId, blockchainRid, blockchainConfig)
+fun PostchainTestNode.addBlockchainAndStart(chainId: Long, blockchainConfig: Gtv) {
+    val bcRid = addBlockchain(chainId, blockchainConfig)
+    mapBlockchainRID(chainId, bcRid)
     startBlockchain(chainId)
 }
 

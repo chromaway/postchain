@@ -8,6 +8,7 @@ import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.ManagedNodeConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
+import net.postchain.debug.NodeDiagnosticContext
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.ScalarHandler
 import java.lang.Exception
@@ -42,11 +43,13 @@ import kotlin.concurrent.withLock
 open class ManagedBlockchainProcessManager(
         blockchainInfrastructure: BlockchainInfrastructure,
         nodeConfigProvider: NodeConfigurationProvider,
-        blockchainConfigProvider: BlockchainConfigurationProvider
+        blockchainConfigProvider: BlockchainConfigurationProvider,
+        nodeDiagnosticContext: NodeDiagnosticContext
 ) : BaseBlockchainProcessManager(
         blockchainInfrastructure,
         nodeConfigProvider,
-        blockchainConfigProvider
+        blockchainConfigProvider,
+        nodeDiagnosticContext
 ) {
 
     private lateinit var dataSource: ManagedNodeDataSource
@@ -57,23 +60,31 @@ open class ManagedBlockchainProcessManager(
     /**
      * Check if this is the "chain zero" and if so we need to set the dataSource in a few objects before we go on.
      */
-    override fun startBlockchain(chainId: Long): Boolean {
-        if (chainId == 0L) {
-            dataSource = buildChain0ManagedDataSource()
+    override fun startBlockchain(chainId: Long): BlockchainRid? {
+        try {
+            if (chainId == 0L) {
+                dataSource = buildChain0ManagedDataSource()
 
-            logger.info { "${nodeConfigProvider.javaClass}" }
+                // TODO: [POS-97]: Put this to DiagnosticContext
+                logger.debug { "${nodeConfigProvider.javaClass}" }
 
-            // Setting up managed data source to the nodeConfig
-            (nodeConfigProvider as? ManagedNodeConfigurationProvider)
-                    ?.setPeerInfoDataSource(dataSource)
-                    ?: logger.warn { "Node config is not managed, no peer info updates possible" }
+                // Setting up managed data source to the nodeConfig
+                (nodeConfigProvider as? ManagedNodeConfigurationProvider)
+                        ?.setPeerInfoDataSource(dataSource)
+                        ?: logger.warn { "Node config is not managed, no peer info updates possible" }
 
-            logger.info { "${blockchainConfigProvider.javaClass}" }
+                // TODO: [POS-97]: Put this to DiagnosticContext
+                logger.debug { "${blockchainConfigProvider.javaClass}" }
 
-            // Setting up managed data source to the blockchainConfig
-            (blockchainConfigProvider as? ManagedBlockchainConfigurationProvider)
-                    ?.setDataSource(dataSource)
-                    ?: logger.warn { "Blockchain config is not managed" }
+                // Setting up managed data source to the blockchainConfig
+                (blockchainConfigProvider as? ManagedBlockchainConfigurationProvider)
+                        ?.setDataSource(dataSource)
+                        ?: logger.warn { "Blockchain config is not managed" }
+            }
+
+        } catch (e: Exception) {
+            // TODO: [POS-90]: Improve error handling here
+            logger.error { e.message }
         }
 
         return super.startBlockchain(chainId)
@@ -161,9 +172,13 @@ open class ManagedBlockchainProcessManager(
         withWriteConnection(storage, chainId) { eContext ->
             val configuration = blockchainConfigProvider.getConfiguration(eContext, chainId)
                     ?: throw ProgrammerMistake("chain0 configuration not found")
-            val blockchainRID = DatabaseAccess.of(eContext).getBlockchainRID(eContext)!! // TODO: [et]: Fix Kotlin NPE
-            val context = BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null)
-            val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(configuration, context)
+
+            val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(
+                    configuration,
+                    eContext,
+                    NODE_ID_AUTO,
+                    chainId)
+
             blockchainConfig.initializeDB(eContext)
 
             val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration().appConfig, NODE_ID_NA)
@@ -183,6 +198,7 @@ open class ManagedBlockchainProcessManager(
 
             // Reloading
             // FYI: For testing only. It can be deleted later.
+            /*
             logger.info {
                 val pubKey = nodeConfigProvider.getConfiguration().pubKey
                 val peerInfos = nodeConfigProvider.getConfiguration().peerInfoMap
@@ -191,6 +207,7 @@ open class ManagedBlockchainProcessManager(
                         ", peerInfos: ${peerInfos.keys.toTypedArray().contentToString()} " +
                         ", chains to launch: ${toLaunch.contentDeepToString()}"
             }
+             */
 
             // Starting blockchains: at first chain0, then the rest
             logger.info { "Launching blockchain 0" }
@@ -218,6 +235,12 @@ open class ManagedBlockchainProcessManager(
                 logger.info { "Reloading of blockchain 0 is required" }
                 logger.info { "Launching blockchain 0" }
                 startBlockchain(0L)
+            }
+
+            if (logger.isDebugEnabled) {
+                val toL = toLaunch.map { it.toString() }.reduce { s1, s2 -> "$s1 , $s2" }
+                val l = launched.map { it.toString() }.reduce { s1, s2 -> "$s1 , $s2" }
+                logger.debug("Chains to launch: $toL. Chains already launched: $l")
             }
 
             // Launching new blockchains except blockchain 0
@@ -252,17 +275,17 @@ open class ManagedBlockchainProcessManager(
     private fun loadBlockchainConfiguration(chainId: Long) {
         withWriteConnection(storage, chainId) { ctx ->
             val dbAccess = DatabaseAccess.of(ctx)
-            val brid = dbAccess.getBlockchainRID(ctx)!!
+            val brid = dbAccess.getBlockchainRID(ctx)!! // We can only load chains this way if we know their BC RID.
             val height = dbAccess.getLastBlockHeight(ctx)
-            val nextConfigHeight = dataSource.findNextConfigurationHeight(brid, height)
+            val nextConfigHeight = dataSource.findNextConfigurationHeight(brid.data, height)
             if (nextConfigHeight != null) {
-                logger.info { "Next config height fount in managed-mode module: $nextConfigHeight" }
+                logger.info { "Next config height found in managed-mode module: $nextConfigHeight" }
                 if (BaseConfigurationDataStore.findConfigurationHeightForBlock(ctx, nextConfigHeight) != nextConfigHeight) {
                     logger.info {
-                        "Configuration for the height $nextConfigHeight is not fount in ConfigurationDataStore " +
+                        "Configuration for the height $nextConfigHeight is not found in ConfigurationDataStore " +
                                 "and will be loaded into it from managed-mode module"
                     }
-                    val config = dataSource.getConfiguration(brid, nextConfigHeight)!!
+                    val config = dataSource.getConfiguration(brid.data, nextConfigHeight)!!
                     BaseConfigurationDataStore.addConfigurationData(ctx, nextConfigHeight, config)
                 }
             }
@@ -286,13 +309,15 @@ open class ManagedBlockchainProcessManager(
             val dba = DatabaseAccess.of(ctx0)
             dataSource.computeBlockchainList(ctx0)
                     .map { brid ->
-                        val chainIid = dba.getChainId(ctx0, brid)
+                        val blockchainRid = BlockchainRid(brid)
+                        val chainIid = dba.getChainId(ctx0, blockchainRid)
+                        logger.debug("Computed bc list: chainIid: $chainIid,  BC RID: ${blockchainRid.toShortHex()}  ")
                         if (chainIid == null) {
                             val newChainId = maxOf(
                                     QueryRunner().query(ctx0.conn, "SELECT MAX(chain_iid) FROM blockchains", ScalarHandler<Long>()) + 1,
                                     100)
                             val newCtx = BaseEContext(ctx0.conn, newChainId, ctx0.nodeID, dba)
-                            dba.checkBlockchainRID(newCtx, brid)
+                            dba.checkBlockchainRID(newCtx, blockchainRid)
                             newChainId
                         } else {
                             chainIid

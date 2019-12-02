@@ -1,6 +1,7 @@
 package net.postchain.devtools.testinfra
 
 import net.postchain.base.BaseBlockchainConfigurationData
+import net.postchain.base.BlockchainRid
 import net.postchain.core.BlockchainConfiguration
 import net.postchain.core.BlockchainConfigurationFactory
 import net.postchain.core.UserMistake
@@ -19,7 +20,7 @@ class TestBlockchainConfigurationFactory : BlockchainConfigurationFactory {
     }
 
     // FYI: Copied from GTXBlockchainConfigurationFactory.createGtxModule()
-    private fun createGtxModule(blockchainRID: ByteArray, data: Gtv): GTXModule {
+    private fun createGtxModule(blockchainRID: BlockchainRid, data: Gtv): GTXModule {
         val gtxConfig = data["gtx"]!!
         val list = gtxConfig["modules"]!!.asArray().map { it.asString() }
         if (list.isEmpty()) {

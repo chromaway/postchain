@@ -3,6 +3,7 @@ package net.postchain.client
 import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
 import net.postchain.api.rest.json.JsonFactory
+import net.postchain.base.BlockchainRid
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.TransactionStatus
@@ -25,7 +26,7 @@ import java.io.InputStream
 
 class ConcretePostchainClient(
         private val resolver: PostchainNodeResolver,
-        private val blockchainRID: ByteArray,
+        private val blockchainRID: BlockchainRid,
         private val defaultSigner: DefaultSigner?
 ) : PostchainClient {
 

@@ -1,5 +1,6 @@
 package net.postchain.ebft
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.common.toHex
 import net.postchain.core.UserMistake
@@ -8,7 +9,7 @@ import net.postchain.ebft.message.Identification
 import net.postchain.ebft.message.SignedMessage
 import net.postchain.network.*
 
-class EbftPacketEncoder(val config: PeerCommConfiguration, val blockchainRID: ByteArray) : XPacketEncoder<Message> {
+class EbftPacketEncoder(val config: PeerCommConfiguration, val blockchainRID: BlockchainRid) : XPacketEncoder<Message> {
 
     override fun makeIdentPacket(forPeer: ByteArray): ByteArray {
         val bytes = Identification(forPeer, blockchainRID, System.currentTimeMillis()).encode()
@@ -24,7 +25,7 @@ class EbftPacketEncoder(val config: PeerCommConfiguration, val blockchainRID: By
 
 class EbftPacketEncoderFactory : XPacketEncoderFactory<Message> {
 
-    override fun create(config: PeerCommConfiguration, blockchainRID: ByteArray): XPacketEncoder<Message> {
+    override fun create(config: PeerCommConfiguration, blockchainRID: BlockchainRid): XPacketEncoder<Message> {
         return EbftPacketEncoder(config, blockchainRID)
     }
 }

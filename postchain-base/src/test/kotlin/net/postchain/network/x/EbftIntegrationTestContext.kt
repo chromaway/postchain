@@ -1,5 +1,6 @@
 package net.postchain.network.x
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.ebft.EbftPacketDecoder
@@ -12,7 +13,7 @@ import java.io.Closeable
 
 class EbftIntegrationTestContext(
         config: PeerCommConfiguration,
-        blockchainRid: ByteArray
+        blockchainRid: BlockchainRid
 ) : Closeable {
 
     val chainId = 1L

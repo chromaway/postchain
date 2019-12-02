@@ -1,6 +1,7 @@
 package net.postchain.network.x
 
 import mu.KLogging
+import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.common.toHex
 import net.postchain.devtools.PeerNameHelper.peerName
@@ -12,7 +13,7 @@ class DefaultXCommunicationManager<PacketType>(
         val connectionManager: XConnectionManager,
         val config: PeerCommConfiguration,
         val chainID: Long,
-        val blockchainRID: ByteArray,
+        val blockchainRID: BlockchainRid,
         private val packetEncoder: XPacketEncoder<PacketType>,
         private val packetDecoder: XPacketDecoder<PacketType>,
         private val processName: String = ""

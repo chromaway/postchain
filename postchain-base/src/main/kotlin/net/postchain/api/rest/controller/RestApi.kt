@@ -2,7 +2,9 @@
 
 package net.postchain.api.rest.controller
 
-import com.google.gson.*
+import com.google.gson.Gson
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
 import mu.KLogging
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_HEADERS
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_METHODS
@@ -22,16 +24,11 @@ import net.postchain.common.TimeLog
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.UserMistake
-import net.postchain.gtv.Gtv
-import net.postchain.gtv.GtvEncoder
-import net.postchain.gtv.GtvFactory
 import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
-import spark.QueryParamsMap
 import spark.Request
 import spark.Response
 import spark.Service
-import java.util.*
 
 /**
  * Contains information on the rest API, such as network parameters and available queries
@@ -197,6 +194,14 @@ class RestApi(
             http.get("/node/$PARAM_BLOCKCHAIN_RID/$SUBQUERY", "application/json") { request, _ ->
                 handleNodeStatusQueries(request)
             }
+
+            http.get("/_debug", "application/json") { request, _ ->
+                handleDebugQuery(request)
+            }
+
+            http.get("/_debug/$SUBQUERY", "application/json") { request, _ ->
+                handleDebugQuery(request)
+            }
         }
 
         http.awaitInitialization()
@@ -248,7 +253,7 @@ class RestApi(
                 .json
     }
 
-    private fun handleDirectQuery(request: Request, response: Response) : Any {
+    private fun handleDirectQuery(request: Request, response: Response): Any {
         val queryMap = request.queryMap()
         val type = gtv(queryMap.value("type"))
         val args = GtvDictionary.build(queryMap.toMap().mapValues {
@@ -306,6 +311,11 @@ class RestApi(
         return model(request).nodeQuery(request.params(SUBQUERY))
     }
 
+    private fun handleDebugQuery(request: Request): String {
+        logger.debug("Request body: ${request.body()}")
+        return model0(request).debugQuery(request.params(SUBQUERY))
+    }
+
     private fun checkTxHashHex(request: Request): String {
         val hashHex = request.params(PARAM_HASH_HEX)
         if (!hashHex.matches(Regex("[0-9a-fA-F]{64}"))) {
@@ -340,6 +350,12 @@ class RestApi(
         val blockchainRID = checkBlockchainRID(request)
         return models[blockchainRID.toUpperCase()]
                 ?: throw NotFoundError("Can't find blockchain with blockchainRID: $blockchainRID")
+    }
+
+    // TODO: [POS-97]: Redesign this
+    private fun model0(request: Request): Model {
+        return models.values.firstOrNull()
+                ?: throw NotFoundError("Can't find blockchain to handle the request")
     }
 
     private fun parseMultipleQueriesRequest(request: Request): JsonArray {

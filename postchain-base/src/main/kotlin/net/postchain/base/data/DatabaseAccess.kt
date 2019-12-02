@@ -4,6 +4,7 @@ package net.postchain.base.data
 
 import mu.KLogging
 import net.postchain.base.BaseBlockHeader
+import net.postchain.base.BlockchainRid
 import net.postchain.common.toHex
 import net.postchain.core.*
 import org.apache.commons.dbutils.QueryRunner
@@ -15,10 +16,10 @@ interface DatabaseAccess {
     class BlockInfoExt(val blockRid: ByteArray, val blockHeight: Long, val blockHeader: ByteArray, val witness: ByteArray, val timestamp: Long)
 
     fun initialize(connection: Connection, expectedDbVersion: Int)
-    fun getChainId(ctx: EContext, blockchainRID: ByteArray): Long?
-    fun checkBlockchainRID(ctx: EContext, blockchainRID: ByteArray)
+    fun getChainId(ctx: EContext, blockchainRID: BlockchainRid): Long?
+    fun checkBlockchainRID(ctx: EContext, blockchainRID: BlockchainRid)
 
-    fun getBlockchainRID(ctx: EContext): ByteArray?
+    fun getBlockchainRID(ctx: EContext): BlockchainRid?
     fun insertBlock(ctx: EContext, height: Long): Long
     fun insertTransaction(ctx: BlockEContext, tx: Transaction): Long
     fun finalizeBlock(ctx: BlockEContext, header: BlockHeader)
@@ -31,7 +32,7 @@ interface DatabaseAccess {
     fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray
     fun getLastBlockHeight(ctx: EContext): Long
     fun getLastBlockRid(ctx: EContext, chainId: Long): ByteArray?
-    fun getBlockHeightInfo(ctx: EContext, bcRid: ByteArray): Pair<Long, ByteArray>?
+    fun getBlockHeightInfo(ctx: EContext, bcRid: BlockchainRid): Pair<Long, ByteArray>?
     fun getLastBlockTimestamp(ctx: EContext): Long
     fun getTxRIDsAtHeight(ctx: EContext, height: Long): Array<ByteArray>
     fun getBlockInfo(ctx: EContext, txRID: ByteArray): BlockInfo
@@ -146,14 +147,14 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
                 nullableByteArrayRes, chainId)
     }
 
-    override fun getBlockHeightInfo(ctx: EContext, bcRid: ByteArray): Pair<Long, ByteArray>? {
+    override fun getBlockHeightInfo(ctx: EContext, bcRid: BlockchainRid): Pair<Long, ByteArray>? {
         val res = queryRunner.query(ctx.conn, """
                     SELECT b.block_height, b.block_rid
                          FROM blocks b
                          JOIN blockchains bc ON bc.chain_iid= b.chain_iid
                          WHERE bc.blockchain_rid = ?
                          ORDER BY b.block_height DESC LIMIT 1
-                         """, mapListHandler, bcRid)
+                         """, mapListHandler, bcRid.data)
 
         return if (res.size == 0) {
             null // This is allowed, it (usually) means we don't have any blocks yet
@@ -234,9 +235,10 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
         return (res != null)
     }
 
-    override fun getBlockchainRID(ctx: EContext): ByteArray? {
-        return queryRunner.query(ctx.conn, "SELECT blockchain_rid FROM blockchains WHERE chain_iid= ?",
+    override fun getBlockchainRID(ctx: EContext): BlockchainRid? {
+        val data = queryRunner.query(ctx.conn, "SELECT blockchain_rid FROM blockchains WHERE chain_iid= ?",
                 nullableByteArrayRes, ctx.chainID)
+        return if (data == null) null else BlockchainRid(data)
     }
 
     override fun initialize(connection: Connection, expectedDbVersion: Int) {
@@ -284,14 +286,14 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
         }
     }
 
-    override fun getChainId(ctx: EContext, blockchainRID: ByteArray): Long? {
+    override fun getChainId(ctx: EContext, blockchainRID: BlockchainRid): Long? {
         return queryRunner.query(ctx.conn,
                 "SELECT chain_iid FROM blockchains WHERE blockchain_rid=?",
                 nullableLongRes,
-                blockchainRID)
+                blockchainRID.data)
     }
 
-    override fun checkBlockchainRID(ctx: EContext, blockchainRID: ByteArray) {
+    override fun checkBlockchainRID(ctx: EContext, blockchainRID: BlockchainRid) {
         // Check that the blockchainRID is present for chain_iid
         val rid = queryRunner.query(
                 ctx.conn,
@@ -299,15 +301,16 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
                 nullableByteArrayRes,
                 ctx.chainID)
 
+        logger.debug("chainId = ${ctx.chainID} = BC RID ${if(rid == null) { "null" } else {rid.toHex()} }")
         if (rid == null) {
-            logger.debug("Blockchain RID: ${blockchainRID.toHex()} doesn't exist in DB, so we add it.")
+            logger.info("Blockchain RID: ${blockchainRID.toHex()} doesn't exist in DB, so we add it.")
             queryRunner.update(
                     ctx.conn,
                     "INSERT INTO blockchains (chain_iid, blockchain_rid) values (?, ?)",
                     ctx.chainID,
-                    blockchainRID)
+                    blockchainRID.data)
 
-        } else if (!rid.contentEquals(blockchainRID)) {
+        } else if (!rid.contentEquals(blockchainRID.data)) {
             throw UserMistake("The blockchainRID in db for chainId ${ctx.chainID} " +
                     "is ${rid.toHex()}, but the expected rid is ${blockchainRID.toHex()}")
         } else {

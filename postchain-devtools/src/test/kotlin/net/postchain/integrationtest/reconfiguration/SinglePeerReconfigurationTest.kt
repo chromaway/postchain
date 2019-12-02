@@ -3,7 +3,6 @@ package net.postchain.integrationtest.reconfiguration
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
 import net.postchain.StorageBuilder
-import net.postchain.common.hexStringToByteArray
 import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.core.NODE_ID_TODO
 import net.postchain.devtools.PostchainTestNode
@@ -21,7 +20,6 @@ class SinglePeerReconfigurationTest : ReconfigurationTest() {
         val appConfig = createAppConfig(0, 1, DEFAULT_CONFIG_FILE)
         val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(appConfig)
         val chainId = nodeConfigProvider.getConfiguration().activeChainIds.first().toLong()
-        val blockchainRid = BLOCKCHAIN_RIDS[chainId]!!.hexStringToByteArray()
 
         // Chains configs
         val blockchainConfig1 = readBlockchainConfig(
@@ -35,7 +33,7 @@ class SinglePeerReconfigurationTest : ReconfigurationTest() {
         PostchainTestNode(nodeConfigProvider)
                 .apply {
                     // Adding chain1 with blockchainConfig1 with DummyModule1
-                    addBlockchain(chainId, blockchainRid, blockchainConfig1)
+                    val blockchainRid = addBlockchain(chainId, blockchainConfig1)
                     // Adding chain1's blockchainConfig2 with DummyModule2
                     addConfiguration(chainId, 5, blockchainConfig2)
                     startBlockchain()

@@ -2,6 +2,7 @@
 
 package net.postchain.modules.ft
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.CryptoSystem
 import net.postchain.core.EContext
 import net.postchain.core.TxEContext
@@ -63,7 +64,7 @@ open class FTConfig (
         val accountResolver: AccountResolver,
         val dbOps : FTDBOps,
         val cryptoSystem: CryptoSystem,
-        val blockchainRID: ByteArray
+        val blockchainRID: BlockchainRid
 )
 
 class HistoryEntry(val delta: Long,

@@ -2,10 +2,10 @@ package net.postchain.base
 
 import mu.KLogging
 import net.postchain.StorageBuilder
-import net.postchain.base.data.DatabaseAccess
 import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
+import net.postchain.debug.NodeDiagnosticContext
 import net.postchain.devtools.PeerNameHelper.peerName
 import net.postchain.ebft.EBFTSynchronizationInfrastructure
 import java.util.*
@@ -23,7 +23,8 @@ import kotlin.concurrent.withLock
 open class BaseBlockchainProcessManager(
         protected val blockchainInfrastructure: BlockchainInfrastructure,
         protected val nodeConfigProvider: NodeConfigurationProvider,
-        protected val blockchainConfigProvider: BlockchainConfigurationProvider
+        protected val blockchainConfigProvider: BlockchainConfigurationProvider,
+        protected val nodeDiagnosticContext: NodeDiagnosticContext
 ) : BlockchainProcessManager {
 
     override var synchronizer: Lock = ReentrantLock()
@@ -32,7 +33,7 @@ open class BaseBlockchainProcessManager(
     val storage = StorageBuilder.buildStorage(nodeConfig.appConfig, NODE_ID_TODO)
     protected val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
     // FYI: [et]: For integration testing. Will be removed or refactored later
-    private val blockchainProcessesLoggers = mutableMapOf<Long, Timer>()
+    private val blockchainProcessesLoggers = mutableMapOf<Long, Timer>() // TODO: [POS-90]: ?
     protected val executor: ExecutorService = Executors.newSingleThreadScheduledExecutor()
 
     companion object : KLogging()
@@ -56,9 +57,9 @@ open class BaseBlockchainProcessManager(
      * Will stop the chain and then start it as a [BlockchainProcess].
      *
      * @param chainId is the chain to start
-     * @return true if success.
+     * @return the Blockchain's RID if successful, else null
      */
-    override fun startBlockchain(chainId: Long): Boolean {
+    override fun startBlockchain(chainId: Long): BlockchainRid? {
         return synchronizer.withLock {
             try {
                 stopBlockchain(chainId)
@@ -68,10 +69,13 @@ open class BaseBlockchainProcessManager(
                 withReadConnection(storage, chainId) { eContext ->
                     val configuration = blockchainConfigProvider.getConfiguration(eContext, chainId)
                     if (configuration != null) {
-                        val blockchainRID = DatabaseAccess.of(eContext).getBlockchainRID(eContext)!! // TODO: [et]: Fix Kotlin NPE
-                        val context = BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null)
 
-                        val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(configuration, context)
+                        val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(
+                                configuration,
+                                eContext,
+                                NODE_ID_AUTO,
+                                chainId)
+
                         logger.debug { "[${nodeName()}]: BlockchainConfiguration has been created: chainId: $chainId" }
 
                         val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig, restartHandler(chainId))
@@ -85,17 +89,18 @@ open class BaseBlockchainProcessManager(
                                 action = { logPeerTopology(chainId) }
                         )
                         logger.info("[${nodeName()}]: Blockchain has been started: chainId: $chainId")
+                        blockchainConfig.blockchainRID
 
                     } else {
                         logger.error("[${nodeName()}]: Can't start Blockchain chainId: $chainId due to configuration is absent")
+                        null
                     }
 
-                    true
                 }
 
             } catch (e: Exception) {
                 logger.error(e) { e.message }
-                false
+                null
             }
         }
     }

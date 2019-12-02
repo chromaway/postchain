@@ -18,12 +18,13 @@ class ManagedBlockchainConfigurationProvider : BlockchainConfigurationProvider {
         return if (chainId == 0L) {
             systemProvider.getConfiguration(eContext, chainId)
         } else {
-            if (::dataSource.isInitialized) {
-                check(eContext.chainID == chainId) { "chainID mismatch" }
-                getConfigurationFromDataSource(eContext)
-            } else {
-                throw IllegalStateException("Using managed blockchain configuration provider before it's properly initialized")
-            }
+            systemProvider.getConfiguration(eContext, chainId)
+                    ?: if (::dataSource.isInitialized) {
+                        check(eContext.chainID == chainId) { "chainID mismatch" }
+                        getConfigurationFromDataSource(eContext)
+                    } else {
+                        throw IllegalStateException("Using managed blockchain configuration provider before it's properly initialized")
+                    }
         }
     }
 
@@ -32,7 +33,7 @@ class ManagedBlockchainConfigurationProvider : BlockchainConfigurationProvider {
             val dba = DatabaseAccess.of(eContext)
             val blockchainRID = dba.getBlockchainRID(eContext)
             val height = dba.getLastBlockHeight(eContext)
-            val nextConfigHeight = dataSource.findNextConfigurationHeight(blockchainRID!!, height)
+            val nextConfigHeight = dataSource.findNextConfigurationHeight(blockchainRID!!.data, height)
             return (nextConfigHeight != null) && (nextConfigHeight == height + 1)
         }
 
@@ -53,7 +54,7 @@ class ManagedBlockchainConfigurationProvider : BlockchainConfigurationProvider {
                 eContext.chainID, eContext.nodeID, dba)*/
         val blockchainRID = dba.getBlockchainRID(eContext)
         val height = dba.getLastBlockHeight(eContext) + 1
-        return dataSource.getConfiguration(blockchainRID!!, height)
+        return dataSource.getConfiguration(blockchainRID!!.data, height)
     }
 
 }

@@ -10,6 +10,10 @@ import java.nio.file.Paths
 @Parameters(commandDescription = "Run Node Auto")
 class CommandRunNodeAuto : Command {
 
+    // TODO Olle No longer needed to have a brid.txt (Blockchan RID) file, should remove it from tests.
+    //./postchain-devtools/src/test/resources/net/postchain/devtools/cli/brid.txt
+    //./postchain-base/src/main/jib/config/blockchains/1/brid.txt
+
     /**
      * Configuration directory structure:
      *
@@ -17,7 +21,6 @@ class CommandRunNodeAuto : Command {
      *      node-config.properties
      *      blockchains/
      *          1/
-     *              blockchain-rid
      *              0.conf.xml
      *              1.conf.xml
      *              ...
@@ -31,7 +34,6 @@ class CommandRunNodeAuto : Command {
 
     private val NODE_CONFIG_FILE = "node-config.properties"
     private val BLOCKCHAIN_DIR = "blockchains"
-    private val BLOCKCHAIN_RID_FILE = "brid.txt"
 
     override fun key(): String = "run-node-auto"
 
@@ -52,7 +54,6 @@ class CommandRunNodeAuto : Command {
                         ?.forEach { dir ->
                             val chainId = dir.name.toLong()
                             chainIds.add(chainId)
-                            val brid = Paths.get(dir.absolutePath, BLOCKCHAIN_RID_FILE).toFile().readLines().first()
 
                             dir.listFiles()
                                     ?.filter { it.extension == "xml" }
@@ -61,7 +62,7 @@ class CommandRunNodeAuto : Command {
                                         val height = (file.nameWithoutExtension.split(".")[0]).toLong()
                                         if (height.toInt() == 0) {
                                             cliExecution.addBlockchain(
-                                                    nodeConfigFile, chainId, brid, blockchainConfigFile)
+                                                    nodeConfigFile, chainId, blockchainConfigFile)
                                         } else {
                                             cliExecution.addConfiguration(
                                                     nodeConfigFile, blockchainConfigFile, chainId, height)

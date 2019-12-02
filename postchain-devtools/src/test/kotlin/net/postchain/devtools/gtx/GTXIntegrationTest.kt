@@ -2,6 +2,7 @@
 
 package net.postchain.devtools.gtx
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
@@ -16,29 +17,28 @@ import net.postchain.gtx.GTXDataBuilder
 import org.junit.Assert
 import org.junit.Test
 
-val testBlockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3".hexStringToByteArray()
 val myCS = SECP256K1CryptoSystem()
 
 class GTXIntegrationTest : IntegrationTest() {
 
-    fun makeNOPGTX(): ByteArray {
-        val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(0)), myCS)
+    fun makeNOPGTX(bcRid: BlockchainRid): ByteArray {
+        val b = GTXDataBuilder(bcRid, arrayOf(pubKey(0)), myCS)
         b.addOperation("nop", arrayOf(gtv(42)))
         b.finish()
         b.sign(myCS.buildSigMaker(pubKey(0), privKey(0)))
         return b.serialize()
     }
 
-    fun makeTestTx(id: Long, value: String): ByteArray {
-        val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(0)), myCS)
+    fun makeTestTx(id: Long, value: String, bcRid: BlockchainRid): ByteArray {
+        val b = GTXDataBuilder(bcRid, arrayOf(pubKey(0)), myCS)
         b.addOperation("gtx_test", arrayOf(gtv(id), gtv(value)))
         b.finish()
         b.sign(myCS.buildSigMaker(pubKey(0), privKey(0)))
         return b.serialize()
     }
 
-    fun makeTimeBTx(from: Long, to: Long?): ByteArray {
-        val b = GTXDataBuilder(testBlockchainRID, arrayOf(pubKey(0)), myCS)
+    fun makeTimeBTx(from: Long, to: Long?, bcRid: BlockchainRid): ByteArray {
+        val b = GTXDataBuilder(bcRid, arrayOf(pubKey(0)), myCS)
         b.addOperation("timeb", arrayOf(
                 gtv(from),
                 if (to != null) gtv(to) else GtvNull
@@ -52,6 +52,7 @@ class GTXIntegrationTest : IntegrationTest() {
     fun testBuildBlock() {
         configOverrides.setProperty("infrastructure", "base/test")
         val node = createNode(0, "/net/postchain/devtools/gtx_it/blockchain_config.xml")
+        val bcRid = node.getBlockchainRid(1L)!! // Just assume we have chain 1
 
         fun enqueueTx(data: ByteArray): Transaction? {
             try {
@@ -80,18 +81,19 @@ class GTXIntegrationTest : IntegrationTest() {
             validTxs.clear()
         }
 
-        val validTx1 = enqueueTx(makeTestTx(1, "true"))!!
+        val validTx1 = enqueueTx(makeTestTx(1, "true", bcRid))!!
         validTxs.add(validTx1)
-        enqueueTx(makeTestTx(2, "false"))
-        validTxs.add(enqueueTx(makeNOPGTX())!!)
+        enqueueTx(makeTestTx(2, "false", bcRid))
+        val x =makeNOPGTX(bcRid)
+        validTxs.add(enqueueTx(x)!!)
 
         makeSureBlockIsBuiltCorrectly()
 
-        validTxs.add(enqueueTx(makeTimeBTx(0, null))!!)
-        validTxs.add(enqueueTx(makeTimeBTx(0, System.currentTimeMillis()))!!)
+        validTxs.add(enqueueTx(makeTimeBTx(0, null, bcRid))!!)
+        validTxs.add(enqueueTx(makeTimeBTx(0, System.currentTimeMillis(), bcRid))!!)
 
-        enqueueTx(makeTimeBTx(100, 0))
-        enqueueTx(makeTimeBTx(System.currentTimeMillis() + 100, null))
+        enqueueTx(makeTimeBTx(100, 0, bcRid))
+        enqueueTx(makeTimeBTx(System.currentTimeMillis() + 100, null, bcRid))
 
         makeSureBlockIsBuiltCorrectly()
 

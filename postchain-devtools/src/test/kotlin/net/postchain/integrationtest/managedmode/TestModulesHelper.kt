@@ -1,9 +1,7 @@
 package net.postchain.integrationtest.managedmode
 
 import net.postchain.base.PeerInfo
-import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
-import net.postchain.devtools.IntegrationTest.Companion.BLOCKCHAIN_RIDS
 import net.postchain.devtools.PeerNameHelper
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvFactory
@@ -35,14 +33,5 @@ object TestModulesHelper {
                 .map { PeerNameHelper.peerName(it.pubKey) }
                 .toTypedArray()
                 .contentToString()
-    }
-
-    fun gtvBlockchain0Rid(): Gtv {
-        return gtvBlockchainRid(0L)
-    }
-
-    fun gtvBlockchainRid(chainId: Long): Gtv {
-        return GtvFactory.gtv(
-                BLOCKCHAIN_RIDS[chainId]?.hexStringToByteArray() ?: byteArrayOf())
     }
 }

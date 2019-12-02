@@ -3,7 +3,10 @@
 package net.postchain.api.rest
 
 import mu.KLogging
-import net.postchain.api.rest.controller.*
+import net.postchain.api.rest.controller.Model
+import net.postchain.api.rest.controller.Query
+import net.postchain.api.rest.controller.QueryResult
+import net.postchain.api.rest.controller.RestApi
 import net.postchain.api.rest.model.ApiStatus
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
@@ -98,9 +101,14 @@ class RestApiMockForClientManual {
             })
         }
 
-        override fun query(query: Gtv): Gtv {        
-        	TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        override fun query(query: Gtv): Gtv {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
+
         override fun nodeQuery(subQuery: String): String = TODO()
+
+        override fun debugQuery(subQuery: String?): String {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
     }
 }
