@@ -1,5 +1,6 @@
 package net.postchain.managed
 
+import net.postchain.base.BaseBlockHeader
 import net.postchain.base.PeerInfo
 import net.postchain.config.node.NodeConfig
 import net.postchain.core.BlockQueries
@@ -64,11 +65,6 @@ class GTXManagedNodeDataSource(val queries: BlockQueries, val nodeConfig: NodeCo
     }
 
     private fun buildArgs(vararg args: Pair<String, Gtv>): Gtv {
-        val currentHeightArg: Pair<String, Gtv> =
-                "current_height" to GtvFactory.gtv(queries.getBestHeight().get())
-
-        return GtvFactory.gtv(
-                *arrayOf(currentHeightArg).plus(args)
-        )
+        return GtvFactory.gtv(*args)
     }
 }

@@ -8,6 +8,7 @@ import net.postchain.base.withReadConnection
 import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.BlockchainInfrastructure
+import net.postchain.core.ByteArrayKey
 import net.postchain.core.RestartHandler
 import net.postchain.debug.NodeDiagnosticContext
 import net.postchain.devtools.KeyPairHelper
@@ -32,7 +33,6 @@ class Chromia0BlockchainProcessManager(
         withReadConnection(storage, chainId) { eContext ->
             val dba = DatabaseAccess.of(eContext)
             val blockRID = dba.getLastBlockRid(eContext, chainId)
-            val bcConfig = blockchainProcesses[chainId]!!.getEngine().getConfiguration()
             val chain0Engine = blockchainProcesses[0L]!!.getEngine()
             if (blockRID != null) {
                 val blockHeader = dba.getBlockHeader(eContext, blockRID)
@@ -40,14 +40,16 @@ class Chromia0BlockchainProcessManager(
                 val witness = BaseBlockWitness.fromBytes(witnessData)
                 val txb = GTXDataBuilder(chain0Engine.getConfiguration().blockchainRID,
                         arrayOf(), SECP256K1CryptoSystem())
+                // sorting signatures makes it more likely we can avoid duplicate anchor transactions
+                val sortedSignatures = witness.getSignatures().sortedBy { ByteArrayKey(it.subjectID) }
                 txb.addOperation("anchor_block",
                         arrayOf(
                                 GtvDecoder.decodeGtv(blockHeader),
                                 GtvArray(
-                                        witness.getSignatures().map { GtvByteArray(it.subjectID) }.toTypedArray()
+                                        sortedSignatures.map { GtvByteArray(it.subjectID) }.toTypedArray()
                                 ),
                                 GtvArray(
-                                        witness.getSignatures().map { GtvByteArray(it.data) }.toTypedArray()
+                                        sortedSignatures.map { GtvByteArray(it.data) }.toTypedArray()
                                 )
                                 )
                 )

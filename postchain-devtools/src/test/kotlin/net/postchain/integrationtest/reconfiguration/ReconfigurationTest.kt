@@ -15,7 +15,7 @@ open class ReconfigurationTest : IntegrationTest() {
     protected fun tx(id: Int): TestTransaction = TestTransaction(id)
 
     protected fun blockTxsIds(node: PostchainTestNode, height: Long): Set<Int> {
-        val blockRids = node.query(DEFAULT_CHAIN_IID) { it.getBlockRids(height) }
+        val blockRids = node.query(DEFAULT_CHAIN_IID) { it.getBlockRid(height) }
         assertNotNull(blockRids)
 
         val txsRids = node.query(DEFAULT_CHAIN_IID) { it.getBlockTransactionRids(blockRids!!) }

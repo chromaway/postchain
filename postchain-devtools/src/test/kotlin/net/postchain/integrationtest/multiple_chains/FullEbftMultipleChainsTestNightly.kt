@@ -12,10 +12,6 @@ import org.awaitility.Duration.ONE_MINUTE
 import org.awaitility.Duration.TEN_SECONDS
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
-import org.junit.Ignore
-import org.junit.Test
-import org.junit.runner.RunWith
-import kotlin.random.Random
 import kotlin.test.assertNotNull
 
 open class FullEbftMultipleChainsTestNightly : IntegrationTest() {
@@ -108,7 +104,7 @@ open class FullEbftMultipleChainsTestNightly : IntegrationTest() {
                     logger.info { "Verifying height $height" }
 
                     // Asserting uniqueness of block at height
-                    val blockRids = queries.getBlockRids(height).get()
+                    val blockRids = queries.getBlockRid(height).get()
                     assertNotNull(blockRids)
 
                     // Asserting txs count

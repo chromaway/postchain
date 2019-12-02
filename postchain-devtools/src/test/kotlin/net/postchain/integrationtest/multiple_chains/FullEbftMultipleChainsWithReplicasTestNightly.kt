@@ -130,7 +130,7 @@ class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
                     logger.info { "Verifying height $height" }
 
                     // Asserting uniqueness of block at height
-                    val blockRid = queries.getBlockRids(height).get()
+                    val blockRid = queries.getBlockRid(height).get()
                     assertNotNull(blockRid)
 
                     // Asserting txs count
