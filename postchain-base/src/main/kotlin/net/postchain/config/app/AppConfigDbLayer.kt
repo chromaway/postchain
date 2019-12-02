@@ -120,7 +120,7 @@ class AppConfigDbLayer(
 
     fun getBlockchainRid(chainIid: Long): BlockchainRid? {
         val queryRunner = QueryRunner()
-        val data = queryRunner.query(connection, "SELECT blockchain_rid FROM blockchains WHERE chain_id= ?",
+        val data = queryRunner.query(connection, "SELECT blockchain_rid FROM blockchains WHERE chain_iid= ?",
                 ScalarHandler<ByteArray?>(), chainIid)
         return if (data == null) null else BlockchainRid(data)
     }

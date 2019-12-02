@@ -58,11 +58,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                     jsonAsMap(gson, "{\"status\"=\"unknown\"}"),
                     jsonAsMap(gson, it))
         }
-        testStatusGet("/tx/iid_${chainIid.toInt().toString()}/$txHashHex/status", 200) {
-            assertEquals(
-                    jsonAsMap(gson, "{\"status\"=\"unknown\"}"),
-                    jsonAsMap(gson, it))
-        }
+
         val factory = GTXTransactionFactory(blockchainRIDBytes, gtxTestModule, cryptoSystem)
 
 
@@ -70,6 +66,13 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         val tx = postGtxTransaction(factory, 1, blockHeight, nodeCount, blockchainRIDBytes)
 
         awaitConfirmed(blockchainRID, tx!!.getRID())
+
+        // Note: here we use the "iid_1" method instead of BC RID
+        testStatusGet("/tx/iid_${chainIid.toInt().toString()}/${tx!!.getRID().toHex()}/status", 200) {
+            assertEquals(
+                    jsonAsMap(gson, "{\"status\"=\"confirmed\"}"),
+                    jsonAsMap(gson, it))
+        }
     }
 
     @Test
