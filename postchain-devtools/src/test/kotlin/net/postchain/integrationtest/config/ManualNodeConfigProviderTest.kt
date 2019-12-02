@@ -23,11 +23,13 @@ import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import java.sql.Connection
 import java.sql.Timestamp
 import java.time.Instant
 
+@Ignore
 class ManualNodeConfigProviderTest : IntegrationTest() {
 
     private val peerInfos = arrayOf(
@@ -79,7 +81,7 @@ class ManualNodeConfigProviderTest : IntegrationTest() {
         }
 
         // Asserting that
-        await().atMost(Duration.TEN_SECONDS.multiply(3))
+        await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
                     // chain is active for all peers
                     nodes.forEach { it.assertChainStarted() }

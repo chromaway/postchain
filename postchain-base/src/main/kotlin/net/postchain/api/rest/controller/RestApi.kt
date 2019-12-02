@@ -2,7 +2,9 @@
 
 package net.postchain.api.rest.controller
 
-import com.google.gson.*
+import com.google.gson.Gson
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
 import mu.KLogging
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_HEADERS
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_METHODS
@@ -265,7 +267,7 @@ class RestApi(
                 .json
     }
 
-    private fun handleDirectQuery(request: Request, response: Response) : Any {
+    private fun handleDirectQuery(request: Request, response: Response): Any {
         val queryMap = request.queryMap()
         val type = gtv(queryMap.value("type"))
         val args = GtvDictionary.build(queryMap.toMap().mapValues {
