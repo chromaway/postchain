@@ -13,11 +13,14 @@ import net.postchain.api.rest.model.TxRID
 import net.postchain.base.ConfirmationProof
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
+import net.postchain.config.app.AppConfig
 import net.postchain.core.BlockDetail
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.TransactionStatus
 import net.postchain.core.UserMistake
 import net.postchain.gtv.Gtv
+import org.apache.commons.configuration2.Configuration
+import org.apache.commons.configuration2.MapConfiguration
 import org.junit.After
 import org.junit.Test
 
@@ -38,7 +41,8 @@ class RestApiMockForClientManual {
     @Test
     fun startMockRestApi() {
         val model = MockModel()
-        restApi = RestApi(listenPort, basePath)
+        val appConfig = AppConfig(DummyConfig.getDummyConfig())
+        restApi = RestApi(listenPort, basePath, appConfig)
         restApi.attachModel(blockchainRID, model)
         logger.info("Ready to serve on port ${restApi.actualPort()}")
         Thread.sleep(600000) // Wait 10 minutes

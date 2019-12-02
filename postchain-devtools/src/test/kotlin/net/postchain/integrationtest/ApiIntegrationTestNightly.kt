@@ -41,6 +41,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
     private val gtxTestModule = GTXTestModule()
     private val gtxTextModuleOperation = "gtx_test" // This is a real operation
+    private val chainIid = 1L
 
     @Test
     fun testMixedAPICalls() {
@@ -48,7 +49,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
         configOverrides.setProperty("api.port", 0)
         val nodes = createNodes(nodeCount, "/net/postchain/devtools/api/blockchain_config.xml")
-        val blockchainRIDBytes = nodes[0].getBlockchainRid(1L)!! // Just take first chain from first node.
+        val blockchainRIDBytes = nodes[0].getBlockchainRid(chainIid)!! // Just take first chain from first node.
         val blockchainRID = blockchainRIDBytes.toHex()
 
         testStatusGet("/tx/$blockchainRID/$txHashHex", 404)
@@ -57,7 +58,11 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                     jsonAsMap(gson, "{\"status\"=\"unknown\"}"),
                     jsonAsMap(gson, it))
         }
-
+        testStatusGet("/tx/iid_${chainIid.toInt().toString()}/$txHashHex/status", 200) {
+            assertEquals(
+                    jsonAsMap(gson, "{\"status\"=\"unknown\"}"),
+                    jsonAsMap(gson, it))
+        }
         val factory = GTXTransactionFactory(blockchainRIDBytes, gtxTestModule, cryptoSystem)
 
 

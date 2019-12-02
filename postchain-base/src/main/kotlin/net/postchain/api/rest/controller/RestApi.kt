@@ -21,17 +21,19 @@ import net.postchain.api.rest.model.TxRID
 import net.postchain.common.TimeLog
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
+import net.postchain.config.DatabaseConnector
+import net.postchain.config.SimpleDatabaseConnector
+import net.postchain.config.app.AppConfig
+import net.postchain.config.app.AppConfigDbLayer
 import net.postchain.core.UserMistake
-import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.GtvFactory
 import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
-import spark.QueryParamsMap
 import spark.Request
 import spark.Response
 import spark.Service
-import java.util.*
+import java.sql.Connection
 
 /**
  * Contains information on the rest API, such as network parameters and available queries
@@ -39,8 +41,15 @@ import java.util.*
 class RestApi(
         private val listenPort: Int,
         private val basePath: String,
+        private val appConfig: AppConfig,
         private val sslCertificate: String? = null,
-        private val sslCertificatePassword: String? = null
+        private val sslCertificatePassword: String? = null,
+        private val databaseConnector: (AppConfig) -> DatabaseConnector = {
+            appConfig -> SimpleDatabaseConnector(appConfig)
+        },
+        private val appConfigDbLayer: (AppConfig, Connection) -> AppConfigDbLayer = {
+            appConfig, connection -> AppConfigDbLayer(appConfig, connection)
+        }
 ) : Modellable {
 
     companion object : KLogging()
@@ -327,12 +336,28 @@ class RestApi(
         return hashHex
     }
 
+    /**
+     * We allow two different syntax for finding the blockchain.
+     * 1. provide BC RID
+     * 2. provide Chain IID (should not be used in production, since to ChainIid could be anything).
+     */
     private fun checkBlockchainRID(request: Request): String {
         val blockchainRID = request.params(PARAM_BLOCKCHAIN_RID)
-        if (!blockchainRID.matches(Regex("[0-9a-fA-F]{64}"))) {
+        return if (blockchainRID.matches(Regex("[0-9a-fA-F]{64}"))) {
+            blockchainRID
+        } else if (blockchainRID.matches(Regex("iid_[0-9]*"))) {
+            val chainIid = blockchainRID.substring(4).toLong()
+            val dbBcRid = databaseConnector(appConfig).withWriteConnection { connection ->
+                appConfigDbLayer(appConfig, connection).getBlockchainRid(chainIid)
+            }
+            if (dbBcRid != null) {
+                dbBcRid.toHex()
+            } else {
+                throw NotFoundError("Can't find blockchain with chain Iid: $chainIid in DB. Did you add this BC to the node?")
+            }
+        } else {
             throw BadFormatError("Invalid blockchainRID. Expected 64 hex digits [0-9a-fA-F]")
         }
-        return blockchainRID
     }
 
     fun stop() {
@@ -355,11 +380,17 @@ class RestApi(
                 ?: throw NotFoundError("Can't find blockchain with blockchainRID: $blockchainRID")
     }
 
-    // TODO: [POS-97]: Redesign this
     private fun model0(request: Request): Model {
-        val chainZero = "0000000000000000000000000000000000000000000000000000000000000000"
-        return models[chainZero]
-                ?: throw NotFoundError("Can't find blockchain with blockchainRID: $chainZero")
+        val dbBcRid = databaseConnector(appConfig).withWriteConnection { connection ->
+            appConfigDbLayer(appConfig, connection).getBlockchainRid(0L)
+        }
+        val chain0Rid = if (dbBcRid != null) {
+            dbBcRid.toHex()
+        } else {
+            throw NotFoundError("Can't find chain0 in DB. Is this node in managed mode?")
+        }
+        return models[chain0Rid]
+                ?: throw NotFoundError("Can't find blockchain with blockchainRID: $chain0Rid")
     }
 
     private fun parseMultipleQueriesRequest(request: Request): JsonArray {
