@@ -143,7 +143,7 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
 
     override fun getLastBlockRid(ctx: EContext, chainId: Long): ByteArray? {
         return queryRunner.query(ctx.conn,
-                "SELECT block_height FROM blocks WHERE chain_iid= ? ORDER BY block_height DESC LIMIT 1",
+                "SELECT block_rid FROM blocks WHERE chain_iid= ? ORDER BY block_height DESC LIMIT 1",
                 nullableByteArrayRes, chainId)
     }
 

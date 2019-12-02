@@ -157,7 +157,8 @@ open class ManagedBlockchainProcessManager(
                     if (chainId == 0L) restartHandlerChain0() else restartHandlerChainN()
                 }
             } catch (e: Exception) {
-                logger.error("Exception in restard handler: ${e.toString()}") // TODO: how do we dump stacktrace?
+                logger.error("Exception in restard handler: ${e.toString()}")
+                e.printStackTrace()
                 reloadBlockchainConfigAsync(chainId)
                 return true // let's hope restarting a blockchain fixes the problem
             }
