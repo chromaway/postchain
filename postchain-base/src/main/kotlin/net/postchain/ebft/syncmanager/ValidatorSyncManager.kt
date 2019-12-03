@@ -311,6 +311,16 @@ class ValidatorSyncManager(
      * Log status of all nodes including their latest block RID and if they have the signature or not
      */
     private fun logStatus() {
+        if (logger.isDebugEnabled) {
+            val smIntent = statusManager.getBlockIntent()
+            val bmIntent = blockManager.getBlockIntent()
+            val primary = if (statusManager.isMyNodePrimary()) {
+                "I'm primary, "
+            } else {
+                "(prim = ${statusManager.primaryIndex()}),"
+            }
+            logger.debug("[$blockchainProcessName]: My node: ${statusManager.getMyIndex()}, $primary block mngr: $bmIntent, status mngr: $smIntent")
+        }
         for ((idx, ns) in statusManager.nodeStatuses.withIndex()) {
             val blockRID = ns.blockRID
             val haveSignature = statusManager.commitSignatures[idx] != null

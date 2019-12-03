@@ -34,6 +34,8 @@ class BaseStatusManager(
         myStatus.serial = System.currentTimeMillis() - 1518000000000
     }
 
+    override fun getMyIndex() = myIndex
+
     /**
      * Count the number of nodes that are at [height] with the tip being [blockRID]
      *
@@ -179,11 +181,11 @@ class BaseStatusManager(
      *
      * @return primary node index
      */
-    fun primaryIndex(): Int {
+    override fun primaryIndex(): Int {
         return ((myStatus.height + myStatus.round) % nodeCount).toInt()
     }
 
-    private fun isMyNodePrimary(): Boolean {
+    override fun isMyNodePrimary(): Boolean {
         return primaryIndex() == this.myIndex
     }
 
