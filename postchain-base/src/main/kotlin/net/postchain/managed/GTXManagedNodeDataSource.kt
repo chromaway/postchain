@@ -1,6 +1,5 @@
 package net.postchain.managed
 
-import net.postchain.base.BaseBlockHeader
 import net.postchain.base.PeerInfo
 import net.postchain.config.node.NodeConfig
 import net.postchain.core.BlockQueries
@@ -10,7 +9,6 @@ import net.postchain.gtv.GtvFactory
 import java.time.Instant
 
 class GTXManagedNodeDataSource(val queries: BlockQueries, val nodeConfig: NodeConfig) : ManagedNodeDataSource {
-
     override fun getPeerInfos(): Array<PeerInfo> {
         // TODO: [POS-90]: Implement correct error processing
 
