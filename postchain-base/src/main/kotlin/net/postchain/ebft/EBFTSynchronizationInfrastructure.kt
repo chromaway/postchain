@@ -1,6 +1,7 @@
 package net.postchain.ebft
 
 import net.postchain.base.BasePeerCommConfiguration
+import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.base.data.BaseBlockchainConfiguration
@@ -8,7 +9,8 @@ import net.postchain.common.hexStringToByteArray
 import net.postchain.config.node.NodeConfig
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
-import net.postchain.debug.DiagnosticProperty.BLOCKCHAIN_NODE_TYPE
+import net.postchain.debug.DiagnosticProperty
+import net.postchain.debug.DiagnosticProperty.BLOCKCHAIN
 import net.postchain.debug.DiagnosticProperty.PEERS_TOPOLOGY
 import net.postchain.debug.NodeDiagnosticContext
 import net.postchain.ebft.message.Message
@@ -19,6 +21,7 @@ import net.postchain.network.netty2.NettyConnectorFactory
 import net.postchain.network.x.DefaultXCommunicationManager
 import net.postchain.network.x.DefaultXConnectionManager
 import net.postchain.network.x.XConnectionManager
+import kotlin.reflect.KClass
 
 class EBFTSynchronizationInfrastructure(
         val nodeConfigProvider: NodeConfigurationProvider,
@@ -27,6 +30,7 @@ class EBFTSynchronizationInfrastructure(
 
     private val nodeConfig get() = nodeConfigProvider.getConfiguration()
     val connectionManager: XConnectionManager
+    private val blockchainProcessesDiagnosticData = mutableMapOf<BlockchainRid, Map<String, String>>()
 
     init {
         connectionManager = DefaultXConnectionManager(
@@ -37,6 +41,7 @@ class EBFTSynchronizationInfrastructure(
                 SECP256K1CryptoSystem())
 
         nodeDiagnosticContext.addProperty(PEERS_TOPOLOGY) { connectionManager.getPeersTopology() }
+        nodeDiagnosticContext.addProperty(BLOCKCHAIN) { blockchainProcessesDiagnosticData.values.toTypedArray() }
     }
 
     override fun shutdown() {
@@ -47,7 +52,8 @@ class EBFTSynchronizationInfrastructure(
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
 
         return if (blockchainConfig.configData.context.nodeID != NODE_ID_READ_ONLY) {
-            nodeDiagnosticContext.addProperty(BLOCKCHAIN_NODE_TYPE, ValidatorWorker::class.simpleName)
+            registerBlockchainDiagnosticData(blockchainConfig.blockchainRID, ValidatorWorker::class)
+
             ValidatorWorker(
                     processName,
                     blockchainConfig.signers,
@@ -55,13 +61,21 @@ class EBFTSynchronizationInfrastructure(
                     blockchainConfig.configData.context.nodeID,
                     buildXCommunicationManager(processName, blockchainConfig))
         } else {
-            nodeDiagnosticContext.addProperty(BLOCKCHAIN_NODE_TYPE, ReadOnlyWorker::class.simpleName)
+            registerBlockchainDiagnosticData(blockchainConfig.blockchainRID, ReadOnlyWorker::class)
+
             ReadOnlyWorker(
                     processName,
                     blockchainConfig.signers,
                     engine,
                     buildXCommunicationManager(processName, blockchainConfig))
         }
+    }
+
+    private fun registerBlockchainDiagnosticData(blockchainRid: BlockchainRid, nodeType: KClass<out BlockchainProcess>) {
+        blockchainProcessesDiagnosticData[blockchainRid] = mapOf(
+                DiagnosticProperty.BLOCKCHAIN_RID.prettyName to blockchainRid.toHex(),
+                DiagnosticProperty.BLOCKCHAIN_NODE_TYPE.prettyName to (nodeType.simpleName ?: nodeType.toString())
+        )
     }
 
     @Deprecated("POS-90")

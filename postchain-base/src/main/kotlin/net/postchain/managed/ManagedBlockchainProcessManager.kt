@@ -305,7 +305,8 @@ class ManagedBlockchainProcessManager(
      * @return all chainIids chain zero thinks we should run.
      */
     private fun retrieveBlockchainsToLaunch(): Array<Long> {
-        val blockchains = mutableListOf<Long>()
+        // chain-zero is always in the list
+        val blockchains = mutableListOf(0L)
 
         withWriteConnection(storage, 0) { ctx0 ->
             val dba = DatabaseAccess.of(ctx0)
@@ -325,6 +326,7 @@ class ManagedBlockchainProcessManager(
                             chainIid
                         }
                     }
+                    .filter { it != 0L }
                     .forEach {
                         blockchains.add(it)
                     }
@@ -337,7 +339,8 @@ class ManagedBlockchainProcessManager(
 
     // TODO: [POS-90]: Redesign this
     private fun inManagedMode(): Boolean {
-        logger.warn("We are using isInitialized as a measure of being in managed mode. Doesn't seem right? ")
+        // TODO: We are using isInitialized as a measure of being in managed mode. Doesn't seem right?
+//        logger.warn("We are using isInitialized as a measure of being in managed mode. Doesn't seem right? ")
         return ::dataSource.isInitialized
     }
 }
