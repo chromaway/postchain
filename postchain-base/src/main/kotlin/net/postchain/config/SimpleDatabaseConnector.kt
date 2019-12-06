@@ -18,11 +18,13 @@ class SimpleDatabaseConnector(private val appConfig: AppConfig) : DatabaseConnec
 
     override fun <Result> withWriteConnection(action: (Connection) -> Result): Result {
         val connection = openWriteConnection()
-
+        var doCommit = false
         try {
-            return action(connection)
+            val ret = action(connection)
+            doCommit = true
+            return ret
         } finally {
-            closeWriteConnection(connection)
+            closeWriteConnection(connection, doCommit)
         }
     }
 

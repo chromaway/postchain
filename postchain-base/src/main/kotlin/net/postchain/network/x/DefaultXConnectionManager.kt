@@ -172,7 +172,8 @@ class DefaultXConnectionManager<PacketType>(
     override fun onPeerConnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection): XPacketHandler? {
         logger.info {
             "[${myPeerId()}]: Peer connected: peer = ${peerName(descriptor.peerId)}" +
-                    ", blockchainRID: ${descriptor.blockchainRID}"
+                    ", blockchainRID: ${descriptor.blockchainRID}" +
+                    ", (size of c4Brid: ${chainIDforBlockchainRID.size}, size of chains: ${chains.size}) "
         }
 
         val chainID = chainIDforBlockchainRID[descriptor.blockchainRID]

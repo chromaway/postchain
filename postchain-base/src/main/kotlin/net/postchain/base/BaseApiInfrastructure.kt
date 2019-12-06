@@ -4,6 +4,7 @@ import net.postchain.api.rest.controller.DefaultDebugInfoQuery
 import net.postchain.api.rest.controller.RestApi
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.common.toHex
+import net.postchain.config.app.AppConfigDbLayer
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.ApiInfrastructure
 import net.postchain.core.BlockchainProcess
@@ -22,12 +23,14 @@ class BaseApiInfrastructure(
                 RestApi(
                         restApiPort,
                         restApiBasePath,
+                        appConfig,
                         restApiSslCertificate,
                         restApiSslCertificatePassword)
             } else {
                 RestApi(
                         restApiPort,
-                        restApiBasePath)
+                        restApiBasePath,
+                        appConfig)
             }
         } else {
             null

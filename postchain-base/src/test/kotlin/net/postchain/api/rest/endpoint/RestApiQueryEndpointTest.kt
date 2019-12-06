@@ -1,10 +1,12 @@
 package net.postchain.api.rest.endpoint
 
 import io.restassured.RestAssured
+import net.postchain.api.rest.DummyConfig
 import net.postchain.api.rest.controller.Model
 import net.postchain.api.rest.controller.Query
 import net.postchain.api.rest.controller.QueryResult
 import net.postchain.api.rest.controller.RestApi
+import net.postchain.config.app.AppConfig
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.UserMistake
 import org.easymock.EasyMock.*
@@ -23,7 +25,7 @@ class RestApiQueryEndpointTest {
     @Before
     fun setup() {
         model = createMock(Model::class.java)
-        restApi = RestApi(0, basePath)
+        restApi = RestApi(0, basePath, AppConfig(DummyConfig.getDummyConfig()))
         restApi.attachModel(blockchainRID, model)
     }
 

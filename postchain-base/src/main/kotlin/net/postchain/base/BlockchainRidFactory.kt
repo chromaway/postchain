@@ -7,6 +7,7 @@ import net.postchain.core.EContext
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtv.merkleHash
+import java.lang.IllegalArgumentException
 
 object BlockchainRidFactory {
 
@@ -53,6 +54,15 @@ object BlockchainRidFactory {
 
 data class BlockchainRid(val data: ByteArray) {
 
+    /*
+    // TODO Olle Add this and fix test-
+    init {
+        if (data.size != 32) {
+            throw IllegalArgumentException("Wrong size of Blockchain RID, was ${data.size} should be 32")
+        }
+    }
+    */
+
     companion object {
 
         val EMPTY_RID = BlockchainRid(ByteArray(0))
@@ -65,7 +75,7 @@ data class BlockchainRid(val data: ByteArray) {
          * @param b is the byte to be repeated
          */
         fun buildRepeat(b: Byte): BlockchainRid {
-            val bArr = ByteArray(64) { b }
+            val bArr = ByteArray(32) { b }
             return BlockchainRid(bArr)
         }
     }
