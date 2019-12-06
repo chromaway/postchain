@@ -309,7 +309,7 @@ open class ManagedBlockchainProcessManager(
 
         withWriteConnection(storage, 0) { ctx0 ->
             val dba = DatabaseAccess.of(ctx0)
-            dataSource.computeBlockchainList(ctx0)
+            dataSource.computeBlockchainList()
                     .map { brid ->
                         val blockchainRid = BlockchainRid(brid)
                         val chainIid = dba.getChainId(ctx0, blockchainRid)

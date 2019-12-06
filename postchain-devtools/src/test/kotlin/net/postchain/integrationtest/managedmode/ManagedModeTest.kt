@@ -14,6 +14,7 @@ import org.awaitility.Duration
 import org.junit.Ignore
 import org.junit.Test
 
+@Ignore
 class ManagedModeTest : IntegrationTest() {
 
     @Test

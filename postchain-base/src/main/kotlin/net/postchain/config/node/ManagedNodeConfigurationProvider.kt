@@ -26,6 +26,16 @@ class ManagedNodeConfigurationProvider(
         managedPeerSource = peerInfoDataSource
     }
 
+    override fun getConfiguration(): NodeConfig {
+        return object : NodeConfig(appConfig) {
+            override val peerInfoMap = getPeerInfoMap(appConfig)
+            override val nodeReplicas = if (managedPeerSource != null)
+                managedPeerSource!!.getNodeReplicaMap() else mapOf()
+            override val blockchainReplicaNodes = if (managedPeerSource != null)
+                managedPeerSource!!.getBlockchainReplicaNodeMap() else mapOf()
+        }
+    }
+
     override fun getPeerInfoCollection(appConfig: AppConfig): Array<PeerInfo> {
         val peerInfoMap = mutableMapOf<ByteArrayKey, PeerInfo>()
 
