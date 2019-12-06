@@ -122,8 +122,7 @@ class BaseBlockWitnessBuilder(val cryptoSystem: CryptoSystem,
         if (signatures.any({ it.subjectID.contentEquals(s.subjectID) })) {
             return
         }
-//        logger.debug("BlockHeader: ${blockHeader.rawData.toHex()}")
-        if (!cryptoSystem.makeVerifier()(blockHeader.rawData, s)) {
+        if (!cryptoSystem.verifyDigest(blockHeader.blockRID, s)) {
             throw UserMistake("Invalid signature from subject ${s.subjectID.toHex()}")
         }
         signatures.add(s)
