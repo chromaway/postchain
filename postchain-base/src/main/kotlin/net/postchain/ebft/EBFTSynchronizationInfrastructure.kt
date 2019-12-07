@@ -97,24 +97,26 @@ class EBFTSynchronizationInfrastructure(
     ): CommunicationManager<Message> {
         val nodeConfigCopy = nodeConfig
 
+        val myPeerID = XPeerID(nodeConfigCopy.pubKey.hexStringToByteArray())
         val signers = blockchainConfig.signers.map { XPeerID(it) }
         val signerReplicas = signers.flatMap {
             nodeConfigCopy.nodeReplicas[it] ?: listOf()
         }
         val blockchainReplicaNodes = nodeConfigCopy.blockchainReplicaNodes[
                 blockchainConfig.blockchainRID
-        ] ?: listOf<XPeerID>();
+        ] ?: listOf();
         val relevantPeerMap = nodeConfigCopy.peerInfoMap.filterKeys {
             signers.contains(it)
                     || signerReplicas.contains(it)
                     || blockchainReplicaNodes.contains(it)
+                    || it.equals(myPeerID)
         }
 
         val communicationConfig = BasePeerCommConfiguration.build(
                 relevantPeerMap,
                 SECP256K1CryptoSystem(),
                 nodeConfigCopy.privKeyByteArray,
-                nodeConfigCopy.pubKey.hexStringToByteArray())
+                myPeerID.byteArray)
 
         val packetEncoder = EbftPacketEncoder(communicationConfig, blockchainConfig.blockchainRID)
         val packetDecoder = EbftPacketDecoder(communicationConfig)
