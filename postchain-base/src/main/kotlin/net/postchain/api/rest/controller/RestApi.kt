@@ -28,8 +28,6 @@ import net.postchain.config.SimpleDatabaseConnector
 import net.postchain.config.app.AppConfig
 import net.postchain.config.app.AppConfigDbLayer
 import net.postchain.core.UserMistake
-import net.postchain.gtv.GtvEncoder
-import net.postchain.gtv.GtvFactory
 import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
 import spark.Request
@@ -46,11 +44,11 @@ class RestApi(
         private val appConfig: AppConfig,
         private val sslCertificate: String? = null,
         private val sslCertificatePassword: String? = null,
-        private val databaseConnector: (AppConfig) -> DatabaseConnector = {
-            appConfig -> SimpleDatabaseConnector(appConfig)
+        private val databaseConnector: (AppConfig) -> DatabaseConnector = { appConfig ->
+            SimpleDatabaseConnector(appConfig)
         },
-        private val appConfigDbLayer: (AppConfig, Connection) -> AppConfigDbLayer = {
-            appConfig, connection -> AppConfigDbLayer(appConfig, connection)
+        private val appConfigDbLayer: (AppConfig, Connection) -> AppConfigDbLayer = { appConfig, connection ->
+            AppConfigDbLayer(appConfig, connection)
         }
 ) : Modellable {
 
@@ -150,12 +148,17 @@ class RestApi(
             http.post("/tx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
                 val n = TimeLog.startSumConc("RestApi.buildRouter().postTx")
                 val tx = toTransaction(request)
-                val maxLength = if (tx.bytes.size > 200) 200 else tx.bytes.size
+                val maxLength =  try {
+                    if (tx.bytes.size > 200) 200 else tx.bytes.size
+                } catch (e: Exception) {
+                    throw UserMistake("Invalid tx format. Expected {\"tx\": <hex-string>}")
+                }
+
                 logger.debug("""
-                    Request body : {"tx": "${tx.bytes.sliceArray(0..maxLength-1).toHex()}" } 
+                    Request body : {"tx": "${tx.bytes.sliceArray(0 until maxLength).toHex()}" } 
                 """.trimIndent())
                 if (!tx.tx.matches(Regex("[0-9a-fA-F]{2,}"))) {
-                    throw UserMistake("Invalid tx format. Expected {\"tx\": <hexString>}")
+                    throw UserMistake("Invalid tx format. Expected {\"tx\": <hex-string>}")
                 }
                 model(request).postTransaction(tx)
                 TimeLog.end("RestApi.buildRouter().postTx", n)
