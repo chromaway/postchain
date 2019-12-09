@@ -201,18 +201,15 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         configOverrides.setProperty("api.port", 0)
         val nodes = createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_rejected.xml")
-        val blockchainRIDBytes = nodes[0].getBlockchainRid(1L)!! // Just take first chain from first node.
-        val blockchainRID = blockchainRIDBytes.toHex()
+        val blockchainRID = nodes[0].getBlockchainRid(1L)!! // Just take first chain from first node.
+        val blockchainRIDStr = blockchainRID.toHex()
 
-        val builder = GTXDataBuilder(blockchainRIDBytes, arrayOf(KeyPairHelper.pubKey(0)), cryptoSystem)
-        builder.addOperation("gtx_test", arrayOf(gtv(1L), gtv("rejectMe")))
-        builder.finish()
-        builder.sign(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)))
+        val builder = createBuilder(blockchainRID, "rejectMe")
 
         // post transaction
         testStatusPost(
                 0,
-                "/tx/$blockchainRID",
+                "/tx/$blockchainRIDStr",
                 "{\"tx\": \"${builder.serialize().toHex()}\"}",
                 200)
 
@@ -227,7 +224,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
         Awaitility.await().untilAsserted {
             val body = given().port(nodes[0].getRestApiHttpPort())
-                    .get("/tx/$blockchainRID/$txRidHex/status")
+                    .get("/tx/$blockchainRIDStr/$txRidHex/status")
                     .then()
                     .statusCode(200)
                     .extract().body().asString()
@@ -403,5 +400,13 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                 .post(path)
                 .then()
                 .statusCode(expectedStatus)
+    }
+
+    private fun createBuilder(blockchainRid: BlockchainRid, value: String): GTXDataBuilder {
+        val builder = GTXDataBuilder(blockchainRid, arrayOf(KeyPairHelper.pubKey(0)), cryptoSystem)
+        builder.addOperation("gtx_test", arrayOf(gtv(1L), gtv(value)))
+        builder.finish()
+        builder.sign(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)))
+        return builder
     }
 }
