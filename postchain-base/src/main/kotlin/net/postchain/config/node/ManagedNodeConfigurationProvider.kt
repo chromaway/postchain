@@ -29,10 +29,8 @@ class ManagedNodeConfigurationProvider(
     override fun getConfiguration(): NodeConfig {
         return object : NodeConfig(appConfig) {
             override val peerInfoMap = getPeerInfoMap(appConfig)
-            override val nodeReplicas = if (managedPeerSource != null)
-                managedPeerSource!!.getNodeReplicaMap() else mapOf()
-            override val blockchainReplicaNodes = if (managedPeerSource != null)
-                managedPeerSource!!.getBlockchainReplicaNodeMap() else mapOf()
+            override val nodeReplicas = managedPeerSource?.getNodeReplicaMap() ?: mapOf()
+            override val blockchainReplicaNodes = managedPeerSource?.getBlockchainReplicaNodeMap() ?: mapOf()
         }
     }
 
