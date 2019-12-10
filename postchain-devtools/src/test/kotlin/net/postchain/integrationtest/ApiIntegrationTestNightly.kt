@@ -5,7 +5,6 @@ package net.postchain.integrationtest
 import io.restassured.RestAssured.given
 import net.postchain.base.BaseBlockHeader
 import net.postchain.base.BlockchainRid
-import net.postchain.base.gtv.BlockHeaderDataFactory
 import net.postchain.base.merkle.Hash
 import net.postchain.common.RestTools
 import net.postchain.common.hexStringToByteArray
@@ -20,7 +19,6 @@ import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
 import net.postchain.gtv.merkle.proof.merkleHash
-import net.postchain.gtv.merkle.proof.toGtvVirtual
 import net.postchain.gtx.GTXDataBuilder
 import net.postchain.gtx.GTXTransactionFactory
 import net.postchain.integrationtest.JsonTools.jsonAsMap
@@ -340,7 +338,8 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
         // Assert signatures
         val blockHeaderRaw = (actualMap["blockHeader"] as String).hexStringToByteArray()
-        val blockRid = BaseBlockHeader(blockHeaderRaw, cryptoSystem).blockRID
+        val blockHeader = BaseBlockHeader(blockHeaderRaw, cryptoSystem)
+        val blockRid = blockHeader.blockRID
 
         val signatures = actualMap["signatures"] as List<Map<String, String>>
         signatures.forEach {
@@ -348,6 +347,8 @@ class ApiIntegrationTestNightly : IntegrationTest() {
             assertTrue(cryptoSystem.verifyDigest(blockRid, signature))
         }
 
+        val blockMerkleRootHashFromHeader = blockHeader.blockHeaderRec.getMerkleRootHash()
+        println("blockMerkleRootHash - from header: ${blockMerkleRootHashFromHeader.toHex()}")
         // -------------------
         // Merkle Proof Tree
         // -------------------
@@ -370,6 +371,13 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         val proofTreeFactory = GtvMerkleProofTreeFactory()
         val x = proofTreeFactory.deserialize(gtvCleanProof as GtvArray)
         println("Proof as classes: $x")
+        val myNewBlockHash = x.merkleHash(GtvMerkleHashCalculator(cryptoSystem))
+
+        // Assert we get the same block RID
+        println("Block merkle root - calculated : ${myNewBlockHash.toHex()}")
+        assertTrue(myNewBlockHash.contentEquals(blockMerkleRootHashFromHeader),
+                "The block merkle root calculated from the proof doesn't correspond to the block's merkle root hash from the header")
+
     }
 
     private fun awaitConfirmed(blockchainRID: String, txRid: Hash) {
