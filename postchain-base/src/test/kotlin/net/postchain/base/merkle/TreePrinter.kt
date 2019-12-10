@@ -108,6 +108,8 @@ object PrintableTreeFactory {
                     PLeaf(content, inElement.isPathLeaf())
                 }
             }
+            /*
+            // We no longer check the cache during Binary Tree construction
             is CachedLeaf -> {
                 if (currentLevel < maxLevel) {
                     // Create node instead of leaf
@@ -123,6 +125,7 @@ object PrintableTreeFactory {
                     PLeaf(content, inElement.isPathLeaf())
                 }
             }
+             */
             is Node -> {
                 val left = genericTreeInternal(currentLevel + 1, maxLevel, inElement.left, toStr)
                 val right = genericTreeInternal(currentLevel + 1, maxLevel, inElement.right, toStr)

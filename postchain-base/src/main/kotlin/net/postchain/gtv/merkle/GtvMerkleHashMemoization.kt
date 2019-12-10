@@ -5,6 +5,8 @@ import net.postchain.base.merkle.MerkleHashMemoization
 import net.postchain.base.merkle.proof.MerkleHashSummary
 import net.postchain.common.toHex
 import net.postchain.gtv.*
+import kotlin.math.abs
+import kotlin.random.Random
 
 /**
  * To improve performance, we will cache the hash of a given [GtvPrimitive] object.
@@ -41,6 +43,7 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
     companion object : KLogging()
 
     private val javaHashCodeToGtvSet_Map = HashMap<Int, MerkleHashSetWithSameGtvJavaHashCode>()
+    private val rndNr: Int = abs(Random.nextInt() / 1000000).toInt()
 
     // Some statistics (Not private due to testing)
     var localCacheHits = 0L // How many times the local cache was successful
@@ -180,7 +183,7 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
         if (foundGtvSet != null) {
             val summaryAlreadyAdded = foundGtvSet.findFromGtv(src)
             if (summaryAlreadyAdded != null) {
-                logger.warn("Why do we need to add to cache when global cache has a value? ")
+                logger.warn("$rndNr, Why do we need to add to cache when global cache has a value? hashCode: $gtvSrcHashCode , gtv: ${src.toString()}")
             }
         }
 
@@ -225,9 +228,9 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
                 // Let's see if we should prune
                 if (totalSizeInBytes > MAX_CACHE_SIZE_BYTES) {
                     // 0. Begin
-                    logger.info("----------------------------------------------------------------------------------")
-                    logger.info("Begin pruning GtvMerkleHashMemoization, size: ${totalSizeInBytes} bytes (interactions: $allInteraction)")
-                    logger.info("----------------------------------------------------------------------------------")
+                    logger.debug("----------------------------------------------------------------------------------")
+                    logger.debug("$rndNr, Begin pruning GtvMerkleHashMemoization, size: ${totalSizeInBytes} bytes (interactions: $allInteraction)")
+                    logger.debug("----------------------------------------------------------------------------------")
                     val begin = System.currentTimeMillis()
                     didPrune = true // Do this now, we might crash later
 
@@ -263,7 +266,7 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
 
                         if (EXTRA_STATS) {
                             if (sum > 10) {
-                                logger.debug("timestamp: $timestamp, sum: $sum  ")
+                                logger.trace("timestamp: $timestamp, sum: $sum  ")
                             }
                         }
                     }
@@ -278,7 +281,7 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
                     }
 
                     logger.debug("------------------  ")
-                    logger.debug("Total unique timestamps: $nrOfStamps, sum: $sumOfValues, avg objects stored per timestamp: ${sumOfValues.toDouble()/nrOfStamps} ")
+                    logger.debug("$rndNr, Total unique timestamps: $nrOfStamps, sum: $sumOfValues, avg objects stored per timestamp: ${sumOfValues.toDouble()/nrOfStamps} ")
                     logger.debug("------------------  ")
 
                     // 2. Remove oldest timestamps first
@@ -303,9 +306,9 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
                     val globalHitrateStr = "%.2f".format(hitrateGlobal)
                     val end = System.currentTimeMillis()
                     val duration = end - begin
-                    logger.info("----------------------------------------------------------------------------------")
-                    logger.info("Cache pruned successfully down to size: $totalSizeInBytes (objects pruned: $pruned) in $duration ms. Local Hitrate = $localHitrateStr% Global Hitrate = $globalHitrateStr% (local hits: $localCacheHits, global hits: $globalCacheHits, misses: $cacheMisses)")
-                    logger.info("----------------------------------------------------------------------------------")
+                    logger.debug("----------------------------------------------------------------------------------")
+                    logger.debug("Cache pruned successfully down to size: $totalSizeInBytes (objects pruned: $pruned) in $duration ms. Local Hitrate = $localHitrateStr% Global Hitrate = $globalHitrateStr% (local hits: $localCacheHits, global hits: $globalCacheHits, misses: $cacheMisses)")
+                    logger.debug("----------------------------------------------------------------------------------")
 
                     // 4. Erase stats
                     localCacheHits = 0
@@ -350,87 +353,87 @@ class GtvMerkleHashMemoization(val TRY_PRUNE_AFTER_THIS_MANY_LOOKUPS: Int ,val M
     }
 
     private fun searchStats() {
-        logger.debug("------GtvIntegers--------  ")
+        logger.trace("------GtvIntegers--------  ")
         var intCount = 0
         for (int in searchedIntegerHashMap.keys.sorted()) {
             val count = searchedIntegerHashMap[int]!!
             intCount += count
             if (count > 10) {
-                logger.debug("search int: $int, nr: ${count}")
+                logger.trace("search int: $int, nr: ${count}")
             }
         }
 
         logger.debug("unique search integers: ${searchedIntegerHashMap.keys.size}, total searches: $intCount  ")
-        logger.debug("------------------  ")
+        logger.trace("------------------  ")
 
-        logger.debug("------GtvStrings--------  ")
+        logger.trace("------GtvStrings--------  ")
         var strCount = 0
         for (str in searchStringsHash.keys.sorted()) {
             val count = searchStringsHash[str]!!
             strCount += count
             if (count > 10) {
-                logger.debug("search string: $str, nr: ${count}")
+                logger.trace("search string: $str, nr: ${count}")
             }
         }
 
         logger.debug("unique search strings: ${searchStringsHash.keys.size}, total searches: $strCount  ")
-        logger.debug("------------------  ")
+        logger.trace("------------------  ")
 
-        logger.debug("------GtvByteArrays--------  ")
+        logger.trace("------GtvByteArrays--------  ")
         var baCount = 0
         for (str in searchByteArrayHash.keys.sorted()) {
             val count =searchByteArrayHash[str]!!
             baCount += count
             if (count > 10) {
-                logger.debug("search byte array: $str, nr: $count")
+                logger.trace("search byte array: $str, nr: $count")
             }
 
         }
         logger.debug(" unique search byte array: ${searchByteArrayHash.keys.size}, total searches: $baCount  ")
-        logger.debug("------------------  ")
+        logger.trace("------------------  ")
 
 
     }
 
     private fun hitStats() {
-        logger.debug("------GtvIntegers--------  ")
+        logger.trace("------GtvIntegers--------  ")
         var intCount = 0
         for (int in hitsIntegerHashMap.keys.sorted()) {
             val count = hitsIntegerHashMap[int]!!
             intCount += count
             if (count > 10) {
-                logger.debug("hit int: $int, nr: ${count}")
+                logger.trace("hit int: $int, nr: ${count}")
             }
         }
 
         logger.debug("unique hit integers: ${hitsIntegerHashMap.keys.size}, total hits: $intCount  ")
-        logger.debug("------------------  ")
+        logger.trace("------------------  ")
 
-        logger.debug("------GtvStrings--------  ")
+        logger.trace("------GtvStrings--------  ")
         var strCount = 0
         for (str in hitsStringsHash.keys.sorted()) {
             val count = hitsStringsHash[str]!!
             strCount += count
             if (count > 10) {
-                logger.debug("search string: $str, nr: ${count}")
+                logger.trace("search string: $str, nr: ${count}")
             }
         }
 
         logger.debug("unique hit strings: ${hitsStringsHash.keys.size}, total hits: $strCount  ")
-        logger.debug("------------------  ")
+        logger.trace("------------------  ")
 
-        logger.debug("------GtvByteArrays--------  ")
+        logger.trace("------GtvByteArrays--------  ")
         var baCount = 0
         for (str in hitsByteArrayHash.keys.sorted()) {
             val count =hitsByteArrayHash[str]!!
             baCount += count
             if (count > 10) {
-                logger.debug("search byte array: $str, nr: $count")
+                logger.trace("search byte array: $str, nr: $count")
             }
 
         }
         logger.debug(" unique hit byte array: ${hitsByteArrayHash.keys.size}, total hits: $baCount  ")
-        logger.debug("------------------  ")
+        logger.trace("------------------  ")
     }
 
 
