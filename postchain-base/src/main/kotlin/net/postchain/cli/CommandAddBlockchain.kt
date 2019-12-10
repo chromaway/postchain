@@ -48,10 +48,14 @@ class CommandAddBlockchain : Command {
         println("add-blockchain will be executed with options: " +
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
+        if (blockchainRID != "") {
+            println("WARNING: You specified Blockchain RID, but this is deprecated and will not be used. The Blockchain global ID will be calculated by the system!" )
+        }
+
         return try {
             val cliExecution = CliExecution()
             val mode = if (force) AlreadyExistMode.FORCE else AlreadyExistMode.ERROR
-            cliExecution.addBlockchain(nodeConfigFile, chainId, blockchainRID, blockchainConfigFile, mode);
+            cliExecution.addBlockchain(nodeConfigFile, chainId, blockchainConfigFile, mode)
             Ok("Configuration has been added successfully")
         } catch (e: CliError.Companion.CliException) {
             CliError.CommandNotAllowed(message = e.message)

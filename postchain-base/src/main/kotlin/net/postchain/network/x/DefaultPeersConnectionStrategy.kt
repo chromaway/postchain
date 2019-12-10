@@ -2,6 +2,7 @@ package net.postchain.network.x
 
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.PeerInfo
+import net.postchain.common.toHex
 
 object DefaultPeersConnectionStrategy : PeersConnectionStrategy {
 
@@ -11,26 +12,26 @@ object DefaultPeersConnectionStrategy : PeersConnectionStrategy {
     }
 
     private fun validate(configuration: PeerCommConfiguration) {
-        // peerInfo
-        require(!configuration.peerInfo.isEmpty()) {
-            "Invalid PeerCommConfiguration: peerInfo must not be empty"
-        }
+        // We are allowed to go on with only one peer, this node itself, and it will not be in the peer list
+        /*require(configuration.networkNodes.hasPeers()) {
+            "Invalid PeerCommConfiguration: no peers loaded from configuration file"
+        } */
+    }
 
-        // myIndex
-        val myIndex = configuration.peerInfo.indexOfFirst { it.pubKey.contentEquals(configuration.pubKey) }
-        val message = "Invalid PeerCommConfiguration: myIndex $myIndex " +
-                "must be in range ${configuration.peerInfo.indices}"
-        require(myIndex >= 0) { message }
-        require(myIndex < configuration.peerInfo.size) { message }
+    /**
+     * This is the implementation this strategy uses for how to decide what peer should interract (usually connect)
+     * with other peers.
+     *
+     * Here we use the string version of the public key of the peer to make sure no double connects are done.
+     */
+    fun getPeersThatShouldDoAction(peerMap: Map<XPeerID, PeerInfo>, myKey: XPeerID): Set<PeerInfo> {
+        val myKeyAsString = myKey.byteArray.toHex()
+        val keysAsStringMap: Map<String, PeerInfo> = peerMap.map{ it.key.byteArray.toHex() to it.value }.toMap()
+
+        return keysAsStringMap.filter { myKeyAsString.compareTo(it.key) > 0 }.values.toSet()
     }
 
     private fun runEachPeerAction(configuration: PeerCommConfiguration, action: (PeerInfo) -> Unit) {
-        val myIndex = configuration.peerInfo.indexOfFirst { it.pubKey.contentEquals(configuration.pubKey) }
-        configuration.peerInfo
-                // To avoid connection to itself.
-                .filterIndexed { i, _ -> i != myIndex }
-                // To avoid duplicating of connection between two peers since each peer has Server and Client entities.
-                .filterIndexed { i, _ -> myIndex > i }
-                .forEach(action)
+        configuration.networkNodes.filterAndRunActionOnPeers(DefaultPeersConnectionStrategy::getPeersThatShouldDoAction, action)
     }
 }

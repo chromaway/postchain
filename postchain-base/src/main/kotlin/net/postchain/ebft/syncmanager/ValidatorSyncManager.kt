@@ -13,6 +13,7 @@ import net.postchain.ebft.message.Transaction
 import net.postchain.ebft.rest.contract.serialize
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
+import nl.komponents.kovenant.task
 import java.util.*
 
 fun decodeBlockDataWithWitness(block: CompleteBlock, bc: BlockchainConfiguration)
@@ -93,7 +94,7 @@ class ValidatorSyncManager(
             val (xPeerId, message) = packet
 
             val nodeIndex = indexOfValidator(xPeerId)
-            if (nodeIndex == -1) continue
+            val isReadOnlyNode = nodeIndex == -1 // This must be a read-only node since not in the validator list
 
             logger.trace { "[$blockchainProcessName]: Received message type ${message.javaClass.simpleName} from node $nodeIndex" }
 
@@ -101,8 +102,9 @@ class ValidatorSyncManager(
                 when (message) {
                     // same case for replica and validator node
                     is GetBlockAtHeight -> sendBlockAtHeight(xPeerId, message.height)
+
                     else -> {
-                        if (nodeIndex != NODE_ID_READ_ONLY) {
+                        if (!isReadOnlyNode) { // TODO: [POS-90]: Is it necessary here `isReadOnlyNode`?
                             // validator consensus logic
                             when (message) {
                                 is Status -> {
@@ -136,6 +138,7 @@ class ValidatorSyncManager(
                                 is GetUnfinishedBlock -> sendUnfinishedBlock(nodeIndex)
                                 is GetBlockSignature -> sendBlockSignature(nodeIndex, message.blockRID)
                                 is Transaction -> handleTransaction(nodeIndex, message)
+
                                 else -> throw ProgrammerMistake("Unhandled type ${message::class}")
                             }
                         }
@@ -154,11 +157,12 @@ class ValidatorSyncManager(
      * @param message message including the transaction
      */
     private fun handleTransaction(index: Int, message: Transaction) {
-        val tx = blockchainConfiguration.getTransactionFactory().decodeTransaction(message.data)
-        if (!tx.isCorrect()) {
-            throw UserMistake("Transaction ${tx.getRID()} is not correct")
+        // TODO: reject if queue is full
+        task {
+            val tx = blockchainConfiguration.getTransactionFactory().decodeTransaction(message.data)
+            txQueue.enqueue(tx)
         }
-        txQueue.enqueue(tx)
+
     }
 
     /**
@@ -307,14 +311,26 @@ class ValidatorSyncManager(
      * Log status of all nodes including their latest block RID and if they have the signature or not
      */
     private fun logStatus() {
+        if (logger.isDebugEnabled) {
+            val smIntent = statusManager.getBlockIntent()
+            val bmIntent = blockManager.getBlockIntent()
+            val primary = if (statusManager.isMyNodePrimary()) {
+                "I'm primary, "
+            } else {
+                "(prim = ${statusManager.primaryIndex()}),"
+            }
+            logger.debug("[$blockchainProcessName]: My node: ${statusManager.getMyIndex()}, $primary block mngr: $bmIntent, status mngr: $smIntent")
+        }
         for ((idx, ns) in statusManager.nodeStatuses.withIndex()) {
             val blockRID = ns.blockRID
             val haveSignature = statusManager.commitSignatures[idx] != null
-            logger.info {
-                "[$blockchainProcessName]: node:$idx he:${ns.height} ro:${ns.round} st:${ns.state}" +
-                        (if (ns.revolting) " R" else "") +
-                        " blockRID:${blockRID?.toHex() ?: "null"}" +
-                        " havesig:$haveSignature"
+            if (logger.isDebugEnabled) {
+                logger.debug {
+                    "[$blockchainProcessName]: node:$idx he:${ns.height} ro:${ns.round} st:${ns.state}" +
+                            (if (ns.revolting) " R" else "") +
+                            " blockRID:${blockRID?.toHex() ?: "null"}" +
+                            " havesig:$haveSignature"
+                }
             }
         }
     }

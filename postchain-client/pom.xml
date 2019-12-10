@@ -3,7 +3,7 @@
     <parent>
         <artifactId>postchain</artifactId>
         <groupId>net.postchain</groupId>
-        <version>3.0.0</version>
+        <version>3.1.0</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -46,22 +46,7 @@
             <groupId>net.postchain</groupId>
             <artifactId>postchain-base</artifactId>
 <!--            <version>${project.version}</version>-->
-            <version>3.0.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>net.postchain</groupId>
-            <artifactId>postchain-devtools</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>net.postchain</groupId>
-            <artifactId>postchain-devtools</artifactId>
-            <version>${project.version}</version>
-            <classifier>tests</classifier>
-            <type>test-jar</type>
-            <scope>test</scope>
+            <version>3.1.0</version>
         </dependency>
 
         <!-- Tools -->

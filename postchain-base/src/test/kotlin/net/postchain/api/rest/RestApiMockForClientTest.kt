@@ -3,18 +3,24 @@
 package net.postchain.api.rest
 
 import mu.KLogging
-import net.postchain.api.rest.controller.*
+import net.postchain.api.rest.controller.Model
+import net.postchain.api.rest.controller.Query
+import net.postchain.api.rest.controller.QueryResult
+import net.postchain.api.rest.controller.RestApi
 import net.postchain.api.rest.model.ApiStatus
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
 import net.postchain.base.ConfirmationProof
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
+import net.postchain.config.app.AppConfig
 import net.postchain.core.BlockDetail
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.TransactionStatus
 import net.postchain.core.UserMistake
 import net.postchain.gtv.Gtv
+import org.apache.commons.configuration2.Configuration
+import org.apache.commons.configuration2.MapConfiguration
 import org.junit.After
 import org.junit.Test
 
@@ -35,7 +41,8 @@ class RestApiMockForClientManual {
     @Test
     fun startMockRestApi() {
         val model = MockModel()
-        restApi = RestApi(listenPort, basePath)
+        val appConfig = AppConfig(DummyConfig.getDummyConfig())
+        restApi = RestApi(listenPort, basePath, appConfig)
         restApi.attachModel(blockchainRID, model)
         logger.info("Ready to serve on port ${restApi.actualPort()}")
         Thread.sleep(600000) // Wait 10 minutes
@@ -98,9 +105,14 @@ class RestApiMockForClientManual {
             })
         }
 
-        override fun query(query: Gtv): Gtv {        
-        	TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        override fun query(query: Gtv): Gtv {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
+
         override fun nodeQuery(subQuery: String): String = TODO()
+
+        override fun debugQuery(subQuery: String?): String {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
     }
 }

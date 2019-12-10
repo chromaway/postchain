@@ -7,7 +7,7 @@ import org.junit.Test
 @Ignore
 class TestLauncherTest {
 
-    private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
+    private val blockchainRID = "101010101010101ABCDEF101010101010101ABCDEF101010101010101ABCDEF0"
 
     @Test
     fun runXMLGTXTests_nop() {
@@ -16,7 +16,7 @@ class TestLauncherTest {
                 readResourceFile("tx_nop.xml"),
                 blockchainRID)
 
-        assertEquals(expected, actual)
+        assertEquals(expected.passed, actual)
     }
 
     @Test
@@ -26,7 +26,7 @@ class TestLauncherTest {
                 readResourceFile("tx_nop_no_blockchainRID.xml"),
                 blockchainRID)
 
-        assertEquals(expected, actual)
+        assertEquals(expected.passed, actual)
     }
 
     @Test
@@ -36,7 +36,7 @@ class TestLauncherTest {
                 readResourceFile("tx_timeb.xml"),
                 blockchainRID)
 
-        assertEquals(expected, actual)
+        assertEquals(expected.passed, actual)
     }
 
     @Test
@@ -46,7 +46,7 @@ class TestLauncherTest {
                 readResourceFile("tx_timeb_3x.xml"),
                 blockchainRID)
 
-        assertEquals(expected, actual)
+        assertEquals(expected.passed, actual)
     }
 
     @Test
@@ -56,7 +56,7 @@ class TestLauncherTest {
                 readResourceFile("tx_block_single_empty_block.xml"),
                 blockchainRID)
 
-        assertEquals(expected, actual)
+        assertEquals(expected.passed, actual)
     }
 
     @Test
@@ -66,7 +66,7 @@ class TestLauncherTest {
                 readResourceFile("tx_block_two_empty_blocks.xml"),
                 blockchainRID)
 
-        assertEquals(expected, actual)
+        assertEquals(expected.passed, actual)
     }
 
     @Test
@@ -76,10 +76,10 @@ class TestLauncherTest {
                 readResourceFile("tx_block_two_blocks.xml"),
                 blockchainRID)
 
-        assertEquals(expected, actual)
+        assertEquals(expected.passed, actual)
     }
 
     private fun readResourceFile(filename: String): String {
-        return javaClass.getResource("/net/postchain/test/$filename").readText()
+        return javaClass.getResource("/net/postchain/devtools/test-launcher/$filename").readText()
     }
 }

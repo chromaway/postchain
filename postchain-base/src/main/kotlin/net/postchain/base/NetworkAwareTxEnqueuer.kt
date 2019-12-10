@@ -5,8 +5,8 @@ package net.postchain.base
 import mu.KLogging
 import net.postchain.common.toHex
 import net.postchain.core.TransactionQueue
+import net.postchain.core.TransactionResult
 import net.postchain.ebft.message.Message
-import net.postchain.gtv.GtvByteArray
 import net.postchain.network.CommunicationManager
 
 /**
@@ -36,7 +36,7 @@ That class needs to know a lot of stuff:
 * If buildBlock has been started
 * Who the next primary is
 
-Then extra complixities are added if nodes goes down.
+Then extra complexities are added if nodes goes down.
 
 I ended up opting for this solution instead:
 
@@ -48,18 +48,18 @@ This has a few drawbacks:
 * DoS attacks becomes easy. Correct (isCorrect() == true) transactions that will fail during
 apply(), can be created en-masse to fill up the "mempools". We have no way to control
 this but to throttle rate of incoming transactions prior to queueing.
-* High bandwith requirement
+* High bandwidth requirement
 
 Despite these drawbacks, I think this is the way to go for now. I haven't found another model
 where we are guaranteed not to drop transactions.
  */
 
-    override fun enqueue(tx: net.postchain.core.Transaction): Boolean {
-        return if (queue.enqueue(tx)) {
+    override fun enqueue(tx: net.postchain.core.Transaction): TransactionResult {
+        val result = queue.enqueue(tx)
+        if (result == TransactionResult.OK) {
             logger.debug("Node broadcasting tx ${tx.getRID().toHex()}")
             network.broadcastPacket(net.postchain.ebft.message.Transaction(tx.getRawData()))
-            true
-        } else
-            false
+        }
+        return result
     }
 }

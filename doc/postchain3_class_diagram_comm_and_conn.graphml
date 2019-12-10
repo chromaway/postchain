@@ -17,7 +17,7 @@
     <node id="n0">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry height="673.3492874042073" width="1114.39692373864" x="653.438269143659" y="-501.28269435672485"/>
+          <y:Geometry height="673.3492874042073" width="1114.39692373864" x="861.4599160602947" y="-513.2832774201132"/>
           <y:Fill color="#CCFFFF" transparent="false"/>
           <y:BorderStyle color="#999999" raised="false" type="dashed" width="3.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="4.0" x="555.19846186932" y="334.67464370210365">
@@ -179,10 +179,10 @@
     <node id="n9">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry height="814.5821352674544" width="1180.152737977466" x="-634.1593754565554" y="-642.515542219972"/>
+          <y:Geometry height="814.5821352674544" width="1466.0712222949262" x="-634.1593754565554" y="-642.515542219972"/>
           <y:Fill color="#CCFFFF" transparent="false"/>
           <y:BorderStyle color="#999999" raised="false" type="dashed" width="3.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="4.0" x="588.076368988733" y="405.2910676337272">
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="4.0" x="731.0356111474631" y="405.2910676337272">
             <y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
@@ -201,7 +201,7 @@
           <y:Geometry height="73.62688755881595" width="245.0" x="-991.9424137467338" y="-150.74871580303943"/>
           <y:Fill color="#C0C0C0" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="34.265625" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="165.53515625" x="39.732421875" y="19.680631279407976">Gtv 
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="34.265625" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="165.53515625" x="39.732421875" y="3.0">Gtv 
 (Described Elsewhere)<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
@@ -220,7 +220,7 @@
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="255.31024349917732" width="219.0" x="750.4444552845525" y="-481.9204105872444"/>
+          <y:Geometry height="255.31024349917732" width="219.0" x="958.4661022011883" y="-493.9209936506328"/>
           <y:Fill color="#C0C0C0" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="104.50244140625" x="57.248779296875" y="3.0">CryptoSystem<y:LabelModel>
@@ -255,7 +255,7 @@ fun getRandomBytes(
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="194.00000000000006" width="254.8333333333328" x="732.5277886178861" y="-190.68038352699725"/>
+          <y:Geometry height="194.00000000000006" width="254.8333333333328" x="940.5494355345219" y="-202.68096659038562"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="185.94921875" x="34.4420572916664" y="3.0">SECP256K1CryptoSystem<y:LabelModel>
@@ -285,10 +285,10 @@ fun secp256k1_verify(
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="87.33333333333348" width="219.0" x="1508.124256919748" y="-179.70346379891254"/>
+          <y:Geometry height="87.33333333333348" width="219.0" x="1716.1459038363837" y="-191.7040468623009"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="148.625" x="35.1875" y="34.10026041666674">Secp256k1SigMaker<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="148.625" x="35.1875" y="3.0">Secp256k1SigMaker<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -308,10 +308,10 @@ digestFun: (ByteArray) -&gt; Hash</y:AttributeLabel>
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="80.12942253602603" width="219.0" x="1147.2777886178865" y="-176.1015084002588"/>
+          <y:Geometry height="80.12942253602603" width="219.0" x="1355.2994355345222" y="-188.10209146364718"/>
           <y:Fill color="#CCFFCC" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="73.4560546875" x="72.77197265625" y="30.498305018013014">Signature<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="73.4560546875" x="72.77197265625" y="3.0">Signature<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -330,10 +330,10 @@ digestFun: (ByteArray) -&gt; Hash</y:AttributeLabel>
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="28.0" width="158.0" x="674.0694552845526" y="81.31961647300275"/>
+          <y:Geometry height="28.0" width="158.0" x="882.0911022011884" y="69.31903340961438"/>
           <y:Fill color="#FFFFFF" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="98.0341796875" x="29.98291015625" y="4.43359375">ECDSASigner<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="98.0341796875" x="29.98291015625" y="3.0">ECDSASigner<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -351,10 +351,10 @@ digestFun: (ByteArray) -&gt; Hash</y:AttributeLabel>
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="28.0" width="203.0" x="887.8194552845529" y="81.31961647300275"/>
+          <y:Geometry height="28.0" width="203.0" x="1095.8411022011887" y="69.31903340961438"/>
           <y:Fill color="#FFFFFF" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="154.71240234375" x="24.143798828125" y="4.43359375">HMacDSAKCalculator<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="154.71240234375" x="24.143798828125" y="3.0">HMacDSAKCalculator<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -372,10 +372,10 @@ digestFun: (ByteArray) -&gt; Hash</y:AttributeLabel>
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="28.0" width="158.0" x="780.9444552845526" y="124.31961647300275"/>
+          <y:Geometry height="28.0" width="158.0" x="988.9661022011884" y="112.31903340961438"/>
           <y:Fill color="#FFFFFF" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="106.0830078125" x="25.95849609375" y="4.43359375">SHA256Digest<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="106.0830078125" x="25.95849609375" y="3.0">SHA256Digest<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -396,7 +396,7 @@ digestFun: (ByteArray) -&gt; Hash</y:AttributeLabel>
           <y:Geometry height="60.91281951219514" width="293.85469918699187" x="-506.77219718800234" y="77.12552561333928"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="208.09619140625" x="42.87925389037093" y="20.89000350609757">GTXBlockchainConfiguration<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="208.09619140625" x="42.87925389037093" y="3.0">GTXBlockchainConfiguration<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -414,10 +414,10 @@ digestFun: (ByteArray) -&gt; Hash</y:AttributeLabel>
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="244.0" width="366.42734959349593" x="-543.0585223912544" y="-235.93527202363146"/>
+          <y:Geometry height="244.0" width="313.716120641115" x="-516.7029079150639" y="-235.93527202363146"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="213.548828125" x="76.43926073424797" y="3.0">BaseBlockchainConfiguration<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="213.548828125" x="50.08364625805751" y="3.0">BaseBlockchainConfiguration<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -446,7 +446,7 @@ blockchainRID: ByteArray</y:AttributeLabel>
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="412.16058538538994" width="283.23144255832153" x="-40.26492906585531" y="-320.0155647163264"/>
+          <y:Geometry height="412.16058538538994" width="283.23144255832153" x="-123.87654361429009" y="-320.0155647163264"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="247.4580078125" x="17.886717372910766" y="3.0">BaseBlockchainConfigurationData<y:LabelModel>
@@ -558,7 +558,7 @@ fun setRestartHandler(
           <y:Geometry height="76.0" width="196.0" x="41.818710439195684" y="-2877.8168136067566"/>
           <y:Fill color="#C0C0C0" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="105.34033203125" x="45.329833984375" y="28.43359375">Shutdownable<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="105.34033203125" x="45.329833984375" y="3.0">Shutdownable<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -676,7 +676,7 @@ fun getBlockBuildingStrategy(
       <data key="d4"/>
       <data key="d6">
         <y:UMLNoteNode>
-          <y:Geometry height="36.32158024691353" width="238.69300411522636" x="-25.65181251332683" y="-544.7181040793805"/>
+          <y:Geometry height="36.32158024691353" width="238.69300411522636" x="-132.6715803863426" y="-498.39611500001547"/>
           <y:Fill hasColor="false" transparent="false"/>
           <y:BorderStyle hasColor="false" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="30" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="38.921875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="228.970703125" x="4.861150495113179" y="-1.3001473765432365">Configuration<y:LabelModel>
@@ -1229,7 +1229,7 @@ yourPubKey:byte[]</y:AttributeLabel>
           <y:Geometry height="80.41594389578552" width="158.46393742222153" x="-2181.3822656031166" y="-172.57999660550303"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="73.4560546875" x="42.50394136736077" y="30.64156569789276">Signature<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="73.4560546875" x="42.50394136736077" y="3.0">Signature<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -1251,7 +1251,7 @@ data: byte[]</y:AttributeLabel>
           <y:Geometry height="134.44468606528727" width="204.96628764771458" x="-2457.2515771813546" y="-139.8271613032784"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="49.728515625" x="77.61888601135752" y="57.655936782643636">Status<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="49.728515625" x="77.61888601135729" y="3.0">Status<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -1299,7 +1299,7 @@ transactions: Vector&lt;byte[]&gt; </y:AttributeLabel>
           <y:Geometry height="62.67516288490424" width="157.1670249146364" x="-2181.3822656031166" y="-68.05763812289541"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="88.169921875" x="34.49855151981819" y="21.77117519245212">Transaction<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="88.169921875" x="34.49855151981819" y="3.0">Transaction<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -1630,7 +1630,7 @@ subjectID: ByteArray</y:AttributeLabel>
           <y:Geometry height="117.71190397547889" width="206.74618184951396" x="1744.7174945686857" y="-2610.100574069456"/>
           <y:Fill color="#C0C0C0" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="126.1923828125" x="40.27689951850698" y="49.289545737739445">ApiInfrastructure<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="126.1923828125" x="40.27689951850698" y="3.0">ApiInfrastructure<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -1654,7 +1654,7 @@ fun disconnectProcess(
           <y:Geometry height="132.57988806130288" width="206.74618184951396" x="1744.7174945686857" y="-2126.5208286911275"/>
           <y:Fill color="#FF99CC" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="160.71728515625" x="23.01444834663198" y="56.72353778065144">BaseApiInfrastructure<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="160.71728515625" x="23.01444834663198" y="3.0">BaseApiInfrastructure<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -2005,7 +2005,7 @@ proof: GtvMerkleProofTree</y:AttributeLabel>
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="148.44705401753163" width="147.87994875095796" x="1543.684282544269" y="-420.92699080767807"/>
+          <y:Geometry height="148.44705401753163" width="147.87994875095796" x="1751.7059294609048" y="-432.92757387106644"/>
           <y:Fill color="#C0C0C0" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="69.90771484375" x="38.98611695360398" y="3.0">SigMaker<y:LabelModel>
@@ -2324,7 +2324,7 @@ ephemeralPubKey: ByteArray?</y:AttributeLabel>
           <y:Geometry height="194.0" width="339.9644838216486" x="-2531.445946217971" y="-2665.4552825687692"/>
           <y:Fill color="#C0C0C0" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="34.265625" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="109.853515625" x="115.05548409832431" y="3.0">XConnector
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="34.265625" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="109.853515625" x="115.05548409832409" y="79.8671875">XConnector
 &lt;PacketType&gt;<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
@@ -2380,7 +2380,7 @@ fun connectPeer(
           <y:Geometry height="111.3254625479085" width="248.70724584899654" x="-2485.8173272316453" y="-2441.4552825687692"/>
           <y:Fill color="#FF99CC" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="34.265625" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="116.70263671875" x="66.00230456512327" y="3.0">NettyConnector
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="34.265625" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="116.70263671875" x="66.00230456512327" y="38.52991877395425">NettyConnector
 &lt;PacketType&gt;<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
@@ -2585,7 +2585,7 @@ fun run(port: Int) </y:MethodLabel>
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="196.1130867107836" width="331.5162949887813" x="1383.2011995799044" y="-2190.0540273406086"/>
+          <y:Geometry height="220.6477678231645" width="331.5162949887813" x="1383.2011995799044" y="-2190.0540273406086"/>
           <y:Fill color="#FF99CC" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="253.87548828125" x="38.82040335376564" y="3.0">EBFTSynchronizationInfrastructure<y:LabelModel>
@@ -2596,10 +2596,9 @@ fun run(port: Int) </y:MethodLabel>
             </y:ModelParameter>
           </y:NodeLabel>
           <y:UML clipContent="true" constraint="" hasDetailsColor="false" omitDetails="false" stereotype="" use3DEffect="true">
-            <y:AttributeLabel>config: Configuration
--connectionManagers = 
-     mutableListOf&lt;XConnectionManager&gt;()
- </y:AttributeLabel>
+            <y:AttributeLabel>nodeConfigProvider: NodeConfigurationProvider
+-nodeConfig: NodeConfiguration
+connectionManager: XConnectionManager</y:AttributeLabel>
             <y:MethodLabel>fun privKey(): ByteArray
 
 fun buildXCommunicationManager(
@@ -2648,7 +2647,7 @@ fun buildXCommunicationManager(
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="130.00000000000006" width="188.3086565066069" x="317.4889258943757" y="-402.61989612202376"/>
+          <y:Geometry height="110.83228038095234" width="188.3086565066069" x="261.58307700548687" y="-117.1970367051573"/>
           <y:Fill color="#C0C0C0" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="137.71337890625" x="25.297638800178447" y="3.0">BlockchainContext<y:LabelModel>
@@ -2672,10 +2671,10 @@ nodeRID: ByteArray?</y:AttributeLabel>
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="68.50977699326847" width="203.0" x="310.14325414767916" y="-127.93527202363146"/>
+          <y:Geometry height="49.342057374220644" width="203.0" x="254.23740525879032" y="42.80296329484287"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="172.23828125" x="15.380859375" y="24.688482246634237">BaseBlockchainContext<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="172.23828125" x="15.380859375" y="3.0">BaseBlockchainContext<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -2810,7 +2809,7 @@ bytes: ByteArray</y:AttributeLabel>
           <y:Geometry height="50.81344377940809" width="100.0" x="1873.2933097980556" y="-1750.3957572021018"/>
           <y:Fill color="#FFFFFF" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="34.265625" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="62.4365234375" x="18.78173828125" y="8.273909389703931">Service
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="34.265625" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="62.4365234375" x="18.78173828125" y="3.0">Service
 (Spark!)<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
@@ -2832,7 +2831,7 @@ bytes: ByteArray</y:AttributeLabel>
           <y:Geometry height="50.81344377940809" width="100.0" x="1705.089782675244" y="-1756.4762488975396"/>
           <y:Fill color="#FFFFFF" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="34.265625" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="62.4365234375" x="18.78173828125" y="8.273909389704158">Request
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="34.265625" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="62.4365234375" x="18.78173828125" y="3.0">Request
 (Spark!)<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
@@ -2875,7 +2874,7 @@ privateKey: ByteArray?</y:AttributeLabel>
       <data key="d4"/>
       <data key="d6">
         <y:UMLNoteNode>
-          <y:Geometry height="36.32158024691353" width="238.69300411522636" x="1234.1899342756642" y="30.279136287592223"/>
+          <y:Geometry height="36.32158024691353" width="238.69300411522636" x="1442.2115811923" y="18.278553224203847"/>
           <y:Fill hasColor="false" transparent="false"/>
           <y:BorderStyle hasColor="false" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="30" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="38.921875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="114.126953125" x="62.28302549511318" y="-1.3001473765432365">Crypto<y:LabelModel>
@@ -3149,6 +3148,121 @@ ALL blockchains.<y:LabelModel>
         </y:UMLClassNode>
       </data>
     </node>
+    <node id="n128">
+      <data key="d4"/>
+      <data key="d5"/>
+      <data key="d6">
+        <y:UMLClassNode>
+          <y:Geometry height="323.1141080986348" width="293.85469918699187" x="189.35489894403145" y="-594.5944306158531"/>
+          <y:Fill color="#FFCC00" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="138.28466796875" x="77.78501560912093" y="3.0">NodeConfiguration<y:LabelModel>
+              <y:SmartNodeLabelModel distance="4.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+          <y:UML clipContent="true" constraint="" hasDetailsColor="false" omitDetails="false" stereotype="" use3DEffect="true">
+            <y:AttributeLabel>appConfig: AppConfiguration
+    val blockchainConfigProvider: String
+    val databaseDriverclass: String
+    val databaseUrl: String
+    val databaseSchema: String
+    val databaseUsername: String
+    val databasePassword: String
+    val privKey: String
+    val privKeyByteArray: ByteArray
+    val pubKey: String
+    val pubKeyByteArray: ByteArray
+    val restApiBasePath: String
+    val restApiPort: Int
+    val restApiSsl: Boolean
+    val restApiSslCertificate: String
+    val restApiSslCertificatePassword: String
+    open val peerInfos: Array&lt;PeerInfo&gt; 
+    val activeChainIds: Array&lt;String&gt;
+</y:AttributeLabel>
+            <y:MethodLabel/>
+          </y:UML>
+        </y:UMLClassNode>
+      </data>
+    </node>
+    <node id="n129">
+      <data key="d4"/>
+      <data key="d5"/>
+      <data key="d6">
+        <y:UMLClassNode>
+          <y:Geometry height="95.20848172043009" width="252.54004520473563" x="532.1780977536184" y="-480.6416174267507"/>
+          <y:Fill color="#C0C0C0" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="198.060546875" x="27.239749164867817" y="3.0">NodeConfigurationProvider<y:LabelModel>
+              <y:SmartNodeLabelModel distance="4.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+          <y:UML clipContent="true" constraint="" hasDetailsColor="false" omitDetails="false" stereotype="" use3DEffect="true">
+            <y:AttributeLabel>fun getConfiguration(): NodeConfig</y:AttributeLabel>
+            <y:MethodLabel/>
+          </y:UML>
+        </y:UMLClassNode>
+      </data>
+    </node>
+    <node id="n130">
+      <data key="d4"/>
+      <data key="d5"/>
+      <data key="d6">
+        <y:UMLClassNode>
+          <y:Geometry height="119.16813124423959" width="303.38034695340457" x="506.75794687928396" y="-342.52037193073915"/>
+          <y:Fill color="#FFCC00" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="249.603515625" x="26.888415664202284" y="3.0">ManualNodeConfigurationProvider<y:LabelModel>
+              <y:SmartNodeLabelModel distance="4.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+          <y:UML clipContent="true" constraint="" hasDetailsColor="false" omitDetails="false" stereotype="" use3DEffect="true">
+            <y:AttributeLabel>val appConfig: AppConfig
+</y:AttributeLabel>
+            <y:MethodLabel>open fun getPeerInfoCollection(
+         appConfig: AppConfig
+ ): Array&lt;PeerInfo&gt; </y:MethodLabel>
+          </y:UML>
+        </y:UMLClassNode>
+      </data>
+    </node>
+    <node id="n131">
+      <data key="d4"/>
+      <data key="d5"/>
+      <data key="d6">
+        <y:UMLClassNode>
+          <y:Geometry height="163.5435093333333" width="293.85469918699187" x="511.5207707624903" y="-134.11748783155303"/>
+          <y:Fill color="#FFCC00" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="262.9716796875" x="15.441509749745933" y="3.0">ManagedNodeConfigurationProvider<y:LabelModel>
+              <y:SmartNodeLabelModel distance="4.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+          <y:UML clipContent="true" constraint="" hasDetailsColor="false" omitDetails="false" stereotype="" use3DEffect="true">
+            <y:AttributeLabel>-lateinit var managedPeerSource: 
+           PeerInfoDataSource
+</y:AttributeLabel>
+            <y:MethodLabel>fun setPeerInfoDataSource(
+      src: PeerInfoDataSource) 
+fun getPeerInfoCollection(
+         appConfig: AppConfig
+ ): Array&lt;PeerInfo&gt; </y:MethodLabel>
+          </y:UML>
+        </y:UMLClassNode>
+      </data>
+    </node>
     <edge id="e0" source="n12" target="n11">
       <data key="d10">
         <y:PolyLineEdge>
@@ -3280,7 +3394,7 @@ ALL blockchains.<y:LabelModel>
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
             <y:Point x="-95.05758559149035" y="126.50668218222893"/>
-            <y:Point x="499.9693540402493" y="126.50668218222893"/>
+            <y:Point x="768.317428706916" y="126.50668218222893"/>
           </y:Path>
           <y:LineStyle color="#3366FF" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
@@ -3302,7 +3416,7 @@ ALL blockchains.<y:LabelModel>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
-            <y:Point x="428.14142538108763" y="-462.8086047965546"/>
+            <y:Point x="14.438143603309982" y="-710.1723977748511"/>
           </y:Path>
           <y:LineStyle color="#000000" type="dashed" width="2.0"/>
           <y:Arrows source="none" target="standard"/>
@@ -3975,8 +4089,8 @@ ALL blockchains.<y:LabelModel>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="-21.23954939681198" ty="2.8421709430404007E-14">
-            <y:Point x="1145.2950082935781" y="-57.96810568807325"/>
-            <y:Point x="1391.4425124403672" y="-57.96810568807325"/>
+            <y:Point x="1353.3166552102139" y="-69.96868875146163"/>
+            <y:Point x="1599.464159357003" y="-69.96868875146163"/>
           </y:Path>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
@@ -3989,9 +4103,9 @@ ALL blockchains.<y:LabelModel>
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
             <y:Point x="1243.1725725614413" y="-1258.4909362114781"/>
-            <y:Point x="1243.1725725614413" y="-404.5633029131376"/>
-            <y:Point x="1376.732051105718" y="-381.2748394686247"/>
-            <y:Point x="1475.8156499290412" y="-381.2748394686247"/>
+            <y:Point x="1251.530473446331" y="-393.27542253201307"/>
+            <y:Point x="1584.7536980223538" y="-393.27542253201307"/>
+            <y:Point x="1683.837296845677" y="-393.27542253201307"/>
           </y:Path>
           <y:LineStyle color="#00FF00" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
@@ -4005,10 +4119,10 @@ ALL blockchains.<y:LabelModel>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
             <y:Point x="1231.455426984439" y="-1243.5376461340902"/>
             <y:Point x="1231.455426984439" y="-586.0471038429806"/>
-            <y:Point x="1231.455426984439" y="-478.3988751509347"/>
-            <y:Point x="1231.455426984439" y="-404.5633029131376"/>
-            <y:Point x="1184.8227514345447" y="-293.7066702589409"/>
-            <y:Point x="1127.5689332840584" y="-256.9084574015018"/>
+            <y:Point x="1231.455426984439" y="-424.90974951591033"/>
+            <y:Point x="1231.455426984439" y="-271.20867886541487"/>
+            <y:Point x="1231.455426984439" y="-240.21754462391652"/>
+            <y:Point x="1231.455426984439" y="-174.6677523379061"/>
           </y:Path>
           <y:LineStyle color="#00FF00" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
@@ -4020,8 +4134,8 @@ ALL blockchains.<y:LabelModel>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
-            <y:Point x="690.0088625974581" y="-207.5473026297675"/>
-            <y:Point x="1368.9189668571441" y="-207.5473026297675"/>
+            <y:Point x="898.0305095140939" y="-219.54788569315588"/>
+            <y:Point x="1576.94061377378" y="-219.54788569315588"/>
           </y:Path>
           <y:LineStyle color="#3366FF" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
@@ -4306,10 +4420,10 @@ ALL blockchains.<y:LabelModel>
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e97" source="n103" target="n19">
+    <edge id="e97" source="n103" target="n128">
       <data key="d10">
         <y:PolyLineEdge>
-          <y:Path sx="35.858916400350154" sy="62.98601386380678" tx="0.0" ty="0.0">
+          <y:Path sx="35.858916400350154" sy="70.8658641614439" tx="22.320026069542887" ty="-136.15343807121607">
             <y:Point x="1077.9370915361699" y="-1815.884586851199"/>
             <y:Point x="1082.258134415452" y="-1246.9213931659926"/>
             <y:Point x="763.7770193238738" y="-1246.9213931659926"/>
@@ -4339,7 +4453,7 @@ ALL blockchains.<y:LabelModel>
     <edge id="e99" source="n103" target="n29">
       <data key="d10">
         <y:PolyLineEdge>
-          <y:Path sx="41.2602199994526" sy="45.122489363128494" tx="0.0" ty="0.0">
+          <y:Path sx="41.2602199994526" sy="50.76752767285534" tx="0.0" ty="0.0">
             <y:Point x="780.4989699925212" y="-1744.6719486651443"/>
             <y:Point x="415.7514274404329" y="-1744.6719486651443"/>
           </y:Path>
@@ -5057,11 +5171,43 @@ has been called)<y:LabelModel>
       </data>
     </edge>
     <edge id="e156" source="n33" target="n127">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
           <y:LineStyle color="#FF0000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="white_delta"/>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e157" source="n130" target="n129">
+      <data key="d9"/>
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="white_delta"/>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e158" source="n129" target="n128">
+      <data key="d9"/>
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e159" source="n131" target="n130">
+      <data key="d9"/>
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="white_delta"/>
           <y:BendStyle smoothed="false"/>
         </y:PolyLineEdge>

@@ -19,7 +19,7 @@ class GetLastBlocksExplorerTest : IntegrationTest() {
         val nodesCount = 1
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         val nodeConfig = "classpath:/net/postchain/rest_api/node0.properties"
-        val blockchainConfig = "/net/postchain/blockexplorer/blockchain_config.xml"
+        val blockchainConfig = "/net/postchain/devtools/blockexplorer/blockchain_config.xml"
 
         // Creating all nodes
         createSingleNode(0, nodesCount, nodeConfig, blockchainConfig)

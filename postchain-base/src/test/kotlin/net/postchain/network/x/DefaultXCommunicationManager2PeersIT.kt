@@ -2,10 +2,7 @@ package net.postchain.network.x
 
 import assertk.assert
 import assertk.assertions.containsExactly
-import net.postchain.base.BasePeerCommConfiguration
-import net.postchain.base.PeerInfo
-import net.postchain.base.SECP256K1CryptoSystem
-import net.postchain.base.secp256k1_derivePubKey
+import net.postchain.base.*
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.ebft.message.GetBlockAtHeight
 import org.awaitility.Awaitility.await
@@ -17,7 +14,7 @@ import org.junit.Test
 class DefaultXCommunicationManager2PeersIT {
 
     private val cryptoSystem = SECP256K1CryptoSystem()
-    private val blockchainRid = ByteArray(64, Int::toByte)
+    private val blockchainRid = BlockchainRid.buildRepeat(0)
 
     private lateinit var peerInfo1: PeerInfo
     private lateinit var peerInfo2: PeerInfo
@@ -25,11 +22,11 @@ class DefaultXCommunicationManager2PeersIT {
     private lateinit var context1: EbftIntegrationTestContext
     private lateinit var context2: EbftIntegrationTestContext
 
-    val privKey1 = cryptoSystem.getRandomBytes(32)
-    val pubKey1 = secp256k1_derivePubKey(privKey1)
+    private val privKey1 = cryptoSystem.getRandomBytes(32)
+    private val pubKey1 = secp256k1_derivePubKey(privKey1)
 
-    val privKey2 = cryptoSystem.getRandomBytes(32)
-    val pubKey2 = secp256k1_derivePubKey(privKey2)
+    private val privKey2 = cryptoSystem.getRandomBytes(32)
+    private val pubKey2 = secp256k1_derivePubKey(privKey2)
 
     @Before
     fun setUp() {
@@ -40,11 +37,11 @@ class DefaultXCommunicationManager2PeersIT {
 
         // Creating
         context1 = EbftIntegrationTestContext(
-                BasePeerCommConfiguration(peers, cryptoSystem, privKey1, pubKey1),
+                BasePeerCommConfiguration.build(peers, cryptoSystem, privKey1, pubKey1),
                 blockchainRid)
 
         context2 = EbftIntegrationTestContext(
-                BasePeerCommConfiguration(peers, cryptoSystem, privKey2, pubKey2),
+                BasePeerCommConfiguration.build(peers, cryptoSystem, privKey2, pubKey2),
                 blockchainRid)
 
         // Initializing

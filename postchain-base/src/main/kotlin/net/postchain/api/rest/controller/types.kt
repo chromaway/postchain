@@ -16,6 +16,7 @@ interface Model {
     fun query(query: Query): QueryResult
     fun query(query: Gtv): Gtv
     fun nodeQuery(subQuery: String): String
+    fun debugQuery(subQuery: String?): String
 }
 
 data class Query(val json: String)
@@ -27,3 +28,5 @@ class NotSupported(message: String) : Exception(message)
 class NotFoundError(message: String) : Exception(message)
 class BadFormatError(message: String) : Exception(message)
 class OverloadedException(message: String) : Exception(message)
+class InvalidTnxException(message: String) : Exception(message)
+class DuplicateTnxException(message: String) : Exception(message)

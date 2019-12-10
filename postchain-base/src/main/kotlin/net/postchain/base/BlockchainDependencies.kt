@@ -14,7 +14,7 @@ import net.postchain.core.ProgrammerMistake
  * @property chainId is the internal ID of the BC
  */
 data class BlockchainRelatedInfo(
-        val blockchainRid: Hash,
+        val blockchainRid: BlockchainRid,
         val nickname: String?,
         var chainId: Long? // We can set this one later
 ) {
@@ -82,7 +82,7 @@ class BlockchainDependencies(
         private val internalArray: Array<BlockchainDependency>
 ) {
     private val chaindIdMap = mutableMapOf<Long, BlockchainDependency>() // Convenience lookups
-    private val blockchainRidMap = mutableMapOf<Hash, BlockchainDependency>() // Convenience lookups
+    private val blockchainRidMap = mutableMapOf<BlockchainRid, BlockchainDependency>() // Convenience lookups
 
     companion object : KLogging() {
 
@@ -105,7 +105,7 @@ class BlockchainDependencies(
     operator fun get(index: Int): BlockchainDependency = internalArray[index]
 
     fun getFromChainId(chainId: Long): BlockchainDependency? = chaindIdMap[chainId]
-    fun getFromBlockchainRID(bcRid: Hash): BlockchainDependency? = blockchainRidMap[bcRid]
+    fun getFromBlockchainRID(bcRid: BlockchainRid): BlockchainDependency? = blockchainRidMap[bcRid]
 
     fun add(dep: BlockchainDependency) {
         if (dep.blockchainRelatedInfo.chainId != null) {

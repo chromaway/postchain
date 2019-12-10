@@ -9,9 +9,9 @@ import kotlin.test.assertTrue
 class BlockchainDependenciesTest {
 
 
-    val dummyHash1 = "thefirst".toByteArray()
-    val dummyHash2 = "theSecond".toByteArray()
-    val dummyHash3 = "theThird".toByteArray()
+    val dummyHash1 = BlockchainRid("thefirst".toByteArray())
+    val dummyHash2 = BlockchainRid("theSecond".toByteArray())
+    val dummyHash3 = BlockchainRid("theThird".toByteArray())
 
     val dummyHash4 = "the4".toByteArray()
     val dummyHash5 = "the5".toByteArray()

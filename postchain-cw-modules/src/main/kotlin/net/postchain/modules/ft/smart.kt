@@ -2,6 +2,7 @@
 
 package net.postchain.modules.ft
 
+import net.postchain.base.BlockchainRid
 import net.postchain.core.TxEContext
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvArray
@@ -20,7 +21,7 @@ class AssuranceContract(
     val thresholdAmount = descriptor[4].asInteger()
     val deadline = descriptor[5].asInteger()
 
-    override fun isCompatibleWithblockchainRID(blockchainRID: ByteArray): Boolean {
+    override fun isCompatibleWithblockchainRID(blockchainRID: BlockchainRid): Boolean {
         return true
     }
 

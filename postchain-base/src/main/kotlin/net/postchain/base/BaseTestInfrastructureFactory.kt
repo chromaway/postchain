@@ -1,8 +1,10 @@
 package net.postchain.base
 
 import net.postchain.config.blockchain.BlockchainConfigurationProvider
+import net.postchain.config.blockchain.ManualBlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
+import net.postchain.debug.NodeDiagnosticContext
 
 class TestBlockchainProcess(val _engine: BlockchainEngine) : BlockchainProcess {
     override fun getEngine(): BlockchainEngine {
@@ -16,7 +18,8 @@ class TestBlockchainProcess(val _engine: BlockchainEngine) : BlockchainProcess {
 
 
 class TestSynchronizationInfrastructure : SynchronizationInfrastructure {
-    override fun makeBlockchainProcess(processName: String, engine: BlockchainEngine, restartHandler: RestartHandler): BlockchainProcess {
+
+    override fun makeBlockchainProcess(processName: String, engine: BlockchainEngine): BlockchainProcess {
         return TestBlockchainProcess(engine)
     }
 
@@ -24,18 +27,34 @@ class TestSynchronizationInfrastructure : SynchronizationInfrastructure {
 }
 
 class BaseTestInfrastructureFactory : InfrastructureFactory {
-    override fun makeBlockchainInfrastructure(nodeConfigProvider: NodeConfigurationProvider): BlockchainInfrastructure {
+
+    override fun makeBlockchainConfigurationProvider(): BlockchainConfigurationProvider {
+        return ManualBlockchainConfigurationProvider()
+    }
+
+    override fun makeBlockchainInfrastructure(
+            nodeConfigProvider: NodeConfigurationProvider,
+            nodeDiagnosticContext: NodeDiagnosticContext
+    ): BlockchainInfrastructure {
+
+        val syncInfra = TestSynchronizationInfrastructure()
+        val apiInfra = BaseApiInfrastructure(nodeConfigProvider, nodeDiagnosticContext)
+
         return BaseBlockchainInfrastructure(
-                nodeConfigProvider,
-                TestSynchronizationInfrastructure(),
-                BaseApiInfrastructure(nodeConfigProvider))
+                nodeConfigProvider, syncInfra, apiInfra, nodeDiagnosticContext)
     }
 
     override fun makeProcessManager(
             nodeConfigProvider: NodeConfigurationProvider,
-            blockchainConfig: BlockchainConfigurationProvider,
-            blockchainInfrastructure: BlockchainInfrastructure
+            blockchainInfrastructure: BlockchainInfrastructure,
+            blockchainConfigurationProvider: BlockchainConfigurationProvider,
+            nodeDiagnosticContext: NodeDiagnosticContext
     ): BlockchainProcessManager {
-        return BaseBlockchainProcessManager(blockchainInfrastructure, nodeConfigProvider, blockchainConfig)
+
+        return BaseBlockchainProcessManager(
+                blockchainInfrastructure,
+                nodeConfigProvider,
+                blockchainConfigurationProvider,
+                nodeDiagnosticContext)
     }
 }

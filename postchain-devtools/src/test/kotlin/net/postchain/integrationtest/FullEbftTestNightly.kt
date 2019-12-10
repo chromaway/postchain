@@ -26,7 +26,7 @@ class FullEbftTestNightly : FullEbftTestNightlyCore() {
         }
 
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-        createNodes(nodesCount, "/net/postchain/full_ebft/blockchain_config_$nodesCount.xml")
+        createNodes(nodesCount, "/net/postchain/devtools/full_ebft/blockchain_config_$nodesCount.xml")
 
         runXNodesWithYTxPerBlockTest(blocksCount, txPerBlock)
     }

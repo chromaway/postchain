@@ -1,5 +1,6 @@
 package net.postchain.network.netty2
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerID
 import net.postchain.base.PeerInfo
 import net.postchain.network.IdentPacketInfo
@@ -22,7 +23,7 @@ class IntMockPacketDecoder(
 ) : XPacketDecoder<Int> {
 
     // FYI: [et]: This logic corresponds to the [EbftPacketConverter]'s one
-    override fun parseIdentPacket(bytes: ByteArray): IdentPacketInfo = IdentPacketInfo(bytes, byteArrayOf())
+    override fun parseIdentPacket(bytes: ByteArray): IdentPacketInfo = IdentPacketInfo(bytes, BlockchainRid.EMPTY_RID)
 
     override fun decodePacket(pubKey: ByteArray, bytes: ByteArray): Int = ByteBuffer.wrap(bytes).int
 

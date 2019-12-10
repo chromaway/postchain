@@ -14,7 +14,7 @@ class NodeConfigTest {
         val nodeConfig = NodeConfig(appConfig)
 
         assertk.assert(nodeConfig.blockchainConfigProvider).isEmpty()
-        assertk.assert(nodeConfig.infrastructure).isEmpty()
+        assertk.assert(nodeConfig.infrastructure).isEqualTo("base/ebft")
 
         assertk.assert(nodeConfig.databaseDriverclass).isEmpty()
         assertk.assert(nodeConfig.databaseUrl).isEmpty()
@@ -33,7 +33,7 @@ class NodeConfigTest {
         assertk.assert(nodeConfig.restApiSslCertificate).isEmpty()
         assertk.assert(nodeConfig.restApiSslCertificatePassword).isEmpty()
 
-        assertk.assert(nodeConfig.peerInfos).isEmpty()
+        assertk.assert(nodeConfig.peerInfoMap.entries).isEmpty()
 
         assertk.assert(nodeConfig.activeChainIds).isEmpty()
     }

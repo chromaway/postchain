@@ -1,5 +1,6 @@
 package net.postchain.gtx
 
+import net.postchain.base.BlockchainRid
 import net.postchain.core.UserMistake
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
@@ -8,15 +9,17 @@ import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.*
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Ignore
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
+@Ignore
 class SQLModuleIntegrationTest : IntegrationTest() {
 
-    private fun makeTx(ownerIdx: Int, key: String, value: String): ByteArray {
+    private fun makeTx(ownerIdx: Int, key: String, value: String, bcRid: BlockchainRid): ByteArray {
         val owner = pubKey(ownerIdx)
-        return GTXDataBuilder(net.postchain.devtools.gtx.testBlockchainRID, arrayOf(owner), net.postchain.devtools.gtx.myCS).run {
+        return GTXDataBuilder(bcRid, arrayOf(owner), net.postchain.devtools.gtx.myCS).run {
             addOperation("test_set_value", arrayOf(gtv(key), gtv(value), gtv(owner)))
             finish()
             sign(net.postchain.devtools.gtx.myCS.buildSigMaker(owner, privKey(ownerIdx)))
@@ -24,15 +27,18 @@ class SQLModuleIntegrationTest : IntegrationTest() {
         }
     }
 
+
     @Test
     fun testBuildBlock() {
-        val node = createNode(0, "/net/postchain/gtx/blockchain_config.xml")
+        configOverrides.setProperty("infrastructure", "base/test")
+        val node = createNode(0, "/net/postchain/devtools/gtx/blockchain_config.xml")
+        val bcRid = node.getBlockchainRid(1L)!!
 
-        enqueueTx(node, makeTx(0, "k", "v"), 0)
+        enqueueTx(node, makeTx(0, "k", "v", bcRid), 0)
         buildBlockAndCommit(node)
-        enqueueTx(node, makeTx(0, "k", "v2"), 1)
-        enqueueTx(node, makeTx(0, "k2", "v2"), 1)
-        enqueueTx(node, makeTx(1, "k", "v"), -1)
+        enqueueTx(node, makeTx(0, "k", "v2", bcRid), 1)
+        enqueueTx(node, makeTx(0, "k2", "v2", bcRid), 1)
+        enqueueTx(node, makeTx(1, "k", "v", bcRid), -1)
         buildBlockAndCommit(node)
 
         verifyBlockchainTransactions(node)
@@ -80,4 +86,40 @@ class SQLModuleIntegrationTest : IntegrationTest() {
         println(result2)
     }
 
+    @Test
+    fun testQueryWithMultipleParams() {
+        configOverrides.setProperty("infrastructure", "base/test")
+        val node = createNode(0, "/net/postchain/devtools/gtx/blockchain_config.xml")
+        val bcRid = node.getBlockchainRid(1L)!!
+
+        enqueueTx(node, makeTx(0, "k", "v", bcRid), 0)
+        buildBlockAndCommit(node)
+        verifyBlockchainTransactions(node)
+        val blockQueries = node.getBlockchainInstance().getEngine().getBlockQueries()
+        val gson = make_gtv_gson()
+        var result = blockQueries.query("""{type: 'test_get_value', q_key: 'k', q_value : 'v'}""").get()
+        var gtxResult = gson.fromJson<Gtv>(result, Gtv::class.java) as GtvArray
+        assertEquals(1, gtxResult.getSize())
+    }
+
+    @Test @Ignore
+    //TODO: fix the test
+    fun testQuerySupportNullableValue() {
+        configOverrides.setProperty("infrastructure", "base/test")
+        val node = createNode(0, "/net/postchain/devtools/gtx/blockchain_config.xml")
+        val bcRid = node.getBlockchainRid(1L)!!
+
+        enqueueTx(node, makeTx(0, "k", "v", bcRid), 0)
+        buildBlockAndCommit(node)
+        verifyBlockchainTransactions(node)
+
+        val blockQueries = node.getBlockchainInstance().getEngine().getBlockQueries()
+        var result = blockQueries.query("""{type: 'test_null_value'}""").get()
+        val gson = make_gtv_gson()
+        var gtxResult = gson.fromJson<Gtv>(result, Gtv::class.java)
+
+        val hit0 = gtxResult.get(0).asDict()
+        assertNotNull(hit0.get("val"))
+        assertEquals(GtvNull, hit0.get("val"))
+    }
 }

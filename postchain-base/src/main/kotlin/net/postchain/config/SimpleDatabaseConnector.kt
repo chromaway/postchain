@@ -4,9 +4,9 @@ import net.postchain.config.app.AppConfig
 import org.apache.commons.dbcp2.BasicDataSource
 import java.sql.Connection
 
-class SimpleDatabaseConnector(private val appConfig: AppConfig) {
+class SimpleDatabaseConnector(private val appConfig: AppConfig) : DatabaseConnector {
 
-    fun <Result> withReadConnection(action: (Connection) -> Result): Result {
+    override fun <Result> withReadConnection(action: (Connection) -> Result): Result {
         val connection = openReadConnection()
 
         try {
@@ -16,29 +16,31 @@ class SimpleDatabaseConnector(private val appConfig: AppConfig) {
         }
     }
 
-    fun <Result> withWriteConnection(action: (Connection) -> Result): Result {
+    override fun <Result> withWriteConnection(action: (Connection) -> Result): Result {
         val connection = openWriteConnection()
-
+        var doCommit = false
         try {
-            return action(connection)
+            val ret = action(connection)
+            doCommit = true
+            return ret
         } finally {
-            closeWriteConnection(connection)
+            closeWriteConnection(connection, doCommit)
         }
     }
 
-    fun openReadConnection(): Connection {
+    override fun openReadConnection(): Connection {
         return createReadDataSource(appConfig).connection
     }
 
-    fun closeReadConnection(connection: Connection) {
+    override fun closeReadConnection(connection: Connection) {
         connection.close()
     }
 
-    fun openWriteConnection(): Connection {
+    override fun openWriteConnection(): Connection {
         return createWriteDataSource(appConfig).connection
     }
 
-    fun closeWriteConnection(connection: Connection, commit: Boolean = true) {
+    override fun closeWriteConnection(connection: Connection, commit: Boolean) {
         if (commit) {
             connection.commit()
         } else {
@@ -68,7 +70,7 @@ class SimpleDatabaseConnector(private val appConfig: AppConfig) {
         return BasicDataSource().apply {
             addConnectionProperty("currentSchema", appConfig.databaseSchema)
             driverClassName = appConfig.databaseDriverclass
-            url = "${appConfig.databaseUrl}?loggerLevel=TRACE&loggerFile=db.log"
+            url = appConfig.databaseUrl // + "?loggerLevel=TRACE&loggerFile=db.log"
             username = appConfig.databaseUsername
             password = appConfig.databasePassword
             defaultAutoCommit = false

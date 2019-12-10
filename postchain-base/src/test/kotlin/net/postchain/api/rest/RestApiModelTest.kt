@@ -9,6 +9,7 @@ import net.postchain.api.rest.json.JsonFactory
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
 import net.postchain.common.hexStringToByteArray
+import net.postchain.config.app.AppConfig
 import net.postchain.ebft.NodeState
 import net.postchain.ebft.rest.contract.EBFTstateNodeStatusContract
 import org.easymock.EasyMock.*
@@ -32,8 +33,11 @@ class RestApiModelTest {
     @Before
     fun setup() {
         model = createMock(Model::class.java)
-        restApi = RestApi(0, basePath)
-//        restApi.attachModel(blockchainRID, model)
+        val appConf = AppConfig(DummyConfig.getDummyConfig())
+        restApi = RestApi(0, basePath, appConf)
+
+        // We're doing this test by test instead
+        // restApi.attachModel(blockchainRID, model)
     }
 
     @After

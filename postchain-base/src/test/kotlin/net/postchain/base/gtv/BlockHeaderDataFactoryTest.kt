@@ -1,5 +1,6 @@
 package net.postchain.base.gtv
 
+import net.postchain.base.BlockchainRid
 import net.postchain.core.InitialBlockData
 import net.postchain.gtv.*
 import org.junit.Test
@@ -7,7 +8,7 @@ import kotlin.test.assertEquals
 
 class BlockHeaderDataFactoryTest {
 
-    val dummyBcRid = "a".toByteArray()
+    val dummyBcRid = BlockchainRid("a".toByteArray())
     val dummyPrevBlockRid = "b".toByteArray()
     val dummyBlockIID: Long = 1L
     val dummyChainID: Long = 2L
@@ -86,7 +87,7 @@ class BlockHeaderDataFactoryTest {
 
     private fun buildGtvArray(dependencies: Gtv): Array<Gtv>  {
 
-        val gtvBlockchainRid = GtvByteArray(dummyBcRid)
+        val gtvBlockchainRid = GtvByteArray(dummyBcRid.data)
         val previousBlockRid = GtvByteArray(dummyPrevBlockRid)
         val merkleRootHash = GtvByteArray(dummyRootHash)
         val timestamp = GtvInteger(dummyTimestamp)

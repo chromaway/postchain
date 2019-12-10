@@ -1,6 +1,9 @@
 package net.postchain.ebft.syncmanager
 
-import net.postchain.core.*
+import net.postchain.core.BlockDataWithWitness
+import net.postchain.core.BlockQueries
+import net.postchain.core.BlockchainConfiguration
+import net.postchain.core.NodeStateTracker
 import net.postchain.ebft.BlockDatabase
 import net.postchain.ebft.NodeStatus
 import net.postchain.ebft.message.CompleteBlock
@@ -27,7 +30,7 @@ class ReplicaSyncManager(
 ) : SyncManagerBase {
 
     private val parallelism = 10
-    private val nodePoolCount = 2 // used to select 1 random node
+    private val nodePoolCount = 1 // used to select 1 random node
     private val defaultBackoffDelta = 1000
     private val maxBackoffDelta = 30 * defaultBackoffDelta
     private val validatorNodes: List<XPeerID> = signers.map { XPeerID(it) }
@@ -125,6 +128,7 @@ class ReplicaSyncManager(
                             )
                         }
                     }
+
                     is Status -> {
                         val nodeStatus = NodeStatus(message.height, message.serial)
                         val index = validatorNodes.indexOf(xPeerId)
@@ -134,7 +138,8 @@ class ReplicaSyncManager(
                             nodesWithBlocks[xPeerId] = message.height - 1
                         }
                     }
-                    else -> throw ProgrammerMistake("Unhandled type ${message::class}")
+
+                    else -> replicaLogger.debug("Unhandled type ${message::class}")
                 }
             } catch (e: Exception) {
                 replicaLogger.fatal("Couldn't handle message $message. Ignoring and continuing", e)

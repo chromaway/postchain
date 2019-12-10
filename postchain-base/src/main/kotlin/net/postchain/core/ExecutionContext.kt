@@ -5,7 +5,7 @@ import java.sql.Connection
 interface ExecutionContext {
     val conn: Connection
     val chainID: Long
-    val nodeID: Int
+    val nodeID: Int // TODO: [et]: Remove it?
     fun <T> getInterface(c: Class<T>): T? {
         return null
     }

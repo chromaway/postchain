@@ -3,7 +3,7 @@
 package net.postchain
 
 import net.postchain.base.data.*
-import net.postchain.config.node.NodeConfig
+import net.postchain.config.app.AppConfig
 import org.apache.commons.dbcp2.BasicDataSource
 import org.apache.commons.dbutils.QueryRunner
 import java.sql.Connection
@@ -13,8 +13,8 @@ class StorageBuilder {
 
     companion object {
 
-        fun buildStorage(nodeConfig: NodeConfig, nodeIndex: Int, wipeDatabase: Boolean = false): BaseStorage {
-            val sqlCommands = SQLCommandsFactory.getSQLCommands(nodeConfig.databaseDriverclass)
+        fun buildStorage(appConfig: AppConfig, nodeIndex: Int, wipeDatabase: Boolean = false): BaseStorage {
+            val sqlCommands = SQLCommandsFactory.getSQLCommands(appConfig.databaseDriverclass)
 
             val db = when (sqlCommands) {
                 is PostgreSQLCommands -> PostgreSQLDatabaseAccess(sqlCommands)
@@ -22,24 +22,24 @@ class StorageBuilder {
                 else -> SQLDatabaseAccess(sqlCommands)
             }
 
-            val initSchemaWriteDataSource = createBasicDataSource(nodeConfig, false)
+            val initSchemaWriteDataSource = createBasicDataSource(appConfig, false)
 
             if (wipeDatabase) {
-                wipeDatabase(initSchemaWriteDataSource, nodeConfig, sqlCommands)
+                wipeDatabase(initSchemaWriteDataSource, appConfig, sqlCommands)
             } else {
-                createSchemaIfNotExists(initSchemaWriteDataSource, nodeConfig.databaseSchema, sqlCommands)
+                createSchemaIfNotExists(initSchemaWriteDataSource, appConfig.databaseSchema, sqlCommands)
             }
             initSchemaWriteDataSource.close()
 
             // Read DataSource
-            val readDataSource = createBasicDataSource(nodeConfig).apply {
+            val readDataSource = createBasicDataSource(appConfig).apply {
                 defaultAutoCommit = true
                 maxTotal = 2
                 defaultReadOnly = true
             }
 
             // Write DataSource
-            val writeDataSource = createBasicDataSource(nodeConfig).apply {
+            val writeDataSource = createBasicDataSource(appConfig).apply {
                 maxWaitMillis = 0
                 defaultAutoCommit = false
                 maxTotal = 1
@@ -56,28 +56,28 @@ class StorageBuilder {
             }
         }
 
-        private fun createBasicDataSource(nodeConfig: NodeConfig, withSchema: Boolean = true): BasicDataSource {
+        private fun createBasicDataSource(appConfig: AppConfig, withSchema: Boolean = true): BasicDataSource {
             return BasicDataSource().apply {
-                driverClassName = nodeConfig.databaseDriverclass
-                url = nodeConfig.databaseUrl // ?loggerLevel=OFF
-                username = nodeConfig.databaseUsername
-                password = nodeConfig.databasePassword
+                driverClassName = appConfig.databaseDriverclass
+                url = appConfig.databaseUrl // ?loggerLevel=OFF
+                username = appConfig.databaseUsername
+                password = appConfig.databasePassword
                 defaultAutoCommit = false
 
                 if (withSchema) {
-                    defaultSchema = nodeConfig.databaseSchema
+                    defaultSchema = appConfig.databaseSchema
                 }
             }
 
         }
 
-        private fun wipeDatabase(dataSource: DataSource, nodeConfig: NodeConfig, sqlCommands: SQLCommands) {
+        private fun wipeDatabase(dataSource: DataSource, appConfig: AppConfig, sqlCommands: SQLCommands) {
             dataSource.connection.use { connection ->
                 QueryRunner().let { query ->
-                    if (isSchemaExists(connection, nodeConfig.databaseSchema)) {
-                        query.update(connection, sqlCommands.dropSchemaCascade(nodeConfig.databaseSchema))
+                    if (isSchemaExists(connection, appConfig.databaseSchema)) {
+                        query.update(connection, sqlCommands.dropSchemaCascade(appConfig.databaseSchema))
                     }
-                    query.update(connection, sqlCommands.createSchema(nodeConfig.databaseSchema))
+                    query.update(connection, sqlCommands.createSchema(appConfig.databaseSchema))
                 }
                 connection.commit()
             }

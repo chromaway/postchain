@@ -3,7 +3,6 @@ package net.postchain.ebft.worker
 import net.postchain.base.NetworkAwareTxQueue
 import net.postchain.core.BlockchainEngine
 import net.postchain.core.NodeStateTracker
-import net.postchain.core.RestartHandler
 import net.postchain.ebft.BaseBlockDatabase
 import net.postchain.ebft.BaseBlockManager
 import net.postchain.ebft.BaseStatusManager
@@ -24,8 +23,7 @@ class ValidatorWorker(
         signers: List<ByteArray>,
         override val blockchainEngine: BlockchainEngine,
         nodeIndex: Int,
-        private val communicationManager: CommunicationManager<Message>,
-        override val restartHandler: RestartHandler
+        private val communicationManager: CommunicationManager<Message>
 ) : AbstractBlockchainProcess() {
 
     override val blockDatabase: BaseBlockDatabase
@@ -71,6 +69,10 @@ class ValidatorWorker(
         startUpdateLoop(syncManager)
     }
 
+
+    /**
+     * Stop the postchain node
+     */
     override fun shutdown() {
         super.shutdown()
         communicationManager.shutdown()
