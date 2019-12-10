@@ -17,7 +17,7 @@ object GtvBinaryTreeFactoryArray {
      * - When the args is empty. -> We return a top node with two empty leafs
      * - When there is only one element. -> We set the right element as empty
      */
-    fun buildFromGtvArray(gtvArray: GtvArray, gtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): BinaryTreeElement {
+    fun buildFromGtvArray(gtvArray: GtvArray, gtvPaths: GtvPathSet): BinaryTreeElement {
         val pathElem: PathElement? =  gtvPaths.getPathLeafOrElseAnyCurrentPathElement()
 
         // 1. Build leaf layer
@@ -26,7 +26,7 @@ object GtvBinaryTreeFactoryArray {
             return GtvArrayHeadNode(EmptyLeaf, EmptyLeaf, gtvArray, 0, 0, pathElem)
         }
 
-        val leafArray = mainFactory.buildLeafElements(leafList, gtvPaths, memoization)
+        val leafArray = mainFactory.buildLeafElements(leafList, gtvPaths)
         val sumNrOfBytes = leafArray.sumBy { it.getNrOfBytes() }
 
         // 2. Build all higher layers
@@ -39,9 +39,6 @@ object GtvBinaryTreeFactoryArray {
                 GtvArrayHeadNode(orgRoot.left, orgRoot.right, gtvArray, leafList.size, sumNrOfBytes, pathElem)
             }
             is Leaf<*> -> {
-                buildFromOneLeaf(leafList, orgRoot, gtvArray, sumNrOfBytes, pathElem)
-            }
-            is CachedLeaf -> {
                 buildFromOneLeaf(leafList, orgRoot, gtvArray, sumNrOfBytes, pathElem)
             }
             else -> throw IllegalStateException("Should not find element of this type here: $orgRoot")

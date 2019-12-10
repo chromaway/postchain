@@ -52,9 +52,6 @@ class GtvMerkleProofTreeFactory: MerkleProofTreeFactory<Gtv>()   {
             is EmptyLeaf -> {
                 ProofHashedLeaf(MerkleBasics.EMPTY_HASH) // Just zeros
             }
-            is CachedLeaf -> {
-                ProofHashedLeaf(currentElement.cachedSummary.merkleHash)
-            }
             is Leaf<*> -> {
                 val content: Gtv = currentElement.content as Gtv // Have to convert here
 
@@ -73,14 +70,23 @@ class GtvMerkleProofTreeFactory: MerkleProofTreeFactory<Gtv>()   {
                         if (logger.isTraceEnabled) { logger.trace("Hash the leaf with GtvNull, no need to calculate since have the hash") }
                         content.getCachedMerkleHash()!!.merkleHash
                     } else {
-                        // Not GtvNull -> Make it a hash
-                        if (logger.isTraceEnabled) { logger.trace("Hash the leaf with content: $content") }
-                        val hashCarrier = calculator.calculateLeafHash(content)
-                        val summary = MerkleHashSummary(hashCarrier, currentElement.getNrOfBytes())
+                        // We don't have paths and we are not in the root element, so we are free to look in cache
                         if (content is GtvPrimitive) {
-                            calculator.memoization.add(content, summary)
+                            val cachedSummary = calculator.memoization.findMerkleHash(content)
+                            if (cachedSummary != null) {
+                                cachedSummary.merkleHash
+                            } else {
+                                // Not GtvNull -> Make it a hash
+                                if (logger.isTraceEnabled) { logger.debug("Hash the leaf with content: $content") }
+                                val hashCarrier = calculator.calculateLeafHash(content)
+                                val summary = MerkleHashSummary(hashCarrier, currentElement.getNrOfBytes())
+                                calculator.memoization.add(content, summary)
+                                hashCarrier
+                            }
+                        } else {
+                            logger.warn("What is this leaf that's not a primitive? type: ${content.type}")
+                            calculator.calculateLeafHash(content)
                         }
-                        hashCarrier
                     }
                     ProofHashedLeaf(hashCarrier)
                 }

@@ -9,6 +9,7 @@ import net.postchain.gtv.path.GtvPath
 import net.postchain.gtv.path.GtvPathFactory
 import net.postchain.gtv.path.GtvPathSet
 import org.junit.Assert
+import org.junit.Ignore
 import org.junit.Test
 
 /**
@@ -27,6 +28,9 @@ class DictToMerkleProofTreeWithCacheTest {
 
     @Test
     fun calculate_same_4dict_proof_two_times() {
+        if (!GtvMerkleHashCache.enabled) {
+            return
+        }
         val memoization = calculator.memoization as GtvMerkleHashMemoization
         val gtvDict = DictToGtvBinaryTreeHelper.buildGtvDictOf4()
 
@@ -69,6 +73,9 @@ class DictToMerkleProofTreeWithCacheTest {
 
     @Test
     fun calculate_4dict_proof_with_different_paths() {
+        if (!GtvMerkleHashCache.enabled) {
+            return
+        }
         val memoization = calculator.memoization as GtvMerkleHashMemoization
         val gtvDict = DictToGtvBinaryTreeHelper.buildGtvDictOf4()
 
