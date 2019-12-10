@@ -69,7 +69,7 @@ class GTXManagedNodeDataSource(val queries: BlockQueries, val nodeConfig: NodeCo
     override fun getBlockchainReplicaNodeMap(): Map<BlockchainRid, List<XPeerID>> {
         val blockchains = computeBlockchainList()
 
-        // query nm_get_blockchain_replica_node_map(blockchain_rids: list<byte_array>): list<list<byte_array>>
+        // Rell: query nm_get_blockchain_replica_node_map(blockchain_rids: list<byte_array>): list<list<byte_array>>
         val replicas = queries.query(
                 "nm_get_blockchain_replica_node_map",
                 buildArgs("blockchain_rids" to GtvFactory.gtv(
@@ -85,7 +85,7 @@ class GTXManagedNodeDataSource(val queries: BlockQueries, val nodeConfig: NodeCo
     }
 
     override fun getNodeReplicaMap(): Map<XPeerID, List<XPeerID>> {
-        // query nm_get_node_replica_map(): list<list<byte_array>>
+        // Rell: query nm_get_node_replica_map(): list<list<byte_array>>
         // [ [ key_peer_id, replica_peer_id_1, replica_peer_id_2, ...], ...]
         val peersReplicas = queries.query(
                 "nm_get_node_replica_map",
