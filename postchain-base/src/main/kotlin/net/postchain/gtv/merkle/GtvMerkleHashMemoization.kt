@@ -19,7 +19,7 @@ import net.postchain.gtv.*
  */
 object GtvMerkleHashCache {
 
-    val enabled : Boolean = false
+    val enabled : Boolean = true
     val defaultSizeOf1MB = 1000000 // TODO: Make this configurable
     val defaultNumberOfLookupsBeforePrune = 100 // Not that important, no need to configure
 

@@ -14,7 +14,6 @@ import org.awaitility.Duration
 import org.junit.Ignore
 import org.junit.Test
 
-@Ignore
 class ManagedModeTest : IntegrationTest() {
 
     @Test
@@ -65,6 +64,7 @@ class ManagedModeTest : IntegrationTest() {
     }
 
     @Test
+    @Ignore
     fun singlePeer_launchesChain100AtHeight5_then_launchesChain101AtHeight10_then_stopsChain101AtHeight15() {
         val nodeConfig0 = "classpath:/net/postchain/managedmode/node0.properties"
         val blockchainConfig0 = "/net/postchain/devtools/managedmode/singlepeer_launches_and_stops_chains/blockchain_config_0_height_0.xml"

@@ -70,7 +70,7 @@ class SimpleDatabaseConnector(private val appConfig: AppConfig) : DatabaseConnec
         return BasicDataSource().apply {
             addConnectionProperty("currentSchema", appConfig.databaseSchema)
             driverClassName = appConfig.databaseDriverclass
-            url = "${appConfig.databaseUrl}?loggerLevel=TRACE&loggerFile=db.log"
+            url = appConfig.databaseUrl // + "?loggerLevel=TRACE&loggerFile=db.log"
             username = appConfig.databaseUsername
             password = appConfig.databasePassword
             defaultAutoCommit = false

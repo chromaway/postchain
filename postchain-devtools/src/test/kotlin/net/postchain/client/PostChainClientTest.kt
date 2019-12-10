@@ -4,9 +4,7 @@ import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.spy
 import com.nhaarman.mockitokotlin2.verify
-import net.postchain.PostchainNode
 import net.postchain.base.BlockchainRid
-import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.TransactionStatus
@@ -15,6 +13,9 @@ import net.postchain.devtools.KeyPairHelper
 import net.postchain.devtools.PostchainTestNode
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtx.GTXDataBuilder
+import org.awaitility.Awaitility.await
+import org.awaitility.kotlin.matches
+import org.awaitility.kotlin.untilCallTo
 import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals
@@ -46,7 +47,7 @@ class PostChainClientTest : IntegrationTest() {
 
     private fun createPostChainClient(bcRid: BlockchainRid): PostchainClient {
         val resolver = postchainClientFactory.makeSimpleNodeResolver("http://127.0.0.1:${nodes[0].getRestApiHttpPort()}")
-        return postchainClientFactory.getClient(resolver,bcRid, defaultSigner)
+        return postchainClientFactory.getClient(resolver, bcRid, defaultSigner)
     }
 
     @Test
@@ -99,7 +100,7 @@ class PostChainClientTest : IntegrationTest() {
         val builder = createGtxDataBuilder(blockchainRid!!)
         val client = createPostChainClient(blockchainRid)
         val result = client.postTransactionSync(builder, ConfirmationLevel.NO_WAIT)
-        assertEquals(result.status, TransactionStatus.WAITING)
+        assertEquals(TransactionStatus.WAITING, result.status)
     }
 
     @Test
@@ -108,8 +109,11 @@ class PostChainClientTest : IntegrationTest() {
         val blockchainRid = nodes[0].getBlockchainRid(1L)!! // Just pick the first node and we only have one chain
         val builder = createGtxDataBuilder(blockchainRid)
         val client = createPostChainClient(blockchainRid)
-        client.postTransaction(builder, ConfirmationLevel.NO_WAIT).success { resp ->
-            assertEquals(resp.status, TransactionStatus.WAITING)
+
+        await().untilCallTo {
+            client.postTransaction(builder, ConfirmationLevel.NO_WAIT).get()
+        } matches { resp ->
+            resp?.status == TransactionStatus.WAITING
         }
     }
 
@@ -120,7 +124,7 @@ class PostChainClientTest : IntegrationTest() {
         val builder = createGtxDataBuilder(blockchainRid)
         val client = createPostChainClient(blockchainRid)
         val result = client.postTransactionSync(builder, ConfirmationLevel.UNVERIFIED)
-        assertEquals(result.status, TransactionStatus.CONFIRMED)
+        assertEquals(TransactionStatus.CONFIRMED, result.status)
     }
 
     @Test
@@ -129,8 +133,11 @@ class PostChainClientTest : IntegrationTest() {
         val blockchainRid = nodes[0].getBlockchainRid(1L)!! // Just pick the first node and we only have one chain
         val builder = createGtxDataBuilder(blockchainRid)
         val client = createPostChainClient(blockchainRid)
-        client.postTransaction(builder, ConfirmationLevel.UNVERIFIED).success { resp ->
-            assertEquals(resp.status, TransactionStatus.CONFIRMED)
+
+        await().untilCallTo {
+            client.postTransaction(builder, ConfirmationLevel.UNVERIFIED).get()
+        } matches { resp ->
+            resp?.status == TransactionStatus.CONFIRMED
         }
     }
 
@@ -142,8 +149,11 @@ class PostChainClientTest : IntegrationTest() {
         val client = createPostChainClient(blockchainRid)
         client.postTransactionSync(builder, ConfirmationLevel.UNVERIFIED)
         val gtv = gtv("txRID" to gtv(builder.getDigestForSigning().toHex()))
-        client.query("gtx_test_get_value", gtv).success { resp ->
-            assertEquals(resp.asString(), randomStr)
+
+        await().untilCallTo {
+            client.query("gtx_test_get_value", gtv).get()
+        } matches { resp ->
+            resp?.asString() == randomStr
         }
     }
 }
