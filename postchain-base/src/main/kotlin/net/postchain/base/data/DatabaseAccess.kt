@@ -28,8 +28,7 @@ interface DatabaseAccess {
     fun getBlockHeight(ctx: EContext, blockRID: ByteArray, chainId: Long): Long?
     fun getBlockRID(ctx: EContext, height: Long): ByteArray?
     fun getBlockHeader(ctx: EContext, blockRID: ByteArray): ByteArray
-    fun getBlockTransactions(ctx: EContext, blockRID: ByteArray): List<ByteArray>
-    fun getBlockTransactionsHashes(ctx: EContext, blockRID: ByteArray): List<TxDetail>
+    fun getBlockTransactions(ctx: EContext, blockRID: ByteArray, hashesOnly: Boolean): List<TxDetail>
     fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray
     fun getLastBlockHeight(ctx: EContext): Long
     fun getLastBlockRid(ctx: EContext, chainId: Long): ByteArray?
@@ -120,28 +119,21 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
                 byteArrayRes, ctx.chainID, blockRID)
     }
 
-    override fun getBlockTransactions(ctx: EContext, blockRID: ByteArray): List<ByteArray> {
+    override fun getBlockTransactions(ctx: EContext, blockRID: ByteArray, hashesOnly: Boolean): List<TxDetail> {
         val sql = """
-            SELECT tx_data
+            SELECT tx_rid, tx_hash${if (hashesOnly) "" else ", tx_data"}
             FROM transactions t
             JOIN blocks b ON t.block_iid=b.block_iid
             WHERE b.block_rid=? AND b.chain_iid=?
             ORDER BY tx_iid"""
-        return queryRunner.query(ctx.conn, sql, byteArrayListRes, blockRID, ctx.chainID)
-    }
+        val txs = queryRunner.query(ctx.conn, sql, mapListHandler, blockRID, ctx.chainID)
 
-    override fun getBlockTransactionsHashes(ctx: EContext, blockRID: ByteArray): List<TxDetail> {
-        val sql = """
-            SELECT tx_rid, tx_hash
-            FROM transactions t
-            JOIN blocks b ON t.block_iid=b.block_iid
-            WHERE b.block_rid=? AND b.chain_iid=?
-            ORDER BY tx_iid"""
-        val txs = queryRunner.query(ctx.conn, sql, mapListHandler, blockRID, ctx.chainID)!!
         return txs.map { tx ->
-            val txRID = tx["tx_rid"] as ByteArray
-            val txHash = tx["tx_hash"] as ByteArray
-            TxDetail(txRID, txHash, null)
+            TxDetail(
+                    tx["tx_rid"] as ByteArray,
+                    tx["tx_hash"] as ByteArray,
+                    if (hashesOnly) null else (tx["tx_hash"] as ByteArray)
+            )
         }
     }
 

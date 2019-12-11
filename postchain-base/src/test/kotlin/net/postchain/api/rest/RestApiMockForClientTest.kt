@@ -57,7 +57,6 @@ class RestApiMockForClientManual {
                         "blockRid001".toByteArray(),
                         blockchainRID.toByteArray(), "some header".toByteArray(),
                         0,
-                        listOf<ByteArray>(),
                         listOf<TxDetail>(),
                         "signatures".toByteArray(),
                         1574849700),
@@ -66,8 +65,7 @@ class RestApiMockForClientManual {
                         "blockRid001".toByteArray(),
                         "some other header".toByteArray(),
                         1,
-                        listOf<ByteArray>("tx1".toByteArray()),
-                        listOf<TxDetail>(),
+                        listOf<TxDetail>(TxDetail("tx1".toByteArray(), "tx1".toByteArray(), "tx1".toByteArray())),
                         "signatures".toByteArray(),
                         1574849760),
                 BlockDetail(
@@ -75,7 +73,6 @@ class RestApiMockForClientManual {
                         "blockRid002".toByteArray(),
                         "yet another header".toByteArray(),
                         2,
-                        listOf<ByteArray>(),
                         listOf<TxDetail>(),
                         "signatures".toByteArray(),
                         1574849880),
@@ -84,8 +81,11 @@ class RestApiMockForClientManual {
                         "blockRid003".toByteArray(),
                         "guess what? Another header".toByteArray(),
                         3,
-                        listOf<ByteArray>("tx2".toByteArray(), "tx3".toByteArray(), "tx4".toByteArray()),
-                        listOf<TxDetail>(),
+                        listOf<TxDetail>(
+                                TxDetail("tx2".toByteArray(), "tx2".toByteArray(), "tx2".toByteArray()),
+                                TxDetail("tx3".toByteArray(), "tx3".toByteArray(), "tx3".toByteArray()),
+                                TxDetail("tx4".toByteArray(), "tx4".toByteArray(), "tx4".toByteArray())
+                        ),
                         "signatures".toByteArray(),
                         1574849940)
         )
@@ -141,7 +141,7 @@ class RestApiMockForClientManual {
 
         override fun nodeQuery(subQuery: String): String = TODO()
 
-        override fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, txDetailsOnly: Boolean): List<BlockDetail> {
+        override fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, hashesOnly: Boolean): List<BlockDetail> {
             var queryBlocks = blocks
             if (asc) {
                 queryBlocks = queryBlocks.sortedByDescending { blockDetail -> blockDetail.height }

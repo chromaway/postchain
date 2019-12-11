@@ -11,8 +11,8 @@ interface BlockHeader {
 
 open class BlockData(
         val header: BlockHeader,
-        val transactions: List<ByteArray>)
-
+        val transactions: List<ByteArray>
+)
 
 /**
  * BlockDetail returns a more in deep block overview
@@ -29,8 +29,7 @@ open class BlockDetail(
         val prevBlockRID: ByteArray,
         val header: ByteArray,
         val height: Long,
-        val transactions: List<ByteArray>, // TODO: [et]: Combine fields transactions and transactionsDetails
-        val transactionsDetails: List<TxDetail>,
+        val transactions: List<TxDetail>,
         val witness: ByteArray,
         val timestamp: Long)
 
