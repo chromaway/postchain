@@ -94,21 +94,21 @@ class BaseBlockStore : BlockStore {
 
     override fun getBlocks(ctx: EContext, blockHeight: Long, asc: Boolean, limit: Int, hashesOnly: Boolean): List<BlockDetail> {
         val db = DatabaseAccess.of(ctx)
-        val blocksInfo = db.getBlocks(ctx, blockHeight, asc, limit)
-        return blocksInfo.map { blockInfo ->
-            val txs = db.getBlockTransactions(ctx, blockInfo.blockRid, hashesOnly)
+        val blocks = db.getBlocks(ctx, blockHeight, asc, limit)
+        return blocks.map { block ->
+            val txs = db.getBlockTransactions(ctx, block.blockRid, hashesOnly)
 
             // Decode block header
-            val blockHeaderDecoded = BaseBlockHeader(blockInfo.blockHeader, SECP256K1CryptoSystem())
+            val blockHeaderDecoded = BaseBlockHeader(block.blockHeader, SECP256K1CryptoSystem())
 
             BlockDetail(
-                    blockInfo.blockRid,
+                    block.blockRid,
                     blockHeaderDecoded.prevBlockRID,
-                    blockInfo.blockHeader,
-                    blockInfo.blockHeight,
+                    block.blockHeader,
+                    block.blockHeight,
                     txs,
-                    blockInfo.witness,
-                    blockInfo.timestamp)
+                    block.witness,
+                    block.timestamp)
         }
     }
 

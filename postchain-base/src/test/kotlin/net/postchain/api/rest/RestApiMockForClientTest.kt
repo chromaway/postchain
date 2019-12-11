@@ -140,7 +140,7 @@ class RestApiMockForClientManual {
 
         override fun nodeQuery(subQuery: String): String = TODO()
 
-        override fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, txDetailsOnly: Boolean): List<BlockDetail> {
+        override fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, hashesOnly: Boolean): List<BlockDetail> {
             var queryBlocks = blocks
             if (asc) {
                 queryBlocks = queryBlocks.sortedByDescending { blockDetail -> blockDetail.height }

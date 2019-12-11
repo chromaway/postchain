@@ -2,6 +2,7 @@ package net.postchain.integrationtest
 
 import assertk.assertions.hasSize
 import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import net.postchain.common.toHex
 import net.postchain.core.Transaction
@@ -65,14 +66,15 @@ class GetLastBlocksExplorerTest : IntegrationTest() {
     }
 
     @Test
-    fun test_get_first_block_partial_tx() {
+    fun test_get_first_block_hashesOnly() {
         val blocks = nodes[0].getRestApiModel().getBlocks(-1, true, 1, true)
         assertk.assert(blocks).hasSize(1)
 
         // Block1
         assertk.assert(blocks[0].height).isEqualTo(0L)
-        assertk.assert(blocks[0].transactions).hasSize(0)
         assertk.assert(blocks[0].transactions).hasSize(2)
+        assertk.assert(blocks[0].transactions[0].data).isNull()
+        assertk.assert(blocks[0].transactions[1].data).isNull()
     }
 
     @Test
