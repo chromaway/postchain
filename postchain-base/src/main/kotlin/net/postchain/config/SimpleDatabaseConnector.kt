@@ -18,11 +18,13 @@ class SimpleDatabaseConnector(private val appConfig: AppConfig) : DatabaseConnec
 
     override fun <Result> withWriteConnection(action: (Connection) -> Result): Result {
         val connection = openWriteConnection()
-
+        var doCommit = false
         try {
-            return action(connection)
+            val ret = action(connection)
+            doCommit = true
+            return ret
         } finally {
-            closeWriteConnection(connection)
+            closeWriteConnection(connection, doCommit)
         }
     }
 
@@ -68,7 +70,7 @@ class SimpleDatabaseConnector(private val appConfig: AppConfig) : DatabaseConnec
         return BasicDataSource().apply {
             addConnectionProperty("currentSchema", appConfig.databaseSchema)
             driverClassName = appConfig.databaseDriverclass
-            url = "${appConfig.databaseUrl}?loggerLevel=TRACE&loggerFile=db.log"
+            url = appConfig.databaseUrl // + "?loggerLevel=TRACE&loggerFile=db.log"
             username = appConfig.databaseUsername
             password = appConfig.databasePassword
             defaultAutoCommit = false

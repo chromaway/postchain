@@ -1,5 +1,6 @@
 package net.postchain.config.node
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerInfo
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
@@ -82,6 +83,9 @@ open class NodeConfig(val appConfig: AppConfig) {
      * Peers
      */
     open val peerInfoMap: Map<XPeerID, PeerInfo> = mapOf()
+    open val nodeReplicas: Map<XPeerID, List<XPeerID>> = mapOf()
+    open val blockchainReplicaNodes: Map<BlockchainRid, List<XPeerID>> = mapOf()
+
 
     /**
      * Active Chains
@@ -89,6 +93,10 @@ open class NodeConfig(val appConfig: AppConfig) {
      * Note: This is only needed for tests (asked Tykulov about it)
      */
     val activeChainIds: Array<String>
-        get() = config.getStringArray("activechainids")
-
+        get() {
+            return if (config.containsKey("activechainids"))
+                config.getStringArray("activechainids")
+            else
+                emptyArray()
+        }
 }

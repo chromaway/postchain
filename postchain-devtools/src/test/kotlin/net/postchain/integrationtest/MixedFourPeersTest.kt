@@ -1,17 +1,18 @@
 package net.postchain.integrationtest
 
-import net.postchain.common.hexStringToByteArray
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.testinfra.TestTransaction
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.Assert.assertEquals
+import org.junit.Ignore
 import org.junit.Test
 
 /**
  * Mixed Four Peers Test is s mix of Reconnection, Reconfiguration and Multiple Chains tests.
  * See [FourPeersReconnectionTest], [FourPeersReconfigurationTest], [FourPeersMultipleChainsOperationsTest].
  */
+@Ignore
 class MixedFourPeersTest : IntegrationTest() {
 
     private val tx1_0 = TestTransaction(10)

@@ -13,10 +13,10 @@ import net.postchain.api.rest.model.TxRID
 import net.postchain.base.ConfirmationProof
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
+import net.postchain.config.app.AppConfig
 import net.postchain.core.*
 import net.postchain.gtv.Gtv
 import org.junit.After
-import org.junit.Ignore
 import org.junit.Test
 
 class RestApiMockForClientManual {
@@ -34,15 +34,14 @@ class RestApiMockForClientManual {
     }
 
     @Test
-    @Ignore
     fun startMockRestApi() {
         val model = MockModel()
-        restApi = RestApi(listenPort, basePath)
+        val appConfig = AppConfig(DummyConfig.getDummyConfig())
+        restApi = RestApi(listenPort, basePath, appConfig)
         restApi.attachModel(blockchainRID, model)
         logger.info("Ready to serve on port ${restApi.actualPort()}")
         Thread.sleep(600000) // Wait 10 minutes
     }
-
 
     class MockModel : Model {
         private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a1"
@@ -141,7 +140,7 @@ class RestApiMockForClientManual {
 
         override fun nodeQuery(subQuery: String): String = TODO()
 
-        override fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, hashesOnly: Boolean): List<BlockDetail> {
+        override fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, txDetailsOnly: Boolean): List<BlockDetail> {
             var queryBlocks = blocks
             if (asc) {
                 queryBlocks = queryBlocks.sortedByDescending { blockDetail -> blockDetail.height }
@@ -150,5 +149,10 @@ class RestApiMockForClientManual {
             }
             return blocks.filter { blockDetail -> blockDetail.height < blockHeight }.subList(0, limit)
         }
+
+		override fun debugQuery(subQuery: String?): String {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+
     }
 }

@@ -27,7 +27,7 @@ class BlockchainRidTest {
 
     @Test
     fun testBuildRepeat() {
-        val expected = ByteArray(64) { 7 }
+        val expected = ByteArray(32) { 7 }
         val actual = BlockchainRid.buildRepeat(7)
 
         assert(actual.data).isContentEqualTo(expected)

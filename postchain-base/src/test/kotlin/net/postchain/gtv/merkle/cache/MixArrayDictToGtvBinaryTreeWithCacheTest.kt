@@ -1,7 +1,5 @@
 package net.postchain.gtv.merkle.cache
 
-import net.postchain.base.merkle.PrintableTreeFactory
-import net.postchain.base.merkle.TreePrinter
 import net.postchain.gtv.merkle.*
 import net.postchain.gtv.merkleHash
 import org.junit.Assert
@@ -18,24 +16,15 @@ class MixArrayDictToGtvBinaryTreeWithCacheTest {
         Assert.assertEquals(misses.toLong(), memoization.cacheMisses)
     }
 
-    private fun buildTreeOfDict1WithSubArray4(memoization: GtvMerkleHashMemoization): String {
-        val gtvDict = MixArrayDictToGtvBinaryTreeHelper.buildGtvDictWithSubArray4()
-
-        val fullBinaryTree: GtvBinaryTree = factory.buildFromGtv(gtvDict, memoization)
-
-        val printer = TreePrinter()
-        val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
-        val treePrintout = printer.printNode(printableBinaryTree)
-        //println(treePrintout)
-        return treePrintout
-    }
-
     @Test
     fun calculate_inner_array_and_then_dictWithArray() {
+        if (!GtvMerkleHashCache.enabled) {
+            return
+        }
         val calculator = MerkleHashCalculatorDummy()
         val memoization = calculator.memoization as GtvMerkleHashMemoization
 
-        // -------------------  Calculate inner array of 4 (just to get it into cache) ---------------------
+        // -------------------  Calculate inner array of 4 (just to the primitives into cache) ---------------------
         val gtvInnerArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf4()
         val root1 = gtvInnerArr.merkleHash(calculator)
 
@@ -43,23 +32,8 @@ class MixArrayDictToGtvBinaryTreeWithCacheTest {
         val cacheMisses1 = maxTotalLookups
         checkStats(0, 0, cacheMisses1, memoization)
 
-        // ------------------- Do dict with array ---------------------
-        val ln = System.lineSeparator()
-        val expectedTree =  "       +               $ln" +
-                "      / \\       $ln" +
-                "     /   \\      $ln" +
-                "    /     \\     $ln" +
-                "   /       \\    $ln" +
-                "   one       +       $ln" +
-                "          / \\   $ln" +
-                "         /   \\  $ln" +
-                " .   .   +   +   $ln" +
-                "        / \\ / \\ $ln" +
-                "- - - - (0202) (0203) (0204) (0205) "
-
-        val treePrintout = buildTreeOfDict1WithSubArray4(calculator.memoization)
-        //println(treePrintout)
-        Assert.assertEquals(expectedTree.trim(), treePrintout.trim())
+        val gtvDict = MixArrayDictToGtvBinaryTreeHelper.buildGtvDictWithSubArray4()
+        val root2 = gtvDict.merkleHash(calculator)
 
         val maxTotalLookups2 = 5
         val potentialHits = 4

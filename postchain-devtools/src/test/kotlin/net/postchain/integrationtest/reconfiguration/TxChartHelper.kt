@@ -26,7 +26,7 @@ object TxChartHelper {
                 heightLimit)
 
         (0..height).forEach { h ->
-            val blockRid = node.query(chainId) { it.getBlockRids(h) }
+            val blockRid = node.query(chainId) { it.getBlockRid(h) }
 
             val block = mapper.createObjectNode()
             block.put("height", h)
@@ -59,7 +59,7 @@ object TxChartHelper {
 
         val height = node.query(chainId) { it.getBestHeight() } ?: -1L
         (0..height).forEach { h ->
-            val blockRid = node.query(chainId) { it.getBlockRids(h) }
+            val blockRid = node.query(chainId) { it.getBlockRid(h) }
             val txsRids = node.query(chainId) { it.getBlockTransactionRids(blockRid!!) }
             txsRids!!.forEach { txRid ->
                 val tx = node.query(chainId) { it.getTransaction(txRid) }

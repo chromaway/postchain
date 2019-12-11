@@ -22,7 +22,7 @@ class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
         lastBlockTime = if (height == -1L) {
             System.currentTimeMillis()
         } else {
-            val blockRID = blockQueries.getBlockRids(height).get()!!
+            val blockRID = blockQueries.getBlockRid(height).get()!!
             (blockQueries.getBlockHeader(blockRID).get() as BaseBlockHeader).timestamp
         }
     }
@@ -55,8 +55,8 @@ class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
                 return true
             }
             if (transactionQueueSize > lastTxSize) {
-                lastTxTime = System.currentTimeMillis()
                 lastTxSize = transactionQueueSize
+                lastTxTime = System.currentTimeMillis()
             }
             return false
         }

@@ -24,11 +24,10 @@ class MixArrayDictToGtvBinaryTreeTest {
     private fun buildTreeOfDict1WithSubArray4(gtvPath: GtvPath?): String {
         val gtvDict = MixArrayDictToGtvBinaryTreeHelper.buildGtvDictWithSubArray4()
 
-        val newMemoization = GtvMerkleHashMemoization(100, 100)
         val fullBinaryTree: GtvBinaryTree = if (gtvPath != null) {
-            factory.buildFromGtvAndPath(gtvDict, GtvPathSet(setOf(gtvPath)), newMemoization)
+            factory.buildFromGtvAndPath(gtvDict, GtvPathSet(setOf(gtvPath)))
         } else {
-            factory.buildFromGtv(gtvDict, newMemoization)
+            factory.buildFromGtv(gtvDict)
         }
 
         val printer = TreePrinter()

@@ -5,7 +5,6 @@ import net.postchain.base.merkle.TreePrinter
 import net.postchain.gtv.merkle.DictToGtvBinaryTreeHelper
 import net.postchain.gtv.merkle.GtvBinaryTree
 import net.postchain.gtv.merkle.GtvBinaryTreeFactory
-import net.postchain.gtv.merkle.GtvMerkleHashMemoization
 import net.postchain.gtv.path.GtvPath
 import net.postchain.gtv.path.GtvPathFactory
 import net.postchain.gtv.path.GtvPathSet
@@ -26,11 +25,10 @@ class DictToGtvBinaryTreeTest {
 
         val gtvDict = DictToGtvBinaryTreeHelper.buildGtvDictOf1()
 
-        val newMemoization = GtvMerkleHashMemoization(100, 100)
         val fullBinaryTree: GtvBinaryTree = if (gtvPath != null) {
-            factory.buildFromGtvAndPath(gtvDict, GtvPathSet(setOf(gtvPath)), newMemoization)
+            factory.buildFromGtvAndPath(gtvDict, GtvPathSet(setOf(gtvPath)))
         } else {
-            factory.buildFromGtv(gtvDict, newMemoization)
+            factory.buildFromGtv(gtvDict)
         }
 
         val printer = TreePrinter()
@@ -74,11 +72,10 @@ class DictToGtvBinaryTreeTest {
     private fun buildThreeOf4_fromDict(gtvPath: GtvPath?): String {
         val gtvDict = DictToGtvBinaryTreeHelper.buildGtvDictOf4()
 
-        val newMemoization = GtvMerkleHashMemoization(100, 100)
         val fullBinaryTree: GtvBinaryTree = if (gtvPath != null) {
-            factory.buildFromGtvAndPath(gtvDict, GtvPathSet(setOf(gtvPath)), newMemoization)
+            factory.buildFromGtvAndPath(gtvDict, GtvPathSet(setOf(gtvPath)))
         } else {
-            factory.buildFromGtv(gtvDict, newMemoization)
+            factory.buildFromGtv(gtvDict)
         }
 
         val printer = TreePrinter()
@@ -143,11 +140,10 @@ class DictToGtvBinaryTreeTest {
     fun buildTreeOf1WithSubTree(gtvPath: GtvPath?): String {
         val gtvDict = DictToGtvBinaryTreeHelper.buildGtvDictOf1WithSubDictOf2()
 
-        val newMemoization = GtvMerkleHashMemoization(100, 100)
         val fullBinaryTree: GtvBinaryTree = if (gtvPath != null) {
-            factory.buildFromGtvAndPath(gtvDict, GtvPathSet(setOf(gtvPath)), newMemoization)
+            factory.buildFromGtvAndPath(gtvDict, GtvPathSet(setOf(gtvPath)))
         } else {
-            factory.buildFromGtv(gtvDict, newMemoization)
+            factory.buildFromGtv(gtvDict)
         }
 
         val printer = TreePrinter()

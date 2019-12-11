@@ -14,6 +14,7 @@ import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
+@Ignore
 class SQLModuleIntegrationTest : IntegrationTest() {
 
     private fun makeTx(ownerIdx: Int, key: String, value: String, bcRid: BlockchainRid): ByteArray {

@@ -102,8 +102,9 @@ class ValidatorSyncManager(
                 when (message) {
                     // same case for replica and validator node
                     is GetBlockAtHeight -> sendBlockAtHeight(xPeerId, message.height)
+
                     else -> {
-                        if (!isReadOnlyNode) {
+                        if (!isReadOnlyNode) { // TODO: [POS-90]: Is it necessary here `isReadOnlyNode`?
                             // validator consensus logic
                             when (message) {
                                 is Status -> {
@@ -137,6 +138,7 @@ class ValidatorSyncManager(
                                 is GetUnfinishedBlock -> sendUnfinishedBlock(nodeIndex)
                                 is GetBlockSignature -> sendBlockSignature(nodeIndex, message.blockRID)
                                 is Transaction -> handleTransaction(nodeIndex, message)
+
                                 else -> throw ProgrammerMistake("Unhandled type ${message::class}")
                             }
                         }
@@ -309,6 +311,16 @@ class ValidatorSyncManager(
      * Log status of all nodes including their latest block RID and if they have the signature or not
      */
     private fun logStatus() {
+        if (logger.isDebugEnabled) {
+            val smIntent = statusManager.getBlockIntent()
+            val bmIntent = blockManager.getBlockIntent()
+            val primary = if (statusManager.isMyNodePrimary()) {
+                "I'm primary, "
+            } else {
+                "(prim = ${statusManager.primaryIndex()}),"
+            }
+            logger.debug("[$blockchainProcessName]: My node: ${statusManager.getMyIndex()}, $primary block mngr: $bmIntent, status mngr: $smIntent")
+        }
         for ((idx, ns) in statusManager.nodeStatuses.withIndex()) {
             val blockRID = ns.blockRID
             val haveSignature = statusManager.commitSignatures[idx] != null

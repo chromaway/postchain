@@ -21,6 +21,10 @@ import net.postchain.api.rest.model.TxRID
 import net.postchain.common.TimeLog
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
+import net.postchain.config.DatabaseConnector
+import net.postchain.config.SimpleDatabaseConnector
+import net.postchain.config.app.AppConfig
+import net.postchain.config.app.AppConfigDbLayer
 import net.postchain.core.BlockDetail
 import net.postchain.core.UserMistake
 import net.postchain.gtv.*
@@ -28,6 +32,7 @@ import net.postchain.gtv.GtvFactory.gtv
 import spark.Request
 import spark.Response
 import spark.Service
+import java.sql.Connection
 
 /**
  * Contains information on the rest API, such as network parameters and available queries
@@ -35,8 +40,15 @@ import spark.Service
 class RestApi(
         private val listenPort: Int,
         private val basePath: String,
+        private val appConfig: AppConfig,
         private val sslCertificate: String? = null,
-        private val sslCertificatePassword: String? = null
+        private val sslCertificatePassword: String? = null,
+        private val databaseConnector: (AppConfig) -> DatabaseConnector = { appConfig ->
+            SimpleDatabaseConnector(appConfig)
+        },
+        private val appConfigDbLayer: (AppConfig, Connection) -> AppConfigDbLayer = { appConfig, connection ->
+            AppConfigDbLayer(appConfig, connection)
+        }
 ) : Modellable {
 
     val MAX_NUMBER_OF_BLOCKS_PER_REQUEST = 100
@@ -138,10 +150,18 @@ class RestApi(
 
             http.post("/tx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
                 val n = TimeLog.startSumConc("RestApi.buildRouter().postTx")
-                logger.debug("Request body: ${request.body()}")
                 val tx = toTransaction(request)
+                val maxLength = try {
+                    if (tx.bytes.size > 200) 200 else tx.bytes.size
+                } catch (e: Exception) {
+                    throw UserMistake("Invalid tx format. Expected {\"tx\": <hex-string>}")
+                }
+
+                logger.debug("""
+                    Request body : {"tx": "${tx.bytes.sliceArray(0 until maxLength).toHex()}" } 
+                """.trimIndent())
                 if (!tx.tx.matches(Regex("[0-9a-fA-F]{2,}"))) {
-                    throw UserMistake("Invalid tx format. Expected {\"tx\": <hexString>}")
+                    throw UserMistake("Invalid tx format. Expected {\"tx\": <hex-string>}")
                 }
                 model(request).postTransaction(tx)
                 TimeLog.end("RestApi.buildRouter().postTx", n)
@@ -190,6 +210,14 @@ class RestApi(
             http.get("/node/$PARAM_BLOCKCHAIN_RID/$SUBQUERY", "application/json") { request, _ ->
                 handleNodeStatusQueries(request)
             }
+
+            http.get("/_debug", "application/json") { request, _ ->
+                handleDebugQuery(request)
+            }
+
+            http.get("/_debug/$SUBQUERY", "application/json") { request, _ ->
+                handleDebugQuery(request)
+            }
         }
 
         http.awaitInitialization()
@@ -197,7 +225,7 @@ class RestApi(
 
     private fun handleBlocksQuery(request: Request): List<BlockDetail> {
         var blockHeight = DEFAULT_BLOCK_HEIGHT_REQUEST
-        var order_asc: Boolean = false
+        var orderAsc = false
         var limit = DEFAULT_ENTRY_RESULTS_REQUEST // max number of blocks that is possible to request is 600
         var txs = false
         var fromTransaction: ByteArray? = null
@@ -206,27 +234,29 @@ class RestApi(
         for ((name, value) in params.toMap()) {
             when (name) {
                 "before_block" -> {
-                    blockHeight = value.get(0).toLongOrNull() ?: blockHeight
-                    order_asc = false
+                    blockHeight = value[0].toLongOrNull() ?: blockHeight
+                    orderAsc = false
                 }
                 "after_block" -> {
-                    blockHeight = value.get(0).toLongOrNull() ?: blockHeight
-                    order_asc = true
+                    blockHeight = value[0].toLongOrNull() ?: blockHeight
+                    orderAsc = true
                 }
                 "limit" -> {
-                    limit = value.get(0).toIntOrNull() ?: limit
-                    limit = if (limit < 0 || limit > MAX_NUMBER_OF_BLOCKS_PER_REQUEST) DEFAULT_ENTRY_RESULTS_REQUEST else limit
+                    limit = value[0].toIntOrNull() ?: limit
+                    limit = if (limit < 0 || limit > MAX_NUMBER_OF_BLOCKS_PER_REQUEST)
+                        DEFAULT_ENTRY_RESULTS_REQUEST
+                    else limit
                 }
                 "txs" -> {
-                    txs = value.get(0) == "true"
+                    txs = value[0] == "true"
                 }
                 "from_transaction" -> {
-                    fromTransaction = value.get(0).hexStringToByteArray()
+                    fromTransaction = value[0].hexStringToByteArray()
                 }
             }
         }
 
-        return model(request).getBlocks(blockHeight, order_asc, limit, !txs)
+        return model(request).getBlocks(blockHeight, orderAsc, limit, !txs)
 
     }
 
@@ -334,6 +364,11 @@ class RestApi(
         return model(request).nodeQuery(request.params(SUBQUERY))
     }
 
+    private fun handleDebugQuery(request: Request): String {
+        logger.debug("Request body: ${request.body()}")
+        return model0(request).debugQuery(request.params(SUBQUERY))
+    }
+
     private fun checkTxHashHex(request: Request): String {
         val hashHex = request.params(PARAM_HASH_HEX)
         if (!hashHex.matches(Regex("[0-9a-fA-F]{64}"))) {
@@ -342,12 +377,25 @@ class RestApi(
         return hashHex
     }
 
+    /**
+     * We allow two different syntax for finding the blockchain.
+     * 1. provide BC RID
+     * 2. provide Chain IID (should not be used in production, since to ChainIid could be anything).
+     */
     private fun checkBlockchainRID(request: Request): String {
         val blockchainRID = request.params(PARAM_BLOCKCHAIN_RID)
-        if (!blockchainRID.matches(Regex("[0-9a-fA-F]{64}"))) {
-            throw BadFormatError("Invalid blockchainRID. Expected 64 hex digits [0-9a-fA-F]")
+        return when {
+            blockchainRID.matches(Regex("[0-9a-fA-F]{64}")) -> blockchainRID
+            blockchainRID.matches(Regex("iid_[0-9]*")) -> {
+                val chainIid = blockchainRID.substring(4).toLong()
+                val dbBcRid = databaseConnector(appConfig).withWriteConnection { connection ->
+                    appConfigDbLayer(appConfig, connection).getBlockchainRid(chainIid)
+                }
+                dbBcRid?.toHex()
+                        ?: throw NotFoundError("Can't find blockchain with chain Iid: $chainIid in DB. Did you add this BC to the node?")
+            }
+            else -> throw BadFormatError("Invalid blockchainRID. Expected 64 hex digits [0-9a-fA-F]")
         }
-        return blockchainRID
     }
 
     fun stop() {
@@ -368,6 +416,16 @@ class RestApi(
         val blockchainRID = checkBlockchainRID(request)
         return models[blockchainRID.toUpperCase()]
                 ?: throw NotFoundError("Can't find blockchain with blockchainRID: $blockchainRID")
+    }
+
+    private fun model0(request: Request): Model {
+        val dbBcRid = databaseConnector(appConfig).withWriteConnection { connection ->
+            appConfigDbLayer(appConfig, connection).getBlockchainRid(0L)
+        }
+        val chain0Rid = dbBcRid?.toHex()
+                ?: throw NotFoundError("Can't find chain0 in DB. Is this node in managed mode?")
+        return models[chain0Rid]
+                ?: throw NotFoundError("Can't find blockchain with blockchainRID: $chain0Rid")
     }
 
     private fun parseMultipleQueriesRequest(request: Request): JsonArray {
