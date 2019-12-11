@@ -13,8 +13,6 @@ import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_REQ
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_REQUEST_METHOD
 import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_BLOCKCHAIN_RID
 import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_HASH_HEX
-import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_LIMIT
-import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_UP_TO
 import net.postchain.api.rest.controller.HttpHelper.Companion.SUBQUERY
 import net.postchain.api.rest.json.JsonFactory
 import net.postchain.api.rest.model.ApiTx
@@ -27,6 +25,7 @@ import net.postchain.config.DatabaseConnector
 import net.postchain.config.SimpleDatabaseConnector
 import net.postchain.config.app.AppConfig
 import net.postchain.config.app.AppConfigDbLayer
+import net.postchain.core.BlockDetail
 import net.postchain.core.UserMistake
 import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
@@ -51,6 +50,10 @@ class RestApi(
             AppConfigDbLayer(appConfig, connection)
         }
 ) : Modellable {
+
+    val MAX_NUMBER_OF_BLOCKS_PER_REQUEST = 100
+    val DEFAULT_BLOCK_HEIGHT_REQUEST = Long.MAX_VALUE
+    val DEFAULT_ENTRY_RESULTS_REQUEST = 25
 
     companion object : KLogging()
 
@@ -183,15 +186,8 @@ class RestApi(
                 }
             }, gson::toJson)
 
-            http.get("/query/$PARAM_BLOCKCHAIN_RID/blocks/latest/$PARAM_UP_TO/limit/$PARAM_LIMIT", { request, _ ->
-                val model = model(request)
-                try {
-                    val upTo = request.params(PARAM_UP_TO).toLong()
-                    val limit = request.params(PARAM_LIMIT).toInt()
-                    model.getLatestBlocksUpTo(upTo, limit)
-                } catch (e: NumberFormatException) {
-                    throw BadFormatError("Format is not correct (Long, Int)")
-                }
+            http.get("/blocks/$PARAM_BLOCKCHAIN_RID", { request, _ ->
+                handleBlocksQuery(request)
             }, gson::toJson)
 
             http.post("/query/$PARAM_BLOCKCHAIN_RID") { request, _ ->
@@ -227,9 +223,44 @@ class RestApi(
         http.awaitInitialization()
     }
 
-    private fun toTransaction(req: Request): ApiTx {
+    private fun handleBlocksQuery(request: Request): List<BlockDetail> {
+        var blockHeight = DEFAULT_BLOCK_HEIGHT_REQUEST
+        var order_asc: Boolean = false
+        var limit = DEFAULT_ENTRY_RESULTS_REQUEST // max number of blocks that is possible to request is 600
+        var txs = false
+        var fromTransaction: ByteArray? = null
+
+        val params = request.queryMap()
+        for ((name, value) in params.toMap()) {
+            when (name) {
+                "before_block" -> {
+                    blockHeight = value.get(0).toLongOrNull() ?: blockHeight
+                    order_asc = false
+                }
+                "after_block" -> {
+                    blockHeight = value.get(0).toLongOrNull() ?: blockHeight
+                    order_asc = true
+                }
+                "limit" -> {
+                    limit = value.get(0).toIntOrNull() ?: limit
+                    limit = if (limit < 0 || limit > MAX_NUMBER_OF_BLOCKS_PER_REQUEST) DEFAULT_ENTRY_RESULTS_REQUEST else limit
+                }
+                "txs" -> {
+                    txs = value.get(0) == "true"
+                }
+                "from_transaction" -> {
+                    fromTransaction = value.get(0).hexStringToByteArray()
+                }
+            }
+        }
+
+        return model(request).getBlocks(blockHeight, order_asc, limit, !txs)
+
+    }
+
+    private fun toTransaction(request: Request): ApiTx {
         try {
-            return gson.fromJson<ApiTx>(req.body(), ApiTx::class.java)
+            return gson.fromJson<ApiTx>(request.body(), ApiTx::class.java)
         } catch (e: Exception) {
             throw UserMistake("Could not parse json", e)
         }

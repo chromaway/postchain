@@ -14,20 +14,16 @@ import net.postchain.base.ConfirmationProof
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.config.app.AppConfig
-import net.postchain.core.BlockDetail
-import net.postchain.core.ProgrammerMistake
-import net.postchain.core.TransactionStatus
-import net.postchain.core.UserMistake
+import net.postchain.core.*
 import net.postchain.gtv.Gtv
-import org.apache.commons.configuration2.Configuration
-import org.apache.commons.configuration2.MapConfiguration
 import org.junit.After
+import org.junit.Ignore
 import org.junit.Test
 
 class RestApiMockForClientManual {
     val listenPort = 49545
     val basePath = "/basepath"
-    private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
+    private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a1"
     lateinit var restApi: RestApi
 
     companion object : KLogging()
@@ -39,6 +35,7 @@ class RestApiMockForClientManual {
     }
 
     @Test
+    @Ignore
     fun startMockRestApi() {
         val model = MockModel()
         val appConfig = AppConfig(DummyConfig.getDummyConfig())
@@ -50,11 +47,51 @@ class RestApiMockForClientManual {
 
 
     class MockModel : Model {
+        private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a1"
         val statusUnknown = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         val statusRejected = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         val statusConfirmed = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
         val statusNotFound = "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
         val statusWaiting = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+
+        val blocks = listOf<BlockDetail>(
+                BlockDetail(
+                        "blockRid001".toByteArray(),
+                        blockchainRID.toByteArray(), "some header".toByteArray(),
+                        0,
+                        listOf<ByteArray>(),
+                        listOf<TxDetail>(),
+                        "signatures".toByteArray(),
+                        1574849700),
+                BlockDetail(
+                        "blockRid002".toByteArray(),
+                        "blockRid001".toByteArray(),
+                        "some other header".toByteArray(),
+                        1,
+                        listOf<ByteArray>("tx1".toByteArray()),
+                        listOf<TxDetail>(),
+                        "signatures".toByteArray(),
+                        1574849760),
+                BlockDetail(
+                        "blockRid003".toByteArray(),
+                        "blockRid002".toByteArray(),
+                        "yet another header".toByteArray(),
+                        2,
+                        listOf<ByteArray>(),
+                        listOf<TxDetail>(),
+                        "signatures".toByteArray(),
+                        1574849880),
+                BlockDetail(
+                        "blockRid004".toByteArray(),
+                        "blockRid003".toByteArray(),
+                        "guess what? Another header".toByteArray(),
+                        3,
+                        listOf<ByteArray>("tx2".toByteArray(), "tx3".toByteArray(), "tx4".toByteArray()),
+                        listOf<TxDetail>(),
+                        "signatures".toByteArray(),
+                        1574849940)
+        )
+
         override fun postTransaction(tx: ApiTx) {
             when (tx.tx) {
                 "helloOK".toByteArray().toHex() -> return
@@ -89,11 +126,6 @@ class RestApiMockForClientManual {
             }
         }
 
-        override fun getLatestBlocksUpTo(upTo: Long, limit: Int): List<BlockDetail> {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-
-        }
-
         override fun query(query: Query): QueryResult {
             return QueryResult(when (query.json) {
                 """{"a":"oknullresponse","c":3}""" -> ""
@@ -113,6 +145,16 @@ class RestApiMockForClientManual {
 
         override fun debugQuery(subQuery: String?): String {
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+
+        override fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, txDetailsOnly: Boolean): List<BlockDetail> {
+            var queryBlocks = blocks
+            if (asc) {
+                queryBlocks = queryBlocks.sortedByDescending { blockDetail -> blockDetail.height }
+            } else {
+                queryBlocks = queryBlocks.sortedBy { blockDetail -> blockDetail.height }
+            }
+            return blocks.filter { blockDetail -> blockDetail.height < blockHeight }.subList(0, limit)
         }
     }
 }
