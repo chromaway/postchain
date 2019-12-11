@@ -151,7 +151,7 @@ class RestApi(
             http.post("/tx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
                 val n = TimeLog.startSumConc("RestApi.buildRouter().postTx")
                 val tx = toTransaction(request)
-                val maxLength =  try {
+                val maxLength = try {
                     if (tx.bytes.size > 200) 200 else tx.bytes.size
                 } catch (e: Exception) {
                     throw UserMistake("Invalid tx format. Expected {\"tx\": <hex-string>}")
@@ -225,7 +225,7 @@ class RestApi(
 
     private fun handleBlocksQuery(request: Request): List<BlockDetail> {
         var blockHeight = DEFAULT_BLOCK_HEIGHT_REQUEST
-        var order_asc: Boolean = false
+        var orderAsc = false
         var limit = DEFAULT_ENTRY_RESULTS_REQUEST // max number of blocks that is possible to request is 600
         var txs = false
         var fromTransaction: ByteArray? = null
@@ -234,27 +234,29 @@ class RestApi(
         for ((name, value) in params.toMap()) {
             when (name) {
                 "before_block" -> {
-                    blockHeight = value.get(0).toLongOrNull() ?: blockHeight
-                    order_asc = false
+                    blockHeight = value[0].toLongOrNull() ?: blockHeight
+                    orderAsc = false
                 }
                 "after_block" -> {
-                    blockHeight = value.get(0).toLongOrNull() ?: blockHeight
-                    order_asc = true
+                    blockHeight = value[0].toLongOrNull() ?: blockHeight
+                    orderAsc = true
                 }
                 "limit" -> {
-                    limit = value.get(0).toIntOrNull() ?: limit
-                    limit = if (limit < 0 || limit > MAX_NUMBER_OF_BLOCKS_PER_REQUEST) DEFAULT_ENTRY_RESULTS_REQUEST else limit
+                    limit = value[0].toIntOrNull() ?: limit
+                    limit = if (limit < 0 || limit > MAX_NUMBER_OF_BLOCKS_PER_REQUEST)
+                        DEFAULT_ENTRY_RESULTS_REQUEST
+                    else limit
                 }
                 "txs" -> {
-                    txs = value.get(0) == "true"
+                    txs = value[0] == "true"
                 }
                 "from_transaction" -> {
-                    fromTransaction = value.get(0).hexStringToByteArray()
+                    fromTransaction = value[0].hexStringToByteArray()
                 }
             }
         }
 
-        return model(request).getBlocks(blockHeight, order_asc, limit, !txs)
+        return model(request).getBlocks(blockHeight, orderAsc, limit, !txs)
 
     }
 
