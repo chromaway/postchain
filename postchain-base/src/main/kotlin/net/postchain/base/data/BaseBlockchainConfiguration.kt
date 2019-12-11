@@ -39,7 +39,9 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
                 getTransactionFactory(),
                 signers.toTypedArray(),
                 configData.blockSigMaker,
-                bcRelatedInfosDependencyList)
+                bcRelatedInfosDependencyList,
+                configData.getMaxBlockSize(),
+                configData.getMaxBlockTransactions())
     }
 
     /**

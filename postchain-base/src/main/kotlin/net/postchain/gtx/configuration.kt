@@ -14,7 +14,7 @@ import nl.komponents.kovenant.Promise
 
 open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationData, val module: GTXModule)
     : BaseBlockchainConfiguration(configData) {
-    val txFactory = GTXTransactionFactory(blockchainRID, module, cryptoSystem)
+    val txFactory = GTXTransactionFactory(blockchainRID, module, cryptoSystem, configData.getMaxTransactionSize())
 
     companion object : KLogging()
 

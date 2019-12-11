@@ -1,8 +1,6 @@
 package net.postchain.util
 
 import mu.KLogging
-import net.postchain.base.BlockchainRid
-import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.configurations.GTXTestModule
 import net.postchain.devtools.IntegrationTest
@@ -257,7 +255,7 @@ open class MultiNodeDoubleChainBlockTestHelper : IntegrationTest() {
             logger.info { "Verifying height $height" }
 
             // Asserting uniqueness of block at height
-            val blockRids = queries.getBlockRids(height).get()
+            val blockRids = queries.getBlockRid(height).get()
             assertNotNull(blockRids)
 
             // Asserting txs count

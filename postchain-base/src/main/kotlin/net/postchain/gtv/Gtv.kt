@@ -137,7 +137,7 @@ fun Gtv.generateProof(gtvPaths: GtvPathSet, calculator: MerkleHashCalculator<Gtv
     val factory = GtvMerkleBasics.getGtvBinaryTreeFactory()
     val proofFactory = GtvMerkleBasics.getGtvMerkleProofTreeFactory()
 
-    val binaryTree = factory.buildFromGtvAndPath(this ,gtvPaths, calculator.memoization)
+    val binaryTree = factory.buildFromGtvAndPath(this ,gtvPaths)
 
     return proofFactory.buildFromBinaryTree(binaryTree, calculator)
 }

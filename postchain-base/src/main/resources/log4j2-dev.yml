@@ -1,5 +1,6 @@
 Configuration:
   name: Default
+  monitorInterval: 30 # sec.
 
   Properties:
     Property:

@@ -39,6 +39,10 @@ class GtvMerkleHashMemoizationTest {
 
     @Test
     fun basic_operations_and_pruning_scenario_test() {
+        if (!GtvMerkleHashCache.enabled) {
+            return
+        }
+
         // ------------ Before we start -----------
         checkStats(0,0,0)
         println("size: ${memoization.getTotalSizeInBytes()}")
