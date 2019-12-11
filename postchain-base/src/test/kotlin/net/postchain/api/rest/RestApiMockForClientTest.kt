@@ -2,9 +2,11 @@
 
 package net.postchain.api.rest
 
-import com.sun.org.apache.xpath.internal.operations.Bool
 import mu.KLogging
-import net.postchain.api.rest.controller.*
+import net.postchain.api.rest.controller.Model
+import net.postchain.api.rest.controller.Query
+import net.postchain.api.rest.controller.QueryResult
+import net.postchain.api.rest.controller.RestApi
 import net.postchain.api.rest.model.ApiStatus
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
@@ -14,6 +16,7 @@ import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.gtv.Gtv
 import org.junit.After
+import org.junit.Ignore
 import org.junit.Test
 
 class RestApiMockForClientManual {
@@ -31,6 +34,7 @@ class RestApiMockForClientManual {
     }
 
     @Test
+    @Ignore
     fun startMockRestApi() {
         val model = MockModel()
         restApi = RestApi(listenPort, basePath)
@@ -131,12 +135,13 @@ class RestApiMockForClientManual {
             })
         }
 
-        override fun query(query: Gtv): Gtv {        
-        	TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        override fun query(query: Gtv): Gtv {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
+
         override fun nodeQuery(subQuery: String): String = TODO()
 
-        override fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, partialTx: Boolean): List<BlockDetail> {
+        override fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, txDetailsOnly: Boolean): List<BlockDetail> {
             var queryBlocks = blocks
             if (asc) {
                 queryBlocks = queryBlocks.sortedByDescending { blockDetail -> blockDetail.height }

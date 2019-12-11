@@ -2,7 +2,9 @@
 
 package net.postchain.api.rest.controller
 
-import com.google.gson.*
+import com.google.gson.Gson
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
 import mu.KLogging
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_HEADERS
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_METHODS
@@ -11,8 +13,6 @@ import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_REQ
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_REQUEST_METHOD
 import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_BLOCKCHAIN_RID
 import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_HASH_HEX
-import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_LIMIT
-import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_UP_TO
 import net.postchain.api.rest.controller.HttpHelper.Companion.SUBQUERY
 import net.postchain.api.rest.json.JsonFactory
 import net.postchain.api.rest.model.ApiTx
@@ -21,17 +21,13 @@ import net.postchain.api.rest.model.TxRID
 import net.postchain.common.TimeLog
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
+import net.postchain.core.BlockDetail
 import net.postchain.core.UserMistake
-import net.postchain.gtv.Gtv
-import net.postchain.gtv.GtvEncoder
-import net.postchain.gtv.GtvFactory
 import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
-import spark.QueryParamsMap
 import spark.Request
 import spark.Response
 import spark.Service
-import java.util.*
 
 /**
  * Contains information on the rest API, such as network parameters and available queries
@@ -171,14 +167,7 @@ class RestApi(
             }, gson::toJson)
 
             http.get("/blocks/$PARAM_BLOCKCHAIN_RID", { request, _ ->
-                val model = model(request)
-                // TODO Here there should not be any exception, the try and catch could be removed
-                try {
-                    val (blockHeight, asc, limit, partialTxs) = toQueryRequestParams(request)
-                    model.getBlocks(blockHeight, asc, limit, partialTxs)
-                } catch (e: java.lang.Exception) {
-                    throw UserMistake("Query format not correct")
-                }
+                handleBlocksQuery(request)
             }, gson::toJson)
 
             http.post("/query/$PARAM_BLOCKCHAIN_RID") { request, _ ->
@@ -206,17 +195,14 @@ class RestApi(
         http.awaitInitialization()
     }
 
-    data class QueryRequestParams(val blockHeight: Long, val order_asc: Boolean, val limit: Int, val txs: Boolean, val fromTransaction: ByteArray?)
-
-    private fun toQueryRequestParams(req: Request): QueryRequestParams {
+    private fun handleBlocksQuery(request: Request): List<BlockDetail> {
         var blockHeight = DEFAULT_BLOCK_HEIGHT_REQUEST
         var order_asc: Boolean = false
         var limit = DEFAULT_ENTRY_RESULTS_REQUEST // max number of blocks that is possible to request is 600
         var txs = false
         var fromTransaction: ByteArray? = null
 
-        val params = req.queryMap()
-
+        val params = request.queryMap()
         for ((name, value) in params.toMap()) {
             when (name) {
                 "before_block" -> {
@@ -240,12 +226,13 @@ class RestApi(
             }
         }
 
-        return QueryRequestParams(blockHeight, order_asc, limit, !txs, fromTransaction)
+        return model(request).getBlocks(blockHeight, order_asc, limit, !txs)
+
     }
 
-    private fun toTransaction(req: Request): ApiTx {
+    private fun toTransaction(request: Request): ApiTx {
         try {
-            return gson.fromJson<ApiTx>(req.body(), ApiTx::class.java)
+            return gson.fromJson<ApiTx>(request.body(), ApiTx::class.java)
         } catch (e: Exception) {
             throw UserMistake("Could not parse json", e)
         }

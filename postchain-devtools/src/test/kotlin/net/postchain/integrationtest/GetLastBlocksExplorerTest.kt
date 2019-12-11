@@ -71,7 +71,7 @@ class GetLastBlocksExplorerTest : IntegrationTest() {
         // Block1
         assertk.assert(blocks[0].height).isEqualTo(0L)
         assertk.assert(blocks[0].transactions).hasSize(0)
-        assertk.assert(blocks[0].partialTransaction).hasSize(2)
+        assertk.assert(blocks[0].transactionsDetails).hasSize(2)
     }
 
     @Test
