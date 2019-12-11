@@ -17,7 +17,6 @@ import net.postchain.config.app.AppConfig
 import net.postchain.core.*
 import net.postchain.gtv.Gtv
 import org.junit.After
-import org.junit.Ignore
 import org.junit.Test
 
 class RestApiMockForClientManual {
@@ -35,7 +34,6 @@ class RestApiMockForClientManual {
     }
 
     @Test
-    @Ignore
     fun startMockRestApi() {
         val model = MockModel()
         val appConfig = AppConfig(DummyConfig.getDummyConfig())
@@ -44,7 +42,6 @@ class RestApiMockForClientManual {
         logger.info("Ready to serve on port ${restApi.actualPort()}")
         Thread.sleep(600000) // Wait 10 minutes
     }
-
 
     class MockModel : Model {
         private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a1"
