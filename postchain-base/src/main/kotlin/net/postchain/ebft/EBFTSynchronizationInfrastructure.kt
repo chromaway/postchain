@@ -11,7 +11,7 @@ import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
 import net.postchain.debug.DiagnosticProperty
 import net.postchain.debug.DiagnosticProperty.BLOCKCHAIN
-import net.postchain.debug.DiagnosticProperty.PEERS_TOPOLOGY
+import net.postchain.debug.DpNodeType
 import net.postchain.debug.NodeDiagnosticContext
 import net.postchain.ebft.message.Message
 import net.postchain.ebft.worker.ReadOnlyWorker
@@ -21,7 +21,6 @@ import net.postchain.network.netty2.NettyConnectorFactory
 import net.postchain.network.x.DefaultXCommunicationManager
 import net.postchain.network.x.DefaultXConnectionManager
 import net.postchain.network.x.XConnectionManager
-import kotlin.reflect.KClass
 import net.postchain.network.x.XPeerID
 
 class EBFTSynchronizationInfrastructure(
@@ -31,7 +30,7 @@ class EBFTSynchronizationInfrastructure(
 
     private val nodeConfig get() = nodeConfigProvider.getConfiguration()
     val connectionManager: XConnectionManager
-    private val blockchainProcessesDiagnosticData = mutableMapOf<BlockchainRid, Map<String, String>>()
+    private val blockchainProcessesDiagnosticData = mutableMapOf<BlockchainRid, MutableMap<String, Any>>()
 
     init {
         connectionManager = DefaultXConnectionManager(
@@ -41,8 +40,7 @@ class EBFTSynchronizationInfrastructure(
                 EbftPacketDecoderFactory(),
                 SECP256K1CryptoSystem())
 
-        nodeDiagnosticContext.addProperty(PEERS_TOPOLOGY) { connectionManager.getPeersTopology() }
-        nodeDiagnosticContext.addProperty(BLOCKCHAIN) { blockchainProcessesDiagnosticData.values.toTypedArray() }
+        addBlockchainDiagnosticProperty()
     }
 
     override fun shutdown() {
@@ -53,7 +51,7 @@ class EBFTSynchronizationInfrastructure(
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
 
         return if (blockchainConfig.configData.context.nodeID != NODE_ID_READ_ONLY) {
-            registerBlockchainDiagnosticData(blockchainConfig.blockchainRID, ValidatorWorker::class)
+            registerBlockchainDiagnosticData(blockchainConfig.blockchainRID, DpNodeType.NODE_TYPE_VALIDATOR)
 
             ValidatorWorker(
                     processName,
@@ -62,7 +60,7 @@ class EBFTSynchronizationInfrastructure(
                     blockchainConfig.configData.context.nodeID,
                     buildXCommunicationManager(processName, blockchainConfig, false))
         } else {
-            registerBlockchainDiagnosticData(blockchainConfig.blockchainRID, ReadOnlyWorker::class)
+            registerBlockchainDiagnosticData(blockchainConfig.blockchainRID, DpNodeType.NODE_TYPE_REPLICA)
 
             ReadOnlyWorker(
                     processName,
@@ -70,13 +68,6 @@ class EBFTSynchronizationInfrastructure(
                     engine,
                     buildXCommunicationManager(processName, blockchainConfig, true))
         }
-    }
-
-    private fun registerBlockchainDiagnosticData(blockchainRid: BlockchainRid, nodeType: KClass<out BlockchainProcess>) {
-        blockchainProcessesDiagnosticData[blockchainRid] = mapOf(
-                DiagnosticProperty.BLOCKCHAIN_RID.prettyName to blockchainRid.toHex(),
-                DiagnosticProperty.BLOCKCHAIN_NODE_TYPE.prettyName to (nodeType.simpleName ?: nodeType.toString())
-        )
     }
 
     @Deprecated("POS-90")
@@ -138,5 +129,28 @@ class EBFTSynchronizationInfrastructure(
                 SECP256K1CryptoSystem(),
                 nodeConfig.privKeyByteArray,
                 nodeConfig.pubKey.hexStringToByteArray())
+    }
+
+    private fun addBlockchainDiagnosticProperty() {
+        nodeDiagnosticContext.addProperty(BLOCKCHAIN) {
+            val diagnosticData = blockchainProcessesDiagnosticData.toMutableMap()
+
+            connectionManager.getPeersTopology().forEach { (blockchainRid, topology) ->
+                diagnosticData.computeIfPresent(BlockchainRid.buildFromHex(blockchainRid)) { _, properties ->
+                    properties.apply {
+                        put(DiagnosticProperty.BLOCKCHAIN_NODE_PEERS.prettyName, topology)
+                    }
+                }
+            }
+
+            diagnosticData.values.toTypedArray()
+        }
+    }
+
+    private fun registerBlockchainDiagnosticData(blockchainRid: BlockchainRid, nodeType: DpNodeType) {
+        blockchainProcessesDiagnosticData[blockchainRid] = mutableMapOf<String, Any>(
+                DiagnosticProperty.BLOCKCHAIN_RID.prettyName to blockchainRid.toHex(),
+                DiagnosticProperty.BLOCKCHAIN_NODE_TYPE.prettyName to nodeType.prettyName
+        )
     }
 }
