@@ -271,7 +271,7 @@ class RestApiModelTest {
         replay(model)
 
         given().basePath(basePath).port(restApi.actualPort())
-                .get("/blocks/$blockchainRID1?before_block=${Long.MAX_VALUE}&limit=${25}&txs=true")
+                .get("/blocks/$blockchainRID1?before_block=${Long.MAX_VALUE}&limit=${25}&hashesOnly=false")
                 .then()
                 .statusCode(200)
                 .assertThat().body(equalTo(gson.toJson(response).toString()))

@@ -227,7 +227,7 @@ class RestApi(
         var blockHeight = DEFAULT_BLOCK_HEIGHT_REQUEST
         var orderAsc = false
         var limit = DEFAULT_ENTRY_RESULTS_REQUEST // max number of blocks that is possible to request is 600
-        var txs = false
+        var hashesOnly = true
         var fromTransaction: ByteArray? = null
 
         val params = request.queryMap()
@@ -247,8 +247,8 @@ class RestApi(
                         DEFAULT_ENTRY_RESULTS_REQUEST
                     else limit
                 }
-                "txs" -> {
-                    txs = value[0] == "true"
+                "hashesOnly" -> {
+                    hashesOnly = value[0] == "true"
                 }
                 "from_transaction" -> {
                     fromTransaction = value[0].hexStringToByteArray()
@@ -256,7 +256,7 @@ class RestApi(
             }
         }
 
-        return model(request).getBlocks(blockHeight, orderAsc, limit, !txs)
+        return model(request).getBlocks(blockHeight, orderAsc, limit, hashesOnly)
 
     }
 
