@@ -41,6 +41,7 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
                 signers.toTypedArray(),
                 configData.blockSigMaker,
                 bcRelatedInfosDependencyList,
+                !effectiveBlockchainRID.equals(blockchainRID),
                 configData.getMaxBlockSize(),
                 configData.getMaxBlockTransactions())
     }
