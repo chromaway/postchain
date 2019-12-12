@@ -48,10 +48,6 @@ class CommandAddBlockchain : Command {
         println("add-blockchain will be executed with options: " +
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
-        if (blockchainRID != "") {
-            println("WARNING: You specified Blockchain RID, but this is deprecated and will not be used. The Blockchain global ID will be calculated by the system!" )
-        }
-
         return try {
             val cliExecution = CliExecution()
             val mode = if (force) AlreadyExistMode.FORCE else AlreadyExistMode.ERROR
