@@ -1,5 +1,6 @@
 package net.postchain.integrationtest.reconfiguration
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import net.postchain.common.toHex
 import net.postchain.core.Transaction
@@ -19,7 +20,7 @@ object TxChartHelper {
         val mapper = ObjectMapper()
         val chart = mapper.createObjectNode()
         val blocks = mapper.createArrayNode()
-        chart.set("blocks", blocks)
+        chart.set<JsonNode>("blocks", blocks)
 
         val height = minOf(
                 node.query(chainId) { it.getBestHeight() } ?: -1L,
@@ -47,7 +48,7 @@ object TxChartHelper {
                         txs.add(it)
                     }
 
-            block.set("tx", txs)
+            block.set<JsonNode>("tx", txs)
             blocks.add(block)
         }
 
