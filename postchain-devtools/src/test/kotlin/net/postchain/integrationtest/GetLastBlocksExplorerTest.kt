@@ -2,9 +2,11 @@ package net.postchain.integrationtest
 
 import assertk.assertions.hasSize
 import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import net.postchain.common.toHex
 import net.postchain.core.Transaction
+import net.postchain.core.TxDetail
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.devtools.testinfra.TestTransaction
@@ -39,7 +41,7 @@ class GetLastBlocksExplorerTest : IntegrationTest() {
     @Test
     fun test_get_all_blocks() {
         // Asserting blocks and txs
-        val blocks = nodes[0].getRestApiModel().getBlocks(Long.MAX_VALUE, false,25, false)
+        val blocks = nodes[0].getRestApiModel().getBlocks(Long.MAX_VALUE, false, 25, false)
         assertk.assert(blocks).hasSize(3)
 
         // Block #2
@@ -64,14 +66,15 @@ class GetLastBlocksExplorerTest : IntegrationTest() {
     }
 
     @Test
-    fun test_get_first_block_partial_tx()  {
+    fun test_get_first_block_hashesOnly() {
         val blocks = nodes[0].getRestApiModel().getBlocks(-1, true, 1, true)
         assertk.assert(blocks).hasSize(1)
 
         // Block1
         assertk.assert(blocks[0].height).isEqualTo(0L)
-        assertk.assert(blocks[0].transactions).hasSize(0)
-        assertk.assert(blocks[0].transactionsDetails).hasSize(2)
+        assertk.assert(blocks[0].transactions).hasSize(2)
+        assertk.assert(blocks[0].transactions[0].data).isNull()
+        assertk.assert(blocks[0].transactions[1].data).isNull()
     }
 
     @Test
@@ -85,13 +88,13 @@ class GetLastBlocksExplorerTest : IntegrationTest() {
 
     private fun tx(id: Int): TestTransaction = TestTransaction(id)
 
-    private fun compareTx(actualTx: ByteArray, expectedTx: Transaction): Boolean {
-        return (actualTx.toHex() == expectedTx.getRawData().toHex())
+    private fun compareTx(actualTx: TxDetail, expectedTx: Transaction): Boolean {
+        return (actualTx.data?.toHex() == expectedTx.getRawData().toHex())
                 .also {
                     if (!it) {
                         logger.error {
                             "Transactions are not equal:\n" +
-                                    "\t actual:\t${actualTx.toHex()}\n" +
+                                    "\t actual:\t${actualTx.data?.toHex()}\n" +
                                     "\t expected:\t${expectedTx.getRawData().toHex()}"
                         }
                     }

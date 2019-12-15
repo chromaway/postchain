@@ -32,6 +32,14 @@ class BaseBlockchainConfigurationData(
         return stratDict?.get("name")?.asString() ?: ""
     }
 
+    fun getHistoricBRID(): BlockchainRid? {
+        val bytes = data["historic_brid"]?.asByteArray()
+        return if (bytes != null)
+            BlockchainRid(bytes)
+        else
+            null
+    }
+
     fun getBlockBuildingStrategy(): Gtv? {
         return data["blockstrategy"]
     }

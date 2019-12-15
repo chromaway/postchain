@@ -227,7 +227,7 @@ class RestApi(
         var blockHeight = DEFAULT_BLOCK_HEIGHT_REQUEST
         var orderAsc = false
         var limit = DEFAULT_ENTRY_RESULTS_REQUEST // max number of blocks that is possible to request is 600
-        var txs = false
+        var hashesOnly = true
         var fromTransaction: ByteArray? = null
 
         val params = request.queryMap()
@@ -247,8 +247,8 @@ class RestApi(
                         DEFAULT_ENTRY_RESULTS_REQUEST
                     else limit
                 }
-                "txs" -> {
-                    txs = value[0] == "true"
+                "hashesOnly" -> {
+                    hashesOnly = value[0] == "true"
                 }
                 "from_transaction" -> {
                     fromTransaction = value[0].hexStringToByteArray()
@@ -256,7 +256,7 @@ class RestApi(
             }
         }
 
-        return model(request).getBlocks(blockHeight, orderAsc, limit, !txs)
+        return model(request).getBlocks(blockHeight, orderAsc, limit, hashesOnly)
 
     }
 
@@ -384,20 +384,17 @@ class RestApi(
      */
     private fun checkBlockchainRID(request: Request): String {
         val blockchainRID = request.params(PARAM_BLOCKCHAIN_RID)
-        return if (blockchainRID.matches(Regex("[0-9a-fA-F]{64}"))) {
-            blockchainRID
-        } else if (blockchainRID.matches(Regex("iid_[0-9]*"))) {
-            val chainIid = blockchainRID.substring(4).toLong()
-            val dbBcRid = databaseConnector(appConfig).withWriteConnection { connection ->
-                appConfigDbLayer(appConfig, connection).getBlockchainRid(chainIid)
+        return when {
+            blockchainRID.matches(Regex("[0-9a-fA-F]{64}")) -> blockchainRID
+            blockchainRID.matches(Regex("iid_[0-9]*")) -> {
+                val chainIid = blockchainRID.substring(4).toLong()
+                val dbBcRid = databaseConnector(appConfig).withWriteConnection { connection ->
+                    appConfigDbLayer(appConfig, connection).getBlockchainRid(chainIid)
+                }
+                dbBcRid?.toHex()
+                        ?: throw NotFoundError("Can't find blockchain with chain Iid: $chainIid in DB. Did you add this BC to the node?")
             }
-            if (dbBcRid != null) {
-                dbBcRid.toHex()
-            } else {
-                throw NotFoundError("Can't find blockchain with chain Iid: $chainIid in DB. Did you add this BC to the node?")
-            }
-        } else {
-            throw BadFormatError("Invalid blockchainRID. Expected 64 hex digits [0-9a-fA-F]")
+            else -> throw BadFormatError("Invalid blockchainRID. Expected 64 hex digits [0-9a-fA-F]")
         }
     }
 
@@ -425,11 +422,8 @@ class RestApi(
         val dbBcRid = databaseConnector(appConfig).withWriteConnection { connection ->
             appConfigDbLayer(appConfig, connection).getBlockchainRid(0L)
         }
-        val chain0Rid = if (dbBcRid != null) {
-            dbBcRid.toHex()
-        } else {
-            throw NotFoundError("Can't find chain0 in DB. Is this node in managed mode?")
-        }
+        val chain0Rid = dbBcRid?.toHex()
+                ?: throw NotFoundError("Can't find chain0 in DB. Is this node in managed mode?")
         return models[chain0Rid]
                 ?: throw NotFoundError("Can't find blockchain with blockchainRID: $chain0Rid")
     }

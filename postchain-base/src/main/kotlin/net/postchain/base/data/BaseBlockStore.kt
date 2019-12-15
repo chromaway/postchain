@@ -84,35 +84,31 @@ class BaseBlockStore : BlockStore {
     // Eventually, we may change this implementation to actually deliver a true
     // stream so that we don't have to store all transaction data in memory.
     override fun getBlockTransactions(ctx: EContext, blockRID: ByteArray): List<ByteArray> {
-        return DatabaseAccess.of(ctx).getBlockTransactions(ctx, blockRID)
+        return DatabaseAccess.of(ctx).getBlockTransactions(ctx, blockRID, false)
+                .map { it.data as ByteArray }
     }
 
     override fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray {
         return DatabaseAccess.of(ctx).getWitnessData(ctx, blockRID)
     }
 
-    override fun getBlocks(ctx: EContext, blockHeight: Long, asc: Boolean, limit: Int, txDetailsOnly: Boolean): List<BlockDetail> {
+    override fun getBlocks(ctx: EContext, blockHeight: Long, asc: Boolean, limit: Int, hashesOnly: Boolean): List<BlockDetail> {
         val db = DatabaseAccess.of(ctx)
-        val blocksInfo = db.getBlocks(ctx, blockHeight, asc, limit)
-        return blocksInfo.map { blockInfo ->
-            val (txs, txDetails) = if (txDetailsOnly) {
-                emptyList<ByteArray>() to db.getBlockTransactionsHashes(ctx, blockInfo.blockRid)
-            } else {
-                db.getBlockTransactions(ctx, blockInfo.blockRid) to emptyList()
-            }
+        val blocks = db.getBlocks(ctx, blockHeight, asc, limit)
+        return blocks.map { block ->
+            val txs = db.getBlockTransactions(ctx, block.blockRid, hashesOnly)
 
             // Decode block header
-            val blockHeaderDecoded = BaseBlockHeader(blockInfo.blockHeader, SECP256K1CryptoSystem())
+            val blockHeaderDecoded = BaseBlockHeader(block.blockHeader, SECP256K1CryptoSystem())
 
             BlockDetail(
-                    blockInfo.blockRid,
+                    block.blockRid,
                     blockHeaderDecoded.prevBlockRID,
-                    blockInfo.blockHeader,
-                    blockInfo.blockHeight,
+                    block.blockHeader,
+                    block.blockHeight,
                     txs,
-                    txDetails,
-                    blockInfo.witness,
-                    blockInfo.timestamp)
+                    block.witness,
+                    block.timestamp)
         }
     }
 

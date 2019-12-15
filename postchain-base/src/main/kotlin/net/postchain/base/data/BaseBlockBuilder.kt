@@ -34,6 +34,7 @@ open class BaseBlockBuilder(
         val subjects: Array<ByteArray>,
         val blockSigMaker: SigMaker,
         val blockchainRelatedInfoDependencyList: List<BlockchainRelatedInfo>,
+        val usingHistoricBRID: Boolean,
         val maxBlockSize : Long = 20*1024*1024, // 20mb
         val maxBlockTransactions : Long = 100
 ): AbstractBlockBuilder(eContext, store, txFactory) {
@@ -55,6 +56,13 @@ open class BaseBlockBuilder(
         val gtvArr = gtv(digests.map { gtv(it) })
 
         return gtvArr.merkleHash(calc)
+    }
+
+    override fun begin(partialBlockHeader: BlockHeader?) {
+        if (partialBlockHeader == null && usingHistoricBRID) {
+            throw UserMistake("Cannot build new blocks in historic mode (check configuration)")
+        }
+        super.begin(partialBlockHeader)
     }
 
     /**
