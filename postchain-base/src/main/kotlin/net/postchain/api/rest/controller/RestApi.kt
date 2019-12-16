@@ -11,8 +11,6 @@ import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_REQ
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_REQUEST_METHOD
 import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_BLOCKCHAIN_RID
 import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_HASH_HEX
-import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_LIMIT
-import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_UP_TO
 import net.postchain.api.rest.controller.HttpHelper.Companion.SUBQUERY
 import net.postchain.api.rest.json.JsonFactory
 import net.postchain.api.rest.model.ApiTx
@@ -22,7 +20,6 @@ import net.postchain.common.TimeLog
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.UserMistake
-import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.GtvFactory
 import net.postchain.gtv.*
@@ -31,7 +28,9 @@ import spark.QueryParamsMap
 import spark.Request
 import spark.Response
 import spark.Service
-import java.util.*
+import kotlin.reflect.KClass
+import kotlin.reflect.full.cast
+import kotlin.reflect.full.safeCast
 
 /**
  * Contains information on the rest API, such as network parameters and available queries
@@ -46,6 +45,7 @@ class RestApi(
     val MAX_NUMBER_OF_BLOCKS_PER_REQUEST = 100
     val DEFAULT_BLOCK_HEIGHT_REQUEST = Long.MAX_VALUE
     val DEFAULT_ENTRY_RESULTS_REQUEST = 25
+    val MAX_NUMBER_OF_TXS_PER_REQUEST = 600
 
     companion object : KLogging()
 
@@ -158,6 +158,19 @@ class RestApi(
                 }
             }, gson::toJson)
 
+            http.get("/transactions/$PARAM_BLOCKCHAIN_RID/$PARAM_HASH_HEX", "application/json", { request, _ ->
+                  runTxActionOnModel(request) { model, txRID ->
+                      model.getTransactionInfo(txRID)
+                  }
+            }, gson::toJson)
+            http.get("/transactions/$PARAM_BLOCKCHAIN_RID", "application/json", { request, _ ->
+                val model = model(request)
+                val paramsMap = request.queryMap()
+                val limit = paramsMap.get("limit")?.value()?.toIntOrNull()?.coerceIn(0, MAX_NUMBER_OF_TXS_PER_REQUEST) ?: DEFAULT_ENTRY_RESULTS_REQUEST
+                val beforeTime = paramsMap.get("before-time")?.value()?.toLongOrNull() ?: Long.MAX_VALUE
+                model.getTransactionsInfo(beforeTime, limit)
+            }, gson::toJson)
+
             http.get("/tx/$PARAM_BLOCKCHAIN_RID/$PARAM_HASH_HEX/confirmationProof", { request, _ ->
                 runTxActionOnModel(request) { model, txRID ->
                     model.getConfirmationProof(txRID)
@@ -170,15 +183,22 @@ class RestApi(
                 }
             }, gson::toJson)
 
-            http.get("/blocks/$PARAM_BLOCKCHAIN_RID", { request, _ ->
+            http.get("/blocks/$PARAM_BLOCKCHAIN_RID", "application/json", { request, _ ->
                 val model = model(request)
-                // TODO Here there should not be any exception, the try and catch could be removed
-                try {
-                    val (blockHeight, asc, limit, partialTxs) = toQueryRequestParams(request)
-                    model.getBlocks(blockHeight, asc, limit, partialTxs)
-                } catch (e: java.lang.Exception) {
-                    throw UserMistake("Query format not correct")
-                }
+                val paramsMap = request.queryMap()
+                val beforeTime = paramsMap.get("before-time")?.value()?.toLongOrNull() ?: Long.MAX_VALUE
+                val limit = paramsMap.get("limit")?.value()?.toIntOrNull()?.coerceIn(0, MAX_NUMBER_OF_BLOCKS_PER_REQUEST) ?: DEFAULT_ENTRY_RESULTS_REQUEST
+                val partialTxs = paramsMap.get("txs")?.value() != "true"
+                model.getBlocks(beforeTime, limit, partialTxs)
+
+            }, gson::toJson)
+
+            http.get("/blocks/$PARAM_BLOCKCHAIN_RID/$PARAM_HASH_HEX", "applicatin/json", { request, _ ->
+                val model = model(request)
+                val blockRID = request.params(PARAM_HASH_HEX).hexStringToByteArray()
+                val paramsMap = request.queryMap()
+                val partialTx = paramsMap.get("txs").value() != "true"
+                model.getBlock(blockRID, partialTx)
             }, gson::toJson)
 
             http.post("/query/$PARAM_BLOCKCHAIN_RID") { request, _ ->
@@ -204,43 +224,6 @@ class RestApi(
         }
 
         http.awaitInitialization()
-    }
-
-    data class QueryRequestParams(val blockHeight: Long, val order_asc: Boolean, val limit: Int, val txs: Boolean, val fromTransaction: ByteArray?)
-
-    private fun toQueryRequestParams(req: Request): QueryRequestParams {
-        var blockHeight = DEFAULT_BLOCK_HEIGHT_REQUEST
-        var order_asc: Boolean = false
-        var limit = DEFAULT_ENTRY_RESULTS_REQUEST // max number of blocks that is possible to request is 600
-        var txs = false
-        var fromTransaction: ByteArray? = null
-
-        val params = req.queryMap()
-
-        for ((name, value) in params.toMap()) {
-            when (name) {
-                "before_block" -> {
-                    blockHeight = value.get(0).toLongOrNull() ?: blockHeight
-                    order_asc = false
-                }
-                "after_block" -> {
-                    blockHeight = value.get(0).toLongOrNull() ?: blockHeight
-                    order_asc = true
-                }
-                "limit" -> {
-                    limit = value.get(0).toIntOrNull() ?: limit
-                    limit = if (limit < 0 || limit > MAX_NUMBER_OF_BLOCKS_PER_REQUEST) DEFAULT_ENTRY_RESULTS_REQUEST else limit
-                }
-                "txs" -> {
-                    txs = value.get(0) == "true"
-                }
-                "from_transaction" -> {
-                    fromTransaction = value.get(0).hexStringToByteArray()
-                }
-            }
-        }
-
-        return QueryRequestParams(blockHeight, order_asc, limit, !txs, fromTransaction)
     }
 
     private fun toTransaction(req: Request): ApiTx {

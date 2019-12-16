@@ -33,6 +33,17 @@ open class BlockDetail(
         val witness: ByteArray,
         val timestamp: Long)
 
+open class TransactionInfoExt(
+        val blockRID: ByteArray,
+        val blockHeight: Long,
+        val blockHeader: ByteArray,
+        val witness: ByteArray,
+        val timestamp: Long,
+        val txRID: ByteArray,
+        val txHash: ByteArray,
+        val txData: ByteArray?
+)
+
 data class ValidationResult(
         val result: Boolean,
         val message: String? = null)

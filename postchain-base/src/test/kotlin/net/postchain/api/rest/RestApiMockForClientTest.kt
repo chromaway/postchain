@@ -2,13 +2,13 @@
 
 package net.postchain.api.rest
 
-import com.sun.org.apache.xpath.internal.operations.Bool
 import mu.KLogging
 import net.postchain.api.rest.controller.*
 import net.postchain.api.rest.model.ApiStatus
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
 import net.postchain.base.ConfirmationProof
+import net.postchain.base.cryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.*
@@ -131,19 +131,37 @@ class RestApiMockForClientManual {
             })
         }
 
+        //TODO Should tests in base have knowledge of GTV? If yes, convert getTransactionsInfo to use GTV
         override fun query(query: Gtv): Gtv {        
         	TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
         override fun nodeQuery(subQuery: String): String = TODO()
 
-        override fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, partialTx: Boolean): List<BlockDetail> {
+        override fun getBlock(blockRID: ByteArray, partialTx: Boolean): BlockDetail? {
+            return (blocks.filter { it.rid.contentEquals(blockRID) }).getOrNull(0)
+        }
+
+        override fun getBlocks(blockTime: Long, limit: Int, partialTx: Boolean): List<BlockDetail> {
+            var queryBlocks = blocks.sortedBy { blockDetail -> blockDetail.height }
+            return blocks.filter { blockDetail -> blockDetail.timestamp < blockTime }.subList(0, limit)
+        }
+
+        override fun getTransactionInfo(txRID: TxRID): TransactionInfoExt {
+            val block = blocks.filter { block -> block.transactions.filter { tx -> cryptoSystem.digest(tx).contentEquals(txRID.bytes) }.size >0 }[0]
+            val tx = block.transactions.filter { tx -> cryptoSystem.digest(tx).contentEquals(txRID.bytes) }[0]
+            return TransactionInfoExt(block.rid, block.height, block.header, block.witness, block.timestamp, cryptoSystem.digest(tx), tx.slice(IntRange(0,4)).toByteArray(), tx)
+        }
+
+        override fun getTransactionsInfo(beforeTime: Long, limit: Int): List<TransactionInfoExt> {
             var queryBlocks = blocks
-            if (asc) {
-                queryBlocks = queryBlocks.sortedByDescending { blockDetail -> blockDetail.height }
-            } else {
-                queryBlocks = queryBlocks.sortedBy { blockDetail -> blockDetail.height }
+            var transactionsInfo: MutableList<TransactionInfoExt> = mutableListOf()
+            queryBlocks = queryBlocks.sortedByDescending { blockDetail ->  blockDetail.height }
+            for (block in queryBlocks) {
+                for(tx in block.transactions) {
+                    transactionsInfo.add(TransactionInfoExt(block.rid, block.height, block.header, block.witness, block.timestamp, cryptoSystem.digest(tx), tx.slice(IntRange(0,4)).toByteArray(), tx))
+                }
             }
-            return blocks.filter { blockDetail -> blockDetail.height < blockHeight }.subList(0, limit)
+            return transactionsInfo.toList()
         }
     }
 }

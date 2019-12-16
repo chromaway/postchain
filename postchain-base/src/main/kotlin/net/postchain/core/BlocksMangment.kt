@@ -30,7 +30,10 @@ interface BlockStore {
     //    fun getBlockData(ctx: EContext, blockRID: ByteArray): BlockData
     fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray
 
-    fun getBlocks(ctx: EContext, blockHeight: Long, asc: Boolean, limit: Int, partialTx: Boolean): List<BlockDetail>
+    fun getBlocks(ctx: EContext, beforeTime: Long, limit: Int, partialTx: Boolean): List<BlockDetail>
+    fun getBlock(ctx: EContext, blockRID: ByteArray, partialTx: Boolean): BlockDetail?
+    fun getTransactionInfo(ctx: EContext, txRID: ByteArray): TransactionInfoExt?
+    fun getTransactionsInfo(ctx: EContext, beforeTime: Long, limit: Int): List<TransactionInfoExt>
     fun getBlockHeader(ctx: EContext, blockRID: ByteArray): ByteArray
 
     fun getTxRIDsAtHeight(ctx: EContext, height: Long): Array<ByteArray>
@@ -50,10 +53,13 @@ interface BlockQueries {
     fun getBlockRids(height: Long): Promise<ByteArray?, Exception>
     fun getBlockAtHeight(height: Long): Promise<BlockDataWithWitness, Exception>
     fun getBlockHeader(blockRID: ByteArray): Promise<BlockHeader, Exception>
-    fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, partialTx: Boolean): Promise<List<BlockDetail>, Exception>
+    fun getBlocks(beforeTime: Long, limit: Int, partialTx: Boolean): Promise<List<BlockDetail>, Exception>
+    fun getBlock(blockRID: ByteArray, partialTx: Boolean): Promise<BlockDetail?, Exception>
 
     fun getBlockTransactionRids(blockRID: ByteArray): Promise<List<ByteArray>, Exception>
     fun getTransaction(txRID: ByteArray): Promise<Transaction?, Exception>
+    fun getTransactionInfo(txRID: ByteArray): Promise<TransactionInfoExt?, Exception>
+    fun getTransactionsInfo(beforeTime: Long, limit: Int): Promise<List<TransactionInfoExt>, Exception>
     fun query(query: String): Promise<String, Exception>
     fun query(name: String, args: Gtv): Promise<Gtv, Exception>
     fun isTransactionConfirmed(txRID: ByteArray): Promise<Boolean, Exception>

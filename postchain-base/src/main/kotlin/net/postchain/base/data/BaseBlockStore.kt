@@ -86,13 +86,35 @@ class BaseBlockStore : BlockStore {
         return DatabaseAccess.of(ctx).getBlockTransactions(ctx, blockRID)
     }
 
+    override fun getTransactionInfo(ctx: EContext, txRID: ByteArray): TransactionInfoExt? {
+        return DatabaseAccess.of(ctx).getTransactionInfo(ctx, txRID)
+    }
+
+    override fun getTransactionsInfo(ctx: EContext, beforeTime: Long, limit: Int): List<TransactionInfoExt> {
+        return DatabaseAccess.of(ctx).getTransactionsInfo(ctx, beforeTime, limit)
+    }
+
     override fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray {
         return DatabaseAccess.of(ctx).getWitnessData(ctx, blockRID)
     }
 
-    override fun getBlocks(ctx: EContext, blockHeight: Long, asc: Boolean, limit: Int, partialTx: Boolean): List<BlockDetail> {
+    override fun getBlock(ctx: EContext, blockRID: ByteArray, partialTx: Boolean): BlockDetail? {
         val db = DatabaseAccess.of(ctx)
-        val blocksInfo = db.getBlocks(ctx, blockHeight, asc, limit)
+        val blockInfo = db.getBlock(ctx, blockRID) ?: return null
+        var txDetails = listOf<TxDetail>()
+        var transactions = listOf<ByteArray>()
+        if(partialTx) {
+            txDetails = db.getBlockPartialTransactions(ctx, blockInfo.blockRid)
+        } else {
+            transactions = db.getBlockTransactions(ctx, blockInfo.blockRid)
+        }
+        val blockHeaderDecoded = BaseBlockHeader(blockInfo.blockHeader, SECP256K1CryptoSystem()) // TODO can I do this on the node or is it too computational expensive
+        return BlockDetail(blockInfo.blockRid, blockHeaderDecoded.prevBlockRID, blockInfo.blockHeader, blockInfo.blockHeight, transactions, txDetails, blockInfo.witness, blockInfo.timestamp)
+    }
+
+    override fun getBlocks(ctx: EContext, blockTime: Long, limit: Int, partialTx: Boolean): List<BlockDetail> {
+        val db = DatabaseAccess.of(ctx)
+        val blocksInfo = db.getBlocks(ctx, blockTime, limit)
         return blocksInfo.map { blockInfo ->
             var txDetails = listOf<TxDetail>()
             var transactions = listOf<ByteArray>()

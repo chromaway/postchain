@@ -95,9 +95,27 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
         }
     }
 
-    override fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, partialTx: Boolean): Promise<List<BlockDetail>, Exception> {
+    override fun getTransactionInfo(txRID: ByteArray): Promise<TransactionInfoExt?, Exception> {
+        return runOp {
+            blockStore.getTransactionInfo(it, txRID)
+        }
+    }
+
+    override fun getTransactionsInfo(beforeTime: Long, limit: Int): Promise<List<TransactionInfoExt>, Exception> {
+        return runOp {
+            blockStore.getTransactionsInfo(it, beforeTime, limit)
+        }
+    }
+
+    override fun getBlocks(beforeTime: Long, limit: Int, partialTx: Boolean): Promise<List<BlockDetail>, Exception> {
         return runOp{
-            blockStore.getBlocks(it, blockHeight, asc, limit, partialTx)
+            blockStore.getBlocks(it, beforeTime, limit, partialTx)
+        }
+    }
+
+    override fun getBlock(blockRID: ByteArray, partialTx: Boolean): Promise<BlockDetail?, Exception> {
+        return runOp {
+            blockStore.getBlock(it, blockRID, partialTx)
         }
     }
 
