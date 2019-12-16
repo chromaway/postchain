@@ -93,8 +93,8 @@ class BaseManagedBlockBuilder(
         return exception
     }
 
-    override fun finalizeBlock() {
-        runOp { blockBuilder.finalizeBlock() }
+    override fun finalizeBlock(): BlockHeader {
+        return runOp { blockBuilder.finalizeBlock() }
     }
 
     override fun finalizeAndValidate(blockHeader: BlockHeader) {

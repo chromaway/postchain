@@ -119,7 +119,7 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
         }
     }
 
-    override fun getBlockRids(height: Long): Promise<ByteArray?, Exception> {
+    override fun getBlockRid(height: Long): Promise<ByteArray?, Exception> {
         return runOp {
             blockStore.getBlockRID(it, height)
         }

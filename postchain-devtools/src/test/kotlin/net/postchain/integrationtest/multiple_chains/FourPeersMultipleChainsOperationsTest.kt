@@ -9,6 +9,7 @@ import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.assertNodeConnectedWith
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
+import org.junit.Ignore
 import org.junit.Test
 
 class FourPeersMultipleChainsOperationsTest : IntegrationTest() {
@@ -16,6 +17,7 @@ class FourPeersMultipleChainsOperationsTest : IntegrationTest() {
     companion object : KLogging()
 
     @Test
+    @Ignore
     fun startingAndStoppingAllPeersWithoutAnyChain_Successfully() {
         val nodesCount = 4
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))

@@ -104,6 +104,7 @@ fun secp256k1_verify(digest: ByteArray, pubKey: ByteArray, signature: ByteArray)
         val sig = secp256k1_decodeSignature(signature)
         return signer.verifySignature(digest, sig[0], sig[1])
     } catch (e: Exception) {
+        e.printStackTrace()
         return false
     }
 }

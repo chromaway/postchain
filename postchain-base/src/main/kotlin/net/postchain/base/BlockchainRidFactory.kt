@@ -7,11 +7,12 @@ import net.postchain.core.EContext
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtv.merkleHash
+import java.lang.IllegalArgumentException
 
 object BlockchainRidFactory {
 
     val cryptoSystem = SECP256K1CryptoSystem()
-    val merkleHashCalculator = GtvMerkleHashCalculator(cryptoSystem)
+    private val merkleHashCalculator = GtvMerkleHashCalculator(cryptoSystem)
 
     /**
      * Check if there is a Blockchain RID for this chain already
@@ -32,16 +33,35 @@ object BlockchainRidFactory {
         return if (dbBcRid != null) {
             dbBcRid // We have it in the DB so don't do anything (if it's in here it must be correct)
         } else {
-            // Need to calculate it the RID, and we do it the usual way (same as merkle root of block)
-            val bcBinary = data.merkleHash(merkleHashCalculator)
-            val newRid = BlockchainRid(bcBinary)
+            val newRid = calculateBlockchainRID(data)
             DatabaseAccess.of(eContext).checkBlockchainRID(eContext, newRid)
             newRid
         }
     }
+
+    /**
+     * Calculates blockchain RID by the given blockchain configuration.
+     *
+     * @param data is the [Gtv] data of the configuration
+     * @return the blockchain RID
+     */
+    fun calculateBlockchainRID(data: Gtv): BlockchainRid {
+        // Need to calculate it the RID, and we do it the usual way (same as merkle root of block)
+        val bcBinary = data.merkleHash(merkleHashCalculator)
+        return BlockchainRid(bcBinary)
+    }
 }
 
 data class BlockchainRid(val data: ByteArray) {
+
+    /*
+    // TODO Olle Add this and fix test-
+    init {
+        if (data.size != 32) {
+            throw IllegalArgumentException("Wrong size of Blockchain RID, was ${data.size} should be 32")
+        }
+    }
+    */
 
     companion object {
 
@@ -55,7 +75,7 @@ data class BlockchainRid(val data: ByteArray) {
          * @param b is the byte to be repeated
          */
         fun buildRepeat(b: Byte): BlockchainRid {
-            val bArr = ByteArray(64) { b }
+            val bArr = ByteArray(32) { b }
             return BlockchainRid(bArr)
         }
     }

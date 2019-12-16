@@ -11,6 +11,7 @@ import net.postchain.api.rest.model.TxRID
 import net.postchain.base.cryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
+import net.postchain.config.app.AppConfig
 import net.postchain.core.BlockDetail
 import net.postchain.core.TransactionInfoExt
 import net.postchain.core.TxDetail
@@ -37,8 +38,11 @@ class RestApiModelTest {
     @Before
     fun setup() {
         model = createMock(Model::class.java)
-        restApi = RestApi(0, basePath)
-//        restApi.attachModel(blockchainRID, model)
+        val appConf = AppConfig(DummyConfig.getDummyConfig())
+        restApi = RestApi(0, basePath, appConf)
+
+        // We're doing this test by test instead
+        // restApi.attachModel(blockchainRID, model)
     }
 
     @After
@@ -221,17 +225,48 @@ class RestApiModelTest {
                 .statusCode(200)
                 .assertThat().body(equalTo(gson.toJson(response).toString()))
 
-      verify(model)
+        verify(model)
     }
 
     @Test
     fun test_blocks_get_all() {
         restApi.attachModel(blockchainRID1, model)
-        val response = listOf<BlockDetail>(
-                BlockDetail("blockRid001".toByteArray(), blockchainRID3.toByteArray(), "some header".toByteArray(), 0, listOf<ByteArray>(), listOf<TxDetail>(),"signatures".toByteArray(), 1574849700),
-                BlockDetail("blockRid002".toByteArray(), "blockRid001".toByteArray(), "some other header".toByteArray(), 1, listOf<ByteArray>("tx1".toByteArray()), listOf<TxDetail>(),"signatures".toByteArray(),1574849760),
-                BlockDetail("blockRid003".toByteArray(), "blockRid002".toByteArray(), "yet another header".toByteArray(), 2, listOf<ByteArray>(), listOf<TxDetail>(),"signatures".toByteArray(),1574849880),
-                BlockDetail("blockRid004".toByteArray(), "blockRid003".toByteArray(), "guess what? Another header".toByteArray(), 3, listOf<ByteArray>("tx2".toByteArray(), "tx3".toByteArray(), "tx4".toByteArray()), listOf<TxDetail>(),"signatures".toByteArray(),1574849940)
+        val response = listOf(
+                BlockDetail(
+                        "blockRid001".toByteArray(),
+                        blockchainRID3.toByteArray(),
+                        "some header".toByteArray(),
+                        0,
+                        listOf(),
+                        "signatures".toByteArray(),
+                        1574849700),
+                BlockDetail(
+                        "blockRid002".toByteArray(),
+                        "blockRid001".toByteArray(),
+                        "some other header".toByteArray(),
+                        1,
+                        listOf(TxDetail("tx1".toByteArray(), "tx1".toByteArray(), "tx1".toByteArray())),
+                        "signatures".toByteArray(),
+                        1574849760),
+                BlockDetail(
+                        "blockRid003".toByteArray(),
+                        "blockRid002".toByteArray(),
+                        "yet another header".toByteArray(),
+                        2, listOf(),
+                        "signatures".toByteArray(),
+                        1574849880),
+                BlockDetail(
+                        "blockRid004".toByteArray(),
+                        "blockRid003".toByteArray(),
+                        "guess what? Another header".toByteArray(),
+                        3,
+                        listOf(
+                                TxDetail("tx2".toByteArray(), "tx2".toByteArray(), "tx2".toByteArray()),
+                                TxDetail("tx3".toByteArray(), "tx3".toByteArray(), "tx3".toByteArray()),
+                                TxDetail("tx4".toByteArray(), "tx4".toByteArray(), "tx4".toByteArray())
+                        ),
+                        "signatures".toByteArray(),
+                        1574849940)
         )
         expect(model.getBlocks(Long.MAX_VALUE, 25, false))
                 .andReturn(response)
@@ -251,9 +286,28 @@ class RestApiModelTest {
     fun test_blocks_get_last_2_partial() {
         restApi.attachModel(blockchainRID1, model)
         val response = listOf<BlockDetail>(
-                BlockDetail("blockRid003".toByteArray(), "blockRid002".toByteArray(), "yet another header".toByteArray(), 2, listOf<ByteArray>(), listOf<TxDetail>(),"signatures".toByteArray(),1574849880),
-                BlockDetail("blockRid004".toByteArray(), "blockRid003".toByteArray(), "guess what? Another header".toByteArray(), 3, listOf(), listOf<TxDetail>(TxDetail("hash2".toByteArray(), "tx2RID".toByteArray(), null), TxDetail("hash3".toByteArray(), "tx3RID".toByteArray(), null), TxDetail("hash4".toByteArray(), "tx4RID".toByteArray(), null)), "signatures".toByteArray(),1574849940)
+                BlockDetail(
+                        "blockRid003".toByteArray(),
+                        "blockRid002".toByteArray(),
+                        "yet another header".toByteArray(),
+                        2,
+                        listOf(),
+                        "signatures".toByteArray(),
+                        1574849880),
+                BlockDetail(
+                        "blockRid004".toByteArray(),
+                        "blockRid003".toByteArray(),
+                        "guess what? Another header".toByteArray(),
+                        3,
+                        listOf(
+                                TxDetail("hash2".toByteArray(), "tx2RID".toByteArray(), null),
+                                TxDetail("hash3".toByteArray(), "tx3RID".toByteArray(), null),
+                                TxDetail("hash4".toByteArray(), "tx4RID".toByteArray(), null)
+                        ),
+                        "signatures".toByteArray(),
+                        1574849940)
         )
+
         expect(model.getBlocks(1574849940,2, true))
                 .andReturn(response)
 
@@ -272,10 +326,56 @@ class RestApiModelTest {
     fun test_blocks_get_no_params() {
         restApi.attachModel(blockchainRID1, model)
         val blocks = listOf(
-                BlockDetail("blockRid001".toByteArray(), blockchainRID3.toByteArray(), "some header".toByteArray(), 0, listOf<ByteArray>(), listOf<TxDetail>(),"signatures".toByteArray(), 1574849700),
-                BlockDetail("blockRid002".toByteArray(), "blockRid001".toByteArray(), "some other header".toByteArray(), 1, listOf<ByteArray>("tx1".toByteArray()), listOf<TxDetail>(),"signatures".toByteArray(),1574849760),
-                BlockDetail("blockRid003".toByteArray(), "blockRid002".toByteArray(), "yet another header".toByteArray(), 2, listOf<ByteArray>(), listOf<TxDetail>(),"signatures".toByteArray(),1574849880),
-                BlockDetail("blockRid004".toByteArray(), "blockRid003".toByteArray(), "guess what? Another header".toByteArray(), 3, listOf<ByteArray>("tx2".toByteArray(), "tx3".toByteArray(), "tx4".toByteArray()), listOf<TxDetail>(),"signatures".toByteArray(),1574849940)
+                BlockDetail("blockRid001".toByteArray(), blockchainRID3.toByteArray(), "some header".toByteArray(), 0, listOf<TxDetail>(),"signatures".toByteArray(), 1574849700),
+                BlockDetail(
+                        "blockRid002".toByteArray(),
+                        "blockRid001".toByteArray(),
+                        "some other header".toByteArray(),
+                        1,
+                        listOf<TxDetail>(
+                            TxDetail(
+                                    cryptoSystem.digest("tx1".toByteArray()),
+                                    "tx1 - 001".toByteArray().slice(IntRange(0,4)).toByteArray(),
+                                    "tx1".toByteArray()
+                            )
+                        ),
+                        "signatures".toByteArray(),
+                        1574849760
+                ),
+                BlockDetail(
+                        "blockRid003".toByteArray(),
+                        "blockRid002".toByteArray(),
+                        "yet another header".toByteArray(),
+                        2,
+                        listOf<TxDetail>(),
+                        "signatures".toByteArray(),
+                        1574849880
+                ),
+                BlockDetail(
+                        "blockRid004".toByteArray(),
+                        "blockRid003".toByteArray(),
+                        "guess what? Another header".toByteArray(),
+                        3,
+                        listOf<TxDetail>(
+                                TxDetail(
+                                        cryptoSystem.digest("tx2".toByteArray()),
+                                        "tx2 - 002".toByteArray().slice(IntRange(0, 4)).toByteArray(),
+                                        "tx2".toByteArray()
+                                ),
+                                TxDetail(
+                                        cryptoSystem.digest("tx3".toByteArray()),
+                                        "tx3 - 003".toByteArray().slice(IntRange(0, 4)).toByteArray(),
+                                        "tx3".toByteArray()
+                                ),
+                                TxDetail(
+                                        cryptoSystem.digest("tx4".toByteArray()),
+                                        "tx4 - 004".toByteArray().slice(IntRange(0, 4)).toByteArray(),
+                                        "tx4".toByteArray()
+                                )
+                        ),
+                        "signatures".toByteArray(),
+                        1574849940
+                )
         )
 
         expect(model.getBlocks(Long.MAX_VALUE, 25, true))
@@ -355,7 +455,7 @@ class RestApiModelTest {
     fun test_block_get_by_RID() {
         restApi.attachModel(blockchainRID1, model)
         val blockRID = "blockRid001".toByteArray()
-        val response = BlockDetail("blockRid001".toByteArray(), blockchainRID3.toByteArray(), "some header".toByteArray(), 0, listOf<ByteArray>(), listOf<TxDetail>(),"signatures".toByteArray(), 1574849700)
+        val response = BlockDetail("blockRid001".toByteArray(), blockchainRID3.toByteArray(), "some header".toByteArray(), 0, listOf<TxDetail>(),"signatures".toByteArray(), 1574849700)
         expect(model.getBlock(blockRID, true))
                 .andReturn(response)
         replay(model)

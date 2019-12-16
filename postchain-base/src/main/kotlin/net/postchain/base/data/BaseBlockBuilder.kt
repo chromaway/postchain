@@ -11,6 +11,7 @@ import net.postchain.getBFTRequiredSignatureCount
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtv.merkleHash
+import java.lang.Long.max
 import java.util.*
 
 /**
@@ -32,19 +33,23 @@ open class BaseBlockBuilder(
         txFactory: TransactionFactory,
         val subjects: Array<ByteArray>,
         val blockSigMaker: SigMaker,
-        val blockchainRelatedInfoDependencyList: List<BlockchainRelatedInfo>
-) : AbstractBlockBuilder(eContext, store, txFactory) {
+        val blockchainRelatedInfoDependencyList: List<BlockchainRelatedInfo>,
+        val maxBlockSize : Long = 20*1024*1024, // 20mb
+        val maxBlockTransactions : Long = 100
+): AbstractBlockBuilder(eContext, store, txFactory) {
 
     companion object : KLogging()
 
     private val calc = GtvMerkleHashCalculator(cryptoSystem)
+
+    private var blockSize : Long = 0L
 
     /**
      * Computes the root hash for the Merkle tree of transactions currently in a block
      *
      * @return The Merkle tree root hash
      */
-    fun computeRootHash(): ByteArray {
+    fun computeMerkleRootHash(): ByteArray {
         val digests = rawTransactions.map { txFactory.decodeTransaction(it).getHash() }
 
         val gtvArr = gtv(digests.map { gtv(it) })
@@ -58,27 +63,10 @@ open class BaseBlockBuilder(
      * @return Block header
      */
     override fun makeBlockHeader(): BlockHeader {
-        var timestamp = System.currentTimeMillis()
-        if (timestamp <= initialBlockData.timestamp) {
-            // if our time is behind the timestamp of most recent block, do a minimal increment
-            timestamp = initialBlockData.timestamp + 1
-        }
-
-        val rootHash = computeRootHash()
-        val blockHeader = BaseBlockHeader.make(cryptoSystem, initialBlockData, rootHash, timestamp)
-        if (/*logger.isDebugEnabled*/true) {
-//            logger.debug {
-            logger.info {
-                "Chain: ${blockchainRID.toShortHex()}" +
-                        ", block header created: " +
-                        "root-hash: ${rootHash.toHex()}" +
-                        ", block-rid: ${blockHeader.blockRID.toHex()}" +
-                        ", prev-block-rid: ${initialBlockData.prevBlockRID.toHex()}" +
-                        ", height: ${initialBlockData.height}"
-            }
-        }
-
-        return blockHeader
+        // If our time is behind the timestamp of most recent block, do a minimal increment
+        val timestamp = max(System.currentTimeMillis(), initialBlockData.timestamp + 1)
+        val rootHash = computeMerkleRootHash()
+        return BaseBlockHeader.make(cryptoSystem, initialBlockData, rootHash, timestamp)
     }
 
     /**
@@ -94,7 +82,7 @@ open class BaseBlockBuilder(
     override fun validateBlockHeader(blockHeader: BlockHeader): ValidationResult {
         val header = blockHeader as BaseBlockHeader
 
-        val computedMerkleRoot = computeRootHash()
+        val computedMerkleRoot = computeMerkleRootHash()
         return when {
             !header.prevBlockRID.contentEquals(initialBlockData.prevBlockRID) ->
                 ValidationResult(false, "header.prevBlockRID != initialBlockData.prevBlockRID," +
@@ -216,5 +204,16 @@ open class BaseBlockBuilder(
         witnessBuilder.applySignature(blockSigMaker.signDigest(_blockData!!.header.blockRID)) // TODO: POS-04_sig
         return witnessBuilder
     }
+
+    override fun appendTransaction(tx: Transaction) {
+        super.appendTransaction(tx)
+        blockSize = transactions.map { t -> t.getRawData().size.toLong() }.sum()
+        if (blockSize >= maxBlockSize) {
+            throw UserMistake("block size exceeds max block size ${maxBlockSize} bytes")
+        } else if (transactions.size >= maxBlockTransactions) {
+            throw UserMistake("Number of transactions exceeds max ${maxBlockTransactions} transactions in block")
+        }
+    }
+
 
 }

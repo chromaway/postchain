@@ -6,7 +6,6 @@ import mu.KLogging
 import net.postchain.StorageBuilder
 import net.postchain.base.PeerInfo
 import net.postchain.base.SECP256K1CryptoSystem
-import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
 import net.postchain.config.node.NodeConfig
 import net.postchain.config.node.NodeConfigurationProviderFactory
@@ -372,7 +371,7 @@ open class IntegrationTest {
 
     protected fun getTxRidsAtHeight(node: PostchainTestNode, height: Long): Array<ByteArray> {
         val blockQueries = node.getBlockchainInstance().getEngine().getBlockQueries()
-        val blockRid = blockQueries.getBlockRids(height).get()
+        val blockRid = blockQueries.getBlockRid(height).get()
         return blockQueries.getBlockTransactionRids(blockRid!!).get().toTypedArray()
     }
 

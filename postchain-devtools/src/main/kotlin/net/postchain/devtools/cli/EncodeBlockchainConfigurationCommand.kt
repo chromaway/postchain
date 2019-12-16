@@ -27,6 +27,7 @@ class EncodeBlockchainConfigurationCommand : CliktCommand(
             File(binaryFilename).writeBytes(binary)
 
             println("Binary file has been created: $binaryFilename")
+
         } catch (e: Exception) {
             println("Error: ${e.message}")
         }

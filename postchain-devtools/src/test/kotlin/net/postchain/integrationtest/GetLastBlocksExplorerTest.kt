@@ -5,6 +5,7 @@ import net.postchain.api.rest.model.TxRID
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.Transaction
+import net.postchain.core.TxDetail
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.devtools.testinfra.TestTransaction
@@ -133,13 +134,13 @@ class GetLastBlocksExplorerTest : IntegrationTest() {
 
     private fun tx(id: Int): TestTransaction = TestTransaction(id)
 
-    private fun compareTx(actualTx: ByteArray, expectedTx: Transaction): Boolean {
-        return (actualTx.toHex() == expectedTx.getRawData().toHex())
+    private fun compareTx(actualTx: TxDetail, expectedTx: Transaction): Boolean {
+        return (actualTx.data?.toHex() == expectedTx.getRawData().toHex())
                 .also {
                     if (!it) {
                         logger.error {
                             "Transactions are not equal:\n" +
-                                    "\t actual:\t${actualTx.toHex()}\n" +
+                                    "\t actual:\t${actualTx.data?.toHex()}\n" +
                                     "\t expected:\t${expectedTx.getRawData().toHex()}"
                         }
                     }

@@ -1,10 +1,12 @@
 package net.postchain.api.rest.endpoint
 
 import io.restassured.RestAssured.given
+import net.postchain.api.rest.DummyConfig
 import net.postchain.api.rest.controller.Model
 import net.postchain.api.rest.controller.RestApi
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.common.toHex
+import net.postchain.config.app.AppConfig
 import org.easymock.EasyMock.*
 import org.junit.After
 import org.junit.Before
@@ -20,7 +22,7 @@ class RestApiPostTxEndpointTest {
     @Before
     fun setup() {
         model = createMock(Model::class.java)
-        restApi = RestApi(0, basePath)
+        restApi = RestApi(0, basePath, AppConfig(DummyConfig.getDummyConfig()))
         restApi.attachModel(blockchainRID, model)
     }
 

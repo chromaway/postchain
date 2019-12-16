@@ -20,6 +20,7 @@ interface Model {
     fun query(query: Query): QueryResult
     fun query(query: Gtv): Gtv
     fun nodeQuery(subQuery: String): String
+    fun debugQuery(subQuery: String?): String
 }
 
 data class Query(val json: String)

@@ -18,17 +18,17 @@ class ManagedBlockchainConfigurationProvider : BlockchainConfigurationProvider {
         return if (chainId == 0L) {
             systemProvider.getConfiguration(eContext, chainId)
         } else {
-            if (::dataSource.isInitialized) {
-                check(eContext.chainID == chainId) { "chainID mismatch" }
-                getConfigurationFromDataSource(eContext)
-            } else {
-                throw IllegalStateException("Using managed blockchain configuration provider before it's properly initialized")
-            }
+            systemProvider.getConfiguration(eContext, chainId)
+                    ?: if (::dataSource.isInitialized) {
+                        check(eContext.chainID == chainId) { "chainID mismatch" }
+                        getConfigurationFromDataSource(eContext)
+                    } else {
+                        throw IllegalStateException("Using managed blockchain configuration provider before it's properly initialized")
+                    }
         }
     }
 
     override fun needsConfigurationChange(eContext: EContext, chainId: Long): Boolean {
-
         fun checkNeedConfChangeViaDataSource(): Boolean {
             val dba = DatabaseAccess.of(eContext)
             val blockchainRID = dba.getBlockchainRID(eContext)
@@ -37,10 +37,6 @@ class ManagedBlockchainConfigurationProvider : BlockchainConfigurationProvider {
             return (nextConfigHeight != null) && (nextConfigHeight == height + 1)
         }
 
-        return systemProvider.needsConfigurationChange(eContext, chainId)
-
-        // TODO: [POS-90]: Fix this
-        /*
         return if (chainId == 0L) {
             systemProvider.needsConfigurationChange(eContext, chainId)
         } else {
@@ -50,7 +46,6 @@ class ManagedBlockchainConfigurationProvider : BlockchainConfigurationProvider {
                 throw IllegalStateException("Using managed blockchain configuration provider before it's properly initialized")
             }
         }
-         */
     }
 
     private fun getConfigurationFromDataSource(eContext: EContext): ByteArray? {

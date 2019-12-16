@@ -3,6 +3,7 @@ package net.postchain.network.netty2
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
+import mu.KLogging
 import net.postchain.base.PeerInfo
 import net.postchain.base.peerId
 import net.postchain.network.XPacketEncoder
@@ -17,6 +18,8 @@ class NettyClientPeerConnection<PacketType>(
         val peerInfo: PeerInfo,
         private val packetEncoder: XPacketEncoder<PacketType>
 ) : ChannelInboundHandlerAdapter(), XPeerConnection {
+
+    companion object: KLogging()
 
     private val nettyClient = NettyClient()
     private lateinit var context: ChannelHandlerContext
@@ -36,6 +39,7 @@ class NettyClientPeerConnection<PacketType>(
     }
 
     override fun channelActive(ctx: ChannelHandlerContext?) {
+        //logger.debug("Activate channel ---")
         ctx?.let {
             context = ctx
             context.writeAndFlush(buildIdentPacket())
@@ -58,6 +62,7 @@ class NettyClientPeerConnection<PacketType>(
     }
 
     override fun sendPacket(packet: LazyPacket) {
+        //logger.debug("Sending package ---")
         context.writeAndFlush(Transport.wrapMessage(packet()))
     }
 

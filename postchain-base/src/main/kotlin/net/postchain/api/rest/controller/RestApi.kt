@@ -2,7 +2,9 @@
 
 package net.postchain.api.rest.controller
 
-import com.google.gson.*
+import com.google.gson.Gson
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
 import mu.KLogging
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_HEADERS
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_METHODS
@@ -19,18 +21,18 @@ import net.postchain.api.rest.model.TxRID
 import net.postchain.common.TimeLog
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
+import net.postchain.config.DatabaseConnector
+import net.postchain.config.SimpleDatabaseConnector
+import net.postchain.config.app.AppConfig
+import net.postchain.config.app.AppConfigDbLayer
+import net.postchain.core.BlockDetail
 import net.postchain.core.UserMistake
-import net.postchain.gtv.GtvEncoder
-import net.postchain.gtv.GtvFactory
 import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
-import spark.QueryParamsMap
 import spark.Request
 import spark.Response
 import spark.Service
-import kotlin.reflect.KClass
-import kotlin.reflect.full.cast
-import kotlin.reflect.full.safeCast
+import java.sql.Connection
 
 /**
  * Contains information on the rest API, such as network parameters and available queries
@@ -38,8 +40,15 @@ import kotlin.reflect.full.safeCast
 class RestApi(
         private val listenPort: Int,
         private val basePath: String,
+        private val appConfig: AppConfig,
         private val sslCertificate: String? = null,
-        private val sslCertificatePassword: String? = null
+        private val sslCertificatePassword: String? = null,
+        private val databaseConnector: (AppConfig) -> DatabaseConnector = { appConfig ->
+            SimpleDatabaseConnector(appConfig)
+        },
+        private val appConfigDbLayer: (AppConfig, Connection) -> AppConfigDbLayer = { appConfig, connection ->
+            AppConfigDbLayer(appConfig, connection)
+        }
 ) : Modellable {
 
     val MAX_NUMBER_OF_BLOCKS_PER_REQUEST = 100
@@ -142,10 +151,18 @@ class RestApi(
 
             http.post("/tx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
                 val n = TimeLog.startSumConc("RestApi.buildRouter().postTx")
-                logger.debug("Request body: ${request.body()}")
                 val tx = toTransaction(request)
+                val maxLength = try {
+                    if (tx.bytes.size > 200) 200 else tx.bytes.size
+                } catch (e: Exception) {
+                    throw UserMistake("Invalid tx format. Expected {\"tx\": <hex-string>}")
+                }
+
+                logger.debug("""
+                    Request body : {"tx": "${tx.bytes.sliceArray(0 until maxLength).toHex()}" } 
+                """.trimIndent())
                 if (!tx.tx.matches(Regex("[0-9a-fA-F]{2,}"))) {
-                    throw UserMistake("Invalid tx format. Expected {\"tx\": <hexString>}")
+                    throw UserMistake("Invalid tx format. Expected {\"tx\": <hex-string>}")
                 }
                 model(request).postTransaction(tx)
                 TimeLog.end("RestApi.buildRouter().postTx", n)
@@ -221,14 +238,22 @@ class RestApi(
             http.get("/node/$PARAM_BLOCKCHAIN_RID/$SUBQUERY", "application/json") { request, _ ->
                 handleNodeStatusQueries(request)
             }
+
+            http.get("/_debug", "application/json") { request, _ ->
+                handleDebugQuery(request)
+            }
+
+            http.get("/_debug/$SUBQUERY", "application/json") { request, _ ->
+                handleDebugQuery(request)
+            }
         }
 
         http.awaitInitialization()
     }
 
-    private fun toTransaction(req: Request): ApiTx {
+    private fun toTransaction(request: Request): ApiTx {
         try {
-            return gson.fromJson<ApiTx>(req.body(), ApiTx::class.java)
+            return gson.fromJson<ApiTx>(request.body(), ApiTx::class.java)
         } catch (e: Exception) {
             throw UserMistake("Could not parse json", e)
         }
@@ -330,6 +355,11 @@ class RestApi(
         return model(request).nodeQuery(request.params(SUBQUERY))
     }
 
+    private fun handleDebugQuery(request: Request): String {
+        logger.debug("Request body: ${request.body()}")
+        return model0(request).debugQuery(request.params(SUBQUERY))
+    }
+
     private fun checkTxHashHex(request: Request): String {
         val hashHex = request.params(PARAM_HASH_HEX)
         if (!hashHex.matches(Regex("[0-9a-fA-F]{64}"))) {
@@ -338,12 +368,25 @@ class RestApi(
         return hashHex
     }
 
+    /**
+     * We allow two different syntax for finding the blockchain.
+     * 1. provide BC RID
+     * 2. provide Chain IID (should not be used in production, since to ChainIid could be anything).
+     */
     private fun checkBlockchainRID(request: Request): String {
         val blockchainRID = request.params(PARAM_BLOCKCHAIN_RID)
-        if (!blockchainRID.matches(Regex("[0-9a-fA-F]{64}"))) {
-            throw BadFormatError("Invalid blockchainRID. Expected 64 hex digits [0-9a-fA-F]")
+        return when {
+            blockchainRID.matches(Regex("[0-9a-fA-F]{64}")) -> blockchainRID
+            blockchainRID.matches(Regex("iid_[0-9]*")) -> {
+                val chainIid = blockchainRID.substring(4).toLong()
+                val dbBcRid = databaseConnector(appConfig).withWriteConnection { connection ->
+                    appConfigDbLayer(appConfig, connection).getBlockchainRid(chainIid)
+                }
+                dbBcRid?.toHex()
+                        ?: throw NotFoundError("Can't find blockchain with chain Iid: $chainIid in DB. Did you add this BC to the node?")
+            }
+            else -> throw BadFormatError("Invalid blockchainRID. Expected 64 hex digits [0-9a-fA-F]")
         }
-        return blockchainRID
     }
 
     fun stop() {
@@ -364,6 +407,16 @@ class RestApi(
         val blockchainRID = checkBlockchainRID(request)
         return models[blockchainRID.toUpperCase()]
                 ?: throw NotFoundError("Can't find blockchain with blockchainRID: $blockchainRID")
+    }
+
+    private fun model0(request: Request): Model {
+        val dbBcRid = databaseConnector(appConfig).withWriteConnection { connection ->
+            appConfigDbLayer(appConfig, connection).getBlockchainRid(0L)
+        }
+        val chain0Rid = dbBcRid?.toHex()
+                ?: throw NotFoundError("Can't find chain0 in DB. Is this node in managed mode?")
+        return models[chain0Rid]
+                ?: throw NotFoundError("Can't find blockchain with blockchainRID: $chain0Rid")
     }
 
     private fun parseMultipleQueriesRequest(request: Request): JsonArray {

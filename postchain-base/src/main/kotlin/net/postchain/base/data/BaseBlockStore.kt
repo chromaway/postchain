@@ -15,7 +15,7 @@ import net.postchain.core.*
  */
 class BaseBlockStore : BlockStore {
 
-    companion object: KLogging()
+    companion object : KLogging()
 
 
     /**
@@ -32,11 +32,12 @@ class BaseBlockStore : BlockStore {
         val prevHeight = getLastBlockHeight(ctx)
         val prevTimestamp = getLastBlockTimestamp(ctx)
         val blockchainRID = db.getBlockchainRID(ctx)
-                    ?: throw UserMistake("Blockchain RID not found for chainId ${ctx.chainID}")
+                ?: throw UserMistake("Blockchain RID not found for chainId ${ctx.chainID}")
         val prevBlockRID = if (prevHeight == -1L) {
             blockchainRID.data
         } else {
-            getBlockRID(ctx, prevHeight) ?: throw ProgrammerMistake("Previous block had no RID. Check your block writing code!")
+            getBlockRID(ctx, prevHeight)
+                    ?: throw ProgrammerMistake("Previous block had no RID. Check your block writing code!")
         }
 
         val blockIid = db.insertBlock(ctx, prevHeight + 1)
@@ -83,7 +84,8 @@ class BaseBlockStore : BlockStore {
     // Eventually, we may change this implementation to actually deliver a true
     // stream so that we don't have to store all transaction data in memory.
     override fun getBlockTransactions(ctx: EContext, blockRID: ByteArray): List<ByteArray> {
-        return DatabaseAccess.of(ctx).getBlockTransactions(ctx, blockRID)
+        return DatabaseAccess.of(ctx).getBlockTransactions(ctx, blockRID, false)
+                .map { it.data as ByteArray }
     }
 
     override fun getTransactionInfo(ctx: EContext, txRID: ByteArray): TransactionInfoExt? {
@@ -98,36 +100,32 @@ class BaseBlockStore : BlockStore {
         return DatabaseAccess.of(ctx).getWitnessData(ctx, blockRID)
     }
 
-    override fun getBlock(ctx: EContext, blockRID: ByteArray, partialTx: Boolean): BlockDetail? {
+    override fun getBlock(ctx: EContext, blockRID: ByteArray, hashesOnly: Boolean): BlockDetail? {
         val db = DatabaseAccess.of(ctx)
         val blockInfo = db.getBlock(ctx, blockRID) ?: return null
         var txDetails = listOf<TxDetail>()
-        var transactions = listOf<ByteArray>()
-        if(partialTx) {
-            txDetails = db.getBlockPartialTransactions(ctx, blockInfo.blockRid)
-        } else {
-            transactions = db.getBlockTransactions(ctx, blockInfo.blockRid)
-        }
+        txDetails = db.getBlockTransactions(ctx, blockInfo.blockRid, hashesOnly)
         val blockHeaderDecoded = BaseBlockHeader(blockInfo.blockHeader, SECP256K1CryptoSystem()) // TODO can I do this on the node or is it too computational expensive
-        return BlockDetail(blockInfo.blockRid, blockHeaderDecoded.prevBlockRID, blockInfo.blockHeader, blockInfo.blockHeight, transactions, txDetails, blockInfo.witness, blockInfo.timestamp)
+        return BlockDetail(blockInfo.blockRid, blockHeaderDecoded.prevBlockRID, blockInfo.blockHeader, blockInfo.blockHeight, txDetails, blockInfo.witness, blockInfo.timestamp)
     }
 
-    override fun getBlocks(ctx: EContext, blockTime: Long, limit: Int, partialTx: Boolean): List<BlockDetail> {
+    override fun getBlocks(ctx: EContext, blockTime: Long, limit: Int, hashesOnly: Boolean): List<BlockDetail> {
         val db = DatabaseAccess.of(ctx)
         val blocksInfo = db.getBlocks(ctx, blockTime, limit)
         return blocksInfo.map { blockInfo ->
-            var txDetails = listOf<TxDetail>()
-            var transactions = listOf<ByteArray>()
-
-            if(partialTx) {
-                txDetails = db.getBlockPartialTransactions(ctx, blockInfo.blockRid)
-            } else {
-                transactions = db.getBlockTransactions(ctx, blockInfo.blockRid)
-            }
+            val txs = db.getBlockTransactions(ctx, blockInfo.blockRid, hashesOnly)
 
             // Decode block header
             val blockHeaderDecoded = BaseBlockHeader(blockInfo.blockHeader, SECP256K1CryptoSystem())
-            BlockDetail(blockInfo.blockRid, blockHeaderDecoded.prevBlockRID, blockInfo.blockHeader, blockInfo.blockHeight, transactions, txDetails, blockInfo.witness, blockInfo.timestamp)
+
+            BlockDetail(
+                    blockInfo.blockRid,
+                    blockHeaderDecoded.prevBlockRID,
+                    blockInfo.blockHeader,
+                    blockInfo.blockHeight,
+                    txs,
+                    blockInfo.witness,
+                    blockInfo.timestamp)
         }
     }
 
@@ -152,7 +150,7 @@ class BaseBlockStore : BlockStore {
         val block = db.getBlockInfo(ctx, txRID)
         return ConfirmationProofMaterial(
                 ByteArrayKey(db.getTxHash(ctx, txRID)),
-                db.getBlockTxHashes(ctx, block.blockIid).map{ ByteArrayKey(it) }.toTypedArray(),
+                db.getBlockTxHashes(ctx, block.blockIid).map { ByteArrayKey(it) }.toTypedArray(),
                 block.blockHeader,
                 block.witness
         )
@@ -166,9 +164,10 @@ class BaseBlockStore : BlockStore {
         return DatabaseAccess.of(ctx).isTransactionConfirmed(ctx, txRID)
     }
 
-    fun initialValidation(ctx: EContext, dependencies:  List<BlockchainRelatedInfo>) {
+    fun initialValidation(ctx: EContext, dependencies: List<BlockchainRelatedInfo>) {
         // At this point we must have stored BC RID
-        DatabaseAccess.of(ctx).getBlockchainRID(ctx) ?: throw IllegalStateException("Cannot initialize block store for a chain without a RID")
+        DatabaseAccess.of(ctx).getBlockchainRID(ctx)
+                ?: throw IllegalStateException("Cannot initialize block store for a chain without a RID")
 
         // Verify all dependencies
         for (dep in dependencies) {

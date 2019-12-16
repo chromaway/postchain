@@ -3,6 +3,7 @@ package net.postchain.core
 import net.postchain.base.Storage
 import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
+import net.postchain.debug.NodeDiagnosticContext
 
 interface SynchronizationInfrastructure : Shutdownable {
     fun makeBlockchainProcess(processName: String, engine: BlockchainEngine): BlockchainProcess
@@ -25,11 +26,18 @@ interface ApiInfrastructure : Shutdownable {
 }
 
 interface InfrastructureFactory {
+
     fun makeBlockchainConfigurationProvider(): BlockchainConfigurationProvider
-    fun makeBlockchainInfrastructure(nodeConfigProvider: NodeConfigurationProvider): BlockchainInfrastructure
+
+    fun makeBlockchainInfrastructure(
+            nodeConfigProvider: NodeConfigurationProvider,
+            nodeDiagnosticContext: NodeDiagnosticContext
+    ): BlockchainInfrastructure
+
     fun makeProcessManager(nodeConfigProvider: NodeConfigurationProvider,
                            blockchainInfrastructure: BlockchainInfrastructure,
-                           blockchainConfigurationProvider: BlockchainConfigurationProvider
+                           blockchainConfigurationProvider: BlockchainConfigurationProvider,
+                           nodeDiagnosticContext: NodeDiagnosticContext
     ): BlockchainProcessManager
 }
 

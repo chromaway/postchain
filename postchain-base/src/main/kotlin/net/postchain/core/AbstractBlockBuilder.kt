@@ -4,7 +4,6 @@ package net.postchain.core
 
 import net.postchain.base.BaseBlockEContext
 import net.postchain.base.BlockchainDependencies
-import net.postchain.base.merkle.Hash
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
 
@@ -48,7 +47,7 @@ abstract class AbstractBlockBuilder(
      * @param partialBlockHeader might hold the header.
      */
     override fun begin(partialBlockHeader: BlockHeader?) {
-        if (finalized)  {
+        if (finalized) {
             ProgrammerMistake("This builder has already been used once (you must create a new builder instance)")
         }
         blockchainDependencies = buildBlockchainDependencies(partialBlockHeader)
@@ -100,11 +99,12 @@ abstract class AbstractBlockBuilder(
     /**
      * By finalizing the block we won't allow any more transactions to be added, and the block RID and timestamp are set
      */
-    override fun finalizeBlock() {
-        val bh = makeBlockHeader()
-        store.finalizeBlock(bctx, bh)
-        _blockData = BlockData(bh, rawTransactions)
+    override fun finalizeBlock(): BlockHeader {
+        val blockHeader = makeBlockHeader()
+        store.finalizeBlock(bctx, blockHeader)
+        _blockData = BlockData(blockHeader, rawTransactions)
         finalized = true
+        return blockHeader
     }
 
     /**

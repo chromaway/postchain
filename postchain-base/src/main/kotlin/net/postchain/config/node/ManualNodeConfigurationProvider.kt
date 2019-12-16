@@ -9,7 +9,7 @@ import net.postchain.network.x.XPeerID
 import java.sql.Connection
 
 open class ManualNodeConfigurationProvider(
-        private val appConfig: AppConfig,
+        protected val appConfig: AppConfig,
         private val databaseConnector: (AppConfig) -> DatabaseConnector,
         private val appConfigDbLayer: (AppConfig, Connection) -> AppConfigDbLayer
 ) : NodeConfigurationProvider {
@@ -20,7 +20,7 @@ open class ManualNodeConfigurationProvider(
         }
     }
 
-    private fun getPeerInfoMap(appConfig: AppConfig): Map<XPeerID, PeerInfo> =
+    protected fun getPeerInfoMap(appConfig: AppConfig): Map<XPeerID, PeerInfo> =
             getPeerInfoCollection(appConfig).associateBy(PeerInfo::peerId)
 
     open fun getPeerInfoCollection(appConfig: AppConfig): Array<PeerInfo> {

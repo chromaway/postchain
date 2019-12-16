@@ -25,11 +25,10 @@ class ArrayToGtvBinaryTreeTest {
     private fun buildTreeOf1(gtvPath: GtvPath?): String {
         val gtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf1()
 
-        val newMemoization = GtvMerkleHashMemoization(100, 100)
         val fullBinaryTree: GtvBinaryTree = if (gtvPath != null) {
-            factory.buildFromGtvAndPath(gtvArr, GtvPathSet(setOf(gtvPath)), newMemoization)
+            factory.buildFromGtvAndPath(gtvArr, GtvPathSet(setOf(gtvPath)))
         } else {
-            factory.buildFromGtv(gtvArr, newMemoization)
+            factory.buildFromGtv(gtvArr)
         }
 
         val printer = TreePrinter()
@@ -76,11 +75,10 @@ class ArrayToGtvBinaryTreeTest {
 
         val gtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf4()
 
-        val newMemoization = GtvMerkleHashMemoization(100, 100)
         val fullBinaryTree: GtvBinaryTree = if (gtvPath != null) {
-            factory.buildFromGtvAndPath(gtvArr, GtvPathSet(setOf((gtvPath))), newMemoization)
+            factory.buildFromGtvAndPath(gtvArr, GtvPathSet(setOf((gtvPath))))
         } else {
-            factory.buildFromGtv(gtvArr, newMemoization)
+            factory.buildFromGtv(gtvArr)
         }
 
         val printer = TreePrinter()
@@ -137,8 +135,7 @@ class ArrayToGtvBinaryTreeTest {
     private fun buildTreeOf7(gtvPaths: GtvPathSet): String {
         val gtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf7()
 
-        val newMemoization = GtvMerkleHashMemoization(100, 100)
-        val fullBinaryTree = factory.buildFromGtvAndPath(gtvArr, gtvPaths, newMemoization)
+        val fullBinaryTree = factory.buildFromGtvAndPath(gtvArr, gtvPaths)
 
         val printer = TreePrinter()
         val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
@@ -194,8 +191,7 @@ class ArrayToGtvBinaryTreeTest {
 
     private fun buildTreeOf9(): String {
         val gtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrayOf9()
-        val newMemoization = GtvMerkleHashMemoization(100, 100)
-        val fullBinaryTree: GtvBinaryTree = factory.buildFromGtv(gtvArr, newMemoization)
+        val fullBinaryTree: GtvBinaryTree = factory.buildFromGtv(gtvArr)
 
         val printer = TreePrinter()
         val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
@@ -238,8 +234,7 @@ class ArrayToGtvBinaryTreeTest {
         val intArray = intArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3)
         val intArrayList = GtvTreeHelper.transformIntToGtv(intArray.toCollection(ArrayList()))
 
-        val newMemoization = GtvMerkleHashMemoization(100, 100)
-        val fullBinaryTree: GtvBinaryTree = (GtvBinaryTreeFactory()).buildFromGtv(GtvTreeHelper.transformGtvsToGtvArray(intArrayList), newMemoization)
+        val fullBinaryTree: GtvBinaryTree = (GtvBinaryTreeFactory()).buildFromGtv(GtvTreeHelper.transformGtvsToGtvArray(intArrayList))
 
         val printer = TreePrinter()
         val printableBinaryTree = PrintableTreeFactory.buildPrintableTreeFromClfbTree(fullBinaryTree)
@@ -287,11 +282,10 @@ class ArrayToGtvBinaryTreeTest {
 
         val gtvArr = ArrayToGtvBinaryTreeHelper.buildGtvArrOf7WithInner3()
 
-        val newMemoization = GtvMerkleHashMemoization(100, 100)
         val fullBinaryTree: GtvBinaryTree = if (gtvPath != null) {
-            factory.buildFromGtvAndPath(gtvArr, GtvPathSet(setOf(gtvPath)), newMemoization)
+            factory.buildFromGtvAndPath(gtvArr, GtvPathSet(setOf(gtvPath)))
         } else {
-            factory.buildFromGtv(gtvArr, newMemoization)
+            factory.buildFromGtv(gtvArr)
         }
 
         val printer = TreePrinter()

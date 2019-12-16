@@ -2,9 +2,11 @@ package net.postchain.gtv.merkle.cache
 
 import net.postchain.gtv.*
 import net.postchain.gtv.merkle.ArrayToGtvBinaryTreeHelper
+import net.postchain.gtv.merkle.GtvMerkleHashCache
 import net.postchain.gtv.merkle.GtvMerkleHashMemoization
 import net.postchain.gtv.merkle.MerkleHashCalculatorDummy
 import org.junit.Assert
+import org.junit.Ignore
 import org.junit.Test
 
 /**
@@ -26,6 +28,9 @@ class ArrayToMerkleRootWithCacheTest {
      */
     @Test
     fun calculate_inner_array_and_then_arrayInArray() {
+        if (!GtvMerkleHashCache.enabled) {
+            return
+        }
         val calculator = MerkleHashCalculatorDummy()
         val memoization = calculator.memoization as GtvMerkleHashMemoization
 

@@ -34,7 +34,7 @@ object BlockHeaderDataFactory {
         val gtvTimestamp: GtvInteger = gtv(timestamp)
         val height: GtvInteger = gtv(iBlockData.height)
         val dependencies: Gtv = translateArrayOfHashToGtv(iBlockData.blockHeightDependencyArr)
-        val extra = GtvDictionary.build(HashMap<String, Gtv>())
+        val extra = GtvDictionary.build(mapOf())
 
         return BlockHeaderData(gtvBlockchainRid, previousBlockRid, merkleRootHash, gtvTimestamp, height, dependencies, extra)
     }

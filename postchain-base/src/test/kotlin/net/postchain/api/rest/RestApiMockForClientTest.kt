@@ -3,7 +3,10 @@
 package net.postchain.api.rest
 
 import mu.KLogging
-import net.postchain.api.rest.controller.*
+import net.postchain.api.rest.controller.Model
+import net.postchain.api.rest.controller.Query
+import net.postchain.api.rest.controller.QueryResult
+import net.postchain.api.rest.controller.RestApi
 import net.postchain.api.rest.model.ApiStatus
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
@@ -11,6 +14,7 @@ import net.postchain.base.ConfirmationProof
 import net.postchain.base.cryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
+import net.postchain.config.app.AppConfig
 import net.postchain.core.*
 import net.postchain.gtv.Gtv
 import org.junit.After
@@ -33,12 +37,12 @@ class RestApiMockForClientManual {
     @Test
     fun startMockRestApi() {
         val model = MockModel()
-        restApi = RestApi(listenPort, basePath)
+        val appConfig = AppConfig(DummyConfig.getDummyConfig())
+        restApi = RestApi(listenPort, basePath, appConfig)
         restApi.attachModel(blockchainRID, model)
         logger.info("Ready to serve on port ${restApi.actualPort()}")
         Thread.sleep(600000) // Wait 10 minutes
     }
-
 
     class MockModel : Model {
         private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a1"
@@ -53,7 +57,6 @@ class RestApiMockForClientManual {
                         "blockRid001".toByteArray(),
                         blockchainRID.toByteArray(), "some header".toByteArray(),
                         0,
-                        listOf<ByteArray>(),
                         listOf<TxDetail>(),
                         "signatures".toByteArray(),
                         1574849700),
@@ -62,8 +65,7 @@ class RestApiMockForClientManual {
                         "blockRid001".toByteArray(),
                         "some other header".toByteArray(),
                         1,
-                        listOf<ByteArray>("tx1".toByteArray()),
-                        listOf<TxDetail>(),
+                        listOf<TxDetail>(TxDetail("tx1".toByteArray(), "tx1".toByteArray(), "tx1".toByteArray())),
                         "signatures".toByteArray(),
                         1574849760),
                 BlockDetail(
@@ -71,7 +73,6 @@ class RestApiMockForClientManual {
                         "blockRid002".toByteArray(),
                         "yet another header".toByteArray(),
                         2,
-                        listOf<ByteArray>(),
                         listOf<TxDetail>(),
                         "signatures".toByteArray(),
                         1574849880),
@@ -80,8 +81,11 @@ class RestApiMockForClientManual {
                         "blockRid003".toByteArray(),
                         "guess what? Another header".toByteArray(),
                         3,
-                        listOf<ByteArray>("tx2".toByteArray(), "tx3".toByteArray(), "tx4".toByteArray()),
-                        listOf<TxDetail>(),
+                        listOf<TxDetail>(
+                                TxDetail("tx2".toByteArray(), "tx2".toByteArray(), "tx2".toByteArray()),
+                                TxDetail("tx3".toByteArray(), "tx3".toByteArray(), "tx3".toByteArray()),
+                                TxDetail("tx4".toByteArray(), "tx4".toByteArray(), "tx4".toByteArray())
+                        ),
                         "signatures".toByteArray(),
                         1574849940)
         )
@@ -135,6 +139,7 @@ class RestApiMockForClientManual {
         override fun query(query: Gtv): Gtv {        
         	TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
+
         override fun nodeQuery(subQuery: String): String = TODO()
 
         override fun getBlock(blockRID: ByteArray, partialTx: Boolean): BlockDetail? {
@@ -147,9 +152,9 @@ class RestApiMockForClientManual {
         }
 
         override fun getTransactionInfo(txRID: TxRID): TransactionInfoExt {
-            val block = blocks.filter { block -> block.transactions.filter { tx -> cryptoSystem.digest(tx).contentEquals(txRID.bytes) }.size >0 }[0]
-            val tx = block.transactions.filter { tx -> cryptoSystem.digest(tx).contentEquals(txRID.bytes) }[0]
-            return TransactionInfoExt(block.rid, block.height, block.header, block.witness, block.timestamp, cryptoSystem.digest(tx), tx.slice(IntRange(0,4)).toByteArray(), tx)
+            val block = blocks.filter { block -> block.transactions.filter { tx -> cryptoSystem.digest(tx.data!!).contentEquals(txRID.bytes) }.size >0 }[0]
+            val tx = block.transactions.filter { tx -> cryptoSystem.digest(tx.data!!).contentEquals(txRID.bytes) }[0]
+            return TransactionInfoExt(block.rid, block.height, block.header, block.witness, block.timestamp, cryptoSystem.digest(tx.data!!), tx.data!!.slice(IntRange(0,4)).toByteArray(), tx.data!!)
         }
 
         override fun getTransactionsInfo(beforeTime: Long, limit: Int): List<TransactionInfoExt> {
@@ -158,10 +163,15 @@ class RestApiMockForClientManual {
             queryBlocks = queryBlocks.sortedByDescending { blockDetail ->  blockDetail.height }
             for (block in queryBlocks) {
                 for(tx in block.transactions) {
-                    transactionsInfo.add(TransactionInfoExt(block.rid, block.height, block.header, block.witness, block.timestamp, cryptoSystem.digest(tx), tx.slice(IntRange(0,4)).toByteArray(), tx))
+                    transactionsInfo.add(TransactionInfoExt(block.rid, block.height, block.header, block.witness, block.timestamp, cryptoSystem.digest(tx.data!!), tx.data!!.slice(IntRange(0,4)).toByteArray(), tx.data!!))
                 }
             }
             return transactionsInfo.toList()
         }
+
+		override fun debugQuery(subQuery: String?): String {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+
     }
 }

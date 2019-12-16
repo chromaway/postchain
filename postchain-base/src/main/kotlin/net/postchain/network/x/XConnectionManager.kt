@@ -20,5 +20,6 @@ interface XConnectionManager : NetworkTopology, Shutdownable {
 }
 
 interface NetworkTopology {
+    fun getPeersTopology(): Map<String, Map<String, String>>
     fun getPeersTopology(chainID: Long): Map<XPeerID, String>
 }

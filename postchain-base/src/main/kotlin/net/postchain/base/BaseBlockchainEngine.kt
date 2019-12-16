@@ -4,9 +4,12 @@ package net.postchain.base
 
 import mu.KLogging
 import net.postchain.base.data.BaseManagedBlockBuilder
+import net.postchain.base.gtv.BlockHeaderData
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.gtv.GtvArray
+import net.postchain.gtv.GtvDecoder
 import nl.komponents.kovenant.task
 import java.lang.Long.max
 
@@ -105,67 +108,50 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
 
     private fun smartDecodeTransaction(txData: ByteArray): Transaction {
         var tx = blockchainConfiguration.getTransactionFactory().decodeTransaction(txData)
-        val tx2 = transactionQueue.findTransaction(ByteArrayKey(tx.getRID()))
-        if (tx2 != null && tx2.getHash().contentEquals(tx.getHash())) {
+        val enqueuedTx = transactionQueue.findTransaction(ByteArrayKey(tx.getRID()))
+        if (enqueuedTx != null && enqueuedTx.getHash().contentEquals(tx.getHash())) {
             // if transaction is identical (has same hash) then use transaction
             // from queue, which is already verified
-            tx = tx2
-        }
-        if (!tx.isCorrect()) throw UserMistake("Transaction is not correct")
-        return tx
-    }
-
-    private fun parallelLoadUnfinishedBlock(block: BlockData): ManagedBlockBuilder {
-        val tStart = System.nanoTime()
-        val transactions = block.transactions.map { txData ->
-            task { smartDecodeTransaction(txData) }
+            tx = enqueuedTx
         }
 
-        val blockBuilder = makeBlockBuilder()
-        blockBuilder.begin(block.header)
-
-        val tBegin = System.nanoTime()
-        transactions.forEach { blockBuilder.appendTransaction(it.get()) }
-        val tEnd = System.nanoTime()
-
-        blockBuilder.finalizeAndValidate(block.header)
-        val tDone = System.nanoTime()
-
-        if (LOG_STATS) {
-            val nTransactions = block.transactions.size
-            val netRate = (nTransactions * 1000000000L) / max(tEnd - tBegin, 1)
-            val grossRate = (nTransactions * 1000000000L) / max(tDone - tStart, 1)
-            logger.info("""Loaded block (par), $nTransactions transactions, \
-                ${ms(tStart, tDone)} ms, $netRate net tps, $grossRate gross tps"""
-            )
-        }
-
-        return blockBuilder
+        return if (tx.isCorrect()) tx
+        else throw UserMistake("Transaction is not correct")
     }
 
     private fun sequentialLoadUnfinishedBlock(block: BlockData): ManagedBlockBuilder {
-        val tStart = System.nanoTime()
+        return loadUnfinishedBlockImpl(block) { txs ->
+            txs.map { smartDecodeTransaction(it) }
+        }
+    }
+
+    private fun parallelLoadUnfinishedBlock(block: BlockData): ManagedBlockBuilder {
+        return loadUnfinishedBlockImpl(block) { txs ->
+            val txsLazy = txs.map { tx ->
+                task { smartDecodeTransaction(tx) }
+            }
+
+            txsLazy.map { it.get() }
+        }
+    }
+
+    private fun loadUnfinishedBlockImpl(block: BlockData, transactionsDecoder: (List<ByteArray>) -> List<Transaction>): ManagedBlockBuilder {
+        val grossStart = System.nanoTime()
         val blockBuilder = makeBlockBuilder()
         blockBuilder.begin(block.header)
 
-        val tBegin = System.nanoTime()
-        block.transactions.forEach {
-            blockBuilder.appendTransaction(
-                    smartDecodeTransaction(it)
-            )
-        }
-        val tEnd = System.nanoTime()
+        val netStart = System.nanoTime()
+        val decodedTxs = transactionsDecoder(block.transactions)
+        decodedTxs.forEach(blockBuilder::appendTransaction)
+        val netEnd = System.nanoTime()
 
         blockBuilder.finalizeAndValidate(block.header)
-        val tDone = System.nanoTime()
+        val grossEnd = System.nanoTime()
 
         if (LOG_STATS) {
-            val nTransactions = block.transactions.size
-            val netRate = (nTransactions * 1000000000L) / (tEnd - tBegin)
-            val grossRate = (nTransactions * 1000000000L) / (tDone - tStart)
-            logger.info("""Loaded block (seq), $nTransactions transactions, \
-                ${ms(tStart, tDone)} ms, $netRate net tps, $grossRate gross tps"""
-            )
+            val prettyBlockHeader = prettyBlockHeader(
+                    block.header, block.transactions.size, 0, grossStart to grossEnd, netStart to netEnd)
+            logger.info("Chain: ${shortChainName()}: Loaded block: $prettyBlockHeader")
         }
 
         return blockBuilder
@@ -173,20 +159,20 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
 
     override fun buildBlock(): ManagedBlockBuilder {
         TimeLog.startSum("BaseBlockchainEngine.buildBlock().buildBlock")
-        val tStart = System.nanoTime()
+        val grossStart = System.nanoTime()
 
         val blockBuilder = makeBlockBuilder()
         blockBuilder.begin(null)
         val abstractBlockBuilder = ((blockBuilder as BaseManagedBlockBuilder).blockBuilder as AbstractBlockBuilder)
-        val tBegin = System.nanoTime()
+        val netStart = System.nanoTime()
 
         // TODO Potential problem: if the block fails for some reason,
         // the transaction queue is gone. This could potentially happen
         // during a revolt. We might need a "transactional" tx queue...
 
         TimeLog.startSum("BaseBlockchainEngine.buildBlock().appendtransactions")
-        var nTransactions = 0
-        var nRejects = 0
+        var acceptedTxs = 0
+        var rejectedTxs = 0
 
         while (true) {
             logger.debug("Checking transaction queue")
@@ -199,10 +185,10 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
                 val exception = blockBuilder.maybeAppendTransaction(tx)
                 TimeLog.end("BaseBlockchainEngine.buildBlock().maybeApppendTransaction")
                 if (exception != null) {
-                    nRejects += 1
+                    rejectedTxs++
                     transactionQueue.rejectTransaction(tx, exception)
                 } else {
-                    nTransactions += 1
+                    acceptedTxs++
                     // tx is fine, consider stopping
                     if (strategy.shouldStopBuildingBlock(abstractBlockBuilder)) {
                         logger.debug("Block size limit is reached")
@@ -216,22 +202,48 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
 
         TimeLog.end("BaseBlockchainEngine.buildBlock().appendtransactions")
 
-        val tEnd = System.nanoTime()
-        blockBuilder.finalizeBlock()
-        val tDone = System.nanoTime()
+        val netEnd = System.nanoTime()
+        val blockHeader = blockBuilder.finalizeBlock()
+        val grossEnd = System.nanoTime()
 
         TimeLog.end("BaseBlockchainEngine.buildBlock().buildBlock")
 
         if (LOG_STATS) {
-            val netRate = (nTransactions * 1000000000L) / (tEnd - tBegin)
-            val grossRate = (nTransactions * 1000000000L) / (tDone - tStart)
-            logger.info("Chain: ${blockchainConfiguration.blockchainRID.toShortHex()}: " +
-                    "Block is finalized: accepted tx: $nTransactions, rejected tx: $nRejects; " +
-                    "${ms(tStart, tDone)} ms, $netRate net tps, $grossRate gross tps")
+            val prettyBlockHeader = prettyBlockHeader(
+                    blockHeader, acceptedTxs, rejectedTxs, grossStart to grossEnd, netStart to netEnd)
+            logger.info("Chain: ${shortChainName()}: Block is finalized: $prettyBlockHeader")
         } else {
-            logger.info("Block is finalized")
+            logger.info("Chain: ${shortChainName()}: Block is finalized")
         }
 
         return blockBuilder
     }
+
+    private fun prettyBlockHeader(
+            blockHeader: BlockHeader,
+            acceptedTxs: Int,
+            rejectedTxs: Int,
+            gross: Pair<Long, Long>,
+            net: Pair<Long, Long>
+    ): String {
+
+        val grossRate = (acceptedTxs * 1_000_000_000L) / max(gross.second - gross.first, 1)
+        val netRate = (acceptedTxs * 1_000_000_000L) / max(net.second - net.first, 1)
+        val grossTimeMs = (gross.second - gross.first) / 1_000_000
+
+        val gtvBlockHeader = GtvDecoder.decodeGtv(blockHeader.rawData)
+        val blockHeaderData = BlockHeaderData.fromGtv(gtvBlockHeader as GtvArray)
+
+        return "$grossTimeMs ms" +
+                ", $netRate net tps" +
+                ", $grossRate gross tps" +
+                ", height: ${blockHeaderData.gtvHeight.asInteger()}" +
+                ", accepted txs: $acceptedTxs" +
+                ", rejected txs: $rejectedTxs" +
+                ", root-hash: ${blockHeaderData.getMerkleRootHash().toHex()}" +
+                ", block-rid: ${blockHeader.blockRID.toHex()}" +
+                ", prev-block-rid: ${blockHeader.prevBlockRID.toHex()}"
+    }
+
+    private fun shortChainName(): String = blockchainConfiguration.blockchainRID.toShortHex()
 }

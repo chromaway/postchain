@@ -34,8 +34,8 @@ interface BlockStore {
     fun getBlock(ctx: EContext, blockRID: ByteArray, partialTx: Boolean): BlockDetail?
     fun getTransactionInfo(ctx: EContext, txRID: ByteArray): TransactionInfoExt?
     fun getTransactionsInfo(ctx: EContext, beforeTime: Long, limit: Int): List<TransactionInfoExt>
-    fun getBlockHeader(ctx: EContext, blockRID: ByteArray): ByteArray
 
+    fun getBlockHeader(ctx: EContext, blockRID: ByteArray): ByteArray
     fun getTxRIDsAtHeight(ctx: EContext, height: Long): Array<ByteArray>
     fun getTxBytes(ctx: EContext, txRID: ByteArray): ByteArray?
     fun getBlockTransactions(ctx: EContext, blockRID: ByteArray): List<ByteArray>
@@ -50,7 +50,7 @@ interface BlockStore {
 interface BlockQueries {
     fun getBlockSignature(blockRID: ByteArray): Promise<Signature, Exception>
     fun getBestHeight(): Promise<Long, Exception>
-    fun getBlockRids(height: Long): Promise<ByteArray?, Exception>
+    fun getBlockRid(height: Long): Promise<ByteArray?, Exception>
     fun getBlockAtHeight(height: Long): Promise<BlockDataWithWitness, Exception>
     fun getBlockHeader(blockRID: ByteArray): Promise<BlockHeader, Exception>
     fun getBlocks(beforeTime: Long, limit: Int, partialTx: Boolean): Promise<List<BlockDetail>, Exception>
@@ -82,7 +82,7 @@ interface BlockQueries {
 interface BlockBuilder {
     fun begin(partialBlockHeader: BlockHeader?)
     fun appendTransaction(tx: Transaction)
-    fun finalizeBlock()
+    fun finalizeBlock(): BlockHeader
     fun finalizeAndValidate(blockHeader: BlockHeader)
     fun getBlockData(): BlockData
     fun getBlockWitnessBuilder(): BlockWitnessBuilder?
