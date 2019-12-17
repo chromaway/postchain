@@ -202,6 +202,9 @@ class DefaultXConnectionManager<PacketType>(
     override fun onPeerDisconnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection) {
         logger.debug { "[${myPeerId()}]: Peer disconnected: peer = ${peerName(descriptor.peerId)}" }
 
+        // Closing local connection entity
+        connection.close()
+
         val chainID = chainIDforBlockchainRID[descriptor.blockchainRID]
         val chain = if (chainID != null) chains[chainID] else null
         if (chain == null) {
