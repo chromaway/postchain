@@ -43,11 +43,11 @@ class RestApi(
         private val appConfig: AppConfig,
         private val sslCertificate: String? = null,
         private val sslCertificatePassword: String? = null,
-        private val databaseConnector: (AppConfig) -> DatabaseConnector = { appConfig ->
-            SimpleDatabaseConnector(appConfig)
+        private val databaseConnector: (AppConfig) -> DatabaseConnector = { applicationConfig ->
+            SimpleDatabaseConnector(applicationConfig)
         },
-        private val appConfigDbLayer: (AppConfig, Connection) -> AppConfigDbLayer = { appConfig, connection ->
-            AppConfigDbLayer(appConfig, connection)
+        private val appConfigDbLayer: (AppConfig, Connection) -> AppConfigDbLayer = { applicationConfig, connection ->
+            AppConfigDbLayer(applicationConfig, connection)
         }
 ) : Modellable {
 
