@@ -228,7 +228,6 @@ class RestApi(
         var orderAsc = false
         var limit = DEFAULT_ENTRY_RESULTS_REQUEST // max number of blocks that is possible to request is 600
         var hashesOnly = true
-        var fromTransaction: ByteArray? = null
 
         val params = request.queryMap()
         for ((name, value) in params.toMap()) {
@@ -249,9 +248,6 @@ class RestApi(
                 }
                 "hashesOnly" -> {
                     hashesOnly = value[0] == "true"
-                }
-                "from_transaction" -> {
-                    fromTransaction = value[0].hexStringToByteArray()
                 }
             }
         }
