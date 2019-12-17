@@ -27,14 +27,11 @@ class CommandKeygen : Command {
      * Cryptographic key generator. Will generate a pair of public and private keys and print to stdout.
      */
     private fun keygen(): String {
-        var privKey = ByteArray(0)
-        var mnemonic : String = ""
+        val cs = SECP256K1CryptoSystem()
+        var privKey = cs.getRandomBytes(32)
         val mnemonicInstance = MnemonicCode.INSTANCE
-        if (wordList.isEmpty()) {
-            val cs = SECP256K1CryptoSystem()
-            privKey = cs.getRandomBytes(32)
-            mnemonic = mnemonicInstance.toMnemonic(privKey).joinToString(" ")
-        } else {
+        var mnemonic = mnemonicInstance.toMnemonic(privKey).joinToString(" ")
+        if (wordList.isNotEmpty()) {
             val words = wordList.split(" ")
             mnemonicInstance.check(words)
             mnemonic = wordList
