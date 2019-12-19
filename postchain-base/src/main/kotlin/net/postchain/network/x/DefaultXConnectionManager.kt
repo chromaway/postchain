@@ -236,11 +236,12 @@ class DefaultXConnectionManager<PacketType>(
     override fun getPeersTopology(chainID: Long): Map<XPeerID, String> {
         return chains[chainID]
                 ?.connections
-                ?.mapValues { peerToConnection ->
-                    when (peerToConnection.value) {
-                        is NettyClientPeerConnection<*> -> "c-s" // TODO: Fix this
-                        else -> "s-c" // TODO: Fix this
-                    }
+                ?.mapValues { connection ->
+                    // TODO: Fix this
+                    when (connection.value) {
+                        is NettyClientPeerConnection<*> -> "c-s"
+                        else -> "s-c"
+                    }.plus(", " + connection.value.remoteAddress())
                 }
                 ?: emptyMap()
     }
