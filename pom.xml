@@ -13,6 +13,7 @@
         <module>postchain-cw-modules</module>
         <module>postchain-docker</module>
         <module>postchain-client</module>
+        <module>postchain-distribution</module>
     </modules>
     <packaging>pom</packaging>
 

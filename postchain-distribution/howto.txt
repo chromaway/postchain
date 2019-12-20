@@ -1,0 +1,10 @@
+How To
+ver. 0.0.1
+
+// TODO: Write this manual
+
+1. Put additional jars (rell-runtime, etc.) to ./lib
+
+2. Build distribution module
+
+
