@@ -67,7 +67,9 @@ class NettyClientPeerConnection<PacketType>(
     }
 
     override fun remoteAddress(): String {
-        return context.channel().remoteAddress().toString()
+        return if (::context.isInitialized)
+            context.channel().remoteAddress().toString()
+        else ""
     }
 
     override fun close() {
