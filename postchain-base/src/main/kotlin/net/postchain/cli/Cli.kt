@@ -32,7 +32,7 @@ class Cli {
 
     init {
         jCommander = with(JCommander.newBuilder()) {
-            commands.forEach { key, command -> addCommand(key, command) }
+            commands.forEach { (key, command) -> addCommand(key, command) }
             build()
         }
     }

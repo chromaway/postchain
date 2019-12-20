@@ -1,4 +1,4 @@
-package net.postchain.client
+package net.postchain.client.core
 
 enum class ConfirmationLevel {
     NO_WAIT,

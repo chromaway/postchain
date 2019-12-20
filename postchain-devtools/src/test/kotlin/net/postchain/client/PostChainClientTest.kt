@@ -5,6 +5,10 @@ import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.spy
 import com.nhaarman.mockitokotlin2.verify
 import net.postchain.base.BlockchainRid
+import net.postchain.client.core.ConfirmationLevel
+import net.postchain.client.core.DefaultSigner
+import net.postchain.client.core.PostchainClient
+import net.postchain.client.core.PostchainClientFactory
 import net.postchain.common.toHex
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.TransactionStatus
@@ -28,7 +32,6 @@ class PostChainClientTest : IntegrationTest() {
     private val privKey0 = KeyPairHelper.privKey(0)
     private val sigMaker0 = cryptoSystem.buildSigMaker(pubKey0, privKey0)
     private val defaultSigner = DefaultSigner(sigMaker0, pubKey0)
-    private val postchainClientFactory = PostchainClientFactory()
     private val randomStr = "hello${Random().nextLong()}"
 
     private fun createTestNodes(nodesCount: Int, configFileName: String): Array<PostchainTestNode> {
@@ -46,8 +49,8 @@ class PostChainClientTest : IntegrationTest() {
     }
 
     private fun createPostChainClient(bcRid: BlockchainRid): PostchainClient {
-        val resolver = postchainClientFactory.makeSimpleNodeResolver("http://127.0.0.1:${nodes[0].getRestApiHttpPort()}")
-        return postchainClientFactory.getClient(resolver, bcRid, defaultSigner)
+        val resolver = PostchainClientFactory.makeSimpleNodeResolver("http://127.0.0.1:${nodes[0].getRestApiHttpPort()}")
+        return PostchainClientFactory.getClient(resolver, bcRid, defaultSigner)
     }
 
     @Test
