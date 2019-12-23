@@ -340,35 +340,37 @@ class ValidatorSyncManager(
      * notify peers of our current status.
      */
     override fun update() {
-        // Process all messages from peers, one at a time. Some
-        // messages may trigger asynchronous code which will
-        // send replies at a later time, others will send replies
-        // immediately
-        dispatchMessages()
+        synchronized (statusManager) {
+            // Process all messages from peers, one at a time. Some
+            // messages may trigger asynchronous code which will
+            // send replies at a later time, others will send replies
+            // immediately
+            dispatchMessages()
 
-        // An intent is something that we want to do with our current block.
-        // The current intent is fetched from the BlockManager and will result in
-        // some messages being sent to peers requesting data like signatures or
-        // complete blocks
-        processIntent()
+            // An intent is something that we want to do with our current block.
+            // The current intent is fetched from the BlockManager and will result in
+            // some messages being sent to peers requesting data like signatures or
+            // complete blocks
+            processIntent()
 
-        // RevoltTracker will check trigger a revolt if conditions for revolting are met
-        // A revolt will be triggerd by calling statusManager.onStartRevolting()
-        // Typical revolt conditions
-        //    * A timeout happens and round has not increased. Round is increased then 2f+1 nodes
-        //      are revolting.
-        revoltTracker.update()
+            // RevoltTracker will check trigger a revolt if conditions for revolting are met
+            // A revolt will be triggerd by calling statusManager.onStartRevolting()
+            // Typical revolt conditions
+            //    * A timeout happens and round has not increased. Round is increased then 2f+1 nodes
+            //      are revolting.
+            revoltTracker.update()
 
-        // Sends a status message to all peers when my status has changed or after a timeout
-        statusSender.update()
+            // Sends a status message to all peers when my status has changed or after a timeout
+            statusSender.update()
 
-        nodeStateTracker.myStatus = statusManager.myStatus.serialize()
-        nodeStateTracker.nodeStatuses = statusManager.nodeStatuses.map { it.serialize() }.toTypedArray()
-        nodeStateTracker.blockHeight = statusManager.myStatus.height
+            nodeStateTracker.myStatus = statusManager.myStatus.serialize()
+            nodeStateTracker.nodeStatuses = statusManager.nodeStatuses.map { it.serialize() }.toTypedArray()
+            nodeStateTracker.blockHeight = statusManager.myStatus.height
 
-        if (Date().time - lastStatusLogged >= StatusLogInterval) {
-            logStatus()
-            lastStatusLogged = Date().time
+            if (Date().time - lastStatusLogged >= StatusLogInterval) {
+                logStatus()
+                lastStatusLogged = Date().time
+            }
         }
     }
 
