@@ -19,7 +19,7 @@ class NettyClientPeerConnection<PacketType>(
         private val packetEncoder: XPacketEncoder<PacketType>
 ) : ChannelInboundHandlerAdapter(), XPeerConnection {
 
-    companion object: KLogging()
+    companion object : KLogging()
 
     private val nettyClient = NettyClient()
     private lateinit var context: ChannelHandlerContext
@@ -64,6 +64,12 @@ class NettyClientPeerConnection<PacketType>(
     override fun sendPacket(packet: LazyPacket) {
         //logger.debug("Sending package ---")
         context.writeAndFlush(Transport.wrapMessage(packet()))
+    }
+
+    override fun remoteAddress(): String {
+        return if (::context.isInitialized)
+            context.channel().remoteAddress().toString()
+        else ""
     }
 
     override fun close() {

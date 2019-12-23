@@ -8,6 +8,7 @@ import net.postchain.base.gtv.BlockHeaderData
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.debug.BlockchainProcessName
 import net.postchain.gtv.GtvArray
 import net.postchain.gtv.GtvDecoder
 import nl.komponents.kovenant.task
@@ -15,15 +16,13 @@ import java.lang.Long.max
 
 const val LOG_STATS = true
 
-fun ms(n1: Long, n2: Long): Long {
-    return (n2 - n1) / 1000000
-}
-
-open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainConfiguration,
-                                val storage: Storage,
-                                private val chainID: Long,
-                                private val transactionQueue: TransactionQueue,
-                                private val useParallelDecoding: Boolean = true
+open class BaseBlockchainEngine(
+        private val processName: BlockchainProcessName,
+        private val blockchainConfiguration: BlockchainConfiguration,
+        val storage: Storage,
+        private val chainID: Long,
+        private val transactionQueue: TransactionQueue,
+        private val useParallelDecoding: Boolean = true
 ) : BlockchainEngine {
 
     companion object : KLogging()
@@ -39,7 +38,7 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
             throw ProgrammerMistake("Engine is already initialized")
         }
 
-        logger.debug("Initialize DB - begin")
+        logger.debug("$processName: Initialize DB - begin")
         withWriteConnection(storage, chainID) { ctx ->
             blockchainConfiguration.initializeDB(ctx)
             true
@@ -50,7 +49,7 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
         blockQueries = blockchainConfiguration.makeBlockQueries(storage)
         strategy = blockchainConfiguration.getBlockBuildingStrategy(blockQueries, transactionQueue)
         initialized = true
-        logger.debug("Initialize DB - end")
+        logger.debug("$processName: Initialize DB - end")
     }
 
     override fun setRestartHandler(handler: RestartHandler) {
@@ -151,7 +150,7 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
         if (LOG_STATS) {
             val prettyBlockHeader = prettyBlockHeader(
                     block.header, block.transactions.size, 0, grossStart to grossEnd, netStart to netEnd)
-            logger.info("Chain: ${shortChainName()}: Loaded block: $prettyBlockHeader")
+            logger.info("$processName: Loaded block: $prettyBlockHeader")
         }
 
         return blockBuilder
@@ -175,12 +174,12 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
         var rejectedTxs = 0
 
         while (true) {
-            logger.debug("Checking transaction queue")
+            logger.debug("$processName: Checking transaction queue")
             TimeLog.startSum("BaseBlockchainEngine.buildBlock().takeTransaction")
             val tx = transactionQueue.takeTransaction()
             TimeLog.end("BaseBlockchainEngine.buildBlock().takeTransaction")
             if (tx != null) {
-                logger.debug("Appending transaction ${tx.getRID().toHex()}")
+                logger.debug("$processName: Appending transaction ${tx.getRID().toHex()}")
                 TimeLog.startSum("BaseBlockchainEngine.buildBlock().maybeApppendTransaction")
                 val exception = blockBuilder.maybeAppendTransaction(tx)
                 TimeLog.end("BaseBlockchainEngine.buildBlock().maybeApppendTransaction")
@@ -191,7 +190,7 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
                     acceptedTxs++
                     // tx is fine, consider stopping
                     if (strategy.shouldStopBuildingBlock(abstractBlockBuilder)) {
-                        logger.debug("Block size limit is reached")
+                        logger.debug("$processName: Block size limit is reached")
                         break
                     }
                 }
@@ -211,9 +210,9 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
         if (LOG_STATS) {
             val prettyBlockHeader = prettyBlockHeader(
                     blockHeader, acceptedTxs, rejectedTxs, grossStart to grossEnd, netStart to netEnd)
-            logger.info("Chain: ${shortChainName()}: Block is finalized: $prettyBlockHeader")
+            logger.info("$processName: Block is finalized: $prettyBlockHeader")
         } else {
-            logger.info("Chain: ${shortChainName()}: Block is finalized")
+            logger.info("$processName: Block is finalized")
         }
 
         return blockBuilder
@@ -245,5 +244,4 @@ open class BaseBlockchainEngine(private val blockchainConfiguration: BlockchainC
                 ", prev-block-rid: ${blockHeader.prevBlockRID.toHex()}"
     }
 
-    private fun shortChainName(): String = blockchainConfiguration.blockchainRID.toShortHex()
 }
