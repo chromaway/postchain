@@ -72,7 +72,7 @@ class CommandRunNodeAuto : Command {
             }
 
             cliExecution.runNode(nodeConfigFile, chainIds.sorted())
-            Ok("Postchain node launching is done", isLongRunning = true)
+            Ok("Postchain node is running", isLongRunning = true)
 
         } catch (e: CliError.Companion.CliException) {
             CliError.CommandNotAllowed(message = e.message)
