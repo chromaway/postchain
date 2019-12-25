@@ -6,8 +6,10 @@ Configuration:
     Property:
     - name: logs
       value: "logs"
-    - name: logfile
-      value: "logfile.log"
+    - name: filename
+      value: "log"
+    - name: fileExt
+      value: "log"
 
   Appenders:
     Console:
@@ -18,13 +20,16 @@ Configuration:
         pattern: "%-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
     RollingFile:
       name: FileAppender
-      fileName: "${logs}/${logfile}"
-      filePattern: "${logs}/${logfile}.%d{yyyy-MM-dd-hh-mm}.log"
+      fileName: "${logs}/${filename}.${fileExt}"
+      filePattern: "${logs}/${filename}-%d{yyyy-MM-dd-HH-mm}.%i.${fileExt}.gz"
       Policies:
+        TimeBasedTriggeringPolicy:
+          interval: 60
+          modulate: true
         SizeBasedTriggeringPolicy:
-          size: 1 MB
+          size: 10 MB
       DefaultRollOverStrategy:
-          max: 10
+        max: 100
       PatternLayout:
         # pattern: "[%X{node-id}] %-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
         pattern: "%-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"

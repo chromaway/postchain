@@ -7,6 +7,7 @@ import com.nhaarman.mockitokotlin2.*
 import net.postchain.base.*
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.byteArrayKeyOf
+import net.postchain.debug.BlockchainProcessName
 import net.postchain.network.XPacketDecoderFactory
 import net.postchain.network.XPacketEncoderFactory
 import org.apache.commons.lang3.reflect.FieldUtils
@@ -74,11 +75,11 @@ class DefaultXConnectionManagerTest {
         val connectionManager = DefaultXConnectionManager(
                 connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         )
-                .also { it.connectChain(chainPeerConfig, false) }
+                .also { it.connectChain(chainPeerConfig, false, mock()) }
 
         // Then
         verify(chainPeerConfig, times(5)).chainID
-        verify(chainPeerConfig, times(2)).blockchainRID
+        verify(chainPeerConfig, times(2 + 1)).blockchainRID
         verify(chainPeerConfig, never()).commConfiguration
         verify(communicationConfig, never()).networkNodes
 
@@ -103,14 +104,14 @@ class DefaultXConnectionManagerTest {
                 connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem)
 
         try {
-            connectionManager.also { it.connectChain(chainPeerConfig, true) }
+            connectionManager.also { it.connectChain(chainPeerConfig, true, mock()) }
         } catch (e: IllegalArgumentException) {
         }
 
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(1)).commConfiguration
-        verify(chainPeerConfig, times(2)).blockchainRID
+        verify(chainPeerConfig, times(2 + 1)).blockchainRID
         verify(communicationConfig).networkNodes
 
         connectionManager.shutdown()
@@ -136,12 +137,12 @@ class DefaultXConnectionManagerTest {
         val connectionManager = DefaultXConnectionManager(
                 connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         )
-                .also { it.connectChain(chainPeerConfig, true) }
+                .also { it.connectChain(chainPeerConfig, true, mock()) }
 
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(1 + (2 - 1) * 2)).commConfiguration
-        verify(chainPeerConfig, times(1 + 1 * 2 + 1)).blockchainRID
+        verify(chainPeerConfig, times(1 + 1 * 2 + 1 + 2)).blockchainRID
 
         connectionManager.shutdown()
     }
@@ -166,7 +167,7 @@ class DefaultXConnectionManagerTest {
         DefaultXConnectionManager(
                 connectorFactory, communicationConfig, mock(), mock(), cryptoSystem
         ).apply {
-            connectChain(chainPeerConfig, false) // Without connecting to peers
+            connectChain(chainPeerConfig, false, mock()) // Without connecting to peers
             connectChainPeer(1, unknownPeerInfo.peerId())
         }
     }
@@ -186,19 +187,23 @@ class DefaultXConnectionManagerTest {
             on { commConfiguration } doReturn communicationConfig
         }
 
+        val loggerName = BlockchainProcessName(
+                peerInfo1.pubKey.byteArrayKeyOf().toString(), blockchainRid
+        ).toString()
+
         // When
         val connectionManager = DefaultXConnectionManager(
                 connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         )
                 .apply {
-                    connectChain(chainPeerConfig, false) // Without connecting to peers
+                    connectChain(chainPeerConfig, false, mock()) // Without connecting to peers
                     connectChainPeer(1, peerInfo2.peerId())
                 }
 
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(2)).commConfiguration
-        verify(chainPeerConfig, times(1 + 2 + 1)).blockchainRID
+        verify(chainPeerConfig, times(1 + 2 + 1 + 2)).blockchainRID
 
         connectionManager.shutdown()
     }
@@ -222,7 +227,7 @@ class DefaultXConnectionManagerTest {
         val connectionManager = DefaultXConnectionManager(
                 connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         ).apply {
-            connectChain(chainPeerConfig, true) // Auto connect all peers
+            connectChain(chainPeerConfig, true, mock()) // Auto connect all peers
 
             // Emulates call of onPeerConnected() by XConnector
             onPeerConnected(peerConnectionDescriptor1, mock())
@@ -233,7 +238,7 @@ class DefaultXConnectionManagerTest {
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(1 + (2 - 1) * 2)).commConfiguration
-        verify(chainPeerConfig, times(1 + 2 + 1)).blockchainRID
+        verify(chainPeerConfig, times(1 + 2 + 1 + 2)).blockchainRID
 
         connectionManager.shutdown()
     }
@@ -247,7 +252,7 @@ class DefaultXConnectionManagerTest {
     @Test
     fun disconnectChain_wont_result_in_exception_if_chain_is_not_connected() {
         DefaultXConnectionManager(connectorFactory, mock(), mock(), mock(), cryptoSystem)
-                .disconnectChain(1)
+                .disconnectChain(1, mock())
     }
 
     @Test(expected = ProgrammerMistake::class)
@@ -281,7 +286,7 @@ class DefaultXConnectionManagerTest {
         val connectionManager = DefaultXConnectionManager(
                 connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         ).apply {
-            connectChain(chainPeerConfig, true) // With autoConnect
+            connectChain(chainPeerConfig, true, mock()) // With autoConnect
 
             // Then / before peers connected
             // - isPeerConnected
@@ -318,7 +323,7 @@ class DefaultXConnectionManagerTest {
 
 
             // When / Disconnecting the whole chain
-            disconnectChain(1L)
+            disconnectChain(1L, mock())
             // Then
             val internalChains = FieldUtils.readField(this, "chains", true) as Map<*, *>
             assertTrue { internalChains.isEmpty() }
@@ -354,7 +359,7 @@ class DefaultXConnectionManagerTest {
         val connectionManager = DefaultXConnectionManager(
                 connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         ).apply {
-            connectChain(chainPeerConfig, true) // With autoConnect
+            connectChain(chainPeerConfig, true, mock()) // With autoConnect
 
             // Emulates call of onPeerConnected() by XConnector
             onPeerConnected(peerConnectionDescriptor1, connection1)
@@ -400,7 +405,7 @@ class DefaultXConnectionManagerTest {
         val connectionManager = DefaultXConnectionManager(
                 connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         ).apply {
-            connectChain(chainPeerConfig, true) // With autoConnect
+            connectChain(chainPeerConfig, true, mock()) // With autoConnect
 
             // Emulates call of onPeerConnected() by XConnector
             onPeerConnected(peerConnectionDescriptor1, connection1)
