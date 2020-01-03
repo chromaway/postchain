@@ -130,14 +130,16 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
             FROM transactions t
             JOIN blocks b ON t.block_iid=b.block_iid
             WHERE b.block_rid=? AND b.chain_iid=?
-            ORDER BY tx_iid"""
+            ORDER BY tx_iid
+        """.trimIndent()
+
         val txs = queryRunner.query(ctx.conn, sql, mapListHandler, blockRID, ctx.chainID)
 
         return txs.map { tx ->
             TxDetail(
                     tx["tx_rid"] as ByteArray,
                     tx["tx_hash"] as ByteArray,
-                    if (hashesOnly) null else (tx["tx_hash"] as ByteArray)
+                    if (hashesOnly) null else (tx["tx_data"] as ByteArray)
             )
         }
     }
