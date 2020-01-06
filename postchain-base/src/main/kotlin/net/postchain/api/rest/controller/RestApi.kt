@@ -13,8 +13,6 @@ import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_REQ
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_REQUEST_METHOD
 import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_BLOCKCHAIN_RID
 import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_HASH_HEX
-import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_LIMIT
-import net.postchain.api.rest.controller.HttpHelper.Companion.PARAM_UP_TO
 import net.postchain.api.rest.controller.HttpHelper.Companion.SUBQUERY
 import net.postchain.api.rest.json.JsonFactory
 import net.postchain.api.rest.model.ApiTx
@@ -27,6 +25,7 @@ import net.postchain.config.DatabaseConnector
 import net.postchain.config.SimpleDatabaseConnector
 import net.postchain.config.app.AppConfig
 import net.postchain.config.app.AppConfigDbLayer
+import net.postchain.core.BlockDetail
 import net.postchain.core.UserMistake
 import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
@@ -51,6 +50,10 @@ class RestApi(
             AppConfigDbLayer(appConfig, connection)
         }
 ) : Modellable {
+
+    val MAX_NUMBER_OF_BLOCKS_PER_REQUEST = 100
+    val DEFAULT_BLOCK_HEIGHT_REQUEST = Long.MAX_VALUE
+    val DEFAULT_ENTRY_RESULTS_REQUEST = 25
 
     companion object : KLogging()
 
@@ -148,7 +151,7 @@ class RestApi(
             http.post("/tx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
                 val n = TimeLog.startSumConc("RestApi.buildRouter().postTx")
                 val tx = toTransaction(request)
-                val maxLength =  try {
+                val maxLength = try {
                     if (tx.bytes.size > 200) 200 else tx.bytes.size
                 } catch (e: Exception) {
                     throw UserMistake("Invalid tx format. Expected {\"tx\": <hex-string>}")
@@ -183,15 +186,8 @@ class RestApi(
                 }
             }, gson::toJson)
 
-            http.get("/query/$PARAM_BLOCKCHAIN_RID/blocks/latest/$PARAM_UP_TO/limit/$PARAM_LIMIT", { request, _ ->
-                val model = model(request)
-                try {
-                    val upTo = request.params(PARAM_UP_TO).toLong()
-                    val limit = request.params(PARAM_LIMIT).toInt()
-                    model.getLatestBlocksUpTo(upTo, limit)
-                } catch (e: NumberFormatException) {
-                    throw BadFormatError("Format is not correct (Long, Int)")
-                }
+            http.get("/blocks/$PARAM_BLOCKCHAIN_RID", { request, _ ->
+                handleBlocksQuery(request)
             }, gson::toJson)
 
             http.post("/query/$PARAM_BLOCKCHAIN_RID") { request, _ ->
@@ -227,9 +223,46 @@ class RestApi(
         http.awaitInitialization()
     }
 
-    private fun toTransaction(req: Request): ApiTx {
+    private fun handleBlocksQuery(request: Request): List<BlockDetail> {
+        var blockHeight = DEFAULT_BLOCK_HEIGHT_REQUEST
+        var orderAsc = false
+        var limit = DEFAULT_ENTRY_RESULTS_REQUEST // max number of blocks that is possible to request is 600
+        var hashesOnly = true
+        var fromTransaction: ByteArray? = null
+
+        val params = request.queryMap()
+        for ((name, value) in params.toMap()) {
+            when (name) {
+                "before_block" -> {
+                    blockHeight = value[0].toLongOrNull() ?: blockHeight
+                    orderAsc = false
+                }
+                "after_block" -> {
+                    blockHeight = value[0].toLongOrNull() ?: blockHeight
+                    orderAsc = true
+                }
+                "limit" -> {
+                    limit = value[0].toIntOrNull() ?: limit
+                    limit = if (limit < 0 || limit > MAX_NUMBER_OF_BLOCKS_PER_REQUEST)
+                        DEFAULT_ENTRY_RESULTS_REQUEST
+                    else limit
+                }
+                "hashesOnly" -> {
+                    hashesOnly = value[0] == "true"
+                }
+                "from_transaction" -> {
+                    fromTransaction = value[0].hexStringToByteArray()
+                }
+            }
+        }
+
+        return model(request).getBlocks(blockHeight, orderAsc, limit, hashesOnly)
+
+    }
+
+    private fun toTransaction(request: Request): ApiTx {
         try {
-            return gson.fromJson<ApiTx>(req.body(), ApiTx::class.java)
+            return gson.fromJson<ApiTx>(request.body(), ApiTx::class.java)
         } catch (e: Exception) {
             throw UserMistake("Could not parse json", e)
         }
@@ -351,20 +384,17 @@ class RestApi(
      */
     private fun checkBlockchainRID(request: Request): String {
         val blockchainRID = request.params(PARAM_BLOCKCHAIN_RID)
-        return if (blockchainRID.matches(Regex("[0-9a-fA-F]{64}"))) {
-            blockchainRID
-        } else if (blockchainRID.matches(Regex("iid_[0-9]*"))) {
-            val chainIid = blockchainRID.substring(4).toLong()
-            val dbBcRid = databaseConnector(appConfig).withWriteConnection { connection ->
-                appConfigDbLayer(appConfig, connection).getBlockchainRid(chainIid)
+        return when {
+            blockchainRID.matches(Regex("[0-9a-fA-F]{64}")) -> blockchainRID
+            blockchainRID.matches(Regex("iid_[0-9]*")) -> {
+                val chainIid = blockchainRID.substring(4).toLong()
+                val dbBcRid = databaseConnector(appConfig).withWriteConnection { connection ->
+                    appConfigDbLayer(appConfig, connection).getBlockchainRid(chainIid)
+                }
+                dbBcRid?.toHex()
+                        ?: throw NotFoundError("Can't find blockchain with chain Iid: $chainIid in DB. Did you add this BC to the node?")
             }
-            if (dbBcRid != null) {
-                dbBcRid.toHex()
-            } else {
-                throw NotFoundError("Can't find blockchain with chain Iid: $chainIid in DB. Did you add this BC to the node?")
-            }
-        } else {
-            throw BadFormatError("Invalid blockchainRID. Expected 64 hex digits [0-9a-fA-F]")
+            else -> throw BadFormatError("Invalid blockchainRID. Expected 64 hex digits [0-9a-fA-F]")
         }
     }
 
@@ -392,11 +422,8 @@ class RestApi(
         val dbBcRid = databaseConnector(appConfig).withWriteConnection { connection ->
             appConfigDbLayer(appConfig, connection).getBlockchainRid(0L)
         }
-        val chain0Rid = if (dbBcRid != null) {
-            dbBcRid.toHex()
-        } else {
-            throw NotFoundError("Can't find chain0 in DB. Is this node in managed mode?")
-        }
+        val chain0Rid = dbBcRid?.toHex()
+                ?: throw NotFoundError("Can't find chain0 in DB. Is this node in managed mode?")
         return models[chain0Rid]
                 ?: throw NotFoundError("Can't find blockchain with blockchainRID: $chain0Rid")
     }

@@ -18,7 +18,7 @@ class IntegrationTestContext(
             connectorFactory, mock(), mock(), mock(), SECP256K1CryptoSystem())
 
     val communicationManager = DefaultXCommunicationManager<Int>(
-            connectionManager, peerCommunicationConfig, 1L, mock(), mock(), mock())
+            connectionManager, peerCommunicationConfig, 1L, mock(), mock(), mock(), mock())
 
     fun shutdown() {
         communicationManager.shutdown()

@@ -5,12 +5,13 @@ import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
 import net.postchain.base.ConfirmationProof
 import net.postchain.core.BlockDetail
+import net.postchain.core.TxDetail
 import net.postchain.gtv.Gtv
 
 interface Model {
     fun postTransaction(tx: ApiTx)
     fun getTransaction(txRID: TxRID): ApiTx?
-    fun getLatestBlocksUpTo(upTo: Long, limit: Int): List<BlockDetail>
+    fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, hashesOnly: Boolean): List<BlockDetail>
     fun getConfirmationProof(txRID: TxRID): ConfirmationProof?
     fun getStatus(txRID: TxRID): ApiStatus
     fun query(query: Query): QueryResult

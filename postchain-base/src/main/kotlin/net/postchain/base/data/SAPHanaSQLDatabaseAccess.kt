@@ -1,8 +1,8 @@
 package net.postchain.base.data
 
-import net.postchain.base.data.SAPQueryExecutor.executeByteArrayListQuery
 import net.postchain.base.data.SAPQueryExecutor.executeByteArrayQuery
 import net.postchain.core.EContext
+import net.postchain.core.TxDetail
 
 class SAPHanaSQLDatabaseAccess(sqlCommands: SQLCommands) : SQLDatabaseAccess(sqlCommands) {
 
@@ -15,18 +15,32 @@ class SAPHanaSQLDatabaseAccess(sqlCommands: SQLCommands) : SQLDatabaseAccess(sql
         } ?: byteArrayOf()
     }
 
-    override fun getBlockTransactions(ctx: EContext, blockRID: ByteArray): List<ByteArray> {
+    override fun getBlockTransactions(ctx: EContext, blockRID: ByteArray, hashesOnly: Boolean): List<TxDetail> {
         val sql = """
-            SELECT tx_data
+            SELECT tx_rid, tx_hash${if (hashesOnly) "" else ", tx_data"}
             FROM transactions t
             JOIN blocks b ON t.block_iid=b.block_iid
             WHERE b.chain_iid = ? AND b.block_rid = ?
             ORDER BY tx_iid"""
 
-        return executeByteArrayListQuery(ctx, sql) {
-            it.setLong(1, ctx.chainID)
-            it.setBytes(2, blockRID)
+        val statement = ctx.conn.prepareStatement(sql)
+                .apply {
+                    setLong(1, ctx.chainID)
+                    setBytes(2, blockRID)
+                }
+
+        val resultSet = statement.executeQuery()
+
+        val txs = mutableListOf<TxDetail>()
+        while (resultSet.next()) {
+            txs.add(TxDetail(
+                    resultSet.getBlob(1).binaryStream.readBytes(),
+                    resultSet.getBlob(2).binaryStream.readBytes(),
+                    if (hashesOnly) null else resultSet.getBlob(3).binaryStream.readBytes()
+            ))
         }
+
+        return txs
     }
 
     override fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray {

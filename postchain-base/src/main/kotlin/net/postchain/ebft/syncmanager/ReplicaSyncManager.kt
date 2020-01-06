@@ -4,6 +4,7 @@ import net.postchain.core.BlockDataWithWitness
 import net.postchain.core.BlockQueries
 import net.postchain.core.BlockchainConfiguration
 import net.postchain.core.NodeStateTracker
+import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.BlockDatabase
 import net.postchain.ebft.NodeStatus
 import net.postchain.ebft.message.CompleteBlock
@@ -20,7 +21,7 @@ import java.lang.Integer.min
 import java.util.*
 
 class ReplicaSyncManager(
-        private val blockchainProcessName: String,
+        private val processName: BlockchainProcessName,
         signers: List<ByteArray>,
         private val communicationManager: CommunicationManager<Message>,
         private val nodeStateTracker: NodeStateTracker,
@@ -34,7 +35,7 @@ class ReplicaSyncManager(
     private val defaultBackoffDelta = 1000
     private val maxBackoffDelta = 30 * defaultBackoffDelta
     private val validatorNodes: List<XPeerID> = signers.map { XPeerID(it) }
-    private val replicaLogger = ReplicaTelemetry(blockchainProcessName)
+    private val replicaLogger = ReplicaTelemetry(processName)
 
     private var blockHeight: Long = blockQueries.getBestHeight().get()
     private var nodesWithBlocks = hashMapOf<XPeerID, Long>()

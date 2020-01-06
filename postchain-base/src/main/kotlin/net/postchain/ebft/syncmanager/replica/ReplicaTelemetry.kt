@@ -1,13 +1,14 @@
 package net.postchain.ebft.syncmanager.replica
 
 import mu.KLogging
+import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.NodeStatus
 import net.postchain.ebft.syncmanager.StatusLogInterval
 import java.util.*
 import kotlin.collections.HashMap
 
 
-class ReplicaTelemetry(private val blockchainProcessName: String) {
+class ReplicaTelemetry(private val processName: BlockchainProcessName) {
 
     companion object : KLogging()
 
@@ -16,7 +17,7 @@ class ReplicaTelemetry(private val blockchainProcessName: String) {
     }
 
     private fun consoleLogger(level: LogLevel, message: String, throwable: Throwable? = null) {
-        val msg = "[$blockchainProcessName]: $message"
+        val msg = "$processName: $message"
 
         when (level) {
             LogLevel.Error -> {

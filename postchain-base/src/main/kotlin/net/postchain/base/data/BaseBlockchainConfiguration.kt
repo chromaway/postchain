@@ -13,6 +13,7 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
     val blockStore = BaseBlockStore()
     override val chainID = configData.context.chainID
     override val blockchainRID = configData.context.blockchainRID
+    val effectiveBlockchainRID = configData.getHistoricBRID() ?: configData.context.blockchainRID
     val signers = configData.getSigners()
 
     val bcRelatedInfosDependencyList: List<BlockchainRelatedInfo> = configData.getDependenciesAsList()
@@ -32,7 +33,7 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
     override fun makeBlockBuilder(ctx: EContext): BlockBuilder {
         addChainIDToDependencies(ctx) // We wait until now with this, b/c now we have an EContext
         return BaseBlockBuilder(
-                blockchainRID,
+                effectiveBlockchainRID,
                 cryptoSystem,
                 ctx,
                 blockStore,
@@ -40,6 +41,7 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
                 signers.toTypedArray(),
                 configData.blockSigMaker,
                 bcRelatedInfosDependencyList,
+                effectiveBlockchainRID != blockchainRID,
                 configData.getMaxBlockSize(),
                 configData.getMaxBlockTransactions())
     }
