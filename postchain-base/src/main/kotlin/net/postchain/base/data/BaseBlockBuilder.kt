@@ -33,12 +33,17 @@ open class BaseBlockBuilder(
         txFactory: TransactionFactory,
         val subjects: Array<ByteArray>,
         val blockSigMaker: SigMaker,
-        val blockchainRelatedInfoDependencyList: List<BlockchainRelatedInfo>
-) : AbstractBlockBuilder(eContext, store, txFactory) {
+        val blockchainRelatedInfoDependencyList: List<BlockchainRelatedInfo>,
+        val usingHistoricBRID: Boolean,
+        val maxBlockSize : Long = 20*1024*1024, // 20mb
+        val maxBlockTransactions : Long = 100
+): AbstractBlockBuilder(eContext, store, txFactory) {
 
     companion object : KLogging()
 
     private val calc = GtvMerkleHashCalculator(cryptoSystem)
+
+    private var blockSize : Long = 0L
 
     /**
      * Computes the root hash for the Merkle tree of transactions currently in a block
@@ -51,6 +56,13 @@ open class BaseBlockBuilder(
         val gtvArr = gtv(digests.map { gtv(it) })
 
         return gtvArr.merkleHash(calc)
+    }
+
+    override fun begin(partialBlockHeader: BlockHeader?) {
+        if (partialBlockHeader == null && usingHistoricBRID) {
+            throw UserMistake("Cannot build new blocks in historic mode (check configuration)")
+        }
+        super.begin(partialBlockHeader)
     }
 
     /**
@@ -200,5 +212,16 @@ open class BaseBlockBuilder(
         witnessBuilder.applySignature(blockSigMaker.signDigest(_blockData!!.header.blockRID)) // TODO: POS-04_sig
         return witnessBuilder
     }
+
+    override fun appendTransaction(tx: Transaction) {
+        super.appendTransaction(tx)
+        blockSize = transactions.map { t -> t.getRawData().size.toLong() }.sum()
+        if (blockSize >= maxBlockSize) {
+            throw UserMistake("block size exceeds max block size ${maxBlockSize} bytes")
+        } else if (transactions.size >= maxBlockTransactions) {
+            throw UserMistake("Number of transactions exceeds max ${maxBlockTransactions} transactions in block")
+        }
+    }
+
 
 }

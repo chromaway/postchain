@@ -28,18 +28,11 @@ abstract class BinaryTreeFactory<T,TPathSet: PathSet>() : KLogging() {
      * @param isRoot tells us if this is the top element (we should not search for top element in cache)
      * @return the resulting [BinaryTreeElement] the leaf got converted to
      */
-    fun handleLeaf(leaf: T, paths: TPathSet, memoization: MerkleHashMemoization<T>, isRoot: Boolean = false): BinaryTreeElement {
+    fun handleLeaf(leaf: T, paths: TPathSet, isRoot: Boolean = false): BinaryTreeElement {
         return if (paths.isEmpty() && !isRoot && (leaf is GtvPrimitive)) {
-            // We don't have paths and we are not in the root element, so we are free to look in cache
-            val cachedSummary = memoization.findMerkleHash(leaf)
-            if (cachedSummary != null) {
-                CachedLeaf(cachedSummary)
-            } else {
-                innerHandleLeaf(leaf, getEmptyPathSet(), memoization)
-            }
+            innerHandleLeaf(leaf, getEmptyPathSet())
         } else {
-            // No cache
-            innerHandleLeaf(leaf, paths, memoization)
+            innerHandleLeaf(leaf, paths)
         }
     }
 
@@ -53,7 +46,7 @@ abstract class BinaryTreeFactory<T,TPathSet: PathSet>() : KLogging() {
      * @param memoization is not used for this leaf (since we know it's not in cache) but might be used below
      * @return the tree element we created.
      */
-    protected abstract fun innerHandleLeaf(leaf: T, paths: TPathSet, memoization: MerkleHashMemoization<T>): BinaryTreeElement
+    protected abstract fun innerHandleLeaf(leaf: T, paths: TPathSet): BinaryTreeElement
 
 
     /**

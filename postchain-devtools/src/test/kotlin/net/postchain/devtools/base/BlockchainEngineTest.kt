@@ -152,6 +152,32 @@ class BlockchainEngineTest : IntegrationTest() {
         assertTrue(riDsAtHeight0.contentDeepEquals(Array(2) { TestTransaction(it).getRID() }))
     }
 
+    @Test
+    fun testMaxBlockTransactionsFail() {
+        val (node0, node1) = createNodes(2, "/net/postchain/devtools/blocks/blockchain_config_max_block_transaction.xml")
+        val blockBuilder = createBlockWithTx(node0, 8)
+        val blockData = blockBuilder.getBlockData()
+
+        try {
+            loadUnfinishedAndCommit(node1, blockData)
+        } catch (e : Exception) {}
+
+        assertEquals(-1, getBestHeight(node1))
+    }
+
+    @Test
+    fun testMaxBlockTransactionsOk() {
+        val (node0, node1) = createNodes(2, "/net/postchain/devtools/blocks/blockchain_config_max_block_transaction.xml")
+        val blockBuilder = createBlockWithTx(node0, 6)
+        val blockData = blockBuilder.getBlockData()
+
+        try {
+            loadUnfinishedAndCommit(node1, blockData)
+        } catch (e : Exception) {}
+
+        assertEquals(0, getBestHeight(node1))
+    }
+
     private fun createBlockWithTxAndCommit(node: PostchainTestNode, txCount: Int, startId: Int = 0): BlockData {
         val blockBuilder = createBlockWithTx(node, txCount, startId)
         commitBlock(blockBuilder)

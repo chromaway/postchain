@@ -3,6 +3,7 @@ package net.postchain.integrationtest.managedmode
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import mu.KLogging
+import org.junit.Ignore
 import org.junit.Test
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -70,7 +71,7 @@ class LockTest {
     Process finished with exit code 0
 
      */
-    @Test
+//    @Test
     fun test() {
         val executor = Executors.newSingleThreadScheduledExecutor()
         val node = Node()
@@ -90,7 +91,7 @@ class LockTest {
         executor.awaitTermination(1000, TimeUnit.SECONDS)
     }
 
-    @Test
+//    @Test
     fun test2() {
         val gson = GsonBuilder().setPrettyPrinting().create()!!
 

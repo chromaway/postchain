@@ -5,6 +5,7 @@ import net.postchain.StorageBuilder
 import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
+import net.postchain.debug.BlockchainProcessName
 import net.postchain.debug.NodeDiagnosticContext
 import net.postchain.devtools.PeerNameHelper.peerName
 import net.postchain.ebft.EBFTSynchronizationInfrastructure
@@ -76,19 +77,22 @@ open class BaseBlockchainProcessManager(
                                 NODE_ID_AUTO,
                                 chainId)
 
-                        logger.debug { "[${nodeName()}]: BlockchainConfiguration has been created: chainId: $chainId" }
+                        val processName = BlockchainProcessName(
+                                nodeConfig.pubKey, blockchainConfig.blockchainRID)
 
-                        val engine = blockchainInfrastructure.makeBlockchainEngine(blockchainConfig, restartHandler(chainId))
-                        logger.debug { "[${nodeName()}]: BlockchainEngine has been created: chainId: $chainId" }
+                        logger.debug { "$processName: BlockchainConfiguration has been created: chainId: $chainId" }
 
-                        blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(nodeName(), engine)
-                        logger.debug { "[${nodeName()}]: BlockchainProcess has been launched: chainId: $chainId" }
+                        val engine = blockchainInfrastructure.makeBlockchainEngine(processName, blockchainConfig, restartHandler(chainId))
+                        logger.debug { "$processName: BlockchainEngine has been created: chainId: $chainId" }
+
+                        blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(processName, engine)
+                        logger.debug { "$processName: BlockchainProcess has been launched: chainId: $chainId" }
 
                         blockchainProcessesLoggers[chainId] = timer(
                                 period = 3000,
                                 action = { logPeerTopology(chainId) }
                         )
-                        logger.info("[${nodeName()}]: Blockchain has been started: chainId: $chainId")
+                        logger.info("$processName: Blockchain has been started: chainId: $chainId")
                         blockchainConfig.blockchainRID
 
                     } else {
@@ -171,7 +175,7 @@ open class BaseBlockchainProcessManager(
     }
 
     // FYI: [et]: For integration testing. Will be removed or refactored later
-    fun logPeerTopology(chainId: Long) {
+    private fun logPeerTopology(chainId: Long) {
         // TODO: [et]: Fix links to EBFT entities
         val topology = ((blockchainInfrastructure as BaseBlockchainInfrastructure)
                 .synchronizationInfrastructure as? EBFTSynchronizationInfrastructure)

@@ -8,7 +8,7 @@ import net.postchain.debug.DefaultNodeDiagnosticContext
 import net.postchain.debug.NodeDiagnosticContext
 import net.postchain.ebft.BaseEBFTInfrastructureFactory
 
-class ManagedEBFTInfrastructureFactory : BaseEBFTInfrastructureFactory() {
+open class ManagedEBFTInfrastructureFactory : BaseEBFTInfrastructureFactory() {
 
     override fun makeBlockchainConfigurationProvider(): BlockchainConfigurationProvider {
         return ManagedBlockchainConfigurationProvider()

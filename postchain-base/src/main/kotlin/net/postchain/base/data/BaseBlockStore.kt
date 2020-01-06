@@ -15,7 +15,7 @@ import net.postchain.core.*
  */
 class BaseBlockStore : BlockStore {
 
-    companion object: KLogging()
+    companion object : KLogging()
 
 
     /**
@@ -32,11 +32,12 @@ class BaseBlockStore : BlockStore {
         val prevHeight = getLastBlockHeight(ctx)
         val prevTimestamp = getLastBlockTimestamp(ctx)
         val blockchainRID = db.getBlockchainRID(ctx)
-                    ?: throw UserMistake("Blockchain RID not found for chainId ${ctx.chainID}")
+                ?: throw UserMistake("Blockchain RID not found for chainId ${ctx.chainID}")
         val prevBlockRID = if (prevHeight == -1L) {
             blockchainRID.data
         } else {
-            getBlockRID(ctx, prevHeight) ?: throw ProgrammerMistake("Previous block had no RID. Check your block writing code!")
+            getBlockRID(ctx, prevHeight)
+                    ?: throw ProgrammerMistake("Previous block had no RID. Check your block writing code!")
         }
 
         val blockIid = db.insertBlock(ctx, prevHeight + 1)
@@ -83,22 +84,31 @@ class BaseBlockStore : BlockStore {
     // Eventually, we may change this implementation to actually deliver a true
     // stream so that we don't have to store all transaction data in memory.
     override fun getBlockTransactions(ctx: EContext, blockRID: ByteArray): List<ByteArray> {
-        return DatabaseAccess.of(ctx).getBlockTransactions(ctx, blockRID)
+        return DatabaseAccess.of(ctx).getBlockTransactions(ctx, blockRID, false)
+                .map { it.data as ByteArray }
     }
 
     override fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray {
         return DatabaseAccess.of(ctx).getWitnessData(ctx, blockRID)
     }
 
-    override fun getLatestBlocksUpTo(ctx: EContext, upTo: Long, n: Int): List<BlockDetail> {
+    override fun getBlocks(ctx: EContext, blockHeight: Long, asc: Boolean, limit: Int, hashesOnly: Boolean): List<BlockDetail> {
         val db = DatabaseAccess.of(ctx)
-        val blocksInfo = db.getLatestBlocksUpTo(ctx, upTo, n)
-        return blocksInfo.map { blockInfo ->
-            val transactions = db.getBlockTransactions(ctx, blockInfo.blockRid)
+        val blocks = db.getBlocks(ctx, blockHeight, asc, limit)
+        return blocks.map { block ->
+            val txs = db.getBlockTransactions(ctx, block.blockRid, hashesOnly)
 
             // Decode block header
-            val blockHeaderDecoded = BaseBlockHeader(blockInfo.blockHeader, SECP256K1CryptoSystem())
-            BlockDetail(blockInfo.blockRid, blockHeaderDecoded.prevBlockRID, blockInfo.blockHeader, blockInfo.blockHeight, transactions, blockInfo.witness, blockInfo.timestamp)
+            val blockHeaderDecoded = BaseBlockHeader(block.blockHeader, SECP256K1CryptoSystem())
+
+            BlockDetail(
+                    block.blockRid,
+                    blockHeaderDecoded.prevBlockRID,
+                    block.blockHeader,
+                    block.blockHeight,
+                    txs,
+                    block.witness,
+                    block.timestamp)
         }
     }
 
@@ -123,7 +133,7 @@ class BaseBlockStore : BlockStore {
         val block = db.getBlockInfo(ctx, txRID)
         return ConfirmationProofMaterial(
                 ByteArrayKey(db.getTxHash(ctx, txRID)),
-                db.getBlockTxHashes(ctx, block.blockIid).map{ ByteArrayKey(it) }.toTypedArray(),
+                db.getBlockTxHashes(ctx, block.blockIid).map { ByteArrayKey(it) }.toTypedArray(),
                 block.blockHeader,
                 block.witness
         )
@@ -137,9 +147,10 @@ class BaseBlockStore : BlockStore {
         return DatabaseAccess.of(ctx).isTransactionConfirmed(ctx, txRID)
     }
 
-    fun initialValidation(ctx: EContext, dependencies:  List<BlockchainRelatedInfo>) {
+    fun initialValidation(ctx: EContext, dependencies: List<BlockchainRelatedInfo>) {
         // At this point we must have stored BC RID
-        DatabaseAccess.of(ctx).getBlockchainRID(ctx) ?: throw IllegalStateException("Cannot initialize block store for a chain without a RID")
+        DatabaseAccess.of(ctx).getBlockchainRID(ctx)
+                ?: throw IllegalStateException("Cannot initialize block store for a chain without a RID")
 
         // Verify all dependencies
         for (dep in dependencies) {

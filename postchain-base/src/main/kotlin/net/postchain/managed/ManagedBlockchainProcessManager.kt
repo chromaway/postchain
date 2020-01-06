@@ -11,6 +11,7 @@ import net.postchain.core.*
 import net.postchain.debug.NodeDiagnosticContext
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.ScalarHandler
+import java.lang.Exception
 import kotlin.concurrent.withLock
 
 /**
@@ -39,7 +40,7 @@ import kotlin.concurrent.withLock
  * Doc: see the /doc/postchain_ManagedModeFlow.graphml (created with yEd)
  *
  */
-class ManagedBlockchainProcessManager(
+open class ManagedBlockchainProcessManager(
         blockchainInfrastructure: BlockchainInfrastructure,
         nodeConfigProvider: NodeConfigurationProvider,
         blockchainConfigProvider: BlockchainConfigurationProvider,
@@ -101,34 +102,31 @@ class ManagedBlockchainProcessManager(
          * B: If not, we just check with chain zero what chains we need and run those.
          */
         fun restartHandlerChain0(): Boolean {
-            return synchronizer.withLock {
-                // Preloading blockchain configuration
-                loadBlockchainConfiguration(0L)
 
-                // Checking out for a peers set changes
-                val peerListVersion = dataSource.getPeerListVersion()
-                val doReload = (lastPeerListVersion != null) && (lastPeerListVersion != peerListVersion)
-                lastPeerListVersion = peerListVersion
+            // Preloading blockchain configuration
+            loadBlockchainConfiguration(0L)
 
-                if (doReload) {
-                    logger.info { "Reloading of blockchains are required" }
-                    reloadBlockchainsAsync()
-                    true
+            // Checking out for a peers set changes
+            val peerListVersion = dataSource.getPeerListVersion()
+            val doReload = (lastPeerListVersion != null) && (lastPeerListVersion != peerListVersion)
+            lastPeerListVersion = peerListVersion
 
-                } else {
-                    val toLaunch = retrieveBlockchainsToLaunch()
-                    val launched = blockchainProcesses.keys
+            return if (doReload) {
+                logger.info { "Reloading of blockchains are required" }
+                reloadBlockchainsAsync()
+                true
 
-                    // Checking out for a chain0 configuration changes
-                    val reloadBlockchainConfig = withReadConnection(storage, 0L) { eContext ->
-                        blockchainConfigProvider.needsConfigurationChange(eContext, 0L)
-                    }
+            } else {
+                val toLaunch = retrieveBlockchainsToLaunch()
+                val launched = blockchainProcesses.keys
 
-                    // Launching blockchain 0
-                    val reloadChan0 = 0L in toLaunch && (0L !in launched || reloadBlockchainConfig)
-                    startStopBlockchainsAsync(toLaunch, launched, reloadChan0)
-                    reloadChan0
+                // Checking out for a chain0 configuration changes
+                val reloadBlockchainConfig = withReadConnection(storage, 0L) { eContext ->
+                    blockchainConfigProvider.needsConfigurationChange(eContext, 0L)
                 }
+
+                startStopBlockchainsAsync(toLaunch, launched, reloadBlockchainConfig)
+                reloadBlockchainConfig
             }
         }
 
@@ -139,32 +137,33 @@ class ManagedBlockchainProcessManager(
          *
          * @param chainId is the chain we should check (cannot be chain zero).
          */
-        fun restartHandler(chainId: Long): Boolean {
-            return synchronizer.withLock {
-                // Preloading blockchain configuration
-                if (inManagedMode()) {
-                    loadBlockchainConfiguration(chainId)
-                }
+        fun restartHandlerChainN(): Boolean {
+            // Checking out for a chain configuration changes
+            val reloadBlockchainConfig = withReadConnection(storage, chainId) { eContext ->
+                (blockchainConfigProvider.needsConfigurationChange(eContext, chainId))
+            }
 
-                // Checking out for a chain configuration changes
-                val reloadBlockchainConfig = withReadConnection(storage, chainId) { eContext ->
-                    (blockchainConfigProvider.needsConfigurationChange(eContext, chainId))
-                }
-
-                if (reloadBlockchainConfig) {
-                    reloadBlockchainConfigAsync(chainId)
-                    true
-                } else {
-                    false
-                }
+            return if (reloadBlockchainConfig) {
+                reloadBlockchainConfigAsync(chainId)
+                true
+            } else {
+               false
             }
         }
 
-        // Note: Here we create a Lambda that will call different functions depending on we are talking about the
-        // chainIid == 0 or not. The Lambda is of the type () -> Boolean, which is what [RestartHandler] is.
-        return {
-            if (chainId == 0L) restartHandlerChain0() else restartHandler(chainId)
+        fun wrappedRestardHandler (): Boolean {
+            try {
+                return synchronizer.withLock {
+                    if (chainId == 0L) restartHandlerChain0() else restartHandlerChainN()
+                }
+            } catch (e: Exception) {
+                logger.error("Exception in restard handler: ${e.toString()}")
+                e.printStackTrace()
+                reloadBlockchainConfigAsync(chainId)
+                return true // let's hope restarting a blockchain fixes the problem
+            }
         }
+        return ::wrappedRestardHandler
     }
 
     private fun buildChain0ManagedDataSource(): ManagedNodeDataSource {
@@ -305,11 +304,12 @@ class ManagedBlockchainProcessManager(
      * @return all chainIids chain zero thinks we should run.
      */
     private fun retrieveBlockchainsToLaunch(): Array<Long> {
-        val blockchains = mutableListOf<Long>()
+        // chain-zero is always in the list
+        val blockchains = mutableListOf(0L)
 
         withWriteConnection(storage, 0) { ctx0 ->
             val dba = DatabaseAccess.of(ctx0)
-            dataSource.computeBlockchainList(ctx0)
+            dataSource.computeBlockchainList()
                     .map { brid ->
                         val blockchainRid = BlockchainRid(brid)
                         val chainIid = dba.getChainId(ctx0, blockchainRid)
@@ -325,6 +325,7 @@ class ManagedBlockchainProcessManager(
                             chainIid
                         }
                     }
+                    .filter { it != 0L }
                     .forEach {
                         blockchains.add(it)
                     }
@@ -337,7 +338,8 @@ class ManagedBlockchainProcessManager(
 
     // TODO: [POS-90]: Redesign this
     private fun inManagedMode(): Boolean {
-        logger.warn("We are using isInitialized as a measure of being in managed mode. Doesn't seem right? ")
+        // TODO: We are using isInitialized as a measure of being in managed mode. Doesn't seem right?
+//        logger.warn("We are using isInitialized as a measure of being in managed mode. Doesn't seem right? ")
         return ::dataSource.isInitialized
     }
 }

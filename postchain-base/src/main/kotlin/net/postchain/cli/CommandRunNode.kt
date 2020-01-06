@@ -35,6 +35,6 @@ class CommandRunNode : Command {
 
         val cliExecution = CliExecution()
         cliExecution.runNode(nodeConfigFile, chainIDs)
-        return Ok("Postchain node launching is done", isLongRunning = true)
+        return Ok("Postchain node is running", isLongRunning = true)
     }
 }
