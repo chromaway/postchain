@@ -218,6 +218,11 @@ class RestApi(
             http.get("/_debug/$SUBQUERY", "application/json") { request, _ ->
                 handleDebugQuery(request)
             }
+
+            http.get( "/brid/$PARAM_BLOCKCHAIN_RID") {
+                request, _ ->  checkBlockchainRID(request)
+
+            }
         }
 
         http.awaitInitialization()
@@ -388,7 +393,7 @@ class RestApi(
             blockchainRID.matches(Regex("[0-9a-fA-F]{64}")) -> blockchainRID
             blockchainRID.matches(Regex("iid_[0-9]*")) -> {
                 val chainIid = blockchainRID.substring(4).toLong()
-                val dbBcRid = databaseConnector(appConfig).withWriteConnection { connection ->
+                val dbBcRid = databaseConnector(appConfig).withReadConnection { connection ->
                     appConfigDbLayer(appConfig, connection).getBlockchainRid(chainIid)
                 }
                 dbBcRid?.toHex()
