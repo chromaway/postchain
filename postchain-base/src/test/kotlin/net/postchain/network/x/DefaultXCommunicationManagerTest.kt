@@ -42,12 +42,12 @@ class DefaultXCommunicationManagerTest {
 
         // When
         val communicationManager = DefaultXCommunicationManager(
-                connectionManager, peerCommunicationConfig, CHAIN_ID, blockchainRid, packetEncoder, packetDecoder)
+                connectionManager, peerCommunicationConfig, CHAIN_ID, blockchainRid, packetEncoder, packetDecoder, mock())
         communicationManager.init()
 
         // Then
         argumentCaptor<XChainPeerConfiguration>().apply {
-            verify(connectionManager).connectChain(capture(), eq(true))
+            verify(connectionManager).connectChain(capture(), eq(true), any())
 
             assert(firstValue.chainID).isEqualTo(CHAIN_ID)
             assert(firstValue.commConfiguration).isSameAs(peerCommunicationConfig)
@@ -73,12 +73,12 @@ class DefaultXCommunicationManagerTest {
 
         // When
         val communicationManager = DefaultXCommunicationManager(
-                connectionManager, peerCommunicationConfig, CHAIN_ID, blockchainRid, packetEncoder, packetDecoder)
+                connectionManager, peerCommunicationConfig, CHAIN_ID, blockchainRid, packetEncoder, packetDecoder, mock())
         communicationManager.init()
 
         // Then
         argumentCaptor<XChainPeerConfiguration>().apply {
-            verify(connectionManager).connectChain(capture(), eq(true))
+            verify(connectionManager).connectChain(capture(), eq(true), any())
 
             assert(firstValue.chainID).isEqualTo(CHAIN_ID)
             assert(firstValue.commConfiguration).isSameAs(peerCommunicationConfig)
@@ -100,7 +100,7 @@ class DefaultXCommunicationManagerTest {
 
         // When
         val communicationManager = DefaultXCommunicationManager<Int>(
-                connectionManager, peerCommunicationConfig, CHAIN_ID, blockchainRid, mock(), mock())
+                connectionManager, peerCommunicationConfig, CHAIN_ID, blockchainRid, mock(), mock(), mock())
         communicationManager.init()
         communicationManager.sendPacket(0, XPeerID(byteArrayOf()))
         communicationManager.shutdown()
@@ -116,7 +116,7 @@ class DefaultXCommunicationManagerTest {
 
         // When
         val communicationManager = DefaultXCommunicationManager<Int>(
-                connectionManager, peerCommunicationConfig, CHAIN_ID, blockchainRid, mock(), mock())
+                connectionManager, peerCommunicationConfig, CHAIN_ID, blockchainRid, mock(), mock(), mock())
         communicationManager.init()
         communicationManager.sendPacket(0, XPeerID(byteArrayOf(0x42)))
         communicationManager.shutdown()
@@ -130,7 +130,7 @@ class DefaultXCommunicationManagerTest {
         }
 
         // When / Then exception
-        DefaultXCommunicationManager<Int>(mock(), peersConfig, CHAIN_ID, blockchainRid, mock(), mock())
+        DefaultXCommunicationManager<Int>(mock(), peersConfig, CHAIN_ID, blockchainRid, mock(), mock(), mock())
                 .apply {
                     sendPacket(0, XPeerID(pubKey2))
                 }
@@ -141,14 +141,14 @@ class DefaultXCommunicationManagerTest {
         // Given
         val peerInfo1Mock: PeerInfo = spy(peerInfo1)
         val connectionManager: XConnectionManager = mock()
-        val config = object: PeerCommConfigurationDummy() {
-            override val networkNodes =NetworkNodes.buildNetworkNodes(setOf(peerInfo1Mock, peerInfo2), XPeerID(pubKey2))
+        val config = object : PeerCommConfigurationDummy() {
+            override val networkNodes = NetworkNodes.buildNetworkNodes(setOf(peerInfo1Mock, peerInfo2), XPeerID(pubKey2))
             override val pubKey = pubKey2
         }
 
         // When
         val communicationManager = DefaultXCommunicationManager<Int>(
-                connectionManager, config, CHAIN_ID, blockchainRid, mock(), mock()
+                connectionManager, config, CHAIN_ID, blockchainRid, mock(), mock(), mock()
         )
                 .apply {
                     init()
@@ -170,7 +170,7 @@ class DefaultXCommunicationManagerTest {
 
         // When
         val communicationManager = DefaultXCommunicationManager<Int>(
-                connectionManager, mock(), CHAIN_ID, blockchainRid, mock(), mock()
+                connectionManager, mock(), CHAIN_ID, blockchainRid, mock(), mock(), mock()
         )
                 .apply {
                     init()
@@ -190,7 +190,7 @@ class DefaultXCommunicationManagerTest {
 
         // When
         val communicationManager = DefaultXCommunicationManager<Int>(
-                connectionManager, mock(), CHAIN_ID, blockchainRid, mock(), mock()
+                connectionManager, mock(), CHAIN_ID, blockchainRid, mock(), mock(), mock()
         )
                 .apply {
                     init()
@@ -198,7 +198,7 @@ class DefaultXCommunicationManagerTest {
                 }
 
         // Then
-        verify(connectionManager).disconnectChain(eq(CHAIN_ID))
+        verify(connectionManager).disconnectChain(eq(CHAIN_ID), any())
 
         communicationManager.shutdown()
     }

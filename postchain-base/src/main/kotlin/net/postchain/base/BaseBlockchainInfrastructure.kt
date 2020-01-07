@@ -5,6 +5,7 @@ import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.base.data.BaseTransactionQueue
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
+import net.postchain.debug.BlockchainProcessName
 import net.postchain.debug.NodeDiagnosticContext
 import net.postchain.gtv.GtvDictionary
 import net.postchain.gtv.GtvFactory
@@ -63,21 +64,26 @@ class BaseBlockchainInfrastructure(
         return factory.makeBlockchainConfiguration(confData)
     }
 
-    override fun makeBlockchainEngine(configuration: BlockchainConfiguration, restartHandler: RestartHandler): BaseBlockchainEngine {
+    override fun makeBlockchainEngine(
+            processName: BlockchainProcessName,
+            configuration: BlockchainConfiguration,
+            restartHandler: RestartHandler
+    ): BaseBlockchainEngine {
+
         val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration().appConfig, NODE_ID_TODO)
         // TODO: [et]: Maybe extract 'queuecapacity' param from ''
         val transactionQueue = BaseTransactionQueue(
                 (configuration as BaseBlockchainConfiguration)
                         .configData.getBlockBuildingStrategy()?.get("queuecapacity")?.asInteger()?.toInt() ?: 2500)
 
-        return BaseBlockchainEngine(configuration, storage, configuration.chainID, transactionQueue)
+        return BaseBlockchainEngine(processName, configuration, storage, configuration.chainID, transactionQueue)
                 .apply {
                     setRestartHandler(restartHandler)
                     initializeDB()
                 }
     }
 
-    override fun makeBlockchainProcess(processName: String, engine: BlockchainEngine): BlockchainProcess {
+    override fun makeBlockchainProcess(processName: BlockchainProcessName, engine: BlockchainEngine): BlockchainProcess {
         return synchronizationInfrastructure.makeBlockchainProcess(processName, engine)
                 .also(apiInfrastructure::connectProcess)
     }
