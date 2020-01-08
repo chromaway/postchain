@@ -24,12 +24,14 @@ import org.hamcrest.Matchers.isEmptyString
 import org.hamcrest.core.IsEqual.equalTo
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 /**
  * [GetConfirmation] and [GetTx] endpoints have common part,
  * so see [RestApiGetTxEndpointTest] for additional tests
  */
+@Ignore
 class RestApiGetConfirmationProofEndpointTest {
 
     private val basePath = "/api/v1"
@@ -43,6 +45,8 @@ class RestApiGetConfirmationProofEndpointTest {
         model = createMock(Model::class.java)
         val appConf = AppConfig(DummyConfig.getDummyConfig())
         restApi = RestApi(0, basePath, appConf)
+        expect(model.chainIID).andReturn(5L)
+        replay(model)
         restApi.attachModel(blockchainRID, model)
     }
 

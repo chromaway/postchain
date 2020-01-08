@@ -18,8 +18,10 @@ import org.easymock.EasyMock.*
 import org.hamcrest.CoreMatchers.equalTo
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
+@Ignore
 class RestApiModelTest {
 
     private val basePath = "/api/v1"
