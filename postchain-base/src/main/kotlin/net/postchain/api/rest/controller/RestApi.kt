@@ -408,6 +408,9 @@ class RestApi(
         // Ugly hack to workaround that there is no blocking stop.
         // Test cases won't work correctly without it
         Thread.sleep(100)
+        System.gc()
+        System.runFinalization()
+        Thread.sleep(100)
     }
 
     private fun runTxActionOnModel(request: Request, txAction: (Model, TxRID) -> Any?): Any? {
