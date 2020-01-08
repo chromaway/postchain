@@ -15,6 +15,7 @@ import net.postchain.core.TransactionStatus.*
 import net.postchain.gtv.Gtv
 
 open class PostchainModel(
+        override val chainIID: Long,
         val txQueue: TransactionQueue,
         private val transactionFactory: TransactionFactory,
         val blockQueries: BaseBlockQueries,
