@@ -81,7 +81,7 @@ class RestApi(
         if (model != null) {
             bridByIID.remove(model.chainIID)
             models.remove(blockchainRID.toUpperCase())
-        }  else throw ProgrammerMistake("Blockchain ${blockchainRID} not attached")
+        }  else throw ProgrammerMistake("Blockchain $blockchainRID not attached")
     }
 
     override fun retrieveModel(blockchainRID: String): Model? {

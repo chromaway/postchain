@@ -12,10 +12,8 @@ import org.easymock.EasyMock.*
 import org.hamcrest.CoreMatchers.equalTo
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 
-@Ignore
 class RestApiGetTxEndpointTest {
 
     private val basePath = "/api/v1"
@@ -27,8 +25,10 @@ class RestApiGetTxEndpointTest {
     @Before
     fun setup() {
         model = createMock(Model::class.java)
-        restApi = RestApi(0, basePath, AppConfig(DummyConfig.getDummyConfig()))
-        restApi.attachModel(blockchainRID, model)
+        expect(model.chainIID).andReturn(1L).anyTimes()
+
+        val config = AppConfig(DummyConfig.getDummyConfig())
+        restApi = RestApi(0, basePath, config)
     }
 
     @After
@@ -40,7 +40,10 @@ class RestApiGetTxEndpointTest {
     fun test_getTx_Ok() {
         expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(ApiTx("1234"))
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx/$blockchainRID/$txHashHex")
@@ -55,7 +58,10 @@ class RestApiGetTxEndpointTest {
     fun test_getTx_when_slash_appended_Ok() {
         expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(ApiTx("1234"))
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx/$blockchainRID/$txHashHex")
@@ -70,7 +76,10 @@ class RestApiGetTxEndpointTest {
     fun test_getTx_when_not_found_then_404_received() {
         expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(null)
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx/$blockchainRID/$txHashHex")
@@ -85,7 +94,10 @@ class RestApiGetTxEndpointTest {
         expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(null)
                 .anyTimes()
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx/$blockchainRID/$txHashHex/element")
@@ -100,7 +112,10 @@ class RestApiGetTxEndpointTest {
         expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(null)
                 .anyTimes()
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx")
@@ -115,7 +130,10 @@ class RestApiGetTxEndpointTest {
         expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(null)
                 .anyTimes()
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx/$blockchainRID")
@@ -130,7 +148,10 @@ class RestApiGetTxEndpointTest {
         expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(null)
                 .anyTimes()
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx/$txHashHex")
@@ -145,7 +166,10 @@ class RestApiGetTxEndpointTest {
         expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(null)
                 .anyTimes()
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx/${blockchainRID}0000/$txHashHex")
@@ -160,7 +184,10 @@ class RestApiGetTxEndpointTest {
         expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(null)
                 .anyTimes()
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx/${blockchainRID.substring(1)}/$txHashHex")
@@ -175,7 +202,10 @@ class RestApiGetTxEndpointTest {
         expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(null)
                 .anyTimes()
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx/${blockchainRID.replaceFirst("a", "g")}/$txHashHex")
@@ -190,7 +220,10 @@ class RestApiGetTxEndpointTest {
         expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(null)
                 .anyTimes()
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx/$blockchainRID/${txHashHex}0000")
@@ -205,7 +238,10 @@ class RestApiGetTxEndpointTest {
         expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(null)
                 .anyTimes()
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx/$blockchainRID/${txHashHex.substring(1)}")
@@ -220,7 +256,10 @@ class RestApiGetTxEndpointTest {
         expect(model.getTransaction(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(null)
                 .anyTimes()
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx/$blockchainRID/${txHashHex.replaceFirst("a", "g")}")

@@ -10,10 +10,8 @@ import net.postchain.config.app.AppConfig
 import org.easymock.EasyMock.*
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 
-@Ignore
 class RestApiPostTxEndpointTest {
 
     private val basePath = "/api/v1"
@@ -24,8 +22,10 @@ class RestApiPostTxEndpointTest {
     @Before
     fun setup() {
         model = createMock(Model::class.java)
-        restApi = RestApi(0, basePath, AppConfig(DummyConfig.getDummyConfig()))
-        restApi.attachModel(blockchainRID, model)
+        expect(model.chainIID).andReturn(1L).anyTimes()
+
+        val config = AppConfig(DummyConfig.getDummyConfig())
+        restApi = RestApi(0, basePath, config)
     }
 
     @After
@@ -38,6 +38,8 @@ class RestApiPostTxEndpointTest {
         val txHexString = "hello".toByteArray().toHex()
         model.postTransaction(ApiTx(txHexString))
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .body("{\"tx\": \"$txHexString\"}")
@@ -52,6 +54,8 @@ class RestApiPostTxEndpointTest {
     fun test_postTx_when_empty_message_then_400_received() {
         replay(model)
 
+        restApi.attachModel(blockchainRID, model)
+
         given().basePath(basePath).port(restApi.actualPort())
                 .body("")
                 .post("/tx/$blockchainRID")
@@ -64,6 +68,8 @@ class RestApiPostTxEndpointTest {
     @Test
     fun test_postTx_when_missing_tx_property_then_400_received() {
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .body("{}")
@@ -78,6 +84,8 @@ class RestApiPostTxEndpointTest {
     fun test_postTx_when_empty_tx_property_then_400_received() {
         replay(model)
 
+        restApi.attachModel(blockchainRID, model)
+
         given().basePath(basePath).port(restApi.actualPort())
                 .body("{\"tx\": \"\"}")
                 .post("/tx/$blockchainRID")
@@ -90,6 +98,8 @@ class RestApiPostTxEndpointTest {
     @Test
     fun test_postTx_when_tx_property_not_hex_then_400_received() {
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .body("{\"tx\": \"abc123z\"}")
@@ -104,6 +114,8 @@ class RestApiPostTxEndpointTest {
     fun test_postTx_when_invalid_json_then_400_received() {
         replay(model)
 
+        restApi.attachModel(blockchainRID, model)
+
         given().basePath(basePath).port(restApi.actualPort())
                 .body("a")
                 .post("/tx/$blockchainRID")
@@ -116,6 +128,8 @@ class RestApiPostTxEndpointTest {
     @Test
     fun test_postTx_when_blockchainRID_too_long_then_400_received() {
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .body("a")
@@ -130,6 +144,8 @@ class RestApiPostTxEndpointTest {
     fun test_postTx_when_blockchainRID_too_short_then_400_received() {
         replay(model)
 
+        restApi.attachModel(blockchainRID, model)
+
         given().basePath(basePath).port(restApi.actualPort())
                 .body("a")
                 .post("/tx/${blockchainRID.substring(1)}")
@@ -142,6 +158,8 @@ class RestApiPostTxEndpointTest {
     @Test
     fun test_postTx_when_blockchainRID_not_hex_then_400_received() {
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .body("a")
