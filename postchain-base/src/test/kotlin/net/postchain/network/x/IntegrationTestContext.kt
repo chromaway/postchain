@@ -11,14 +11,14 @@ class IntegrationTestContext(
         peerInfos: Array<PeerInfo>,
         myIndex: Int
 ) {
-    val peerCommunicationConfig = BasePeerCommConfiguration(
+    val peerCommunicationConfig = BasePeerCommConfiguration.build(
             peerInfos, mock(), KeyPairHelper.privKey(myIndex), KeyPairHelper.pubKey(myIndex))
 
     val connectionManager = DefaultXConnectionManager(
             connectorFactory, mock(), mock(), mock(), SECP256K1CryptoSystem())
 
     val communicationManager = DefaultXCommunicationManager<Int>(
-            connectionManager, peerCommunicationConfig, 1L, mock(), mock(), mock())
+            connectionManager, peerCommunicationConfig, 1L, mock(), mock(), mock(), mock())
 
     fun shutdown() {
         communicationManager.shutdown()

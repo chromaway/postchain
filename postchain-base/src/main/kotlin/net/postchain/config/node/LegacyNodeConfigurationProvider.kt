@@ -3,15 +3,19 @@ package net.postchain.config.node
 import net.postchain.base.PeerInfo
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
+import net.postchain.network.x.XPeerID
 import org.apache.commons.configuration2.Configuration
 
 class LegacyNodeConfigurationProvider(private val appConfig: AppConfig) : NodeConfigurationProvider {
 
     override fun getConfiguration(): NodeConfig {
         return object : NodeConfig(appConfig) {
-            override val peerInfos = createPeerInfoCollection(appConfig.config)
+            override val peerInfoMap = createPeerInfoMap(appConfig.config)
         }
     }
+
+    private fun createPeerInfoMap(config: Configuration): Map<XPeerID, PeerInfo> =
+        createPeerInfoCollection(config).map { XPeerID(it.pubKey) to it }.toMap()
 
     /**
      * Retrieves peer information from config, including networking info and public keys

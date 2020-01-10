@@ -8,6 +8,8 @@ import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.integrationtest.assertChainStarted
+import net.postchain.integrationtest.assertNodeConnectedWith
+import net.postchain.util.NodesTestHelper.selectAnotherRandNode
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration.TEN_SECONDS
 import org.junit.Assert.assertArrayEquals
@@ -45,8 +47,8 @@ class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
                         "classpath:/net/postchain/multiple_chains/ebft_nightly/five_nodes/replica0.properties"
                 ),
                 arrayOf(
-                        "/net/postchain/multiple_chains/ebft_nightly/five_nodes/blockchain_config_1.xml",
-                        "/net/postchain/multiple_chains/ebft_nightly/five_nodes/blockchain_config_2.xml"
+                        "/net/postchain/devtools/multiple_chains/ebft_nightly/five_nodes/blockchain_config_1.xml",
+                        "/net/postchain/devtools/multiple_chains/ebft_nightly/five_nodes/blockchain_config_2.xml"
                 ))
     }
 
@@ -74,6 +76,22 @@ class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
                         chains.forEach(node::assertChainStarted)
                     }
                 }
+
+
+        // Asserting all chains are connected
+        // We don't need to assert all connections, just check some random connections
+        if (nodes.size > 1) {
+            await().atMost(TEN_SECONDS)
+                    .untilAsserted {
+                        nodes.forEachIndexed { i, _ ->
+                            val randNode = selectAnotherRandNode(i, nodes.size)
+                            chains.forEach { chain ->
+                                logger.debug("Wait for (node $i, chain $chain) to be connected to node $randNode")
+                                nodes[i].assertNodeConnectedWith(chain, nodes[randNode])
+                            }
+                        }
+                    }
+        }
 
         // Enqueueing txs
         var txId = 0
@@ -112,7 +130,7 @@ class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
                     logger.info { "Verifying height $height" }
 
                     // Asserting uniqueness of block at height
-                    val blockRid = queries.getBlockRids(height).get()
+                    val blockRid = queries.getBlockRid(height).get()
                     assertNotNull(blockRid)
 
                     // Asserting txs count

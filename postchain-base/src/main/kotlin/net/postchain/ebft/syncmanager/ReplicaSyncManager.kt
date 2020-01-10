@@ -1,8 +1,10 @@
 package net.postchain.ebft.syncmanager
 
+import net.postchain.core.BlockDataWithWitness
 import net.postchain.core.BlockQueries
 import net.postchain.core.BlockchainConfiguration
 import net.postchain.core.NodeStateTracker
+import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.BlockDatabase
 import net.postchain.ebft.message.Message
 import net.postchain.ebft.rest.contract.serialize
@@ -10,7 +12,7 @@ import net.postchain.ebft.syncmanager.replica.FastSyncAlgorithm
 import net.postchain.network.CommunicationManager
 
 class ReplicaSyncManager(
-        blockchainProcessName: String,
+        private val processName: BlockchainProcessName,
         signers: List<ByteArray>,
         private val communicationManager: CommunicationManager<Message>,
         private val nodeStateTracker: NodeStateTracker,
@@ -20,7 +22,7 @@ class ReplicaSyncManager(
 ) : SyncManagerBase {
 
     private val fastSyncAlgorithm = FastSyncAlgorithm(
-            blockchainProcessName,
+            processName,
             signers,
             communicationManager,
             blockDatabase,

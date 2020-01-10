@@ -24,13 +24,22 @@ enum class TransactionStatus(val status: String) {
     REJECTED("rejected")
 }
 
+enum class TransactionResult(val code: Int) {
+    OK(0),
+    FULL(1),
+    DUPLICATE(2),
+    INVALID(3),
+    UNKNOWN(9999)
+}
+
 interface TransactionFactory {
     fun decodeTransaction(data: ByteArray): Transaction
 }
 
 interface TransactionQueue {
     fun takeTransaction(): Transaction?
-    fun enqueue(tx: Transaction): Boolean
+    fun enqueue(tx: Transaction): TransactionResult
+    fun findTransaction(txRID: ByteArrayKey): Transaction?
     fun getTransactionStatus(txHash: ByteArray): TransactionStatus
     fun getTransactionQueueSize(): Int
     fun removeAll(transactionsToRemove: Collection<Transaction>)

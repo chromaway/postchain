@@ -12,7 +12,8 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
     val cryptoSystem = SECP256K1CryptoSystem()
     val blockStore = BaseBlockStore()
     override val chainID = configData.context.chainID
-    val blockchainRID = configData.context.blockchainRID
+    override val blockchainRID = configData.context.blockchainRID
+    val effectiveBlockchainRID = configData.getHistoricBRID() ?: configData.context.blockchainRID
     val signers = configData.getSigners()
 
     val bcRelatedInfosDependencyList: List<BlockchainRelatedInfo> = configData.getDependenciesAsList()
@@ -30,25 +31,19 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
     }
 
     override fun makeBlockBuilder(ctx: EContext): BlockBuilder {
-        return createBlockBuilderInstance(
+        addChainIDToDependencies(ctx) // We wait until now with this, b/c now we have an EContext
+        return BaseBlockBuilder(
+                effectiveBlockchainRID,
                 cryptoSystem,
                 ctx,
                 blockStore,
                 getTransactionFactory(),
                 signers.toTypedArray(),
-                configData.blockSigMaker)
-    }
-
-    open fun createBlockBuilderInstance(cryptoSystem: CryptoSystem,
-                                        ctx: EContext,
-                                        blockStore: BlockStore,
-                                        transactionFactory: TransactionFactory,
-                                        signers: Array<ByteArray>,
-                                        blockSigMaker: SigMaker
-    ): BlockBuilder {
-        addChainIDToDependencies(ctx) // We wait until now with this, b/c now we have an EContext
-        return BaseBlockBuilder(
-                cryptoSystem, ctx, blockStore, getTransactionFactory(), signers, blockSigMaker, bcRelatedInfosDependencyList)
+                configData.blockSigMaker,
+                bcRelatedInfosDependencyList,
+                effectiveBlockchainRID != blockchainRID,
+                configData.getMaxBlockSize(),
+                configData.getMaxBlockTransactions())
     }
 
     /**
@@ -56,16 +51,15 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
      */
     @Synchronized
     private fun addChainIDToDependencies(ctx: EContext) {
-        if (!bcRelatedInfosDependencyList.isEmpty()) {
+        if (bcRelatedInfosDependencyList.isNotEmpty()) {
             // Check if we have added ChainId's already
             val first = bcRelatedInfosDependencyList.first()
             if (first.chainId == null) {
                 // We have to fill up the cache of ChainIDs
                 for (bcInfo in bcRelatedInfosDependencyList) {
                     val depChainId = blockStore.getChainId(ctx, bcInfo.blockchainRid)
-                    bcInfo.chainId = depChainId ?:
-                            throw BadDataMistake(BadDataType.BAD_CONFIGURATION ,
-                                    "The blockchain configuration claims we depend on: $bcInfo so this BC must exist in DB"
+                    bcInfo.chainId = depChainId ?: throw BadDataMistake(BadDataType.BAD_CONFIGURATION,
+                            "The blockchain configuration claims we depend on: $bcInfo so this BC must exist in DB"
                                     + "(Order is wrong. It must have been configured BEFORE this point in time)")
                 }
             }
@@ -78,7 +72,7 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
     }
 
     override fun initializeDB(ctx: EContext) {
-        blockStore.initialize(ctx, blockchainRID, bcRelatedInfosDependencyList)
+        blockStore.initialValidation(ctx, bcRelatedInfosDependencyList)
     }
 
     override fun getBlockBuildingStrategy(blockQueries: BlockQueries, txQueue: TransactionQueue): BlockBuildingStrategy {

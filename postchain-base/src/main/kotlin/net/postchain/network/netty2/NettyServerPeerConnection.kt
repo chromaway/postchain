@@ -4,7 +4,10 @@ import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import net.postchain.network.XPacketDecoder
-import net.postchain.network.x.*
+import net.postchain.network.x.LazyPacket
+import net.postchain.network.x.XPacketHandler
+import net.postchain.network.x.XPeerConnection
+import net.postchain.network.x.XPeerConnectionDescriptor
 
 class NettyServerPeerConnection<PacketType>(
         private val packetDecoder: XPacketDecoder<PacketType>
@@ -23,6 +26,12 @@ class NettyServerPeerConnection<PacketType>(
 
     override fun sendPacket(packet: LazyPacket) {
         context.writeAndFlush(Transport.wrapMessage(packet()))
+    }
+
+    override fun remoteAddress(): String {
+        return if (::context.isInitialized)
+            context.channel().remoteAddress().toString()
+        else ""
     }
 
     override fun close() {
@@ -51,6 +60,7 @@ class NettyServerPeerConnection<PacketType>(
                 packetHandler?.invoke(message, peerConnectionDescriptor!!.peerId)
             }
         }
+        (msg as ByteBuf).release()
     }
 
     override fun channelActive(ctx: ChannelHandlerContext?) {

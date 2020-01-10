@@ -18,7 +18,7 @@ class BaseBlockchainConfigurationData(
     init {
         context = BaseBlockchainContext(
                 partialContext.blockchainRID,
-                resolveNodeID(partialContext),
+                resolveNodeID(partialContext.nodeID),
                 partialContext.chainID,
                 partialContext.nodeRID)
     }
@@ -32,8 +32,27 @@ class BaseBlockchainConfigurationData(
         return stratDict?.get("name")?.asString() ?: ""
     }
 
+    fun getHistoricBRID(): BlockchainRid? {
+        val bytes = data["historic_brid"]?.asByteArray()
+        return if (bytes != null)
+            BlockchainRid(bytes)
+        else
+            null
+    }
+
     fun getBlockBuildingStrategy(): Gtv? {
         return data["blockstrategy"]
+    }
+
+    // default is 20mb
+    fun getMaxBlockSize() : Long {
+        val stratDict = data["blockstrategy"]
+        return stratDict?.get("maxblocksize")?.asInteger() ?: 20*1024*1024
+    }
+
+    fun getMaxBlockTransactions() : Long {
+        val stratDict = data["blockstrategy"]
+        return stratDict?.get("maxblocktransactions")?.asInteger() ?: 100
     }
 
     fun getDependenciesAsList(): List<BlockchainRelatedInfo> {
@@ -41,14 +60,14 @@ class BaseBlockchainConfigurationData(
         return if (dep != null) {
             try {
                 // Should contain an array of String, ByteArr pairs
-                val gtvDepArray = dep!! as GtvArray
+                val gtvDepArray = dep as GtvArray
                 val depList = mutableListOf<BlockchainRelatedInfo>()
                 for (element in gtvDepArray.array) {
                     val elemArr = element as GtvArray
                     val nickname = elemArr[0] as GtvString
                     val blockchainRid = elemArr[1] as GtvByteArray
                     depList.add(
-                            BlockchainRelatedInfo(blockchainRid.bytearray, nickname.string, null)
+                            BlockchainRelatedInfo(BlockchainRid(blockchainRid.bytearray), nickname.string, null)
                     )
 
                 }
@@ -63,23 +82,14 @@ class BaseBlockchainConfigurationData(
         }
     }
 
+    // default is 1mb
+    fun getMaxTransactionSize() : Long {
+        val gtxDict = data["gtx"]
+        return gtxDict?.get("max_transaction_size")?.asInteger() ?: 1024*1024
+    }
+
     companion object {
 
-        @Deprecated("Deprecated in v2.4.4. Will be deleted in v3.0")
-        fun readFromCommonsConfiguration(config: Configuration, chainId: Long, blockchainRID: ByteArray, nodeID: Int):
-                BaseBlockchainConfigurationData {
-
-            val gtxConfig = convertConfigToGtv(config.subset("blockchain.$chainId")) as GtvDictionary
-            val cryptoSystem = SECP256K1CryptoSystem()
-            val privKey = gtxConfig["blocksigningprivkey"]!!.asByteArray()
-            val pubKey = secp256k1_derivePubKey(privKey)
-            val sigMaker = cryptoSystem.buildSigMaker(pubKey, privKey) // TODO: maybe take it from somewhere?
-
-            return BaseBlockchainConfigurationData(
-                    gtxConfig,
-                    BaseBlockchainContext(blockchainRID, nodeID, chainId, pubKey),
-                    sigMaker)
-        }
 
         @Deprecated("Deprecated in v2.4.4. Will be deleted in v3.0")
         private fun convertGTXConfigToGtv(config: Configuration): Gtv {
@@ -144,8 +154,8 @@ class BaseBlockchainConfigurationData(
         }
     }
 
-    private fun resolveNodeID(partialContext: BlockchainContext): Int {
-        return if (partialContext.nodeID == NODE_ID_AUTO) {
+    private fun resolveNodeID(nodeID: Int): Int {
+        return if (nodeID == NODE_ID_AUTO) {
             if (subjectID == null) {
                 NODE_ID_READ_ONLY
             } else {
@@ -154,7 +164,7 @@ class BaseBlockchainConfigurationData(
                         .let { i -> if (i == -1) NODE_ID_READ_ONLY else i }
             }
         } else {
-            partialContext.nodeID
+            nodeID
         }
     }
 }

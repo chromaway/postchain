@@ -23,7 +23,6 @@ class NettyConnector<PacketType>(
                         .onConnected { descriptor, connection ->
                             eventReceiver.onPeerConnected(descriptor, connection)
                                     ?.also { connection.accept(it) }
-//                            ?: connection.close()
                         }
                         .onDisconnected { descriptor, connection ->
                             eventReceiver.onPeerDisconnected(descriptor, connection)
@@ -45,7 +44,6 @@ class NettyConnector<PacketType>(
                         onConnected = {
                             eventReceiver.onPeerConnected(peerConnectionDescriptor, this)
                                     ?.also { this.accept(it) }
-//                                    ?: connection.close()
                         },
                         onDisconnected = {
                             eventReceiver.onPeerDisconnected(peerConnectionDescriptor, this)

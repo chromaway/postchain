@@ -22,7 +22,7 @@ import org.junit.Test
 class EbftNettyConnector3PeersCommunicationIT {
 
     private val cryptoSystem = SECP256K1CryptoSystem()
-    private val blockchainRid = ByteArray(64, Int::toByte)
+    private val blockchainRid = BlockchainRid.buildRepeat(0)
 
     private lateinit var peerInfo1: PeerInfo
     private lateinit var peerInfo2: PeerInfo
@@ -50,15 +50,15 @@ class EbftNettyConnector3PeersCommunicationIT {
 
         // Creating
         context1 = EbftTestContext(
-                BasePeerCommConfiguration(peers, cryptoSystem, privKey1, pubKey1),
+                BasePeerCommConfiguration.build(peers, cryptoSystem, privKey1, pubKey1),
                 blockchainRid)
 
         context2 = EbftTestContext(
-                BasePeerCommConfiguration(peers, cryptoSystem, privKey2, pubKey2),
+                BasePeerCommConfiguration.build(peers, cryptoSystem, privKey2, pubKey2),
                 blockchainRid)
 
         context3 = EbftTestContext(
-                BasePeerCommConfiguration(peers, cryptoSystem, privKey3, pubKey3),
+                BasePeerCommConfiguration.build(peers, cryptoSystem, privKey3, pubKey3),
                 blockchainRid)
 
         // Initializing
@@ -78,10 +78,10 @@ class EbftNettyConnector3PeersCommunicationIT {
     fun threePeers_ConnectAndCommunicate_Successfully() {
         // Connecting
         // * 1 -> 2
-        val peerDescriptor2 = XPeerConnectionDescriptor(peerInfo2.peerId(), blockchainRid.byteArrayKeyOf())
+        val peerDescriptor2 = XPeerConnectionDescriptor(peerInfo2.peerId(), blockchainRid)
         context1.peer.connectPeer(peerDescriptor2, peerInfo2, context1.buildPacketEncoder())
         // * 1 -> 3
-        val peerDescriptor3 = XPeerConnectionDescriptor(peerInfo3.peerId(), blockchainRid.byteArrayKeyOf())
+        val peerDescriptor3 = XPeerConnectionDescriptor(peerInfo3.peerId(), blockchainRid)
         context1.peer.connectPeer(peerDescriptor3, peerInfo3, context2.buildPacketEncoder())
         // * 3 -> 2
         context3.peer.connectPeer(peerDescriptor2, peerInfo2, context3.buildPacketEncoder())

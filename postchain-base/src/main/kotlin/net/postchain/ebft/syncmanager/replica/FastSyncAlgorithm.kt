@@ -4,6 +4,7 @@ import net.postchain.core.BlockDataWithWitness
 import net.postchain.core.BlockQueries
 import net.postchain.core.BlockchainConfiguration
 import net.postchain.core.ProgrammerMistake
+import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.BlockDatabase
 import net.postchain.ebft.NodeStatus
 import net.postchain.ebft.message.*
@@ -15,7 +16,7 @@ import java.lang.Integer.min
 import java.util.*
 
 class FastSyncAlgorithm(
-        blockchainProcessName: String,
+        processName: BlockchainProcessName,
         signers: List<ByteArray>,
         private val communicationManager: CommunicationManager<Message>,
         private val blockDatabase: BlockDatabase,
@@ -23,7 +24,7 @@ class FastSyncAlgorithm(
         private val blockQueries: BlockQueries
 )
 {
-    private val fastSyncAlgorithmTelemetry = ReplicaTelemetry(blockchainProcessName)
+    private val fastSyncAlgorithmTelemetry = ReplicaTelemetry(processName)
     private val validatorNodes: List<XPeerID> = signers.map { XPeerID(it) }
     private val parallelism = 10
     private val nodePoolCount: Int = max(1, signers.count() / 2)

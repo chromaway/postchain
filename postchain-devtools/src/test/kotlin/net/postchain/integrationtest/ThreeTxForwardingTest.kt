@@ -32,7 +32,7 @@ class ThreeTxForwardingTest : IntegrationTest() {
         val count = 3
         configOverrides.setProperty("testpeerinfos", createPeerInfos(count))
         configOverrides.setProperty("api.port", 0)
-        createNodes(count, "/net/postchain/three_tx/blockchain_config.xml")
+        createNodes(count, "/net/postchain/devtools/three_tx/blockchain_config.xml")
 
         apiModel(0).postTransaction(tx(0))
         apiModel(1).postTransaction(tx(1))

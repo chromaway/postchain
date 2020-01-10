@@ -3,6 +3,7 @@
 package net.postchain.base.data
 
 import net.postchain.base.BaseEContext
+import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.core.EContext
 import net.postchain.core.UserMistake
@@ -14,7 +15,7 @@ import java.sql.Connection
 
 class BaseBlockStoreTest {
     val cryptoSystem = SECP256K1CryptoSystem()
-    val blockchainRID = cryptoSystem.digest("Test BlockchainRID".toByteArray())
+    val blockchainRID = BlockchainRid(cryptoSystem.digest("Test BlockchainRID".toByteArray()))
     lateinit var sut: BaseBlockStore
     lateinit var db: DatabaseAccess
     lateinit var ctx: EContext
@@ -33,8 +34,8 @@ class BaseBlockStoreTest {
         expect(db.insertBlock(ctx, 0)).andReturn(17)
         expect(db.getLastBlockTimestamp(ctx)).andReturn(1509606236)
         replay(db)
-        val initialBlockData = sut.beginBlock(ctx, null)
-        assertArrayEquals(blockchainRID, initialBlockData.prevBlockRID)
+        val initialBlockData = sut.beginBlock(ctx, blockchainRID, null)
+        assertArrayEquals(blockchainRID.data, initialBlockData.prevBlockRID)
     }
 
     @Test
@@ -46,16 +47,7 @@ class BaseBlockStoreTest {
         expect(db.insertBlock(ctx, 1)).andReturn(17)
         expect(db.getLastBlockTimestamp(ctx)).andReturn(1509606236)
         replay(db)
-        val initialBlockData = sut.beginBlock(ctx, null)
+        val initialBlockData = sut.beginBlock(ctx, blockchainRID,null)
         assertArrayEquals(anotherRID, initialBlockData.prevBlockRID)
-    }
-
-    @Test(expected = UserMistake::class)
-    fun beginBlockMissingBlockchainRIDOnFirstBlock() {
-        expect(db.getLastBlockHeight(ctx)).andReturn(-1)
-        expect(db.getBlockchainRID(ctx)).andReturn(null)
-        expect(db.getLastBlockTimestamp(ctx)).andReturn(1509606236)
-        replay(db)
-        sut.beginBlock(ctx, null)
     }
 }

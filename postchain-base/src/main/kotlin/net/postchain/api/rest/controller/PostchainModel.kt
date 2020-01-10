@@ -15,9 +15,11 @@ import net.postchain.core.TransactionStatus.*
 import net.postchain.gtv.Gtv
 
 open class PostchainModel(
+        override val chainIID: Long,
         val txQueue: TransactionQueue,
         private val transactionFactory: TransactionFactory,
-        val blockQueries: BaseBlockQueries
+        val blockQueries: BaseBlockQueries,
+        private val debugInfoQuery: DebugInfoQuery
 ) : Model {
 
     companion object : KLogging()
@@ -33,8 +35,13 @@ open class PostchainModel(
         }
         TimeLog.end("PostchainModel.postTransaction().isCorrect", nonce)
         nonce = TimeLog.startSumConc("PostchainModel.postTransaction().enqueue")
-        if (!txQueue.enqueue(decodedTransaction))
-            throw OverloadedException("Transaction queue is full")
+        when (txQueue.enqueue(decodedTransaction)) {
+            TransactionResult.FULL -> throw OverloadedException("Transaction queue is full")
+            TransactionResult.INVALID -> throw InvalidTnxException("Transaction is invalid")
+            TransactionResult.DUPLICATE -> throw DuplicateTnxException("Transaction already in queue")
+            TransactionResult.UNKNOWN -> throw UserMistake("Unknown error")
+            else -> {}
+        }
         TimeLog.end("PostchainModel.postTransaction().enqueue", nonce)
     }
 
@@ -44,8 +51,8 @@ open class PostchainModel(
                 ?.let { ApiTx(it.getRawData().toHex()) }
     }
 
-    override fun getLatestBlocksUpTo(upTo: Long, limit: Int): List<BlockDetail> {
-        return blockQueries.getLatestBlocksUpTo(upTo, limit).get()
+    override fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, hashesOnly: Boolean): List<BlockDetail> {
+        return blockQueries.getBlocks(blockHeight, asc, limit, hashesOnly).get()
     }
 
     override fun getConfirmationProof(txRID: TxRID): ConfirmationProof? {
@@ -73,8 +80,12 @@ open class PostchainModel(
     }
 
     override fun query(query: Gtv): Gtv {
-        return blockQueries.query(query[0]!!.asString(), query[1]).get()
+        return blockQueries.query(query[0].asString(), query[1]).get()
     }
 
     override fun nodeQuery(subQuery: String): String = throw NotSupported("NotSupported: $subQuery")
+
+    override fun debugQuery(subQuery: String?): String {
+        return debugInfoQuery.queryDebugInfo(subQuery)
+    }
 }

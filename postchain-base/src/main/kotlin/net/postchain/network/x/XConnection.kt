@@ -4,10 +4,12 @@ import net.postchain.base.PeerInfo
 import net.postchain.core.Shutdownable
 import net.postchain.network.XPacketDecoder
 import net.postchain.network.XPacketEncoder
+import java.net.InetAddress
 
 interface XPeerConnection {
     fun accept(handler: XPacketHandler)
     fun sendPacket(packet: LazyPacket)
+    fun remoteAddress(): String
     fun close()
 }
 

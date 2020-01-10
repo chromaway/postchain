@@ -4,12 +4,10 @@ import assertk.assert
 import assertk.assertions.isEmpty
 import assertk.isContentEqualTo
 import com.nhaarman.mockitokotlin2.*
-import net.postchain.base.PeerCommConfiguration
-import net.postchain.base.PeerInfo
-import net.postchain.base.SECP256K1CryptoSystem
-import net.postchain.base.peerId
+import net.postchain.base.*
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.byteArrayKeyOf
+import net.postchain.debug.BlockchainProcessName
 import net.postchain.network.XPacketDecoderFactory
 import net.postchain.network.XPacketEncoderFactory
 import org.apache.commons.lang3.reflect.FieldUtils
@@ -20,7 +18,7 @@ import kotlin.test.assertTrue
 
 class DefaultXConnectionManagerTest {
 
-    private val blockchainRid = byteArrayOf(0x01)
+    private val blockchainRid = BlockchainRid(byteArrayOf(0x01))
     private val cryptoSystem = SECP256K1CryptoSystem()
     private lateinit var connectorFactory: XConnectorFactory<Int>
 
@@ -41,8 +39,8 @@ class DefaultXConnectionManagerTest {
         peerInfo2 = PeerInfo("localhost", 3332, byteArrayOf(0x02))
         unknownPeerInfo = PeerInfo("localhost", 3333, byteArrayOf(0x03))
 
-        peerConnectionDescriptor1 = XPeerConnectionDescriptor(peerInfo1.peerId(), blockchainRid.byteArrayKeyOf())
-        peerConnectionDescriptor2 = XPeerConnectionDescriptor(peerInfo2.peerId(), blockchainRid.byteArrayKeyOf())
+        peerConnectionDescriptor1 = XPeerConnectionDescriptor(peerInfo1.peerId(), blockchainRid)
+        peerConnectionDescriptor2 = XPeerConnectionDescriptor(peerInfo2.peerId(), blockchainRid)
 
         val connector: XConnector<Int> = mock {
             on { connectPeer(any(), any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
@@ -77,13 +75,13 @@ class DefaultXConnectionManagerTest {
         val connectionManager = DefaultXConnectionManager(
                 connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         )
-                .also { it.connectChain(chainPeerConfig, false) }
+                .also { it.connectChain(chainPeerConfig, false, mock()) }
 
         // Then
         verify(chainPeerConfig, times(5)).chainID
-        verify(chainPeerConfig, times(2)).blockchainRID
+        verify(chainPeerConfig, times(2 + 1)).blockchainRID
         verify(chainPeerConfig, never()).commConfiguration
-        verify(communicationConfig, never()).peerInfo
+        verify(communicationConfig, never()).networkNodes
 
         connectionManager.shutdown()
     }
@@ -92,7 +90,7 @@ class DefaultXConnectionManagerTest {
     fun connectChain_with_autoConnect_without_any_peers_will_result_in_exception() {
         // Given
         val communicationConfig: PeerCommConfiguration = mock {
-            on { peerInfo } doReturn arrayOf()
+            on { networkNodes } doReturn NetworkNodes.buildNetworkNodesDummy()
             on { myPeerInfo() } doReturn peerInfo1
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {
@@ -106,15 +104,15 @@ class DefaultXConnectionManagerTest {
                 connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem)
 
         try {
-            connectionManager.also { it.connectChain(chainPeerConfig, true) }
+            connectionManager.also { it.connectChain(chainPeerConfig, true, mock()) }
         } catch (e: IllegalArgumentException) {
         }
 
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(1)).commConfiguration
-        verify(chainPeerConfig, times(2)).blockchainRID
-        verify(communicationConfig).peerInfo
+        verify(chainPeerConfig, times(2 + 1)).blockchainRID
+        verify(communicationConfig).networkNodes
 
         connectionManager.shutdown()
     }
@@ -126,7 +124,7 @@ class DefaultXConnectionManagerTest {
         val communicationConfig: PeerCommConfiguration = mock {
             on { pubKey } doReturn peerInfo2.pubKey// See DefaultPeersConnectionStrategy
             on { myPeerInfo() } doReturn peerInfo2
-            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+            on { networkNodes } doReturn NetworkNodes.buildNetworkNodes(setOf(peerInfo1, peerInfo2), XPeerID(peerInfo2.pubKey))
             on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {
@@ -139,13 +137,12 @@ class DefaultXConnectionManagerTest {
         val connectionManager = DefaultXConnectionManager(
                 connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         )
-                .also { it.connectChain(chainPeerConfig, true) }
+                .also { it.connectChain(chainPeerConfig, true, mock()) }
 
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(1 + (2 - 1) * 2)).commConfiguration
-        verify(chainPeerConfig, times(1 + 1 * 2 + 1)).blockchainRID
-        verify(communicationConfig, times(2 + 2 + 2)).peerInfo
+        verify(chainPeerConfig, times(1 + 1 * 2 + 1 + 2)).blockchainRID
 
         connectionManager.shutdown()
     }
@@ -170,7 +167,7 @@ class DefaultXConnectionManagerTest {
         DefaultXConnectionManager(
                 connectorFactory, communicationConfig, mock(), mock(), cryptoSystem
         ).apply {
-            connectChain(chainPeerConfig, false) // Without connecting to peers
+            connectChain(chainPeerConfig, false, mock()) // Without connecting to peers
             connectChainPeer(1, unknownPeerInfo.peerId())
         }
     }
@@ -181,7 +178,7 @@ class DefaultXConnectionManagerTest {
         val communicationConfig: PeerCommConfiguration = mock {
             on { pubKey } doReturn peerInfo1.pubKey
             on { myPeerInfo() } doReturn peerInfo1
-            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+            on { networkNodes } doReturn NetworkNodes.buildNetworkNodes(setOf(peerInfo1, peerInfo2), XPeerID(peerInfo1.pubKey))
             on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {
@@ -190,19 +187,23 @@ class DefaultXConnectionManagerTest {
             on { commConfiguration } doReturn communicationConfig
         }
 
+        val loggerName = BlockchainProcessName(
+                peerInfo1.pubKey.byteArrayKeyOf().toString(), blockchainRid
+        ).toString()
+
         // When
         val connectionManager = DefaultXConnectionManager(
                 connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         )
                 .apply {
-                    connectChain(chainPeerConfig, false) // Without connecting to peers
+                    connectChain(chainPeerConfig, false, mock()) // Without connecting to peers
                     connectChainPeer(1, peerInfo2.peerId())
                 }
 
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(2)).commConfiguration
-        verify(chainPeerConfig, times(1 + 2 + 1)).blockchainRID
+        verify(chainPeerConfig, times(1 + 2 + 1 + 2)).blockchainRID
 
         connectionManager.shutdown()
     }
@@ -213,7 +214,7 @@ class DefaultXConnectionManagerTest {
         val communicationConfig: PeerCommConfiguration = mock {
             on { pubKey } doReturn peerInfo2.pubKey // See DefaultPeersConnectionStrategy
             on { myPeerInfo() } doReturn peerInfo2
-            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+            on { networkNodes } doReturn NetworkNodes.buildNetworkNodes(setOf(peerInfo1, peerInfo2), XPeerID(peerInfo2.pubKey))
             on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {
@@ -226,7 +227,7 @@ class DefaultXConnectionManagerTest {
         val connectionManager = DefaultXConnectionManager(
                 connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         ).apply {
-            connectChain(chainPeerConfig, true) // Auto connect all peers
+            connectChain(chainPeerConfig, true, mock()) // Auto connect all peers
 
             // Emulates call of onPeerConnected() by XConnector
             onPeerConnected(peerConnectionDescriptor1, mock())
@@ -237,8 +238,7 @@ class DefaultXConnectionManagerTest {
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
         verify(chainPeerConfig, times(1 + (2 - 1) * 2)).commConfiguration
-        verify(chainPeerConfig, times(1 + 2 + 1)).blockchainRID
-        verify(communicationConfig, times(2 + 2 + 2)).peerInfo
+        verify(chainPeerConfig, times(1 + 2 + 1 + 2)).blockchainRID
 
         connectionManager.shutdown()
     }
@@ -252,7 +252,7 @@ class DefaultXConnectionManagerTest {
     @Test
     fun disconnectChain_wont_result_in_exception_if_chain_is_not_connected() {
         DefaultXConnectionManager(connectorFactory, mock(), mock(), mock(), cryptoSystem)
-                .disconnectChain(1)
+                .disconnectChain(1, mock())
     }
 
     @Test(expected = ProgrammerMistake::class)
@@ -273,7 +273,7 @@ class DefaultXConnectionManagerTest {
         val communicationConfig: PeerCommConfiguration = mock {
             on { pubKey } doReturn peerInfo2.pubKey // See DefaultPeersConnectionStrategy
             on { myPeerInfo() } doReturn peerInfo2
-            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+            on { networkNodes } doReturn NetworkNodes.buildNetworkNodes(setOf(peerInfo1, peerInfo2), XPeerID(peerInfo2.pubKey))
             on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {
@@ -286,7 +286,7 @@ class DefaultXConnectionManagerTest {
         val connectionManager = DefaultXConnectionManager(
                 connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         ).apply {
-            connectChain(chainPeerConfig, true) // With autoConnect
+            connectChain(chainPeerConfig, true, mock()) // With autoConnect
 
             // Then / before peers connected
             // - isPeerConnected
@@ -323,7 +323,7 @@ class DefaultXConnectionManagerTest {
 
 
             // When / Disconnecting the whole chain
-            disconnectChain(1L)
+            disconnectChain(1L, mock())
             // Then
             val internalChains = FieldUtils.readField(this, "chains", true) as Map<*, *>
             assertTrue { internalChains.isEmpty() }
@@ -344,7 +344,7 @@ class DefaultXConnectionManagerTest {
         val communicationConfig: PeerCommConfiguration = mock {
             on { pubKey } doReturn peerInfo2.pubKey // See DefaultPeersConnectionStrategy
             on { myPeerInfo() } doReturn peerInfo2
-            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+            on { networkNodes } doReturn NetworkNodes.buildNetworkNodes(setOf(peerInfo1, peerInfo2), XPeerID(peerInfo2.pubKey))
             on { resolvePeer(peerInfo1.pubKey) } doReturn peerInfo1
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {
@@ -359,7 +359,7 @@ class DefaultXConnectionManagerTest {
         val connectionManager = DefaultXConnectionManager(
                 connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         ).apply {
-            connectChain(chainPeerConfig, true) // With autoConnect
+            connectChain(chainPeerConfig, true, mock()) // With autoConnect
 
             // Emulates call of onPeerConnected() by XConnector
             onPeerConnected(peerConnectionDescriptor1, connection1)
@@ -390,7 +390,7 @@ class DefaultXConnectionManagerTest {
         val communicationConfig: PeerCommConfiguration = mock {
             on { pubKey } doReturn peerInfo1.pubKey
             on { myPeerInfo() } doReturn peerInfo1
-            on { peerInfo } doReturn arrayOf(peerInfo1, peerInfo2)
+            on { networkNodes } doReturn NetworkNodes.buildNetworkNodes(setOf(peerInfo1, peerInfo2), XPeerID(peerInfo1.pubKey))
             on { resolvePeer(peerInfo2.pubKey) } doReturn peerInfo2
         }
         val chainPeerConfig: XChainPeerConfiguration = mock {
@@ -405,7 +405,7 @@ class DefaultXConnectionManagerTest {
         val connectionManager = DefaultXConnectionManager(
                 connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         ).apply {
-            connectChain(chainPeerConfig, true) // With autoConnect
+            connectChain(chainPeerConfig, true, mock()) // With autoConnect
 
             // Emulates call of onPeerConnected() by XConnector
             onPeerConnected(peerConnectionDescriptor1, connection1)

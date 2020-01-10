@@ -11,7 +11,7 @@ class GTXClientTestBackendManual : IntegrationTest() {
     fun testBuildBlock() {
         val nodeCount = 1
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
-        createNodes(nodeCount, "/net/postchain/manual/blockchain_config.xml")
+        createNodes(nodeCount, "/net/postchain/devtools/manual/blockchain_config.xml")
         Thread.sleep(6000/*00*/)
     }
 }

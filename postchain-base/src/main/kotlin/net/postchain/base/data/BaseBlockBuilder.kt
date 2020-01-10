@@ -7,9 +7,11 @@ import net.postchain.base.*
 import net.postchain.base.merkle.Hash
 import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.getBFTRequiredSignatureCount
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtv.merkleHash
+import java.lang.Long.max
 import java.util.*
 
 /**
@@ -24,30 +26,43 @@ import java.util.*
  * @property blockSigMaker used to produce signatures on blocks for local node
  */
 open class BaseBlockBuilder(
+        blockchainRID: BlockchainRid,
         val cryptoSystem: CryptoSystem,
         eContext: EContext,
         store: BlockStore,
         txFactory: TransactionFactory,
         val subjects: Array<ByteArray>,
         val blockSigMaker: SigMaker,
-        val blockchainRelatedInfoDependencyList: List<BlockchainRelatedInfo>
-): AbstractBlockBuilder(eContext, store, txFactory) {
+        val blockchainRelatedInfoDependencyList: List<BlockchainRelatedInfo>,
+        val usingHistoricBRID: Boolean,
+        val maxBlockSize : Long = 20*1024*1024, // 20mb
+        val maxBlockTransactions : Long = 100
+): AbstractBlockBuilder(eContext, blockchainRID, store, txFactory) {
 
     companion object : KLogging()
 
     private val calc = GtvMerkleHashCalculator(cryptoSystem)
+
+    private var blockSize : Long = 0L
 
     /**
      * Computes the root hash for the Merkle tree of transactions currently in a block
      *
      * @return The Merkle tree root hash
      */
-    fun computeRootHash(): ByteArray {
+    fun computeMerkleRootHash(): ByteArray {
         val digests = rawTransactions.map { txFactory.decodeTransaction(it).getHash() }
 
-        val gtvArr = gtv(digests.map {gtv(it)})
+        val gtvArr = gtv(digests.map { gtv(it) })
 
         return gtvArr.merkleHash(calc)
+    }
+
+    override fun begin(partialBlockHeader: BlockHeader?) {
+        if (partialBlockHeader == null && usingHistoricBRID) {
+            throw UserMistake("Cannot build new blocks in historic mode (check configuration)")
+        }
+        super.begin(partialBlockHeader)
     }
 
     /**
@@ -56,23 +71,10 @@ open class BaseBlockBuilder(
      * @return Block header
      */
     override fun makeBlockHeader(): BlockHeader {
-        var timestamp = System.currentTimeMillis()
-        if (timestamp <= initialBlockData.timestamp) {
-            // if our time is behind the timestamp of most recent block, do a minimal increment
-            timestamp = initialBlockData.timestamp + 1
-        }
-
-        val rootHash = computeRootHash()
-        if (logger.isDebugEnabled) {
-            logger.debug("Create Block header. Root hash: ${rootHash.toHex()}, "+
-                    " prev block: ${initialBlockData.prevBlockRID.toHex()} ," +
-                    " height = ${initialBlockData.height} ")
-        }
-        val bh = BaseBlockHeader.make(cryptoSystem, initialBlockData, rootHash , timestamp)
-        if (logger.isDebugEnabled) {
-            logger.debug("Block header created with block RID: ${bh.blockRID.toHex()}.")
-        }
-        return bh
+        // If our time is behind the timestamp of most recent block, do a minimal increment
+        val timestamp = max(System.currentTimeMillis(), initialBlockData.timestamp + 1)
+        val rootHash = computeMerkleRootHash()
+        return BaseBlockHeader.make(cryptoSystem, initialBlockData, rootHash, timestamp)
     }
 
     /**
@@ -88,11 +90,11 @@ open class BaseBlockBuilder(
     override fun validateBlockHeader(blockHeader: BlockHeader): ValidationResult {
         val header = blockHeader as BaseBlockHeader
 
-        val computedMerkleRoot = computeRootHash()
+        val computedMerkleRoot = computeMerkleRootHash()
         return when {
-            !Arrays.equals(header.prevBlockRID, initialBlockData.prevBlockRID) ->
+            !header.prevBlockRID.contentEquals(initialBlockData.prevBlockRID) ->
                 ValidationResult(false, "header.prevBlockRID != initialBlockData.prevBlockRID," +
-                        "( ${header.prevBlockRID.toHex()} != ${initialBlockData.prevBlockRID.toHex()} ), "+
+                        "( ${header.prevBlockRID.toHex()} != ${initialBlockData.prevBlockRID.toHex()} ), " +
                         " height: ${header.blockHeaderRec.getHeight()} and ${initialBlockData.height} ")
 
             header.blockHeaderRec.getHeight() != initialBlockData.height ->
@@ -124,7 +126,7 @@ open class BaseBlockBuilder(
         if (!(blockWitness is MultiSigBlockWitness)) {
             throw ProgrammerMistake("Invalid BlockWitness impelmentation.")
         }
-        val witnessBuilder = BaseBlockWitnessBuilder(cryptoSystem, _blockData!!.header, subjects, getRequiredSigCount())
+        val witnessBuilder = BaseBlockWitnessBuilder(cryptoSystem, _blockData!!.header, subjects, getBFTRequiredSignatureCount(subjects.size))
         for (signature in blockWitness.getSignatures()) {
             witnessBuilder.applySignature(signature)
         }
@@ -206,28 +208,20 @@ open class BaseBlockBuilder(
             throw ProgrammerMistake("Block is not finalized yet.")
         }
 
-        val witnessBuilder = BaseBlockWitnessBuilder(cryptoSystem, _blockData!!.header, subjects, getRequiredSigCount())
+        val witnessBuilder = BaseBlockWitnessBuilder(cryptoSystem, _blockData!!.header, subjects, getBFTRequiredSignatureCount(subjects.size))
         witnessBuilder.applySignature(blockSigMaker.signDigest(_blockData!!.header.blockRID)) // TODO: POS-04_sig
         return witnessBuilder
     }
 
-    /**
-     * Return the number of signature required for a finalized block to be deemed valid
-     *
-     * @return An integer representing the threshold value
-     */
-    protected open fun getRequiredSigCount(): Int {
-        val requiredSigs: Int
-        if (subjects.size == 1)
-            requiredSigs = 1
-        else if (subjects.size == 3) {
-            requiredSigs = 3
-        } else {
-            val maxFailedNodes = Math.floor(((subjects.size - 1) / 3).toDouble())
-            //return signers.signers.length - maxFailedNodes;
-            requiredSigs = 2 * maxFailedNodes.toInt() + 1
+    override fun appendTransaction(tx: Transaction) {
+        super.appendTransaction(tx)
+        blockSize = transactions.map { t -> t.getRawData().size.toLong() }.sum()
+        if (blockSize >= maxBlockSize) {
+            throw UserMistake("block size exceeds max block size ${maxBlockSize} bytes")
+        } else if (transactions.size >= maxBlockTransactions) {
+            throw UserMistake("Number of transactions exceeds max ${maxBlockTransactions} transactions in block")
         }
-        return requiredSigs
     }
+
 
 }

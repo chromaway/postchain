@@ -1,29 +1,29 @@
 package net.postchain.config.blockchain
 
-import net.postchain.StorageBuilder
+import mu.KLogging
 import net.postchain.base.BaseConfigurationDataStore
 import net.postchain.base.data.DatabaseAccess
-import net.postchain.base.withReadConnection
-import net.postchain.config.node.NodeConfigurationProvider
-import net.postchain.core.NODE_ID_TODO
+import net.postchain.core.EContext
 
-class ManualBlockchainConfigurationProvider(
-        private val nodeConfigProvider: NodeConfigurationProvider
-) : BlockchainConfigurationProvider {
+class ManualBlockchainConfigurationProvider : BlockchainConfigurationProvider {
 
-    override fun getConfiguration(chainId: Long): ByteArray? {
-        val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration(), NODE_ID_TODO)
+    companion object : KLogging()
 
-        val configuration = withReadConnection(storage, chainId) { eContext ->
-            val lastHeight = DatabaseAccess.of(eContext).getLastBlockHeight(eContext)
-            val nextHeight = BaseConfigurationDataStore.findConfiguration(eContext, lastHeight + 1)
-            nextHeight?.let {
-                BaseConfigurationDataStore.getConfigurationData(eContext, it)!!
-            }
+    override fun needsConfigurationChange(eContext: EContext, chainId: Long): Boolean {
+        val lastHeight = DatabaseAccess.of(eContext).getLastBlockHeight(eContext)
+        val currentConfigHeight = BaseConfigurationDataStore.findConfigurationHeightForBlock(eContext, lastHeight)
+        val nextConfigHeight = BaseConfigurationDataStore.findConfigurationHeightForBlock(eContext, lastHeight + 1)
+
+        logger.debug { "lastHeight: $lastHeight, currentConfigHeight: $currentConfigHeight, nextConfigHeight: $nextConfigHeight" }
+
+        return (currentConfigHeight != nextConfigHeight)
+    }
+
+    override fun getConfiguration(eContext: EContext, chainId: Long): ByteArray? {
+        val lastHeight = DatabaseAccess.of(eContext).getLastBlockHeight(eContext)
+        val nextHeight = BaseConfigurationDataStore.findConfigurationHeightForBlock(eContext, lastHeight + 1)
+        return nextHeight?.let {
+            BaseConfigurationDataStore.getConfigurationData(eContext, it)!!
         }
-
-        storage.close()
-
-        return configuration
     }
 }

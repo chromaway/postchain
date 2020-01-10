@@ -2,6 +2,7 @@ package net.postchain.gtx.gtxml
 
 import assertk.assert
 import assertk.assertions.isEqualTo
+import net.postchain.base.BlockchainRid
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.gtv.GtvInteger
@@ -33,7 +34,7 @@ class GTXMLTransactionParserAutoSignTest {
         val sigMaker1 = MockCryptoSystem().buildSigMaker(pubKey1, privKey1)
 
         val expectedBody = GTXTransactionBodyData(
-                "23213213".hexStringToByteArray(),
+                BlockchainRid.buildFromHex("23213213"),
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
@@ -99,7 +100,7 @@ class GTXMLTransactionParserAutoSignTest {
         val pubKey1 = pubKey(1)
 
         val expectedBody = GTXTransactionBodyData(
-                "23213213".hexStringToByteArray(),
+                BlockchainRid.buildFromHex("23213213"),
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
@@ -150,7 +151,7 @@ class GTXMLTransactionParserAutoSignTest {
         val sigMaker1 = MockCryptoSystem().buildSigMaker(pubKey1, privKey1)
 
         val expectedBody = GTXTransactionBodyData(
-                "23213213".hexStringToByteArray(),
+                BlockchainRid.buildFromHex("23213213"),
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(

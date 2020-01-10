@@ -6,6 +6,7 @@ import mu.KLogging
 import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.core.Signature
+import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.*
 import net.postchain.ebft.message.*
 import net.postchain.ebft.message.BlockData
@@ -14,6 +15,7 @@ import net.postchain.ebft.rest.contract.serialize
 import net.postchain.ebft.syncmanager.replica.FastSyncAlgorithm
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
+import nl.komponents.kovenant.task
 import java.util.*
 
 fun decodeBlockDataWithWitness(block: CompleteBlock, bc: BlockchainConfiguration)
@@ -58,7 +60,7 @@ private class StatusSender(
  * The ValidatorSyncManager handles communications with our peers.
  */
 class ValidatorSyncManager(
-        private val blockchainProcessName: String,
+        private val processName: BlockchainProcessName,
         private val signers: List<ByteArray>,
         private val statusManager: StatusManager,
         private val blockManager: BlockManager,
@@ -69,6 +71,7 @@ class ValidatorSyncManager(
         private val txQueue: TransactionQueue,
         private val blockchainConfiguration: BlockchainConfiguration
 ) : SyncManagerBase {
+
     private val revoltTracker = RevoltTracker(10000, statusManager)
     private val statusSender = StatusSender(1000, statusManager, communicationManager)
     private val defaultTimeout = 1000
@@ -80,8 +83,8 @@ class ValidatorSyncManager(
     @Volatile
     private var useFastSyncAlgorithm: Boolean = false
     private val fastSyncAlgorithm = FastSyncAlgorithm(
-            blockchainProcessName,
-            signers.minus(signers.elementAt((statusManager as BaseStatusManager).myIndex)),
+            processName,
+            signers.minus(signers.elementAt(statusManager.getMyIndex())),
             communicationManager,
             blockDatabase,
             blockchainConfiguration,
@@ -89,6 +92,12 @@ class ValidatorSyncManager(
     )
 
     companion object : KLogging()
+
+    init {
+        this.currentTimeout = defaultTimeout
+        this.processingIntent = DoNothingIntent
+        this.lastStatusLogged = Date().time
+    }
 
     //    private val nodes = communicationManager.peers().map { XPeerID(it.pubKey) }
     private val signersIds = signers.map { XPeerID(it) }
@@ -106,15 +115,17 @@ class ValidatorSyncManager(
             val (xPeerId, message) = packet
 
             val nodeIndex = indexOfValidator(xPeerId)
+            val isReadOnlyNode = nodeIndex == -1 // This must be a read-only node since not in the validator list
 
-            logger.trace { "[$blockchainProcessName]: Received message type ${message.javaClass.simpleName} from node $nodeIndex" }
+            logger.trace { "$processName: Received message type ${message.javaClass.simpleName} from node $nodeIndex" }
 
             try {
                 when (message) {
                     // same case for replica and validator node
                     is GetBlockAtHeight -> sendBlockAtHeight(xPeerId, message.height)
+
                     else -> {
-                        if (nodeIndex != NODE_ID_READ_ONLY) {
+                        if (!isReadOnlyNode) { // TODO: [POS-90]: Is it necessary here `isReadOnlyNode`?
                             // validator consensus logic
                             when (message) {
                                 is Status -> {
@@ -130,9 +141,9 @@ class ValidatorSyncManager(
                                     val signature = Signature(message.sig.subjectID, message.sig.data)
                                     val smBlockRID = this.statusManager.myStatus.blockRID
                                     if (smBlockRID == null) {
-                                        logger.info("[$blockchainProcessName]: Received signature not needed")
+                                        logger.info("$processName: Received signature not needed")
                                     } else if (!smBlockRID.contentEquals(message.blockRID)) {
-                                        logger.info("[$blockchainProcessName]: Receive signature for a different block")
+                                        logger.info("$processName: Receive signature for a different block")
                                     } else if (this.blockDatabase.verifyBlockSignature(signature)) {
                                         this.statusManager.onCommitSignature(nodeIndex, message.blockRID, signature)
                                     }
@@ -157,13 +168,14 @@ class ValidatorSyncManager(
                                 is GetUnfinishedBlock -> sendUnfinishedBlock(nodeIndex)
                                 is GetBlockSignature -> sendBlockSignature(nodeIndex, message.blockRID)
                                 is Transaction -> handleTransaction(nodeIndex, message)
+
                                 else -> throw ProgrammerMistake("Unhandled type ${message::class}")
                             }
                         }
                     }
                 }
             } catch (e: Exception) {
-                logger.error("[$blockchainProcessName]: Couldn't handle message $message. Ignoring and continuing", e)
+                logger.error("$processName: Couldn't handle message $message. Ignoring and continuing", e)
             }
         }
     }
@@ -175,11 +187,12 @@ class ValidatorSyncManager(
      * @param message message including the transaction
      */
     private fun handleTransaction(index: Int, message: Transaction) {
-        val tx = blockchainConfiguration.getTransactionFactory().decodeTransaction(message.data)
-        if (!tx.isCorrect()) {
-            throw UserMistake("Transaction ${tx.getRID()} is not correct")
+        // TODO: reject if queue is full
+        task {
+            val tx = blockchainConfiguration.getTransactionFactory().decodeTransaction(message.data)
+            txQueue.enqueue(tx)
         }
-        txQueue.enqueue(tx)
+
     }
 
     /**
@@ -208,7 +221,7 @@ class ValidatorSyncManager(
             val packet = BlockSignature(blockRID, net.postchain.ebft.message.Signature(it.subjectID, it.data))
             communicationManager.sendPacket(packet, validatorAtIndex(nodeIndex))
         } fail {
-            logger.debug("[$blockchainProcessName]: Error sending BlockSignature", it)
+            logger.debug("$processName: Error sending BlockSignature", it)
         }
     }
 
@@ -227,7 +240,7 @@ class ValidatorSyncManager(
                     it.witness!!.getRawData()
             )
             communicationManager.sendPacket(packet, xPeerId)
-        } fail { logger.debug("[$blockchainProcessName]: Error sending CompleteBlock", it) }
+        } fail { logger.debug("$processName: Error sending CompleteBlock", it) }
     }
 
     /**
@@ -266,7 +279,7 @@ class ValidatorSyncManager(
      */
     private fun fetchBlockAtHeight(height: Long) {
         val nodeIndex = selectRandomNode { it.height > height } ?: return
-        logger.debug("[$blockchainProcessName]: Fetching block at height $height from node $nodeIndex")
+        logger.debug("$processName: Fetching block at height $height from node $nodeIndex")
         communicationManager.sendPacket(GetBlockAtHeight(height), validatorAtIndex(nodeIndex))
     }
 
@@ -278,7 +291,7 @@ class ValidatorSyncManager(
      */
     private fun fetchCommitSignatures(blockRID: ByteArray, nodes: Array<Int>) {
         val message = GetBlockSignature(blockRID)
-        logger.debug("[$blockchainProcessName]: Fetching commit signature for block with RID ${blockRID.toHex()} from nodes ${Arrays.toString(nodes)}")
+        logger.debug("$processName: Fetching commit signature for block with RID ${blockRID.toHex()} from nodes ${Arrays.toString(nodes)}")
         nodes.forEach {
             communicationManager.sendPacket(message, validatorAtIndex(it))
         }
@@ -294,7 +307,7 @@ class ValidatorSyncManager(
         val nodeIndex = selectRandomNode {
             it.height == height && (it.blockRID?.contentEquals(blockRID) ?: false)
         } ?: return
-        logger.debug("[$blockchainProcessName]: Fetching unfinished block with RID ${blockRID.toHex()} from node $nodeIndex ")
+        logger.debug("$processName: Fetching unfinished block with RID ${blockRID.toHex()} from node $nodeIndex ")
         communicationManager.sendPacket(GetUnfinishedBlock(blockRID), validatorAtIndex(nodeIndex))
     }
 
@@ -315,7 +328,9 @@ class ValidatorSyncManager(
         }
         when (intent) {
             DoNothingIntent -> Unit
-            is FetchBlockAtHeightIntent -> if(!useFastSyncAlgorithm) { fetchBlockAtHeight(intent.height) }
+            is FetchBlockAtHeightIntent -> if (!useFastSyncAlgorithm) {
+                fetchBlockAtHeight(intent.height)
+            }
             is FetchCommitSignatureIntent -> fetchCommitSignatures(intent.blockRID, intent.nodes)
             is FetchUnfinishedBlockIntent -> fetchUnfinishedBlock(intent.blockRID)
             else -> throw ProgrammerMistake("Unrecognized intent: ${intent::class}")
@@ -328,14 +343,26 @@ class ValidatorSyncManager(
      * Log status of all nodes including their latest block RID and if they have the signature or not
      */
     private fun logStatus() {
+        if (logger.isDebugEnabled) {
+            val smIntent = statusManager.getBlockIntent()
+            val bmIntent = blockManager.getBlockIntent()
+            val primary = if (statusManager.isMyNodePrimary()) {
+                "I'm primary, "
+            } else {
+                "(prim = ${statusManager.primaryIndex()}),"
+            }
+            logger.debug("$processName: My node: ${statusManager.getMyIndex()}, $primary block mngr: $bmIntent, status mngr: $smIntent")
+        }
         for ((idx, ns) in statusManager.nodeStatuses.withIndex()) {
             val blockRID = ns.blockRID
             val haveSignature = statusManager.commitSignatures[idx] != null
-            logger.info {
-                "[$blockchainProcessName]: node:$idx he:${ns.height} ro:${ns.round} st:${ns.state}" +
-                        (if (ns.revolting) " R" else "") +
-                        " blockRID:${blockRID?.toHex() ?: "null"}" +
-                        " havesig:$haveSignature"
+            if (logger.isDebugEnabled) {
+                logger.debug {
+                    "$processName: node:$idx he:${ns.height} ro:${ns.round} st:${ns.state}" +
+                            (if (ns.revolting) " R" else "") +
+                            " blockRID:${blockRID?.toHex() ?: "null"}" +
+                            " havesig:$haveSignature"
+                }
             }
         }
     }
@@ -345,9 +372,10 @@ class ValidatorSyncManager(
      * notify peers of our current status.
      */
     override fun update() {
-        if(useFastSyncAlgorithm) {
+
+        if (useFastSyncAlgorithm) {
             fastSyncAlgorithm.sync()
-            if(fastSyncAlgorithm.isUpToDate()){
+            if (fastSyncAlgorithm.isUpToDate()) {
                 // turn off fast sync, reset current block to null, and query for the last known state from db to prevent
                 // possible race conditions
                 useFastSyncAlgorithm = false
@@ -357,42 +385,38 @@ class ValidatorSyncManager(
             }
         } else {
 
-            // Process all messages from peers, one at a time. Some
-            // messages may trigger asynchronous code which will
-            // send replies at a later time, others will send replies
-            // immediately
-            dispatchMessages()
+            synchronized(statusManager) {
+                // Process all messages from peers, one at a time. Some
+                // messages may trigger asynchronous code which will
+                // send replies at a later time, others will send replies
+                // immediately
+                dispatchMessages()
 
-            // An intent is something that we want to do with our current block.
-            // The current intent is fetched from the BlockManager and will result in
-            // some messages being sent to peers requesting data like signatures or
-            // complete blocks
-            processIntent()
+                // An intent is something that we want to do with our current block.
+                // The current intent is fetched from the BlockManager and will result in
+                // some messages being sent to peers requesting data like signatures or
+                // complete blocks
+                processIntent()
 
-            // RevoltTracker will check trigger a revolt if conditions for revolting are met
-            // A revolt will be triggerd by calling statusManager.onStartRevolting()
-            // Typical revolt conditions
-            //    * A timeout happens and round has not increased. Round is increased then 2f+1 nodes
-            //      are revolting.
-            revoltTracker.update()
+                // RevoltTracker will check trigger a revolt if conditions for revolting are met
+                // A revolt will be triggerd by calling statusManager.onStartRevolting()
+                // Typical revolt conditions
+                //    * A timeout happens and round has not increased. Round is increased then 2f+1 nodes
+                //      are revolting.
+                revoltTracker.update()
 
-            // Sends a status message to all peers when my status has changed or after a timeout
-            statusSender.update()
+                // Sends a status message to all peers when my status has changed or after a timeout
+                statusSender.update()
 
-            nodeStateTracker.myStatus = statusManager.myStatus.serialize()
-            nodeStateTracker.nodeStatuses = statusManager.nodeStatuses.map { it.serialize() }.toTypedArray()
-            nodeStateTracker.blockHeight = statusManager.myStatus.height
+                nodeStateTracker.myStatus = statusManager.myStatus.serialize()
+                nodeStateTracker.nodeStatuses = statusManager.nodeStatuses.map { it.serialize() }.toTypedArray()
+                nodeStateTracker.blockHeight = statusManager.myStatus.height
 
-            if (Date().time - lastStatusLogged >= StatusLogInterval) {
-                logStatus()
-                lastStatusLogged = Date().time
+                if (Date().time - lastStatusLogged >= StatusLogInterval) {
+                    logStatus()
+                    lastStatusLogged = Date().time
+                }
             }
         }
-    }
-
-    init {
-        this.currentTimeout = defaultTimeout
-        this.processingIntent = DoNothingIntent
-        this.lastStatusLogged = Date().time
     }
 }

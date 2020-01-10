@@ -18,23 +18,22 @@ import java.nio.file.Paths
 class CliIntegrationTest {
 
     private fun fullPath(name: String): String {
-        return Paths.get(javaClass.getResource("/net/postchain/cli/${name}").toURI()).toString()
+        return Paths.get(javaClass.getResource("/net/postchain/devtools/cli/${name}").toURI()).toString()
     }
 
     @Test
     fun testModule() {
         val nodeConfigPath = fullPath("node-config.properties")
-        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
-                AppConfig.fromPropertiesFile(nodeConfigPath))
+        val appConfig = AppConfig.fromPropertiesFile(nodeConfigPath)
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(appConfig)
 
         // this wipes the data base!
-        StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration(), NODE_ID_NA, true)
+        StorageBuilder.buildStorage(appConfig, NODE_ID_NA, true)
 
         // add-blockchain goes here
         val chainId: Long = 1;
-        val brid = File(fullPath("brid.txt")).readText()
         val blockChainConfig = fullPath("blockchain_config_4_signers.xml")
-        CliExecution().addBlockchain(nodeConfigPath, chainId, brid, blockChainConfig, AlreadyExistMode.FORCE)
+        val brid = CliExecution().addBlockchain(nodeConfigPath, chainId, blockChainConfig, AlreadyExistMode.FORCE)
 
         val node = PostchainNode(nodeConfigProvider)
         node.startBlockchain(chainId)
@@ -55,17 +54,16 @@ class CliIntegrationTest {
     @Test
     fun testModuleWithSAPDatabase() {
         val nodeConfigPath = fullPath("node-config-saphana.properties")
-        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
-                AppConfig.fromPropertiesFile(nodeConfigPath))
+        val appConfig = AppConfig.fromPropertiesFile(nodeConfigPath)
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(appConfig)
 
         // this wipes the data base!
-        StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration(), NODE_ID_NA, true)
+        StorageBuilder.buildStorage(appConfig, NODE_ID_NA, true)
 
         // add-blockchain goes here
         val chainId: Long = 1;
-        val brid = File(fullPath("brid.txt")).readText()
         val blockChainConfig = fullPath("blockchain_config_4_signers.xml")
-        CliExecution().addBlockchain(nodeConfigPath, chainId, brid, blockChainConfig, AlreadyExistMode.FORCE)
+        CliExecution().addBlockchain(nodeConfigPath, chainId, blockChainConfig, AlreadyExistMode.FORCE)
 
         val node = PostchainNode(nodeConfigProvider)
         node.startBlockchain(chainId)
@@ -86,18 +84,17 @@ class CliIntegrationTest {
     @Test
     fun testAddConfiguration() {
         val nodeConfigPath = fullPath("node-config.properties")
-        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
-                AppConfig.fromPropertiesFile(nodeConfigPath))
+        val appConfig = AppConfig.fromPropertiesFile(nodeConfigPath)
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(appConfig)
 
         // this wipes the data base!
-        StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration(), NODE_ID_NA, true)
+        StorageBuilder.buildStorage(appConfig, NODE_ID_NA, true)
 
         // add-blockchain goes here
         val chainId = 1L
-        val brid = File(fullPath("brid.txt")).readText()
         val blockChainConfig = fullPath("blockchain_config.xml")
         val cliExecution = CliExecution()
-        cliExecution.addBlockchain(nodeConfigPath, chainId, brid, blockChainConfig, AlreadyExistMode.FORCE)
+        val brid = cliExecution.addBlockchain(nodeConfigPath, chainId, blockChainConfig, AlreadyExistMode.FORCE)
 
         // start blockchain with one signer first
         val node = PostchainNode(nodeConfigProvider)

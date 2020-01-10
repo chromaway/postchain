@@ -1,9 +1,10 @@
 package net.postchain.network.x
 
 import mu.KLogging
+import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerCommConfiguration
-import net.postchain.base.PeerInfo
-import net.postchain.base.peerId
+import net.postchain.common.toHex
+import net.postchain.debug.BlockchainProcessName
 import net.postchain.devtools.PeerNameHelper.peerName
 import net.postchain.network.CommunicationManager
 import net.postchain.network.XPacketDecoder
@@ -13,10 +14,10 @@ class DefaultXCommunicationManager<PacketType>(
         val connectionManager: XConnectionManager,
         val config: PeerCommConfiguration,
         val chainID: Long,
-        val blockchainRID: ByteArray,
+        val blockchainRID: BlockchainRid,
         private val packetEncoder: XPacketEncoder<PacketType>,
         private val packetDecoder: XPacketDecoder<PacketType>,
-        val processName: String = ""
+        private val processName: BlockchainProcessName
 ) : CommunicationManager<PacketType> {
 
     companion object : KLogging()
@@ -33,10 +34,8 @@ class DefaultXCommunicationManager<PacketType>(
                 packetDecoder
         )
 
-        connectionManager.connectChain(peerConfig, true)
+        connectionManager.connectChain(peerConfig, true) { processName.toString() }
     }
-
-    override fun peers(): Array<PeerInfo> = config.peerInfo
 
     @Synchronized
     override fun getPackets(): MutableList<Pair<XPeerID, PacketType>> {
@@ -46,12 +45,7 @@ class DefaultXCommunicationManager<PacketType>(
     }
 
     override fun sendPacket(packet: PacketType, recipient: XPeerID) {
-        logger.trace { "[$processName]: sendPacket($packet, ${peerName(recipient.toString())})" }
-
-        val peers: List<XPeerID> = config.peerInfo.map(PeerInfo::peerId)
-        require(recipient in peers) {
-            "CommunicationManager.sendPacket(): recipient not found among peers"
-        }
+        logger.trace { "$processName: sendPacket($packet, ${peerName(recipient.toString())})" }
 
         require(XPeerID(config.pubKey) != recipient) {
             "CommunicationManager.sendPacket(): sender can not be the recipient"
@@ -64,7 +58,7 @@ class DefaultXCommunicationManager<PacketType>(
     }
 
     override fun broadcastPacket(packet: PacketType) {
-        logger.trace { "[$processName]: broadcastPacket($packet)" }
+        logger.trace { "$processName: broadcastPacket($packet)" }
 
         connectionManager.broadcastPacket(
                 { packetEncoder.encodePacket(packet) },
@@ -72,14 +66,16 @@ class DefaultXCommunicationManager<PacketType>(
     }
 
     override fun shutdown() {
-        connectionManager.disconnectChain(chainID)
+        connectionManager.disconnectChain(chainID) { processName.toString() }
     }
 
     private fun decodeAndEnqueue(peerID: XPeerID, packet: ByteArray) {
         // packet decoding should not be synchronized so we can make
         // use of parallel processing in different threads
+        logger.trace("receiving a packet from peer: ${peerID.byteArray.toHex()}")
         val decodedPacket = packetDecoder.decodePacket(peerID.byteArray, packet)
         synchronized(this) {
+            logger.trace("Successfully decoded the package, now adding it ")
             inboundPackets.add(peerID to decodedPacket)
         }
     }

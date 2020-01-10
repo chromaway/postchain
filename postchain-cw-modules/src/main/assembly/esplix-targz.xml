@@ -10,19 +10,19 @@
             <source>
                 target/${project.artifactId}-${project.version}.jar
             </source>
-            <outputDirectory>/</outputDirectory>
+            <outputDirectory>./</outputDirectory>
         </file>
         <file>
             <source>
                 ../postchain-base/target/postchain-base-${project.version}-jar-with-dependencies.jar
             </source>
-            <outputDirectory>/</outputDirectory>
+            <outputDirectory>./</outputDirectory>
         </file>
     </files>
     <fileSets>
         <fileSet>
             <directory>src/main/resources/esplix-example-config</directory>
-            <outputDirectory>/esplix-example-config</outputDirectory>
+            <outputDirectory>./esplix-example-config</outputDirectory>
         </fileSet>
     </fileSets>
 </assembly>

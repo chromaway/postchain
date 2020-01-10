@@ -5,7 +5,7 @@
     <parent>
         <artifactId>postchain</artifactId>
         <groupId>net.postchain</groupId>
-        <version>3.0.1-SNAPSHOT</version>
+        <version>3.1.2-SNAPSHOT</version>
     </parent>
     <artifactId>postchain-base</artifactId>
     <packaging>jar</packaging>
@@ -15,13 +15,13 @@
     <properties>
         <main-class>net.postchain.AppKt</main-class>
         <commons-dbutils.version>1.6</commons-dbutils.version>
-        <postgresql.version>42.1.4</postgresql.version>
+        <postgresql.version>42.2.0</postgresql.version>
         <spongycastle.core.version>1.56.0.0</spongycastle.core.version>
         <commons-dbcp2.version>2.6.0</commons-dbcp2.version>
         <commons-configuration2.version>2.1.1</commons-configuration2.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
-        <netty.version>4.1.34.Final</netty.version>
-        <spark-core.version>2.6.0</spark-core.version>
+        <netty.version>4.1.43.Final</netty.version>
+        <spark-core.version>2.7.2</spark-core.version>
         <easymock.version>3.6</easymock.version>
         <mockito.version>2.23.0</mockito.version>
         <mockito-kotlin.version>2.1.0</mockito-kotlin.version>
@@ -37,7 +37,7 @@
         <dependency>
             <groupId>net.postchain</groupId>
             <artifactId>postchain-common</artifactId>
-            <version>3.0.1-SNAPSHOT</version>
+            <version>3.1.2-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -111,11 +111,44 @@
             <classifier>linux-x86_64</classifier>
         </dependency>
 
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-core</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-impl</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.activation</groupId>
+            <artifactId>javax.activation-api</artifactId>
+            <version>1.2.0</version>
+        </dependency>
+
         <!-- Cli -->
         <dependency>
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
             <version>1.72</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bitcoinj</groupId>
+            <artifactId>bitcoinj-core</artifactId>
+            <version>0.15.5</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcprov-jdk15to18</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.openmuc/jasn1-compiler -->

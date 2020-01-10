@@ -1,10 +1,12 @@
 package net.postchain.api.rest.endpoint
 
 import io.restassured.RestAssured
+import net.postchain.api.rest.DummyConfig
 import net.postchain.api.rest.controller.Model
 import net.postchain.api.rest.controller.Query
 import net.postchain.api.rest.controller.QueryResult
 import net.postchain.api.rest.controller.RestApi
+import net.postchain.config.app.AppConfig
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.UserMistake
 import org.easymock.EasyMock.*
@@ -23,8 +25,10 @@ class RestApiQueryEndpointTest {
     @Before
     fun setup() {
         model = createMock(Model::class.java)
-        restApi = RestApi(0, basePath)
-        restApi.attachModel(blockchainRID, model)
+        expect(model.chainIID).andReturn(1L).anyTimes()
+
+        val config = AppConfig(DummyConfig.getDummyConfig())
+        restApi = RestApi(0, basePath, config)
     }
 
     @After
@@ -41,7 +45,10 @@ class RestApiQueryEndpointTest {
         val answer = QueryResult(answerString)
 
         expect(model.query(query)).andReturn(answer)
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         RestAssured.given().basePath(basePath).port(restApi.actualPort())
                 .body(queryString)
@@ -63,7 +70,10 @@ class RestApiQueryEndpointTest {
 
         expect(model.query(query)).andThrow(
                 UserMistake(answerMessage))
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         RestAssured.given().basePath(basePath).port(restApi.actualPort())
                 .body(queryString)
@@ -83,9 +93,11 @@ class RestApiQueryEndpointTest {
         val answerMessage = "expected error"
         val answerBody = """{"error":"expected error"}"""
 
-        expect(model.query(query)).andThrow(
-                ProgrammerMistake(answerMessage))
+        expect(model.query(query)).andThrow(ProgrammerMistake(answerMessage))
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         RestAssured.given().basePath(basePath).port(restApi.actualPort())
                 .body(queryString)
@@ -104,6 +116,8 @@ class RestApiQueryEndpointTest {
 
         replay(model)
 
+        restApi.attachModel(blockchainRID, model)
+
         RestAssured.given().basePath(basePath).port(restApi.actualPort())
                 .body(queryString)
                 .post("/query/${blockchainRID}0000")
@@ -121,6 +135,8 @@ class RestApiQueryEndpointTest {
 
         replay(model)
 
+        restApi.attachModel(blockchainRID, model)
+
         RestAssured.given().basePath(basePath).port(restApi.actualPort())
                 .body(queryString)
                 .post("/query/${blockchainRID.substring(1)}")
@@ -137,6 +153,8 @@ class RestApiQueryEndpointTest {
         val answerBody = """{"error":"Invalid blockchainRID. Expected 64 hex digits [0-9a-fA-F]"}"""
 
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         RestAssured.given().basePath(basePath).port(restApi.actualPort())
                 .body(queryString)

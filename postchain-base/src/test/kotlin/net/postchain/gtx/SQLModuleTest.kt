@@ -1,11 +1,11 @@
 package net.postchain.gtx
 
 import net.postchain.StorageBuilder
+import net.postchain.base.BlockchainRid
 import net.postchain.base.withWriteConnection
 import net.postchain.config.app.AppConfig
-import net.postchain.config.node.NodeConfigurationProviderFactory
-import org.apache.commons.configuration2.Configuration
 import net.postchain.gtv.GtvFactory.gtv
+import org.apache.commons.configuration2.Configuration
 import org.apache.commons.configuration2.MapConfiguration
 import org.junit.Assert
 import org.junit.Test
@@ -21,13 +21,10 @@ class SQLModuleTest {
         )
 
         val mf = SQLGTXModuleFactory()
-        val module = mf.makeModule(config, testBlockchainRID)
+        val module = mf.makeModule(config, BlockchainRid.EMPTY_RID)
 
-        val nodeConfig = NodeConfigurationProviderFactory.createProvider(
-                AppConfig(getDatabaseConfig())
-        ).getConfiguration()
-
-        val storage = StorageBuilder.buildStorage(nodeConfig, 0)
+        val appConfig = AppConfig(getDatabaseConfig())
+        val storage = StorageBuilder.buildStorage(appConfig, 0)
         withWriteConnection(storage, 1) {
             GTXSchemaManager.initializeDB(it)
             module.initializeDB(it)

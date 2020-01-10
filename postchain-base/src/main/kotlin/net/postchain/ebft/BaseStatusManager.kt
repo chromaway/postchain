@@ -5,14 +5,15 @@ package net.postchain.ebft
 import mu.KLogging
 import net.postchain.common.toHex
 import net.postchain.core.Signature
+import net.postchain.getBFTRequiredSignatureCount
 import java.util.*
 
 /**
  * StatusManager manages the status of the consensus protocol
  */
 class BaseStatusManager(
-        val nodeCount: Int,
-        val myIndex: Int,
+        private val nodeCount: Int,
+        private val myIndex: Int,
         myNextHeight: Long
 ): StatusManager {
 
@@ -20,7 +21,7 @@ class BaseStatusManager(
     override val commitSignatures: Array<Signature?> = arrayOfNulls(nodeCount)
     override val myStatus: NodeStatus
     var intent: BlockIntent = DoNothingIntent
-    val quorum2f = (nodeCount / 3) * 2
+    private val quorum = getBFTRequiredSignatureCount(nodeCount)
 
     companion object : KLogging()
 
@@ -32,6 +33,8 @@ class BaseStatusManager(
         // otherwise we are screwed
         myStatus.serial = System.currentTimeMillis() - 1518000000000
     }
+
+    override fun getMyIndex() = myIndex
 
     /**
      * Count the number of nodes that are at [height] with the tip being [blockRID]
@@ -198,11 +201,11 @@ class BaseStatusManager(
      *
      * @return primary node index
      */
-    fun primaryIndex(): Int {
+    override fun primaryIndex(): Int {
         return ((myStatus.height + myStatus.round) % nodeCount).toInt()
     }
 
-    private fun isMyNodePrimary(): Boolean {
+    override fun isMyNodePrimary(): Boolean {
         return primaryIndex() == this.myIndex
     }
 
@@ -218,6 +221,7 @@ class BaseStatusManager(
         if (intent is BuildBlockIntent) {
             if (!isMyNodePrimary()) {
                 logger.warn("Inconsistent state: building a block while not a primary")
+                intent = DoNothingIntent
                 return false
             }
             acceptBlock(blockRID, mySignature)
@@ -325,7 +329,7 @@ class BaseStatusManager(
                 if (ns.height == myStatus.height) sameHeightCount++
                 else if (ns.height > myStatus.height) higherHeightCount++
             }
-            if (sameHeightCount <= this.quorum2f) {
+            if (sameHeightCount < this.quorum) {
                 // cannot build a block
 
                 // worth trying to sync?
@@ -368,7 +372,7 @@ class BaseStatusManager(
                     nHighRound++
                 }
             }
-            if (nHighRound + nRevolting > this.quorum2f) {
+            if (nHighRound + nRevolting >= this.quorum) {
                 // revolt is successful
 
                 // Note: we do not reset block if NodeState is Prepared.
@@ -392,7 +396,7 @@ class BaseStatusManager(
         fun handleHaveBlockState(): Boolean {
             val count = countNodes(NodeState.HaveBlock, myStatus.height, myStatus.blockRID) +
                     countNodes(NodeState.Prepared, myStatus.height, myStatus.blockRID)
-            if (count > this.quorum2f) {
+            if (count >= this.quorum) {
                 myStatus.state = NodeState.Prepared
                 myStatus.serial += 1
                 return true
@@ -408,7 +412,7 @@ class BaseStatusManager(
         fun handlePreparedState(): Boolean {
             if (intent is CommitBlockIntent) return false
             val count = commitSignatures.count { it != null }
-            if (count > this.quorum2f) {
+            if (count >= this.quorum) {
                 // check if we have (2f+1) commit signatures including ours, in that case we signal commit intent.
                 intent = CommitBlockIntent
                 return true
@@ -471,11 +475,17 @@ class BaseStatusManager(
                         intent = FetchUnfinishedBlockIntent(primaryBlockRID)
                         return true
                     }
+                } else {
+                    if (intent == DoNothingIntent)
+                        return false
+                    else {
+                        intent = DoNothingIntent
+                        return true
+                    }
                 }
             }
             return false
         }
-
 
         // We should make sure we have enough nodes who can participate in building a block.
         // (If we are in [Perpared] state we ignore this check, it has been done before we got here)
@@ -483,7 +493,7 @@ class BaseStatusManager(
             when (potentiallyDoSynch()) {
                 FlowStatus.Break -> return false
                 FlowStatus.Continue -> return true
-                // FlowStatus.JustRunOn -> // nothing, just go on
+                FlowStatus.JustRunOn -> Unit// nothing, just go on
             }
         }
 
@@ -492,7 +502,7 @@ class BaseStatusManager(
             when (potentiallyRevolt()) {
                 FlowStatus.Break -> return false
                 FlowStatus.Continue -> return true
-                // FlowStatus.JustRunOn -> // nothing, just go on
+                FlowStatus.JustRunOn -> Unit// nothing, just go on
             }
         }
 

@@ -3,10 +3,11 @@
 package net.postchain.gtx
 
 import mu.KLogging
+import net.postchain.base.BlockchainRid
 import net.postchain.core.EContext
 import net.postchain.core.Transactor
 import net.postchain.core.UserMistake
-import net.postchain.gtv.*
+import net.postchain.gtv.Gtv
 
 interface GTXModule {
     fun makeTransactor(opData: ExtOpData): Transactor
@@ -17,14 +18,14 @@ interface GTXModule {
 }
 
 interface GTXModuleFactory {
-    fun makeModule(config: Gtv, blockchainRID: ByteArray): GTXModule
+    fun makeModule(config: Gtv, blockchainRID: BlockchainRid): GTXModule
 }
 
 abstract class SimpleGTXModule<ConfT>(
         val conf: ConfT,
-        val opmap: Map<String, (ConfT, ExtOpData)-> Transactor>,
-        val querymap: Map<String, (ConfT, EContext, Gtv)->Gtv>
-): GTXModule {
+        val opmap: Map<String, (ConfT, ExtOpData) -> Transactor>,
+        val querymap: Map<String, (ConfT, EContext, Gtv) -> Gtv>
+) : GTXModule {
 
     override fun makeTransactor(opData: ExtOpData): Transactor {
         if (opData.opName in opmap) {
@@ -45,18 +46,18 @@ abstract class SimpleGTXModule<ConfT>(
     override fun query(ctxt: EContext, name: String, args: Gtv): Gtv {
         if (name in querymap) {
             return querymap[name]!!(conf, ctxt, args)
-        } else throw UserMistake("Unkown query")
+        } else throw UserMistake("Unknown query: $name")
     }
 }
 
-class CompositeGTXModule (val modules: Array<GTXModule>, val allowOverrides: Boolean): GTXModule {
+class CompositeGTXModule(val modules: Array<GTXModule>, val allowOverrides: Boolean) : GTXModule {
 
     lateinit var opmap: Map<String, GTXModule>
     lateinit var qmap: Map<String, GTXModule>
     lateinit var ops: Set<String>
     lateinit var _queries: Set<String>
 
-    companion object: KLogging()
+    companion object : KLogging()
 
     override fun makeTransactor(opData: ExtOpData): Transactor {
         if (opData.opName in opmap) {
@@ -84,7 +85,7 @@ class CompositeGTXModule (val modules: Array<GTXModule>, val allowOverrides: Boo
 
     override fun initializeDB(ctx: EContext) {
         for (module in modules) {
-            logger.info("Initialize DB for module: $module") // TODO: Should probably write the module name here
+            logger.debug("Initialize DB for module: $module") // TODO: Should probably write the module name here
             module.initializeDB(ctx)
         }
         val _opmap = mutableMapOf<String, GTXModule>()

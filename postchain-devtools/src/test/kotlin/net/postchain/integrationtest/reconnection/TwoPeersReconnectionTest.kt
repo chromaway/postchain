@@ -3,6 +3,7 @@ package net.postchain.integrationtest.reconnection
 import net.postchain.hasSize
 import net.postchain.integrationtest.assertChainNotStarted
 import net.postchain.integrationtest.assertChainStarted
+import net.postchain.integrationtest.assertNodeConnectedWith
 import net.postchain.isEmpty
 import org.awaitility.Awaitility
 import org.awaitility.Duration
@@ -14,7 +15,7 @@ class TwoPeersReconnectionTest : ReconnectionTest() {
     fun test2Peers() {
         val nodesCount = 2
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-        val blockchainConfig = "/net/postchain/reconnection/blockchain_config_2.xml"
+        val blockchainConfig = "/net/postchain/devtools/reconnection/blockchain_config_2.xml"
         val nodeConfigsFilenames = arrayOf(
                 "classpath:/net/postchain/reconnection/node0.properties",
                 "classpath:/net/postchain/reconnection/node1.properties"
@@ -31,13 +32,20 @@ class TwoPeersReconnectionTest : ReconnectionTest() {
                     nodes[0].assertChainStarted()
                     nodes[1].assertChainStarted()
                 }
+        //println("---- Both started ------")
 
-        // Printing net networkTopology
-//        printPeers(0, 1)
+        Awaitility.await().atMost(Duration.FIVE_SECONDS)
+                .untilAsserted{
+                    nodes[0].assertNodeConnectedWith(1, nodes[1])
+                    nodes[1].assertNodeConnectedWith(1, nodes[0])
+                }
+        //println("---- Both connected ------")
+
 
         // Asserting network topology is pair of connected peers
         assertk.assert(nodes[0].networkTopology()).hasSize(1)
         assertk.assert(nodes[1].networkTopology()).hasSize(1)
+        //println("---- Both asserted ------")
 
         // Shutting down peer 1
         nodes[1].shutdown()
@@ -59,7 +67,6 @@ class TwoPeersReconnectionTest : ReconnectionTest() {
         nodes.removeAt(1)
 
         println("Re-boring peer 1")
-        // Re-boring peer 1
         createSingleNode(1, nodesCount, nodeConfigsFilenames[1], blockchainConfig)
 
         // Asserting that

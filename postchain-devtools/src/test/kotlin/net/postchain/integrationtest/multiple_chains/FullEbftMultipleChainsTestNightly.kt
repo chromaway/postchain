@@ -5,13 +5,13 @@ import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.integrationtest.assertChainStarted
+import net.postchain.integrationtest.assertNodeConnectedWith
+import net.postchain.util.NodesTestHelper.selectAnotherRandNode
 import org.awaitility.Awaitility.await
+import org.awaitility.Duration.ONE_MINUTE
 import org.awaitility.Duration.TEN_SECONDS
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
-import org.junit.Ignore
-import org.junit.Test
-import org.junit.runner.RunWith
 import kotlin.test.assertNotNull
 
 open class FullEbftMultipleChainsTestNightly : IntegrationTest() {
@@ -49,6 +49,22 @@ open class FullEbftMultipleChainsTestNightly : IntegrationTest() {
                         chains.forEach(node::assertChainStarted)
                     }
                 }
+
+
+        // Asserting all chains are connected
+        // We don't need to assert all connections, just check some random connections
+        if (nodesCount > 1) {
+            await().atMost(ONE_MINUTE)
+                    .untilAsserted {
+                        nodes.forEachIndexed { i, _ ->
+                            val randNode = selectAnotherRandNode(i, nodesCount)
+                            chains.forEach { chain ->
+                                logger.debug("Wait for (node $i, chain $chain) to be connected to node $randNode")
+                                nodes[i].assertNodeConnectedWith(chain, nodes[randNode])
+                            }
+                        }
+                    }
+        }
 
         // Enqueueing txs
         var txId = 0
@@ -88,7 +104,7 @@ open class FullEbftMultipleChainsTestNightly : IntegrationTest() {
                     logger.info { "Verifying height $height" }
 
                     // Asserting uniqueness of block at height
-                    val blockRids = queries.getBlockRids(height).get()
+                    val blockRids = queries.getBlockRid(height).get()
                     assertNotNull(blockRids)
 
                     // Asserting txs count

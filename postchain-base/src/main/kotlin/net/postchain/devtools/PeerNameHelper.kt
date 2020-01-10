@@ -5,14 +5,15 @@ import net.postchain.network.x.XPeerID
 
 object PeerNameHelper {
 
-    fun peerName(pubKey: String): String = pubKey.run {
+    fun peerName(pubKey: String): String = shorten(pubKey)
+
+    fun peerName(pubKey: ByteArray): String = shorten(pubKey.toHex())
+
+    fun peerName(peerId: XPeerID): String = shorten(peerId.toString())
+
+    fun shortHash(byteArrayHash: ByteArray): String = shorten(byteArrayHash.toHex())
+
+    private fun shorten(word: String) = word.run {
         "${take(2)}:${takeLast(2)}"
     }
-
-    fun peerName(pubKey: ByteArray): String = pubKey.toHex().run {
-        "${take(2)}:${takeLast(2)}"
-    }
-
-    fun peerName(peerId: XPeerID): String = peerName(peerId.toString())
-
 }

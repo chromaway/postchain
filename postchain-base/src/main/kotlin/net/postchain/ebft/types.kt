@@ -55,9 +55,21 @@ sealed class BlockIntent {
     }
 }
 
-object DoNothingIntent : BlockIntent()
-object CommitBlockIntent : BlockIntent()
-object BuildBlockIntent : BlockIntent()
+object DoNothingIntent : BlockIntent() {
+    override fun toString(): String {
+        return "DNI"
+    }
+}
+object CommitBlockIntent : BlockIntent() {
+    override fun toString(): String {
+        return "CBI"
+    }
+}
+object BuildBlockIntent : BlockIntent() {
+    override fun toString(): String {
+        return "BBI"
+    }
+}
 
 class FetchBlockAtHeightIntent(val height: Long): BlockIntent() {
     override fun equals(other: Any?): Boolean {
@@ -126,6 +138,9 @@ interface StatusManager {
     val commitSignatures: Array<Signature?>
     val myStatus: NodeStatus
 
+    fun getMyIndex(): Int
+    fun isMyNodePrimary(): Boolean
+    fun primaryIndex(): Int
     fun onStatusUpdate(nodeIndex: Int, status: NodeStatus) // STATUS message from another node
     fun fastForwardHeight(height: Long): Boolean
     fun onHeightAdvance(height: Long):Boolean // a complete block was received from other peers, go forward

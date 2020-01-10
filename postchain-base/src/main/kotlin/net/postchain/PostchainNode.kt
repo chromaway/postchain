@@ -2,54 +2,46 @@
 
 package net.postchain
 
-import net.postchain.base.BaseTestInfrastructureFactory
-import net.postchain.config.blockchain.BlockchainConfigurationProviderFactory
+import net.postchain.base.BlockchainRid
 import net.postchain.config.node.NodeConfigurationProvider
+import net.postchain.core.BaseInfrastructureFactoryProvider
 import net.postchain.core.BlockchainInfrastructure
 import net.postchain.core.BlockchainProcessManager
-import net.postchain.core.InfrastructureFactory
-import net.postchain.core.Infrastructures.BaseEbft
-import net.postchain.core.Infrastructures.BaseTest
 import net.postchain.core.Shutdownable
-import net.postchain.ebft.BaseEBFTInfrastructureFactory
+import net.postchain.debug.DefaultNodeDiagnosticContext
+import net.postchain.debug.DiagnosticProperty
 
 /**
- * Postchain node instantiates infrastructure and blockchain
- * process manager.
+ * Postchain node instantiates infrastructure and blockchain process manager.
  */
-open class PostchainNode(nodeConfigProvider: NodeConfigurationProvider) : Shutdownable {
+open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Shutdownable {
 
-    val processManager: BlockchainProcessManager
     protected val blockchainInfrastructure: BlockchainInfrastructure
+    val processManager: BlockchainProcessManager
+    private val diagnosticContext = DefaultNodeDiagnosticContext()
 
     init {
-        val blockchainConfigProvider = BlockchainConfigurationProviderFactory.createProvider(nodeConfigProvider)
-        val infrastructureFactory = buildInfrastructureFactory(nodeConfigProvider)
-
-        blockchainInfrastructure = infrastructureFactory.makeBlockchainInfrastructure(nodeConfigProvider)
+        val infrastructureFactory = BaseInfrastructureFactoryProvider().createInfrastructureFactory(nodeConfigProvider)
+        blockchainInfrastructure = infrastructureFactory.makeBlockchainInfrastructure(nodeConfigProvider, diagnosticContext)
+        val blockchainConfigProvider = infrastructureFactory.makeBlockchainConfigurationProvider()
         processManager = infrastructureFactory.makeProcessManager(
-                nodeConfigProvider, blockchainConfigProvider, blockchainInfrastructure)
+                nodeConfigProvider, blockchainInfrastructure, blockchainConfigProvider, diagnosticContext)
+
+        diagnosticContext.addProperty(DiagnosticProperty.VERSION, "3.0.1") // TODO: [POS-97]
+        diagnosticContext.addProperty(DiagnosticProperty.PUB_KEY, nodeConfigProvider.getConfiguration().pubKey)
     }
 
-    fun startBlockchain(chainID: Long) {
-        processManager.startBlockchain(chainID)
+    fun startBlockchain(chainId: Long): BlockchainRid? {
+        return processManager.startBlockchain(chainId)
     }
 
-    fun stopBlockchain(chainID: Long) {
-        processManager.stopBlockchain(chainID)
+    fun stopBlockchain(chainId: Long) {
+        processManager.stopBlockchain(chainId)
     }
 
     override fun shutdown() {
+        // FYI: Order is important
         processManager.shutdown()
-    }
-
-    private fun buildInfrastructureFactory(nodeConfigProvider: NodeConfigurationProvider): InfrastructureFactory {
-        val factoryClass = when (nodeConfigProvider.getConfiguration().infrastructure.toLowerCase()) {
-            BaseEbft.secondName.toLowerCase() -> BaseEBFTInfrastructureFactory::class.java
-            BaseTest.secondName.toLowerCase() -> BaseTestInfrastructureFactory::class.java
-            else -> BaseEBFTInfrastructureFactory::class.java
-        }
-
-        return factoryClass.newInstance()
+        blockchainInfrastructure.shutdown()
     }
 }

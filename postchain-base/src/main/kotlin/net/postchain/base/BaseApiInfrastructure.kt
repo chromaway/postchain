@@ -1,15 +1,21 @@
 package net.postchain.base
 
+import net.postchain.api.rest.controller.DefaultDebugInfoQuery
 import net.postchain.api.rest.controller.RestApi
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.common.toHex
+import net.postchain.config.app.AppConfigDbLayer
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.ApiInfrastructure
 import net.postchain.core.BlockchainProcess
+import net.postchain.debug.NodeDiagnosticContext
 import net.postchain.ebft.rest.model.PostchainEBFTModel
 import net.postchain.ebft.worker.AbstractBlockchainProcess
 
-class BaseApiInfrastructure(nodeConfigProvider: NodeConfigurationProvider) : ApiInfrastructure {
+class BaseApiInfrastructure(
+        nodeConfigProvider: NodeConfigurationProvider,
+        val nodeDiagnosticContext: NodeDiagnosticContext
+) : ApiInfrastructure {
 
     val restApi: RestApi? = with(nodeConfigProvider.getConfiguration()) {
         if (restApiPort != -1) {
@@ -17,12 +23,14 @@ class BaseApiInfrastructure(nodeConfigProvider: NodeConfigurationProvider) : Api
                 RestApi(
                         restApiPort,
                         restApiBasePath,
+                        appConfig,
                         restApiSslCertificate,
                         restApiSslCertificatePassword)
             } else {
                 RestApi(
                         restApiPort,
-                        restApiBasePath)
+                        restApiBasePath,
+                        appConfig)
             }
         } else {
             null
@@ -34,10 +42,13 @@ class BaseApiInfrastructure(nodeConfigProvider: NodeConfigurationProvider) : Api
             val engine = process.getEngine()
 
             val apiModel = PostchainEBFTModel(
+                    process.getEngine().getConfiguration().chainID,
                     (process as AbstractBlockchainProcess).nodeStateTracker,
                     process.networkAwareTxQueue,
                     engine.getConfiguration().getTransactionFactory(),
-                    engine.getBlockQueries() as BaseBlockQueries) // TODO: [et]: Resolve type cast
+                    engine.getBlockQueries() as BaseBlockQueries, // TODO: [et]: Resolve type cast
+                    DefaultDebugInfoQuery(nodeDiagnosticContext)
+            )
 
             attachModel(blockchainRID(process), apiModel)
         }

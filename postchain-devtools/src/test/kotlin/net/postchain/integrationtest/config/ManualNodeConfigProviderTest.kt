@@ -7,6 +7,7 @@ import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_HOST
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_PORT
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_PUBKEY
+import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_TIMESTAMP
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.config.SimpleDatabaseConnector
@@ -22,9 +23,13 @@ import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import java.sql.Connection
+import java.sql.Timestamp
+import java.time.Instant
 
+@Ignore
 class ManualNodeConfigProviderTest : IntegrationTest() {
 
     private val peerInfos = arrayOf(
@@ -62,7 +67,7 @@ class ManualNodeConfigProviderTest : IntegrationTest() {
     @Test
     fun fourPeersConnectedSuccessfully() {
         val nodesCount = 4
-        val blockchainConfig = "/net/postchain/config/blockchain_config_4.xml"
+        val blockchainConfig = "/net/postchain/devtools/config/blockchain_config_4.xml"
         val nodeConfigs = arrayOf(
                 "classpath:/net/postchain/config/node0.properties",
                 "classpath:/net/postchain/config/node1.properties",
@@ -103,13 +108,13 @@ class ManualNodeConfigProviderTest : IntegrationTest() {
         val appConfig = buildAppConfig(nodeIndex)
 
         fun insertPeerInfo(connection: Connection, peerInfo: PeerInfo) {
+            val ts = Timestamp(Instant.now().toEpochMilli())
             QueryRunner().insert(
                     connection,
                     "INSERT INTO $TABLE_PEERINFOS " +
-                            "($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT, $TABLE_PEERINFOS_FIELD_PUBKEY) " +
-                            "VALUES (?, ?, ?) " +
-                            "ON CONFLICT ($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT) DO NOTHING",
-                    ScalarHandler<Long>(), peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex())
+                            "($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT, $TABLE_PEERINFOS_FIELD_PUBKEY, $TABLE_PEERINFOS_FIELD_TIMESTAMP) " +
+                            "VALUES (?, ?, ?, ?)",
+                    ScalarHandler<Long>(), peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex(), ts)
         }
 
         SimpleDatabaseConnector(appConfig)

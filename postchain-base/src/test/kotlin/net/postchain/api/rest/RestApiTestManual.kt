@@ -3,6 +3,7 @@
 package net.postchain.api.rest
 
 import io.restassured.RestAssured.given
+import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.RestTools
 import net.postchain.common.toHex
@@ -19,7 +20,8 @@ import java.util.*
 class RestApiTestManual {
     private val port = 58373
     private val cryptoSystem = SECP256K1CryptoSystem()
-    private val blockchainRID = "78967BAA4768CBCEF11C508326FFB13A956689FCB6DC3BA17F4B895CBB1577A3"
+    // TODO Olle POS-93 where do we get it?
+    private var blockchainRID: BlockchainRid? = null //"78967BAA4768CBCEF11C508326FFB13A956689FCB6DC3BA17F4B895CBB1577A3"
 
     //    @Test
     fun testGtxTestModuleBackend() {
@@ -40,13 +42,13 @@ class RestApiTestManual {
                 .then()
                 .statusCode(200)
 
-        val transaction = GTXTransactionFactory(EMPTY_SIGNATURE, GTXTestModule(), cryptoSystem)
+        val transaction = GTXTransactionFactory(BlockchainRid.EMPTY_RID, GTXTestModule(), cryptoSystem)
                 .decodeTransaction(txBytes)
-        RestTools.awaitConfirmed(port, blockchainRID, transaction.getRID().toHex())
+        RestTools.awaitConfirmed(port, blockchainRID!!.toHex(), transaction.getRID().toHex())
     }
 
     private fun buildTestTx(id: Long, value: String): ByteArray {
-        val b = GTXDataBuilder(EMPTY_SIGNATURE, arrayOf(pubKey(0)), cryptoSystem)
+        val b = GTXDataBuilder(BlockchainRid.EMPTY_RID, arrayOf(pubKey(0)), cryptoSystem)
         b.addOperation("gtx_test", arrayOf(gtv(id), gtv(value)))
         b.finish()
         b.sign(cryptoSystem.buildSigMaker(pubKey(0), privKey(0)))

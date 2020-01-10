@@ -89,4 +89,18 @@ data class BlockHeaderData(
         return gtv(gtvBlockchainRid, gtvPreviousBlockRid, gtvMerkleRootHash, gtvTimestamp, gtvHeight, gtvDependencies, gtvExtra)
     }
 
+    companion object {
+
+        fun fromGtv(gtv: GtvArray): BlockHeaderData {
+            return BlockHeaderData(
+                    gtv[0] as GtvByteArray,
+                    gtv[1] as GtvByteArray,
+                    gtv[2] as GtvByteArray,
+                    gtv[3] as GtvInteger,
+                    gtv[4] as GtvInteger,
+                    gtv[5],
+                    gtv[6] as GtvDictionary)
+        }
+    }
+
 }
