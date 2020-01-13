@@ -30,6 +30,7 @@ class FastSynchronizer(
     private val defaultBackoffDelta = 1000
     private val maxBackoffDelta = 30 * defaultBackoffDelta
 
+    private var nodesStatuses = HashMap<Int, NodeStatus>()
     private var nodesWithBlocks = hashMapOf<XPeerID, Long>()
     private var parallelRequestsState = hashMapOf<Long, IssuedRequestTimer>()
     private var blocks = PriorityQueue<IncomingBlock>(parallelism)
@@ -57,7 +58,7 @@ class FastSynchronizer(
         }
     }
 
-    fun nodeStatuses() = fastSyncAlgorithmTelemetry.nodeStatuses()
+    fun nodeStatuses() = nodesStatuses.values.toTypedArray()
 
     fun logCurrentState() = fastSyncAlgorithmTelemetry.logCurrentState(blockHeight, parallelRequestsState, blocks)
 
@@ -128,8 +129,7 @@ class FastSynchronizer(
                     }
                     is Status -> {
                         val nodeStatus = NodeStatus(message.height, message.serial)
-                        val index = validatorNodes.indexOf(xPeerId)
-                        fastSyncAlgorithmTelemetry.reportNodeStatus(index, nodeStatus)
+                        nodesStatuses[validatorNodes.indexOf(xPeerId)] = nodeStatus
 
                         if (xPeerId in validatorNodes) {
                             nodesWithBlocks[xPeerId] = message.height - 1 // TODO: [et]: ?
