@@ -1,6 +1,5 @@
 package net.postchain.ebft.syncmanager
 
-import net.postchain.core.BlockDataWithWitness
 import net.postchain.core.BlockQueries
 import net.postchain.core.BlockchainConfiguration
 import net.postchain.core.NodeStateTracker
@@ -8,20 +7,20 @@ import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.BlockDatabase
 import net.postchain.ebft.message.Message
 import net.postchain.ebft.rest.contract.serialize
-import net.postchain.ebft.syncmanager.replica.FastSyncAlgorithm
+import net.postchain.ebft.syncmanager.replica.FastSynchronizer
 import net.postchain.network.CommunicationManager
 
 class ReplicaSyncManager(
-        private val processName: BlockchainProcessName,
+        processName: BlockchainProcessName,
         signers: List<ByteArray>,
-        private val communicationManager: CommunicationManager<Message>,
+        communicationManager: CommunicationManager<Message>,
         private val nodeStateTracker: NodeStateTracker,
         blockDatabase: BlockDatabase,
         val blockQueries: BlockQueries,
         blockchainConfiguration: BlockchainConfiguration
-) : SyncManagerBase {
+) : SyncManager {
 
-    private val fastSyncAlgorithm = FastSyncAlgorithm(
+    private val fastSynchronizer = FastSynchronizer(
             processName,
             signers,
             communicationManager,
@@ -31,9 +30,9 @@ class ReplicaSyncManager(
     )
 
     override fun update() {
-        fastSyncAlgorithm.logCurrentState()
-        nodeStateTracker.blockHeight = fastSyncAlgorithm.blockHeight
-        nodeStateTracker.nodeStatuses = fastSyncAlgorithm.nodeStatuses().map { it.serialize() }.toTypedArray()
-        fastSyncAlgorithm.sync()
+        fastSynchronizer.logCurrentState()
+        nodeStateTracker.blockHeight = fastSynchronizer.blockHeight
+        nodeStateTracker.nodeStatuses = fastSynchronizer.nodeStatuses().map { it.serialize() }.toTypedArray()
+        fastSynchronizer.sync()
     }
 }

@@ -8,7 +8,7 @@ import net.postchain.core.BlockchainProcess
 import net.postchain.core.NodeStateTracker
 import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.BaseBlockDatabase
-import net.postchain.ebft.syncmanager.SyncManagerBase
+import net.postchain.ebft.syncmanager.SyncManager
 import kotlin.concurrent.thread
 
 /**
@@ -22,7 +22,7 @@ abstract class AbstractBlockchainProcess : BlockchainProcess {
     abstract val processName: BlockchainProcessName
     abstract val blockchainEngine: BlockchainEngine
     abstract val blockDatabase: BaseBlockDatabase
-    abstract val syncManager: SyncManagerBase
+    abstract val syncManager: SyncManager
     abstract val nodeStateTracker: NodeStateTracker
     abstract val networkAwareTxQueue: NetworkAwareTxQueue
 
@@ -36,8 +36,7 @@ abstract class AbstractBlockchainProcess : BlockchainProcess {
      * Create and run the [updateLoop] thread
      * @param syncManager the syncronization manager
      */
-    protected fun startUpdateLoop(syncManager: SyncManagerBase) {
-
+    protected fun startUpdateLoop(syncManager: SyncManager) {
         updateLoop = thread(name = "updateLoop-$processName") {
             while (!Thread.interrupted()) {
                 try {

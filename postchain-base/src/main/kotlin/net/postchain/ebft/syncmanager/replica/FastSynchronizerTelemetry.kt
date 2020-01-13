@@ -8,7 +8,7 @@ import java.util.*
 import kotlin.collections.HashMap
 
 
-class ReplicaTelemetry(private val processName: BlockchainProcessName) {
+class FastSynchronizerTelemetry(private val processName: BlockchainProcessName) {
 
     companion object : KLogging()
 

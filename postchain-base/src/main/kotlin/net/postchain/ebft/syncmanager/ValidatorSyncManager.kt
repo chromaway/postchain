@@ -12,49 +12,13 @@ import net.postchain.ebft.message.*
 import net.postchain.ebft.message.BlockData
 import net.postchain.ebft.message.Transaction
 import net.postchain.ebft.rest.contract.serialize
-import net.postchain.ebft.syncmanager.replica.FastSyncAlgorithm
+import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockData
+import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockDataWithWitness
+import net.postchain.ebft.syncmanager.replica.FastSynchronizer
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
 import nl.komponents.kovenant.task
 import java.util.*
-
-fun decodeBlockDataWithWitness(block: CompleteBlock, bc: BlockchainConfiguration)
-        : BlockDataWithWitness {
-    val header = bc.decodeBlockHeader(block.data.header)
-    val witness = bc.decodeWitness(block.witness)
-    return BlockDataWithWitness(header, block.data.transactions, witness)
-}
-
-fun decodeBlockData(block: BlockData, bc: BlockchainConfiguration)
-        : net.postchain.core.BlockData {
-    val header = bc.decodeBlockHeader(block.header)
-    return net.postchain.core.BlockData(header, block.transactions)
-}
-
-private class StatusSender(
-        private val maxStatusInterval: Int,
-        private val statusManager: StatusManager,
-        private val communicationManager: CommunicationManager<Message>
-) {
-    var lastSerial: Long = -1
-    var lastSentTime: Long = Date(0L).time
-
-    // Sends a status message to all peers when my status has changed or
-    // after a timeout period.
-    fun update() {
-        val myStatus = statusManager.myStatus
-        val isNewState = myStatus.serial > this.lastSerial
-        val timeoutExpired = System.currentTimeMillis() - this.lastSentTime > this.maxStatusInterval
-        if (isNewState || timeoutExpired) {
-            this.lastSentTime = Date().time
-            this.lastSerial = myStatus.serial
-            val statusMessage = Status(myStatus.blockRID, myStatus.height,
-                    myStatus.revolting, myStatus.round, myStatus.serial,
-                    myStatus.state.ordinal)
-            communicationManager.broadcastPacket(statusMessage)
-        }
-    }
-}
 
 /**
  * The ValidatorSyncManager handles communications with our peers.
@@ -70,7 +34,7 @@ class ValidatorSyncManager(
         private val nodeStateTracker: NodeStateTracker,
         private val txQueue: TransactionQueue,
         private val blockchainConfiguration: BlockchainConfiguration
-) : SyncManagerBase {
+) : SyncManager {
 
     private val revoltTracker = RevoltTracker(10000, statusManager)
     private val statusSender = StatusSender(1000, statusManager, communicationManager)
@@ -82,7 +46,7 @@ class ValidatorSyncManager(
 
     @Volatile
     private var useFastSyncAlgorithm: Boolean = false
-    private val fastSyncAlgorithm = FastSyncAlgorithm(
+    private val fastSynchronizer = FastSynchronizer(
             processName,
             signers.minus(signers.elementAt(statusManager.getMyIndex())),
             communicationManager,
@@ -130,7 +94,7 @@ class ValidatorSyncManager(
                             when (message) {
                                 is Status -> {
                                     val nodeStatus = NodeStatus(message.height, message.serial)
-                                    useFastSyncAlgorithm = (message.height - statusManager.myStatus.height) >= fastSyncAlgorithm.blockHeightAheadCount
+                                    useFastSyncAlgorithm = (message.height - statusManager.myStatus.height) >= fastSynchronizer.blockHeightAheadCount
                                     nodeStatus.blockRID = message.blockRID
                                     nodeStatus.revolting = message.revolting
                                     nodeStatus.round = message.round
@@ -374,8 +338,8 @@ class ValidatorSyncManager(
     override fun update() {
 
         if (useFastSyncAlgorithm) {
-            fastSyncAlgorithm.sync()
-            if (fastSyncAlgorithm.isUpToDate()) {
+            fastSynchronizer.sync()
+            if (fastSynchronizer.isUpToDate()) {
                 // turn off fast sync, reset current block to null, and query for the last known state from db to prevent
                 // possible race conditions
                 useFastSyncAlgorithm = false

@@ -15,7 +15,7 @@ class BaseStatusManager(
         private val nodeCount: Int,
         private val myIndex: Int,
         myNextHeight: Long
-): StatusManager {
+) : StatusManager {
 
     override val nodeStatuses = Array(nodeCount) { NodeStatus() }
     override val commitSignatures: Array<Signature?> = arrayOfNulls(nodeCount)
@@ -130,13 +130,13 @@ class BaseStatusManager(
      */
     @Synchronized
     override fun fastForwardHeight(height: Long): Boolean {
-
-        if(height < myStatus.height) {
+        if (height < myStatus.height) {
             logger.error("Failed to fast forward negative increment.")
             return false
         }
+
         logger.debug("Advancing block height from ${myStatus.height} to ${height + 1} ...")
-        (myStatus.height until height + 1).map { advanceHeight() }
+        (myStatus.height..height).forEach { _ -> advanceHeight() }
 
         logger.debug("Current state: ${myStatus.height}")
         return true
@@ -471,7 +471,7 @@ class BaseStatusManager(
                 if (primaryBlockRID != null) {
                     val _intent = intent
                     if (!(_intent is FetchUnfinishedBlockIntent &&
-                          _intent.isThisTheBlockWeAreWaitingFor(myStatus.blockRID))) {
+                                    _intent.isThisTheBlockWeAreWaitingFor(myStatus.blockRID))) {
                         intent = FetchUnfinishedBlockIntent(primaryBlockRID)
                         return true
                     }
