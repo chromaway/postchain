@@ -1,7 +1,10 @@
 package net.postchain.gtv
 
+import net.postchain.common.hexStringToByteArray
+import net.postchain.common.toHex
 import org.junit.Test
 import java.math.BigInteger
+import kotlin.system.measureTimeMillis
 import kotlin.test.assertEquals
 
 class GtvEncoderTest {
@@ -59,5 +62,26 @@ class GtvEncoderTest {
         val b = GtvEncoder.encodeGtv(expected)
         val result = GtvDecoder.decodeGtv(b)
         assertEquals(expected, result)
+    }
+
+    @Test
+    fun stressTestGtv() {
+        var hex = ""
+        val size = 1024*1024*30 // 30mb
+
+        // int array 30mb, we need to divide 4 because Int size is 4 bytes
+        val gtvArray = Array<Gtv>(size/4) { GtvInteger(1L)}
+
+        val executionTime = measureTimeMillis {
+            hex = GtvEncoder.encodeGtv(GtvArray(gtvArray)).toHex()
+        }
+        println("Execution time serialization: ${executionTime} milliseconds")
+
+        val executionTime2 = measureTimeMillis {
+            val gtvArray = GtvDecoder.decodeGtv(hex.hexStringToByteArray()).asArray()
+        }
+        assertEquals(size/4, gtvArray.size)
+        println("Execution time deserialization: ${executionTime2} milliseconds")
+
     }
 }
