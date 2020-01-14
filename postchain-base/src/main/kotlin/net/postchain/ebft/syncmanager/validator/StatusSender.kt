@@ -1,4 +1,4 @@
-package net.postchain.ebft.syncmanager
+package net.postchain.ebft.syncmanager.validator
 
 import net.postchain.ebft.StatusManager
 import net.postchain.ebft.message.Message

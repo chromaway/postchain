@@ -1,4 +1,4 @@
-package net.postchain.ebft.syncmanager
+package net.postchain.ebft.syncmanager.replica
 
 import net.postchain.core.BlockQueries
 import net.postchain.core.BlockchainConfiguration
@@ -7,7 +7,8 @@ import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.BlockDatabase
 import net.postchain.ebft.message.Message
 import net.postchain.ebft.rest.contract.serialize
-import net.postchain.ebft.syncmanager.replica.FastSynchronizer
+import net.postchain.ebft.syncmanager.SyncManager
+import net.postchain.ebft.syncmanager.common.FastSynchronizer
 import net.postchain.network.CommunicationManager
 
 class ReplicaSyncManager(

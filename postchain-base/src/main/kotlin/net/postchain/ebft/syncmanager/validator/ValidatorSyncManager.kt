@@ -1,6 +1,6 @@
 // Copyright (c) 2017 ChromaWay Inc. See README for license information.
 
-package net.postchain.ebft.syncmanager
+package net.postchain.ebft.syncmanager.validator
 
 import mu.KLogging
 import net.postchain.common.toHex
@@ -14,7 +14,9 @@ import net.postchain.ebft.message.Transaction
 import net.postchain.ebft.rest.contract.serialize
 import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockData
 import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockDataWithWitness
-import net.postchain.ebft.syncmanager.replica.FastSynchronizer
+import net.postchain.ebft.syncmanager.StatusLogInterval
+import net.postchain.ebft.syncmanager.SyncManager
+import net.postchain.ebft.syncmanager.common.FastSynchronizer
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
 import nl.komponents.kovenant.task
@@ -93,13 +95,18 @@ class ValidatorSyncManager(
                             // validator consensus logic
                             when (message) {
                                 is Status -> {
-                                    val nodeStatus = NodeStatus(message.height, message.serial)
-                                    useFastSyncAlgorithm = (message.height - statusManager.myStatus.height) >= fastSynchronizer.blockHeightAheadCount
-                                    nodeStatus.blockRID = message.blockRID
-                                    nodeStatus.revolting = message.revolting
-                                    nodeStatus.round = message.round
-                                    nodeStatus.state = NodeState.values()[message.state]
-                                    statusManager.onStatusUpdate(nodeIndex, nodeStatus)
+                                    useFastSyncAlgorithm = (message.height - statusManager.myStatus.height) >=
+                                            fastSynchronizer.blockHeightAheadCount
+
+                                    NodeStatus(message.height, message.serial)
+                                            .apply {
+                                                blockRID = message.blockRID
+                                                revolting = message.revolting
+                                                round = message.round
+                                                state = NodeState.values()[message.state]
+                                            }.also {
+                                                statusManager.onStatusUpdate(nodeIndex, it)
+                                            }
                                 }
                                 is BlockSignature -> {
                                     val signature = Signature(message.sig.subjectID, message.sig.data)
@@ -278,7 +285,7 @@ class ValidatorSyncManager(
     /**
      * Process our intent latest intent
      */
-    fun processIntent() {
+    private fun processIntent() {
         val intent = blockManager.getBlockIntent()
         if (intent == processingIntent) {
             if (intent is DoNothingIntent) return
@@ -336,7 +343,6 @@ class ValidatorSyncManager(
      * notify peers of our current status.
      */
     override fun update() {
-
         if (useFastSyncAlgorithm) {
             fastSynchronizer.sync()
             if (fastSynchronizer.isUpToDate()) {
@@ -348,7 +354,6 @@ class ValidatorSyncManager(
                 blockManager.currentBlock = null
             }
         } else {
-
             synchronized(statusManager) {
                 // Process all messages from peers, one at a time. Some
                 // messages may trigger asynchronous code which will
