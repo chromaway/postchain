@@ -1,7 +1,5 @@
 package net.postchain.gtv
 
-import net.postchain.common.hexStringToByteArray
-import net.postchain.common.toHex
 import org.junit.Test
 import java.math.BigInteger
 import kotlin.system.measureTimeMillis
@@ -66,22 +64,19 @@ class GtvEncoderTest {
 
     @Test
     fun stressTestGtv() {
-        var hex = ""
-        val size = 1024*1024*30 // 30mb
-
-        // int array 30mb, we need to divide 4 because Int size is 4 bytes
-        val gtvArray = Array<Gtv>(size/4) { GtvInteger(1L)}
-
-        val executionTime = measureTimeMillis {
-            hex = GtvEncoder.encodeGtv(GtvArray(gtvArray)).toHex()
+        val size = 1024*1024 * 3 // that could make gtv size is around 3x MB
+        var ran = java.util.Random()
+        var gtvArray  = (1..size).map { GtvInteger(ran.nextLong()) }.toTypedArray()
+        var encoded = ByteArray(0)
+        val serializationTime = measureTimeMillis {
+            encoded = GtvEncoder.encodeGtv(GtvArray(gtvArray))
         }
-        println("Execution time serialization: ${executionTime} milliseconds")
+        println("Size of gtv ~: ${encoded.size / (1024*1024)} MB")
+        println("Execution time serialization: ${serializationTime} milliseconds")
 
-        val executionTime2 = measureTimeMillis {
-            val gtvArray = GtvDecoder.decodeGtv(hex.hexStringToByteArray()).asArray()
+        val deserializationTime = measureTimeMillis {
+            GtvDecoder.decodeGtv(encoded).asArray()
         }
-        assertEquals(size/4, gtvArray.size)
-        println("Execution time deserialization: ${executionTime2} milliseconds")
-
+        println("Execution time deserialization: ${deserializationTime} milliseconds")
     }
 }
