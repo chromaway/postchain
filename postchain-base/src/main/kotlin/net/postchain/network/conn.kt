@@ -2,7 +2,7 @@
 
 package net.postchain.network
 
-val MAX_PAYLOAD_SIZE = 10000000
+val MAX_PAYLOAD_SIZE = 30000000
 
 val MAX_QUEUED_PACKETS = 100
 
