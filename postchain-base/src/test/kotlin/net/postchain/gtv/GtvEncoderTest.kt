@@ -1,5 +1,8 @@
 package net.postchain.gtv
 
+import net.postchain.base.SECP256K1CryptoSystem
+import net.postchain.common.toHex
+import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import org.junit.Test
 import java.math.BigInteger
 import kotlin.system.measureTimeMillis
@@ -64,12 +67,12 @@ class GtvEncoderTest {
 
     @Test
     fun stressTestGtv() {
-        val size = 1024*1024 * 3 // that could make gtv size is around 3x MB
-        var ran = java.util.Random()
-        var gtvArray  = (1..size).map { GtvInteger(ran.nextLong()) }.toTypedArray()
+        val size = 1024*1024 * 4 // that could make gtv size is around 27 MB
+        val gtvArray  = (1..size).map { GtvInteger( it.toLong() ) }.toTypedArray()
         var encoded = ByteArray(0)
+        val gtv = GtvArray(gtvArray)
         val serializationTime = measureTimeMillis {
-            encoded = GtvEncoder.encodeGtv(GtvArray(gtvArray))
+            encoded = GtvEncoder.encodeGtv(gtv)
         }
         println("Size of gtv ~: ${encoded.size / (1024*1024)} MB")
         println("Execution time serialization: ${serializationTime} milliseconds")
@@ -78,5 +81,12 @@ class GtvEncoderTest {
             GtvDecoder.decodeGtv(encoded).asArray()
         }
         println("Execution time deserialization: ${deserializationTime} milliseconds")
+
+        val cs = SECP256K1CryptoSystem()
+        val hashingTime = measureTimeMillis {
+            val hash = gtv.merkleHash(GtvMerkleHashCalculator(cs))
+            println(hash.toHex())
+        }
+        println("Execution hashing time: ${hashingTime} milliseconds")
     }
 }
