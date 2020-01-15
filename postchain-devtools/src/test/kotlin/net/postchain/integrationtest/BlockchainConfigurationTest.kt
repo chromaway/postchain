@@ -15,7 +15,6 @@ import kotlin.test.assertEquals
 
 class BlockchainConfigurationTest : IntegrationTest() {
 
-    @Ignore
     @Test
     fun testMaxBlockSize() {
         val blockchainRid = BlockchainRid.buildFromHex("14C483C045F323ACD44298D3BECAAFFD672B1C43D273AB55C0C67F12C9D09014")
@@ -27,7 +26,7 @@ class BlockchainConfigurationTest : IntegrationTest() {
         buildBlockAndCommit(node)
         assertEquals(0, getBestHeight(node))
 
-        val dummyTest = RandomStringUtils.randomAlphanumeric(1024 * 1024)
+        val dummyTest = RandomStringUtils.randomAlphanumeric(25 * 1024 * 1024)
 
         for (i in 1..2) {
             txQueue.enqueue(buildTransaction(blockchainRid, "${dummyTest}-${i}"))
