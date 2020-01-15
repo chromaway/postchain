@@ -9,11 +9,13 @@ import net.postchain.gtx.GTXDataBuilder
 import net.postchain.gtx.GTXTransaction
 import net.postchain.gtx.GTXTransactionFactory
 import org.apache.commons.lang3.RandomStringUtils
+import org.junit.Ignore
 import org.junit.Test
 import kotlin.test.assertEquals
 
 class BlockchainConfigurationTest : IntegrationTest() {
 
+    @Ignore
     @Test
     fun testMaxBlockSize() {
         val blockchainRid = BlockchainRid.buildFromHex("14C483C045F323ACD44298D3BECAAFFD672B1C43D273AB55C0C67F12C9D09014")
