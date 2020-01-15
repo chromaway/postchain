@@ -16,7 +16,7 @@ interface MultiSigBlockWitnessBuilder : BlockWitnessBuilder {
 }
 
 interface BlockStore {
-    fun beginBlock(ctx: EContext, blockHeightDependencies: Array<Hash?>?): InitialBlockData
+    fun beginBlock(ctx: EContext, blockchainRID: BlockchainRid, blockHeightDependencies: Array<Hash?>?): InitialBlockData
     fun addTransaction(bctx: BlockEContext, tx: Transaction): TxEContext
     fun finalizeBlock(bctx: BlockEContext, bh: BlockHeader)
     fun commitBlock(bctx: BlockEContext, w: BlockWitness?)

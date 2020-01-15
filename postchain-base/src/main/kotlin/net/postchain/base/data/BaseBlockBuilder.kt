@@ -26,7 +26,7 @@ import java.util.*
  * @property blockSigMaker used to produce signatures on blocks for local node
  */
 open class BaseBlockBuilder(
-        val blockchainRID: BlockchainRid,
+        blockchainRID: BlockchainRid,
         val cryptoSystem: CryptoSystem,
         eContext: EContext,
         store: BlockStore,
@@ -37,7 +37,7 @@ open class BaseBlockBuilder(
         val usingHistoricBRID: Boolean,
         val maxBlockSize : Long = 20*1024*1024, // 20mb
         val maxBlockTransactions : Long = 100
-): AbstractBlockBuilder(eContext, store, txFactory) {
+): AbstractBlockBuilder(eContext, blockchainRID, store, txFactory) {
 
     companion object : KLogging()
 

@@ -9,6 +9,7 @@ import net.postchain.core.TxDetail
 import net.postchain.gtv.Gtv
 
 interface Model {
+    val chainIID: Long
     fun postTransaction(tx: ApiTx)
     fun getTransaction(txRID: TxRID): ApiTx?
     fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, hashesOnly: Boolean): List<BlockDetail>

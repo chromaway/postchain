@@ -9,7 +9,7 @@ import net.postchain.core.NodeStateTracker
 import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.BaseBlockDatabase
 import net.postchain.ebft.message.Message
-import net.postchain.ebft.syncmanager.ReplicaSyncManager
+import net.postchain.ebft.syncmanager.replica.ReplicaSyncManager
 import net.postchain.network.CommunicationManager
 
 /**
