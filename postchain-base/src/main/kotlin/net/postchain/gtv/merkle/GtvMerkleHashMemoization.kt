@@ -21,7 +21,7 @@ import kotlin.random.Random
  */
 object GtvMerkleHashCache {
 
-    val enabled : Boolean = true
+    val enabled : Boolean = false
     val defaultSizeOf1MB = 1000000 // TODO: Make this configurable
     val defaultNumberOfLookupsBeforePrune = 100 // Not that important, no need to configure
 
