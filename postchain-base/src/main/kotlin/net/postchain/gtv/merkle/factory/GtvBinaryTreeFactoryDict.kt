@@ -2,7 +2,6 @@ package net.postchain.gtv.merkle.factory
 
 import net.postchain.base.merkle.BinaryTreeElement
 import net.postchain.base.merkle.EmptyLeaf
-import net.postchain.base.merkle.MerkleHashMemoization
 import net.postchain.base.merkle.Node
 import net.postchain.gtv.*
 import net.postchain.gtv.merkle.GtvBinaryTreeFactory
