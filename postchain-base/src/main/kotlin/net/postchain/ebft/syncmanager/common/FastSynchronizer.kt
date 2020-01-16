@@ -68,10 +68,7 @@ class FastSynchronizer(
                 when {
                     it <= blockHeight -> blocks.remove()
                     it == blockHeight + 1 ->
-                        if (!isUpToDate()) {
-                            // to prevent outstanding blocks to commit when fast sync is turned off.
                             commitBlock(blocks.remove().block)
-                        } else Unit
                     else -> Unit
                 }
             }
@@ -82,7 +79,11 @@ class FastSynchronizer(
         parallelRequestsState.entries.removeIf { it.key <= blockHeight }
         val maxElem = (parallelRequestsState.maxBy { it.key }?.key ?: blockHeight) + 1
         val diff = parallelism - parallelRequestsState.count()
-        (maxElem until maxElem + diff).subtract(parallelRequestsState.keys).map { askForBlock(it) }
+        (maxElem until maxElem + diff).subtract(parallelRequestsState.keys).map {
+            if (!doesQueueContainsBlock(it)) {
+                askForBlock(it)
+            }
+        }
 
         parallelRequestsState.entries.associate {
             val state = IssuedRequestTimer(it.value.backoffDelta, it.value.lastSentTimestamp)
@@ -132,7 +133,7 @@ class FastSynchronizer(
                         nodesStatuses[validatorNodes.indexOf(xPeerId)] = nodeStatus
 
                         if (xPeerId in validatorNodes) {
-                            nodesWithBlocks[xPeerId] = message.height - 1 // TODO: [et]: ?
+                            nodesWithBlocks[xPeerId] = message.height - 1
                         }
                     }
                     else -> throw ProgrammerMistake("Unhandled type ${message::class}")
