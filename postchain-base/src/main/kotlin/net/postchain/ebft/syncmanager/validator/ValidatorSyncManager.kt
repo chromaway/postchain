@@ -344,14 +344,16 @@ class ValidatorSyncManager(
      */
     override fun update() {
         if (useFastSyncAlgorithm) {
-            fastSynchronizer.sync()
-            if (fastSynchronizer.isUpToDate()) {
-                // turn off fast sync, reset current block to null, and query for the last known state from db to prevent
-                // possible race conditions
-                useFastSyncAlgorithm = false
-                val currentBlockHeight = blockQueries.getBestHeight().get()
-                statusManager.fastForwardHeight(currentBlockHeight)
-                blockManager.currentBlock = null
+            synchronized (statusManager) {
+                fastSynchronizer.sync()
+                if (fastSynchronizer.isUpToDate()) {
+                    // turn off fast sync, reset current block to null, and query for the last known state from db to prevent
+                    // possible race conditions
+                    useFastSyncAlgorithm = false
+                    val currentBlockHeight = blockQueries.getBestHeight().get()
+                    statusManager.fastForwardHeight(currentBlockHeight)
+                    blockManager.currentBlock = null
+                }
             }
         } else {
             synchronized(statusManager) {
