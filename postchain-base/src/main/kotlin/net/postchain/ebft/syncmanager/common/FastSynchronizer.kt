@@ -26,7 +26,6 @@ class FastSynchronizer(
     private val fastSyncAlgorithmTelemetry = FastSynchronizerTelemetry(processName)
     private val validatorNodes: List<XPeerID> = signers.map { XPeerID(it) }
     private val parallelism = 10
-    private val nodePoolCount: Int = max(1, signers.count() / 2) // TODO: [et] ?
     private val defaultBackoffDelta = 1000
     private val maxBackoffDelta = 30 * defaultBackoffDelta
 
@@ -46,7 +45,7 @@ class FastSynchronizer(
         dispatchMessages()
     }
 
-    fun isUpToDate(): Boolean {
+    fun isAlmostUpToDate(): Boolean {
         val highest = nodeStatuses().map { it.height }.max() ?: Long.MAX_VALUE
         return if (blockHeight == -1L || ((highest - blockHeight) > blockHeightAheadCount)) {
             false
@@ -169,14 +168,12 @@ class FastSynchronizer(
                 .toMutableList()
                 .also {
                     it.shuffle()
-                    if (it.count() >= nodePoolCount) {
-                        fastSyncAlgorithmTelemetry.askForBlock(height, blockHeight)
-                        val timer = parallelRequestsState[height]
-                                ?: IssuedRequestTimer(defaultBackoffDelta, Date().time)
-                        val backoffDelta = min((timer.backoffDelta.toDouble() * 1.1).toInt(), maxBackoffDelta)
-                        communicationManager.sendPacket(GetBlockAtHeight(height), it.first())
-                        parallelRequestsState[height] = timer.copy(backoffDelta = backoffDelta, lastSentTimestamp = Date().time)
-                    }
+                    fastSyncAlgorithmTelemetry.askForBlock(height, blockHeight)
+                    val timer = parallelRequestsState[height]
+                            ?: IssuedRequestTimer(defaultBackoffDelta, Date().time)
+                    val backoffDelta = min((timer.backoffDelta.toDouble() * 1.1).toInt(), maxBackoffDelta)
+                    communicationManager.sendPacket(GetBlockAtHeight(height), it.first())
+                    parallelRequestsState[height] = timer.copy(backoffDelta = backoffDelta, lastSentTimestamp = Date().time)
                 }
     }
 

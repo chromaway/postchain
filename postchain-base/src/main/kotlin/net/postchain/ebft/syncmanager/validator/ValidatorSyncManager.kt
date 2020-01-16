@@ -346,7 +346,7 @@ class ValidatorSyncManager(
         if (useFastSyncAlgorithm) {
             synchronized (statusManager) {
                 fastSynchronizer.sync()
-                if (fastSynchronizer.isUpToDate()) {
+                if (fastSynchronizer.isAlmostUpToDate()) {
                     // turn off fast sync, reset current block to null, and query for the last known state from db to prevent
                     // possible race conditions
                     useFastSyncAlgorithm = false
