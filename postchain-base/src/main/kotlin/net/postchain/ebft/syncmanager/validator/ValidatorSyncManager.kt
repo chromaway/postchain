@@ -16,8 +16,8 @@ import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockData
 import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockDataWithWitness
 import net.postchain.ebft.syncmanager.StatusLogInterval
 import net.postchain.ebft.syncmanager.SyncManager
+import net.postchain.ebft.syncmanager.common.EBFTNodesCondition
 import net.postchain.ebft.syncmanager.common.FastSynchronizer
-import net.postchain.getBFTRequiredSignatureCount
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
 import nl.komponents.kovenant.task
@@ -339,13 +339,9 @@ class ValidatorSyncManager(
     }
 
     private fun tryToSwitchToFastSync() {
-        val aheadNodes = statusManager.nodeStatuses
-                .sortedByDescending(NodeStatus::height)
-                .takeWhile { status -> status.height - statusManager.myStatus.height >= fastSynchronizer.blockHeightAheadCount }
-
-        val quorum = getBFTRequiredSignatureCount(statusManager.nodeStatuses.size)
-
-        useFastSyncAlgorithm = aheadNodes.size >= quorum
+        useFastSyncAlgorithm = EBFTNodesCondition(statusManager.nodeStatuses) { status ->
+            status.height - statusManager.myStatus.height >= fastSynchronizer.blockHeightAheadCount
+        }.satisfied()
     }
 
     /**
@@ -357,6 +353,7 @@ class ValidatorSyncManager(
             synchronized(statusManager) {
                 fastSynchronizer.sync()
                 if (fastSynchronizer.isAlmostUpToDate()) {
+                    fastSynchronizer.reset()
                     // turn off fast sync, reset current block to null, and query for the last known state from db to prevent
                     // possible race conditions
                     useFastSyncAlgorithm = false
