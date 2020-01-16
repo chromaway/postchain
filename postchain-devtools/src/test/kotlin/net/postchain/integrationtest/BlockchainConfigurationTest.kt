@@ -9,6 +9,7 @@ import net.postchain.gtx.GTXDataBuilder
 import net.postchain.gtx.GTXTransaction
 import net.postchain.gtx.GTXTransactionFactory
 import org.apache.commons.lang3.RandomStringUtils
+import org.junit.Ignore
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -25,7 +26,7 @@ class BlockchainConfigurationTest : IntegrationTest() {
         buildBlockAndCommit(node)
         assertEquals(0, getBestHeight(node))
 
-        val dummyTest = RandomStringUtils.randomAlphanumeric(1024 * 1024)
+        val dummyTest = RandomStringUtils.randomAlphanumeric(25 * 1024 * 1024)
 
         for (i in 1..2) {
             txQueue.enqueue(buildTransaction(blockchainRid, "${dummyTest}-${i}"))

@@ -26,12 +26,6 @@ class CommandAddBlockchain : Command {
     private var chainId = 0L
 
     @Parameter(
-            names = ["-brid", "--blockchain-rid"],
-            description = "Blockchain global ID",
-            required = true)
-    private var blockchainRID: String = ""
-
-    @Parameter(
             names = ["-bc", "--blockchain-config"],
             description = "Configuration file of blockchain (gtxml or binary)",
             required = true)

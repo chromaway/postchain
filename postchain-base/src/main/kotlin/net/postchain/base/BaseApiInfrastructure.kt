@@ -42,6 +42,7 @@ class BaseApiInfrastructure(
             val engine = process.getEngine()
 
             val apiModel = PostchainEBFTModel(
+                    process.getEngine().getConfiguration().chainID,
                     (process as AbstractBlockchainProcess).nodeStateTracker,
                     process.networkAwareTxQueue,
                     engine.getConfiguration().getTransactionFactory(),

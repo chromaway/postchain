@@ -8,12 +8,13 @@ import net.postchain.core.TransactionFactory
 import net.postchain.core.TransactionQueue
 
 class PostchainEBFTModel(
+        chainIID: Long,
         private val nodeStateTracker: NodeStateTracker,
         txQueue: TransactionQueue,
         transactionFactory: TransactionFactory,
         blockQueries: BaseBlockQueries,
         debugInfoQuery: DebugInfoQuery
-) : PostchainModel(txQueue, transactionFactory, blockQueries, debugInfoQuery) {
+) : PostchainModel(chainIID, txQueue, transactionFactory, blockQueries, debugInfoQuery) {
 
     override fun nodeQuery(subQuery: String): String {
         val json = JsonFactory.makeJson()

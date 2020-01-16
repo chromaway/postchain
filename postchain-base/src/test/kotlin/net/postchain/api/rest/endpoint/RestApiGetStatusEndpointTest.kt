@@ -17,6 +17,7 @@ import org.easymock.EasyMock.*
 import org.hamcrest.Matchers.equalToIgnoringCase
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 /**
@@ -40,6 +41,8 @@ class RestApiGetStatusEndpointTest {
     @Before
     fun setup() {
         model = createMock(Model::class.java)
+        expect(model.chainIID).andReturn(1L).anyTimes()
+
         restApi = RestApi(
                 0,
                 basePath,
@@ -49,7 +52,6 @@ class RestApiGetStatusEndpointTest {
                 { MockDatabaseConnector() },
                 { _, _ -> mockAppConfigDbLayer }
         )
-        restApi.attachModel(blockchainRID, model)
     }
 
     @After
@@ -61,7 +63,10 @@ class RestApiGetStatusEndpointTest {
     fun test_getStatus_ok() {
         expect(model.getStatus(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(ApiStatus(TransactionStatus.CONFIRMED))
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx/$blockchainRID/$txHashHex/status")
@@ -76,7 +81,10 @@ class RestApiGetStatusEndpointTest {
     fun test_getStatus_ok_via_ChainIid() {
         expect(model.getStatus(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(ApiStatus(TransactionStatus.CONFIRMED))
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx/iid_${chainIid.toInt().toString()}/$txHashHex/status")

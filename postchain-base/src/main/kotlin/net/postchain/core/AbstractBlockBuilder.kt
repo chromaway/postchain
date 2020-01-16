@@ -4,6 +4,7 @@ package net.postchain.core
 
 import net.postchain.base.BaseBlockEContext
 import net.postchain.base.BlockchainDependencies
+import net.postchain.base.BlockchainRid
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
 
@@ -21,9 +22,11 @@ import net.postchain.common.toHex
  */
 abstract class AbstractBlockBuilder(
         val ectx: EContext,
+        val blockchainRID: BlockchainRid,
+
         val store: BlockStore,
         val txFactory: TransactionFactory
-) : BlockBuilder {
+        ) : BlockBuilder {
 
     // functions which need to be implemented in a concrete BlockBuilder:
     abstract fun makeBlockHeader(): BlockHeader
@@ -51,7 +54,7 @@ abstract class AbstractBlockBuilder(
             ProgrammerMistake("This builder has already been used once (you must create a new builder instance)")
         }
         blockchainDependencies = buildBlockchainDependencies(partialBlockHeader)
-        initialBlockData = store.beginBlock(ectx, blockchainDependencies!!.extractBlockHeightDependencyArray())
+        initialBlockData = store.beginBlock(ectx, blockchainRID, blockchainDependencies!!.extractBlockHeightDependencyArray())
         bctx = BaseBlockEContext(
                 ectx,
                 initialBlockData.blockIID,

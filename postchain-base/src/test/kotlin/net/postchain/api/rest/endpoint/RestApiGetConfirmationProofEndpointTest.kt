@@ -7,18 +7,13 @@ import net.postchain.api.rest.controller.RestApi
 import net.postchain.api.rest.model.TxRID
 import net.postchain.base.BaseBlockWitness
 import net.postchain.base.ConfirmationProof
-import net.postchain.base.MerklePath
-import net.postchain.base.merkle.proof.MerkleProofElement
-import net.postchain.base.merkle.proof.ProofValueLeaf
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
-import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 import net.postchain.gtv.merkle.proof.ProofNodeGtvArrayHead
 import net.postchain.gtv.merkle.proof.ProofValueGtvLeaf
 import net.postchain.gtv.path.ArrayGtvPathElement
-import net.postchain.gtv.path.SearchableGtvPathElement
 import org.easymock.EasyMock.*
 import org.hamcrest.Matchers.isEmptyString
 import org.hamcrest.core.IsEqual.equalTo
@@ -41,9 +36,10 @@ class RestApiGetConfirmationProofEndpointTest {
     @Before
     fun setup() {
         model = createMock(Model::class.java)
+        expect(model.chainIID).andReturn(1L).anyTimes()
+
         val appConf = AppConfig(DummyConfig.getDummyConfig())
         restApi = RestApi(0, basePath, appConf)
-        restApi.attachModel(blockchainRID, model)
     }
 
     @After
@@ -65,7 +61,6 @@ class RestApiGetConfirmationProofEndpointTest {
 
     @Test
     fun test_getConfirmationProof_ok() {
-
         val expectedObject = ConfirmationProof(
                 txHashHex.toByteArray(),
                 byteArrayOf(0x0a, 0x0b, 0x0c),
@@ -73,11 +68,14 @@ class RestApiGetConfirmationProofEndpointTest {
                         byteArrayOf(0x0b),
                         arrayOf()),
                 buildDummyProof()
-                )
+        )
 
         expect(model.getConfirmationProof(TxRID(txHashHex.hexStringToByteArray())))
                 .andReturn(expectedObject)
+
         replay(model)
+
+        restApi.attachModel(blockchainRID, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx/$blockchainRID/$txHashHex/confirmationProof")
@@ -90,5 +88,4 @@ class RestApiGetConfirmationProofEndpointTest {
 
         verify(model)
     }
-
 }

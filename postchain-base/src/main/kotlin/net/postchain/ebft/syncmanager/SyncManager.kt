@@ -2,6 +2,6 @@
 
 package net.postchain.ebft.syncmanager
 
-interface SyncManagerBase {
+interface SyncManager {
     fun update()
 }
