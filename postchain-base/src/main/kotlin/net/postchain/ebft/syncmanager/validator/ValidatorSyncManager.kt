@@ -17,6 +17,7 @@ import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockDataWithWitnes
 import net.postchain.ebft.syncmanager.StatusLogInterval
 import net.postchain.ebft.syncmanager.SyncManager
 import net.postchain.ebft.syncmanager.common.FastSynchronizer
+import net.postchain.getBFTRequiredSignatureCount
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
 import nl.komponents.kovenant.task
@@ -95,9 +96,6 @@ class ValidatorSyncManager(
                             // validator consensus logic
                             when (message) {
                                 is Status -> {
-                                    useFastSyncAlgorithm = (message.height - statusManager.myStatus.height) >=
-                                            fastSynchronizer.blockHeightAheadCount
-
                                     NodeStatus(message.height, message.serial)
                                             .apply {
                                                 blockRID = message.blockRID
@@ -107,6 +105,8 @@ class ValidatorSyncManager(
                                             }.also {
                                                 statusManager.onStatusUpdate(nodeIndex, it)
                                             }
+
+                                    tryToSwitchToFastSync()
                                 }
                                 is BlockSignature -> {
                                     val signature = Signature(message.sig.subjectID, message.sig.data)
@@ -338,13 +338,23 @@ class ValidatorSyncManager(
         }
     }
 
+    private fun tryToSwitchToFastSync() {
+        val aheadNodes = statusManager.nodeStatuses
+                .sortedByDescending(NodeStatus::height)
+                .takeWhile { status -> status.height - statusManager.myStatus.height >= fastSynchronizer.blockHeightAheadCount }
+
+        val quorum = getBFTRequiredSignatureCount(statusManager.nodeStatuses.size)
+
+        useFastSyncAlgorithm = aheadNodes.size >= quorum
+    }
+
     /**
      * Process peer messages, how we should proceed with the current block, updating the revolt tracker and
      * notify peers of our current status.
      */
     override fun update() {
         if (useFastSyncAlgorithm) {
-            synchronized (statusManager) {
+            synchronized(statusManager) {
                 fastSynchronizer.sync()
                 if (fastSynchronizer.isUpToDate()) {
                     // turn off fast sync, reset current block to null, and query for the last known state from db to prevent
