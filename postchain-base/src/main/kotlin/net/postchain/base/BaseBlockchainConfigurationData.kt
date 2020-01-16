@@ -39,24 +39,7 @@ class BaseBlockchainConfigurationData(
     fun getDependenciesAsList(): List<BlockchainRelatedInfo> {
         val dep = data["dependencies"]
         return if (dep != null) {
-            try {
-                // Should contain an array of String, ByteArr pairs
-                val gtvDepArray = dep!! as GtvArray
-                val depList = mutableListOf<BlockchainRelatedInfo>()
-                for (element in gtvDepArray.array) {
-                    val elemArr = element as GtvArray
-                    val nickname = elemArr[0] as GtvString
-                    val blockchainRid = elemArr[1] as GtvByteArray
-                    depList.add(
-                            BlockchainRelatedInfo(blockchainRid.bytearray, nickname.string, null)
-                    )
-
-                }
-                depList.toList()
-            } catch (e: Exception) {
-                throw BadDataMistake(BadDataType.BAD_CONFIGURATION,
-                        "Dependencies must be array of array and have two parts, one string (description) and one bytea (blokchain RID)", e)
-            }
+            BaseDependencyFactory.build(dep!!)
         } else {
             // It is allowed to have no dependencies
             listOf<BlockchainRelatedInfo>()

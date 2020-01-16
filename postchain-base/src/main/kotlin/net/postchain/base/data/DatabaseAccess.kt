@@ -256,7 +256,7 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
             }
 
         } else {
-            // meta table does not exist! Assume database does not exist.
+            logger.info("Meta table does not exist! Assume database does not exist and create it (version: $expectedDbVersion).")
             queryRunner.update(connection, sqlCommands.createTableMeta)
             queryRunner.update(
                     connection,

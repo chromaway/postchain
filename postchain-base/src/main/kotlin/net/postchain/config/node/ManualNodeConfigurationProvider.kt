@@ -6,6 +6,9 @@ import net.postchain.config.app.AppConfig
 import net.postchain.config.app.AppConfigDbLayer
 import net.postchain.network.x.XPeerID
 
+/**
+ *
+ */
 open class ManualNodeConfigurationProvider(private val appConfig: AppConfig) : NodeConfigurationProvider {
 
     override fun getConfiguration(): NodeConfig {
@@ -17,6 +20,12 @@ open class ManualNodeConfigurationProvider(private val appConfig: AppConfig) : N
     private fun getPeerInfoMap(appConfig: AppConfig): Map<XPeerID, PeerInfo> =
             getPeerInfoCollection(appConfig).map { XPeerID(it.pubKey) to it }.toMap()
 
+    /**
+     *
+     *
+     * @param appConfig is the
+     * @return the [PeerInfo] this node should know about
+     */
     open fun getPeerInfoCollection(appConfig: AppConfig): Array<PeerInfo> {
         return SimpleDatabaseConnector(appConfig).withWriteConnection { connection ->
             AppConfigDbLayer(appConfig, connection).getPeerInfoCollection()

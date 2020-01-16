@@ -11,24 +11,16 @@ import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.core.*
 import net.postchain.devtools.KeyPairHelper.privKey
-import net.postchain.devtools.KeyPairHelper.privKeyHex
 import net.postchain.devtools.KeyPairHelper.pubKey
-import net.postchain.devtools.KeyPairHelper.pubKeyHex
-import net.postchain.devtools.utils.configuration.NodeNameWithBlockchains
-import net.postchain.devtools.utils.configuration.UniversalFileLocationStrategy
+import net.postchain.devtools.utils.configuration.*
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.gtvml.GtvMLParser
 import org.apache.commons.configuration2.CompositeConfiguration
 import org.apache.commons.configuration2.MapConfiguration
-import org.apache.commons.configuration2.PropertiesConfiguration
-import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder
-import org.apache.commons.configuration2.builder.fluent.Parameters
-import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertTrue
-import java.io.File
 
 /**
  * Postchain has different test categories:
@@ -51,6 +43,7 @@ import java.io.File
 open class IntegrationTest {
 
     protected val nodes = mutableListOf<PostchainTestNode>()
+    protected val nodeMap = mutableMapOf<NodeSeqNumber, PostchainTestNode>()
     protected val nodesNames = mutableMapOf<String, String>() // { pubKey -> Node${i} }
     val configOverrides = MapConfiguration(mutableMapOf<String, String>())
     val cryptoSystem = SECP256K1CryptoSystem()
@@ -190,52 +183,104 @@ open class IntegrationTest {
     /**
      * Starts the nodes with the number of chains different for each node
      *
-     * @param count is the number of nodes
-     * @param nodeConfigsFilenamesAndBlockchainConfigsFilenames an array with pairs, mapping the node to the actual blockchain file paths to run on this node.
+     * NOTE: This is a more generic function compared to the [createMultipleChainNodes] function. It handles any setup.
+     *
+     * @param systemSetup is holds the configuration of all the nodes and chains
      */
-    protected fun createMultipleChainNodesWithVariableNumberOfChains(
-            count: Int,
-            nodeNameWithBlockchainsArr: Array<NodeNameWithBlockchains>
-    ): Array<PostchainTestNode> {
+    protected fun createMultipleChainNodesFromSystemSetup(systemSetup: SystemSetup, nodeConfProv: NodeConfigurationProvider) = systemSetup.toTestNodes(nodeConfProv).toTypedArray()
 
-        require(count == nodeNameWithBlockchainsArr.size) { "Must have as many nodes in the array as specified" }
 
-        return Array(count) {
-            val bcFilenames: List<String> = nodeNameWithBlockchainsArr[it].getFilenames()
-            createMultipleChainNode(it, count, nodeNameWithBlockchainsArr[it].nodeFileName, *(bcFilenames.toTypedArray()))
-        }
-    }
-
+    /**
+     * Can be called directly from the test.
+     *
+     * @return Array of [PostchainTestNode] matching the node count and replica count and the blockchain config.
+     */
     protected fun createMultipleChainNodesWithReplicas(
             nodeCount: Int,
             replicaCount: Int,
-            nodeConfigsFilenames: Array<String>,
             blockchainConfigsFilenames: Array<String>
     ): Array<PostchainTestNode> {
 
-        val validators = Array(nodeCount) {
-            createMultipleChainNode(it, nodeCount, nodeConfigsFilenames[it], *blockchainConfigsFilenames)
+        val blockchainSetups  = mutableListOf<BlockchainSetup>()
+        val chainIds = listOf<Int>()
+        for (bcFile in blockchainConfigsFilenames) {
+            val bcGtv = readBlockchainConfig(bcFile)
+            val bcSetup = BlockchainSetup.buildFromGtv(bcGtv)
+            blockchainSetups.add(bcSetup)
         }
 
-        val replicas = Array(replicaCount) {
-            createMultipleChainNode(-it - 1, replicaCount, nodeConfigsFilenames[nodeCount + it], *blockchainConfigsFilenames)
+        // 1.a Build the setup without replicas
+        val systemSetupWithOnlySigners = SystemSetup.buildSimpleSetup(nodeCount, chainIds)
+
+        // 1.b Add the replicas to setup
+        val systemSetup = if (replicaCount > 0) {
+            val replicaMap = mutableMapOf<NodeSeqNumber, NodeSetup>()
+            for (replicaNr in 1..replicaCount) {
+                val replSeqNr = NodeSeqNumber(replicaNr * -1) // We use negative numbers for replicas, just to make them easy to identify
+                val replica = NodeSetup.buildSimple(replSeqNr, setOf(), chainIds.toSet()) // Make the replica signer of nothing, but replicate everything.
+                replicaMap[replSeqNr] = replica
+            }
+
+            SystemSetup.addNodesToSystemSetup(replicaMap.toMap(), systemSetupWithOnlySigners)
+        } else {
+            systemSetupWithOnlySigners
         }
 
-        return validators + replicas
+        // 2 Create the configuraton provider
+        val configOverrides: MapConfiguration()
+        addConfigProviderToNodeSetups(systemSetup, configOverrides)
+
+        // 3. Create all PostchainTestNodes from setup
+        return systemSetup.toTestNodes().toTypedArray()
     }
 
+    /**
+     * Takes a [SystemSetup] and adds [NodeConfigurationProvider] to all [NodeSetup] in it.
+     */
+    protected fun addConfigProviderToNodeSetups(
+            systemSetup: SystemSetup,
+            configOverrides: MapConfiguration
+    )  {
+        val testName = this::class.simpleName!!
+        for (nodeSetup in systemSetup.nodeMap.values) {
+
+            val nodeConfProv: NodeConfigurationProvider = NodeConfigurationProviderGenerator.buildFromSetup(
+                    testName,
+                    configOverrides,
+                    nodeSetup,
+                    systemSetup)
+            nodeSetup.configurationProvider = nodeConfProv // TODO: A bit ugly to mutate an existing instance like this. Ideas?
+        }
+
+    }
+
+    /**
+     * @param nodeIndex is this node's index number
+     * @param nodesThisNodeKnowsAbout is a list of other nodes' ID that this node should connect to
+     * @param nodeConfigFilename
+     * @param blockchainConfigFilenames
+     * @param preWipeDatabase
+     */
     private fun createMultipleChainNode(
             nodeIndex: Int,
-            nodeCount: Int,
+            nodesThisNodeKnowsAbout: List<Int>,
             nodeConfigFilename: String = DEFAULT_CONFIG_FILE,
             vararg blockchainConfigFilenames: String,
             preWipeDatabase: Boolean = true
     ): PostchainTestNode {
 
-        val nodeConfigProvider = createNodeConfig(nodeIndex, nodeCount, nodeConfigFilename)
+        val nodeConfigProvider = createNodeConfig(nodeIndex, nodeConfigFilename, nodesThisNodeKnowsAbout)
         //require(nodeConfigProvider.getConfiguration().activeChainIds.size == blockchainConfigFilenames.size) {
         //    "The nodes config must have the same number of active chains as the number of specified BC config files."
         //}
+        return createMultipleChainNodeFromProvider(nodeConfigProvider, preWipeDatabase, *blockchainConfigFilenames)
+    }
+
+    private fun createMultipleChainNodeFromProvider(
+            nodeConfigProvider: NodeConfigurationProvider,
+            preWipeDatabase: Boolean = true,
+            vararg blockchainConfigFilenames: String
+    ): PostchainTestNode {
 
         val node = PostchainTestNode(nodeConfigProvider, preWipeDatabase)
                 .also { nodes.add(it) }
@@ -246,6 +291,7 @@ open class IntegrationTest {
                     val blockchainRid = blockchainRids[chainId.toLong()]!!.hexStringToByteArray()
                     val filename = blockchainConfigFilenames[i]
                     val blockchainConfig = readBlockchainConfig(filename)
+
                     node.addBlockchain(chainId.toLong(), blockchainRid, blockchainConfig)
                     node.startBlockchain(chainId.toLong())
                 }
@@ -253,61 +299,52 @@ open class IntegrationTest {
         return node
     }
 
+    /**
+     * Using the latest way of configuring nodes, via exact configuration
+     *
+     * @param nodeSetup is the configuration object for the node
+     * @param preWipeDatabase
+     */
+    /*
+    private fun createMultipleChainNode(
+            nodeSetup: NodeSetup,
+            system: SystemSetup,
+            preWipeDatabase: Boolean = true
+    ): PostchainTestNode {
+        val baseConfig: PropertiesConfiguration = createNodeConfig(
+                testName: String,
+                nodeSetup: TestNodeConfig,
+                testSystemConfig: TestSystemConfig
+
+
+        val node = PostchainTestNode(nodeConfigProvider, preWipeDatabase)
+                .also { nodes.add(it) }
+
+        nodeConfigProvider.getConfiguration().activeChainIds
+                .filter(String::isNotEmpty)
+                .forEachIndexed { i, chainId ->
+                    val blockchainRid = blockchainRids[chainId.toLong()]!!.hexStringToByteArray()
+                    val filename = blockchainConfigFilenames[i]
+                    val blockchainConfig = readBlockchainConfig(filename)
+
+                    node.addBlockchain(chainId.toLong(), blockchainRid, blockchainConfig)
+                    node.startBlockchain(chainId.toLong())
+                }
+
+        return node
+    }
+*/
+
     protected fun readBlockchainConfig(blockchainConfigFilename: String): Gtv {
         return GtvMLParser.parseGtvML(
                 javaClass.getResource(blockchainConfigFilename).readText())
     }
 
-    protected fun createNodeConfig(nodeIndex: Int, nodeCount: Int = 1, configFile /*= DEFAULT_CONFIG_FILE*/: String)
-            : NodeConfigurationProvider {
 
-        val file = File(configFile)
-        /*
-        if (file.isFile) {
-            throw IllegalArgumentException("Node conf file on path: $configFile cannot be found.")
-        } else {
-            logger.debug("Node conf file found: $configFile")
-        }
-         */
 
-        // Read first file directly via the builder
-        val params = Parameters()
-                .fileBased()
-//                .setLocationStrategy(ClasspathLocationStrategy())
-                .setLocationStrategy(UniversalFileLocationStrategy())
-                .setListDelimiterHandler(DefaultListDelimiterHandler(','))
-                .setFile(file)
 
-        val baseConfig = FileBasedConfigurationBuilder(PropertiesConfiguration::class.java)
-                .configure(params)
-                .configuration
 
-        if (baseConfig.getString("configuration.provider.node") == "legacy") {
-            // append nodeIndex to schema name
-            val dbSchema = baseConfig.getString("database.schema") + "_" + nodeIndex
-            // To convert negative indexes of replica nodes to 'replica_' prefixed indexes.
-            baseConfig.setProperty("database.schema", dbSchema.replace("-", "replica_"))
 
-            // peers
-            var port = (baseConfig.getProperty("node.0.port") as String).toInt()
-            for (i in 0 until nodeCount) {
-                baseConfig.setProperty("node.$i.id", "node$i")
-                baseConfig.setProperty("node.$i.host", "127.0.0.1")
-                baseConfig.setProperty("node.$i.port", port++)
-                baseConfig.setProperty("node.$i.pubkey", pubKeyHex(i))
-            }
-        }
-
-        baseConfig.setProperty("messaging.privkey", privKeyHex(nodeIndex))
-        baseConfig.setProperty("messaging.pubkey", pubKeyHex(nodeIndex))
-
-        val appConfig = CompositeConfiguration().apply {
-            addConfiguration(configOverrides)
-            addConfiguration(baseConfig)
-        }
-
-        return NodeConfigurationProviderFactory.createProvider(AppConfig(appConfig))
-    }
 
     protected fun gtxConfigSigners(nodeCount: Int = 1): Gtv {
         return gtv(*Array(nodeCount) { gtv(pubKey(it)) })
@@ -321,6 +358,10 @@ open class IntegrationTest {
         }
 
         return peerInfos!!
+    }
+
+    fun createPeerInfosWithReplicas(sysSetup: SystemSetup): Array<PeerInfo> {
+        return sysSetup.toPeerInfoList().toTypedArray()
     }
 
     fun createPeerInfos(nodeCount: Int): Array<PeerInfo> = createPeerInfosWithReplicas(nodeCount, 0)

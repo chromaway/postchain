@@ -48,7 +48,9 @@ open class BaseBlockchainProcessManager(
         withReadConnection(storage, chainId) { eContext ->
             val configuration = blockchainConfigProvider.getConfiguration(eContext, chainId)
             if (configuration != null) {
-                val blockchainRID = DatabaseAccess.of(eContext).getBlockchainRID(eContext)!! // TODO: [et]: Fix Kotlin NPE
+                val hasBlockchainRID = DatabaseAccess.of(eContext).getBlockchainRID(eContext)
+                require( hasBlockchainRID != null) { "Cannot start a blockchain that does not exist in DB" }
+                val blockchainRID = hasBlockchainRID!!
                 val context = BaseBlockchainContext(blockchainRID, NODE_ID_AUTO, chainId, null)
 
                 val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(configuration, context)

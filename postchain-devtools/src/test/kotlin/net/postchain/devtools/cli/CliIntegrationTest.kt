@@ -105,7 +105,7 @@ class CliIntegrationTest {
         val chain = node.processManager.retrieveBlockchain(chainId)
         val queries = chain!!.getEngine().getBlockQueries()
 
-        waitUntilBlock(queries, 1, 100) // wait to build first block
+        waitUntilBlock(queries, 1, 100) // wait to buildFromFile first block
         println(queries.getBestHeight().get())
         Assert.assertTrue(queries.getBestHeight().get() >= 1) // make sure it built at least one block
 

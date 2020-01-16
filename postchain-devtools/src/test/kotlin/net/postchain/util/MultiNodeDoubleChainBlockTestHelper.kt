@@ -10,6 +10,7 @@ import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.TxCache
 import net.postchain.devtools.testinfra.TestOneOpGtxTransaction
 import net.postchain.devtools.utils.configuration.NodeNameWithBlockchains
+import net.postchain.devtools.utils.configuration.SystemSetup
 import net.postchain.gtx.GTXTransactionFactory
 import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.assertNodeConnectedWith
@@ -19,6 +20,12 @@ import org.junit.Assert
 import kotlin.random.Random
 import kotlin.test.assertNotNull
 
+/**
+ * Extends [IntegrationTest] with extra functions relevant for tests running multiple chains.
+ *
+ * Note 1: We are using (real) [GTXTransaction] here, not some mock transaction designed for tests
+ * Note 2: We currently only handle two chains // TODO
+ */
 open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
 
     private val gtxTestModule =  GTXTestModule()
@@ -90,29 +97,38 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
     /**
      * Starts the nodes with the given number of chains different for each node
      *
-     * @param nodesCount = number of nodes
-     * @param nodeNameWithBlockchainsArr = what chains each node has
-     * @param chainsInCommon = what chains are in common for all nodes
+     * @param systemSetup holds the detailed description of the system
      */
     fun runXNodesWithDifferentNumberOfChainsPerNode(
-            nodesCount: Int,
-            nodeNameWithBlockchainsArr: Array<NodeNameWithBlockchains>,
-            chainsInCommon: List<Long>
-
+            systemSetup: SystemSetup
     ) {
-        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+        val peerList = systemSetup.toPeerInfoList()
+        val peers = peerList.toTypedArray()
+        configOverrides.setProperty("testpeerinfos", peers)
 
         // Creating node with two chains
         logger.debug("---Creating node with custom number of chains ----------------------------")
-        createMultipleChainNodesWithVariableNumberOfChains(nodesCount, nodeNameWithBlockchainsArr)
+
+        val testName: String = this::class.java.simpleName ?: "NoName"   // Get subclass name or dummy
+        for (nodeSetup in systemSetup.nodeMap.values) {
+            val nodeConfigProvider = createNodeConfig( testName, nodeSetup, systemSetup)
+            val newPTNode = PostchainTestNode(nodeConfigProvider, true)
+
+            // TODO: not nice to mutate the "nodes" object like this, should return the list of PTNodes instead for testability
+            nodes.add(newPTNode)
+            nodeMap[nodeSetup.sequenceNumber] = newPTNode
+        }
+
 
         // Asserting all chains are started
         // (This is a bit more complicated since we have different chains per node)
         logger.debug("---Asserting all chains are started -------------------------")
         Awaitility.await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
-                    nodes.forEachIndexed { i, node ->
-                                nodeNameWithBlockchainsArr[i].getChainIds().forEach{ node::assertChainStarted }
+                    systemSetup.nodeMap.values.forEach { nodeSetup ->
+                        val bcList = systemSetup.getBlockchainsANodeShouldRun(nodeSetup.sequenceNumber)
+                        val node = nodeMap[nodeSetup.sequenceNumber]!!
+                        bcList.forEach{ bcSetup -> node.assertChainStarted(bcSetup.chainId.toLong()) }
                     }
                 }
 
@@ -121,19 +137,25 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
             // We don't need to assert all connections, just check some random connections
             Awaitility.await().atMost(Duration.TEN_SECONDS)
                     .untilAsserted {
-                        nodes.forEachIndexed { i, node ->
-                            logger.debug("Assert connection for Node: $i")
-                            val nodeNameWithBlockchains = nodeNameWithBlockchainsArr[i]
+                        systemSetup.nodeMap.values.forEach { nodeSetup ->
 
-                            // TODO: NOTE: Here we assume that all nodes are connected EVEN THOUGH they might not have a common chain
-                            var randNode = Random.nextInt(nodesCount)
-                            while (randNode == i) {
-                                randNode = Random.nextInt(nodesCount) // Cannot be connected to itself, so pic new value
+                            val nn =nodeSetup.sequenceNumber.nodeNumber
+                            logger.debug("Assert connection for node: $nn")
+                            /*
+                            val nodesForBc = mutableListOf<PostchainTestNode>()
+                            for (nodeSeqNr in bcSetup.signerNodeList) {
+                                nodesForBc.add(nodeMap[nodeSeqNr]!!)
                             }
-                            val x = this.nodes[randNode]
-                            chainsInCommon.forEach { chain ->
-                                logger.debug("Wait for (node $i, chain $chain) to be connected to node $randNode")
-                                nodes[i].assertNodeConnectedWith(chain, x)
+                            */
+
+                            nodeSetup.getAllBlockchains().forEach { chainId ->
+                                val allSignersButMe = systemSetup.blockchainMap[chainId]!!.signerNodeList.filter { it != nodeSetup.sequenceNumber }
+                                if (logger.isDebugEnabled) {
+                                    val debugOut = allSignersButMe.map { it.nodeNumber.toString() }.fold(",", String::plus)
+                                    logger.debug("Wait for (node $nn) to be connected to all nodes in chain $chainId (nodes $debugOut)")
+                                }
+                                val allPostchainTesNodesButMe = allSignersButMe.map { nodeMap[it]!! }.toTypedArray()
+                                nodeMap[nodeSetup.sequenceNumber]!!.assertNodeConnectedWith(chainId.toLong(), *allPostchainTesNodesButMe)
                             }
                         }
                     }
@@ -146,7 +168,7 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
     /**
      * Note that we are enqueueing real GTX TXs here.
      *
-     * @param blocksCount number of blocks to build
+     * @param blocksCount number of blocks to buildFromFile
      * @param txPerBlock number of TX in each block
      * @param chainList all BC we will use
      * @param nodeNameWithBlockchainsArr = null if all nodes have the same chains, else with a value
@@ -185,7 +207,7 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
             nodes.indices.forEach { nodeId ->
                 if (nodeNameWithBlockchainsArr != null) {
                     nodeNameWithBlockchainsArr[nodeId].getWritableChainIds().forEach { chain ->
-                        buildBlocks(nodeId, chain, block) // The block we can build ourselves
+                        buildBlocks(nodeId, chain, block) // The block we can buildFromFile ourselves
                     }
                     nodeNameWithBlockchainsArr[nodeId].getReadOnlyChainIds().forEach { chain ->
                           // The blocks we must fetch form the node

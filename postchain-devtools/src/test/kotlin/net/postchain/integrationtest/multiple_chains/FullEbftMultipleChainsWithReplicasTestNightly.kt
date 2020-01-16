@@ -67,7 +67,7 @@ class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
 
         val chains = arrayOf(1L, 2L)
         configOverrides.setProperty("testpeerinfos", createPeerInfosWithReplicas(nodeCount, replicaCount))
-        createMultipleChainNodesWithReplicas(nodeCount, replicaCount, nodeConfigsFilenames, blockchainConfigsFilenames)
+        createMultipleChainNodesWithReplicas(nodeCount, replicaCount, blockchainConfigsFilenames)
 
         // Asserting all chains are started
         await().atMost(TEN_SECONDS)
