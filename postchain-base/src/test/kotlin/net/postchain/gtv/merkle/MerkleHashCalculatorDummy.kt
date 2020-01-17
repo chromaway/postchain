@@ -56,9 +56,8 @@ fun dummyAddOneHashFun(bArr: ByteArray, cryptoSystem: CryptoSystem?): Hash {
  *
  * @property memoization is possible to override with some other version (for example that prunes more often)
  */
-class MerkleHashCalculatorDummy(memoization: GtvMerkleHashMemoization): MerkleHashCalculator<Gtv>(null, memoization) {
+class MerkleHashCalculatorDummy(): MerkleHashCalculator<Gtv>(null) {
 
-    constructor(): this(GtvMerkleHashMemoization(100, 10))
 
     override fun calculateLeafHash(value: Gtv): Hash {
         val hash = calculateHashOfValueInternal(value, ::dummySerializatorFun, ::dummyAddOneHashFun)

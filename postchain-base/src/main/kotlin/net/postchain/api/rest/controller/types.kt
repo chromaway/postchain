@@ -9,6 +9,7 @@ import net.postchain.core.TransactionInfoExt
 import net.postchain.gtv.Gtv
 
 interface Model {
+    val chainIID: Long
     fun postTransaction(tx: ApiTx)
     fun getTransaction(txRID: TxRID): ApiTx?
     fun getTransactionInfo(txRID: TxRID): TransactionInfoExt?

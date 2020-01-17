@@ -24,15 +24,13 @@ class BaseBlockStore : BlockStore {
      * @param ctx Connection context
      * @returns Initial block data
      */
-    override fun beginBlock(ctx: EContext, blockHeightDependencies: Array<Hash?>?): InitialBlockData {
+    override fun beginBlock(ctx: EContext, blockchainRID: BlockchainRid, blockHeightDependencies: Array<Hash?>?): InitialBlockData {
         val db = DatabaseAccess.of(ctx)
         if (ctx.chainID < 0) {
             throw UserMistake("ChainId must be >=0, got ${ctx.chainID}")
         }
         val prevHeight = getLastBlockHeight(ctx)
         val prevTimestamp = getLastBlockTimestamp(ctx)
-        val blockchainRID = db.getBlockchainRID(ctx)
-                ?: throw UserMistake("Blockchain RID not found for chainId ${ctx.chainID}")
         val prevBlockRID = if (prevHeight == -1L) {
             blockchainRID.data
         } else {

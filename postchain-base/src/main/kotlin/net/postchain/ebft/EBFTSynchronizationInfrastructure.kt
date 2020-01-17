@@ -9,6 +9,7 @@ import net.postchain.common.hexStringToByteArray
 import net.postchain.config.node.NodeConfig
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
+import net.postchain.debug.BlockchainProcessName
 import net.postchain.debug.DiagnosticProperty
 import net.postchain.debug.DiagnosticProperty.BLOCKCHAIN
 import net.postchain.debug.DpNodeType
@@ -47,7 +48,7 @@ class EBFTSynchronizationInfrastructure(
         connectionManager.shutdown()
     }
 
-    override fun makeBlockchainProcess(processName: String, engine: BlockchainEngine): BlockchainProcess {
+    override fun makeBlockchainProcess(processName: BlockchainProcessName, engine: BlockchainEngine): BlockchainProcess {
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
 
         return if (blockchainConfig.configData.context.nodeID != NODE_ID_READ_ONLY) {
@@ -82,7 +83,7 @@ class EBFTSynchronizationInfrastructure(
     }
 
     private fun buildXCommunicationManager(
-            processName: String,
+            processName: BlockchainProcessName,
             blockchainConfig: BaseBlockchainConfiguration,
             isReplica: Boolean
     ): CommunicationManager<Message> {

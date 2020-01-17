@@ -38,8 +38,10 @@ class RestApiModelTest {
     @Before
     fun setup() {
         model = createMock(Model::class.java)
-        val appConf = AppConfig(DummyConfig.getDummyConfig())
-        restApi = RestApi(0, basePath, appConf)
+        expect(model.chainIID).andReturn(1L).anyTimes()
+
+        val config = AppConfig(DummyConfig.getDummyConfig())
+        restApi = RestApi(0, basePath, config)
 
         // We're doing this test by test instead
         // restApi.attachModel(blockchainRID, model)
@@ -64,10 +66,10 @@ class RestApiModelTest {
 
     @Test
     fun test_getTx_unknown_model_404_received() {
+        replay(model)
+
         restApi.attachModel(blockchainRID1, model)
         restApi.attachModel(blockchainRID2, model)
-
-        replay(model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx/$blockchainRID3/$txRID")
@@ -79,11 +81,12 @@ class RestApiModelTest {
 
     @Test
     fun test_getTx_case_insensitive_ok() {
-        restApi.attachModel(blockchainRID1.toUpperCase(), model)
-
         expect(model.getTransaction(TxRID(txRID.hexStringToByteArray())))
                 .andReturn(ApiTx("1234"))
+
         replay(model)
+
+        restApi.attachModel(blockchainRID1.toUpperCase(), model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx/${blockchainRID1.toLowerCase()}/$txRID")
@@ -116,8 +119,9 @@ class RestApiModelTest {
 
     @Test
     fun test_getTx_incorrect_blockchainRID_format() {
-        restApi.attachModel(blockchainRID1, model)
         replay(model)
+
+        restApi.attachModel(blockchainRID1, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/tx/$blockchainRIDBadFormatted/$txRID")
@@ -129,12 +133,12 @@ class RestApiModelTest {
 
     @Test
     fun test_node_get_block_height_null() {
-        restApi.attachModel(blockchainRID1, model)
-
         expect(model.nodeQuery("height"))
                 .andReturn(null)
 
         replay(model)
+
+        restApi.attachModel(blockchainRID1, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/node/$blockchainRID1/height")
@@ -148,12 +152,12 @@ class RestApiModelTest {
 
     @Test
     fun test_node_get_block_height() {
-        restApi.attachModel(blockchainRID1, model)
-
         expect(model.nodeQuery("height"))
                 .andReturn(gson.toJson(BlockHeight(42)))
 
         replay(model)
+
+        restApi.attachModel(blockchainRID1, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/node/$blockchainRID1/height")
@@ -166,8 +170,6 @@ class RestApiModelTest {
 
     @Test
     fun test_node_get_my_status() {
-        restApi.attachModel(blockchainRID1, model)
-
         val response = EBFTstateNodeStatusContract(
                 height = 233,
                 serial = 41744989480,
@@ -182,6 +184,8 @@ class RestApiModelTest {
 
         replay(model)
 
+        restApi.attachModel(blockchainRID1, model)
+
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/node/$blockchainRID1/my_status")
                 .then()
@@ -193,8 +197,6 @@ class RestApiModelTest {
 
     @Test
     fun test_node_get_statuses() {
-        restApi.attachModel(blockchainRID1, model)
-
         val response =
                 arrayOf(
                         EBFTstateNodeStatusContract(
@@ -219,6 +221,8 @@ class RestApiModelTest {
 
         replay(model)
 
+        restApi.attachModel(blockchainRID1, model)
+
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/node/$blockchainRID1/statuses")
                 .then()
@@ -230,7 +234,6 @@ class RestApiModelTest {
 
     @Test
     fun test_blocks_get_all() {
-        restApi.attachModel(blockchainRID1, model)
         val response = listOf(
                 BlockDetail(
                         "blockRid001".toByteArray(),
@@ -273,6 +276,8 @@ class RestApiModelTest {
 
         replay(model)
 
+        restApi.attachModel(blockchainRID1, model)
+
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/blocks/$blockchainRID1?before-time=${Long.MAX_VALUE}&limit=${25}&txs=true")
                 .then()
@@ -284,8 +289,7 @@ class RestApiModelTest {
 
     @Test
     fun test_blocks_get_last_2_partial() {
-        restApi.attachModel(blockchainRID1, model)
-        val response = listOf<BlockDetail>(
+        val response = listOf(
                 BlockDetail(
                         "blockRid003".toByteArray(),
                         "blockRid002".toByteArray(),
@@ -313,6 +317,8 @@ class RestApiModelTest {
 
         replay(model)
 
+        restApi.attachModel(blockchainRID1, model)
+
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/blocks/$blockchainRID1?before-time=${1574849940}&limit=${2}&txs=false")
                 .then()
@@ -324,7 +330,7 @@ class RestApiModelTest {
 
     @Test
     fun test_blocks_get_no_params() {
-        restApi.attachModel(blockchainRID1, model)
+
         val blocks = listOf(
                 BlockDetail("blockRid001".toByteArray(), blockchainRID3.toByteArray(), "some header".toByteArray(), 0, listOf<TxDetail>(),"signatures".toByteArray(), 1574849700),
                 BlockDetail(
@@ -383,6 +389,8 @@ class RestApiModelTest {
 
         replay(model)
 
+        restApi.attachModel(blockchainRID1, model)
+
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/blocks/$blockchainRID1")
                 .then()
@@ -393,7 +401,7 @@ class RestApiModelTest {
 
     @Test
     fun test_transactions_get_all() {
-        restApi.attachModel(blockchainRID1, model)
+
         val response = listOf<TransactionInfoExt> (
                 TransactionInfoExt("blockRid002".toByteArray(),  1, "some other header".toByteArray(), "signatures".toByteArray(), 1574849760, cryptoSystem.digest("tx1".toByteArray()), "tx1 - 001".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx1".toByteArray()),
                 TransactionInfoExt("blockRid004".toByteArray(),  3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx2".toByteArray()), "tx2 - 002".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx2".toByteArray()),
@@ -403,6 +411,7 @@ class RestApiModelTest {
         expect(model.getTransactionsInfo(Long.MAX_VALUE, 300))
                 .andReturn(response)
         replay(model)
+        restApi.attachModel(blockchainRID1, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/transactions/$blockchainRID1?before-time=${Long.MAX_VALUE}&limit=${300}")
@@ -415,7 +424,6 @@ class RestApiModelTest {
 
     @Test
     fun test_transactions_get_no_params() {
-        restApi.attachModel(blockchainRID1, model)
         val response = listOf(
             TransactionInfoExt("blockRid002".toByteArray(),  1, "some other header".toByteArray(), "signatures".toByteArray(), 1574849760, cryptoSystem.digest("tx1".toByteArray()), "tx1 - 001".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx1".toByteArray()),
             TransactionInfoExt("blockRid004".toByteArray(),  3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx2".toByteArray()), "tx2 - 002".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx2".toByteArray()),
@@ -425,6 +433,7 @@ class RestApiModelTest {
         expect(model.getTransactionsInfo(Long.MAX_VALUE, 25))
                 .andReturn(response)
         replay(model)
+        restApi.attachModel(blockchainRID1, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/transactions/$blockchainRID1")
@@ -436,13 +445,13 @@ class RestApiModelTest {
 
     @Test
     fun test_block_get_one() {
-        restApi.attachModel(blockchainRID1, model)
         val tx = "tx2".toByteArray()
         val txRID = cryptoSystem.digest(tx)
         val response = TransactionInfoExt("blockRid004".toByteArray(),  3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, txRID, "tx2 - 002".toByteArray().slice(IntRange(0,4)).toByteArray(), tx)
         expect(model.getTransactionInfo(TxRID(txRID)))
                 .andReturn(response)
         replay(model)
+        restApi.attachModel(blockchainRID1, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/transactions/$blockchainRID1/${txRID.toHex()}")
@@ -453,12 +462,12 @@ class RestApiModelTest {
 
     @Test
     fun test_block_get_by_RID() {
-        restApi.attachModel(blockchainRID1, model)
         val blockRID = "blockRid001".toByteArray()
         val response = BlockDetail("blockRid001".toByteArray(), blockchainRID3.toByteArray(), "some header".toByteArray(), 0, listOf<TxDetail>(),"signatures".toByteArray(), 1574849700)
         expect(model.getBlock(blockRID, true))
                 .andReturn(response)
         replay(model)
+        restApi.attachModel(blockchainRID1, model)
 
         given().basePath(basePath).port(restApi.actualPort())
                 .get("/blocks/$blockchainRID1/${blockRID.toHex()}")

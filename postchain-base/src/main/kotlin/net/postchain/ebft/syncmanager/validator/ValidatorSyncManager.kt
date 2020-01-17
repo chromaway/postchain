@@ -1,73 +1,44 @@
 // Copyright (c) 2017 ChromaWay Inc. See README for license information.
 
-package net.postchain.ebft.syncmanager
+package net.postchain.ebft.syncmanager.validator
 
 import mu.KLogging
 import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.core.Signature
+import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.*
 import net.postchain.ebft.message.*
 import net.postchain.ebft.message.BlockData
 import net.postchain.ebft.message.Transaction
 import net.postchain.ebft.rest.contract.serialize
+import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockData
+import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockDataWithWitness
+import net.postchain.ebft.syncmanager.StatusLogInterval
+import net.postchain.ebft.syncmanager.SyncManager
+import net.postchain.ebft.syncmanager.common.EBFTNodesCondition
+import net.postchain.ebft.syncmanager.common.FastSynchronizer
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
 import nl.komponents.kovenant.task
 import java.util.*
 
-fun decodeBlockDataWithWitness(block: CompleteBlock, bc: BlockchainConfiguration)
-        : BlockDataWithWitness {
-    val header = bc.decodeBlockHeader(block.data.header)
-    val witness = bc.decodeWitness(block.witness)
-    return BlockDataWithWitness(header, block.data.transactions, witness)
-}
-
-fun decodeBlockData(block: BlockData, bc: BlockchainConfiguration)
-        : net.postchain.core.BlockData {
-    val header = bc.decodeBlockHeader(block.header)
-    return net.postchain.core.BlockData(header, block.transactions)
-}
-
-private class StatusSender(
-        private val maxStatusInterval: Int,
-        private val statusManager: StatusManager,
-        private val communicationManager: CommunicationManager<Message>
-) {
-    var lastSerial: Long = -1
-    var lastSentTime: Long = Date(0L).time
-
-    // Sends a status message to all peers when my status has changed or
-    // after a timeout period.
-    fun update() {
-        val myStatus = statusManager.myStatus
-        val isNewState = myStatus.serial > this.lastSerial
-        val timeoutExpired = System.currentTimeMillis() - this.lastSentTime > this.maxStatusInterval
-        if (isNewState || timeoutExpired) {
-            this.lastSentTime = Date().time
-            this.lastSerial = myStatus.serial
-            val statusMessage = Status(myStatus.blockRID, myStatus.height,
-                    myStatus.revolting, myStatus.round, myStatus.serial,
-                    myStatus.state.ordinal)
-            communicationManager.broadcastPacket(statusMessage)
-        }
-    }
-}
-
 /**
  * The ValidatorSyncManager handles communications with our peers.
  */
 class ValidatorSyncManager(
-        private val blockchainProcessName: String,
+        private val processName: BlockchainProcessName,
         private val signers: List<ByteArray>,
         private val statusManager: StatusManager,
         private val blockManager: BlockManager,
         private val blockDatabase: BlockDatabase,
+        private val blockQueries: BlockQueries,
         private val communicationManager: CommunicationManager<Message>,
         private val nodeStateTracker: NodeStateTracker,
         private val txQueue: TransactionQueue,
         private val blockchainConfiguration: BlockchainConfiguration
-) : SyncManagerBase {
+) : SyncManager {
+
     private val revoltTracker = RevoltTracker(10000, statusManager)
     private val statusSender = StatusSender(1000, statusManager, communicationManager)
     private val defaultTimeout = 1000
@@ -76,7 +47,24 @@ class ValidatorSyncManager(
     private var processingIntentDeadline = 0L
     private var lastStatusLogged: Long
 
+    @Volatile
+    private var useFastSyncAlgorithm: Boolean = false
+    private val fastSynchronizer = FastSynchronizer(
+            processName,
+            signers.minus(signers.elementAt(statusManager.getMyIndex())),
+            communicationManager,
+            blockDatabase,
+            blockchainConfiguration,
+            blockQueries
+    )
+
     companion object : KLogging()
+
+    init {
+        this.currentTimeout = defaultTimeout
+        this.processingIntent = DoNothingIntent
+        this.lastStatusLogged = Date().time
+    }
 
     //    private val nodes = communicationManager.peers().map { XPeerID(it.pubKey) }
     private val signersIds = signers.map { XPeerID(it) }
@@ -96,7 +84,7 @@ class ValidatorSyncManager(
             val nodeIndex = indexOfValidator(xPeerId)
             val isReadOnlyNode = nodeIndex == -1 // This must be a read-only node since not in the validator list
 
-            logger.trace { "[$blockchainProcessName]: Received message type ${message.javaClass.simpleName} from node $nodeIndex" }
+            logger.trace { "$processName: Received message type ${message.javaClass.simpleName} from node $nodeIndex" }
 
             try {
                 when (message) {
@@ -108,28 +96,41 @@ class ValidatorSyncManager(
                             // validator consensus logic
                             when (message) {
                                 is Status -> {
-                                    val nodeStatus = NodeStatus(message.height, message.serial)
-                                    nodeStatus.blockRID = message.blockRID
-                                    nodeStatus.revolting = message.revolting
-                                    nodeStatus.round = message.round
-                                    nodeStatus.state = NodeState.values()[message.state]
-                                    statusManager.onStatusUpdate(nodeIndex, nodeStatus)
+                                    NodeStatus(message.height, message.serial)
+                                            .apply {
+                                                blockRID = message.blockRID
+                                                revolting = message.revolting
+                                                round = message.round
+                                                state = NodeState.values()[message.state]
+                                            }.also {
+                                                statusManager.onStatusUpdate(nodeIndex, it)
+                                            }
+
+                                    tryToSwitchToFastSync()
                                 }
                                 is BlockSignature -> {
                                     val signature = Signature(message.sig.subjectID, message.sig.data)
                                     val smBlockRID = this.statusManager.myStatus.blockRID
                                     if (smBlockRID == null) {
-                                        logger.info("[$blockchainProcessName]: Received signature not needed")
+                                        logger.info("$processName: Received signature not needed")
                                     } else if (!smBlockRID.contentEquals(message.blockRID)) {
-                                        logger.info("[$blockchainProcessName]: Receive signature for a different block")
+                                        logger.info("$processName: Receive signature for a different block")
                                     } else if (this.blockDatabase.verifyBlockSignature(signature)) {
                                         this.statusManager.onCommitSignature(nodeIndex, message.blockRID, signature)
                                     }
                                 }
                                 is CompleteBlock -> {
-                                    blockManager.onReceivedBlockAtHeight(
-                                            decodeBlockDataWithWitness(message, blockchainConfiguration),
-                                            message.height)
+                                    try {
+                                        blockManager.onReceivedBlockAtHeight(
+                                                decodeBlockDataWithWitness(message, blockchainConfiguration),
+                                                message.height)
+                                    } catch (e: Exception) {
+                                        logger.error("Failed to add block to database. Resetting state...", e)
+                                        // reset state to last known from database
+                                        val currentBlockHeight = blockQueries.getBestHeight().get()
+                                        statusManager.fastForwardHeight(currentBlockHeight)
+                                        blockManager.currentBlock = null
+                                    }
                                 }
                                 is UnfinishedBlock -> {
                                     blockManager.onReceivedUnfinishedBlock(decodeBlockData(BlockData(message.header, message.transactions),
@@ -145,7 +146,7 @@ class ValidatorSyncManager(
                     }
                 }
             } catch (e: Exception) {
-                logger.error("[$blockchainProcessName]: Couldn't handle message $message. Ignoring and continuing", e)
+                logger.error("$processName: Couldn't handle message $message. Ignoring and continuing", e)
             }
         }
     }
@@ -191,7 +192,7 @@ class ValidatorSyncManager(
             val packet = BlockSignature(blockRID, net.postchain.ebft.message.Signature(it.subjectID, it.data))
             communicationManager.sendPacket(packet, validatorAtIndex(nodeIndex))
         } fail {
-            logger.debug("[$blockchainProcessName]: Error sending BlockSignature", it)
+            logger.debug("$processName: Error sending BlockSignature", it)
         }
     }
 
@@ -210,7 +211,7 @@ class ValidatorSyncManager(
                     it.witness!!.getRawData()
             )
             communicationManager.sendPacket(packet, xPeerId)
-        } fail { logger.debug("[$blockchainProcessName]: Error sending CompleteBlock", it) }
+        } fail { logger.debug("$processName: Error sending CompleteBlock", it) }
     }
 
     /**
@@ -249,7 +250,7 @@ class ValidatorSyncManager(
      */
     private fun fetchBlockAtHeight(height: Long) {
         val nodeIndex = selectRandomNode { it.height > height } ?: return
-        logger.debug("[$blockchainProcessName]: Fetching block at height $height from node $nodeIndex")
+        logger.debug("$processName: Fetching block at height $height from node $nodeIndex")
         communicationManager.sendPacket(GetBlockAtHeight(height), validatorAtIndex(nodeIndex))
     }
 
@@ -261,7 +262,7 @@ class ValidatorSyncManager(
      */
     private fun fetchCommitSignatures(blockRID: ByteArray, nodes: Array<Int>) {
         val message = GetBlockSignature(blockRID)
-        logger.debug("[$blockchainProcessName]: Fetching commit signature for block with RID ${blockRID.toHex()} from nodes ${Arrays.toString(nodes)}")
+        logger.debug("$processName: Fetching commit signature for block with RID ${blockRID.toHex()} from nodes ${Arrays.toString(nodes)}")
         nodes.forEach {
             communicationManager.sendPacket(message, validatorAtIndex(it))
         }
@@ -277,14 +278,14 @@ class ValidatorSyncManager(
         val nodeIndex = selectRandomNode {
             it.height == height && (it.blockRID?.contentEquals(blockRID) ?: false)
         } ?: return
-        logger.debug("[$blockchainProcessName]: Fetching unfinished block with RID ${blockRID.toHex()} from node $nodeIndex ")
+        logger.debug("$processName: Fetching unfinished block with RID ${blockRID.toHex()} from node $nodeIndex ")
         communicationManager.sendPacket(GetUnfinishedBlock(blockRID), validatorAtIndex(nodeIndex))
     }
 
     /**
      * Process our intent latest intent
      */
-    fun processIntent() {
+    private fun processIntent() {
         val intent = blockManager.getBlockIntent()
         if (intent == processingIntent) {
             if (intent is DoNothingIntent) return
@@ -298,7 +299,9 @@ class ValidatorSyncManager(
         }
         when (intent) {
             DoNothingIntent -> Unit
-            is FetchBlockAtHeightIntent -> fetchBlockAtHeight(intent.height)
+            is FetchBlockAtHeightIntent -> if (!useFastSyncAlgorithm) {
+                fetchBlockAtHeight(intent.height)
+            }
             is FetchCommitSignatureIntent -> fetchCommitSignatures(intent.blockRID, intent.nodes)
             is FetchUnfinishedBlockIntent -> fetchUnfinishedBlock(intent.blockRID)
             else -> throw ProgrammerMistake("Unrecognized intent: ${intent::class}")
@@ -319,14 +322,14 @@ class ValidatorSyncManager(
             } else {
                 "(prim = ${statusManager.primaryIndex()}),"
             }
-            logger.debug("[$blockchainProcessName]: My node: ${statusManager.getMyIndex()}, $primary block mngr: $bmIntent, status mngr: $smIntent")
+            logger.debug("$processName: My node: ${statusManager.getMyIndex()}, $primary block mngr: $bmIntent, status mngr: $smIntent")
         }
         for ((idx, ns) in statusManager.nodeStatuses.withIndex()) {
             val blockRID = ns.blockRID
             val haveSignature = statusManager.commitSignatures[idx] != null
             if (logger.isDebugEnabled) {
                 logger.debug {
-                    "[$blockchainProcessName]: node:$idx he:${ns.height} ro:${ns.round} st:${ns.state}" +
+                    "$processName: node:$idx he:${ns.height} ro:${ns.round} st:${ns.state}" +
                             (if (ns.revolting) " R" else "") +
                             " blockRID:${blockRID?.toHex() ?: "null"}" +
                             " havesig:$haveSignature"
@@ -335,46 +338,63 @@ class ValidatorSyncManager(
         }
     }
 
+    private fun tryToSwitchToFastSync() {
+        useFastSyncAlgorithm = EBFTNodesCondition(statusManager.nodeStatuses) { status ->
+            status.height - statusManager.myStatus.height >= fastSynchronizer.blockHeightAheadCount
+        }.satisfied()
+    }
+
     /**
      * Process peer messages, how we should proceed with the current block, updating the revolt tracker and
      * notify peers of our current status.
      */
     override fun update() {
-        // Process all messages from peers, one at a time. Some
-        // messages may trigger asynchronous code which will
-        // send replies at a later time, others will send replies
-        // immediately
-        dispatchMessages()
+        if (useFastSyncAlgorithm) {
+            synchronized(statusManager) {
+                fastSynchronizer.sync()
+                if (fastSynchronizer.isAlmostUpToDate()) {
+                    fastSynchronizer.reset()
+                    // turn off fast sync, reset current block to null, and query for the last known state from db to prevent
+                    // possible race conditions
+                    useFastSyncAlgorithm = false
+                    val currentBlockHeight = blockQueries.getBestHeight().get()
+                    statusManager.fastForwardHeight(currentBlockHeight)
+                    blockManager.currentBlock = null
+                }
+            }
+        } else {
+            synchronized(statusManager) {
+                // Process all messages from peers, one at a time. Some
+                // messages may trigger asynchronous code which will
+                // send replies at a later time, others will send replies
+                // immediately
+                dispatchMessages()
 
-        // An intent is something that we want to do with our current block.
-        // The current intent is fetched from the BlockManager and will result in
-        // some messages being sent to peers requesting data like signatures or
-        // complete blocks
-        processIntent()
+                // An intent is something that we want to do with our current block.
+                // The current intent is fetched from the BlockManager and will result in
+                // some messages being sent to peers requesting data like signatures or
+                // complete blocks
+                processIntent()
 
-        // RevoltTracker will check trigger a revolt if conditions for revolting are met
-        // A revolt will be triggerd by calling statusManager.onStartRevolting()
-        // Typical revolt conditions
-        //    * A timeout happens and round has not increased. Round is increased then 2f+1 nodes
-        //      are revolting.
-        revoltTracker.update()
+                // RevoltTracker will check trigger a revolt if conditions for revolting are met
+                // A revolt will be triggerd by calling statusManager.onStartRevolting()
+                // Typical revolt conditions
+                //    * A timeout happens and round has not increased. Round is increased then 2f+1 nodes
+                //      are revolting.
+                revoltTracker.update()
 
-        // Sends a status message to all peers when my status has changed or after a timeout
-        statusSender.update()
+                // Sends a status message to all peers when my status has changed or after a timeout
+                statusSender.update()
 
-        nodeStateTracker.myStatus = statusManager.myStatus.serialize()
-        nodeStateTracker.nodeStatuses = statusManager.nodeStatuses.map { it.serialize() }.toTypedArray()
-        nodeStateTracker.blockHeight = statusManager.myStatus.height
+                nodeStateTracker.myStatus = statusManager.myStatus.serialize()
+                nodeStateTracker.nodeStatuses = statusManager.nodeStatuses.map { it.serialize() }.toTypedArray()
+                nodeStateTracker.blockHeight = statusManager.myStatus.height
 
-        if (Date().time - lastStatusLogged >= StatusLogInterval) {
-            logStatus()
-            lastStatusLogged = Date().time
+                if (Date().time - lastStatusLogged >= StatusLogInterval) {
+                    logStatus()
+                    lastStatusLogged = Date().time
+                }
+            }
         }
-    }
-
-    init {
-        this.currentTimeout = defaultTimeout
-        this.processingIntent = DoNothingIntent
-        this.lastStatusLogged = Date().time
     }
 }

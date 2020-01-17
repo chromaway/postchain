@@ -35,7 +35,7 @@ class BaseBlockBuilderValidationTest {
     val db = mock(DatabaseAccess::class.java)
     val ctx = BaseEContext(mockedConn, 2L, 0, db)
     val bctx = BaseBlockEContext(ctx, 1, 10, mapOf())
-    val bbb = BaseBlockBuilder(BlockchainRid.buildFromHex("0000"), cryptoSystem, ctx, bbs, tf, subjects, sigMaker, listOf(), true)
+    val bbb = BaseBlockBuilder(BlockchainRid.buildFromHex("0000"), cryptoSystem, ctx, bbs, tf, subjects, sigMaker, listOf(), false)
 
     @Test
     fun validateBlockHeader_valid() {

@@ -18,6 +18,7 @@ import net.postchain.api.rest.json.JsonFactory
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.GTXQuery
 import net.postchain.api.rest.model.TxRID
+import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.common.TimeLog
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
@@ -26,6 +27,7 @@ import net.postchain.config.SimpleDatabaseConnector
 import net.postchain.config.app.AppConfig
 import net.postchain.config.app.AppConfigDbLayer
 import net.postchain.core.BlockDetail
+import net.postchain.core.ProgrammerMistake
 import net.postchain.core.UserMistake
 import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
@@ -43,11 +45,11 @@ class RestApi(
         private val appConfig: AppConfig,
         private val sslCertificate: String? = null,
         private val sslCertificatePassword: String? = null,
-        private val databaseConnector: (AppConfig) -> DatabaseConnector = { appConfig ->
-            SimpleDatabaseConnector(appConfig)
+        private val databaseConnector: (AppConfig) -> DatabaseConnector = { applicationConfig ->
+            SimpleDatabaseConnector(applicationConfig)
         },
-        private val appConfigDbLayer: (AppConfig, Connection) -> AppConfigDbLayer = { appConfig, connection ->
-            AppConfigDbLayer(appConfig, connection)
+        private val appConfigDbLayer: (AppConfig, Connection) -> AppConfigDbLayer = { applicationConfig, connection ->
+            AppConfigDbLayer(applicationConfig, connection)
         }
 ) : Modellable {
 
@@ -61,6 +63,7 @@ class RestApi(
     private val http = Service.ignite()!!
     private val gson = JsonFactory.makeJson()
     private val models = mutableMapOf<String, Model>()
+    private val bridByIID = mutableMapOf<Long, String>()
 
     init {
         buildErrorHandler(http)
@@ -71,10 +74,15 @@ class RestApi(
 
     override fun attachModel(blockchainRID: String, model: Model) {
         models[blockchainRID.toUpperCase()] = model
+        bridByIID[model.chainIID] = blockchainRID.toUpperCase()
     }
 
     override fun detachModel(blockchainRID: String) {
-        models.remove(blockchainRID.toUpperCase())
+        val model = models[blockchainRID.toUpperCase()]
+        if (model != null) {
+            bridByIID.remove(model.chainIID)
+            models.remove(blockchainRID.toUpperCase())
+        }  else throw ProgrammerMistake("Blockchain $blockchainRID not attached")
     }
 
     override fun retrieveModel(blockchainRID: String): Model? {
@@ -246,6 +254,11 @@ class RestApi(
             http.get("/_debug/$SUBQUERY", "application/json") { request, _ ->
                 handleDebugQuery(request)
             }
+
+            http.get( "/brid/$PARAM_BLOCKCHAIN_RID") {
+                request, _ ->  checkBlockchainRID(request)
+
+            }
         }
 
         http.awaitInitialization()
@@ -379,11 +392,11 @@ class RestApi(
             blockchainRID.matches(Regex("[0-9a-fA-F]{64}")) -> blockchainRID
             blockchainRID.matches(Regex("iid_[0-9]*")) -> {
                 val chainIid = blockchainRID.substring(4).toLong()
-                val dbBcRid = databaseConnector(appConfig).withWriteConnection { connection ->
-                    appConfigDbLayer(appConfig, connection).getBlockchainRid(chainIid)
-                }
-                dbBcRid?.toHex()
-                        ?: throw NotFoundError("Can't find blockchain with chain Iid: $chainIid in DB. Did you add this BC to the node?")
+                val brid = bridByIID[chainIid]
+                if (brid != null)
+                    return brid
+                else
+                    throw NotFoundError("Can't find blockchain with chain Iid: $chainIid in DB. Did you add this BC to the node?")
             }
             else -> throw BadFormatError("Invalid blockchainRID. Expected 64 hex digits [0-9a-fA-F]")
         }
@@ -393,7 +406,12 @@ class RestApi(
         http.stop()
         // Ugly hack to workaround that there is no blocking stop.
         // Test cases won't work correctly without it
-        Thread.sleep(100)
+        Thread.sleep(200)
+        System.gc()
+        System.runFinalization()
+        Thread.sleep(200)
+        System.gc()
+        System.runFinalization()
     }
 
     private fun runTxActionOnModel(request: Request, txAction: (Model, TxRID) -> Any?): Any? {

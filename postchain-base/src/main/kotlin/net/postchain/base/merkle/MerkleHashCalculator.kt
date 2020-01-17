@@ -9,7 +9,7 @@ import net.postchain.base.CryptoSystem
  *
  * Note: We make this class abstract so we can use a dummy version during test (this makes tests easier to understand).
  */
-abstract class MerkleHashCalculator<T>(cryptoSystem: CryptoSystem?, val memoization: MerkleHashMemoization<T>): BinaryNodeHashCalculator(cryptoSystem) {
+abstract class MerkleHashCalculator<T>(cryptoSystem: CryptoSystem?): BinaryNodeHashCalculator(cryptoSystem) {
 
     /**
      * Leaf hashes are prefixed to tell them apart from internal nodes.

@@ -72,17 +72,10 @@ class GtvMerkleProofTreeFactory: MerkleProofTreeFactory<Gtv>()   {
                     } else {
                         // We don't have paths and we are not in the root element, so we are free to look in cache
                         if (content is GtvPrimitive) {
-                            val cachedSummary = calculator.memoization.findMerkleHash(content)
-                            if (cachedSummary != null) {
-                                cachedSummary.merkleHash
-                            } else {
-                                // Not GtvNull -> Make it a hash
-                                if (logger.isTraceEnabled) { logger.debug("Hash the leaf with content: $content") }
-                                val hashCarrier = calculator.calculateLeafHash(content)
-                                val summary = MerkleHashSummary(hashCarrier, currentElement.getNrOfBytes())
-                                calculator.memoization.add(content, summary)
-                                hashCarrier
-                            }
+                            // Not GtvNull -> Make it a hash
+                            if (logger.isTraceEnabled) { logger.debug("Hash the leaf with content: $content") }
+                            val hashCarrier = calculator.calculateLeafHash(content)
+                            hashCarrier
                         } else {
                             logger.warn("What is this leaf that's not a primitive? type: ${content.type}")
                             calculator.calculateLeafHash(content)

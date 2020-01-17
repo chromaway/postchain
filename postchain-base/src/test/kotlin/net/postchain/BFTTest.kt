@@ -6,6 +6,12 @@ import kotlin.test.assertEquals
 class BFTTest {
 
     @Test
+    fun testGetBFTRequiredSignatureCount_0() {
+        val result = getBFTRequiredSignatureCount(0)
+        assertEquals(0, result)
+    }
+
+    @Test
     fun testGetBFTRequiredSignatureCount_1() {
         val result = getBFTRequiredSignatureCount(1)
         assertEquals(1, result)

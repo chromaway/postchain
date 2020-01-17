@@ -1,5 +1,6 @@
 package net.postchain.network.x
 
+import com.nhaarman.mockitokotlin2.mock
 import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.base.SECP256K1CryptoSystem
@@ -32,7 +33,8 @@ class EbftIntegrationTestContext(
             chainId,
             blockchainRid,
             EbftPacketEncoder(config, blockchainRid),
-            EbftPacketDecoder(config))
+            EbftPacketDecoder(config),
+            mock())
 
     fun shutdown() {
         communicationManager.shutdown()

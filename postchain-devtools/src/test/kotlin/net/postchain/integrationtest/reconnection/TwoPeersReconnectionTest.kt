@@ -7,8 +7,10 @@ import net.postchain.integrationtest.assertNodeConnectedWith
 import net.postchain.isEmpty
 import org.awaitility.Awaitility
 import org.awaitility.Duration
+import org.junit.Ignore
 import org.junit.Test
 
+// TODO: this test seems flaky, investigate
 class TwoPeersReconnectionTest : ReconnectionTest() {
 
     @Test

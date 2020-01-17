@@ -26,12 +26,6 @@ class CommandAddBlockchain : Command {
     private var chainId = 0L
 
     @Parameter(
-            names = ["-brid", "--blockchain-rid"],
-            description = "Blockchain global ID",
-            required = true)
-    private var blockchainRID: String = ""
-
-    @Parameter(
             names = ["-bc", "--blockchain-config"],
             description = "Configuration file of blockchain (gtxml or binary)",
             required = true)
@@ -47,10 +41,6 @@ class CommandAddBlockchain : Command {
     override fun execute(): CliResult {
         println("add-blockchain will be executed with options: " +
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
-
-        if (blockchainRID != "") {
-            println("WARNING: You specified Blockchain RID, but this is deprecated and will not be used. The Blockchain global ID will be calculated by the system!" )
-        }
 
         return try {
             val cliExecution = CliExecution()
