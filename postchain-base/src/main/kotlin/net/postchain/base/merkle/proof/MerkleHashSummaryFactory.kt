@@ -59,15 +59,7 @@ abstract class MerkleHashSummaryFactory<T, TPathSet: PathSet>(
                     val merkleProofTree: MerkleProofTree<T> = buildProofTree(value, calculator)
                     calculateMerkleRootInternal(merkleProofTree.root, calculator)
                 } else {
-                    // This is a primitive value, just hash it
-                    val foundInCache = calculator.memoization.findMerkleHash(value)
-                    if (foundInCache != null) {
-                        foundInCache.merkleHash
-                    } else {
-                        val hash = calculator.calculateLeafHash(value)
-                        calculator.memoization.add(value, MerkleHashSummary(hash, currentElement.sizeInBytes))
-                        hash
-                    }
+                    calculator.calculateLeafHash(value)
                 }
             }
             is ProofNode -> {

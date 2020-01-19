@@ -11,9 +11,9 @@ import net.postchain.ebft.message.*
 import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockDataWithWitness
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
-import java.lang.Integer.max
 import java.lang.Integer.min
 import java.util.*
+import kotlin.math.abs
 
 class FastSynchronizer(
         processName: BlockchainProcessName,
@@ -26,7 +26,6 @@ class FastSynchronizer(
     private val fastSyncAlgorithmTelemetry = FastSynchronizerTelemetry(processName)
     private val validatorNodes: List<XPeerID> = signers.map { XPeerID(it) }
     private val parallelism = 10
-    private val nodePoolCount: Int = max(1, signers.count() / 2) // TODO: [et] ?
     private val defaultBackoffDelta = 1000
     private val maxBackoffDelta = 30 * defaultBackoffDelta
 
@@ -46,16 +45,15 @@ class FastSynchronizer(
         dispatchMessages()
     }
 
-    fun isUpToDate(): Boolean {
-        val highest = nodeStatuses().map { it.height }.max() ?: Long.MAX_VALUE
-        return if (blockHeight == -1L || ((highest - blockHeight) > blockHeightAheadCount)) {
-            false
-        } else {
-            // TODO: [et]: Extract out the mutations
-            parallelRequestsState.clear()
-            blocks.clear()
-            true
-        }
+    fun reset() {
+        parallelRequestsState.clear()
+        blocks.clear()
+    }
+
+    fun isAlmostUpToDate(): Boolean {
+        return blockHeight != -1L && EBFTNodesCondition(nodeStatuses()) { status ->
+            abs(status.height - blockHeight) < blockHeightAheadCount
+        }.satisfied()
     }
 
     fun nodeStatuses() = nodesStatuses.values.toTypedArray()
@@ -68,10 +66,7 @@ class FastSynchronizer(
                 when {
                     it <= blockHeight -> blocks.remove()
                     it == blockHeight + 1 ->
-                        if (!isUpToDate()) {
-                            // to prevent outstanding blocks to commit when fast sync is turned off.
-                            commitBlock(blocks.remove().block)
-                        } else Unit
+                        commitBlock(blocks.remove().block)
                     else -> Unit
                 }
             }
@@ -82,7 +77,11 @@ class FastSynchronizer(
         parallelRequestsState.entries.removeIf { it.key <= blockHeight }
         val maxElem = (parallelRequestsState.maxBy { it.key }?.key ?: blockHeight) + 1
         val diff = parallelism - parallelRequestsState.count()
-        (maxElem until maxElem + diff).subtract(parallelRequestsState.keys).map { askForBlock(it) }
+        (maxElem until maxElem + diff).subtract(parallelRequestsState.keys).map {
+            if (!doesQueueContainsBlock(it)) {
+                askForBlock(it)
+            }
+        }
 
         parallelRequestsState.entries.associate {
             val state = IssuedRequestTimer(it.value.backoffDelta, it.value.lastSentTimestamp)
@@ -132,7 +131,7 @@ class FastSynchronizer(
                         nodesStatuses[validatorNodes.indexOf(xPeerId)] = nodeStatus
 
                         if (xPeerId in validatorNodes) {
-                            nodesWithBlocks[xPeerId] = message.height - 1 // TODO: [et]: ?
+                            nodesWithBlocks[xPeerId] = message.height - 1
                         }
                     }
                     else -> throw ProgrammerMistake("Unhandled type ${message::class}")
@@ -168,14 +167,12 @@ class FastSynchronizer(
                 .toMutableList()
                 .also {
                     it.shuffle()
-                    if (it.count() >= nodePoolCount) {
-                        fastSyncAlgorithmTelemetry.askForBlock(height, blockHeight)
-                        val timer = parallelRequestsState[height]
-                                ?: IssuedRequestTimer(defaultBackoffDelta, Date().time)
-                        val backoffDelta = min((timer.backoffDelta.toDouble() * 1.1).toInt(), maxBackoffDelta)
-                        communicationManager.sendPacket(GetBlockAtHeight(height), it.first())
-                        parallelRequestsState[height] = timer.copy(backoffDelta = backoffDelta, lastSentTimestamp = Date().time)
-                    }
+                    fastSyncAlgorithmTelemetry.askForBlock(height, blockHeight)
+                    val timer = parallelRequestsState[height]
+                            ?: IssuedRequestTimer(defaultBackoffDelta, Date().time)
+                    val backoffDelta = min((timer.backoffDelta.toDouble() * 1.1).toInt(), maxBackoffDelta)
+                    communicationManager.sendPacket(GetBlockAtHeight(height), it.first())
+                    parallelRequestsState[height] = timer.copy(backoffDelta = backoffDelta, lastSentTimestamp = Date().time)
                 }
     }
 
