@@ -344,11 +344,11 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
 
         return blocksInfo.map { blockInfo ->
             val blockRid = blockInfo.get("block_rid") as ByteArray
-            val blockHeight = blockInfo.get("block_height") as Long
+            val heightOfBlock = blockInfo.get("block_height") as Long
             val blockHeader = blockInfo.get("block_header_data") as ByteArray
             val blockWitness = blockInfo.get("block_witness") as ByteArray
             val timestamp = blockInfo.get("timestamp") as Long
-            DatabaseAccess.BlockInfoExt(blockRid, blockHeight, blockHeader, blockWitness, timestamp)
+            DatabaseAccess.BlockInfoExt(blockRid, heightOfBlock, blockHeader, blockWitness, timestamp)
         }
     }
 

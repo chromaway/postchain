@@ -44,22 +44,22 @@ open class FullEbftTestNightlyCore : IntegrationTest() {
         val referenceHeight = queries.getBestHeight().get()
         logger.info { "$blocksCount, refHe: $referenceHeight" }
         nodes.forEach { node ->
-            val queries = node.getBlockchainInstance().getEngine().getBlockQueries()
+            val blockQueries = node.getBlockchainInstance().getEngine().getBlockQueries()
             assertEquals(referenceHeight, queries.getBestHeight().get())
 
             for (height in 0..referenceHeight) {
                 logger.info { "Verifying height $height" }
-                val rid = queries.getBlockRid(height).get()
+                val rid = blockQueries.getBlockRid(height).get()
                 assertNotNull(rid)
 
-                val txs = queries.getBlockTransactionRids(rid!!).get()
+                val txs = blockQueries.getBlockTransactionRids(rid!!).get()
                 assertEquals(txPerBlock, txs.size)
 
                 for (tx in 0 until txPerBlock) {
                     val expectedTx = TestTransaction((height * txPerBlock + tx).toInt())
                     assertArrayEquals(expectedTx.getRID(), txs[tx])
 
-                    val actualTx = queries.getTransaction(txs[tx]).get()
+                    val actualTx = blockQueries.getTransaction(txs[tx]).get()
                     assertArrayEquals(expectedTx.getRID(), actualTx?.getRID())
                     assertArrayEquals(expectedTx.getRawData(), actualTx!!.getRawData())
                 }
