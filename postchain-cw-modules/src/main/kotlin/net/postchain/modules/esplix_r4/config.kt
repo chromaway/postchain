@@ -10,11 +10,11 @@ open class EsplixConfig (
 )
 
 fun makeBaseEsplixConfig(data: Gtv, blockchainRID: ByteArray): EsplixConfig {
-    val blockchainRID = blockchainRID
+    val blockchainRid = blockchainRID
 
     val cs = SECP256K1CryptoSystem()
     return EsplixConfig(
             cs,
-            blockchainRID
+            blockchainRid
     )
 }
