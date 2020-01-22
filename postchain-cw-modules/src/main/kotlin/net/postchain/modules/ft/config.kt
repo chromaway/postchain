@@ -2,6 +2,7 @@
 
 package net.postchain.modules.ft
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.core.ByteArrayKey
 import net.postchain.gtv.Gtv
@@ -109,7 +110,7 @@ fun makeFTTransferRules(config: Gtv): FTTransferRules {
  * @param config configuration options
  * @return account factory
  */
-fun makeFTAccountFactory(config: Gtv, blockchainRID: ByteArray): AccountFactory {
+fun makeFTAccountFactory(config: Gtv, blockchainRID: BlockchainRid): AccountFactory {
 
     return BaseAccountFactory(
             mapOf(
@@ -125,7 +126,7 @@ fun makeFTAccountFactory(config: Gtv, blockchainRID: ByteArray): AccountFactory 
  * @param config the base configuration options
  * @return the FT module configuration
  */
-fun makeBaseFTConfig(config: Gtv, blockchainRID: ByteArray): FTConfig {
+fun makeBaseFTConfig(config: Gtv, blockchainRID: BlockchainRid): FTConfig {
     val blockchainRID = blockchainRID
     val ftConfig = config["gtx"]!!["ft"] ?: throw Exception("No ft module") // MARK
 

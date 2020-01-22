@@ -5,8 +5,8 @@ package net.postchain.gtx
 import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import mu.KLogging
+import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
-import net.postchain.common.hexStringToByteArray
 import net.postchain.configurations.GTXTestModule
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
@@ -27,7 +27,7 @@ class GTXPerformanceTestNightly : IntegrationTest() {
 
     companion object : KLogging()
 
-    val expectedBcRid = "78967BAA4768CBCEF11C508326FFB13A956689FCB6DC3BA17F4B895CBB1577A3".hexStringToByteArray()
+    val dummyBcRid = BlockchainRid.buildFromHex( "ABABAABABABABABABABABABABABABABAABABABABABABABABABABABABABAABABA")
 
     private fun strategy(node: PostchainTestNode): OnDemandBlockBuildingStrategy {
         return node
@@ -36,8 +36,8 @@ class GTXPerformanceTestNightly : IntegrationTest() {
                 .getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
     }
 
-    private fun makeTestTx(id: Long, value: String): ByteArray {
-        val b = GTXDataBuilder(net.postchain.devtools.gtx.testBlockchainRID, arrayOf(pubKey(0)), net.postchain.devtools.gtx.myCS)
+    private fun makeTestTx(id: Long, value: String, blockchainRid: BlockchainRid): ByteArray {
+        val b = GTXDataBuilder(blockchainRid, arrayOf(pubKey(0)), net.postchain.devtools.gtx.myCS)
         b.addOperation("gtx_test", arrayOf(gtv(id), gtv(value)))
         b.finish()
         b.sign(net.postchain.devtools.gtx.myCS.buildSigMaker(pubKey(0), privKey(0)))
@@ -49,7 +49,7 @@ class GTXPerformanceTestNightly : IntegrationTest() {
         var total = 0
         val nanoDelta = measureNanoTime {
             for (i in 0..999) {
-                total += makeTestTx(i.toLong(), "Hello").size
+                total += makeTestTx(i.toLong(), "Hello", dummyBcRid).size
             }
         }
         Assert.assertTrue(total > 1000)
@@ -59,7 +59,7 @@ class GTXPerformanceTestNightly : IntegrationTest() {
     @Test
     fun parseTxData() {
         val transactions = (0..999).map {
-            makeTestTx(it.toLong(), it.toString())
+            makeTestTx(it.toLong(), it.toString(), dummyBcRid)
         }
         var total = 0
         val nanoDelta = measureNanoTime {
@@ -76,12 +76,12 @@ class GTXPerformanceTestNightly : IntegrationTest() {
     @Test
     fun parseTx() {
         val transactions = (0..999).map {
-            makeTestTx(it.toLong(), it.toString())
+            makeTestTx(it.toLong(), it.toString(), dummyBcRid)
         }
         var total = 0
         val module = GTXTestModule()
         val cs = SECP256K1CryptoSystem()
-        val txFactory = GTXTransactionFactory(expectedBcRid ,module, cs)
+        val txFactory = GTXTransactionFactory(dummyBcRid ,module, cs)
         val nanoDelta = measureNanoTime {
             for (rawTx in transactions) {
                 val ttx =  txFactory.decodeTransaction(rawTx) as GTXTransaction
@@ -95,12 +95,12 @@ class GTXPerformanceTestNightly : IntegrationTest() {
     @Test
     fun parseTxVerify() {
         val transactions = (0..999).map {
-            makeTestTx(1, it.toString())
+            makeTestTx(1, it.toString(), dummyBcRid)
         }
         var total = 0
         val module = GTXTestModule()
         val cs = SECP256K1CryptoSystem()
-        val txFactory = GTXTransactionFactory(expectedBcRid ,module, cs)
+        val txFactory = GTXTransactionFactory(dummyBcRid ,module, cs)
         val nanoDelta = measureNanoTime {
             for (rawTx in transactions) {
                 val ttx =  txFactory.decodeTransaction(rawTx) as GTXTransaction
@@ -114,36 +114,41 @@ class GTXPerformanceTestNightly : IntegrationTest() {
 
     @Test
     @Parameters(
-            "1, 100", "1, 1000"
-/*            "3, 100", "4, 100", "10, 100",
-            "4, 1000"*/
+            "1, 1000, 0", "1, 1000, 1",
+            "4, 1000, 0", "4, 1000, 1"
     )
-    fun runXNodesWithYTxPerBlock(nodeCount: Int, txPerBlock: Int) {
+    fun runXNodesWithYTxPerBlockBuildOnly(nodeCount: Int, txPerBlock: Int, mode: Int) {
         val blocksCount = 2
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
-        createNodes(nodeCount, "/net/postchain/performance/blockchain_config_$nodeCount.xml")
+        val nodes = createNodes(nodeCount, "/net/postchain/devtools/performance/blockchain_config_$nodeCount.xml")
+        val blockchainRid = nodes[0].getBlockchainRid(1L) // We only have one chain so just pick it from first node
 
         var txId = 0
         val statusManager = (nodes[0].getBlockchainInstance() as ValidatorWorker).statusManager
         for (i in 0 until blocksCount) {
-            for (tx in 0 until txPerBlock) {
-                val txFactory = nodes[statusManager.primaryIndex()]
-                        .getBlockchainInstance()
-                        .getEngine()
-                        .getConfiguration()
-                        .getTransactionFactory()
+            val txs = (1..txPerBlock).map { makeTestTx(1, (txId++).toString(), blockchainRid!!) }
 
-                val tx = makeTestTx(1, (txId++).toString())
-                nodes[statusManager.primaryIndex()]
-                        .getBlockchainInstance()
-                        .getEngine()
-                        .getTransactionQueue()
-                        .enqueue(txFactory.decodeTransaction(tx))
-            }
+            val engine = nodes[statusManager.primaryIndex()]
+                    .getBlockchainInstance()
+                    .getEngine()
+            val txFactory = engine
+                    .getConfiguration()
+                    .getTransactionFactory()
+            val queue = engine.getTransactionQueue()
 
-            val nanoDelta = measureNanoTime {
-                nodes.forEach { strategy(it).buildBlocksUpTo(i.toLong()) }
-                nodes.forEach { strategy(it).awaitCommitted(i) }
+            val nanoDelta = if (mode == 0) {
+                txs.forEach {
+                    queue.enqueue(txFactory.decodeTransaction(it)) }
+                measureNanoTime {
+                    nodes.forEach { strategy(it).buildBlocksUpTo(i.toLong()) }
+                    nodes.forEach { strategy(it).awaitCommitted(i) }
+                }
+            } else {
+                measureNanoTime {
+                    txs.forEach { queue.enqueue(txFactory.decodeTransaction(it)) }
+                    nodes.forEach { strategy(it).buildBlocksUpTo(i.toLong()) }
+                    nodes.forEach { strategy(it).awaitCommitted(i) }
+                }
             }
 
             println("Time elapsed: ${nanoDelta / 1000000} ms")

@@ -1,6 +1,7 @@
 package net.postchain.devtools.utils.configuration
 
 import net.postchain.base.BlockchainRelatedInfo
+import net.postchain.base.BlockchainRid
 import net.postchain.common.toHex
 import net.postchain.devtools.KeyPairHelper.pubKeyFromByteArray
 import net.postchain.gtv.Gtv
@@ -9,9 +10,9 @@ import net.postchain.gtv.gtvml.GtvMLParser
 
 /**
  * This setup holds the most important facts about a blockchain we will use during the test.
+ * We have the entire BC configuration in the GTV format, but we have extracted the signers and dependencies for convenience.
  *
- * Note: the reason we have 2 sets for BC dependencies is bc we initially only know the BC RID (from the config file).
- *       The chainID has to be added later. (This is bit ugly but I have no good idea how to clean it up in a better way)
+ * (The "setup" classes are data holders/builders for test configuration used to generate the "real" classes at a later stage)
  *
  * @property chainId is the ID of the chain
  * @property rid is the blockchainRID
@@ -21,7 +22,7 @@ import net.postchain.gtv.gtvml.GtvMLParser
  */
 data class BlockchainSetup(
         val chainId: Int,
-        val rid: String,
+        val rid: BlockchainRid,
         val bcGtv: Gtv,
         val signerNodeList: List<NodeSeqNumber>,
         val chainDependencies: Set<Int> = setOf() // default is none
@@ -29,25 +30,29 @@ data class BlockchainSetup(
 
     companion object {
 
-        /**
-         * Will:
-         * 1. figure out the RID via the cache
-         */
-        fun simpleBuild(chainId: Int, filepath: String, bcGtv: Gtv, signers: List<NodeSeqNumber>): BlockchainSetup {
-            return BlockchainSetup(chainId, TestBlockchainRidCache.getRid(chainId), bcGtv, signers)
-        }
 
 
         /**
          * Will:
-         * 1. figure out the RID via the cache
-         * 2. figure out the dependency chain ID via the cache
+         * 1. figure out the RID via the GTV config
+         * 2. figure out the dependency chain ID via the cache (we must have added the dependencies to the cache before this)
          */
-        fun buildWithDependencies(chainId: Int, bcGtv: Gtv, signers: List<NodeSeqNumber>, dependencyRid: Set<String>): BlockchainSetup {
-
+        fun buildWithDependencies(
+                chainId: Int,
+                bcGtv: Gtv,
+                signers: List<NodeSeqNumber>,
+                dependencyRid: Set<BlockchainRid>
+        ): BlockchainSetup {
             val depChainIds = dependencyRid.map { TestBlockchainRidCache.getChainId(it)}.toSet()
-            return BlockchainSetup(chainId, TestBlockchainRidCache.getRid(chainId), bcGtv, signers, depChainIds)
+            return BlockchainSetup(chainId, TestBlockchainRidCache.getRid(chainId, bcGtv), bcGtv, signers, depChainIds)
         }
+
+        /**
+         * Will take a GTV configuration and return a setup
+         */
+        fun buildFromGtv(chainId: Int, gtvConfig: Gtv): BlockchainSetup = BlockchainSetupFactory.buildFromGtv(chainId, gtvConfig)
+
+
 
     }
 

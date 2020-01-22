@@ -7,6 +7,7 @@ import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.argumentCaptor
 import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
+import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerInfo
 import net.postchain.base.peerId
 import net.postchain.core.byteArrayKeyOf
@@ -22,7 +23,7 @@ import org.junit.Test
 
 class IntNettyConnector2PeersCommunicationIT {
 
-    private val blockchainRid = byteArrayOf(0x01)
+    private val blockchainRid = BlockchainRid(byteArrayOf(0x01))
     private lateinit var peerInfo1: PeerInfo
     private lateinit var peerInfo2: PeerInfo
     private lateinit var context1: IntTestContext
@@ -51,7 +52,7 @@ class IntNettyConnector2PeersCommunicationIT {
     @Test
     fun testConnectAndCommunicate() {
         // Connecting 1 -> 2
-        val peerDescriptor2 = XPeerConnectionDescriptor(peerInfo2.peerId(), blockchainRid.byteArrayKeyOf())
+        val peerDescriptor2 = XPeerConnectionDescriptor(peerInfo2.peerId(), blockchainRid)
         context1.peer.connectPeer(peerDescriptor2, peerInfo2, context1.packetEncoder)
 
         // Waiting for all connections to be established

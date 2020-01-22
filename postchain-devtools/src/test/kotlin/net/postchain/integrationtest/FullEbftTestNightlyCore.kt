@@ -2,21 +2,16 @@
 
 package net.postchain.integrationtest
 
-import junitparams.JUnitParamsRunner
-import junitparams.Parameters
-import junitparams.naming.TestCaseName
 import mu.KLogging
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.ConfigFileBasedIntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
-import org.junit.Test
-import org.junit.runner.RunWith
 import kotlin.test.assertNotNull
 
-open class FullEbftTestNightlyCore : IntegrationTest() {
+open class FullEbftTestNightlyCore : ConfigFileBasedIntegrationTest() {
 
     companion object : KLogging()
 
@@ -54,7 +49,7 @@ open class FullEbftTestNightlyCore : IntegrationTest() {
 
             for (height in 0..referenceHeight) {
                 logger.info { "Verifying height $height" }
-                val rid = queries.getBlockRids(height).get()
+                val rid = queries.getBlockRid(height).get()
                 assertNotNull(rid)
 
                 val txs = queries.getBlockTransactionRids(rid!!).get()

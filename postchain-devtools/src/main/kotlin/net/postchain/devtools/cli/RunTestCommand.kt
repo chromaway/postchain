@@ -27,7 +27,7 @@ class RunTestCommand : CliktCommand(name = "run-test", help = "Tests gtxml file"
     )
 
     override fun run() {
-        println("Gtxml file will be processed: $filename\n")
+        println("GtxML file will be processed: $filename\n")
 
         val result = TestLauncher().runXMLGTXTests(
                 File(filename).readText(),

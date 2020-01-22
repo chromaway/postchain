@@ -2,16 +2,19 @@ package net.postchain.devtools
 
 import com.google.gson.GsonBuilder
 import mu.KLogging
+import net.postchain.StorageBuilder
+import net.postchain.base.BlockchainRid
 import net.postchain.base.gtxml.TestType
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
 import net.postchain.config.node.NodeConfigurationProviderFactory
+import net.postchain.core.NODE_ID_TODO
 import net.postchain.core.UserMistake
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.devtools.utils.configuration.NodeSeqNumber
 import net.postchain.gtv.GtvFactory.gtv
-import net.postchain.gtv.GtvNull
 import net.postchain.gtv.gtvml.GtvMLParser
 import net.postchain.gtx.gtxml.GTXMLTransactionParser
 import net.postchain.gtx.gtxml.TransactionContext
@@ -45,9 +48,9 @@ class TestLauncher : IntegrationTest() {
         }
     }
 
-    private fun createTestNode(configFile: String, blockchainRid: ByteArray, blockchainConfigFile: String): PostchainTestNode {
-        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
-                AppConfig.fromPropertiesFile(configFile))
+    private fun createTestNode(configFile: String, blockchainConfigFile: String): PostchainTestNode {
+        val appConfig = AppConfig.fromPropertiesFile(configFile)
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(appConfig)
 
         /*
         // TODO: Fix this hack
@@ -64,10 +67,15 @@ class TestLauncher : IntegrationTest() {
 
         val chainId = nodeConfigProvider.getConfiguration().activeChainIds.first().toLong()
 
-        return PostchainTestNode(nodeConfigProvider, true).apply {
-            addBlockchain(chainId, blockchainRid, blockchainConfig)
+        // Wiping of database
+        StorageBuilder.buildStorage(appConfig, NODE_ID_TODO, true).close()
+
+        return PostchainTestNode(nodeConfigProvider).apply {
+            val blockchainRid = addBlockchain(chainId, blockchainConfig)
+            mapBlockchainRID(chainId, blockchainRid)
             startBlockchain()
             nodes.add(this)
+            nodeMap[NodeSeqNumber(0)] = this
         }
     }
 
@@ -90,15 +98,16 @@ class TestLauncher : IntegrationTest() {
     }
 
     private fun _runXMLGTXTests(xml: String,
-                                blockchainRID: String,
+                                blockchainRIDStr: String,
                                 nodeConfigFile: String? = null,
                                 blockchainConfigFile: String? = null
     ): TestOutput {
+        val blockchainRID = BlockchainRid.buildFromHex(blockchainRIDStr)
         val node: PostchainTestNode
         val testType: TestType
         try {
             // TODO: Resolve nullability here and above: !! vs ?.
-            node = createTestNode(nodeConfigFile!!, blockchainRID.hexStringToByteArray(), blockchainConfigFile!!)
+            node = createTestNode(nodeConfigFile!!, blockchainConfigFile!!)
         } catch (e: Exception) {
             return TestOutput(false, false, e, listOf())
         }
@@ -119,7 +128,7 @@ class TestLauncher : IntegrationTest() {
         val user3priv = privKey(2)
 
         val txContext = TransactionContext(
-                blockchainRID?.hexStringToByteArray(),
+                blockchainRID,
                 mapOf(
                         "user1pub" to gtv(pubKey(0)),
                         "user2pub" to gtv(user2pub),

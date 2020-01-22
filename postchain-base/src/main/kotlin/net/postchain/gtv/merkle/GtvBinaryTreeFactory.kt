@@ -22,8 +22,8 @@ class GtvBinaryTreeFactory : BinaryTreeFactory<Gtv, GtvPathSet>() {
      * Generic builder.
      * @param Gtv will take any damn thing
      */
-    fun buildFromGtv(gtv: Gtv, memoization: MerkleHashMemoization<Gtv>): GtvBinaryTree {
-        return buildFromGtvAndPath(gtv, GtvPath.NO_PATHS, memoization)
+    fun buildFromGtv(gtv: Gtv): GtvBinaryTree {
+        return buildFromGtvAndPath(gtv, GtvPath.NO_PATHS)
     }
 
     /**
@@ -31,13 +31,13 @@ class GtvBinaryTreeFactory : BinaryTreeFactory<Gtv, GtvPathSet>() {
      * @param Gtv will take any damn thing
      * @param GtvPathList will tell us what element that are path leafs
      */
-    fun buildFromGtvAndPath(gtv: Gtv, gtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): GtvBinaryTree {
+    fun buildFromGtvAndPath(gtv: Gtv, gtvPaths: GtvPathSet): GtvBinaryTree {
         if (logger.isTraceEnabled) {
             logger.trace("--------------------------------------------")
             logger.trace("--- Converting GTV to binary tree ----------")
             logger.trace("--------------------------------------------")
         }
-        val result = handleLeaf(gtv, gtvPaths, memoization, true)
+        val result = handleLeaf(gtv, gtvPaths, true)
         if (logger.isTraceEnabled) {
             logger.trace("--------------------------------------------")
             logger.trace("--- /Converting GTV to binary tree ---------")
@@ -56,7 +56,7 @@ class GtvBinaryTreeFactory : BinaryTreeFactory<Gtv, GtvPathSet>() {
      * @return an array of all the leafs as [BinaryTreeElement] s. Note that some leafs might not be primitive values
      *   but some sort of collection with their own leafs (recursivly)
      */
-    fun buildLeafElements(leafList: List<Gtv>, gtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): ArrayList<BinaryTreeElement> {
+    fun buildLeafElements(leafList: List<Gtv>, gtvPaths: GtvPathSet): ArrayList<BinaryTreeElement> {
         val leafArray = arrayListOf<BinaryTreeElement>()
 
         val onlyArrayPaths = gtvPaths.keepOnlyArrayPaths() // For performance, since we will loop soon
@@ -64,7 +64,7 @@ class GtvBinaryTreeFactory : BinaryTreeFactory<Gtv, GtvPathSet>() {
         for (i in 0..(leafList.size - 1)) {
             val pathsRelevantForThisLeaf = onlyArrayPaths.getTailIfFirstElementIsArrayOfThisIndexFromList(i)
             val leaf = leafList[i]
-            val binaryTreeElement = handleLeaf(leaf, pathsRelevantForThisLeaf, memoization)
+            val binaryTreeElement = handleLeaf(leaf, pathsRelevantForThisLeaf)
             leafArray.add(binaryTreeElement)
         }
         return leafArray
@@ -80,11 +80,11 @@ class GtvBinaryTreeFactory : BinaryTreeFactory<Gtv, GtvPathSet>() {
      * @param memoization is not used for this leaf (since we know it's not in cache) but might be used below
      * @return the tree element we created.
      */
-    override fun innerHandleLeaf(leaf: Gtv, gtvPaths: GtvPathSet, memoization: MerkleHashMemoization<Gtv>): BinaryTreeElement {
+    override fun innerHandleLeaf(leaf: Gtv, gtvPaths: GtvPathSet): BinaryTreeElement {
         return when (leaf) {
             is GtvPrimitive  -> handlePrimitiveLeaf(leaf, gtvPaths)
-            is GtvArray      -> GtvBinaryTreeFactoryArray.buildFromGtvArray(leaf, gtvPaths, memoization)
-            is GtvDictionary -> GtvBinaryTreeFactoryDict.buildFromGtvDictionary(leaf, gtvPaths, memoization)
+            is GtvArray      -> GtvBinaryTreeFactoryArray.buildFromGtvArray(leaf, gtvPaths)
+            is GtvDictionary -> GtvBinaryTreeFactoryDict.buildFromGtvDictionary(leaf, gtvPaths)
             is GtvCollection -> throw IllegalStateException("Programmer should have dealt with this container type: ${leaf.type}")
             else ->             throw IllegalStateException("What is this? Not container and not primitive? type: ${leaf.type}")
         }

@@ -1,6 +1,8 @@
 package net.postchain.integrationtest.reconfiguration
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.gson.Gson
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
 import net.postchain.common.toHex
 import net.postchain.core.Transaction
 import net.postchain.devtools.PostchainTestNode
@@ -9,6 +11,8 @@ import net.postchain.integrationtest.query
 
 object TxChartHelper {
 
+    private val gson = Gson()
+
     fun buildTxChart(
             node: PostchainTestNode,
             chainId: Long,
@@ -16,42 +20,43 @@ object TxChartHelper {
             txPayloadName: String = "id"
     ): String {
 
-        val mapper = ObjectMapper()
-        val chart = mapper.createObjectNode()
-        val blocks = mapper.createArrayNode()
-        chart.set("blocks", blocks)
+        val chart = JsonObject()
+        val blocks = JsonArray()
+        chart.add("blocks", blocks)
 
         val height = minOf(
                 node.query(chainId) { it.getBestHeight() } ?: -1L,
                 heightLimit)
 
         (0..height).forEach { h ->
-            val blockRid = node.query(chainId) { it.getBlockRids(h) }
+            val blockRid = node.query(chainId) { it.getBlockRid(h) }
 
-            val block = mapper.createObjectNode()
-            block.put("height", h)
-            block.put("block-rid", blockRid?.toHex())
+            val block = JsonObject()
+            block.addProperty("height", h)
+            block.addProperty("block-rid", blockRid?.toHex())
 
-            val txs = mapper.createArrayNode()
+            val txs = JsonArray()//mapper.createArrayNode()
             val txsRids = node.query(chainId) { it.getBlockTransactionRids(blockRid!!) }
 
             txsRids!!
                     .map { txRid ->
                         val tx = node.query(chainId) { it.getTransaction(txRid) }
                         val txPayload = (tx as? TestTransaction)?.id
-                        mapper.createObjectNode().apply {
-                            put("rid", txRid.toHex())
-                            put(txPayloadName, txPayload)
+
+                        JsonObject().apply {
+                            addProperty("rid", txRid.toHex())
+                            addProperty(txPayloadName, txPayload)
                         }
                     }.forEach {
                         txs.add(it)
                     }
 
-            block.set("tx", txs)
+            block.add("tx", txs)
             blocks.add(block)
         }
 
-        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(chart)
+        //return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(chart)
+        return gson.toJson(chart)
     }
 
     fun collectAllTxs(node: PostchainTestNode, chainId: Long): List<Transaction> {
@@ -59,7 +64,7 @@ object TxChartHelper {
 
         val height = node.query(chainId) { it.getBestHeight() } ?: -1L
         (0..height).forEach { h ->
-            val blockRid = node.query(chainId) { it.getBlockRids(h) }
+            val blockRid = node.query(chainId) { it.getBlockRid(h) }
             val txsRids = node.query(chainId) { it.getBlockTransactionRids(blockRid!!) }
             txsRids!!.forEach { txRid ->
                 val tx = node.query(chainId) { it.getTransaction(txRid) }

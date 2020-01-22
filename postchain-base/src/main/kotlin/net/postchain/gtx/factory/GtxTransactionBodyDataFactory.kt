@@ -1,5 +1,6 @@
 package net.postchain.gtx.factory
 
+import net.postchain.base.BlockchainRid
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvArray
 import net.postchain.gtv.GtvByteArray
@@ -22,7 +23,7 @@ object GtxTransactionBodyDataFactory {
         FactoryUtils.formatChecker(mainArr, GtxBase.NR_FIELDS_TRANSACTION_BODY, "GTXTransactionBodyData")
 
         //  1. blockchainRId
-        val blockchainRid: ByteArray = (mainArr[0] as GtvByteArray).bytearray
+        val blockchainRid = BlockchainRid((mainArr[0] as GtvByteArray).bytearray)
 
         // 2. operations
         val opsGtvArr = (mainArr[1] as GtvArray)

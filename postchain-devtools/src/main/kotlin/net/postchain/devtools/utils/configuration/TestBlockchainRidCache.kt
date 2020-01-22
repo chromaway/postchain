@@ -1,67 +1,34 @@
 package net.postchain.devtools.utils.configuration
 
-    /**
-     * We put all the chains' RIDs in here, and re-use them in all tests
-     *
-     * Note1: This may seem a bit crazy, but we are allowed to do this since this is just for testing.
-     * Note2: If you need more chains for your test, just add more
-     */
-    object TestBlockchainRidCache {
+import net.postchain.base.BlockchainRid
+import net.postchain.base.BlockchainRidFactory
+import net.postchain.gtv.Gtv
+import java.lang.IllegalStateException
 
-        const val BC1 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
-        const val BC2 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a4"
-        const val BC3 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a5"
-        const val BC4 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a6"
-        const val BC5 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a7"
-        const val BC6 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a8"
-        const val BC7 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a9"
-        const val BC8 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577b0"
-        const val BC9 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577b1"
-        const val BC10= "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577b2"
+/**
+ * This cache will save us some CPU and get us out of situations where we really should have gone to the DB to fetch the RID / IID.
+ *
+ * TODO: Olle Since CHAIN -> RID never changes (we can only add more) this cache could actually be used in production code to to avoid DB calls.
+ */
+object TestBlockchainRidCache {
+
+        val cacheRid = mutableMapOf<Int, BlockchainRid>()
+        val cacheChainId = mutableMapOf<BlockchainRid, Int>()
 
 
-        val cacheRid = mutableMapOf<Int, String>()
-        val cacheChainId = mutableMapOf<String, Int>()
-
-        fun init() {
-            cacheRid[1] = BC1
-            cacheRid[2] = BC2
-            cacheRid[3] = BC3
-            cacheRid[4] = BC4
-            cacheRid[5] = BC5
-            cacheRid[6] = BC6
-            cacheRid[7] = BC7
-            cacheRid[8] = BC8
-            cacheRid[9] = BC9
-            cacheRid[10]= BC10
-
-            cacheChainId[BC1] = 1
-            cacheChainId[BC2] = 2
-            cacheChainId[BC3] = 3
-            cacheChainId[BC4] = 4
-            cacheChainId[BC5] = 5
-            cacheChainId[BC6] = 6
-            cacheChainId[BC7] = 7
-            cacheChainId[BC8] = 8
-            cacheChainId[BC9] = 9
-            cacheChainId[BC10]= 10
-
-        }
-
-        fun getChainId(rid: String): Int {
-            if (cacheChainId.isEmpty()) {
-                init()
-            }
-            return cacheChainId[rid]!!
-        }
-
-
-        fun getRid(chainId: Int): String {
-            if (cacheRid.isEmpty()) {
-                init()
-            }
-            return cacheRid[chainId]!!
-        }
-
-
+    fun add(chainIid: Int, bcRid: BlockchainRid) {
+        cacheChainId[bcRid]  = chainIid
+        cacheRid[chainIid]= bcRid
     }
+
+    fun getRid(chainId: Int, bcGtv: Gtv): BlockchainRid = cacheRid[chainId] ?: calcAndAdd(chainId, bcGtv)
+
+    fun getChainId(rid: BlockchainRid): Int = cacheChainId[rid] ?: throw IllegalStateException("Is this a dependency bc RID? This chain must be added to the cache before it can be found")
+
+    fun calcAndAdd(chainId: Int, bcGtv: Gtv): BlockchainRid {
+        val newRid = BlockchainRidFactory.calculateBlockchainRID(bcGtv)
+        add(chainId, newRid)
+        return newRid
+    }
+
+}

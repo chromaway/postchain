@@ -1,5 +1,8 @@
 package net.postchain.devtools.utils.configuration
 
+import net.postchain.devtools.utils.configuration.pre.BlockchainPreSetup
+import net.postchain.devtools.utils.configuration.pre.SystemPreSetup
+import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -19,47 +22,48 @@ class SystemSetupTest {
     val chainId3 = 3
     val chainId4 = 4
 
-    val bcSetup1 = BlockchainSetup(chainId1, "111", listOf(nodeNr1, nodeNr2))
-    val bcSetup2 = BlockchainSetup(chainId2, "222", listOf(nodeNr3, nodeNr4))
-    val bcSetup3 = BlockchainSetup(chainId3, "333", listOf(nodeNr5), setOf(chainId1)) // chain3 depends on chain1
-    val bcSetup4 = BlockchainSetup(chainId4, "444", listOf(nodeNr6), setOf(chainId3)) // chain4 depends on chain3
+    val bcSetup1 = BlockchainPreSetup.simpleBuild(chainId1, listOf(nodeNr1, nodeNr2))
+    val bcSetup2 = BlockchainPreSetup.simpleBuild(chainId2, listOf(nodeNr3, nodeNr4))
+    val bcSetup3 = BlockchainPreSetup.buildWithDependencies(chainId3, listOf(nodeNr5), setOf(chainId1)) // chain3 depends on chain1
+    val bcSetup4 = BlockchainPreSetup.buildWithDependencies(chainId4, listOf(nodeNr6), setOf(chainId3)) // chain4 depends on chain3
 
+    val bcPreSetupMap = mapOf<Int, BlockchainPreSetup>(
+            chainId1 to bcSetup1,
+            chainId2 to bcSetup2,
+            chainId3 to bcSetup3,
+            chainId4 to bcSetup4)
 
-    fun init(): Map<Int, BlockchainSetup> {
-
-        val blockchainMap: MutableMap<Int, BlockchainSetup> = mutableMapOf()
-        blockchainMap[chainId1] = bcSetup1
-        blockchainMap[chainId2] = bcSetup1
-        blockchainMap[chainId3] = bcSetup1
-        blockchainMap[chainId4] = bcSetup1
-        return blockchainMap.toMap()
-    }
+    val sysPreSetup = SystemPreSetup(bcPreSetupMap)
 
     @Test
     fun checkNoDeps() {
-        val blockchainMap = init()
 
-        val foundSignerBcs = SystemSetup.calculateWhatBlockchainsTheNodeShouldSign(nodeNr1, blockchainMap)
+        val sysSetup = SystemSetupFactory.buildSystemSetup(sysPreSetup)
+        val blockchainMap = sysSetup.blockchainMap
+
+        val foundSignerBcs = SystemSetupFactory.calculateWhatBlockchainsTheNodeShouldSign(nodeNr1, blockchainMap)
 
         assertEquals(1, foundSignerBcs.size)
         val chainFound = foundSignerBcs.first()
         assertEquals(chainId1, chainFound)
 
-        val foundReadBcs = SystemSetup.calculateWhatBlockchainsTheNodeShouldRead(blockchainMap[chainFound]!!.chainDependencies, blockchainMap)
+        val foundReadBcs = SystemSetupFactory.calculateWhatBlockchainsTheNodeShouldRead(blockchainMap[chainFound]!!.chainDependencies, blockchainMap)
         assertEquals(0, foundReadBcs.size)
     }
 
     @Test
     fun checkOneDep() {
-        val blockchainMap = init()
 
-        val foundSignerBcs = SystemSetup.calculateWhatBlockchainsTheNodeShouldSign(nodeNr5, blockchainMap)
+        val sysSetup = SystemSetupFactory.buildSystemSetup(sysPreSetup)
+        val blockchainMap = sysSetup.blockchainMap
+
+        val foundSignerBcs = SystemSetupFactory.calculateWhatBlockchainsTheNodeShouldSign(nodeNr5, blockchainMap)
 
         assertEquals(1, foundSignerBcs.size)
         val chainFound = foundSignerBcs.first()
         assertEquals(chainId3, chainFound)
 
-        val foundReadBcs = SystemSetup.calculateWhatBlockchainsTheNodeShouldRead(blockchainMap[chainFound]!!.chainDependencies, blockchainMap)
+        val foundReadBcs = SystemSetupFactory.calculateWhatBlockchainsTheNodeShouldRead(blockchainMap[chainFound]!!.chainDependencies, blockchainMap)
         assertEquals(1, foundReadBcs.size)
         val depChainFound = foundReadBcs.first()
         assertEquals(chainId1, depChainFound)
@@ -68,15 +72,17 @@ class SystemSetupTest {
 
     @Test
     fun checkManyDeps() {
-        val blockchainMap = init()
+        val sysSetup = SystemSetupFactory.buildSystemSetup(sysPreSetup)
+        val blockchainMap = sysSetup.blockchainMap
 
-        val foundSignerBcs = SystemSetup.calculateWhatBlockchainsTheNodeShouldSign(nodeNr6, blockchainMap)
+
+        val foundSignerBcs = SystemSetupFactory.calculateWhatBlockchainsTheNodeShouldSign(nodeNr6, blockchainMap)
 
         assertEquals(1, foundSignerBcs.size)
         val chainFound = foundSignerBcs.first()
         assertEquals(chainId4, chainFound)
 
-        val foundReadBcs = SystemSetup.calculateWhatBlockchainsTheNodeShouldRead(blockchainMap[chainFound]!!.chainDependencies, blockchainMap)
+        val foundReadBcs = SystemSetupFactory.calculateWhatBlockchainsTheNodeShouldRead(blockchainMap[chainFound]!!.chainDependencies, blockchainMap)
         assertEquals(2, foundReadBcs.size)
         assertTrue(foundReadBcs.contains(chainId1))
         assertTrue(foundReadBcs.contains(chainId3))

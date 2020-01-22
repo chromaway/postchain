@@ -1,12 +1,13 @@
 package net.postchain.devtools.utils.configuration
 
 import net.postchain.base.PeerInfo
+import net.postchain.common.hexStringToByteArray
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.ByteArrayKey
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.PostchainTestNode
-import net.postchain.devtools.utils.configuration.system.ComplexSystemFactory
-import net.postchain.devtools.utils.configuration.system.SimpleSystemFactory
+import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
+import net.postchain.devtools.utils.configuration.pre.SystemPreSetup
 
 
 /**
@@ -15,9 +16,11 @@ import net.postchain.devtools.utils.configuration.system.SimpleSystemFactory
  *
  * 1. all nodes run on the same machine,
  * 2. all nodes have standard "test" port numbers
- * 3. all blockchains have standard "test" RIDs
  *
  * [SystemSetup] is not a stand alone test framework, but meant to be used by subclasses of [IntegrationTest] or similar.
+ *
+ * [SystemSetup] works like a builder, we add data to it (mostly other "setup" objects) and finally calls "toTestNodes()"
+ *   which corresponds to the "build()" function in the builder pattern.
  *
  * Note: When using [SystemSetup] for your test setup it doesn't matter if you have a node configuration file or not
  *  (for example "node1.properties"). Since the [SystemSetup] will use the [NodeConfigurationProvider] instance sent to it
@@ -58,7 +61,7 @@ data class SystemSetup(
         fun buildSimpleSetup(
                 nodeCount: Int,
                 blockchainList: List<Int> = listOf(1) // as default we assume just one blockchain
-        ): SystemSetup =  SimpleSystemFactory.buildSystemSetup(nodeCount, blockchainList)
+        ): SystemSetup = SystemSetupFactory.buildSystemSetup(SystemPreSetup.simpleBuild(nodeCount, blockchainList))
 
 
         /**
@@ -69,7 +72,7 @@ data class SystemSetup(
          */
         fun buildComplexSetup(
                 blockchainConfList: List<BlockchainSetup>
-        ): SystemSetup  =  ComplexSystemFactory.buildSystemSetup(blockchainConfList)
+        ): SystemSetup  =  SystemSetupFactory.buildSystemSetup(blockchainConfList)
 
 
 
@@ -82,14 +85,22 @@ data class SystemSetup(
          * @param oldSysSetup is the previous setup
          * @return a new immutable system setup with the new nodes added
          */
-        fun addNodesToSystemSetup(newNodeSetups: Map<NodeSeqNumber, NodeSetup>, oldSysSetup: SystemSetup): SystemSetup {
+        fun addNodesToSystemSetup(newNodeSetups: Map<NodeSeqNumber, NodeSetup>,
+                                  oldSysSetup: SystemSetup
+        ): SystemSetup {
 
             // Merge the maps
             val nodesMap = mutableMapOf<NodeSeqNumber, NodeSetup>()
             nodesMap.putAll(oldSysSetup.nodeMap)
             nodesMap.putAll(newNodeSetups)
 
-            return SystemSetup(nodesMap, oldSysSetup.blockchainMap, oldSysSetup.nodeConfProvider)
+            // We are just returning a new instance with everything the same except for the nodeMap.
+            return SystemSetup(nodesMap,
+                    oldSysSetup.blockchainMap,
+                    oldSysSetup.realGtxTransactions,
+                    oldSysSetup.nodeConfProvider,
+                    oldSysSetup.chainConfProvider,
+                    oldSysSetup.confInfrastructure)
         }
     }
 
@@ -100,7 +111,7 @@ data class SystemSetup(
     fun toPeerInfoList(): List<PeerInfo> {
         val peerInfos = mutableListOf<PeerInfo>()
         for (node in this. nodeMap.values) {
-            val key = ByteArrayKey(node.pubKeyHex.toByteArray())
+            val key = ByteArrayKey(node.pubKeyHex.hexStringToByteArray())
             val pi = PeerInfo("localhost", node.getPortNumber(), key)
             peerInfos.add(pi)
         }
@@ -121,7 +132,7 @@ data class SystemSetup(
     fun toTestNodes(): List<PostchainTestNode> {
         val retList = mutableListOf<PostchainTestNode>()
         for (nodeSetup in nodeMap.values) {
-            val postchainNode = nodeSetup.toTestNode(this)
+            val postchainNode = nodeSetup.toTestNodeAndStartAllChains(this)
             retList.add(postchainNode)
         }
         return retList

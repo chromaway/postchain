@@ -1,15 +1,21 @@
 package net.postchain.config.node
 
 import net.postchain.base.PeerInfo
-import net.postchain.config.SimpleDatabaseConnector
+import net.postchain.base.peerId
+import net.postchain.config.DatabaseConnector
 import net.postchain.config.app.AppConfig
 import net.postchain.config.app.AppConfigDbLayer
 import net.postchain.network.x.XPeerID
+import java.sql.Connection
 
 /**
  *
  */
-open class ManualNodeConfigurationProvider(private val appConfig: AppConfig) : NodeConfigurationProvider {
+open class ManualNodeConfigurationProvider(
+        protected val appConfig: AppConfig,
+        private val databaseConnector: (AppConfig) -> DatabaseConnector,
+        private val appConfigDbLayer: (AppConfig, Connection) -> AppConfigDbLayer
+) : NodeConfigurationProvider {
 
     override fun getConfiguration(): NodeConfig {
         return object : NodeConfig(appConfig) {
@@ -17,8 +23,8 @@ open class ManualNodeConfigurationProvider(private val appConfig: AppConfig) : N
         }
     }
 
-    private fun getPeerInfoMap(appConfig: AppConfig): Map<XPeerID, PeerInfo> =
-            getPeerInfoCollection(appConfig).map { XPeerID(it.pubKey) to it }.toMap()
+    protected fun getPeerInfoMap(appConfig: AppConfig): Map<XPeerID, PeerInfo> =
+            getPeerInfoCollection(appConfig).associateBy(PeerInfo::peerId)
 
     /**
      *
@@ -27,8 +33,8 @@ open class ManualNodeConfigurationProvider(private val appConfig: AppConfig) : N
      * @return the [PeerInfo] this node should know about
      */
     open fun getPeerInfoCollection(appConfig: AppConfig): Array<PeerInfo> {
-        return SimpleDatabaseConnector(appConfig).withWriteConnection { connection ->
-            AppConfigDbLayer(appConfig, connection).getPeerInfoCollection()
+        return databaseConnector(appConfig).withWriteConnection { connection ->
+            appConfigDbLayer(appConfig, connection).getPeerInfoCollection()
         }
     }
 }

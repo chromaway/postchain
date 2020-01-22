@@ -20,58 +20,67 @@ class BaseBlockManager(
 
     @Volatile
     var processing = false
+    @Volatile
     var intent: BlockIntent = DoNothingIntent
 
     companion object : KLogging()
 
+    @Volatile
     override var currentBlock: BlockData? = null
 
-    @Synchronized
     protected fun <RT> runDBOp(op: () -> Promise<RT, Exception>, onSuccess: (RT) -> Unit) {
         if (!processing) {
-            processing = true
-            intent = DoNothingIntent
-            val promise = op()
-            promise.success { res ->
-                onSuccess(res)
-                processing = false
-            }
-            promise.fail { err ->
-                processing = false
-                logger.debug("Error in runDBOp()", err)
+            synchronized (statusManager) {
+                processing = true
+                intent = DoNothingIntent
+                val promise = op()
+                promise.success { res ->
+                    synchronized (statusManager) {
+                        onSuccess(res)
+                        processing = false
+                    }
+                }
+                promise.fail { err ->
+                    processing = false
+                    logger.debug("Error in runDBOp()", err)
+                }
             }
         }
     }
 
     override fun onReceivedUnfinishedBlock(block: BlockData) {
-        val theIntent = intent
-        if (theIntent is FetchUnfinishedBlockIntent
-                && Arrays.equals(theIntent.blockRID, block.header.blockRID)) {
-            runDBOp({
-                blockDB.loadUnfinishedBlock(block)
-            }, { sig ->
-                if (statusManager.onReceivedBlock(block.header.blockRID, sig)) {
-                    currentBlock = block
-                }
-            })
+        synchronized (statusManager) {
+            val theIntent = intent
+            if (theIntent is FetchUnfinishedBlockIntent
+                    && Arrays.equals(theIntent.blockRID, block.header.blockRID)) {
+                runDBOp({
+                    blockDB.loadUnfinishedBlock(block)
+                }, { sig ->
+                    if (statusManager.onReceivedBlock(block.header.blockRID, sig)) {
+                        currentBlock = block
+                    }
+                })
+            }
         }
     }
 
     override fun onReceivedBlockAtHeight(block: BlockDataWithWitness, height: Long) {
-        val theIntent = intent
-        if (theIntent is FetchBlockAtHeightIntent
-                && theIntent.height == height) {
-            runDBOp({
-                blockDB.addBlock(block)
-            }, {
-                if (statusManager.onHeightAdvance(height + 1)) {
-                    currentBlock = null
-                }
-            })
+        synchronized (statusManager) {
+            val theIntent = intent
+            if (theIntent is FetchBlockAtHeightIntent
+                    && theIntent.height == height) {
+                runDBOp({
+                    blockDB.addBlock(block)
+                }, {
+                    if (statusManager.onHeightAdvance(height + 1)) {
+                        currentBlock = null
+                    }
+                })
+            }
         }
-
     }
 
+    // this is called only in getBlockIntent which is synchronized on status manager
     protected fun update() {
         if (processing) return
         val smIntent = statusManager.getBlockIntent()
@@ -120,7 +129,9 @@ class BaseBlockManager(
     }
 
     override fun getBlockIntent(): BlockIntent {
-        update()
+        synchronized (statusManager) {
+            update()
+        }
         return intent
     }
 }

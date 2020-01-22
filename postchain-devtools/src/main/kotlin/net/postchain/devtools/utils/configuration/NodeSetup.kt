@@ -8,6 +8,7 @@ import net.postchain.devtools.PostchainTestNode
 
 /**
  * Represents a single test node
+ * (The "setup" classes are data holders/builders for test configuration used to generate the "real" classes at a later stage)
  *
  * @property sequenceNumber is the node's number. Must be unique.
  * @property chainsToSign the blockchains this node should be a signer for (SET because no duplicates allowed)
@@ -75,7 +76,7 @@ data class NodeSetup(
     /**
      * Turns this [NodeSetup] to a [PostchainTestNode] and adds and starts all blockchains on it
      */
-    fun toTestNode(
+    fun toTestNodeAndStartAllChains(
             systemSetup: SystemSetup,
             preWipeDatabase: Boolean = true
     ): PostchainTestNode {

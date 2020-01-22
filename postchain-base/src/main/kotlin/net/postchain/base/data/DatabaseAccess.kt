@@ -4,6 +4,7 @@ package net.postchain.base.data
 
 import mu.KLogging
 import net.postchain.base.BaseBlockHeader
+import net.postchain.base.BlockchainRid
 import net.postchain.common.toHex
 import net.postchain.core.*
 import org.apache.commons.dbutils.QueryRunner
@@ -15,10 +16,10 @@ interface DatabaseAccess {
     class BlockInfoExt(val blockRid: ByteArray, val blockHeight: Long, val blockHeader: ByteArray, val witness: ByteArray, val timestamp: Long)
 
     fun initialize(connection: Connection, expectedDbVersion: Int)
-    fun getChainId(ctx: EContext, blockchainRID: ByteArray): Long?
-    fun checkBlockchainRID(ctx: EContext, blockchainRID: ByteArray)
+    fun getChainId(ctx: EContext, blockchainRID: BlockchainRid): Long?
+    fun checkBlockchainRID(ctx: EContext, blockchainRID: BlockchainRid)
 
-    fun getBlockchainRID(ctx: EContext): ByteArray?
+    fun getBlockchainRID(ctx: EContext): BlockchainRid?
     fun insertBlock(ctx: EContext, height: Long): Long
     fun insertTransaction(ctx: BlockEContext, tx: Transaction): Long
     fun finalizeBlock(ctx: BlockEContext, header: BlockHeader)
@@ -27,11 +28,11 @@ interface DatabaseAccess {
     fun getBlockHeight(ctx: EContext, blockRID: ByteArray, chainId: Long): Long?
     fun getBlockRID(ctx: EContext, height: Long): ByteArray?
     fun getBlockHeader(ctx: EContext, blockRID: ByteArray): ByteArray
-    fun getBlockTransactions(ctx: EContext, blockRID: ByteArray): List<ByteArray>
+    fun getBlockTransactions(ctx: EContext, blockRID: ByteArray, hashesOnly: Boolean): List<TxDetail>
     fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray
     fun getLastBlockHeight(ctx: EContext): Long
     fun getLastBlockRid(ctx: EContext, chainId: Long): ByteArray?
-    fun getBlockHeightInfo(ctx: EContext, bcRid: ByteArray): Pair<Long, ByteArray>?
+    fun getBlockHeightInfo(ctx: EContext, bcRid: BlockchainRid): Pair<Long, ByteArray>?
     fun getLastBlockTimestamp(ctx: EContext): Long
     fun getTxRIDsAtHeight(ctx: EContext, height: Long): Array<ByteArray>
     fun getBlockInfo(ctx: EContext, txRID: ByteArray): BlockInfo
@@ -40,10 +41,10 @@ interface DatabaseAccess {
     fun getBlockTxHashes(ctx: EContext, blokcIid: Long): List<ByteArray>
     fun getTxBytes(ctx: EContext, txRID: ByteArray): ByteArray?
     fun isTransactionConfirmed(ctx: EContext, txRID: ByteArray): Boolean
-    fun getLatestBlocksUpTo(ctx: EContext, upTo: Long, n: Int): List<BlockInfoExt>
+    fun getBlocks(ctx: EContext, blockHeight: Long, asc: Boolean, limit: Int): List<BlockInfoExt>
 
     // Blockchain configurations
-    fun findConfiguration(context: EContext, height: Long): Long?
+    fun findConfigurationHeightForBlock(context: EContext, height: Long): Long?
 
     fun getConfigurationData(context: EContext, height: Long): ByteArray?
     fun addConfigurationData(context: EContext, height: Long, data: ByteArray)
@@ -70,13 +71,12 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
     private val mapListHandler = MapListHandler()
     private val stringRes = ScalarHandler<String>()
 
-    companion object: KLogging() {
+    companion object : KLogging() {
         const val TABLE_PEERINFOS = "peerinfos"
         const val TABLE_PEERINFOS_FIELD_HOST = "host"
         const val TABLE_PEERINFOS_FIELD_PORT = "port"
         const val TABLE_PEERINFOS_FIELD_PUBKEY = "pub_key"
-        const val TABLE_PEERINFOS_FIELD_CREATED_AT = "created_at"
-        const val TABLE_PEERINFOS_FIELD_UPDATED_AT = "updated_at"
+        const val TABLE_PEERINFOS_FIELD_TIMESTAMP = "timestamp"
     }
 
     override fun insertBlock(ctx: EContext, height: Long): Long {
@@ -119,14 +119,24 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
                 byteArrayRes, ctx.chainID, blockRID)
     }
 
-    override fun getBlockTransactions(ctx: EContext, blockRID: ByteArray): List<ByteArray> {
+    override fun getBlockTransactions(ctx: EContext, blockRID: ByteArray, hashesOnly: Boolean): List<TxDetail> {
         val sql = """
-            SELECT tx_data
+            SELECT tx_rid, tx_hash${if (hashesOnly) "" else ", tx_data"}
             FROM transactions t
             JOIN blocks b ON t.block_iid=b.block_iid
             WHERE b.block_rid=? AND b.chain_iid=?
-            ORDER BY tx_iid"""
-        return queryRunner.query(ctx.conn, sql, byteArrayListRes, blockRID, ctx.chainID)
+            ORDER BY tx_iid
+        """.trimIndent()
+
+        val txs = queryRunner.query(ctx.conn, sql, mapListHandler, blockRID, ctx.chainID)
+
+        return txs.map { tx ->
+            TxDetail(
+                    tx["tx_rid"] as ByteArray,
+                    tx["tx_hash"] as ByteArray,
+                    if (hashesOnly) null else (tx["tx_data"] as ByteArray)
+            )
+        }
     }
 
     override fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray {
@@ -143,18 +153,18 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
 
     override fun getLastBlockRid(ctx: EContext, chainId: Long): ByteArray? {
         return queryRunner.query(ctx.conn,
-                "SELECT block_height FROM blocks WHERE chain_iid= ? ORDER BY block_height DESC LIMIT 1",
+                "SELECT block_rid FROM blocks WHERE chain_iid= ? ORDER BY block_height DESC LIMIT 1",
                 nullableByteArrayRes, chainId)
     }
 
-    override fun getBlockHeightInfo(ctx: EContext, bcRid: ByteArray): Pair<Long, ByteArray>? {
+    override fun getBlockHeightInfo(ctx: EContext, bcRid: BlockchainRid): Pair<Long, ByteArray>? {
         val res = queryRunner.query(ctx.conn, """
                     SELECT b.block_height, b.block_rid
                          FROM blocks b
                          JOIN blockchains bc ON bc.chain_iid= b.chain_iid
                          WHERE bc.blockchain_rid = ?
                          ORDER BY b.block_height DESC LIMIT 1
-                         """, mapListHandler, bcRid)
+                         """, mapListHandler, bcRid.data)
 
         return if (res.size == 0) {
             null // This is allowed, it (usually) means we don't have any blocks yet
@@ -235,9 +245,10 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
         return (res != null)
     }
 
-    override fun getBlockchainRID(ctx: EContext): ByteArray? {
-        return queryRunner.query(ctx.conn, "SELECT blockchain_rid FROM blockchains WHERE chain_iid= ?",
+    override fun getBlockchainRID(ctx: EContext): BlockchainRid? {
+        val data = queryRunner.query(ctx.conn, "SELECT blockchain_rid FROM blockchains WHERE chain_iid= ?",
                 nullableByteArrayRes, ctx.chainID)
+        return if (data == null) null else BlockchainRid(data)
     }
 
     override fun initialize(connection: Connection, expectedDbVersion: Int) {
@@ -285,14 +296,14 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
         }
     }
 
-    override fun getChainId(ctx: EContext, blockchainRID: ByteArray): Long? {
+    override fun getChainId(ctx: EContext, blockchainRID: BlockchainRid): Long? {
         return queryRunner.query(ctx.conn,
                 "SELECT chain_iid FROM blockchains WHERE blockchain_rid=?",
                 nullableLongRes,
-                blockchainRID)
+                blockchainRID.data)
     }
 
-    override fun checkBlockchainRID(ctx: EContext, blockchainRID: ByteArray) {
+    override fun checkBlockchainRID(ctx: EContext, blockchainRID: BlockchainRid) {
         // Check that the blockchainRID is present for chain_iid
         val rid = queryRunner.query(
                 ctx.conn,
@@ -300,15 +311,20 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
                 nullableByteArrayRes,
                 ctx.chainID)
 
+        logger.debug("chainId = ${ctx.chainID} = BC RID ${if (rid == null) {
+            "null"
+        } else {
+            rid.toHex()
+        }}")
         if (rid == null) {
-            logger.debug("Blockchain RID: ${blockchainRID.toHex()} doesn't exist in DB, so we add it.")
+            logger.info("Blockchain RID: ${blockchainRID.toHex()} doesn't exist in DB, so we add it.")
             queryRunner.update(
                     ctx.conn,
                     "INSERT INTO blockchains (chain_iid, blockchain_rid) values (?, ?)",
                     ctx.chainID,
-                    blockchainRID)
+                    blockchainRID.data)
 
-        } else if (!rid.contentEquals(blockchainRID)) {
+        } else if (!rid.contentEquals(blockchainRID.data)) {
             throw UserMistake("The blockchainRID in db for chainId ${ctx.chainID} " +
                     "is ${rid.toHex()}, but the expected rid is ${blockchainRID.toHex()}")
         } else {
@@ -316,15 +332,15 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
         }
     }
 
-    override fun getLatestBlocksUpTo(context: EContext, upTo: Long, n: Int): List<DatabaseAccess.BlockInfoExt> {
+    override fun getBlocks(context: EContext, blockHeight: Long, asc: Boolean, limit: Int): List<DatabaseAccess.BlockInfoExt> {
         val blocksInfo = queryRunner.query(context.conn,
                 "SELECT block_rid, block_height, block_header_data, block_witness, timestamp " +
-                        "FROM blocks WHERE timestamp < ? " +
-                        "ORDER BY timestamp DESC " +
+                        "FROM blocks WHERE block_height ${if (asc) ">" else "<"} ? " +
+                        "ORDER BY timestamp ${if (asc) "ASC" else "DESC"} " +
                         "LIMIT ?",
                 mapListHandler,
-                upTo,
-                n)
+                blockHeight,
+                limit)
 
         return blocksInfo.map { blockInfo ->
             val blockRid = blockInfo.get("block_rid") as ByteArray
@@ -336,7 +352,7 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
         }
     }
 
-    override fun findConfiguration(context: EContext, height: Long): Long? {
+    override fun findConfigurationHeightForBlock(context: EContext, height: Long): Long? {
         return queryRunner.query(context.conn,
                 "SELECT height FROM configurations WHERE chain_iid= ? AND height <= ? " +
                         "ORDER BY height DESC LIMIT 1",

@@ -1,5 +1,7 @@
 package net.postchain.core
 
+import net.postchain.base.BlockchainRid
+
 
 interface BlockHeader {
     val prevBlockRID: ByteArray
@@ -9,19 +11,25 @@ interface BlockHeader {
 
 open class BlockData(
         val header: BlockHeader,
-        val transactions: List<ByteArray>)
-
+        val transactions: List<ByteArray>
+)
 
 /**
  * BlockDetail returns a more in deep block overview
  * ATM it is mainly used to reply to explorer's queries
  */
+open class TxDetail(
+        val rid: ByteArray,
+        val hash: ByteArray,
+        val data: ByteArray?
+)
+
 open class BlockDetail(
         val rid: ByteArray,
         val prevBlockRID: ByteArray,
         val header: ByteArray,
         val height: Long,
-        val transactions: List<ByteArray>,
+        val transactions: List<TxDetail>,
         val witness: ByteArray,
         val timestamp: Long)
 
@@ -53,7 +61,7 @@ interface MultiSigBlockWitness : BlockWitness {
  *           ("null" means this blockchain doesn't have any dependencies)
  */
 class InitialBlockData(
-        val blockchainRid: ByteArray,
+        val blockchainRid: BlockchainRid,
         val blockIID: Long,
         val chainID: Long,
         val prevBlockRID: ByteArray,

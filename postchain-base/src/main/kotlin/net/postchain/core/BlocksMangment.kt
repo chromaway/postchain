@@ -1,5 +1,6 @@
 package net.postchain.core
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.merkle.Hash
 import net.postchain.gtv.Gtv
 import nl.komponents.kovenant.Promise
@@ -15,22 +16,21 @@ interface MultiSigBlockWitnessBuilder : BlockWitnessBuilder {
 }
 
 interface BlockStore {
-    fun beginBlock(ctx: EContext, blockHeightDependencies: Array<Hash?>?): InitialBlockData
+    fun beginBlock(ctx: EContext, blockchainRID: BlockchainRid, blockHeightDependencies: Array<Hash?>?): InitialBlockData
     fun addTransaction(bctx: BlockEContext, tx: Transaction): TxEContext
     fun finalizeBlock(bctx: BlockEContext, bh: BlockHeader)
     fun commitBlock(bctx: BlockEContext, w: BlockWitness?)
     fun getBlockHeightFromOwnBlockchain(ctx: EContext, blockRID: ByteArray): Long? // returns null if not found
     fun getBlockHeightFromAnyBlockchain(ctx: EContext, blockRID: ByteArray, chainId: Long): Long? // returns null if not found
-    fun getChainId(ctx: EContext, blockchainRID: ByteArray): Long? // returns null if not found
+    fun getChainId(ctx: EContext, blockchainRID: BlockchainRid): Long? // returns null if not found
     fun getBlockRID(ctx: EContext, height: Long): ByteArray? // returns null if height is out of range
     fun getLastBlockHeight(ctx: EContext): Long // height of the last block, first block has height 0
-    fun getBlockHeightInfo(ctx: EContext, blockchainRID: ByteArray): Pair<Long, Hash>?
+    fun getBlockHeightInfo(ctx: EContext, blockchainRID: BlockchainRid): Pair<Long, Hash>?
     fun getLastBlockTimestamp(ctx: EContext): Long
     //    fun getBlockData(ctx: EContext, blockRID: ByteArray): BlockData
     fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray
 
-    fun getLatestBlocksUpTo(ctx: EContext, upTo: Long, n: Int): List<BlockDetail>
-
+    fun getBlocks(ctx: EContext, blockHeight: Long, asc: Boolean, limit: Int, hashesOnly: Boolean): List<BlockDetail>
     fun getBlockHeader(ctx: EContext, blockRID: ByteArray): ByteArray
 
     fun getTxRIDsAtHeight(ctx: EContext, height: Long): Array<ByteArray>
@@ -47,10 +47,10 @@ interface BlockStore {
 interface BlockQueries {
     fun getBlockSignature(blockRID: ByteArray): Promise<Signature, Exception>
     fun getBestHeight(): Promise<Long, Exception>
-    fun getBlockRids(height: Long): Promise<ByteArray?, Exception>
+    fun getBlockRid(height: Long): Promise<ByteArray?, Exception>
     fun getBlockAtHeight(height: Long): Promise<BlockDataWithWitness, Exception>
     fun getBlockHeader(blockRID: ByteArray): Promise<BlockHeader, Exception>
-    fun getLatestBlocksUpTo(upTo: Long, limit: Int): Promise<List<BlockDetail>, Exception>
+    fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, hashesOnly: Boolean): Promise<List<BlockDetail>, Exception>
 
     fun getBlockTransactionRids(blockRID: ByteArray): Promise<List<ByteArray>, Exception>
     fun getTransaction(txRID: ByteArray): Promise<Transaction?, Exception>
@@ -76,7 +76,7 @@ interface BlockQueries {
 interface BlockBuilder {
     fun begin(partialBlockHeader: BlockHeader?)
     fun appendTransaction(tx: Transaction)
-    fun finalizeBlock()
+    fun finalizeBlock(): BlockHeader
     fun finalizeAndValidate(blockHeader: BlockHeader)
     fun getBlockData(): BlockData
     fun getBlockWitnessBuilder(): BlockWitnessBuilder?

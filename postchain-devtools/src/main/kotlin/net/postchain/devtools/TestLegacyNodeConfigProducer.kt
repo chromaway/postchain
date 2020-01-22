@@ -6,10 +6,13 @@ import net.postchain.devtools.utils.configuration.SystemSetup
 import org.apache.commons.configuration2.MapConfiguration
 import org.apache.commons.configuration2.PropertiesConfiguration
 
+/**
+ * "Legacy" means there is no "managed mode" with chain zero etc.
+ */
 object TestLegacyNodeConfigProducer {
 
     /**
-     * Builds a [NodeConfigurationProvider] and returns it.
+     * Builds a [NodeConfigurationProvider] of type "legacy" and returns it.
      *
      * Here we don't care about the node configuration file (nodeX.properties) at all (most test won't have one).
      *
@@ -31,15 +34,15 @@ object TestLegacyNodeConfigProducer {
         val baseConfig = startConfig ?: PropertiesConfiguration()
 
         // DB
-        TestLegacyNodeConfigProducer.setDbConfig(testName, nodeSetup, baseConfig)
+        setDbConfig(testName, nodeSetup, baseConfig)
 
         // peers
-        TestLegacyNodeConfigProducer.setPeerConfig(nodeSetup, systemSetup, baseConfig)
+        setPeerConfig(nodeSetup, systemSetup, baseConfig)
 
 
-        TestLegacyNodeConfigProducer.setConfProvider(systemSetup.nodeConfProvider, baseConfig)
-        TestLegacyNodeConfigProducer.setConfInfrastructure(systemSetup.confInfrastructure, baseConfig)
-        TestLegacyNodeConfigProducer.setKeys(nodeSetup, baseConfig)
+        setConfProvider(systemSetup.nodeConfProvider, baseConfig)
+        setConfInfrastructure(systemSetup.confInfrastructure, baseConfig)
+        setKeys(nodeSetup, baseConfig)
 
         return baseConfig
     }
@@ -67,7 +70,8 @@ object TestLegacyNodeConfigProducer {
         baseConfig.setProperty("database.username",    "postchain")
         baseConfig.setProperty("database.password",    "postchain")
         // TODO: Maybe a personalized schema name like this is not needed (this is just legacy from the node.properties files)
-        baseConfig.setProperty("database.schema", testName + nodeConf.sequenceNumber.nodeNumber)
+        val goodTestName = testName.filter { it.isLetterOrDigit() }.toLowerCase()
+        baseConfig.setProperty("database.schema", goodTestName + nodeConf.sequenceNumber.nodeNumber)
 
         // Legacy way of creating nodes, append nodeIndex to schema name
         val dbSchema = baseConfig.getString("database.schema") + "_" + nodeConf.sequenceNumber.nodeNumber

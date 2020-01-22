@@ -6,10 +6,10 @@ import net.postchain.base.NetworkAwareTxQueue
 import net.postchain.core.BlockchainEngine
 import net.postchain.core.NODE_ID_READ_ONLY
 import net.postchain.core.NodeStateTracker
-import net.postchain.core.RestartHandler
+import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.BaseBlockDatabase
 import net.postchain.ebft.message.Message
-import net.postchain.ebft.syncmanager.ReplicaSyncManager
+import net.postchain.ebft.syncmanager.replica.ReplicaSyncManager
 import net.postchain.network.CommunicationManager
 
 /**
@@ -17,11 +17,10 @@ import net.postchain.network.CommunicationManager
  * @property updateLoop the main thread
  */
 class ReadOnlyWorker(
-        override val name: String,
+        override val processName: BlockchainProcessName,
         signers: List<ByteArray>,
         override val blockchainEngine: BlockchainEngine,
-        val communicationManager: CommunicationManager<Message>,
-        override val restartHandler: RestartHandler
+        private val communicationManager: CommunicationManager<Message>
 ) : AbstractBlockchainProcess() {
 
     override val blockDatabase: BaseBlockDatabase
@@ -34,7 +33,7 @@ class ReadOnlyWorker(
                 blockchainEngine, blockchainEngine.getBlockQueries(), NODE_ID_READ_ONLY)
 
         syncManager = ReplicaSyncManager(
-                name,
+                processName,
                 signers,
                 communicationManager,
                 nodeStateTracker,

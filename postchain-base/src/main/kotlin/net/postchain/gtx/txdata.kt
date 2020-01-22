@@ -2,6 +2,7 @@
 
 package net.postchain.gtx
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.CryptoSystem
 import net.postchain.base.SigMaker
 import net.postchain.base.merkle.Hash
@@ -45,14 +46,14 @@ data class OpData(val opName: String, val args: Array<Gtv>) {
 
 class ExtOpData(val opName: String,
                 val opIndex: Int,
-                val blockchainRID: ByteArray,
+                val blockchainRID: BlockchainRid,
                 val signers: Array<ByteArray>,
                 val args: Array<Gtv>)
 
 val EMPTY_SIGNATURE: ByteArray = ByteArray(0)
 
 data class GTXTransactionBodyData(
-        val blockchainRID: ByteArray,
+        val blockchainRID: BlockchainRid,
         val operations: Array<OpData>,
         val signers: Array<ByteArray>) {
 
@@ -84,7 +85,7 @@ data class GTXTransactionBodyData(
 
         other as GTXTransactionBodyData
 
-        if (!Arrays.equals(blockchainRID, other.blockchainRID)) return false
+        if (blockchainRID != other.blockchainRID) return false
         if (!Arrays.deepEquals(signers, other.signers)) return false
         if (!Arrays.equals(operations, other.operations)) return false
 
@@ -92,7 +93,7 @@ data class GTXTransactionBodyData(
     }
 
     override fun hashCode(): Int {
-        var result = Arrays.hashCode(blockchainRID)
+        var result = blockchainRID.hashCode()
         result = 31 * result + Arrays.hashCode(signers)
         result = 31 * result + Arrays.hashCode(operations)
         return result
@@ -141,7 +142,7 @@ fun decodeGTXTransactionData(_rawData: ByteArray): GTXTransactionData {
 /**
  * Used for signing
  */
-class GTXDataBuilder(val blockchainRID: ByteArray,
+class GTXDataBuilder(val blockchainRID: BlockchainRid,
                      val signers: Array<ByteArray>,
                      val crypto: CryptoSystem,
                      val signatures: Array<ByteArray>,
@@ -151,7 +152,7 @@ class GTXDataBuilder(val blockchainRID: ByteArray,
     val calculator = GtvMerkleHashCalculator(crypto)
 
     // construct empty builder
-    constructor(blockchainRID: ByteArray,
+    constructor(blockchainRID: BlockchainRid,
                 signers: Array<ByteArray>,
                 crypto: CryptoSystem) :
             this(

@@ -1,6 +1,7 @@
 package net.postchain.devtools
 
 import net.postchain.base.secp256k1_derivePubKey
+import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 
 /**
@@ -16,6 +17,14 @@ object KeyPairHelper {
     private val privKeys = mutableMapOf<Int, Pair<ByteArray, String>>()
     private val pubKeys = mutableMapOf<Int, Pair<ByteArray, String>>()
     private val pubKeyHexToIndex = mutableMapOf<String, Int>()
+
+    // TODO Olle POS-114 Note A bit sad that I had to do this, but it's the usage of [pubKeyFromByteArray()] from BlockchainSetupFactory that breaks
+    init {
+        for(i in 0..10) {
+            val x = pubKey(i)
+            //println("$i = ${x.toHex()}")
+        }
+    }
 
     fun privKey(index: Int): ByteArray {
         return getCachedPrivKey(index).first

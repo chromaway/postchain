@@ -18,26 +18,45 @@ class BaseBlockchainConfigurationData(
     init {
         context = BaseBlockchainContext(
                 partialContext.blockchainRID,
-                resolveNodeID(partialContext),
+                resolveNodeID(partialContext.nodeID),
                 partialContext.chainID,
                 partialContext.nodeRID)
     }
 
     fun getSigners(): List<ByteArray> {
-        return data["signers"]!!.asArray().map { it.asByteArray() }
+        return data[KEY_SIGNERS]!!.asArray().map { it.asByteArray() }
     }
 
     fun getBlockBuildingStrategyName(): String {
-        val stratDict = data["blockstrategy"]
-        return stratDict?.get("name")?.asString() ?: ""
+        val stratDict = data[KEY_BLOCKSTRATEGY]
+        return stratDict?.get(KEY_BLOCKSTRATEGY_NAME)?.asString() ?: ""
+    }
+
+    fun getHistoricBRID(): BlockchainRid? {
+        val bytes = data[KEY_HISTORIC_BRID]?.asByteArray()
+        return if (bytes != null)
+            BlockchainRid(bytes)
+        else
+            null
     }
 
     fun getBlockBuildingStrategy(): Gtv? {
-        return data["blockstrategy"]
+        return data[KEY_BLOCKSTRATEGY]
+    }
+
+    // default is 26 MiB
+    fun getMaxBlockSize(): Long {
+        val stratDict = data[KEY_BLOCKSTRATEGY]
+        return stratDict?.get(KEY_BLOCKSTRATEGY_MAXBLOCKSIZE)?.asInteger() ?: 26 * 1024 * 1024
+    }
+
+    fun getMaxBlockTransactions(): Long {
+        val stratDict = data[KEY_BLOCKSTRATEGY]
+        return stratDict?.get(KEY_BLOCKSTRATEGY_MAXBLOCKTRANSACTIONS)?.asInteger() ?: 100
     }
 
     fun getDependenciesAsList(): List<BlockchainRelatedInfo> {
-        val dep = data["dependencies"]
+        val dep = data[KEY_DEPENDENCIES]
         return if (dep != null) {
             BaseDependencyFactory.build(dep!!)
         } else {
@@ -46,23 +65,31 @@ class BaseBlockchainConfigurationData(
         }
     }
 
+    // default is 25 MiB
+    fun getMaxTransactionSize(): Long {
+        val gtxDict = data[KEY_GTX]
+        return gtxDict?.get(KEY_GTX_TX_SIZE)?.asInteger() ?: 25 * 1024 * 1024
+    }
+
     companion object {
 
-        @Deprecated("Deprecated in v2.4.4. Will be deleted in v3.0")
-        fun readFromCommonsConfiguration(config: Configuration, chainId: Long, blockchainRID: ByteArray, nodeID: Int):
-                BaseBlockchainConfigurationData {
+        const val KEY_BLOCKSTRATEGY = "blockstrategy"
+        const val KEY_BLOCKSTRATEGY_NAME = "name"
+        const val KEY_BLOCKSTRATEGY_MAXBLOCKSIZE = "maxblocksize"
+        const val KEY_BLOCKSTRATEGY_MAXBLOCKTRANSACTIONS = "maxblocktransactions"
 
-            val gtxConfig = convertConfigToGtv(config.subset("blockchain.$chainId")) as GtvDictionary
-            val cryptoSystem = SECP256K1CryptoSystem()
-            val privKey = gtxConfig["blocksigningprivkey"]!!.asByteArray()
-            val pubKey = secp256k1_derivePubKey(privKey)
-            val sigMaker = cryptoSystem.buildSigMaker(pubKey, privKey) // TODO: maybe take it from somewhere?
+        const val KEY_CONFIGURATIONFACTORY = "configurationfactory"
 
-            return BaseBlockchainConfigurationData(
-                    gtxConfig,
-                    BaseBlockchainContext(blockchainRID, nodeID, chainId, pubKey),
-                    sigMaker)
-        }
+        const val KEY_SIGNERS = "signers"
+
+        const val KEY_GTX = "gtx"
+        const val KEY_GTX_MODULES = "modules"
+        const val KEY_GTX_TX_SIZE = "max_transaction_size"
+
+        const val KEY_DEPENDENCIES = "dependencies"
+
+        const val KEY_HISTORIC_BRID = "historic_brid"
+
 
         @Deprecated("Deprecated in v2.4.4. Will be deleted in v3.0")
         private fun convertGTXConfigToGtv(config: Configuration): Gtv {
@@ -102,33 +129,10 @@ class BaseBlockchainConfigurationData(
 
             return gtv(*properties.toTypedArray())
         }
-
-        @Deprecated("Deprecated in v2.4.4. Will be deleted in v3.0")
-        private fun convertConfigToGtv(config: Configuration): Gtv {
-
-            fun blockStrategy(config: Configuration): Gtv {
-                return gtv(
-                        "name" to gtv(config.getString("blockstrategy"))
-                )
-            }
-
-            val properties = mutableListOf(
-                    "blockstrategy" to blockStrategy(config),
-                    "configurationfactory" to gtv(config.getString("configurationfactory")),
-                    "signers" to gtv(config.getStringArray("signers").map { gtv(it.hexStringToByteArray()) }),
-                    "blocksigningprivkey" to gtv(config.getString("blocksigningprivkey").hexStringToByteArray())
-            )
-
-            if (config.containsKey("gtx.modules")) {
-                properties.add(Pair("gtx", convertGTXConfigToGtv(config)))
-            }
-
-            return gtv(*properties.toTypedArray())
-        }
     }
 
-    private fun resolveNodeID(partialContext: BlockchainContext): Int {
-        return if (partialContext.nodeID == NODE_ID_AUTO) {
+    private fun resolveNodeID(nodeID: Int): Int {
+        return if (nodeID == NODE_ID_AUTO) {
             if (subjectID == null) {
                 NODE_ID_READ_ONLY
             } else {
@@ -137,7 +141,7 @@ class BaseBlockchainConfigurationData(
                         .let { i -> if (i == -1) NODE_ID_READ_ONLY else i }
             }
         } else {
-            partialContext.nodeID
+            nodeID
         }
     }
 }

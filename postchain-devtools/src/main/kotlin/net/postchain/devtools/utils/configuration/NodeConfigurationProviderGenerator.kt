@@ -1,6 +1,7 @@
 package net.postchain.devtools.utils.configuration
 
 import net.postchain.config.app.AppConfig
+import net.postchain.config.node.NodeConfig
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.devtools.TestLegacyNodeConfigProducer
@@ -41,12 +42,14 @@ object NodeConfigurationProviderGenerator {
      * @param configOverrides is the configurations we always want
      * @param nodeSetup is the node we are working with
      * @param systemSetup is the architecture of the entire system we should test
+     * @param setupAction is sometimes used to do an action on the setup
      */
     fun buildFromSetup(
             testName: String,
             configOverrides: MapConfiguration,
             nodeSetup: NodeSetup,
-            systemSetup: SystemSetup
+            systemSetup: SystemSetup,
+            setupAction: (appConfig: AppConfig, nodeConfig: NodeConfig) -> Unit = { _, _ -> Unit }
     ): NodeConfigurationProvider {
 
         // TODO [Olle] I'm uncertain about this: could the Logic in TestLegacyNodeConfProducer be the same for managed mode too?
@@ -55,7 +58,7 @@ object NodeConfigurationProviderGenerator {
             "managed" -> throw IllegalArgumentException("Managed not implemented yet") // TODO [Olle] Implement
             else -> throw IllegalArgumentException("Don't know this provider")
         }
-        return buildBase(baseConfig, configOverrides)
+        return buildBase(baseConfig, configOverrides, setupAction)
     }
 
     /**
@@ -63,18 +66,26 @@ object NodeConfigurationProviderGenerator {
      *
      * @param baseConfig is the config we have built so far
      * @param configOverrides is the configurations we always want
+     * @param setupAction is sometimes used to do an action on the setup
      * @return a conf provider where we have overidden the base config with the given overrides.
      */
     private fun buildBase(
             baseConfig: PropertiesConfiguration,
-            configOverrides: MapConfiguration
+            configOverrides: MapConfiguration,
+            setupAction: (appConfig: AppConfig, nodeConfig: NodeConfig) -> Unit = { _, _ -> Unit }
     ): NodeConfigurationProvider {
         val appConfig = CompositeConfiguration().apply {
             addConfiguration(configOverrides)
             addConfiguration(baseConfig)
         }
 
-        return NodeConfigurationProviderFactory.createProvider(AppConfig(appConfig))
+        val wrappedAppConfig =AppConfig(appConfig)
+        val provider = NodeConfigurationProviderFactory.createProvider(wrappedAppConfig)
+
+        // Run the action, default won't do anything
+        setupAction(wrappedAppConfig, provider.getConfiguration())
+
+        return provider
     }
 
     /**

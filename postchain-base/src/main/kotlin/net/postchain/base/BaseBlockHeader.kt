@@ -10,11 +10,13 @@ import net.postchain.core.BlockHeader
 import net.postchain.core.ByteArrayKey
 import net.postchain.core.InitialBlockData
 import net.postchain.core.UserMistake
+import net.postchain.gtv.GtvDecoder
 import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.generateProof
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
+import net.postchain.gtv.merkleHash
 
 /**
  * BaseBlockHeader implements elements and functionality that are necessary to describe and operate on a block header
@@ -34,7 +36,7 @@ class BaseBlockHeader(override val rawData: ByteArray, private val cryptoSystem:
     init {
         blockHeaderRec = BlockHeaderDataFactory.buildFromBinary(rawData)
         prevBlockRID = blockHeaderRec.getPreviousBlockRid()
-        blockRID = cryptoSystem.digest(rawData)
+        blockRID = blockHeaderRec.toGtv().merkleHash(  GtvMerkleHashCalculator(cryptoSystem) )
         blockHeightDependencyArray = blockHeaderRec.getBlockHeightDependencyArray()
     }
 

@@ -3,8 +3,9 @@
 package net.postchain.core
 
 import net.postchain.common.toHex
+import org.spongycastle.util.Arrays
 
-class ByteArrayKey(val byteArray: ByteArray) {
+class ByteArrayKey(val byteArray: ByteArray): Comparable<ByteArrayKey> {
 
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
@@ -18,6 +19,10 @@ class ByteArrayKey(val byteArray: ByteArray) {
 
     override fun toString(): String {
         return byteArray.toHex()
+    }
+
+    override fun compareTo(other: ByteArrayKey): Int {
+        return Arrays.compareUnsigned(this.byteArray, other.byteArray)
     }
 }
 

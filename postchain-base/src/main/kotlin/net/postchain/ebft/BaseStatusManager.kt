@@ -15,7 +15,7 @@ class BaseStatusManager(
         private val nodeCount: Int,
         private val myIndex: Int,
         myNextHeight: Long
-): StatusManager {
+) : StatusManager {
 
     override val nodeStatuses = Array(nodeCount) { NodeStatus() }
     override val commitSignatures: Array<Signature?> = arrayOfNulls(nodeCount)
@@ -33,6 +33,8 @@ class BaseStatusManager(
         // otherwise we are screwed
         myStatus.serial = System.currentTimeMillis() - 1518000000000
     }
+
+    override fun getMyIndex() = myIndex
 
     /**
      * Count the number of nodes that are at [height] with the tip being [blockRID]
@@ -121,6 +123,26 @@ class BaseStatusManager(
     }
 
     /**
+     * Fast forward height
+     *
+     * @param height the new height
+     * @return success or failure
+     */
+    @Synchronized
+    override fun fastForwardHeight(height: Long): Boolean {
+        if (height < myStatus.height) {
+            logger.error("Failed to fast forward negative increment.")
+            return false
+        }
+
+        logger.debug("Advancing block height from ${myStatus.height} to ${height + 1} ...")
+        (myStatus.height..height).forEach { _ -> advanceHeight() }
+
+        logger.debug("Current state: ${myStatus.height}")
+        return true
+    }
+
+    /**
      * Block is committed
      *
      * @param blockRID the committed block
@@ -179,11 +201,11 @@ class BaseStatusManager(
      *
      * @return primary node index
      */
-    fun primaryIndex(): Int {
+    override fun primaryIndex(): Int {
         return ((myStatus.height + myStatus.round) % nodeCount).toInt()
     }
 
-    private fun isMyNodePrimary(): Boolean {
+    override fun isMyNodePrimary(): Boolean {
         return primaryIndex() == this.myIndex
     }
 
@@ -449,7 +471,7 @@ class BaseStatusManager(
                 if (primaryBlockRID != null) {
                     val _intent = intent
                     if (!(_intent is FetchUnfinishedBlockIntent &&
-                          _intent.isThisTheBlockWeAreWaitingFor(myStatus.blockRID))) {
+                                    _intent.isThisTheBlockWeAreWaitingFor(myStatus.blockRID))) {
                         intent = FetchUnfinishedBlockIntent(primaryBlockRID)
                         return true
                     }

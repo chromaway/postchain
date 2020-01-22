@@ -9,3 +9,4 @@ target
 postchain-base/start.sh
 *.log
 *.log.lck
+logs

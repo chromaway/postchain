@@ -10,7 +10,7 @@ class ApiTx(val tx: String) {
         }
 
     init {
-        require(tx.length > 1) { "Tx length must not be >= 2" }
+        require(tx.length > 1) { "Tx length must be >= 2" }
     }
 
     override fun equals(other: Any?): Boolean {

@@ -1,7 +1,14 @@
 package net.postchain.core
 
+import net.postchain.base.BlockchainRid
+import java.util.concurrent.locks.Lock
+
 interface Shutdownable {
     fun shutdown()
+}
+
+interface Synchronizable {
+    var synchronizer: Lock
 }
 
 /**
@@ -23,11 +30,14 @@ interface BlockchainProcess : Shutdownable {
     fun getEngine(): BlockchainEngine
 }
 
-interface BlockchainProcessManager : Shutdownable {
+interface BlockchainProcessManager : Shutdownable, Synchronizable {
     fun startBlockchainAsync(chainId: Long)
-    fun startBlockchain(chainId: Long)
+    fun startBlockchain(chainId: Long): BlockchainRid?
     fun retrieveBlockchain(chainId: Long): BlockchainProcess?
     fun stopBlockchain(chainId: Long)
+    fun restartHandler(chainId: Long): RestartHandler
 }
 
+// A return value of "true" means a restart is needed.
 typealias RestartHandler = () -> Boolean
+

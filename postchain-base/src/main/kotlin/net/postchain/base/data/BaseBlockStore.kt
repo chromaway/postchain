@@ -2,13 +2,9 @@
 
 package net.postchain.base.data
 
-import net.postchain.base.BaseBlockHeader
 import mu.KLogging
-import net.postchain.base.BaseTxEContext
-import net.postchain.base.BlockchainRelatedInfo
-import net.postchain.base.ConfirmationProofMaterial
+import net.postchain.base.*
 import net.postchain.base.merkle.Hash
-import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.core.*
 
 /**
@@ -19,7 +15,7 @@ import net.postchain.core.*
  */
 class BaseBlockStore : BlockStore {
 
-    companion object: KLogging()
+    companion object : KLogging()
 
 
     /**
@@ -28,19 +24,18 @@ class BaseBlockStore : BlockStore {
      * @param ctx Connection context
      * @returns Initial block data
      */
-    override fun beginBlock(ctx: EContext, blockHeightDependencies: Array<Hash?>?): InitialBlockData {
+    override fun beginBlock(ctx: EContext, blockchainRID: BlockchainRid, blockHeightDependencies: Array<Hash?>?): InitialBlockData {
         val db = DatabaseAccess.of(ctx)
         if (ctx.chainID < 0) {
             throw UserMistake("ChainId must be >=0, got ${ctx.chainID}")
         }
         val prevHeight = getLastBlockHeight(ctx)
         val prevTimestamp = getLastBlockTimestamp(ctx)
-        val blockchainRID: ByteArray = db.getBlockchainRID(ctx)
-                    ?: throw UserMistake("Blockchain RID not found for chainId ${ctx.chainID}")
         val prevBlockRID = if (prevHeight == -1L) {
-            blockchainRID
+            blockchainRID.data
         } else {
-            getBlockRID(ctx, prevHeight) ?: throw ProgrammerMistake("Previous block had no RID. Check your block writing code!")
+            getBlockRID(ctx, prevHeight)
+                    ?: throw ProgrammerMistake("Previous block had no RID. Check your block writing code!")
         }
 
         val blockIid = db.insertBlock(ctx, prevHeight + 1)
@@ -70,7 +65,7 @@ class BaseBlockStore : BlockStore {
         return DatabaseAccess.of(ctx).getBlockHeight(ctx, blockRID, chainId)
     }
 
-    override fun getChainId(ctx: EContext, blockchainRID: ByteArray): Long? {
+    override fun getChainId(ctx: EContext, blockchainRID: BlockchainRid): Long? {
         return DatabaseAccess.of(ctx).getChainId(ctx, blockchainRID)
     }
 
@@ -87,22 +82,31 @@ class BaseBlockStore : BlockStore {
     // Eventually, we may change this implementation to actually deliver a true
     // stream so that we don't have to store all transaction data in memory.
     override fun getBlockTransactions(ctx: EContext, blockRID: ByteArray): List<ByteArray> {
-        return DatabaseAccess.of(ctx).getBlockTransactions(ctx, blockRID)
+        return DatabaseAccess.of(ctx).getBlockTransactions(ctx, blockRID, false)
+                .map { it.data as ByteArray }
     }
 
     override fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray {
         return DatabaseAccess.of(ctx).getWitnessData(ctx, blockRID)
     }
 
-    override fun getLatestBlocksUpTo(ctx: EContext, upTo: Long, n: Int): List<BlockDetail> {
+    override fun getBlocks(ctx: EContext, blockHeight: Long, asc: Boolean, limit: Int, hashesOnly: Boolean): List<BlockDetail> {
         val db = DatabaseAccess.of(ctx)
-        val blocksInfo = db.getLatestBlocksUpTo(ctx, upTo, n)
-        return blocksInfo.map { blockInfo ->
-            val transactions = db.getBlockTransactions(ctx, blockInfo.blockRid)
+        val blocks = db.getBlocks(ctx, blockHeight, asc, limit)
+        return blocks.map { block ->
+            val txs = db.getBlockTransactions(ctx, block.blockRid, hashesOnly)
 
             // Decode block header
-            val blockHeaderDecoded = BaseBlockHeader(blockInfo.blockHeader, SECP256K1CryptoSystem())
-            BlockDetail(blockInfo.blockRid, blockHeaderDecoded.prevBlockRID, blockInfo.blockHeader, blockInfo.blockHeight, transactions, blockInfo.witness, blockInfo.timestamp)
+            val blockHeaderDecoded = BaseBlockHeader(block.blockHeader, SECP256K1CryptoSystem())
+
+            BlockDetail(
+                    block.blockRid,
+                    blockHeaderDecoded.prevBlockRID,
+                    block.blockHeader,
+                    block.blockHeight,
+                    txs,
+                    block.witness,
+                    block.timestamp)
         }
     }
 
@@ -110,7 +114,7 @@ class BaseBlockStore : BlockStore {
         return DatabaseAccess.of(ctx).getLastBlockHeight(ctx)
     }
 
-    override fun getBlockHeightInfo(ctx: EContext, blockchainRID: ByteArray): Pair<Long, Hash>? {
+    override fun getBlockHeightInfo(ctx: EContext, blockchainRID: BlockchainRid): Pair<Long, Hash>? {
         return DatabaseAccess.of(ctx).getBlockHeightInfo(ctx, blockchainRID)
     }
 
@@ -127,7 +131,7 @@ class BaseBlockStore : BlockStore {
         val block = db.getBlockInfo(ctx, txRID)
         return ConfirmationProofMaterial(
                 ByteArrayKey(db.getTxHash(ctx, txRID)),
-                db.getBlockTxHashes(ctx, block.blockIid).map{ ByteArrayKey(it) }.toTypedArray(),
+                db.getBlockTxHashes(ctx, block.blockIid).map { ByteArrayKey(it) }.toTypedArray(),
                 block.blockHeader,
                 block.witness
         )
@@ -141,15 +145,19 @@ class BaseBlockStore : BlockStore {
         return DatabaseAccess.of(ctx).isTransactionConfirmed(ctx, txRID)
     }
 
-    fun initialize(ctx: EContext, blockchainRID: ByteArray, dependencies:  List<BlockchainRelatedInfo>) {
-        DatabaseAccess.of(ctx).checkBlockchainRID(ctx, blockchainRID)
+    fun initialValidation(ctx: EContext, dependencies: List<BlockchainRelatedInfo>) {
+        // At this point we must have stored BC RID
+        DatabaseAccess.of(ctx).getBlockchainRID(ctx)
+                ?: throw IllegalStateException("Cannot initialize block store for a chain without a RID")
 
         // Verify all dependencies
         for (dep in dependencies) {
+            logger.debug("Validating")
             val chainId = DatabaseAccess.of(ctx).getChainId(ctx, dep.blockchainRid)
             if (chainId == null) {
                 throw BadDataMistake(BadDataType.BAD_CONFIGURATION,
-                        "Dependency given in configuration: ${dep.nickname} is missing in DB. Dependent blockchains must be added in correct order!")
+                        "Dependency given in configuration: ${dep.nickname} is missing in DB. Dependent blockchains must be added in correct order!" +
+                                " Dependency not found BC RID ${dep.blockchainRid.toHex()}")
             } else {
                 logger.info("initialize() - Verified BC dependency: ${dep.nickname} exists as chainID: = $chainId (before: ${dep.chainId}) ")
                 dep.chainId = chainId

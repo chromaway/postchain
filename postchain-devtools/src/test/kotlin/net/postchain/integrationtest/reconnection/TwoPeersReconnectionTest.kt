@@ -7,15 +7,17 @@ import net.postchain.integrationtest.assertNodeConnectedWith
 import net.postchain.isEmpty
 import org.awaitility.Awaitility
 import org.awaitility.Duration
+import org.junit.Ignore
 import org.junit.Test
 
+// TODO: this test seems flaky, investigate
 class TwoPeersReconnectionTest : ReconnectionTest() {
 
     @Test
     fun test2Peers() {
         val nodesCount = 2
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-        val blockchainConfig = "/net/postchain/reconnection/blockchain_config_2.xml"
+        val blockchainConfig = "/net/postchain/devtools/reconnection/blockchain_config_2.xml"
         val nodeConfigsFilenames = arrayOf(
                 "classpath:/net/postchain/reconnection/node0.properties",
                 "classpath:/net/postchain/reconnection/node1.properties"

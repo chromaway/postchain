@@ -208,30 +208,6 @@ Summary<y:LabelModel>
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
-          <y:Geometry height="112.32025510304652" width="174.71716643243525" x="8.51660916706524" y="135.78083809224404"/>
-          <y:Fill color="#FFCC00" transparent="false"/>
-          <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="34.265625" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="118.04833984375" x="28.334413294342625" y="3.0">GtvMerkleHash-
-Memoization<y:LabelModel>
-              <y:SmartNodeLabelModel distance="4.0"/>
-            </y:LabelModel>
-            <y:ModelParameter>
-              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
-            </y:ModelParameter>
-          </y:NodeLabel>
-          <y:UML clipContent="true" constraint="" hasDetailsColor="false" omitDetails="false" stereotype="" use3DEffect="true">
-            <y:AttributeLabel/>
-            <y:MethodLabel>fun findMerkleHash(
-      src: Gtv
-):  MerkleHashSummary?</y:MethodLabel>
-          </y:UML>
-        </y:UMLClassNode>
-      </data>
-    </node>
-    <node id="n10">
-      <data key="d4"/>
-      <data key="d6">
-        <y:UMLClassNode>
           <y:Geometry height="112.32025510304652" width="286.9789465371473" x="804.677193398093" y="295.76616099930345"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
@@ -252,7 +228,7 @@ Memoization<y:LabelModel>
         </y:UMLClassNode>
       </data>
     </node>
-    <node id="n11">
+    <node id="n10">
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
@@ -276,7 +252,7 @@ of the serialized data)</y:MethodLabel>
         </y:UMLClassNode>
       </data>
     </node>
-    <node id="n12">
+    <node id="n11">
       <data key="d4"/>
       <data key="d6">
         <y:UMLNoteNode>
@@ -295,7 +271,7 @@ Calculation<y:LabelModel>
         </y:UMLNoteNode>
       </data>
     </node>
-    <node id="n13">
+    <node id="n12">
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
@@ -319,7 +295,7 @@ Calculation<y:LabelModel>
         </y:UMLClassNode>
       </data>
     </node>
-    <node id="n14">
+    <node id="n13">
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
@@ -343,7 +319,7 @@ of the serialized data)</y:MethodLabel>
         </y:UMLClassNode>
       </data>
     </node>
-    <node id="n15">
+    <node id="n14">
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
@@ -366,7 +342,7 @@ of the serialized data)</y:MethodLabel>
         </y:UMLClassNode>
       </data>
     </node>
-    <node id="n16">
+    <node id="n15">
       <data key="d4"/>
       <data key="d6">
         <y:UMLClassNode>
@@ -387,14 +363,14 @@ of the serialized data)</y:MethodLabel>
         </y:UMLClassNode>
       </data>
     </node>
-    <node id="n17">
+    <node id="n16">
       <data key="d4"/>
       <data key="d6">
         <y:UMLNoteNode>
           <y:Geometry height="171.98653702318632" width="95.3147311614174" x="679.3624622366756" y="245.6989815473761"/>
           <y:Fill hasColor="false" transparent="false"/>
           <y:BorderStyle hasColor="false" type="line" width="1.0"/>
-          <y:NodeLabel alignment="left" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="157.65625" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="124.703125" x="-14.694196919291244" y="7.165143511593158">       +               
+          <y:NodeLabel alignment="left" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="157.65625" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="124.703125" x="-14.694196919291244" y="7.165143511593158">       +
       / \       
      /   \      
     /     \     
@@ -414,7 +390,7 @@ of the serialized data)</y:MethodLabel>
         </y:UMLNoteNode>
       </data>
     </node>
-    <node id="n18">
+    <node id="n17">
       <data key="d4"/>
       <data key="d6">
         <y:UMLNoteNode>
@@ -441,7 +417,7 @@ of the serialized data)</y:MethodLabel>
         </y:UMLNoteNode>
       </data>
     </node>
-    <node id="n19">
+    <node id="n18">
       <data key="d4"/>
       <data key="d6">
         <y:UMLNoteNode>
@@ -459,7 +435,7 @@ with an array.<y:LabelModel>
         </y:UMLNoteNode>
       </data>
     </node>
-    <node id="n20">
+    <node id="n19">
       <data key="d4"/>
       <data key="d6">
         <y:UMLNoteNode>
@@ -478,7 +454,7 @@ with an array.<y:LabelModel>
         </y:UMLNoteNode>
       </data>
     </node>
-    <node id="n21">
+    <node id="n20">
       <data key="d4"/>
       <data key="d6">
         <y:UMLNoteNode>
@@ -497,11 +473,11 @@ looks like<y:LabelModel>
         </y:UMLNoteNode>
       </data>
     </node>
-    <node id="n22">
+    <node id="n21">
       <data key="d4"/>
       <data key="d6">
         <y:UMLNoteNode>
-          <y:Geometry height="64.4128791852429" width="118.819247070556" x="205.97294938917975" y="118.86236389628289"/>
+          <y:Geometry height="64.4128791852429" width="118.819247070556" x="128.48525156060964" y="159.73452605114585"/>
           <y:Fill color="#C0C0C0" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="45.90625" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="107.505859375" x="5.656693847778001" y="9.25331459262145">The intermediary
@@ -516,7 +492,7 @@ looks like this.<y:LabelModel>
         </y:UMLNoteNode>
       </data>
     </node>
-    <node id="n23">
+    <node id="n22">
       <data key="d4"/>
       <data key="d6">
         <y:UMLNoteNode>
@@ -535,7 +511,7 @@ byte hash<y:LabelModel>
         </y:UMLNoteNode>
       </data>
     </node>
-    <node id="n24">
+    <node id="n23">
       <data key="d4"/>
       <data key="d6">
         <y:UMLNoteNode>
@@ -594,7 +570,7 @@ byte hash<y:LabelModel>
           <y:Path sx="0.0" sy="0.0" tx="-86.90060833331651" ty="5.664104589452736"/>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
-          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="45.90625" horizontalTextPosition="center" iconTextGap="4" modelName="custom" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="22.802734375" x="57.60596605912954" y="-59.77227022557594">1.a
+          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="45.90625" horizontalTextPosition="center" iconTextGap="4" modelName="custom" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="15.44921875" x="62.906182706715285" y="-60.63847354881955">1.
 
 
 <y:LabelModel>
@@ -702,7 +678,7 @@ byte hash<y:LabelModel>
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e9" source="n10" target="n5">
+    <edge id="e8" source="n9" target="n5">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -720,7 +696,7 @@ byte hash<y:LabelModel>
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e10" source="n10" target="n14">
+    <edge id="e9" source="n9" target="n13">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="13.0590343562327"/>
@@ -738,7 +714,7 @@ byte hash<y:LabelModel>
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e11" source="n8" target="n11">
+    <edge id="e10" source="n8" target="n10">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -756,7 +732,7 @@ byte hash<y:LabelModel>
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e12" source="n13" target="n2">
+    <edge id="e11" source="n12" target="n2">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="31.47394789927013" ty="-41.0"/>
@@ -766,7 +742,7 @@ byte hash<y:LabelModel>
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e13" source="n15" target="n1">
+    <edge id="e12" source="n14" target="n1">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -776,16 +752,16 @@ byte hash<y:LabelModel>
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e14" source="n16" target="n7">
+    <edge id="e13" source="n15" target="n7">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="-105.8835535516137" ty="67.86969662623197"/>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
-          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="59.875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="23.06640625" x="72.04514455825165" y="-80.18329588795763">
+          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="59.875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="15.44921875" x="79.66233205825165" y="-82.47295403910175">
 
 
-1.b<y:LabelModel>
+2.<y:LabelModel>
               <y:SmartEdgeLabelModel autoRotationEnabled="false" defaultAngle="0.0" defaultDistance="10.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -797,7 +773,7 @@ byte hash<y:LabelModel>
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e15" source="n19" target="n20">
+    <edge id="e14" source="n18" target="n19">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -807,7 +783,7 @@ byte hash<y:LabelModel>
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e16" source="n21" target="n17">
+    <edge id="e15" source="n20" target="n16">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="-38.72538752817968" ty="-64.6271790043694"/>
@@ -827,7 +803,7 @@ byte hash<y:LabelModel>
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e18" source="n23" target="n24">
+    <edge id="e17" source="n22" target="n23">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>

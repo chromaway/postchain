@@ -1,19 +1,18 @@
 package net.postchain.integrationtest.reconnection
 
 import assertk.assertions.containsExactly
-import assertk.assertions.hasSize
 import assertk.assertions.isFalse
 import net.postchain.core.BlockQueries
 import net.postchain.core.Transaction
 import net.postchain.core.byteArrayKeyOf
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.ConfigFileBasedIntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
 import nl.komponents.kovenant.Promise
 import java.util.*
 
-open class ReconnectionTest : IntegrationTest() {
+open class ReconnectionTest : ConfigFileBasedIntegrationTest() {
 
     protected val tx0 = TestTransaction(0)
     protected val tx1 = TestTransaction(1)
@@ -49,7 +48,7 @@ open class ReconnectionTest : IntegrationTest() {
 
     protected fun assertThatNodeInBlockHasTxs(node: PostchainTestNode, height: Long, vararg txs: Transaction) {
         // Asserting number of blocks at height
-        val blockRids = queries(node) { it.getBlockRids(height) }
+        val blockRids = queries(node) { it.getBlockRid(height) }
         assertk.assert(blockRids == null).isFalse()
 
         // Asserting content of a block

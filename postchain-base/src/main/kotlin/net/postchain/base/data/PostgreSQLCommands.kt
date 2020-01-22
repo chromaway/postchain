@@ -39,9 +39,8 @@ object PostgreSQLCommands : SQLCommands {
     override val createTablePeerInfos = "CREATE TABLE ${SQLDatabaseAccess.TABLE_PEERINFOS} (" +
             " ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_HOST} text NOT NULL" +
             ", ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_PORT} integer NOT NULL" +
-            ", ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_PUBKEY} text NOT NULL" +
-            ", ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_CREATED_AT} timestamp NOT NULL" +
-            ", ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_UPDATED_AT} timestamp NOT NULL" +
+            ", ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_PUBKEY} text PRIMARY KEY NOT NULL" +
+            ", ${SQLDatabaseAccess.TABLE_PEERINFOS_FIELD_TIMESTAMP} timestamp NOT NULL" +
             ")"
 
     override val createTableMeta: String = "CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)"

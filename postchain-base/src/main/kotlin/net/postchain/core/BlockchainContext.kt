@@ -1,5 +1,7 @@
 package net.postchain.core
 
+import net.postchain.base.BlockchainRid
+
 /**
  * BlockchainContext interface
  *
@@ -9,7 +11,7 @@ package net.postchain.core
  * @property nodeRID is a block signing key, it's called subjectID in other contexts.
  */
 interface BlockchainContext {
-    val blockchainRID: ByteArray
+    val blockchainRID: BlockchainRid
     val nodeID: Int
     val chainID: Long
     val nodeRID: ByteArray?

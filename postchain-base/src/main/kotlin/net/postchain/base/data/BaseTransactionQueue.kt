@@ -29,7 +29,7 @@ class BaseTransactionQueue(queueCapacity: Int = 2500) : TransactionQueue {
     companion object : KLogging()
 
     private val queue = LinkedBlockingQueue<ComparableTransaction>(queueCapacity)
-    private val queueSet = HashSet<ByteArrayKey>()
+    private val queueMap = HashMap<ByteArrayKey, ComparableTransaction>() // transaction by RID
     private val taken = mutableListOf<ComparableTransaction>()
     private val rejects = object : LinkedHashMap<ByteArrayKey, Exception?>() {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<ByteArrayKey, java.lang.Exception?>?): Boolean {
@@ -42,9 +42,14 @@ class BaseTransactionQueue(queueCapacity: Int = 2500) : TransactionQueue {
         val tx = queue.poll()
         return if (tx != null) {
             taken.add(tx)
-            queueSet.remove(ByteArrayKey(tx.tx.getRID()))
+            queueMap.remove(ByteArrayKey(tx.tx.getRID()))
             tx.tx
         } else null
+    }
+
+    @Synchronized
+    override fun findTransaction(txRID: ByteArrayKey): Transaction? {
+        return queueMap[txRID]?.tx
     }
 
     override fun getTransactionQueueSize(): Int {
@@ -54,7 +59,7 @@ class BaseTransactionQueue(queueCapacity: Int = 2500) : TransactionQueue {
     override fun enqueue(tx: Transaction): TransactionResult {
         val rid = ByteArrayKey(tx.getRID())
         synchronized(this) {
-            if (queueSet.contains(rid)) {
+            if (queueMap.contains(rid)) {
                 logger.debug("Skipping $rid first test")
                 return TransactionResult.DUPLICATE
             }
@@ -64,13 +69,13 @@ class BaseTransactionQueue(queueCapacity: Int = 2500) : TransactionQueue {
         try {
             if (tx.isCorrect()) {
                 synchronized(this) {
-                    if (queueSet.contains(rid)) {
+                    if (queueMap.contains(rid)) {
                         logger.debug("Skipping $rid second test")
                         return TransactionResult.DUPLICATE
                     }
                     if (queue.offer(comparableTx)) {
                         logger.debug("Enqueued tx $rid")
-                        queueSet.add(rid)
+                        queueMap.set(rid, comparableTx)
                         return TransactionResult.OK
                     } else {
                         logger.debug("Skipping tx $rid, overloaded. Queue contains ${queue.size} elements")
@@ -95,7 +100,7 @@ class BaseTransactionQueue(queueCapacity: Int = 2500) : TransactionQueue {
     override fun getTransactionStatus(txHash: ByteArray): TransactionStatus {
         val rid = ByteArrayKey(txHash)
         return when {
-            rid in queueSet -> TransactionStatus.WAITING
+            rid in queueMap -> TransactionStatus.WAITING
             taken.find { it.tx.getRID().contentEquals(txHash) } != null -> TransactionStatus.WAITING
             rid in rejects -> TransactionStatus.REJECTED
             else -> TransactionStatus.UNKNOWN
@@ -110,9 +115,12 @@ class BaseTransactionQueue(queueCapacity: Int = 2500) : TransactionQueue {
 
     @Synchronized
     override fun removeAll(transactionsToRemove: Collection<Transaction>) {
-        queue.removeAll(transactionsToRemove.map { ComparableTransaction(it) })
-        queueSet.removeAll(transactionsToRemove.map { ByteArrayKey(it.getRID()) })
-        taken.removeAll(transactionsToRemove.map { ComparableTransaction(it) })
+        for (tx in transactionsToRemove) {
+            val ct = ComparableTransaction(tx)
+            queue.remove(ct)
+            queueMap.remove(ByteArrayKey(tx.getRID()))
+            taken.remove(ct)
+        }
     }
 
     @Synchronized

@@ -3,7 +3,8 @@
 package net.postchain.integrationtest
 
 import io.restassured.RestAssured.given
-import net.postchain.base.gtv.BlockHeaderDataFactory
+import net.postchain.base.BaseBlockHeader
+import net.postchain.base.BlockchainRid
 import net.postchain.base.merkle.Hash
 import net.postchain.common.RestTools
 import net.postchain.common.hexStringToByteArray
@@ -33,19 +34,20 @@ import kotlin.test.assertTrue
 class ApiIntegrationTestNightly : IntegrationTest() {
 
     private val gson = JsonTools.buildGson()
-    private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
-    private val blockchainRIDBytes = blockchainRID.hexStringToByteArray()
     private var txHashHex = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
     private val gtxTestModule = GTXTestModule()
     private val gtxTextModuleOperation = "gtx_test" // This is a real operation
+    private val chainIid = 1L
 
     @Test
     fun testMixedAPICalls() {
         val nodeCount = 3
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
         configOverrides.setProperty("api.port", 0)
-        createNodes(nodeCount, "/net/postchain/api/blockchain_config.xml")
+        val nodes = createNodes(nodeCount, "/net/postchain/devtools/api/blockchain_config.xml")
+        val blockchainRIDBytes = nodes[0].getBlockchainRid(chainIid)!! // Just take first chain from first node.
+        val blockchainRID = blockchainRIDBytes.toHex()
 
         testStatusGet("/tx/$blockchainRID/$txHashHex", 404)
         testStatusGet("/tx/$blockchainRID/$txHashHex/status", 200) {
@@ -58,9 +60,48 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
 
         val blockHeight = 0 // If we set it to zero the node with index 0 will get the post
-        val tx = postGtxTransaction(factory, 1, blockHeight, nodeCount)
+        val tx = postGtxTransaction(factory, 1, blockHeight, nodeCount, blockchainRIDBytes)
 
         awaitConfirmed(blockchainRID, tx!!.getRID())
+
+        // Note: here we use the "iid_1" method instead of BC RID
+        testStatusGet("/tx/iid_${chainIid.toInt().toString()}/${tx!!.getRID().toHex()}/status", 200) {
+            assertEquals(
+                    jsonAsMap(gson, "{\"status\"=\"confirmed\"}"),
+                    jsonAsMap(gson, it))
+        }
+    }
+
+    @Test
+    fun testDirectQueryApi() {
+        val nodesCount = 1
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+        configOverrides.setProperty("api.port", 0)
+        val nodes = createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_dquery.xml")
+        val blockchainRIDBytes = nodes[0].getBlockchainRid(1L)!! // Just take first chain from first node.
+        val blockchainRID = blockchainRIDBytes.toHex()
+
+        buildBlockAndCommit(nodes[0])
+
+        val expect1 = "abcd"
+
+        val byteArray = given().port(nodes[0].getRestApiHttpPort())
+                .get("/dquery/$blockchainRID?type=get_picture&id=1234")
+                .then()
+                .statusCode(200)
+                .extract().asByteArray()
+
+        assertEquals(expect1, String(byteArray))
+
+        val expect2 = "<h1>it works!</h1>"
+
+        val text = given().port(nodes[0].getRestApiHttpPort())
+                .get("/dquery/$blockchainRID?type=get_front_page&id=1234")
+                .then()
+                .statusCode(200)
+                .extract().asString()
+
+        assertEquals(expect2, text)
     }
 
     @Test
@@ -70,7 +111,9 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         val txPerBlock = 1
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         configOverrides.setProperty("api.port", 0)
-        createNodes(nodesCount, "/net/postchain/api/blockchain_config_1.xml")
+        val nodes = createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_1.xml")
+        val blockchainRIDBytes = nodes[0].getBlockchainRid(1L)!! // Just take first chain from first node.
+        val blockchainRID = blockchainRIDBytes.toHex()
 
         buildBlockAndCommit(nodes[0])
         val query = """{"queries": [{"type"="gtx_test_get_value", "txRID"="abcd"},
@@ -90,7 +133,9 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         val txPerBlock = 1
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         configOverrides.setProperty("api.port", 0)
-        createNodes(nodesCount, "/net/postchain/api/blockchain_config_1.xml")
+        val nodes = createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_1.xml")
+        val blockchainRIDBytes = nodes[0].getBlockchainRid(1L)!! // Just take first chain from first node.
+        val blockchainRID = blockchainRIDBytes.toHex()
 
         buildBlockAndCommit(nodes[0])
 
@@ -112,13 +157,13 @@ class ApiIntegrationTestNightly : IntegrationTest() {
     @Suppress("UNCHECKED_CAST")
     fun testConfirmationProof() {
         val nodeCount = 3
-
-        val factory = GTXTransactionFactory(blockchainRIDBytes, gtxTestModule, cryptoSystem)
-
-//        createEbftNodes(nodeCount)
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
         configOverrides.setProperty("api.port", 0)
-        createNodes(nodeCount, "/net/postchain/api/blockchain_config.xml")
+        val nodes = createNodes(nodeCount, "/net/postchain/devtools/api/blockchain_config.xml")
+        val blockchainRIDBytes = nodes[0].getBlockchainRid(1L)!! // Just take first chain from first node.
+        val blockchainRID = blockchainRIDBytes.toHex()
+
+        val factory = GTXTransactionFactory(blockchainRIDBytes, gtxTestModule, cryptoSystem)
 
         var blockHeight = 0
         var currentId = 0
@@ -129,7 +174,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
             val txList = mutableListOf<TestOneOpGtxTransaction>()
             var lastTx: TestOneOpGtxTransaction? = null
             for (i in 1..txCount) {
-                lastTx = postGtxTransaction(factory, ++currentId, blockHeight, nodeCount)
+                lastTx = postGtxTransaction(factory, ++currentId, blockHeight, nodeCount, blockchainRIDBytes)
                 txList.add(lastTx!!)
             }
 
@@ -144,7 +189,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
             for (i in 0 until txCount) {
                 val realTx = txArr[i]!!
-                val jsonResponse = fetchConfirmationProof(realTx, i)
+                val jsonResponse = fetchConfirmationProof(realTx, i, blockchainRIDBytes)
                 checkConfirmationProofForTx(realTx, jsonResponse)
             }
         }
@@ -155,17 +200,16 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         val nodesCount = 1
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         configOverrides.setProperty("api.port", 0)
-        createNodes(nodesCount, "/net/postchain/api/blockchain_config_rejected.xml")
+        val nodes = createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_rejected.xml")
+        val blockchainRID = nodes[0].getBlockchainRid(1L)!! // Just take first chain from first node.
+        val blockchainRIDStr = blockchainRID.toHex()
 
-        val builder = GTXDataBuilder(blockchainRIDBytes, arrayOf(KeyPairHelper.pubKey(0)), cryptoSystem)
-        builder.addOperation("gtx_test", arrayOf(gtv(1L), gtv("rejectMe")))
-        builder.finish()
-        builder.sign(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)))
+        val builder = createBuilder(blockchainRID, "rejectMe")
 
         // post transaction
         testStatusPost(
                 0,
-                "/tx/$blockchainRID",
+                "/tx/$blockchainRIDStr",
                 "{\"tx\": \"${builder.serialize().toHex()}\"}",
                 200)
 
@@ -180,7 +224,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
         Awaitility.await().untilAsserted {
             val body = given().port(nodes[0].getRestApiHttpPort())
-                    .get("/tx/$blockchainRID/$txRidHex/status")
+                    .get("/tx/$blockchainRIDStr/$txRidHex/status")
                     .then()
                     .statusCode(200)
                     .extract().body().asString()
@@ -198,7 +242,8 @@ class ApiIntegrationTestNightly : IntegrationTest() {
             factory: GTXTransactionFactory,
             currentId: Int,
             blockHeight: Int,
-            nodeCount: Int
+            nodeCount: Int,
+            bcRid: BlockchainRid
     ): TestOneOpGtxTransaction? {
 
         val tx = TestOneOpGtxTransaction(factory, currentId)
@@ -206,7 +251,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         //println("Sending TX: $strHexData:")
         testStatusPost(
                 blockHeight % nodeCount,
-                "/tx/$blockchainRID",
+                "/tx/${bcRid.toHex()}",
                 "{\"tx\": \"$strHexData\"}",
                 200)
 
@@ -256,11 +301,11 @@ class ApiIntegrationTestNightly : IntegrationTest() {
      * @param seqNr is just for debugging
      * @return the Json converted to a [Map]
      */
-    private fun fetchConfirmationProof(realTx: TestOneOpGtxTransaction, seqNr: Int): String {
+    private fun fetchConfirmationProof(realTx: TestOneOpGtxTransaction, seqNr: Int, bcRid: BlockchainRid): String {
         val txRidHex = realTx.getRID().toHex()
         println("Fetching conf proof for tx nr: $seqNr with tx RID: $txRidHex ")
         val body = given().port(nodes[0].getRestApiHttpPort())
-                .get("/tx/$blockchainRID/${txRidHex}/confirmationProof")
+                .get("/tx/${bcRid.toHex()}/${txRidHex}/confirmationProof")
                 .then()
                 .statusCode(200)
                 .extract()
@@ -289,22 +334,18 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         assertArrayEquals(realTx.getHash(), hash)
 
         // Assert signatures
-        val verifier = cryptoSystem.makeVerifier()
-        val blockHeader = (actualMap["blockHeader"] as String).hexStringToByteArray()
+        val blockHeaderRaw = (actualMap["blockHeader"] as String).hexStringToByteArray()
+        val blockHeader = BaseBlockHeader(blockHeaderRaw, cryptoSystem)
+        val blockRid = blockHeader.blockRID
+
         val signatures = actualMap["signatures"] as List<Map<String, String>>
         signatures.forEach {
-            assertTrue(verifier(blockHeader,
-                    Signature(it["pubKey"]!!.hexStringToByteArray(),
-                            it["signature"]!!.hexStringToByteArray())))
+            val signature = Signature(it["pubKey"]!!.hexStringToByteArray(), it["signature"]!!.hexStringToByteArray())
+            assertTrue(cryptoSystem.verifyDigest(blockRid, signature))
         }
 
-        // Block Header
-
-        val blockHeaderData = BlockHeaderDataFactory.buildFromBinary(blockHeader)
-        val blockRid = blockHeaderData.getMerkleRootHash()
-        //println("BlockRID - from header: ${blockRid.toHex()}")
-
-
+        val blockMerkleRootHashFromHeader = blockHeader.blockHeaderRec.getMerkleRootHash()
+        println("blockMerkleRootHash - from header: ${blockMerkleRootHashFromHeader.toHex()}")
         // -------------------
         // Merkle Proof Tree
         // -------------------
@@ -330,12 +371,11 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         val myNewBlockHash = x.merkleHash(GtvMerkleHashCalculator(cryptoSystem))
 
         // Assert we get the same block RID
-        println("BlockRID - calculated : ${myNewBlockHash.toHex()}")
-        assertTrue(myNewBlockHash.contentEquals(blockRid),
-                "The block merkle root calculated from the proof doesn't correspond to the blockRid")
+        println("Block merkle root - calculated : ${myNewBlockHash.toHex()}")
+        assertTrue(myNewBlockHash.contentEquals(blockMerkleRootHashFromHeader),
+                "The block merkle root calculated from the proof doesn't correspond to the block's merkle root hash from the header")
 
     }
-
 
     private fun awaitConfirmed(blockchainRID: String, txRid: Hash) {
         RestTools.awaitConfirmed(
@@ -360,5 +400,13 @@ class ApiIntegrationTestNightly : IntegrationTest() {
                 .post(path)
                 .then()
                 .statusCode(expectedStatus)
+    }
+
+    private fun createBuilder(blockchainRid: BlockchainRid, value: String): GTXDataBuilder {
+        val builder = GTXDataBuilder(blockchainRid, arrayOf(KeyPairHelper.pubKey(0)), cryptoSystem)
+        builder.addOperation("gtx_test", arrayOf(gtv(1L), gtv(value)))
+        builder.finish()
+        builder.sign(cryptoSystem.buildSigMaker(KeyPairHelper.pubKey(0), KeyPairHelper.privKey(0)))
+        return builder
     }
 }

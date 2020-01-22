@@ -1,5 +1,6 @@
 package net.postchain.client
 
+import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.base.SigMaker
 import net.postchain.core.TransactionStatus
@@ -7,7 +8,7 @@ import net.postchain.gtv.Gtv
 import net.postchain.gtx.GTXDataBuilder
 import nl.komponents.kovenant.Promise
 
-class GTXTransactionBuilder(private val client: PostchainClient, blockchainRID: ByteArray, signers: Array<ByteArray>) {
+class GTXTransactionBuilder(private val client: PostchainClient, blockchainRID: BlockchainRid, signers: Array<ByteArray>) {
 
     private val dataBuilder = GTXDataBuilder(blockchainRID, signers, SECP256K1CryptoSystem())
 
@@ -47,7 +48,7 @@ interface PostchainClient {
 }
 
 interface PostchainNodeResolver {
-    fun getNodeURL(blockchainRID: ByteArray): String
+    fun getNodeURL(blockchainRID: BlockchainRid): String
 }
 
 class DefaultSigner(val sigMaker: SigMaker, val pubkey: ByteArray)

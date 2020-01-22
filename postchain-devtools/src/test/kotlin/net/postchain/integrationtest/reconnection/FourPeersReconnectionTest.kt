@@ -1,6 +1,7 @@
 package net.postchain.integrationtest.reconnection
 
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
+import net.postchain.ebft.worker.ValidatorWorker
 import net.postchain.integrationtest.assertChainNotStarted
 import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.assertNodeConnectedWith
@@ -9,13 +10,14 @@ import org.awaitility.Duration
 import org.junit.Assert
 import org.junit.Test
 
+// TODO: this tests breaks with a weird duplicate tx issue once in a while
 class FourPeersReconnectionTest : ReconnectionTest() {
 
     @Test
     fun test4Peers() {
         val nodesCount = 4
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-        val blockchainConfig = "/net/postchain/reconnection/blockchain_config_4.xml"
+        val blockchainConfig = "/net/postchain/devtools/reconnection/blockchain_config_4.xml"
         val nodeConfigsFilenames = arrayOf(
                 "classpath:/net/postchain/reconnection/node0.properties",
                 "classpath:/net/postchain/reconnection/node1.properties",
@@ -106,29 +108,31 @@ class FourPeersReconnectionTest : ReconnectionTest() {
                     nodes[3].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[1], nodes[2], nodes[0])
                 }
 
-        /* It's not correct to assert that height is -1 for peer 3
-        Assert.assertEquals(-1, queries(nodes[3]) { it.getBestHeight() })
-        */
-
-        // Building a block 2 via newly connected peer 3
-        nodes[3].let {
-            enqueueTransactions(it, tx100, tx101)
+        val statusManager = (nodes[0].getBlockchainInstance() as ValidatorWorker).statusManager
+        nodes[statusManager.primaryIndex()].let {
+            enqueueTransactions(it, tx100)
             awaitBuiltBlock(it, 2)
         }
+        nodes[3].let {
+            enqueueTransactions(it, tx101)
+            awaitBuiltBlock(it, 3)
+        }
+
         // * Asserting height is 2 for all peers
-        await().atMost(Duration.TEN_SECONDS.multiply(3))
+        await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
-                    Assert.assertEquals(2, queries(nodes[0]) { it.getBestHeight() })
-                    Assert.assertEquals(2, queries(nodes[1]) { it.getBestHeight() })
-                    Assert.assertEquals(2, queries(nodes[2]) { it.getBestHeight() })
-                    Assert.assertEquals(2, queries(nodes[3]) { it.getBestHeight() })
+                    Assert.assertEquals(3, queries(nodes[0]) { it.getBestHeight() })
+                    Assert.assertEquals(3, queries(nodes[1]) { it.getBestHeight() })
+                    Assert.assertEquals(3, queries(nodes[2]) { it.getBestHeight() })
+                    Assert.assertEquals(3, queries(nodes[3]) { it.getBestHeight() })
                 }
 
         // Asserts txs in blocks
         (0..3).forEach { i ->
             assertThatNodeInBlockHasTxs(nodes[i], 0, tx0, tx1)
             assertThatNodeInBlockHasTxs(nodes[i], 1, tx10, tx11)
-            assertThatNodeInBlockHasTxs(nodes[i], 2, tx100, tx101)
+            assertThatNodeInBlockHasTxs(nodes[i], 2, tx100)
+            assertThatNodeInBlockHasTxs(nodes[i], 3, tx101)
         }
     }
 }

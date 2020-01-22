@@ -4,17 +4,16 @@ import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import net.postchain.base.PeerInfo
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS
-import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_CREATED_AT
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_HOST
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_PORT
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_PUBKEY
-import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_UPDATED_AT
+import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_TIMESTAMP
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.config.SimpleDatabaseConnector
 import net.postchain.config.app.AppConfig
 import net.postchain.config.app.AppConfigDbLayer
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.ConfigFileBasedIntegrationTest
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.assertNodeConnectedWith
@@ -24,12 +23,14 @@ import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import java.sql.Connection
 import java.sql.Timestamp
 import java.time.Instant
 
-class ManualNodeConfigProviderTest : IntegrationTest() {
+@Ignore
+class ManualNodeConfigProviderTest : ConfigFileBasedIntegrationTest() {
 
     private val peerInfos = arrayOf(
             PeerInfo(
@@ -66,7 +67,7 @@ class ManualNodeConfigProviderTest : IntegrationTest() {
     @Test
     fun fourPeersConnectedSuccessfully() {
         val nodesCount = 4
-        val blockchainConfig = "/net/postchain/config/blockchain_config_4.xml"
+        val blockchainConfig = "/net/postchain/devtools/config/blockchain_config_4.xml"
         val nodeConfigs = arrayOf(
                 "classpath:/net/postchain/config/node0.properties",
                 "classpath:/net/postchain/config/node1.properties",
@@ -111,9 +112,9 @@ class ManualNodeConfigProviderTest : IntegrationTest() {
             QueryRunner().insert(
                     connection,
                     "INSERT INTO $TABLE_PEERINFOS " +
-                            "($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT, $TABLE_PEERINFOS_FIELD_PUBKEY, $TABLE_PEERINFOS_FIELD_CREATED_AT, $TABLE_PEERINFOS_FIELD_UPDATED_AT) " +
-                            "VALUES (?, ?, ?, ?, ?)",
-                    ScalarHandler<Long>(), peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex(), ts, ts)
+                            "($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT, $TABLE_PEERINFOS_FIELD_PUBKEY, $TABLE_PEERINFOS_FIELD_TIMESTAMP) " +
+                            "VALUES (?, ?, ?, ?)",
+                    ScalarHandler<Long>(), peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex(), ts)
         }
 
         SimpleDatabaseConnector(appConfig)

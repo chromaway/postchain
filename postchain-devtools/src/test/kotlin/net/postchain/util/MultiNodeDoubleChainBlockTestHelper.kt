@@ -1,7 +1,6 @@
 package net.postchain.util
 
 import mu.KLogging
-import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.configurations.GTXTestModule
 import net.postchain.devtools.IntegrationTest
@@ -9,31 +8,28 @@ import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.TxCache
 import net.postchain.devtools.testinfra.TestOneOpGtxTransaction
+import net.postchain.devtools.utils.configuration.NodeConfigurationProviderGenerator
 import net.postchain.devtools.utils.configuration.NodeNameWithBlockchains
+import net.postchain.devtools.utils.configuration.NodeSeqNumber
 import net.postchain.devtools.utils.configuration.SystemSetup
 import net.postchain.gtx.GTXTransactionFactory
 import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.assertNodeConnectedWith
+import net.postchain.util.NodesTestHelper.selectAnotherRandNode
 import org.awaitility.Awaitility
 import org.awaitility.Duration
 import org.junit.Assert
-import kotlin.random.Random
 import kotlin.test.assertNotNull
 
 /**
  * Extends [IntegrationTest] with extra functions relevant for tests running multiple chains.
  *
- * Note 1: We are using (real) [GTXTransaction] here, not some mock transaction designed for tests
- * Note 2: We currently only handle two chains // TODO
+ * Note: We are using (real) [GTXTransaction] here, not some mock transaction designed for tests
  */
 open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
 
     private val gtxTestModule =  GTXTestModule()
-    private val factory1 = GTXTransactionFactory(blockchainRids[1L]!!.hexStringToByteArray(), gtxTestModule, cryptoSystem)
-    private val factory2 = GTXTransactionFactory(blockchainRids[2L]!!.hexStringToByteArray(), gtxTestModule, cryptoSystem)
-    private val factoryMap = mapOf(
-            1L to factory1,
-            2L to factory2)
+    private val factoryMap: MutableMap<Long, GTXTransactionFactory> = mutableMapOf()
 
     companion object: KLogging()
 
@@ -42,87 +38,39 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
         return nodes[nodeId].blockBuildingStrategy(chainId) as OnDemandBlockBuildingStrategy
     }
 
+
     /**
-     * Starts the nodes and the same amount of chains for every node
+     * Starts the nodes according to the settings found in [SystemSetup]
      *
-     * @param nodesCount = number of nodes
-     * @param chainList chains all nodes are using
-     * @param nodeConfigsFilenames = filenames for node conf
-     * @param blockchainConfigsFilenames = filenames for bc conf
-     */
-    fun runXNodes(
-            nodesCount: Int,
-            chainList: List<Long>,
-            nodeConfigsFilenames: Array<String>,
-            blockchainConfigsFilenames: Array<String>
-    ) {
-        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-
-        // Creating node with two chains
-        logger.debug("---Creating node with many chains ----------------------------")
-        createMultipleChainNodes(nodesCount, nodeConfigsFilenames, blockchainConfigsFilenames)
-
-        // Asserting all chains are started
-        logger.debug("---Asserting all chains are started -------------------------")
-        Awaitility.await().atMost(Duration.TEN_SECONDS)
-                .untilAsserted {
-                    nodes.forEach { node ->
-                        chainList.forEach(node::assertChainStarted)
-                    }
-                }
-
-        if (nodes.size > 1) {
-            logger.debug("---Asserting all chains are connected -------------------------")
-            // We don't need to assert all connections, just check some random connections
-            Awaitility.await().atMost(Duration.TEN_SECONDS)
-                    .untilAsserted {
-                        nodes.forEachIndexed { i, node ->
-                            logger.debug("Node $i")
-                            var randNode = Random.nextInt(nodesCount)
-                            while (randNode == i) {
-                                randNode = Random.nextInt(nodesCount) // Cannot be connected to itself, so pic new value
-                            }
-                            val x = this.nodes[randNode]
-                            chainList.forEach { chain ->
-                                logger.debug("Wait for (node $i, chain $chain) to be connected to node $randNode")
-                                nodes[i].assertNodeConnectedWith(chain, x)
-                            }
-                        }
-                    }
-        }
-
-
-    }
-
-    /**
-     * Starts the nodes with the given number of chains different for each node
+     * 1. First we create the [PostchainTestNode] s from the [SystemSetup]
+     * 2. Then we make sure the chains have started
+     * 3. Then we make sure chains are connected
      *
      * @param systemSetup holds the detailed description of the system
      */
-    fun runXNodesWithDifferentNumberOfChainsPerNode(
+    fun runXNodes(
             systemSetup: SystemSetup
     ) {
         val peerList = systemSetup.toPeerInfoList()
-        val peers = peerList.toTypedArray()
-        configOverrides.setProperty("testpeerinfos", peers)
+        configOverrides.setProperty("testpeerinfos", peerList.toTypedArray())
 
         // Creating node with two chains
-        logger.debug("---Creating node with custom number of chains ----------------------------")
+        logger.debug("---1. Creating nodes ----------------------------")
 
         val testName: String = this::class.java.simpleName ?: "NoName"   // Get subclass name or dummy
         for (nodeSetup in systemSetup.nodeMap.values) {
-            val nodeConfigProvider = createNodeConfig( testName, nodeSetup, systemSetup)
-            val newPTNode = PostchainTestNode(nodeConfigProvider, true)
+            val nodeConfigProvider = NodeConfigurationProviderGenerator.buildFromSetup(testName, configOverrides, nodeSetup, systemSetup)
+            nodeSetup.configurationProvider = nodeConfigProvider
+            val newPTNode = nodeSetup.toTestNodeAndStartAllChains(systemSetup, true)
 
             // TODO: not nice to mutate the "nodes" object like this, should return the list of PTNodes instead for testability
             nodes.add(newPTNode)
             nodeMap[nodeSetup.sequenceNumber] = newPTNode
         }
 
-
         // Asserting all chains are started
         // (This is a bit more complicated since we have different chains per node)
-        logger.debug("---Asserting all chains are started -------------------------")
+        logger.debug("---2. Asserting all chains are started -------------------------")
         Awaitility.await().atMost(Duration.TEN_SECONDS)
                 .untilAsserted {
                     systemSetup.nodeMap.values.forEach { nodeSetup ->
@@ -132,8 +80,9 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
                     }
                 }
 
+
         if (nodes.size > 1) {
-            logger.debug("---Asserting all chains are connected -------------------------")
+            logger.debug("---3. Asserting all chains are connected -------------------------")
             // We don't need to assert all connections, just check some random connections
             Awaitility.await().atMost(Duration.TEN_SECONDS)
                     .untilAsserted {
@@ -163,10 +112,9 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
     }
 
 
-
-
     /**
      * Note that we are enqueueing real GTX TXs here.
+     * We are assuming that the relevant chains have been added and started on the nodes.
      *
      * @param blocksCount number of blocks to buildFromFile
      * @param txPerBlock number of TX in each block
@@ -176,10 +124,16 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
     fun runXNodesWithYTxPerBlock(
             blocksCount: Int,
             txPerBlock: Int,
-            chainList: List<Long>,
-            txCache: TxCache,
-            nodeNameWithBlockchainsArr: Array<NodeNameWithBlockchains>? = null
+            systemSetup: SystemSetup,
+            txCache: TxCache
     ) {
+
+        if(factoryMap.isEmpty()) {
+            // Must create the TX factories before any transactions can be created
+            systemSetup.blockchainMap.values.forEach { chainSetup ->
+                factoryMap[chainSetup.chainId.toLong()] = GTXTransactionFactory(chainSetup.rid, gtxTestModule, cryptoSystem)
+            }
+        }
 
         // Enqueueing txs
         logger.debug("---Enqueueing txs --------------------------------------------")
@@ -190,32 +144,17 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
                 logger.debug("+++++++++++++++++++++++++++++++++++++++++++")
                 logger.debug("++++ block: $block, txId: $txId +++++++")
                 logger.debug("+++++++++++++++++++++++++++++++++++++++++++")
-                nodes.forEachIndexed { i, node ->
-
-                    if (nodeNameWithBlockchainsArr != null) {
-                         nodeNameWithBlockchainsArr[i].getChainIds().forEach { chain ->
-                             enqueueTx(chain, currentTxId, txCache, block, blockIndex, node)
-                         }
-                    } else {
-                        chainList.forEach { chain ->
-                            enqueueTx(chain, currentTxId, txCache, block, blockIndex, node)
-                        }
+                systemSetup.nodeMap.values.forEach { node ->
+                    node.chainsToSign.forEach { chain -> // For each chain this node is a signer of
+                        enqueueTx(chain.toLong(), currentTxId, txCache, block, blockIndex, nodes[node.sequenceNumber.nodeNumber])
                     }
                 }
             }
 
-            nodes.indices.forEach { nodeId ->
-                if (nodeNameWithBlockchainsArr != null) {
-                    nodeNameWithBlockchainsArr[nodeId].getWritableChainIds().forEach { chain ->
-                        buildBlocks(nodeId, chain, block) // The block we can buildFromFile ourselves
-                    }
-                    nodeNameWithBlockchainsArr[nodeId].getReadOnlyChainIds().forEach { chain ->
-                          // The blocks we must fetch form the node
-                    }
-                } else {
-                    chainList.forEach { chain ->
-                        buildBlocks(nodeId, chain, block)
-                    }
+            systemSetup.nodeMap.values.forEach { node ->
+                val nodeId = node.sequenceNumber.nodeNumber
+                node.chainsToSign.forEach { chain ->
+                    buildBlocks(nodeId, chain.toLong(), block) // The block we can buildFromFile ourselves
                 }
             }
         }
@@ -243,33 +182,24 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
     fun runXNodesAssertions(
             blocksCount: Int,
             txPerBlock: Int,
-            chainList: List<Long>,
-            txCache: TxCache,
-            nodeNameWithBlockchainsArr: Array<NodeNameWithBlockchains>? = null
+            systemSetup: SystemSetup,
+            txCache: TxCache
     ) {
         logger.debug("---Assertions -------------------------------------------------")
-        // Assertions
 
         val expectedHeight = (blocksCount - 1).toLong()
         //logger.debug("Nr of nodes: ${nodes.size}, total nr of blocks: $blocksCount => expected height: $expectedHeight")
 
-        nodes.forEachIndexed { nodeId, node ->
-            if (nodeNameWithBlockchainsArr != null) {
-                val chains = nodeNameWithBlockchainsArr[nodeId].getChainIds()
-                chains.forEach {chain ->
-                    assertChainForNode(nodeId, chain, expectedHeight, node, txPerBlock, txCache)
+        systemSetup.nodeMap.values.forEach { node ->
+                    node.chainsToSign.forEach { chain ->
+                        assertChainForNode(node.sequenceNumber, chain.toLong(), expectedHeight, txPerBlock, txCache)
                 }
-
-            } else {
-                chainList.forEach { chain ->
-                    assertChainForNode(nodeId, chain, expectedHeight, node, txPerBlock, txCache)
-                }
-            }
         }
     }
 
-    private fun assertChainForNode(nodeId: Int, chain: Long, expectedHeight: Long, node: PostchainTestNode, txPerBlock: Int, txCache: TxCache) {
+    private fun assertChainForNode(nodeId: NodeSeqNumber, chain: Long, expectedHeight: Long, txPerBlock: Int, txCache: TxCache) {
         logger.info { "Assertions: node: $nodeId, chain: $chain, expectedHeight: $expectedHeight" }
+        val node = nodes[nodeId.nodeNumber]
 
         val queries = node.blockQueries(chain)
 
@@ -281,7 +211,7 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
             logger.info { "Verifying height $height" }
 
             // Asserting uniqueness of block at height
-            val blockRids = queries.getBlockRids(height).get()
+            val blockRids = queries.getBlockRid(height).get()
             assertNotNull(blockRids)
 
             // Asserting txs count

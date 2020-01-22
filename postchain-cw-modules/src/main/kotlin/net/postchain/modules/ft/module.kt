@@ -2,6 +2,7 @@
 
 package net.postchain.modules.ft
 
+import net.postchain.base.BlockchainRid
 import net.postchain.core.EContext
 import net.postchain.gtx.*
 import net.postchain.gtv.Gtv
@@ -49,7 +50,7 @@ class BaseFTModuleFactory : GTXModuleFactory {
      * @param config base configuration for the FT module
      * @return an instance of the module
      */
-    override fun makeModule(config: Gtv, blockchainRID: ByteArray): GTXModule{
+    override fun makeModule(config: Gtv, blockchainRID: BlockchainRid): GTXModule{
         return FTModule(makeBaseFTConfig(config, blockchainRID))
     }
 }
