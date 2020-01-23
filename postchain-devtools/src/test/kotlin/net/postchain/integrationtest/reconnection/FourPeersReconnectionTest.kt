@@ -1,17 +1,17 @@
 package net.postchain.integrationtest.reconnection
 
-import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
-import net.postchain.ebft.worker.ValidatorWorker
-import net.postchain.integrationtest.assertChainNotStarted
 import net.postchain.integrationtest.assertChainStarted
-import net.postchain.integrationtest.assertNodeConnectedWith
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
-import org.junit.Assert
+import org.junit.Before
 import org.junit.Test
 
-// TODO: this tests breaks with a weird duplicate tx issue once in a while
-class FourPeersReconnectionTest : ReconnectionTest() {
+class FourPeersReconnectionTest : FourPeersReconnectionImpl() {
+
+    @Before
+    fun setUp() {
+        reset()
+    }
 
     @Test
     fun test4Peers() {
@@ -37,102 +37,41 @@ class FourPeersReconnectionTest : ReconnectionTest() {
                 }
 
         // Asserting height is -1 for all peers
-        Assert.assertEquals(-1, queries(nodes[0]) { it.getBestHeight() })
-        Assert.assertEquals(-1, queries(nodes[1]) { it.getBestHeight() })
-        Assert.assertEquals(-1, queries(nodes[2]) { it.getBestHeight() })
-        Assert.assertEquals(-1, queries(nodes[3]) { it.getBestHeight() })
+        assertHeightForAllNodes(-1)
 
-        // Building a block 0 via peer 0
-        nodes[0].let {
-            enqueueTransactions(it, tx0, tx1)
-            awaitBuiltBlock(it, 0)
-        }
-        // * Asserting height is 0 for all peers
-        await().atMost(Duration.TEN_SECONDS.multiply(3))
-                .untilAsserted {
-                    Assert.assertEquals(0, queries(nodes[0]) { it.getBestHeight() })
-                    Assert.assertEquals(0, queries(nodes[1]) { it.getBestHeight() })
-                    Assert.assertEquals(0, queries(nodes[2]) { it.getBestHeight() })
-                    Assert.assertEquals(0, queries(nodes[3]) { it.getBestHeight() })
-                }
-
-        // Again: Building a block 1 via peer 1
-        nodes[1].let {
-            enqueueTransactions(it, tx10, tx11)
-            awaitBuiltBlock(it, 1)
-        }
-        // * Asserting height is 1 for all peers
-        await().atMost(Duration.TEN_SECONDS.multiply(3))
-                .untilAsserted {
-                    Assert.assertEquals(1, queries(nodes[0]) { it.getBestHeight() })
-                    Assert.assertEquals(1, queries(nodes[1]) { it.getBestHeight() })
-                    Assert.assertEquals(1, queries(nodes[2]) { it.getBestHeight() })
-                    Assert.assertEquals(1, queries(nodes[3]) { it.getBestHeight() })
-                }
+        // Building 6 blocks
+        buildNotEmptyBlocks(6, randNode())
+        // Asserting height is 5 for all peers
+        assertHeightForAllNodes(5)
 
         // Shutting down node 3
         nodes[3].shutdown()
 
-        // Asserting that
-        await().atMost(Duration.ONE_MINUTE)
-                .untilAsserted {
-                    // chain is active for peer 0, 1, 2 and is shutdown for peer 3
-                    nodes[0].assertChainStarted()
-                    nodes[1].assertChainStarted()
-                    nodes[2].assertChainStarted()
-                    nodes[3].assertChainNotStarted()
-
-                    // network topology is that peer 3 is disconnected from interconnected peers 0, 1, 2
-                    nodes[0].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[1], nodes[2])
-                    nodes[1].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[0], nodes[2])
-                    nodes[2].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[1], nodes[0])
-//                    nodes[3].assertNodeConnectedWith(...) // No assertion because chain already disconnected
-                }
+        // Asserting that node3 is stopped
+        assertChainStarted(true, true, true, false)
+        assertTopology(0, 1, 2)
 
         // Removing peer 3
         nodes.removeAt(3)
 
-        println("Re-boring peer 3")
+        // Building additional 6 blocks
+        buildNotEmptyBlocks(6, randNode3())
+
+        println("Stating peer 3 ...")
         createSingleNode(3, nodesCount, nodeConfigsFilenames[1], blockchainConfig)
 
-        // Asserting that
-        await().atMost(Duration.ONE_MINUTE)
-                .untilAsserted {
-                    // chain is active for peer 3
-                    nodes[3].assertChainStarted()
+        // Asserting that node3 is a part of network
+        assertChainStarted(true, true, true, true)
+        assertTopology(0, 1, 2, 3)
 
-                    // network topology is that peers 0, 1, 2, 3 are interconnected
-                    nodes[0].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[1], nodes[2], nodes[3])
-                    nodes[1].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[0], nodes[2], nodes[3])
-                    nodes[2].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[1], nodes[0], nodes[3])
-                    nodes[3].assertNodeConnectedWith(DEFAULT_CHAIN_IID, nodes[1], nodes[2], nodes[0])
-                }
+        // Building additional 6 blocks
+        buildNotEmptyBlocks(6, randNode())
+        // Asserting height is "6 + 6 + 6 - 1" for all peers
+        assertHeightForAllNodes(6 + 6 + 6 - 1)
 
-        val statusManager = (nodes[0].getBlockchainInstance() as ValidatorWorker).statusManager
-        nodes[statusManager.primaryIndex()].let {
-            enqueueTransactions(it, tx100)
-            awaitBuiltBlock(it, 2)
-        }
-        nodes[3].let {
-            enqueueTransactions(it, tx101)
-            awaitBuiltBlock(it, 3)
-        }
-
-        // * Asserting height is 2 for all peers
-        await().atMost(Duration.TEN_SECONDS)
-                .untilAsserted {
-                    Assert.assertEquals(3, queries(nodes[0]) { it.getBestHeight() })
-                    Assert.assertEquals(3, queries(nodes[1]) { it.getBestHeight() })
-                    Assert.assertEquals(3, queries(nodes[2]) { it.getBestHeight() })
-                    Assert.assertEquals(3, queries(nodes[3]) { it.getBestHeight() })
-                }
-
-        // Asserts txs in blocks
-        (0..3).forEach { i ->
-            assertThatNodeInBlockHasTxs(nodes[i], 0, tx0, tx1)
-            assertThatNodeInBlockHasTxs(nodes[i], 1, tx10, tx11)
-            assertThatNodeInBlockHasTxs(nodes[i], 2, tx100)
-            assertThatNodeInBlockHasTxs(nodes[i], 3, tx101)
-        }
+        // And building additional 6 blocks via peer 3
+        buildNotEmptyBlocks(6, randNode())
+        // Asserting height is "6 + 6 + 6 + 6 - 1" for all peers
+        assertHeightForAllNodes(6 + 6 + 6 + 6 - 1)
     }
 }

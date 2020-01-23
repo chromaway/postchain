@@ -7,7 +7,6 @@ import net.postchain.integrationtest.assertNodeConnectedWith
 import net.postchain.isEmpty
 import org.awaitility.Awaitility
 import org.awaitility.Duration
-import org.junit.Ignore
 import org.junit.Test
 
 // TODO: this test seems flaky, investigate
@@ -37,7 +36,7 @@ class TwoPeersReconnectionTest : ReconnectionTest() {
         //println("---- Both started ------")
 
         Awaitility.await().atMost(Duration.FIVE_SECONDS)
-                .untilAsserted{
+                .untilAsserted {
                     nodes[0].assertNodeConnectedWith(1, nodes[1])
                     nodes[1].assertNodeConnectedWith(1, nodes[0])
                 }

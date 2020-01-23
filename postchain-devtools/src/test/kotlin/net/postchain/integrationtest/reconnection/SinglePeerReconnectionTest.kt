@@ -1,8 +1,5 @@
 package net.postchain.integrationtest.reconnection
 
-import assertk.assertions.isNotNull
-import assertk.assertions.isNull
-import net.postchain.devtools.PostchainTestNode
 import net.postchain.integrationtest.assertChainNotStarted
 import net.postchain.integrationtest.assertChainStarted
 import org.awaitility.Awaitility

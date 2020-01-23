@@ -161,19 +161,20 @@ class FastSynchronizer(
     }
 
     private fun askForBlock(height: Long) {
-        nodesWithBlocks
+        val aheadNodes = nodesWithBlocks
                 .filter { it.value >= height }
                 .map { it.key }
                 .toMutableList()
-                .also {
-                    it.shuffle()
-                    fastSyncAlgorithmTelemetry.askForBlock(height, blockHeight)
-                    val timer = parallelRequestsState[height]
-                            ?: IssuedRequestTimer(defaultBackoffDelta, Date().time)
-                    val backoffDelta = min((timer.backoffDelta.toDouble() * 1.1).toInt(), maxBackoffDelta)
-                    communicationManager.sendPacket(GetBlockAtHeight(height), it.first())
-                    parallelRequestsState[height] = timer.copy(backoffDelta = backoffDelta, lastSentTimestamp = Date().time)
-                }
+
+        if (aheadNodes.isNotEmpty()) {
+            aheadNodes.shuffle()
+            fastSyncAlgorithmTelemetry.askForBlock(height, blockHeight)
+            val timer = parallelRequestsState[height]
+                    ?: IssuedRequestTimer(defaultBackoffDelta, Date().time)
+            val backoffDelta = min((timer.backoffDelta.toDouble() * 1.1).toInt(), maxBackoffDelta)
+            communicationManager.sendPacket(GetBlockAtHeight(height), aheadNodes.first())
+            parallelRequestsState[height] = timer.copy(backoffDelta = backoffDelta, lastSentTimestamp = Date().time)
+        }
     }
 
     private fun doesQueueContainsBlock(height: Long) = blocks.firstOrNull { it.height == height } != null
