@@ -71,8 +71,8 @@ class TestLauncher : IntegrationTest() {
         StorageBuilder.buildStorage(appConfig, NODE_ID_TODO, true).close()
 
         return PostchainTestNode(nodeConfigProvider).apply {
-            val blockchainRid = addBlockchain(chainId, blockchainConfig)
-            mapBlockchainRID(chainId, blockchainRid)
+            val blockchainRID = addBlockchain(chainId, blockchainConfig)
+            mapBlockchainRID(chainId, blockchainRID)
             startBlockchain()
             nodes.add(this)
         }

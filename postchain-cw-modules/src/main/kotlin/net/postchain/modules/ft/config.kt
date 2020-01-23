@@ -127,12 +127,12 @@ fun makeFTAccountFactory(config: Gtv, blockchainRID: BlockchainRid): AccountFact
  * @return the FT module configuration
  */
 fun makeBaseFTConfig(config: Gtv, blockchainRID: BlockchainRid): FTConfig {
-    val blockchainRID = blockchainRID
+    val blockchainRid = blockchainRID
     val ftConfig = config["gtx"]!!["ft"] ?: throw Exception("No ft module") // MARK
 
     val cs = SECP256K1CryptoSystem()
     val ac = AccountUtil(blockchainRID, cs)
-    val accFactory = makeFTAccountFactory(config, blockchainRID)
+    val accFactory = makeFTAccountFactory(config, blockchainRid)
     return FTConfig(
             makeFTIssueRules(ac, ftConfig),
             makeFTTransferRules(ftConfig),
@@ -141,6 +141,6 @@ fun makeBaseFTConfig(config: Gtv, blockchainRID: BlockchainRid): FTConfig {
             BaseAccountResolver(accFactory),
             BaseDBOps(),
             cs,
-            blockchainRID
+            blockchainRid
     )
 }

@@ -67,8 +67,8 @@ class GTXDataTest {
             b2.addSignature(Signature(signerPub[2], signerPub[2]), true)
         }
         mustThrowError("Allows signature from wrong participant") {
-            val sigMaker = crypto.buildSigMaker(signerPub[3], signerPriv[3])
-            val wrongSignature = sigMaker.signDigest(txBodyMerkleRoot)
+            val signatureMaker = crypto.buildSigMaker(signerPub[3], signerPriv[3])
+            val wrongSignature = signatureMaker.signDigest(txBodyMerkleRoot)
             b2.addSignature(wrongSignature, true)
         }
 
