@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.ebft.syncmanager.common
 
 import net.postchain.core.BlockDataWithWitness
@@ -11,7 +13,6 @@ import net.postchain.ebft.message.*
 import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockDataWithWitness
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
-import java.lang.Integer.max
 import java.lang.Integer.min
 import java.util.*
 

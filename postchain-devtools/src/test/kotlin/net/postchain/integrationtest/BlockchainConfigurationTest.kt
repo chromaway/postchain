@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.integrationtest
 
 import net.postchain.base.BlockchainRid
@@ -9,7 +11,6 @@ import net.postchain.gtx.GTXDataBuilder
 import net.postchain.gtx.GTXTransaction
 import net.postchain.gtx.GTXTransactionFactory
 import org.apache.commons.lang3.RandomStringUtils
-import org.junit.Ignore
 import org.junit.Test
 import kotlin.test.assertEquals
 

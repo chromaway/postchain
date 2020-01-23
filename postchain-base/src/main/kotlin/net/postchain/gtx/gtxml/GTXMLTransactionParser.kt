@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.gtx.gtxml
 
@@ -11,7 +11,6 @@ import net.postchain.base.gtxml.SignersType
 import net.postchain.base.gtxml.TransactionType
 import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.common.hexStringToByteArray
-import net.postchain.common.toHex
 import net.postchain.core.ByteArrayKey
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.gtv.Gtv

@@ -1,10 +1,12 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.integrationtest.multiple_chains
 
 import mu.KLogging
-import net.postchain.devtools.utils.configuration.NodeChain
-import net.postchain.util.MultiNodeDoubleChainBlockTestHelper
-import net.postchain.devtools.utils.configuration.NodeNameWithBlockchains
 import net.postchain.devtools.TxCache
+import net.postchain.devtools.utils.configuration.NodeChain
+import net.postchain.devtools.utils.configuration.NodeNameWithBlockchains
+import net.postchain.util.MultiNodeDoubleChainBlockTestHelper
 import org.junit.Ignore
 import org.junit.Test
 

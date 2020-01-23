@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.api.rest
 
@@ -8,12 +8,11 @@ import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.RestTools
 import net.postchain.common.toHex
 import net.postchain.configurations.GTXTestModule
-import net.postchain.gtx.EMPTY_SIGNATURE
-import net.postchain.gtx.GTXDataBuilder
-import net.postchain.gtx.GTXTransactionFactory
-import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtx.GTXDataBuilder
+import net.postchain.gtx.GTXTransactionFactory
 import org.hamcrest.core.IsEqual.equalTo
 import java.util.*
 

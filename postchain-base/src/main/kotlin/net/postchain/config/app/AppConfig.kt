@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.config.app
 
 import org.apache.commons.configuration2.Configuration

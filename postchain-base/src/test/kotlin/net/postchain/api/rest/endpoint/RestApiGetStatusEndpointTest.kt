@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.api.rest.endpoint
 
 import com.nhaarman.mockitokotlin2.doReturn
@@ -17,7 +19,6 @@ import org.easymock.EasyMock.*
 import org.hamcrest.Matchers.equalToIgnoringCase
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 
 /**

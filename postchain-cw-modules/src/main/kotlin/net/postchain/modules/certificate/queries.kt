@@ -1,6 +1,7 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.modules.certificate
 
-import net.postchain.common.hexStringToByteArray
 import net.postchain.core.EContext
 import net.postchain.core.UserMistake
 import net.postchain.gtv.Gtv

@@ -1,15 +1,14 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.gtx
 
 import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
-import net.postchain.common.hexStringToByteArray
 import net.postchain.core.Signature
-import net.postchain.gtv.*
-import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtv.GtvNull
 import org.junit.Assert.*
 import org.junit.Test
 

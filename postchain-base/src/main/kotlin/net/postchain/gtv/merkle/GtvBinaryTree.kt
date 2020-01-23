@@ -1,10 +1,16 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv.merkle
 
-import net.postchain.base.merkle.*
+import net.postchain.base.merkle.BinaryTree
+import net.postchain.base.merkle.BinaryTreeElement
+import net.postchain.base.merkle.SubTreeRootNode
 import net.postchain.base.path.PathElement
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvArray
+import net.postchain.gtv.GtvDictionary
 import net.postchain.gtv.merkle.GtvMerkleBasics.HASH_PREFIX_NODE_GTV_ARRAY
 import net.postchain.gtv.merkle.GtvMerkleBasics.HASH_PREFIX_NODE_GTV_DICT
-import net.postchain.gtv.*
 
 /**
  * In this file we handle the most common case, where the binary tree holds only [Gtv] s.

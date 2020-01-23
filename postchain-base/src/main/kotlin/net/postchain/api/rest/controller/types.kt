@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.api.rest.controller
 
 import net.postchain.api.rest.model.ApiStatus
@@ -5,7 +7,6 @@ import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
 import net.postchain.base.ConfirmationProof
 import net.postchain.core.BlockDetail
-import net.postchain.core.TxDetail
 import net.postchain.gtv.Gtv
 
 interface Model {

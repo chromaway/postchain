@@ -1,21 +1,21 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtx.gtxml
 
 import assertk.assert
 import assertk.assertions.isEqualTo
 import net.postchain.base.BlockchainRid
-import net.postchain.common.hexStringToByteArray
 import net.postchain.core.byteArrayKeyOf
-import net.postchain.gtv.GtvInteger
-import net.postchain.gtx.OpData
-import net.postchain.gtv.GtvString
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.MockCryptoSystem
+import net.postchain.gtv.GtvInteger
+import net.postchain.gtv.GtvString
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtx.GTXTransactionBodyData
 import net.postchain.gtx.GTXTransactionData
+import net.postchain.gtx.OpData
 import org.junit.Test
-import org.mockito.Mock
 
 class GTXMLTransactionParserAutoSignTest {
 

@@ -1,10 +1,12 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv
 
 import net.postchain.base.BlockchainRid
 import net.postchain.gtv.messages.DictPair
+import net.postchain.gtv.messages.RawGtv
 import org.openmuc.jasn1.ber.types.string.BerUTF8String
 import java.math.BigInteger
-import net.postchain.gtv.messages.RawGtv
 
 fun Boolean.toLong() = if (this) 1L else 0L
 

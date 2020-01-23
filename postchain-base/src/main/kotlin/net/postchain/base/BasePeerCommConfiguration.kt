@@ -1,10 +1,8 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.base
 
-import net.postchain.common.toHex
 import net.postchain.core.ByteArrayKey
-import net.postchain.core.UserMistake
 import net.postchain.network.x.XPeerID
 
 class BasePeerCommConfiguration(override val networkNodes: NetworkNodes,
