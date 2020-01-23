@@ -1,8 +1,9 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtx
 
 import net.postchain.base.BlockchainRid
 import net.postchain.base.CryptoSystem
-import net.postchain.common.toHex
 import net.postchain.core.Transaction
 import net.postchain.core.TransactionFactory
 import net.postchain.core.UserMistake
@@ -12,7 +13,6 @@ import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtv.merkleHash
 import net.postchain.gtx.factory.GtxTransactionDataFactory
 import net.postchain.gtx.serializer.GtxTransactionDataSerializer
-import java.lang.Exception
 
 /**
  * Idea is that we can build a [GTXTransaction] from different layers.

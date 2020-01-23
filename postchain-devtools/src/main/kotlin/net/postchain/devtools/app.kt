@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.devtools
 
 import com.github.ajalt.clikt.core.subcommands

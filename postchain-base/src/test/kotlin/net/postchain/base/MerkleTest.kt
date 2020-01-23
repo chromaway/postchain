@@ -1,11 +1,12 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.base
 
-import org.junit.Assert.*
 import net.postchain.gtv.GtvFactory
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtv.merkleHash
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 
 val cryptoSystem = SECP256K1CryptoSystem()
 val calculator = GtvMerkleHashCalculator(cryptoSystem)

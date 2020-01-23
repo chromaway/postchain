@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.api.rest.controller
 
@@ -18,7 +18,6 @@ import net.postchain.api.rest.json.JsonFactory
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.GTXQuery
 import net.postchain.api.rest.model.TxRID
-import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.common.TimeLog
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex

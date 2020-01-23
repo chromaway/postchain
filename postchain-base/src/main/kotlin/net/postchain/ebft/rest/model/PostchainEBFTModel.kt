@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.ebft.rest.model
 
 import net.postchain.api.rest.controller.*

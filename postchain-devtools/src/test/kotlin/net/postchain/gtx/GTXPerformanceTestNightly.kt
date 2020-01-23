@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.gtx
 
@@ -12,11 +12,11 @@ import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
+import net.postchain.devtools.PostchainTestNode
+import net.postchain.ebft.worker.ValidatorWorker
 import net.postchain.gtv.GtvFactory
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtx.factory.GtxTransactionDataFactory
-import net.postchain.devtools.PostchainTestNode
-import net.postchain.ebft.worker.ValidatorWorker
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith

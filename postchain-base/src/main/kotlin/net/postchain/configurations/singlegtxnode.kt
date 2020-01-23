@@ -1,18 +1,19 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.configurations
 
-import net.postchain.common.hexStringToByteArray
 import net.postchain.core.EContext
 import net.postchain.core.TxEContext
 import net.postchain.core.UserMistake
-import net.postchain.gtx.*
-import net.postchain.gtv.*
+import net.postchain.gtv.GtvDictionary
 import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtv.GtvNull
+import net.postchain.gtx.ExtOpData
+import net.postchain.gtx.GTXOperation
+import net.postchain.gtx.GTXSchemaManager
+import net.postchain.gtx.SimpleGTXModule
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.ScalarHandler
-import java.io.FileInputStream
-import java.util.*
 
 private val r = QueryRunner()
 private val nullableStringReader = ScalarHandler<String?>()

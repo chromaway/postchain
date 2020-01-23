@@ -1,8 +1,9 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.config.app
 
 import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerInfo
-import net.postchain.base.data.DatabaseAccess
 import net.postchain.base.data.SQLCommandsFactory
 import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS
@@ -12,7 +13,6 @@ import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_TIMESTAMP
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
-import net.postchain.core.EContext
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.MapListHandler
 import org.apache.commons.dbutils.handlers.ScalarHandler

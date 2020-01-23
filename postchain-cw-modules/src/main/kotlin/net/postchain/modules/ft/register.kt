@@ -1,12 +1,12 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.modules.ft
 
 import net.postchain.core.TxEContext
-import net.postchain.gtx.ExtOpData
-import net.postchain.gtx.GTXOperation
 import net.postchain.gtv.GtvArray
 import net.postchain.gtv.GtvDecoder.decodeGtv
+import net.postchain.gtx.ExtOpData
+import net.postchain.gtx.GTXOperation
 
 /**
  * Collection of information relevant to the register operation

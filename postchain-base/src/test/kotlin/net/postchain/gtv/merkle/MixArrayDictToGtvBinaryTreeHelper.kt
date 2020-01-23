@@ -1,6 +1,10 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv.merkle
 
-import net.postchain.gtv.*
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvArray
+import net.postchain.gtv.GtvDictionary
 
 /**
  * Used for the case when we are mixing dicts and arrays in the same test

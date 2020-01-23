@@ -1,6 +1,7 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv.merkle
 
-import net.postchain.gtv.GtvInteger
 import net.postchain.gtv.merkle.proof.GtvMerkleHashSummaryFactory
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
 import net.postchain.gtv.merkle.virtual.GtvVirtualFactory

@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.managed
 
 import mu.KLogging
@@ -11,7 +13,6 @@ import net.postchain.core.*
 import net.postchain.debug.NodeDiagnosticContext
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.ScalarHandler
-import java.lang.Exception
 import kotlin.concurrent.withLock
 
 /**

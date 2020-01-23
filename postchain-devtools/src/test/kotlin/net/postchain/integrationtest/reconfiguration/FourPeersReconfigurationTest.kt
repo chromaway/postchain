@@ -1,13 +1,12 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.integrationtest.reconfiguration
 
-import assertk.assertions.isEqualTo
+//import com.fasterxml.jackson.databind.ObjectMapper
+//import com.fasterxml.jackson.databind.node.ArrayNode
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isTrue
-import com.google.gson.Gson
-import com.google.gson.JsonElement
-//import com.fasterxml.jackson.databind.ObjectMapper
-//import com.fasterxml.jackson.databind.node.ArrayNode
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.integrationtest.*
 import net.postchain.integrationtest.reconfiguration.TxChartHelper.buildTxChart

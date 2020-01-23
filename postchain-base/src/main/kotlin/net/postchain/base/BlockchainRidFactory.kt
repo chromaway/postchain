@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.base
 
 import net.postchain.base.data.DatabaseAccess
@@ -7,7 +9,6 @@ import net.postchain.core.EContext
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtv.merkleHash
-import java.lang.IllegalArgumentException
 
 object BlockchainRidFactory {
 

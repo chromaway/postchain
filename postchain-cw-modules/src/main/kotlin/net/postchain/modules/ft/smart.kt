@@ -1,10 +1,9 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.modules.ft
 
 import net.postchain.base.BlockchainRid
 import net.postchain.core.TxEContext
-import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvArray
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.MapListHandler

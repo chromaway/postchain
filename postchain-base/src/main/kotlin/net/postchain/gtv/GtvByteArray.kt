@@ -1,8 +1,10 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv
 
-import java.util.*
-import org.openmuc.jasn1.ber.types.BerOctetString
 import net.postchain.gtv.messages.RawGtv
+import org.openmuc.jasn1.ber.types.BerOctetString
+import java.util.*
 
 
 data class GtvByteArray(val bytearray: ByteArray) : GtvPrimitive() {
