@@ -6,7 +6,6 @@ import net.postchain.api.rest.json.JsonFactory
 import net.postchain.base.BlockchainRid
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
-import net.postchain.core.TransactionStatus
 import net.postchain.core.TransactionStatus.*
 import net.postchain.core.UserMistake
 import net.postchain.gtv.Gtv
@@ -34,8 +33,8 @@ class ConcretePostchainClient(
     private val serverUrl = resolver.getNodeURL(blockchainRID)
     private val httpClient = HttpClients.createDefault()
     private val blockchainRIDHex = blockchainRID.toHex()
-    val retrieveTxStatusAttempts = 20
-    val retrieveTxStatusIntervalMs = 500L
+    private val retrieveTxStatusAttempts = 20
+    private val retrieveTxStatusIntervalMs = 500L
 
     override fun makeTransaction(): GTXTransactionBuilder {
         return GTXTransactionBuilder(this, blockchainRID, arrayOf(defaultSigner!!.pubkey))
@@ -117,16 +116,19 @@ class ConcretePostchainClient(
 
                 // keep polling till getting Confirmed or Rejected
                 (0 until retrieveTxStatusAttempts).forEach { _ ->
-                    httpClient.execute(httpGet).entity?.let { e ->
-                        val response = parseResponse(e.content)
-                        val jsonObject = gson.fromJson(response, JsonObject::class.java)
-                        val status = TransactionStatus.valueOf(
-                                jsonObject.get("status").asString.toUpperCase())
+                    try {
+                        httpClient.execute(httpGet).entity?.let {
+                            val response = parseResponse(it.content)
+                            val jsonObject = gson.fromJson(response, JsonObject::class.java)
+                            val status = valueOf(jsonObject.get("status").asString.toUpperCase())
 
-                        if (status == CONFIRMED || status == REJECTED) {
-                            return TransactionResultImpl(status)
+                            if (status == CONFIRMED || status == REJECTED) {
+                                return TransactionResultImpl(status)
+                            }
+
+                            Thread.sleep(retrieveTxStatusIntervalMs)
                         }
-
+                    } catch (e: Exception) {
                         Thread.sleep(retrieveTxStatusIntervalMs)
                     }
                 }

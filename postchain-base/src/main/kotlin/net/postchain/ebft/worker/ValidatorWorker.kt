@@ -9,7 +9,7 @@ import net.postchain.ebft.BaseBlockManager
 import net.postchain.ebft.BaseStatusManager
 import net.postchain.ebft.BlockManager
 import net.postchain.ebft.message.Message
-import net.postchain.ebft.syncmanager.ValidatorSyncManager
+import net.postchain.ebft.syncmanager.validator.ValidatorSyncManager
 import net.postchain.network.CommunicationManager
 
 /**
@@ -57,6 +57,7 @@ class ValidatorWorker(
                 statusManager,
                 blockManager,
                 blockDatabase,
+                blockchainEngine.getBlockQueries(),
                 communicationManager,
                 nodeStateTracker,
                 blockchainEngine.getTransactionQueue(),

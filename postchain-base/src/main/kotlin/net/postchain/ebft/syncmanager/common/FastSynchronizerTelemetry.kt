@@ -1,14 +1,12 @@
-package net.postchain.ebft.syncmanager.replica
+package net.postchain.ebft.syncmanager.common
 
 import mu.KLogging
 import net.postchain.debug.BlockchainProcessName
-import net.postchain.ebft.NodeStatus
 import net.postchain.ebft.syncmanager.StatusLogInterval
 import java.util.*
-import kotlin.collections.HashMap
 
 
-class ReplicaTelemetry(private val processName: BlockchainProcessName) {
+class FastSynchronizerTelemetry(private val processName: BlockchainProcessName) {
 
     companion object : KLogging()
 
@@ -37,14 +35,6 @@ class ReplicaTelemetry(private val processName: BlockchainProcessName) {
     }
 
     private var lastLoggedTimestamp = 0L
-
-    private var nodeStatuses = HashMap<Int, NodeStatus>()
-
-    fun reportNodeStatus(index: Int, nodeStatus: NodeStatus) {
-        nodeStatuses[index] = nodeStatus
-    }
-
-    fun nodeStatuses(): Array<NodeStatus> = nodeStatuses.values.toTypedArray()
 
     fun logCurrentState(blockHeight: Long, parallelRequestsState: HashMap<Long, IssuedRequestTimer>, blocks: PriorityQueue<IncomingBlock>) {
         val now = Date().time
