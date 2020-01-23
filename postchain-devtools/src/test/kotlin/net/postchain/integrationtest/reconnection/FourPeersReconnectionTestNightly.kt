@@ -6,7 +6,7 @@ import org.awaitility.Duration
 import org.junit.Before
 import org.junit.Test
 
-class FourPeersReconnectionTest : FourPeersReconnectionImpl() {
+class FourPeersReconnectionTestNightly : FourPeersReconnectionImpl() {
 
     @Before
     fun setUp() {
