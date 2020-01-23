@@ -14,7 +14,6 @@ import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-@Ignore
 class SQLModuleIntegrationTest : IntegrationTest() {
 
     private fun makeTx(ownerIdx: Int, key: String, value: String, bcRid: BlockchainRid): ByteArray {
@@ -102,7 +101,7 @@ class SQLModuleIntegrationTest : IntegrationTest() {
         assertEquals(1, gtxResult.getSize())
     }
 
-    @Test @Ignore
+    @Test
     //TODO: fix the test
     fun testQuerySupportNullableValue() {
         configOverrides.setProperty("infrastructure", "base/test")
