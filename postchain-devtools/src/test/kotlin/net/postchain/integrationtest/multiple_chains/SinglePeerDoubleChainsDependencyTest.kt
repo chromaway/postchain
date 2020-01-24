@@ -1,21 +1,15 @@
 package net.postchain.integrationtest.multiple_chains
 
-import assertk.assertions.isFalse
 import mu.KLogging
-import net.postchain.StorageBuilder
-import net.postchain.common.hexStringToByteArray
-import net.postchain.config.node.NodeConfigurationProviderFactory
-import net.postchain.core.NODE_ID_TODO
 import net.postchain.devtools.PostchainTestNode
-import net.postchain.devtools.TxCache
 import net.postchain.devtools.utils.configuration.BlockchainSetupFactory
 import net.postchain.devtools.utils.configuration.NodeConfigurationProviderGenerator
 import net.postchain.devtools.utils.configuration.NodeSeqNumber
 import net.postchain.devtools.utils.configuration.SystemSetup
-import net.postchain.util.MultiNodeDoubleChainBlockTestHelper
+import net.postchain.util.RealGtxTxIntegrationTest
 import org.junit.Test
 
-class SinglePeerDoubleChainsDependencyTest : MultiNodeDoubleChainBlockTestHelper() {
+class SinglePeerDoubleChainsDependencyTest : RealGtxTxIntegrationTest() {
 
     companion object : KLogging()
 

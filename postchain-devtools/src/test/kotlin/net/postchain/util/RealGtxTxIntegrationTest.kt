@@ -22,11 +22,11 @@ import org.junit.Assert
 import kotlin.test.assertNotNull
 
 /**
- * Extends [IntegrationTest] with extra functions relevant for tests running multiple chains.
+ * Extends [IntegrationTest] with extra functions relevant for real GTX transactions on multi chain tests
  *
- * Note: We are using (real) [GTXTransaction] here, not some mock transaction designed for tests
+ * We are using (real) [GTXTransaction] here, not some mock transaction as otherwise is common for integration tests.
  */
-open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
+open class RealGtxTxIntegrationTest: IntegrationTest()  {
 
     private val gtxTestModule =  GTXTestModule()
     private val factoryMap: MutableMap<Long, GTXTransactionFactory> = mutableMapOf()
@@ -51,22 +51,8 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
     fun runXNodes(
             systemSetup: SystemSetup
     ) {
-        val peerList = systemSetup.toPeerInfoList()
-        configOverrides.setProperty("testpeerinfos", peerList.toTypedArray())
-
-        // Creating node with two chains
         logger.debug("---1. Creating nodes ----------------------------")
-
-        val testName: String = this::class.java.simpleName ?: "NoName"   // Get subclass name or dummy
-        for (nodeSetup in systemSetup.nodeMap.values) {
-            val nodeConfigProvider = NodeConfigurationProviderGenerator.buildFromSetup(testName, configOverrides, nodeSetup, systemSetup)
-            nodeSetup.configurationProvider = nodeConfigProvider
-            val newPTNode = nodeSetup.toTestNodeAndStartAllChains(systemSetup, true)
-
-            // TODO: not nice to mutate the "nodes" object like this, should return the list of PTNodes instead for testability
-            nodes.add(newPTNode)
-            nodeMap[nodeSetup.sequenceNumber] = newPTNode
-        }
+        createNodesFromSystemSetup(systemSetup)
 
         // Asserting all chains are started
         // (This is a bit more complicated since we have different chains per node)
@@ -110,6 +96,7 @@ open class MultiNodeDoubleChainBlockTestHelper: IntegrationTest()  {
                     }
         }
     }
+
 
 
     /**

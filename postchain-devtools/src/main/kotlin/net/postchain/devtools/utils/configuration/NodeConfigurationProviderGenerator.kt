@@ -14,26 +14,9 @@ import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler
 import java.io.File
 
 /**
- *  Only use "buildFromSetup()" for boring/standard node setup so for more advanced tests you SHOULD use a
- *  real node configuration file. Don't make this class too smart.
+ * Will extract a [NodeConfigurationProvider] from a [NodeSetup].
  */
 object NodeConfigurationProviderGenerator {
-
-    /**
-     * Builds a [NodeConfigurationProvider] from a real node configuration file.
-     *
-     * @param configFile is the node's config file.
-     * @param configOverrides is the configurations we always want
-     */
-    fun buildFromFile(
-            configFile: String,
-            configOverrides: MapConfiguration
-    ): NodeConfigurationProvider {
-
-        val baseConfig = readNodeConfFromFile(configFile)
-        return buildBase(baseConfig, configOverrides)
-    }
-
 
     /**
      * Builds a [NodeConfigurationProvider] from the [NodeSetup]
@@ -74,16 +57,16 @@ object NodeConfigurationProviderGenerator {
             configOverrides: MapConfiguration,
             setupAction: (appConfig: AppConfig, nodeConfig: NodeConfig) -> Unit = { _, _ -> Unit }
     ): NodeConfigurationProvider {
-        val appConfig = CompositeConfiguration().apply {
+        val compositeConfig = CompositeConfiguration().apply {
             addConfiguration(configOverrides)
             addConfiguration(baseConfig)
         }
 
-        val wrappedAppConfig =AppConfig(appConfig)
-        val provider = NodeConfigurationProviderFactory.createProvider(wrappedAppConfig)
+        val appConfig =AppConfig(compositeConfig)
+        val provider = NodeConfigurationProviderFactory.createProvider(appConfig)
 
         // Run the action, default won't do anything
-        setupAction(wrappedAppConfig, provider.getConfiguration())
+        setupAction(appConfig, provider.getConfiguration())
 
         return provider
     }

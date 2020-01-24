@@ -67,7 +67,7 @@ class RestApi(
     init {
         buildErrorHandler(http)
         buildRouter(http)
-        logger.info { "Rest API listening on port ${actualPort()}" }
+        logger.info { "Rest API listening on port ${actualPort()} and were given $listenPort" }
         logger.info { "Rest API attached on $basePath/" }
     }
 

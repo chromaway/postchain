@@ -42,6 +42,7 @@ object TestLegacyNodeConfigProducer {
 
         setConfProvider(systemSetup.nodeConfProvider, baseConfig)
         setConfInfrastructure(systemSetup.confInfrastructure, baseConfig)
+        setApiPort(nodeSetup, baseConfig)
         setKeys(nodeSetup, baseConfig)
 
         return baseConfig
@@ -100,6 +101,16 @@ object TestLegacyNodeConfigProducer {
             baseConfig.setProperty("node.$i.port", nodeSetup.getPortNumber())
             baseConfig.setProperty("node.$i.pubkey", nodeSetup.pubKeyHex)
         }
+    }
+
+    /**
+     * Sets the API port, so it wont clash with other nodes.
+     */
+    fun setApiPort(
+        nodeSetup: NodeSetup,
+        baseConfig: PropertiesConfiguration
+    ){
+        baseConfig.setProperty("api.port", nodeSetup.getApiPortNumber())
     }
 
     /**

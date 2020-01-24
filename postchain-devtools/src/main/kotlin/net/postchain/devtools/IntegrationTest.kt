@@ -18,6 +18,7 @@ import org.apache.commons.configuration2.MapConfiguration
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertTrue
+import java.lang.IllegalArgumentException
 
 /**
  * This class uses the [SystemSetup] helper class to construct tests, and this way skips node config files, but
@@ -98,13 +99,63 @@ open class IntegrationTest: AbstractIntegration() {
 
     /**
      * Creates [count] nodes with the same configuration.
+     * (The nodes needed will be fetched from the signer list.)
      *
-     * @param nodesCount number of nodes to create
+     * @param nodesCount is the expected number of nodes. Only here for extra validation( make sure it is correct)
      * @param blockchainConfigFilename is the file holding the blockchain's configuration
+     * @param preWipeDatabase should we wipe the db before test
+     * @param setupAction is the action to perform on the [AppConfig] and [NodeConfig]
      * @return an array of nodes
      */
-    protected fun createNodes(nodesCount: Int, blockchainConfigFilename: String): Array<PostchainTestNode> =
-            Array(nodesCount) { createSingleNode(it, blockchainConfigFilename) }
+    protected fun createNodes(
+            nodesCount: Int,
+            blockchainConfigFilename: String,
+            preWipeDatabase: Boolean = true,
+            setupAction: (appConfig: AppConfig, nodeConfig: NodeConfig) -> Unit = { _, _ -> Unit }
+    ): Array<PostchainTestNode> {
+
+        // 1. Build the BC Setup
+        val blockchainGtvConfig = readBlockchainConfig(blockchainConfigFilename)
+        val chainId = 1 // We only have one.
+        val blockchainSetup = BlockchainSetupFactory.buildFromGtv(chainId, blockchainGtvConfig)
+
+        // 2. Build the system Setup
+        val systemSetup = SystemSetupFactory.buildSystemSetup(listOf(blockchainSetup))
+
+        if (nodesCount != systemSetup.nodeMap.size) {
+            throw IllegalArgumentException("The blockchain conf expected ${systemSetup.nodeMap.size} signers, but you expected: $nodesCount")
+        }
+
+        // 3. Create the configuraton provider
+        createNodesFromSystemSetup(systemSetup, preWipeDatabase, setupAction)
+        return nodes.toTypedArray()
+    }
+
+    /**
+     * Used to create the [PostchainTestNode] 's needed for this test.
+     * Will start the nodes and all chains on them.
+     *
+     * @param systemSetup is the map of what the test setup looks like.
+     */
+    protected fun createNodesFromSystemSetup(
+            systemSetup: SystemSetup,
+            preWipeDatabase: Boolean = true,
+            setupAction: (appConfig: AppConfig, nodeConfig: NodeConfig) -> Unit = { _, _ -> Unit }
+    ) {
+        val peerList = systemSetup.toPeerInfoList()
+        configOverrides.setProperty("testpeerinfos", peerList.toTypedArray())
+
+        val testName: String = this::class.java.simpleName ?: "NoName"   // Get subclass name or dummy
+        for (nodeSetup in systemSetup.nodeMap.values) {
+            val nodeConfigProvider = NodeConfigurationProviderGenerator.buildFromSetup(testName, configOverrides, nodeSetup, systemSetup, setupAction)
+            nodeSetup.configurationProvider = nodeConfigProvider
+            val newPTNode = nodeSetup.toTestNodeAndStartAllChains(systemSetup, preWipeDatabase)
+
+            // TODO: not nice to mutate the "nodes" object like this, should return the list of PTNodes instead for testability
+            nodes.add(newPTNode)
+            nodeMap[nodeSetup.sequenceNumber] = newPTNode
+        }
+    }
 
     /**
      * Unless you wan't to test a strange setting in the config file, doing it this way is semi-deprecated,

@@ -28,6 +28,7 @@ data class NodeSetup(
 
     companion object: KLogging() {
         const val DEFAULT_PORT_BASE_NR= 9870 // Just some made up number. Can be used if there is no other test running in parallel on this machine.
+        const val DEFAULT_API_PORT_BASE = 7740 // Made up number, used for the REST API
 
         fun buildSimple(nodeNr: NodeSeqNumber,
                         signerChains: Set<Int>,
@@ -51,6 +52,9 @@ data class NodeSetup(
      */
     fun getPortNumber() = getPortNumber(DEFAULT_PORT_BASE_NR)
     fun getPortNumber(portBase: Int) = sequenceNumber.nodeNumber + portBase
+
+    fun getApiPortNumber() = getApiPortNumber(DEFAULT_API_PORT_BASE)
+    fun getApiPortNumber(portBase: Int) = sequenceNumber.nodeNumber + portBase // Must be different from "normal" port base
 
     /**
      * It can be pretty hard to figure out if a node needs to know about some other node,
@@ -83,6 +87,8 @@ data class NodeSetup(
 
         require (configurationProvider != null) {"Cannot build a PostchainTestNode without a NodeConfigurationProvider set"}
 
+        val x = configurationProvider!!.getConfiguration()
+        //logger.debug("Peers: ${x.peerInfoMap.size}")
         val node = PostchainTestNode(configurationProvider!!, preWipeDatabase)
 
 
