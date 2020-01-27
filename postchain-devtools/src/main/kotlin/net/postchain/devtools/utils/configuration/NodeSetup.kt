@@ -110,6 +110,7 @@ data class NodeSetup(
             val chainSetup = systemSetup.blockchainMap[chainId]!!
             logger.debug("Node ${sequenceNumber.nodeNumber}: Begin starting chainId: $chainId ")
             node.addBlockchain(chainSetup)
+            node.mapBlockchainRID(chainId.toLong(), chainSetup.rid)
             node.startBlockchain(chainId.toLong())
             logger.debug("Node ${sequenceNumber.nodeNumber}: Finished starting chainId: $chainId ")
         }

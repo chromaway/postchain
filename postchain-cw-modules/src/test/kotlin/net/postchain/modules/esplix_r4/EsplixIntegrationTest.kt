@@ -45,7 +45,8 @@ class EsplixIntegrationTest : IntegrationTest() {
     fun testEsplix() {
         val creator = 0
         val user = 1
-        val node = createNode(0, "/net/postchain/esplix/blockchain_config.xml")
+        val nodes = createNodes(1, "/net/postchain/esplix/blockchain_config.xml")
+        val node = nodes[0]
         var currentBlockHeight = -1L
 
         fun buildBlockAndCommitWithTx(data: ByteArray, fail: Boolean = false) {
