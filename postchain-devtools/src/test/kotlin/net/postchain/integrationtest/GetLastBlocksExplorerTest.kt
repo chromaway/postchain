@@ -10,6 +10,7 @@ import net.postchain.core.TxDetail
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.devtools.testinfra.TestTransaction
+import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.Before
@@ -20,11 +21,13 @@ class GetLastBlocksExplorerTest : IntegrationTest() {
     @Before
     fun setup() {
         val nodesCount = 1
-        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+        //configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         val blockchainConfig = "/net/postchain/devtools/blockexplorer/blockchain_config.xml"
+        val sysSetup = SystemSetupFactory.buildSystemSetup(mapOf(1 to blockchainConfig))
+        sysSetup.needRestApi = true // We need the API to be running for this test.
 
         // Creating all nodes
-        createSingleNode(0, blockchainConfig)
+        createNodesFromSystemSetup(sysSetup)
 
         // Asserting chain 1 is started for all nodes
         await().atMost(Duration.TEN_SECONDS)

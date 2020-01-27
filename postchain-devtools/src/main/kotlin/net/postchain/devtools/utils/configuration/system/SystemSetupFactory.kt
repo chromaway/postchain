@@ -1,5 +1,6 @@
 package net.postchain.devtools.utils.configuration.system
 
+import mu.KLogging
 import net.postchain.base.BlockchainRelatedInfo
 import net.postchain.common.toHex
 import net.postchain.devtools.KeyPairHelper
@@ -18,7 +19,7 @@ import java.lang.IllegalStateException
  * but use real node config files.
  */
 
-object SystemSetupFactory {
+object SystemSetupFactory : KLogging() {
 
     /**
      * Takes a [SystemPreSetup] and builds a [SystemSetup].
@@ -84,6 +85,7 @@ object SystemSetupFactory {
         for (chainId in blockchainConfFileMap.keys) {
             val filename = blockchainConfFileMap[chainId]!!
             val bcSetup = BlockchainSetupFactory.buildFromFile(chainId, filename)
+
             bcSetups.add(bcSetup)
         }
         return buildSystemSetup(bcSetups.toList())

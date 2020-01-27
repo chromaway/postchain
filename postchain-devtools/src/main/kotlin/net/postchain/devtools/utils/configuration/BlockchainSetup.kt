@@ -30,8 +30,6 @@ data class BlockchainSetup(
 
     companion object {
 
-
-
         /**
          * Will:
          * 1. figure out the RID via the GTV config
@@ -43,7 +41,7 @@ data class BlockchainSetup(
                 signers: List<NodeSeqNumber>,
                 dependencyRid: Set<BlockchainRid>
         ): BlockchainSetup {
-            val depChainIds = dependencyRid.map { TestBlockchainRidCache.getChainId(it)}.toSet()
+            val depChainIds = dependencyRid.map { println("dep chainId: $it, adding to cache"); TestBlockchainRidCache.getChainId(it)}.toSet()
             return BlockchainSetup(chainId, TestBlockchainRidCache.getRid(chainId, bcGtv), bcGtv, signers, depChainIds)
         }
 

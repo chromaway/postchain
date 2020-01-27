@@ -1,5 +1,6 @@
 package net.postchain.devtools.utils.configuration
 
+import mu.KLogging
 import net.postchain.base.BaseBlockchainConfigurationData.Companion.KEY_SIGNERS
 import net.postchain.base.BaseBlockchainConfigurationData.Companion.KEY_DEPENDENCIES
 import net.postchain.base.BaseDependencyFactory
@@ -10,7 +11,7 @@ import net.postchain.gtv.Gtv
 import net.postchain.gtv.gtvml.GtvMLParser
 import java.lang.IllegalStateException
 
-object BlockchainSetupFactory {
+object BlockchainSetupFactory : KLogging() {
 
 
     /**
@@ -24,9 +25,9 @@ object BlockchainSetupFactory {
     fun buildFromFile(chainIid: Int, blockchainConfigFilename: String): BlockchainSetup {
         val gtv =  GtvMLParser.parseGtvML(
                 javaClass.getResource(blockchainConfigFilename).readText())
-        println("gtv hash: ${gtv.hashCode()}")
-        return buildFromGtv(chainIid, gtv)
-
+        val res = buildFromGtv(chainIid, gtv)
+        logger.debug("Translated Filename: $blockchainConfigFilename -> Setup with bc chainId: $chainIid, bc Rid: ${res.rid.toShortHex()}")
+        return res
     }
 
     /**
