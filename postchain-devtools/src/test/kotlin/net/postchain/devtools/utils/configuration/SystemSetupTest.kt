@@ -39,31 +39,37 @@ class SystemSetupTest {
     fun checkNoDeps() {
 
         val sysSetup = SystemSetupFactory.buildSystemSetup(sysPreSetup)
-        val blockchainMap = sysSetup.blockchainMap
 
-        val foundSignerBcs = SystemSetupFactory.calculateWhatBlockchainsTheNodeShouldSign(nodeNr1, blockchainMap)
-
-        assertEquals(1, foundSignerBcs.size)
-        val chainFound = foundSignerBcs.first()
+        // Check BCs to sign
+        val node1Found = sysSetup.nodeMap[nodeNr1]!!
+        val foundSignBcs =node1Found.chainsToSign
+        assertEquals(1, foundSignBcs.size)
+        val chainFound = foundSignBcs.first()
         assertEquals(chainId1, chainFound)
 
-        val foundReadBcs = SystemSetupFactory.calculateWhatBlockchainsTheNodeShouldRead(blockchainMap[chainFound]!!.chainDependencies, blockchainMap)
+        // Check BCs to read
+        val foundReadBcs = node1Found.chainsToRead
         assertEquals(0, foundReadBcs.size)
     }
 
+    /**
+     * In our setup node 5 has been assigned a s a signer of BC 3.
+     * BC 3 has a dependency to BC 1.
+     */
     @Test
     fun checkOneDep() {
 
         val sysSetup = SystemSetupFactory.buildSystemSetup(sysPreSetup)
-        val blockchainMap = sysSetup.blockchainMap
 
-        val foundSignerBcs = SystemSetupFactory.calculateWhatBlockchainsTheNodeShouldSign(nodeNr5, blockchainMap)
-
-        assertEquals(1, foundSignerBcs.size)
-        val chainFound = foundSignerBcs.first()
+        // Check BCs to sign
+        val node5Found = sysSetup.nodeMap[nodeNr5]!!
+        val foundSignBcs =node5Found.chainsToSign
+        assertEquals(1, foundSignBcs.size)
+        val chainFound = foundSignBcs.first()
         assertEquals(chainId3, chainFound)
 
-        val foundReadBcs = SystemSetupFactory.calculateWhatBlockchainsTheNodeShouldRead(blockchainMap[chainFound]!!.chainDependencies, blockchainMap)
+        // Check BCs to read
+        val foundReadBcs = node5Found.chainsToRead
         assertEquals(1, foundReadBcs.size)
         val depChainFound = foundReadBcs.first()
         assertEquals(chainId1, depChainFound)
@@ -73,16 +79,16 @@ class SystemSetupTest {
     @Test
     fun checkManyDeps() {
         val sysSetup = SystemSetupFactory.buildSystemSetup(sysPreSetup)
-        val blockchainMap = sysSetup.blockchainMap
 
-
-        val foundSignerBcs = SystemSetupFactory.calculateWhatBlockchainsTheNodeShouldSign(nodeNr6, blockchainMap)
-
-        assertEquals(1, foundSignerBcs.size)
-        val chainFound = foundSignerBcs.first()
+        // Check BCs to sign
+        val node6Found = sysSetup.nodeMap[nodeNr6]!!
+        val foundSignBcs =node6Found.chainsToSign
+        assertEquals(1, foundSignBcs.size)
+        val chainFound = foundSignBcs.first()
         assertEquals(chainId4, chainFound)
 
-        val foundReadBcs = SystemSetupFactory.calculateWhatBlockchainsTheNodeShouldRead(blockchainMap[chainFound]!!.chainDependencies, blockchainMap)
+        // Check BCs to read
+        val foundReadBcs = node6Found.chainsToRead
         assertEquals(2, foundReadBcs.size)
         assertTrue(foundReadBcs.contains(chainId1))
         assertTrue(foundReadBcs.contains(chainId3))

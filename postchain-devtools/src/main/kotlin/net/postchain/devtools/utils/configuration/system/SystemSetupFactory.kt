@@ -160,7 +160,7 @@ object SystemSetupFactory {
 
 
     /**
-     * Check the blockchain Setups is this node is a signer and the BC has dep.
+     * Check the blockchain Setups if this node is a signer and the BC has dep.
      *
      * This function will call itself recursively
      *
