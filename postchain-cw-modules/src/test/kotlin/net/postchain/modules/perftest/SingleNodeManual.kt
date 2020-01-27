@@ -37,7 +37,8 @@ class SingleNodeManual : IntegrationTest() {
 
     private fun runSingleNode(name: String, blockchainConfig: String) {
         configOverrides.setProperty("api.port", 8383)
-        val node = createNode(0, blockchainConfig)
+        val nodes = createNodes(1, blockchainConfig)
+        val node = nodes[0]
 
         // warm up
         val warmupDuration = 30000

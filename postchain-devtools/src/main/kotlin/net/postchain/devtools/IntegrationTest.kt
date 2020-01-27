@@ -89,16 +89,6 @@ open class IntegrationTest: AbstractIntegration() {
         }
     }
 
-    /**
-     * Creates one node from the given configuration.
-     * NOTE: This way is almost deprecated. Usually you don't need a BC configuration file and can go via the [SystemPreSetup] instead.
-     *
-     * @param nodeIndex is a unique number only this node should have (it is used to separate schemas in the DB etc).
-     * @param blockchainConfigFilename is the file holding the blockchain's configuration
-     * @return the node
-     */
-    protected fun createNode(nodeIndex: Int, blockchainConfigFilename: String): PostchainTestNode =
-            createSingleNode(nodeIndex, blockchainConfigFilename)
 
     /**
      * Creates [count] nodes with the same configuration.
@@ -160,47 +150,6 @@ open class IntegrationTest: AbstractIntegration() {
             nodeMap[nodeSetup.sequenceNumber] = newPTNode
         }
     }
-
-    /**
-     * Unless you wan't to test a strange setting in the config file, doing it this way is semi-deprecated,
-     * since we can often go via the [SystemPreSetup] instead
-     *
-     * @param nodeIndex what node we are working on right now
-     * @param blockchainConfigFilename is the name of the BC conf file
-     * @param preWipeDatabase should we wipe the db before test
-     * @param setupAction is the action to perform on the [AppConfig] and [NodeConfig]
-     * @return the created [PostchainTestNode]
-     *
-     */
-    // TODO Olle POS-114 This is not complete. The entire idea of creating one node at a time should not be used. All nodes at once is the way.
-    protected fun createSingleNode(
-            nodeIndex: Int,
-            blockchainConfigFilename: String,
-            preWipeDatabase: Boolean = true,
-            setupAction: (appConfig: AppConfig, nodeConfig: NodeConfig) -> Unit = { _, _ -> Unit }
-    ): PostchainTestNode {
-
-        // 1. Build the BC Setup
-        val blockchainGtvConfig = readBlockchainConfig(blockchainConfigFilename)
-        val chainId = 1 // We only have one.
-        val blockchainSetup = BlockchainSetupFactory.buildFromGtv(chainId, blockchainGtvConfig)
-
-        // 2. Build the system Setup
-        val systemSetup = SystemSetupFactory.buildSystemSetup(listOf(blockchainSetup))
-
-        // 3. Create the configuraton provider
-        val emptyMap = hashMapOf<String, Any>()
-        val configOverrides = MapConfiguration(emptyMap)
-        addConfigProviderToNodeSetups(systemSetup, configOverrides, setupAction)
-
-        val nodeNr = NodeSeqNumber(nodeIndex)
-        val node = systemSetup.nodeMap[nodeNr]!!.toTestNodeAndStartAllChains(systemSetup, preWipeDatabase)
-        nodes.add(node)
-        nodeMap[nodeNr] = node
-        return node
-
-    }
-
 
     /**
      * Starts the nodes with the number of chains different for each node
