@@ -24,6 +24,7 @@ object BlockchainSetupFactory {
     fun buildFromFile(chainIid: Int, blockchainConfigFilename: String): BlockchainSetup {
         val gtv =  GtvMLParser.parseGtvML(
                 javaClass.getResource(blockchainConfigFilename).readText())
+        println("gtv hash: ${gtv.hashCode()}")
         return buildFromGtv(chainIid, gtv)
 
     }

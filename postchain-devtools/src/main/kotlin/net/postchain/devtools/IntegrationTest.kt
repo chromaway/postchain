@@ -54,6 +54,8 @@ open class IntegrationTest: AbstractIntegration() {
         peerInfos = null
         expectedSuccessRids = mutableMapOf()
         configOverrides.clear()
+        TestBlockchainRidCache.clear()
+
         System.gc()
     }
 

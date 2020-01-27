@@ -15,6 +15,10 @@ object TestBlockchainRidCache {
         val cacheRid = mutableMapOf<Int, BlockchainRid>()
         val cacheChainId = mutableMapOf<BlockchainRid, Int>()
 
+    fun clear() {
+        cacheRid.clear()
+        cacheChainId.clear()
+    }
 
     fun add(chainIid: Int, bcRid: BlockchainRid) {
         cacheChainId[bcRid]  = chainIid
