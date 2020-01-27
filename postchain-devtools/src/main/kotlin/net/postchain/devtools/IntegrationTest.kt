@@ -29,6 +29,7 @@ import java.lang.IllegalArgumentException
  */
 open class IntegrationTest: AbstractIntegration() {
 
+    protected lateinit var systemSetup: SystemSetup
     protected val nodes = mutableListOf<PostchainTestNode>()
     protected val nodeMap = mutableMapOf<NodeSeqNumber, PostchainTestNode>()
     val configOverrides = MapConfiguration(mutableMapOf<String, String>())
@@ -120,14 +121,14 @@ open class IntegrationTest: AbstractIntegration() {
         val blockchainSetup = BlockchainSetupFactory.buildFromGtv(chainId, blockchainGtvConfig)
 
         // 2. Build the system Setup
-        val systemSetup = SystemSetupFactory.buildSystemSetup(listOf(blockchainSetup))
+        val sysSetup = SystemSetupFactory.buildSystemSetup(listOf(blockchainSetup))
 
-        if (nodesCount != systemSetup.nodeMap.size) {
-            throw IllegalArgumentException("The blockchain conf expected ${systemSetup.nodeMap.size} signers, but you expected: $nodesCount")
+        if (nodesCount != sysSetup.nodeMap.size) {
+            throw IllegalArgumentException("The blockchain conf expected ${sysSetup.nodeMap.size} signers, but you expected: $nodesCount")
         }
 
         // 3. Create the configuraton provider
-        createNodesFromSystemSetup(systemSetup, preWipeDatabase, setupAction)
+        createNodesFromSystemSetup(sysSetup, preWipeDatabase, setupAction)
         return nodes.toTypedArray()
     }
 
@@ -138,10 +139,11 @@ open class IntegrationTest: AbstractIntegration() {
      * @param systemSetup is the map of what the test setup looks like.
      */
     protected fun createNodesFromSystemSetup(
-            systemSetup: SystemSetup,
+            sysSetup: SystemSetup,
             preWipeDatabase: Boolean = true,
             setupAction: (appConfig: AppConfig, nodeConfig: NodeConfig) -> Unit = { _, _ -> Unit }
     ) {
+        this.systemSetup = sysSetup
         val peerList = systemSetup.toPeerInfoList()
         configOverrides.setProperty("testpeerinfos", peerList.toTypedArray())
 

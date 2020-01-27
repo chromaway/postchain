@@ -51,8 +51,9 @@ class GTXIntegrationTest : IntegrationTest() {
     @Test
     fun testBuildBlock() {
         configOverrides.setProperty("infrastructure", "base/test")
-        val node = createNode(0, "/net/postchain/devtools/gtx_it/blockchain_config.xml")
-        val bcRid = node.getBlockchainRid(1L)!! // Just assume we have chain 1
+        val nodes = createNodes(1, "/net/postchain/devtools/gtx_it/blockchain_config.xml")
+        val node = nodes[0]
+        val bcRid = systemSetup.blockchainMap[1]!!.rid // Just assume we have chain 1
 
         fun enqueueTx(data: ByteArray): Transaction? {
             try {
