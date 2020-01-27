@@ -46,7 +46,8 @@ data class SystemSetup(
         var realGtxTransactions: Boolean = true,
         var nodeConfProvider: String = "legacy", // Override with "managed" if that's what you need.
         var chainConfProvider: String = "manual", // Override with "managed" if that's what you need.
-        var confInfrastructure: String = "base/ebft" // Override with "base/test" if you don't need real consensus.
+        var confInfrastructure: String = "base/ebft", // Override with "base/test" if you don't need real consensus.
+        var needRestApi: Boolean = false // If this is set to true, all nodes will start the REST API (default is "false" since most test don't use the API)
 ) {
 
     companion object {

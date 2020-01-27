@@ -42,7 +42,7 @@ object TestLegacyNodeConfigProducer {
 
         setConfProvider(systemSetup.nodeConfProvider, baseConfig)
         setConfInfrastructure(systemSetup.confInfrastructure, baseConfig)
-        setApiPort(nodeSetup, baseConfig)
+        setApiPort(nodeSetup, baseConfig, systemSetup.needRestApi)
         setKeys(nodeSetup, baseConfig)
 
         return baseConfig
@@ -108,9 +108,14 @@ object TestLegacyNodeConfigProducer {
      */
     fun setApiPort(
         nodeSetup: NodeSetup,
-        baseConfig: PropertiesConfiguration
+        baseConfig: PropertiesConfiguration,
+        needRestApi: Boolean
     ){
-        baseConfig.setProperty("api.port", nodeSetup.getApiPortNumber())
+        if (needRestApi) {
+            baseConfig.setProperty("api.port", nodeSetup.getApiPortNumber())
+        } else {
+            baseConfig.setProperty("api.port", -1) // -1 means "don't start"
+        }
     }
 
     /**
