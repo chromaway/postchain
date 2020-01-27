@@ -1,17 +1,20 @@
 package net.postchain.integrationtest.multiple_chains
 
 import mu.KLogging
+import net.postchain.StorageBuilder
+import net.postchain.base.BlockchainRid
+import net.postchain.config.node.NodeConfigurationProviderFactory
+import net.postchain.core.NODE_ID_TODO
+import net.postchain.devtools.ConfigFileBasedIntegrationTest
 import net.postchain.devtools.PostchainTestNode
-import net.postchain.devtools.utils.configuration.BlockchainSetupFactory
-import net.postchain.devtools.utils.configuration.NodeConfigurationProviderGenerator
-import net.postchain.devtools.utils.configuration.NodeSeqNumber
-import net.postchain.devtools.utils.configuration.SystemSetup
-import net.postchain.util.RealGtxTxIntegrationTest
 import org.junit.Test
 
-class SinglePeerDoubleChainsDependencyTest : RealGtxTxIntegrationTest() {
+class SinglePeerDoubleChainsDependencyTest : ConfigFileBasedIntegrationTest() {
 
-    companion object : KLogging()
+    companion object : KLogging() {
+
+        const val BAD_DEPENDENCY_RID = "ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB" // The dummy RID that's in the config file.
+    }
 
     /**
      * What if our configuration tells us we should have a dependency, but we haven't got it?
@@ -19,22 +22,21 @@ class SinglePeerDoubleChainsDependencyTest : RealGtxTxIntegrationTest() {
     @Test
     fun testBreakIfDependencyNotFound() {
         // Building configs
+        val nodeConfigFilename = "classpath:/net/postchain/multiple_chains/dependent_bcs/single_peer/node0bc1dep.properties"
         val blockchainConfigFilename = "/net/postchain/devtools/multiple_chains/dependent_bcs/single_peer/blockchain_config_bad_dependency.xml"
         configOverrides.setProperty("testpeerinfos", createPeerInfos(1))
+        val appConfig = createAppConfig(0, 1, nodeConfigFilename)
+        val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(appConfig)
 
-        val bcSetup = BlockchainSetupFactory.buildFromFile(1, blockchainConfigFilename)
+        StorageBuilder.buildStorage(appConfig, NODE_ID_TODO, true).close()
 
-        val sysSetup = SystemSetup.buildComplexSetup(listOf(bcSetup))
-        val nodeSetup = sysSetup.nodeMap[NodeSeqNumber(0)]!!
-
-        val nodeConfigProvider = NodeConfigurationProviderGenerator.buildFromSetup(
-                "SinglePeerDoubleChainsDependencyTest", configOverrides, nodeSetup, sysSetup)
-
+        // Building a PostchainNode
         val node = PostchainTestNode(nodeConfigProvider)
                 .also { nodes.add(it) }
 
         // Launching blockchain
-        val blockchainRid = node.addBlockchain(1L, bcSetup.bcGtv)
+        val blockchainConfig = readBlockchainConfig(blockchainConfigFilename)
+        val blockchainRid = node.addBlockchain(1L, blockchainConfig)
         assertk.assert {
             node.startBlockchain(1L)
         }.returnedValue { null }
