@@ -14,6 +14,8 @@ import net.postchain.core.Signature
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper
 import net.postchain.devtools.testinfra.TestOneOpGtxTransaction
+import net.postchain.devtools.utils.configuration.SystemSetup
+import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
 import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
@@ -29,6 +31,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.skyscreamer.jsonassert.JSONAssert
 import org.skyscreamer.jsonassert.JSONCompareMode
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class ApiIntegrationTestNightly : IntegrationTest() {
@@ -38,15 +41,25 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
     private val gtxTestModule = GTXTestModule()
     private val gtxTextModuleOperation = "gtx_test" // This is a real operation
-    private val chainIid = 1L
+    private val chainIid = 1
+
+
+    private fun doSystemSetup(nodeCount: Int, bcConfFileName: String): SystemSetup {
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
+        val bcConfFileMap = mapOf(chainIid to bcConfFileName)
+        val sysSetup = SystemSetupFactory.buildSystemSetup(bcConfFileMap)
+        assertEquals(nodeCount, sysSetup.nodeMap.size, "We didn't get the nodes we expected, check BC config file")
+        sysSetup.needRestApi = true // NOTE!! This is important in this test!!
+
+        createNodesFromSystemSetup(sysSetup)
+        return sysSetup
+    }
 
     @Test
     fun testMixedAPICalls() {
         val nodeCount = 3
-        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
-        configOverrides.setProperty("api.port", 0)
-        val nodes = createNodes(nodeCount, "/net/postchain/devtools/api/blockchain_config.xml")
-        val blockchainRIDBytes = nodes[0].getBlockchainRid(chainIid)!! // Just take first chain from first node.
+        val sysSetup = doSystemSetup(nodeCount,"/net/postchain/devtools/api/blockchain_config.xml")
+        val blockchainRIDBytes = sysSetup.blockchainMap[chainIid]!!.rid
         val blockchainRID = blockchainRIDBytes.toHex()
 
         testStatusGet("/tx/$blockchainRID/$txHashHex", 404)
@@ -74,11 +87,10 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
     @Test
     fun testDirectQueryApi() {
-        val nodesCount = 1
-        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-        configOverrides.setProperty("api.port", 0)
-        val nodes = createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_dquery.xml")
-        val blockchainRIDBytes = nodes[0].getBlockchainRid(1L)!! // Just take first chain from first node.
+        val nodeCount = 1
+
+        val sysSetup = doSystemSetup(nodeCount, "/net/postchain/devtools/api/blockchain_config_dquery.xml")
+        val blockchainRIDBytes = sysSetup.blockchainMap[chainIid]!!.rid
         val blockchainRID = blockchainRIDBytes.toHex()
 
         buildBlockAndCommit(nodes[0])
@@ -109,10 +121,9 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         val nodesCount = 1
         val blocksCount = 1
         val txPerBlock = 1
-        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-        configOverrides.setProperty("api.port", 0)
-        val nodes = createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_1.xml")
-        val blockchainRIDBytes = nodes[0].getBlockchainRid(1L)!! // Just take first chain from first node.
+
+        val sysSetup = doSystemSetup(nodesCount, "/net/postchain/devtools/api/blockchain_config_1.xml")
+        val blockchainRIDBytes = sysSetup.blockchainMap[chainIid]!!.rid
         val blockchainRID = blockchainRIDBytes.toHex()
 
         buildBlockAndCommit(nodes[0])
@@ -131,10 +142,9 @@ class ApiIntegrationTestNightly : IntegrationTest() {
         val nodesCount = 1
         val blocksCount = 1
         val txPerBlock = 1
-        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-        configOverrides.setProperty("api.port", 0)
-        val nodes = createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_1.xml")
-        val blockchainRIDBytes = nodes[0].getBlockchainRid(1L)!! // Just take first chain from first node.
+
+        val sysSetup = doSystemSetup(nodesCount,"/net/postchain/devtools/api/blockchain_config_1.xml")
+        val blockchainRIDBytes = sysSetup.blockchainMap[chainIid]!!.rid
         val blockchainRID = blockchainRIDBytes.toHex()
 
         buildBlockAndCommit(nodes[0])
@@ -157,10 +167,9 @@ class ApiIntegrationTestNightly : IntegrationTest() {
     @Suppress("UNCHECKED_CAST")
     fun testConfirmationProof() {
         val nodeCount = 3
-        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
-        configOverrides.setProperty("api.port", 0)
-        val nodes = createNodes(nodeCount, "/net/postchain/devtools/api/blockchain_config.xml")
-        val blockchainRIDBytes = nodes[0].getBlockchainRid(1L)!! // Just take first chain from first node.
+
+        val sysSetup = doSystemSetup(nodeCount,"/net/postchain/devtools/api/blockchain_config.xml")
+        val blockchainRIDBytes = sysSetup.blockchainMap[chainIid]!!.rid
         val blockchainRID = blockchainRIDBytes.toHex()
 
         val factory = GTXTransactionFactory(blockchainRIDBytes, gtxTestModule, cryptoSystem)
@@ -198,18 +207,16 @@ class ApiIntegrationTestNightly : IntegrationTest() {
     @Test
     fun testRejectedTransactionWithReason() {
         val nodesCount = 1
-        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-        configOverrides.setProperty("api.port", 0)
-        val nodes = createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_rejected.xml")
-        val blockchainRID = nodes[0].getBlockchainRid(1L)!! // Just take first chain from first node.
-        val blockchainRIDStr = blockchainRID.toHex()
+        val sysSetup = doSystemSetup(nodesCount,"/net/postchain/devtools/api/blockchain_config_rejected.xml")
+        val bcRid = sysSetup.blockchainMap[chainIid]!!.rid
+        val blockchainRID = bcRid.toHex()
 
-        val builder = createBuilder(blockchainRID, "rejectMe")
+        val builder = createBuilder(bcRid, "rejectMe")
 
         // post transaction
         testStatusPost(
                 0,
-                "/tx/$blockchainRIDStr",
+                "/tx/$blockchainRID",
                 "{\"tx\": \"${builder.serialize().toHex()}\"}",
                 200)
 
@@ -224,7 +231,7 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
         Awaitility.await().untilAsserted {
             val body = given().port(nodes[0].getRestApiHttpPort())
-                    .get("/tx/$blockchainRIDStr/$txRidHex/status")
+                    .get("/tx/$blockchainRID/$txRidHex/status")
                     .then()
                     .statusCode(200)
                     .extract().body().asString()
