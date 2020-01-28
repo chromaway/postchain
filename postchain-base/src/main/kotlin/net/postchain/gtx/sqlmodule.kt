@@ -1,13 +1,15 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtx
 
 import net.postchain.base.BlockchainRid
 import net.postchain.core.*
+import net.postchain.gtv.*
+import net.postchain.gtv.GtvFactory.gtv
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.MapListHandler
 import org.apache.commons.dbutils.handlers.ScalarHandler
 import java.io.File
-import net.postchain.gtv.GtvFactory.gtv
-import net.postchain.gtv.*
 
 fun decodeSQLTextArray(a: Any): Array<String> {
     val arr = a as java.sql.Array

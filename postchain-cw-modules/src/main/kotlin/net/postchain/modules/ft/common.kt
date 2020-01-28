@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.modules.ft
 
@@ -6,9 +6,9 @@ import net.postchain.base.BlockchainRid
 import net.postchain.base.CryptoSystem
 import net.postchain.core.EContext
 import net.postchain.core.TxEContext
-import net.postchain.gtx.ExtOpData
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvArray
+import net.postchain.gtx.ExtOpData
 
 class OpEContext (val txCtx: TxEContext, val opIndex: Int)
 

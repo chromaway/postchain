@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.gtx
 
@@ -10,12 +10,12 @@ import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.Signature
 import net.postchain.core.UserMistake
-import java.util.*
 import net.postchain.gtv.*
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtx.factory.GtxTransactionDataFactory
 import net.postchain.gtx.serializer.GtxTransactionBodyDataSerializer
 import net.postchain.gtx.serializer.GtxTransactionDataSerializer
+import java.util.*
 
 object GtxBase {
     const val NR_FIELDS_TRANSACTION = 2

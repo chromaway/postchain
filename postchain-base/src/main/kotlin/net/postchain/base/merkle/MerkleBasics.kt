@@ -1,9 +1,11 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.base.merkle
 
 import net.postchain.base.CryptoSystem
-import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 import net.postchain.core.ProgrammerMistake
 import net.postchain.gtv.Gtv
+import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 
 /**
  * This file holds some basic stuff, like constants etc..

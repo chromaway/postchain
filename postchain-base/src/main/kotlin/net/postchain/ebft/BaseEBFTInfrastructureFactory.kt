@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.ebft
 
 import net.postchain.base.BaseApiInfrastructure
@@ -9,7 +11,6 @@ import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.BlockchainInfrastructure
 import net.postchain.core.BlockchainProcessManager
 import net.postchain.core.InfrastructureFactory
-import net.postchain.debug.DefaultNodeDiagnosticContext
 import net.postchain.debug.NodeDiagnosticContext
 
 open class BaseEBFTInfrastructureFactory : InfrastructureFactory {

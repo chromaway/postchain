@@ -1,7 +1,11 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv.merkle
 
 import net.postchain.base.CryptoSystem
-import net.postchain.base.merkle.*
+import net.postchain.base.merkle.Hash
+import net.postchain.base.merkle.MerkleHashCalculator
+import net.postchain.base.merkle.TreeHelper
 import net.postchain.gtv.*
 import java.nio.charset.Charset
 

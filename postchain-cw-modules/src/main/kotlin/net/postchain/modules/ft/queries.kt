@@ -1,11 +1,11 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.modules.ft
 
 import net.postchain.core.EContext
-import net.postchain.gtv.GtvNull
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtv.GtvNull
 
 /**
  * Query that checks if an account exists given the account identifier

@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.ebft.syncmanager.common
 
 import net.postchain.core.BlockDataWithWitness
@@ -11,9 +13,9 @@ import net.postchain.ebft.message.*
 import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockDataWithWitness
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
-import java.lang.Integer.max
 import java.lang.Integer.min
 import java.util.*
+import kotlin.math.abs
 
 class FastSynchronizer(
         processName: BlockchainProcessName,
@@ -45,16 +47,15 @@ class FastSynchronizer(
         dispatchMessages()
     }
 
+    fun reset() {
+        parallelRequestsState.clear()
+        blocks.clear()
+    }
+
     fun isAlmostUpToDate(): Boolean {
-        val highest = nodeStatuses().map { it.height }.max() ?: Long.MAX_VALUE
-        return if (blockHeight == -1L || ((highest - blockHeight) > blockHeightAheadCount)) {
-            false
-        } else {
-            // TODO: [et]: Extract out the mutations
-            parallelRequestsState.clear()
-            blocks.clear()
-            true
-        }
+        return blockHeight != -1L && EBFTNodesCondition(nodeStatuses()) { status ->
+            abs(status.height - blockHeight) < blockHeightAheadCount
+        }.satisfied()
     }
 
     fun nodeStatuses() = nodesStatuses.values.toTypedArray()
@@ -67,7 +68,7 @@ class FastSynchronizer(
                 when {
                     it <= blockHeight -> blocks.remove()
                     it == blockHeight + 1 ->
-                            commitBlock(blocks.remove().block)
+                        commitBlock(blocks.remove().block)
                     else -> Unit
                 }
             }

@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.devtools.cli
 
 import net.postchain.PostchainNode
@@ -11,7 +13,6 @@ import net.postchain.core.NODE_ID_NA
 import org.junit.Assert
 import org.junit.Ignore
 import org.junit.Test
-import java.io.File
 import java.nio.file.Paths
 
 @Ignore

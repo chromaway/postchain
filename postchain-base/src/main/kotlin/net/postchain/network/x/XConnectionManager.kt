@@ -1,8 +1,9 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.network.x
 
 import net.postchain.core.ByteArrayKey
 import net.postchain.core.Shutdownable
-import net.postchain.debug.BlockchainProcessName
 
 typealias XPeerID = ByteArrayKey
 typealias XPacketHandler = (data: ByteArray, peerID: XPeerID) -> Unit

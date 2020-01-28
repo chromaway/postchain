@@ -1,12 +1,10 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.integrationtest
 
 import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import junitparams.naming.TestCaseName
-import net.postchain.common.toHex
-import net.postchain.devtools.KeyPairHelper
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith

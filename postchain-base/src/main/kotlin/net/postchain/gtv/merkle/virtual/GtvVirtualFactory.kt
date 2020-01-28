@@ -1,7 +1,12 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv.merkle.virtual
 
 import mu.KLogging
-import net.postchain.base.merkle.proof.*
+import net.postchain.base.merkle.proof.MerkleProofElement
+import net.postchain.base.merkle.proof.ProofHashedLeaf
+import net.postchain.base.merkle.proof.ProofNode
+import net.postchain.base.merkle.proof.ProofValueLeaf
 import net.postchain.core.UserMistake
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvVirtual

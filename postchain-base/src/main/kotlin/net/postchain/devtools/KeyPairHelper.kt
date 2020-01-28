@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.devtools
 
 import net.postchain.base.secp256k1_derivePubKey
