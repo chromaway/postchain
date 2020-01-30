@@ -11,7 +11,6 @@ import net.postchain.devtools.utils.configuration.NodeNameWithBlockchains
 import net.postchain.devtools.utils.configuration.UniversalFileLocationStrategy
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvFactory
-import net.postchain.gtv.gtvml.GtvMLParser
 import org.apache.commons.configuration2.CompositeConfiguration
 import org.apache.commons.configuration2.MapConfiguration
 import org.apache.commons.configuration2.PropertiesConfiguration
@@ -51,11 +50,11 @@ open class ConfigFileBasedIntegrationTest: AbstractIntegration() {
 
     @After
     open fun tearDown() {
-        IntegrationTest.logger.debug("Integration test -- TEARDOWN")
+        logger.debug("Integration test -- TEARDOWN")
         nodes.forEach { it.shutdown() }
         nodes.clear()
         nodesNames.clear()
-        IntegrationTest.logger.debug("Closed nodes")
+        logger.debug("Closed nodes")
         peerInfos = null
         expectedSuccessRids = mutableMapOf()
         configOverrides.clear()

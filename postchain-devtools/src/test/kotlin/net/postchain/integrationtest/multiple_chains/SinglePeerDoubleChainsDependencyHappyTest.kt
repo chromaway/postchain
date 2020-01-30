@@ -3,10 +3,10 @@ package net.postchain.integrationtest.multiple_chains
 import mu.KLogging
 import net.postchain.devtools.TxCache
 import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
-import net.postchain.util.RealGtxTxIntegrationTest
+import net.postchain.util.GtxTxIntegrationTestSetup
 import org.junit.Test
 
-class SinglePeerDoubleChainsDependencyHappyTest : RealGtxTxIntegrationTest() {
+class SinglePeerDoubleChainsDependencyHappyTest : GtxTxIntegrationTestSetup() {
 
     companion object : KLogging()
 

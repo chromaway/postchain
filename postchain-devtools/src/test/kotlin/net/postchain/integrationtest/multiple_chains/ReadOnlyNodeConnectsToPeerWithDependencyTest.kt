@@ -4,7 +4,7 @@ package net.postchain.integrationtest.multiple_chains
 
 import mu.KLogging
 import net.postchain.devtools.TxCache
-import net.postchain.util.RealGtxTxIntegrationTest
+import net.postchain.util.GtxTxIntegrationTestSetup
 import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
 import org.junit.Ignore
 import org.junit.Test
@@ -17,7 +17,7 @@ import org.junit.Test
  * 2. The read only node reads A and
  * 3. The read only node also has chain B where B depends on A.
  */
-class ReadOnlyNodeConnectsToPeerWithDependencyTest : RealGtxTxIntegrationTest() {
+class ReadOnlyNodeConnectsToPeerWithDependencyTest : GtxTxIntegrationTestSetup() {
 
     companion object : KLogging()
 

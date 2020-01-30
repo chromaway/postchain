@@ -11,7 +11,7 @@ import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.configurations.GTXTestModule
 import net.postchain.core.Signature
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.KeyPairHelper
 import net.postchain.devtools.testinfra.TestOneOpGtxTransaction
 import net.postchain.devtools.utils.configuration.SystemSetup
@@ -34,7 +34,7 @@ import org.skyscreamer.jsonassert.JSONCompareMode
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class ApiIntegrationTestNightly : IntegrationTest() {
+class ApiIntegrationTestNightly : IntegrationTestSetup() {
 
     private val gson = JsonTools.buildGson()
     private var txHashHex = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"

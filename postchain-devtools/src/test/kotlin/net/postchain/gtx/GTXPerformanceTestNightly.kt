@@ -8,7 +8,7 @@ import mu.KLogging
 import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.configurations.GTXTestModule
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
@@ -23,7 +23,7 @@ import org.junit.runner.RunWith
 import kotlin.system.measureNanoTime
 
 @RunWith(JUnitParamsRunner::class)
-class GTXPerformanceTestNightly : IntegrationTest() {
+class GTXPerformanceTestNightly : IntegrationTestSetup() {
 
     companion object : KLogging()
 

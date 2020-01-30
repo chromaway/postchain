@@ -9,7 +9,7 @@ import assertk.assertions.isTrue
 import net.postchain.common.toHex
 import net.postchain.core.Transaction
 import net.postchain.core.TxDetail
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
@@ -18,7 +18,7 @@ import org.awaitility.Duration
 import org.junit.Before
 import org.junit.Test
 
-class GetLastBlocksExplorerTest : IntegrationTest() {
+class GetLastBlocksExplorerTest : IntegrationTestSetup() {
 
     @Before
     fun setup() {

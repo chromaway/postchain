@@ -27,7 +27,7 @@ import java.lang.IllegalArgumentException
  * If you need to provide unusual configurations in your config files, you can use [ConfigFileBasedIntegrationTest]
  * instead (but usually we can sneak in settings via [configOverrides] etc  even here, so it SHOULDN'T be needed)
  */
-open class IntegrationTest: AbstractIntegration() {
+open class IntegrationTestSetup: AbstractIntegration() {
 
     protected lateinit var systemSetup: SystemSetup
     protected val nodes = mutableListOf<PostchainTestNode>()

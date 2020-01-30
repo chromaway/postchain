@@ -3,7 +3,7 @@
 package net.postchain.modules.perftest
 
 import net.postchain.common.TimeLog
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.PostchainTestNode
 import org.junit.Test
 
@@ -25,7 +25,7 @@ import org.junit.Test
  * the warp-up period will be included in the profile.
  *
  */
-class SingleNodeManual : IntegrationTest() {
+class SingleNodeManual : IntegrationTestSetup() {
 
     @Test
     fun runSingleFTNode() {

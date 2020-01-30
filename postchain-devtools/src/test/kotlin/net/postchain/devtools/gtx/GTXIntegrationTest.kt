@@ -6,7 +6,7 @@ import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.toHex
 import net.postchain.core.Transaction
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.gtv.GtvFactory.gtv
@@ -17,7 +17,7 @@ import org.junit.Test
 
 val myCS = SECP256K1CryptoSystem()
 
-class GTXIntegrationTest : IntegrationTest() {
+class GTXIntegrationTest : IntegrationTestSetup() {
 
     fun makeNOPGTX(bcRid: BlockchainRid): ByteArray {
         val b = GTXDataBuilder(bcRid, arrayOf(pubKey(0)), myCS)

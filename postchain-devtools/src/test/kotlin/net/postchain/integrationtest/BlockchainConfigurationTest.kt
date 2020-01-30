@@ -4,7 +4,7 @@ package net.postchain.integrationtest
 
 import net.postchain.base.BlockchainRid
 import net.postchain.configurations.GTXTestModule
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.KeyPairHelper
 import net.postchain.gtv.GtvFactory
 import net.postchain.gtx.GTXDataBuilder
@@ -14,7 +14,7 @@ import org.apache.commons.lang3.RandomStringUtils
 import org.junit.Test
 import kotlin.test.assertEquals
 
-class BlockchainConfigurationTest : IntegrationTest() {
+class BlockchainConfigurationTest : IntegrationTestSetup() {
 
     @Test
     fun testMaxBlockSize() {

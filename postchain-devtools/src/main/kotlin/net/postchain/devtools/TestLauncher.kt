@@ -26,9 +26,9 @@ import javax.xml.bind.JAXBElement
 import javax.xml.bind.util.ValidationEventCollector
 
 /**
- * TODO: [et]: Maybe redesign this implementation based on [IntegrationTest] currently
+ * TODO: [et]: Maybe redesign this implementation based on [IntegrationTestSetup] currently
  */
-class TestLauncher : IntegrationTest() {
+class TestLauncher : IntegrationTestSetup() {
 
     companion object : KLogging()
 

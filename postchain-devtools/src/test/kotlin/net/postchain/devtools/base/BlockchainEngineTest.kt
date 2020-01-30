@@ -3,7 +3,7 @@
 package net.postchain.devtools.base
 
 import net.postchain.core.*
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.PostchainTestNode
@@ -14,7 +14,7 @@ import net.postchain.devtools.testinfra.UnexpectedExceptionTransaction
 import org.junit.Assert.*
 import org.junit.Test
 
-class BlockchainEngineTest : IntegrationTest() {
+class BlockchainEngineTest : IntegrationTestSetup() {
 
     @Test
     fun testBuildBlock() {

@@ -3,30 +3,27 @@ package net.postchain.util
 import mu.KLogging
 import net.postchain.common.toHex
 import net.postchain.configurations.GTXTestModule
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.TxCache
 import net.postchain.devtools.testinfra.TestOneOpGtxTransaction
-import net.postchain.devtools.utils.configuration.NodeConfigurationProviderGenerator
-import net.postchain.devtools.utils.configuration.NodeNameWithBlockchains
 import net.postchain.devtools.utils.configuration.NodeSeqNumber
 import net.postchain.devtools.utils.configuration.SystemSetup
 import net.postchain.gtx.GTXTransactionFactory
 import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.assertNodeConnectedWith
-import net.postchain.util.NodesTestHelper.selectAnotherRandNode
 import org.awaitility.Awaitility
 import org.awaitility.Duration
 import org.junit.Assert
 import kotlin.test.assertNotNull
 
 /**
- * Extends [IntegrationTest] with extra functions relevant for real GTX transactions on multi chain tests
+ * Extends [IntegrationTestSetup] with extra functions relevant for real GTX transactions on multi chain tests
  *
  * We are using (real) [GTXTransaction] here, not some mock transaction as otherwise is common for integration tests.
  */
-open class RealGtxTxIntegrationTest: IntegrationTest()  {
+open class GtxTxIntegrationTestSetup: IntegrationTestSetup()  {
 
     private val gtxTestModule =  GTXTestModule()
     private val factoryMap: MutableMap<Long, GTXTransactionFactory> = mutableMapOf()

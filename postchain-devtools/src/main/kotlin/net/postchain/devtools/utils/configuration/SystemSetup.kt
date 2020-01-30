@@ -4,7 +4,7 @@ import net.postchain.base.PeerInfo
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.ByteArrayKey
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
 import net.postchain.devtools.utils.configuration.pre.SystemPreSetup
@@ -17,7 +17,7 @@ import net.postchain.devtools.utils.configuration.pre.SystemPreSetup
  * 1. all nodes run on the same machine,
  * 2. all nodes have standard "test" port numbers
  *
- * [SystemSetup] is not a stand alone test framework, but meant to be used by subclasses of [IntegrationTest] or similar.
+ * [SystemSetup] is not a stand alone test framework, but meant to be used by subclasses of [IntegrationTestSetup] or similar.
  *
  * [SystemSetup] works like a builder, we add data to it (mostly other "setup" objects) and finally calls "toTestNodes()"
  *   which corresponds to the "build()" function in the builder pattern.

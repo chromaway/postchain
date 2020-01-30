@@ -10,7 +10,7 @@ import net.postchain.base.BlockchainRid
 import net.postchain.common.toHex
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.TransactionStatus
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.KeyPairHelper
 import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
@@ -23,7 +23,7 @@ import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals
 
-class PostChainClientTest : IntegrationTest() {
+class PostChainClientTest : IntegrationTestSetup() {
 
     private val blockchainRIDStr = "ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB"
     private val blockchainRID = BlockchainRid.buildFromHex(blockchainRIDStr)
