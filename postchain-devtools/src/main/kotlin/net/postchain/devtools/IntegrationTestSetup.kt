@@ -40,12 +40,10 @@ open class IntegrationTestSetup: AbstractIntegration() {
     private var peerInfos: Array<PeerInfo>? = null
     private var expectedSuccessRids = mutableMapOf<Long, MutableList<ByteArray>>()
 
-    companion object : KLogging() {
-        const val BASE_PORT = 9870
-    }
+    companion object : KLogging()
 
     @After
-    open fun tearDown() {
+    override fun tearDown() {
         logger.debug("Integration test -- TEARDOWN")
         nodes.forEach { it.shutdown() }
         nodes.clear()

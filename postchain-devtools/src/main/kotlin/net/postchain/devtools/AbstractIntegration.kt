@@ -31,6 +31,15 @@ abstract class AbstractIntegration {
 
     val cryptoSystem = SECP256K1CryptoSystem()
 
+    companion object {
+        const val BASE_PORT = 9870
+    }
+
+    /**
+     * Put logic in here that should run after each test (the "@after" annotation will guarantee execution)
+     */
+    abstract fun tearDown()
+
     protected fun readBlockchainConfig(blockchainConfigFilename: String): Gtv {
         return GtvMLParser.parseGtvML(
                 javaClass.getResource(blockchainConfigFilename).readText())

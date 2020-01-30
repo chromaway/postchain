@@ -21,9 +21,12 @@ import org.junit.After
 import org.junit.Assert
 import java.io.File
 
+// Legacy code still use this old name, don't want to break compatibility.
+typealias IntegrationTest = ConfigFileBasedIntegrationTest
 
 /**
- * This is the integration test base class used before the Setup classes were created.
+ * This is the integration test base class used before the Setup classes were created,
+ * now most tests should go with the [IntegrationTestSetup] or [GtxTxIntegrationTestSetup]
  * We should still use this class for tests when we need to test broken configuration files,
  * or when we need to do non-standard stuff, like adding one blockchain at a time.
  */
@@ -41,15 +44,11 @@ open class ConfigFileBasedIntegrationTest: AbstractIntegration() {
     private var expectedSuccessRids = mutableMapOf<Long, MutableList<ByteArray>>()
 
     companion object : KLogging() {
-        const val BASE_PORT = 9870
         const val DEFAULT_CONFIG_FILE = "config.properties"
-        const val DEFAULT_BLOCKCHAIN_CONFIG_FILE = "blockchain_config.xml"
-
-
     }
 
     @After
-    open fun tearDown() {
+    override fun tearDown() {
         logger.debug("Integration test -- TEARDOWN")
         nodes.forEach { it.shutdown() }
         nodes.clear()
