@@ -92,9 +92,22 @@ data class OpData(val opName: String, val args: Array<Gtv>) {
 
 class ExtOpData(val opName: String,
                 val opIndex: Int,
+                val args: Array<Gtv>,
                 val blockchainRID: BlockchainRid,
                 val signers: Array<ByteArray>,
-                val args: Array<Gtv>)
+                val operations: Array<OpData> ) {
+
+    companion object {
+
+        /**
+         * If we have [GTXTransactionBodyData] it will hold everything we need for extending the OpData
+         */
+        fun build(op: OpData, opIndex: Int, bodyData: GTXTransactionBodyData): ExtOpData {
+            return ExtOpData(op.opName, opIndex, op.args, bodyData.blockchainRID, bodyData.signers, bodyData.operations)
+        }
+    }
+
+}
 
 val EMPTY_SIGNATURE: ByteArray = ByteArray(0)
 
@@ -107,7 +120,7 @@ data class GTXTransactionBodyData(
 
     fun getExtOpData(): Array<ExtOpData> {
         return operations.mapIndexed { idx, op ->
-            ExtOpData(op.opName, idx, blockchainRID, signers, op.args)
+            ExtOpData.build(op, idx, this)
         }.toTypedArray()
     }
 
