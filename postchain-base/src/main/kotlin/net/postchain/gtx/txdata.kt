@@ -2,6 +2,7 @@
 
 package net.postchain.gtx
 
+import mu.KLogging
 import net.postchain.base.BlockchainRid
 import net.postchain.base.CryptoSystem
 import net.postchain.base.SigMaker
@@ -15,6 +16,7 @@ import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtx.factory.GtxTransactionDataFactory
 import net.postchain.gtx.serializer.GtxTransactionBodyDataSerializer
 import net.postchain.gtx.serializer.GtxTransactionDataSerializer
+import java.lang.IllegalArgumentException
 import java.util.*
 
 object GtxBase {
@@ -24,6 +26,50 @@ object GtxBase {
 }
 
 data class OpData(val opName: String, val args: Array<Gtv>) {
+
+    companion object: KLogging() {
+
+        private const val MAX_SIZE = 64 // Number of bytes/chars we allow per argument
+
+        /**
+         * Some operations must have few arguments, small in size, for example [GtxNop] (to avoid spam)
+         */
+        fun validateSimpleOperationArgs(args: Array<Gtv>, opName: String): Boolean {
+            for (arg in args) {
+                if (!validateSimpleOperationArgument(arg, opName)) return false
+            }
+            return true
+        }
+
+        /**
+         * Validates a single argument, making sure it is simple and not too big.
+         */
+        private fun validateSimpleOperationArgument(arg: Gtv, opName: String): Boolean {
+            return when (arg) {
+                is GtvNull -> true
+                is GtvInteger -> checkSize(arg.nrOfBytes(), MAX_SIZE, opName, "GtvInteger")
+                is GtvByteArray -> checkSize(arg.nrOfBytes(), MAX_SIZE, opName, "GtvByteArray" )
+                is GtvString -> checkSize(arg.asString().length, MAX_SIZE, opName, "GtvString" )
+                else -> {
+                    if (logger.isTraceEnabled) {
+                        logger.trace("Argument of type: ${arg.type} not allowed for operation: $opName. ")
+                    }
+                    false
+                }
+            }
+        }
+
+        private fun checkSize(size: Int, maxSize: Int, opName: String, type: String): Boolean {
+            return if (size <= maxSize) {
+                true
+            } else {
+                if (logger.isTraceEnabled) {
+                    logger.trace("Argument of type: $type too big. Max: $maxSize chains but was $size (operation: $opName) ")
+                }
+                false
+            }
+        }
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
