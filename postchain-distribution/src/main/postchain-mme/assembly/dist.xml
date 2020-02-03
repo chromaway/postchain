@@ -7,7 +7,7 @@
         <format>dir</format>
     </formats>
 
-    <baseDirectory>postchain-mme-dist</baseDirectory>
+    <baseDirectory>postchain-mme</baseDirectory>
 
     <!-- Project modules jars -->
     <files>
