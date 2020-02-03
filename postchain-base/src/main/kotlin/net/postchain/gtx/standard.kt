@@ -22,13 +22,12 @@ class GtxNop(u: Unit, opData: ExtOpData) : GTXOperation(opData) {
     }
 
     override fun apply(ctx: TxEContext): Boolean {
-        // Validation: To prevent spam from entering the BC we validate the arguments
-        OpData.validateSimpleOperationArgs(data.args, GtxNop.OP_NAME)
         return true
     }
 
     override fun isCorrect(): Boolean {
-        return true
+        // Validation: To prevent spam from entering the BC we validate the arguments
+        return OpData.validateSimpleOperationArgs(data.args, GtxNop.OP_NAME)
     }
 }
 

@@ -93,6 +93,8 @@ class GTXTransaction (
                     hasCustomOperation = true
                 }
             }
+
+            if (!op.isCorrect()) return false
         }
 
         // "This transaction must have at least one operation (nop and timeb not counted) or be classed as spam."

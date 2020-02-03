@@ -19,6 +19,10 @@ private val r = QueryRunner()
 private val nullableStringReader = ScalarHandler<String?>()
 
 class GTXTestOp(u: Unit, opdata: ExtOpData): GTXOperation(opdata) {
+
+    /**
+     * The only way for the [GtxTestOp] to be considered correct is if first argument is "1" and the second is a string.
+     */
     override fun isCorrect(): Boolean {
         if (data.args.size != 2) return false
         data.args[1].asString()
