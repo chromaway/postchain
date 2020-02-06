@@ -168,13 +168,15 @@ class FastSynchronizer(
                 .map { it.key }
                 .toMutableList()
                 .also {
-                    it.shuffle()
-                    fastSyncAlgorithmTelemetry.askForBlock(height, blockHeight)
-                    val timer = parallelRequestsState[height]
-                            ?: IssuedRequestTimer(defaultBackoffDelta, Date().time)
-                    val backoffDelta = min((timer.backoffDelta.toDouble() * 1.1).toInt(), maxBackoffDelta)
-                    communicationManager.sendPacket(GetBlockAtHeight(height), it.first())
-                    parallelRequestsState[height] = timer.copy(backoffDelta = backoffDelta, lastSentTimestamp = Date().time)
+                    if (!it.isEmpty()) {
+                        it.shuffle()
+                        fastSyncAlgorithmTelemetry.askForBlock(height, blockHeight)
+                        val timer = parallelRequestsState[height]
+                                ?: IssuedRequestTimer(defaultBackoffDelta, Date().time)
+                        val backoffDelta = min((timer.backoffDelta.toDouble() * 1.1).toInt(), maxBackoffDelta)
+                        communicationManager.sendPacket(GetBlockAtHeight(height), it.first())
+                        parallelRequestsState[height] = timer.copy(backoffDelta = backoffDelta, lastSentTimestamp = Date().time)
+                    }
                 }
     }
 
