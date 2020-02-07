@@ -8,7 +8,7 @@ pipelines:
           - maven
         script:
           - export TESTCONTAINERS_RYUK_DISABLED=true
-          - export DOCKER_HOST=127.0.0.1
+          - export DOCKER_HOST=tcp://127.0.0.1:2376
           - docker version
 #          - docker-compose version
           - mvn -X -B -P ci clean install
