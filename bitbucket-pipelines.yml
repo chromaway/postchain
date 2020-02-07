@@ -15,11 +15,11 @@ pipelines:
 
 definitions:
   services:
+    docker:
+      memory: 2048
     postgres:
       image: postgres
       environment:
         POSTGRES_DB: 'postchain'
         POSTGRES_USER: 'postchain'
         POSTGRES_PASSWORD: 'postchain'
-    docker:
-      memory: 2048
