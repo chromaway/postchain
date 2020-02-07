@@ -21,3 +21,5 @@ definitions:
         POSTGRES_DB: 'postchain'
         POSTGRES_USER: 'postchain'
         POSTGRES_PASSWORD: 'postchain'
+    docker:
+      memory: 2048
