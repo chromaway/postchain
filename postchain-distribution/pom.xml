@@ -59,6 +59,22 @@
                             <classifier>${dist-classifier}</classifier>
                         </configuration>
                     </execution>
+
+                    <execution>
+                        <id>postchain-mme-testtools</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>postchain-mme-testtools-${project.version}</finalName>
+                            <descriptors>
+                                <descriptor>src/main/postchain-mme-testtools/assembly/dist.xml</descriptor>
+                            </descriptors>
+                            <classifier>${dist-classifier}</classifier>
+                        </configuration>
+                    </execution>
+
                 </executions>
             </plugin>
         </plugins>

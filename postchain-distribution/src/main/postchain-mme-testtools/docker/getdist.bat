@@ -1,0 +1,1 @@
+copy ..\..\..\..\target\postchain-mme-testtools-?.?.?-SNAPSHOT-dist.tar.gz .

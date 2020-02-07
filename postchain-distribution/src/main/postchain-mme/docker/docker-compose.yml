@@ -14,7 +14,7 @@ services:
       POSTGRES_PASSWORD: postchain
 
   postchain-mme:
-    image: chromaway/postchain-mme:latest
+    image: chromaway/postchain-mme:3.2.0
     ports:
       - 7740:7740
     depends_on:

@@ -12,14 +12,15 @@ class AppConfig(private val config: Configuration) {
         fun fromProperties(propertiesFilename: String): AppConfig {
             return AppConfig(PropertiesFileLoader.load(propertiesFilename))
         }
-
     }
 
     val apiUrl: String
-        get() = config.getString("api-url", "")
+        get() = System.getenv("POSTCHAIN_CLIENT_API_URL")
+                ?: config.getString("api-url", "")
 
     val blockchainRidStr: String
-        get() = config.getString("blockchain-rid", "")
+        get() = System.getenv("POSTCHAIN_CLIENT_BLOCKCHAIN_RID")
+                ?: config.getString("blockchain-rid", "")
 
     val blockchainRid: BlockchainRid
         get() = BlockchainRid.buildFromHex(blockchainRidStr)
@@ -28,13 +29,15 @@ class AppConfig(private val config: Configuration) {
      * Pub/Priv keys
      */
     val privKey: String
-        get() = config.getString("privkey", "")
+        get() = System.getenv("POSTCHAIN_CLIENT_PRIVKEY")
+                ?: config.getString("privkey", "")
 
     val privKeyByteArray: ByteArray
         get() = privKey.hexStringToByteArray()
 
     val pubKey: String
-        get() = config.getString("pubkey", "")
+        get() = System.getenv("POSTCHAIN_CLIENT_PUBKEY")
+                ?: config.getString("pubkey", "")
 
     val pubKeyByteArray: ByteArray
         get() = pubKey.hexStringToByteArray()
