@@ -16,7 +16,7 @@ pipelines:
 definitions:
   services:
     docker:
-      memory: 2048
+      memory: 1024
     postgres:
       image: postgres
       environment:
