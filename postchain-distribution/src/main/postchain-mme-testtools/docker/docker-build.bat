@@ -1,1 +1,0 @@
-docker build . -t chromaway/postchain-mme-testtools
