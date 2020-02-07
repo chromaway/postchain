@@ -9,7 +9,7 @@ pipelines:
         script:
           - export TESTCONTAINERS_RYUK_DISABLED=true
           - docker version
-          - docker-compose version
+#          - docker-compose version
           - mvn -X -B -P ci clean install
         services:
           - postgres
@@ -17,6 +17,8 @@ pipelines:
 
 definitions:
   services:
+    docker:
+      memory: 3072
     postgres:
       image: postgres
       environment:
