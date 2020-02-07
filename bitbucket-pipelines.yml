@@ -8,6 +8,7 @@ pipelines:
           - maven
         script:
           - export TESTCONTAINERS_RYUK_DISABLED=true
+          - docker version
           - mvn -X -B -P ci clean install
         services:
           - postgres
@@ -15,8 +16,6 @@ pipelines:
 
 definitions:
   services:
-    docker:
-      memory: 1536
     postgres:
       image: postgres
       environment:
