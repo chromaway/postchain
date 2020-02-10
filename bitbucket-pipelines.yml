@@ -8,18 +8,13 @@ pipelines:
           - maven
         script:
           - export TESTCONTAINERS_RYUK_DISABLED=true
-#          - export DOCKER_HOST=tcp://127.0.0.1:2376
-          - docker version
-#          - docker-compose version
-          - mvn -X -B -P ci clean install
+          - mvn -B -P ci clean install
         services:
           - postgres
           - docker
 
 definitions:
   services:
-#    docker:
-#      memory: 3072
     postgres:
       image: postgres
       environment:
