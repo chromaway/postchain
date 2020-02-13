@@ -6,6 +6,7 @@ import assertk.assertions.isEqualTo
 import net.postchain.e2e.tools.DbTool
 import net.postchain.e2e.tools.KDockerComposeContainer
 import net.postchain.e2e.tools.TxSender
+import net.postchain.e2e.tools.postgresUrl
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration.ONE_MINUTE
 import org.awaitility.Duration.ONE_SECOND
@@ -15,7 +16,7 @@ import org.testcontainers.containers.output.ToStringConsumer
 import java.io.File
 import kotlin.random.Random
 
-class ChainZeroE2ET {
+class ChainZeroTest1And2E2ET {
 
     private val POSTCHAIN_SERVICE = "postchain-mme_1"
     private val POSTCHAIN_PORT = 7741
@@ -77,9 +78,10 @@ class ChainZeroE2ET {
     private fun buildDbTool(service: String, port: Int, dbScheme: String): DbTool {
         val exposedHost = environment.getServiceHost(service, port)
         val exposedPort = environment.getServicePort(service, port)
-        val databaseUrl = "jdbc:postgresql://$exposedHost:$exposedPort/postchain"
 
-        return DbTool(databaseUrl, dbScheme)
+        return DbTool(
+                postgresUrl(exposedHost, exposedPort),
+                dbScheme)
     }
 
 }
