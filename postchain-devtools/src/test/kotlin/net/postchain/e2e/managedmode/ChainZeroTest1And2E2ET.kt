@@ -14,7 +14,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.testcontainers.containers.output.ToStringConsumer
 import java.io.File
-import kotlin.random.Random
 
 class ChainZeroTest1And2E2ET {
 
@@ -25,7 +24,7 @@ class ChainZeroTest1And2E2ET {
     private val POSTGRES_PORT = 5432
     private val POSTGRES_DB_SCHEME = "mme_node1"
 
-    private val blockchainRid0 = "6357B76B43F8905A2BC35CE40906ACD8DA80DD129C469D93F723B94964DDA9E2"
+    private val blockchainRid0 = "D9A1466EEE33A01293FE9FE8BE2E5BAF502AF37B7A3E138D9D267D710E146626"
     private val privKey1 = "3132333435363738393031323334353637383930313233343536373839303131"
     private val pubKey1 = "0350fe40766bc0ce8d08b3f5b810e49a8352fdd458606bd5fafe5acdcdc8ff3f57"
 
@@ -58,7 +57,7 @@ class ChainZeroTest1And2E2ET {
 
         val txSender = buildTxSender(POSTCHAIN_SERVICE, POSTCHAIN_PORT)
         repeat(5) {
-            txSender.postTx("nop", Random.Default.nextInt(1000).toString())
+            txSender.postNopTx()
         }
 
         val dbTool = buildDbTool(POSTGRES_SERVICE, POSTGRES_PORT, POSTGRES_DB_SCHEME)

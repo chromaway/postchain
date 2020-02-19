@@ -2,6 +2,7 @@ package net.postchain.e2e.tools
 
 import org.apache.commons.dbcp2.BasicDataSource
 import org.apache.commons.dbutils.QueryRunner
+import org.apache.commons.dbutils.handlers.ColumnListHandler
 import org.apache.commons.dbutils.handlers.ScalarHandler
 import java.sql.Connection
 
@@ -14,11 +15,15 @@ class DbTool(
     private val databaseUsername = "postchain"
     private val databasePassword = "postchain"
 
-    private lateinit var connection: Connection
-
     fun getTxsCount(): Long {
         return withReadConnection {
             QueryRunner().query(it, "SELECT COUNT(*) FROM transactions", ScalarHandler<Long>())
+        }
+    }
+
+    fun getPeerIds(): List<ByteArray> {
+        return withReadConnection {
+            QueryRunner().query(it, "SELECT pubkey FROM $databaseSchema.\"c0.peer_info\"", ColumnListHandler<ByteArray>())
         }
     }
 

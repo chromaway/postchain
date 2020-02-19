@@ -12,6 +12,10 @@ entity peer_info {
     key pubkey;
 }
 
+entity replica {
+    key peerPubkey: pubkey, peerReplicaPubkey: pubkey;
+}
+
 entity blockchain {
     key rid: byte_array;
 }
@@ -33,6 +37,15 @@ function require_admin () {
 operation add_peer (host: text, port: integer, pubkey) {
     require_admin();
     create peer_info (host, port, pubkey);
+    peer_list_version.n += 1;
+}
+
+operation add_peer_replica (peerPubkey: pubkey, host: text, port: integer, peerReplicaPubkey: pubkey) {
+    require_admin();
+
+    create peer_info (host, port, peerReplicaPubkey);
+    create replica (peerPubkey, peerReplicaPubkey);
+
     peer_list_version.n += 1;
 }
 
@@ -121,6 +134,25 @@ function refresh_system_configuration () {
 
 query nm_get_blockchain_replica_node_map(blockchain_rids: list<byte_array>) = list<list<byte_array>>();
 
-query nm_get_node_replica_map() = list<list<byte_array>>();
+query nm_get_node_replica_map(): list<list<byte_array>> {
+    val replicas = map<byte_array, list<byte_array>>();
+
+    for (r in replica @* {}) {
+        if (not replicas.contains(r.peerPubkey)) {
+            replicas.put(r.peerPubkey, list<byte_array>());
+        };
+        replicas[r.peerPubkey].add(r.peerReplicaPubkey);
+    };
+
+    val res = list<list<byte_array>>();
+    for ((p, r) in replicas) {
+        val pr = list<byte_array>();
+        pr.add(p);
+        pr.add_all(r);
+        res.add(pr);
+    };
+
+    return res;
+}
 
 
