@@ -142,7 +142,7 @@ class ChainZeroTest3E2ET {
         }
 
         /**
-         * Test 5: include node2 as validator to the network of node1
+         * Test 5: include node2 as replica to the network of node1
          */
         // Asserting node1 doesn't know any peers
         assert(dbTool1.getPeerIds()).isEmpty()
@@ -161,6 +161,30 @@ class ChainZeroTest3E2ET {
         // Asserting node2 received all txs from node1: 6 = 5 (nop) + 1 (add-peer)
         await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
             assert(dbTool2.getTxsCount()).isEqualTo(5L + 1L)
+        }
+
+        /**
+         * Test 6: stop and run again node2
+         */
+        // Stopping node2
+        node2.dockerClient.stopContainerCmd(node2.containerId).exec()
+
+        // Posting 5 nop txs to node1
+        repeat(5) {
+            txSender1.postNopTx()
+        }
+
+        // Asserting that node1 has 11 = 5 + 1 + 5 txs
+        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+            assert(dbTool1.getTxsCount()).isEqualTo(11L)
+        }
+
+        // Starting node2 again
+        node2.dockerClient.startContainerCmd(node2.containerId).exec()
+
+        // Asserting node2 received all txs from node1: 11 = 6 + 5
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
+            assert(dbTool2.getTxsCount()).isEqualTo(11L)
         }
 
 
