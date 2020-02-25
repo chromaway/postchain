@@ -258,6 +258,28 @@ class ChainZeroTest3E2ET {
         }
 
 
+        /**
+         * Test 9: include node3 as replica to the network of node1 and node2
+         */
+        // At this point node1 knows only node2 (see. Test 5)
+
+        // Posting add-peer-replica(node3) tx
+        txSender1.postAddPeerAsReplicaTx(pubKey1, SERVICE_NODE3, port3, pubKey3)
+
+        // Asserting node1 knows node2 and node3
+        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+            val peers = dbTool1.getPeerIds().map { it.toHex().toUpperCase() }
+            assert(peers).hasSize(2)
+            assert(peers).contains(pubKey2.toUpperCase())
+            assert(peers).contains(pubKey3.toUpperCase())
+        }
+
+        // Asserting node3 received all txs from the network: 17 = 16 + 1 (add-peer)
+        val dbTool3 = buildDbTool(postgres, POSTGRES_PORT, postgresDbScheme3)
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
+            assert(dbTool3.getTxsCount()).isEqualTo(17L)
+        }
+
 
         // End of tests
         // - stopping nodes
@@ -267,6 +289,7 @@ class ChainZeroTest3E2ET {
         // - closing DbTool-s
         dbTool1.close()
         dbTool2.close()
+        dbTool3.close()
     }
 
     private fun buildNode1Container(postgresUrl: String): KGenericContainer {
