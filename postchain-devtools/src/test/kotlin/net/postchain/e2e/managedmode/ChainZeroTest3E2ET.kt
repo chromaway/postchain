@@ -38,6 +38,14 @@ class ChainZeroTest3E2ET {
     private val pubKey2 = "02b99a05912b01b7797d84d6660e9ed35faee078bd5bdf40026e0cc6e0cb2ef50c"
     private val postgresDbScheme2 = "mme_node2"
 
+    // Node3
+    private lateinit var logConsumer3: ToStringConsumer
+    private val port3 = 9873
+    private val apiPort3 = 7743
+    private val privKey3 = "3AFAED9C68D6DB2013DD56554EE69A3C9B1E2AAC112F534B12A5FD4B7928B376"
+    private val pubKey3 = "02839DDE1D2121CE72794E54180F5F5C3AD23543D419CB4C3640A854ACB1ADA9E6"
+    private val postgresDbScheme3 = "mme_node3"
+
     // Blockchains
     private val blockchainRid0 = "D9A1466EEE33A01293FE9FE8BE2E5BAF502AF37B7A3E138D9D267D710E146626"
 
@@ -46,6 +54,7 @@ class ChainZeroTest3E2ET {
     private val SERVICE_POSTGRES = "network3_postgres"
     private val SERVICE_NODE1 = "network3_node1"
     private val SERVICE_NODE2 = "network3_node2"
+    private val SERVICE_NODE3 = "network3_node3"
 
     @get:Rule
     val postgres: KGenericContainer = KGenericContainer("chromaway/postgres:2.4.3-beta")
@@ -72,6 +81,9 @@ class ChainZeroTest3E2ET {
                     .contains("Postchain node is running")
         }
 
+        /**
+         * Test 3: launch separate node2 as replica
+         */
         // Starting node2
         val node2 = buildNode2Container(postgresUrl)
                 .apply { start() }
@@ -82,9 +94,6 @@ class ChainZeroTest3E2ET {
                     .contains("Postchain node is running")
         }
 
-        /**
-         * Test 3: launch separate node2 as replica
-         */
         // Waiting until node1 builds a couple of blocks
         var height1: Int? = null
         await().atMost(SECONDS_20).pollInterval(ONE_SECOND).untilAsserted {
@@ -98,7 +107,7 @@ class ChainZeroTest3E2ET {
             assert(height12).isGreaterThan(height1!!)
         }
 
-        // Asserting node2 doesn't build blocks b/c it's a replica
+        // Asserting node2 doesn't build blocks b/c it's a replica and doesn't receive any blocks
         await().atMost(SECONDS_20).pollInterval(ONE_SECOND).untilAsserted {
             assert(
                     parseLogLastHeight(logConsumer2.toUtf8String())
@@ -207,15 +216,55 @@ class ChainZeroTest3E2ET {
             assert(dbTool2.getTxsCount()).isEqualTo(16L)
         }
 
-        // Stopping node2new
-        node2new.stop()
+
+        /**
+         * Test 8: launch separate node3 as replica
+         */
+        // Starting node3
+        val node3 = buildNode3Container(postgresUrl)
+                .apply { start() }
+
+        // Asserting node3 is running
+        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+            assert(logConsumer3.toUtf8String())
+                    .contains("Postchain node is running")
+        }
+
+        // Waiting until node1 builds a couple of blocks and node2 receives them
+        var height21: Int? = null
+        await().atMost(SECONDS_20).pollInterval(ONE_SECOND).untilAsserted {
+            height21 = parseLogLastHeight(logConsumer2.toUtf8String())
+            assert(height21).isNotNull()
+        }
+
+        await().atMost(SECONDS_20).pollInterval(ONE_SECOND).untilAsserted {
+            val height22 = parseLogLastHeight(logConsumer2.toUtf8String())!!
+            assert(height22).isNotNull()
+            assert(height22).isGreaterThan(height21!!)
+        }
+
+        // Asserting node3 doesn't build blocks b/c it's a replica and doesn't receive any blocks
+        await().atMost(SECONDS_20).pollInterval(ONE_SECOND).untilAsserted {
+            assert(
+                    parseLogLastHeight(logConsumer3.toUtf8String())
+            ).isNull()
+        }
+
+        // * waiting for 20 sec
+        await().pollDelay(SECONDS_20).atMost(SECONDS_21).pollInterval(ONE_SECOND).untilAsserted {
+            assert(
+                    parseLogLastHeight(logConsumer3.toUtf8String())
+            ).isNull()
+        }
+
 
 
         // End of tests
-        // Stopping nodes
+        // - stopping nodes
         node1.stop()
-
-        // Closing DbTool-s
+        node2new.stop()
+        node3.stop()
+        // - closing DbTool-s
         dbTool1.close()
         dbTool2.close()
     }
@@ -229,6 +278,17 @@ class ChainZeroTest3E2ET {
                 .withExposedPorts(apiPort1)
                 .withEnv(ENV_POSTCHAIN_DB_URL, postgresUrl)
                 .withLogConsumer(logConsumer1)
+    }
+
+    private fun buildNode3Container(postgresUrl: String): KGenericContainer {
+        logConsumer3 = ToStringConsumer()
+
+        return KGenericContainer("chromaway/postchain-mme:3.2.0")
+                .withNetwork(network)
+                .withNetworkAliases(SERVICE_NODE3)
+                .withEnv(ENV_POSTCHAIN_DB_URL, postgresUrl)
+                .withEnv(ENV_NODE, "node3") // It's necessary to use node3 config in postchain-mme docker
+                .withLogConsumer(logConsumer3)
     }
 
     private fun buildNode2Container(postgresUrl: String, wipeDb: Boolean = false): KGenericContainer {
