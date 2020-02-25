@@ -3,7 +3,7 @@
 set -eu
 
 # Wiping db if required
-if [ $1 = "WIPE_DB" ]
+if [ $1 = "WIPE_DB" ] || [ $WIPE_DB = "true" ]
 then
 	echo "Deleting the database..."
 	postchain-node/postchain.sh wipe-db -nc rte/node-config.properties

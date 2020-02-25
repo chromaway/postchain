@@ -19,10 +19,11 @@ class ChainZeroTest3E2ET {
     // Env
     private val ENV_POSTCHAIN_DB_URL = "POSTCHAIN_DB_URL"
     private val ENV_NODE = "ENV_NODE"
+    private val ENV_WIPE_DB = "WIPE_DB"
     private val POSTGRES_PORT = 5432
 
     // Node1
-    private val logConsumer1 = ToStringConsumer()
+    private lateinit var logConsumer1: ToStringConsumer
     private val port1 = 9871
     private val apiPort1 = 7741
     private val privKey1 = "3132333435363738393031323334353637383930313233343536373839303131"
@@ -30,7 +31,7 @@ class ChainZeroTest3E2ET {
     private val postgresDbScheme1 = "mme_node1"
 
     // Node2
-    private val logConsumer2 = ToStringConsumer()
+    private lateinit var logConsumer2: ToStringConsumer
     private val port2 = 9872
     private val apiPort2 = 7742
     private val privKey2 = "30807728c8c207c48f6d03c414177ca2c04e92fa683d2d1dc0dcaea6ae3c6240"
@@ -58,18 +59,12 @@ class ChainZeroTest3E2ET {
     companion object : KLogging()
 
     @Test
-    fun test3_launch_node2_as_replica_on_network() {
+    fun tests() {
         val postgresUrl = postgresUrl(SERVICE_POSTGRES, POSTGRES_PORT)
 
         // Starting node1
-        val node1 = KGenericContainer("chromaway/postchain-mme:3.2.0")
-                .withNetwork(network)
-                .withNetworkAliases(SERVICE_NODE1)
-                .withExposedPorts(apiPort1)
-                .withEnv(ENV_POSTCHAIN_DB_URL, postgresUrl)
-                .withLogConsumer(logConsumer1)
-
-        node1.start()
+        val node1 = buildNode1Container(postgresUrl)
+                .apply { start() }
 
         // Asserting node1 is running
         await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
@@ -78,14 +73,8 @@ class ChainZeroTest3E2ET {
         }
 
         // Starting node2
-        val node2 = KGenericContainer("chromaway/postchain-mme:3.2.0")
-                .withNetwork(network)
-                .withNetworkAliases(SERVICE_NODE2)
-                .withEnv(ENV_POSTCHAIN_DB_URL, postgresUrl)
-                .withEnv(ENV_NODE, "node2") // It's necessary to use node2 config in postchain-mme docker
-                .withLogConsumer(logConsumer2)
-
-        node2.start()
+        val node2 = buildNode2Container(postgresUrl)
+                .apply { start() }
 
         // Asserting node2 is running
         await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
@@ -183,14 +172,75 @@ class ChainZeroTest3E2ET {
         node2.dockerClient.startContainerCmd(node2.containerId).exec()
 
         // Asserting node2 received all txs from node1: 11 = 6 + 5
-        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
+        await().pollDelay(TEN_SECONDS).atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
             assert(dbTool2.getTxsCount()).isEqualTo(11L)
         }
 
+        /**
+         * Test 7: stop and run again node2 with wiping db
+         */
+        // Stopping node2 and removing its container
+        node2.stop()
 
+        // Posting 5 nop txs to node1
+        repeat(5) {
+            txSender1.postNopTx()
+        }
+
+        // Asserting that node1 has 16 = 5 + 5 + 1 + 5 txs
+        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+            assert(dbTool1.getTxsCount()).isEqualTo(16L)
+        }
+
+        // Starting node2new with wiping DB
+        val node2new = buildNode2Container(postgresUrl, true)
+                .apply { start() }
+
+        // Asserting node2new is running
+        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+            assert(logConsumer2.toUtf8String())
+                    .contains("Postchain node is running")
+        }
+
+        // Asserting node2new received all txs from node1: 16 = 5 + 5 + 1 + 5
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
+            assert(dbTool2.getTxsCount()).isEqualTo(16L)
+        }
+
+        // Stopping node2new
+        node2new.stop()
+
+
+        // End of tests
         // Stopping nodes
         node1.stop()
-        node2.stop()
+
+        // Closing DbTool-s
+        dbTool1.close()
+        dbTool2.close()
+    }
+
+    private fun buildNode1Container(postgresUrl: String): KGenericContainer {
+        logConsumer1 = ToStringConsumer()
+
+        return KGenericContainer("chromaway/postchain-mme:3.2.0")
+                .withNetwork(network)
+                .withNetworkAliases(SERVICE_NODE1)
+                .withExposedPorts(apiPort1)
+                .withEnv(ENV_POSTCHAIN_DB_URL, postgresUrl)
+                .withLogConsumer(logConsumer1)
+    }
+
+    private fun buildNode2Container(postgresUrl: String, wipeDb: Boolean = false): KGenericContainer {
+        logConsumer2 = ToStringConsumer()
+
+        return KGenericContainer("chromaway/postchain-mme:3.2.0")
+                .withNetwork(network)
+                .withNetworkAliases(SERVICE_NODE2)
+                .withEnv(ENV_POSTCHAIN_DB_URL, postgresUrl)
+                .withEnv(ENV_WIPE_DB, wipeDb.toString())
+                .withEnv(ENV_NODE, "node2") // It's necessary to use node2 config in postchain-mme docker
+                .withLogConsumer(logConsumer2)
     }
 
     private fun buildTxSender(node: KGenericContainer, port: Int, privKey: String, pubKey: String): TxSender {
@@ -209,4 +259,5 @@ class ChainZeroTest3E2ET {
                 postgresUrl(exposedHost, exposedPort),
                 dbScheme)
     }
+
 }
