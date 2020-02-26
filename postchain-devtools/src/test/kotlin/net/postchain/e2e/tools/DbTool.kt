@@ -29,6 +29,12 @@ class DbTool(
         }
     }
 
+    fun getBlockchainConfigsHeights(): List<Long> {
+        return dataSource.connection.use { connection ->
+            QueryRunner().query(connection, "SELECT height FROM $databaseSchema.\"c0.blockchain_configuration\"", ColumnListHandler<Long>())
+        }
+    }
+
     private fun buildDataSource(
             dbDriverClassName: String,
             dbUrl: String,

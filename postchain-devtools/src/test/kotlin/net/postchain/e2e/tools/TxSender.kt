@@ -42,6 +42,19 @@ class TxSender(
         }
     }
 
+    fun postAddBlockchainConfigurationTx(blockchainConfigData: ByteArray, height: Int) {
+        postTx { txBuilder ->
+            txBuilder.addOperation(
+                    "add_blockchain_configuration",
+                    arrayOf(
+                            GtvByteArray(blockchainRid.hexStringToByteArray()),
+                            GtvInteger(height.toLong()),
+                            GtvByteArray(blockchainConfigData)
+                    )
+            )
+        }
+    }
+
     private fun postTx(addOperations: (GTXTransactionBuilder) -> Unit) {
         val nodeResolver = PostchainClientFactory.makeSimpleNodeResolver(apiUrl)
         val sigMaker = cryptoSystem.buildSigMaker(pubKey.hexStringToByteArray(), privKey.hexStringToByteArray())

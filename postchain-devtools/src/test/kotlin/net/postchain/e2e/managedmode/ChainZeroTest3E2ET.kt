@@ -12,6 +12,7 @@ import org.junit.Test
 import org.testcontainers.containers.Network
 import org.testcontainers.containers.output.ToStringConsumer
 import org.testcontainers.containers.wait.strategy.Wait
+import java.io.File
 
 
 class ChainZeroTest3E2ET {
@@ -66,6 +67,31 @@ class ChainZeroTest3E2ET {
             )
 
     companion object : KLogging()
+
+    @Test
+    fun test_debug_RestApi() {
+        val postgresUrl = postgresUrl(SERVICE_POSTGRES, POSTGRES_PORT)
+
+        // Starting node1
+        val node1 = buildNode1Container(postgresUrl)
+                .apply { start() }
+
+        // Asserting node1 is running
+        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+            assert(logConsumer1.toUtf8String())
+                    .contains("Postchain node is running")
+        }
+
+        val restApiTool = RestApiTool(node1.containerIpAddress, node1.getMappedPort(apiPort1))
+        await().atMost(TEN_SECONDS).pollInterval(ONE_SECOND).untilAsserted {
+            val body = restApiTool.getDebug()
+            assert(body.getList<Map<String, String>>("blockchain")).hasSize(1)
+            assert(body.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
+            assert(body.getString("blockchain[0].node-type")).isEqualTo("Validator")
+        }
+
+        node1.stop()
+    }
 
     @Test
     fun tests() {
@@ -281,6 +307,81 @@ class ChainZeroTest3E2ET {
         }
 
 
+        /**
+         * Test 10: make node2 as signer (reconfigure the network)
+         */
+        // Asserting chain-zero doesn't know any blockchain's configs
+        assert(dbTool1.getBlockchainConfigsHeights()).isEmpty()
+
+        // Adding chain-zero's config at height 0.
+        // It's an initial operation to insert record to c0.blockchain table.
+        txSender1.postAddBlockchainConfigurationTx(
+                readResourceFile("/e2e/test10/00.gtv"), 0)
+
+        // Asserting chain-zero knows about single config
+        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+            assert(dbTool1.getBlockchainConfigsHeights()).hasSize(1)
+        }
+
+        // Asserting node1 is signer and node2 and node3 are replicas via /_debug REST API
+        val restApiTool1 = RestApiTool(node1.containerIpAddress, node1.getMappedPort(apiPort1))
+        await().atMost(TEN_SECONDS).pollInterval(ONE_SECOND).untilAsserted {
+            val body = restApiTool1.getDebug()
+            assert(body.getList<Map<String, String>>("blockchain")).hasSize(1)
+            assert(body.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
+            assert(body.getString("blockchain[0].node-type")).isEqualTo("Validator")
+        }
+
+        val restApiTool2 = RestApiTool(node2.containerIpAddress, node2new.getMappedPort(apiPort2))
+        await().atMost(TEN_SECONDS).pollInterval(ONE_SECOND).untilAsserted {
+            val body = restApiTool2.getDebug()
+            assert(body.getList<Map<String, String>>("blockchain")).hasSize(1)
+            assert(body.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
+            assert(body.getString("blockchain[0].node-type")).isEqualTo("Replica")
+        }
+
+        val restApiTool3 = RestApiTool(node3.containerIpAddress, node3.getMappedPort(apiPort3))
+        await().atMost(TEN_SECONDS).pollInterval(ONE_SECOND).untilAsserted {
+            val body = restApiTool3.getDebug()
+            assert(body.getList<Map<String, String>>("blockchain")).hasSize(1)
+            assert(body.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
+            assert(body.getString("blockchain[0].node-type")).isEqualTo("Replica")
+        }
+
+        // Retrieving current height for node1/chain-zero:
+        val currentHeight0 = parseLogLastHeight(logConsumer1.toUtf8String())!!
+        // Adding chain-zero's config at height (currentHeight0 + 3).
+        txSender1.postAddBlockchainConfigurationTx(
+                readResourceFile("/e2e/test10/01.gtv"), currentHeight0 + 3)
+
+        // Asserting chain-zero knows about two configs
+        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+            assert(dbTool1.getBlockchainConfigsHeights()).hasSize(2)
+        }
+
+        // Asserting node1 and node2 are signers and node3 is replica via /_debug REST API
+        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+            val body = restApiTool1.getDebug()
+            assert(body.getList<Map<String, String>>("blockchain")).hasSize(1)
+            assert(body.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
+            assert(body.getString("blockchain[0].node-type")).isEqualTo("Validator")
+        }
+
+        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+            val body = restApiTool2.getDebug()
+            assert(body.getList<Map<String, String>>("blockchain")).hasSize(1)
+            assert(body.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
+            assert(body.getString("blockchain[0].node-type")).isEqualTo("Validator")
+        }
+
+        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+            val body = restApiTool3.getDebug()
+            assert(body.getList<Map<String, String>>("blockchain")).hasSize(1)
+            assert(body.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
+            assert(body.getString("blockchain[0].node-type")).isEqualTo("Replica")
+        }
+
+
         // End of tests
         // - stopping nodes
         node1.stop()
@@ -303,27 +404,29 @@ class ChainZeroTest3E2ET {
                 .withLogConsumer(logConsumer1)
     }
 
-    private fun buildNode3Container(postgresUrl: String): KGenericContainer {
-        logConsumer3 = ToStringConsumer()
-
-        return KGenericContainer("chromaway/postchain-mme:3.2.0")
-                .withNetwork(network)
-                .withNetworkAliases(SERVICE_NODE3)
-                .withEnv(ENV_POSTCHAIN_DB_URL, postgresUrl)
-                .withEnv(ENV_NODE, "node3") // It's necessary to use node3 config in postchain-mme docker
-                .withLogConsumer(logConsumer3)
-    }
-
     private fun buildNode2Container(postgresUrl: String, wipeDb: Boolean = false): KGenericContainer {
         logConsumer2 = ToStringConsumer()
 
         return KGenericContainer("chromaway/postchain-mme:3.2.0")
                 .withNetwork(network)
                 .withNetworkAliases(SERVICE_NODE2)
+                .withExposedPorts(apiPort2)
                 .withEnv(ENV_POSTCHAIN_DB_URL, postgresUrl)
                 .withEnv(ENV_WIPE_DB, wipeDb.toString())
                 .withEnv(ENV_NODE, "node2") // It's necessary to use node2 config in postchain-mme docker
                 .withLogConsumer(logConsumer2)
+    }
+
+    private fun buildNode3Container(postgresUrl: String): KGenericContainer {
+        logConsumer3 = ToStringConsumer()
+
+        return KGenericContainer("chromaway/postchain-mme:3.2.0")
+                .withNetwork(network)
+                .withNetworkAliases(SERVICE_NODE3)
+                .withExposedPorts(apiPort3)
+                .withEnv(ENV_POSTCHAIN_DB_URL, postgresUrl)
+                .withEnv(ENV_NODE, "node3") // It's necessary to use node3 config in postchain-mme docker
+                .withLogConsumer(logConsumer3)
     }
 
     private fun buildTxSender(node: KGenericContainer, port: Int, privKey: String, pubKey: String): TxSender {
@@ -341,6 +444,12 @@ class ChainZeroTest3E2ET {
         return DbTool(
                 postgresUrl(exposedHost, exposedPort),
                 dbScheme)
+    }
+
+    private fun readResourceFile(path: String): ByteArray {
+        return File(
+                javaClass.getResource(path).file
+        ).readBytes()
     }
 
 }
