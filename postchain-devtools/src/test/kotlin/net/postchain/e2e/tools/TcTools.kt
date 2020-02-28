@@ -14,3 +14,8 @@ class KGenericContainerFixedPort(dockerImageName: String)
 class KDockerComposeContainer(vararg composeFiles: File)
     : DockerComposeContainer<KDockerComposeContainer>(*composeFiles)
 
+
+fun KGenericContainer.startContainer(): Void = this.dockerClient.startContainerCmd(this.containerId).exec()
+
+fun KGenericContainer.stopContainer(): Void = this.dockerClient.stopContainerCmd(this.containerId).exec()
+

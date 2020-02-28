@@ -5,6 +5,7 @@ import org.awaitility.Duration.TEN_SECONDS
 
 internal val SECONDS_20 = TEN_SECONDS.multiply(2)
 internal val SECONDS_21 = SECONDS_20 + ONE_SECOND
+internal val SECONDS_11 = TEN_SECONDS.plus(1)
 
 internal fun postgresUrl(host: String, port: Int): String = "jdbc:postgresql://$host:$port/postchain"
 

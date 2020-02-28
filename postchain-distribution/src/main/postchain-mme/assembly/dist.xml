@@ -20,7 +20,7 @@
         </file>
         <file>
             <source>
-                ../postchain-base/src/main/resources/log4j2.yml
+                ./src/main/postchain-mme/src/log4j2.yml
             </source>
             <outputDirectory>./postchain-node/lib</outputDirectory>
         </file>
