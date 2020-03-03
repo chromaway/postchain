@@ -10,7 +10,6 @@ import org.awaitility.Duration.*
 import org.junit.Rule
 import org.junit.Test
 import org.testcontainers.containers.Network
-import org.testcontainers.containers.output.ToStringConsumer
 import org.testcontainers.containers.wait.strategy.Wait
 import java.io.File
 
@@ -24,7 +23,6 @@ class ChainZeroTest3E2ET {
     private val POSTGRES_PORT = 5432
 
     // Node1
-    private lateinit var logConsumer1: ToStringConsumer
     private val port1 = 9871
     private val apiPort1 = 7741
     private val privKey1 = "3132333435363738393031323334353637383930313233343536373839303131"
@@ -32,7 +30,6 @@ class ChainZeroTest3E2ET {
     private val postgresDbScheme1 = "mme_node1"
 
     // Node2
-    private lateinit var logConsumer2: ToStringConsumer
     private val port2 = 9872
     private val apiPort2 = 7742
     private val privKey2 = "30807728c8c207c48f6d03c414177ca2c04e92fa683d2d1dc0dcaea6ae3c6240"
@@ -40,7 +37,6 @@ class ChainZeroTest3E2ET {
     private val postgresDbScheme2 = "mme_node2"
 
     // Node3
-    private lateinit var logConsumer3: ToStringConsumer
     private val port3 = 9873
     private val apiPort3 = 7743
     private val privKey3 = "3AFAED9C68D6DB2013DD56554EE69A3C9B1E2AAC112F534B12A5FD4B7928B376"
@@ -78,8 +74,7 @@ class ChainZeroTest3E2ET {
 
         // Asserting node1 is running
         await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
-            assert(logConsumer1.toUtf8String())
-                    .contains("Postchain node is running")
+            assert(node1.logs).contains("Postchain node is running")
         }
 
         val restApiTool = RestApiTool(node1.containerIpAddress, node1.getMappedPort(apiPort1))
@@ -103,48 +98,42 @@ class ChainZeroTest3E2ET {
 
         // Asserting node1 is running
         await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
-            assert(logConsumer1.toUtf8String())
-                    .contains("Postchain node is running")
+            assert(node1.logs).contains("Postchain node is running")
         }
 
         /**
          * Test 3: launch separate node2 as replica
          */
         // Starting node2
-        val node2 = buildNode2Container(postgresUrl)
+        var node2 = buildNode2Container(postgresUrl)
                 .apply { start() }
 
         // Asserting node2 is running
         await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
-            assert(logConsumer2.toUtf8String())
-                    .contains("Postchain node is running")
+            assert(node2.logs).contains("Postchain node is running")
         }
 
         // Waiting until node1 builds a couple of blocks
         var height1: Int? = null
         await().atMost(SECONDS_20).pollInterval(ONE_SECOND).untilAsserted {
-            height1 = parseLogLastHeight(logConsumer1.toUtf8String())
+            height1 = parseLogLastHeight(node1.logs)
             assert(height1).isNotNull()
         }
 
         await().atMost(SECONDS_20).pollInterval(ONE_SECOND).untilAsserted {
-            val height12 = parseLogLastHeight(logConsumer1.toUtf8String())!!
+            val height12 = parseLogLastHeight(node1.logs)!!
             assert(height12).isNotNull()
             assert(height12).isGreaterThan(height1!!)
         }
 
         // Asserting node2 doesn't build blocks b/c it's a replica and doesn't receive any blocks
         await().atMost(SECONDS_20).pollInterval(ONE_SECOND).untilAsserted {
-            assert(
-                    parseLogLastHeight(logConsumer2.toUtf8String())
-            ).isNull()
+            assert(parseLogLastHeight(node2.logs)).isNull()
         }
 
         // * waiting for 20 sec
         await().pollDelay(SECONDS_20).atMost(SECONDS_21).pollInterval(ONE_SECOND).untilAsserted {
-            assert(
-                    parseLogLastHeight(logConsumer2.toUtf8String())
-            ).isNull()
+            assert(parseLogLastHeight(node2.logs)).isNull()
         }
 
         /**
@@ -227,17 +216,16 @@ class ChainZeroTest3E2ET {
             assert(dbTool1.getTxsCount()).isEqualTo(16L)
         }
 
-        // Starting node2new with wiping DB
-        val node2new = buildNode2Container(postgresUrl, true)
+        // Starting node2 (new) with wiping DB
+        node2 = buildNode2Container(postgresUrl, true)
                 .apply { start() }
 
-        // Asserting node2new is running
+        // Asserting node2 (new) is running
         await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
-            assert(logConsumer2.toUtf8String())
-                    .contains("Postchain node is running")
+            assert(node2.logs).contains("Postchain node is running")
         }
 
-        // Asserting node2new received all txs from node1: 16 = 5 + 5 + 1 + 5
+        // Asserting node2 (new) received all txs from node1: 16 = 5 + 5 + 1 + 5
         await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
             assert(dbTool2.getTxsCount()).isEqualTo(16L)
         }
@@ -252,35 +240,30 @@ class ChainZeroTest3E2ET {
 
         // Asserting node3 is running
         await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
-            assert(logConsumer3.toUtf8String())
-                    .contains("Postchain node is running")
+            assert(node3.logs).contains("Postchain node is running")
         }
 
-        // Waiting until node1 builds a couple of blocks and node2 receives them
+        // Waiting until node1 builds a couple of blocks and node2 (new) receives them
         var height21: Int? = null
         await().atMost(SECONDS_20).pollInterval(ONE_SECOND).untilAsserted {
-            height21 = parseLogLastHeight(logConsumer2.toUtf8String())
+            height21 = parseLogLastHeight(node2.logs)
             assert(height21).isNotNull()
         }
 
         await().atMost(SECONDS_20).pollInterval(ONE_SECOND).untilAsserted {
-            val height22 = parseLogLastHeight(logConsumer2.toUtf8String())!!
+            val height22 = parseLogLastHeight(node2.logs)!!
             assert(height22).isNotNull()
             assert(height22).isGreaterThan(height21!!)
         }
 
         // Asserting node3 doesn't build blocks b/c it's a replica and doesn't receive any blocks
         await().atMost(SECONDS_20).pollInterval(ONE_SECOND).untilAsserted {
-            assert(
-                    parseLogLastHeight(logConsumer3.toUtf8String())
-            ).isNull()
+            assert(parseLogLastHeight(node3.logs)).isNull()
         }
 
         // * waiting for 20 sec
         await().pollDelay(SECONDS_20).atMost(SECONDS_21).pollInterval(ONE_SECOND).untilAsserted {
-            assert(
-                    parseLogLastHeight(logConsumer3.toUtf8String())
-            ).isNull()
+            assert(parseLogLastHeight(node3.logs)).isNull()
         }
 
 
@@ -332,7 +315,7 @@ class ChainZeroTest3E2ET {
             assert(body.getString("blockchain[0].node-type")).isEqualTo("Validator")
         }
 
-        val restApiTool2 = RestApiTool(node2.containerIpAddress, node2new.getMappedPort(apiPort2))
+        val restApiTool2 = RestApiTool(node2.containerIpAddress, node2.getMappedPort(apiPort2))
         await().atMost(TEN_SECONDS).pollInterval(ONE_SECOND).untilAsserted {
             val body = restApiTool2.getDebug()
             assert(body.getList<Map<String, String>>("blockchain")).hasSize(1)
@@ -349,7 +332,7 @@ class ChainZeroTest3E2ET {
         }
 
         // Retrieving current height for node1/chain-zero:
-        val currentHeight0 = parseLogLastHeight(logConsumer1.toUtf8String())!!
+        val currentHeight0 = parseLogLastHeight(node1.logs)!!
         // Adding chain-zero's config at height (currentHeight0 + 3).
         txSender1.postAddBlockchainConfigurationTx(
                 readResourceFile("/e2e/test10/01.gtv"), currentHeight0 + 3)
@@ -386,71 +369,71 @@ class ChainZeroTest3E2ET {
          * Test 11: stop node2 for some time
          */
         // Asserting the network builds blocks
-        var height11_1: Int? = parseLogLastHeight(logConsumer1.toUtf8String())
+        var height11_1: Int? = parseLogLastHeight(node1.logs)
         await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
-            val height = parseLogLastHeight(logConsumer1.toUtf8String())!!
+            val height = parseLogLastHeight(node1.logs)!!
             assert(height).isNotNull()
             assert(height).isGreaterThan(height11_1!!)
         }
 
-        var height11_2: Int? = parseLogLastHeight(logConsumer2.toUtf8String())
+        var height11_2: Int? = parseLogLastHeight(node2.logs)
         await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
-            val height = parseLogLastHeight(logConsumer2.toUtf8String())!!
+            val height = parseLogLastHeight(node2.logs)!!
             assert(height).isNotNull()
             assert(height).isGreaterThan(height11_2!!)
         }
 
-        var height11_3: Int? = parseLogLastHeight(logConsumer3.toUtf8String())
+        var height11_3: Int? = parseLogLastHeight(node3.logs)
         await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
-            val height = parseLogLastHeight(logConsumer3.toUtf8String())!!
+            val height = parseLogLastHeight(node3.logs)!!
             assert(height).isNotNull()
             assert(height).isGreaterThan(height11_3!!)
         }
 
         // Stopping node2
-        node2new.dockerClient.stopContainerCmd(node2new.containerId).exec()
+        node2.dockerClient.stopContainerCmd(node2.containerId).exec()
 
         // Waiting for 10 seconds to until network stops
         await().pollDelay(TEN_SECONDS).atMost(SECONDS_11).until { true }
 
         // Asserting the network [node1, node3] is stopped
         // - node1
-        height11_1 = parseLogLastHeight(logConsumer1.toUtf8String())!!
+        height11_1 = parseLogLastHeight(node1.logs)!!
         await().pollDelay(SECONDS_20).atMost(SECONDS_21).pollInterval(ONE_SECOND).untilAsserted {
-            val height = parseLogLastHeight(logConsumer1.toUtf8String())!!
+            val height = parseLogLastHeight(node1.logs)!!
             assert(height).isNotNull()
             assert(height).isEqualTo(height11_1)
         }
 
         // - node3
-        height11_3 = parseLogLastHeight(logConsumer3.toUtf8String())!!
+        height11_3 = parseLogLastHeight(node3.logs)!!
         await().pollDelay(SECONDS_20).atMost(SECONDS_21).pollInterval(ONE_SECOND).untilAsserted {
-            val height = parseLogLastHeight(logConsumer3.toUtf8String())!!
+            val height = parseLogLastHeight(node3.logs)!!
             assert(height).isNotNull()
             assert(height).isEqualTo(height11_3)
         }
 
         // Starting node2 again
-        node2new.dockerClient.startContainerCmd(node2new.containerId).exec()
+        node2.dockerClient.startContainerCmd(node2.containerId).exec()
 
         // Asserting the network builds blocks again
-        height11_1 = parseLogLastHeight(logConsumer1.toUtf8String())
+        height11_1 = parseLogLastHeight(node1.logs)
         await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
-            val height = parseLogLastHeight(logConsumer1.toUtf8String())!!
+            val height = parseLogLastHeight(node1.logs)!!
             assert(height).isNotNull()
             assert(height).isGreaterThan(height11_1!!)
         }
 
-        height11_2 = parseLogLastHeight(node2new.logs)
+        height11_2 = parseLogLastHeight(node2.logs)
         await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
-            val height = parseLogLastHeight(node2new.logs)!!
+            val height = parseLogLastHeight(node2.logs)!!
             assert(height).isNotNull()
             assert(height).isGreaterThan(height11_2!!)
         }
 
-        height11_3 = parseLogLastHeight(logConsumer3.toUtf8String())
+        height11_3 = parseLogLastHeight(node3.logs)
         await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
-            val height = parseLogLastHeight(logConsumer3.toUtf8String())!!
+            val height = parseLogLastHeight(node3.logs)!!
             assert(height).isNotNull()
             assert(height).isGreaterThan(height11_3!!)
         }
@@ -459,7 +442,7 @@ class ChainZeroTest3E2ET {
         // End of tests
         // - stopping nodes
         node1.stop()
-        node2new.stop()
+        node2.stop()
         node3.stop()
         // - closing DbTool-s
         dbTool1.close()
@@ -468,19 +451,14 @@ class ChainZeroTest3E2ET {
     }
 
     private fun buildNode1Container(postgresUrl: String): KGenericContainer {
-        logConsumer1 = ToStringConsumer()
-
         return KGenericContainer("chromaway/postchain-mme:3.2.0")
                 .withNetwork(network)
                 .withNetworkAliases(SERVICE_NODE1)
                 .withExposedPorts(apiPort1)
                 .withEnv(ENV_POSTCHAIN_DB_URL, postgresUrl)
-                .withLogConsumer(logConsumer1)
     }
 
     private fun buildNode2Container(postgresUrl: String, wipeDb: Boolean = false): KGenericContainer {
-        logConsumer2 = ToStringConsumer()
-
         return KGenericContainer("chromaway/postchain-mme:3.2.0")
                 .withNetwork(network)
                 .withNetworkAliases(SERVICE_NODE2)
@@ -488,19 +466,15 @@ class ChainZeroTest3E2ET {
                 .withEnv(ENV_POSTCHAIN_DB_URL, postgresUrl)
                 .withEnv(ENV_WIPE_DB, wipeDb.toString())
                 .withEnv(ENV_NODE, "node2") // It's necessary to use node2 config in postchain-mme docker
-                .withLogConsumer(logConsumer2)
     }
 
     private fun buildNode3Container(postgresUrl: String): KGenericContainer {
-        logConsumer3 = ToStringConsumer()
-
         return KGenericContainer("chromaway/postchain-mme:3.2.0")
                 .withNetwork(network)
                 .withNetworkAliases(SERVICE_NODE3)
                 .withExposedPorts(apiPort3)
                 .withEnv(ENV_POSTCHAIN_DB_URL, postgresUrl)
                 .withEnv(ENV_NODE, "node3") // It's necessary to use node3 config in postchain-mme docker
-                .withLogConsumer(logConsumer3)
     }
 
     private fun buildTxSender(node: KGenericContainer, port: Int, privKey: String, pubKey: String): TxSender {
