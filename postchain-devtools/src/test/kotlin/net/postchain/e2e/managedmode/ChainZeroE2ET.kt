@@ -15,7 +15,7 @@ import org.testcontainers.containers.wait.strategy.Wait
 import java.io.File
 
 
-class ChainZeroTest3E2ET {
+class ChainZeroE2ET {
 
     // Env
     private val ENV_POSTCHAIN_DB_URL = "POSTCHAIN_DB_URL"
@@ -66,7 +66,7 @@ class ChainZeroTest3E2ET {
     companion object : KLogging()
 
     @Test
-    fun test_debug_RestApi() {
+    fun testDebugInterface() {
         val postgresUrl = postgresUrl(SERVICE_POSTGRES, POSTGRES_PORT)
 
         // Starting node1
@@ -98,9 +98,12 @@ class ChainZeroTest3E2ET {
     }
 
     @Test
-    fun tests() {
+    fun end2endTests() {
         val postgresUrl = postgresUrl(SERVICE_POSTGRES, POSTGRES_PORT)
 
+        /**
+         * Test 1: launch node1
+         */
         // Starting node1
         val node1 = buildNode1Container(postgresUrl)
                 .apply { start() }
@@ -108,6 +111,19 @@ class ChainZeroTest3E2ET {
         // Asserting node1 is running
         await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
             assert(node1.logs).contains("Postchain node is running")
+        }
+
+        /**
+         * Test 2: post 5 txs to node1/chain-zero
+         */
+        val txSender1 = buildTxSender(node1, apiPort1, privKey1, pubKey1)
+        repeat(5) {
+            txSender1.postNopTx()
+        }
+
+        val dbTool1 = buildDbTool(postgres, POSTGRES_PORT, postgresDbScheme1)
+        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+            assert(dbTool1.getTxsCount()).isEqualTo(5L)
         }
 
         /**
@@ -148,14 +164,12 @@ class ChainZeroTest3E2ET {
         /**
          * Test 4: post 5 nop txs to node1/chain-zero
          */
-        val txSender1 = buildTxSender(node1, apiPort1, privKey1, pubKey1)
         repeat(5) {
             txSender1.postNopTx()
         }
 
-        val dbTool1 = buildDbTool(postgres, POSTGRES_PORT, postgresDbScheme1)
         await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
-            assert(dbTool1.getTxsCount()).isEqualTo(5L)
+            assert(dbTool1.getTxsCount()).isEqualTo(5L + 5L)
         }
 
         val dbTool2 = buildDbTool(postgres, POSTGRES_PORT, postgresDbScheme2)
@@ -180,9 +194,9 @@ class ChainZeroTest3E2ET {
                     .isEqualTo(pubKey2.toUpperCase())
         }
 
-        // Asserting node2 received all txs from node1: 6 = 5 (nop) + 1 (add-peer)
+        // Asserting node2 received all txs from node1: 11 = 10 (nop) + 1 (add-peer)
         await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
-            assert(dbTool2.getTxsCount()).isEqualTo(5L + 1L)
+            assert(dbTool2.getTxsCount()).isEqualTo(10L + 1L)
         }
 
         /**
@@ -196,17 +210,17 @@ class ChainZeroTest3E2ET {
             txSender1.postNopTx()
         }
 
-        // Asserting that node1 has 11 = 5 + 1 + 5 txs
+        // Asserting that node1 has 16 = 10 + 1 + 5 txs
         await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
-            assert(dbTool1.getTxsCount()).isEqualTo(11L)
+            assert(dbTool1.getTxsCount()).isEqualTo(16L)
         }
 
         // Starting node2 again
         node2.dockerClient.startContainerCmd(node2.containerId).exec()
 
-        // Asserting node2 received all txs from node1: 11 = 6 + 5
+        // Asserting node2 received all txs from node1
         await().pollDelay(TEN_SECONDS).atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
-            assert(dbTool2.getTxsCount()).isEqualTo(11L)
+            assert(dbTool2.getTxsCount()).isEqualTo(16L)
         }
 
         /**
@@ -220,9 +234,9 @@ class ChainZeroTest3E2ET {
             txSender1.postNopTx()
         }
 
-        // Asserting that node1 has 16 = 5 + 5 + 1 + 5 txs
+        // Asserting that node1 has 21 = 16 + 5 txs
         await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
-            assert(dbTool1.getTxsCount()).isEqualTo(16L)
+            assert(dbTool1.getTxsCount()).isEqualTo(21L)
         }
 
         // Starting node2 (new) with wiping DB
@@ -234,9 +248,9 @@ class ChainZeroTest3E2ET {
             assert(node2.logs).contains("Postchain node is running")
         }
 
-        // Asserting node2 (new) received all txs from node1: 16 = 5 + 5 + 1 + 5
+        // Asserting node2 (new) received all txs from node1
         await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
-            assert(dbTool2.getTxsCount()).isEqualTo(16L)
+            assert(dbTool2.getTxsCount()).isEqualTo(21L)
         }
 
 
@@ -292,10 +306,10 @@ class ChainZeroTest3E2ET {
             assert(peers).contains(pubKey3.toUpperCase())
         }
 
-        // Asserting node3 received all txs from the network: 17 = 16 + 1 (add-peer)
+        // Asserting node3 received all txs from the network: 22 = 21 + 1 (add-peer)
         val dbTool3 = buildDbTool(postgres, POSTGRES_PORT, postgresDbScheme3)
         await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
-            assert(dbTool3.getTxsCount()).isEqualTo(17L)
+            assert(dbTool3.getTxsCount()).isEqualTo(22L)
         }
 
 

@@ -10,11 +10,14 @@ import net.postchain.e2e.tools.postgresUrl
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration.ONE_MINUTE
 import org.awaitility.Duration.ONE_SECOND
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.testcontainers.containers.output.ToStringConsumer
 import java.io.File
 
+@Deprecated("Test1 and Test2 have been moved to ChainZeroE2ET class")
+@Ignore
 class ChainZeroTest1And2E2ET {
 
     private val POSTCHAIN_SERVICE = "postchain-mme_1"
@@ -41,6 +44,7 @@ class ChainZeroTest1And2E2ET {
             .withLogConsumer(POSTCHAIN_SERVICE, logConsumer)
 
     @Test
+    @Ignore
     fun test1_launch_node1() {
         await().atMost(ONE_MINUTE).untilAsserted {
             assert(logConsumer.toUtf8String())
@@ -49,6 +53,7 @@ class ChainZeroTest1And2E2ET {
     }
 
     @Test
+    @Ignore
     fun test2_post_5_txs_to_node1() {
         await().atMost(ONE_MINUTE).untilAsserted {
             assert(logConsumer.toUtf8String())
