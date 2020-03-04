@@ -491,6 +491,80 @@ class ChainZeroTest3E2ET {
         }
 
 
+        /**
+         * Test 13: stop node3 for some time (cf. Test 11)
+         */
+        // Asserting the network builds blocks
+        var height13_1: Int? = parseLogLastHeight(node1.logs)
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
+            val height = parseLogLastHeight(node1.logs)!!
+            assert(height).isNotNull()
+            assert(height).isGreaterThan(height13_1!!)
+        }
+
+        var height13_2: Int? = parseLogLastHeight(node2.logs)
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
+            val height = parseLogLastHeight(node2.logs)!!
+            assert(height).isNotNull()
+            assert(height).isGreaterThan(height13_2!!)
+        }
+
+        var height13_3: Int? = parseLogLastHeight(node3.logs)
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
+            val height = parseLogLastHeight(node3.logs)!!
+            assert(height).isNotNull()
+            assert(height).isGreaterThan(height13_3!!)
+        }
+
+        // Stopping node3
+        node3.dockerClient.stopContainerCmd(node3.containerId).exec()
+
+        // Waiting for 10 seconds to until network stops
+        await().pollDelay(TEN_SECONDS).atMost(SECONDS_11).until { true }
+
+        // Asserting the network [node1, node2] is stopped
+        // - node1
+        height13_1 = parseLogLastHeight(node1.logs)!!
+        await().pollDelay(SECONDS_20).atMost(SECONDS_21).pollInterval(ONE_SECOND).untilAsserted {
+            val height = parseLogLastHeight(node1.logs)!!
+            assert(height).isNotNull()
+            assert(height).isEqualTo(height13_1)
+        }
+
+        // - node2
+        height13_2 = parseLogLastHeight(node2.logs)!!
+        await().pollDelay(SECONDS_20).atMost(SECONDS_21).pollInterval(ONE_SECOND).untilAsserted {
+            val height = parseLogLastHeight(node2.logs)!!
+            assert(height).isNotNull()
+            assert(height).isEqualTo(height13_2)
+        }
+
+        // Starting node3 again
+        node3.dockerClient.startContainerCmd(node3.containerId).exec()
+
+        // Asserting the network builds blocks again
+        height13_1 = parseLogLastHeight(node1.logs)
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
+            val height = parseLogLastHeight(node1.logs)!!
+            assert(height).isNotNull()
+            assert(height).isGreaterThan(height13_1!!)
+        }
+
+        height13_2 = parseLogLastHeight(node2.logs)
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
+            val height = parseLogLastHeight(node2.logs)!!
+            assert(height).isNotNull()
+            assert(height).isGreaterThan(height13_2!!)
+        }
+
+        height13_3 = parseLogLastHeight(node3.logs)
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
+            val height = parseLogLastHeight(node3.logs)!!
+            assert(height).isNotNull()
+            assert(height).isGreaterThan(height13_3!!)
+        }
+
+
         // End of tests
         // - stopping nodes
         node1.stop()
