@@ -2,6 +2,7 @@ package net.postchain.e2e.managedmode
 
 import assertk.assert
 import assertk.assertions.*
+import io.restassured.path.json.JsonPath
 import mu.KLogging
 import net.postchain.common.toHex
 import net.postchain.e2e.tools.*
@@ -77,13 +78,21 @@ class ChainZeroTest3E2ET {
             assert(node1.logs).contains("Postchain node is running")
         }
 
+        fun assertDebugInfo(debug: JsonPath) {
+            assert(debug.getList<Map<String, String>>("blockchain")).hasSize(1)
+            assert(debug.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
+            assert(debug.getString("blockchain[0].node-type")).isEqualTo("Validator")
+        }
+
+        // Retrieving debug info via REST API endpoint /_debug
         val restApiTool = RestApiTool(node1.containerIpAddress, node1.getMappedPort(apiPort1))
         await().atMost(TEN_SECONDS).pollInterval(ONE_SECOND).untilAsserted {
-            val body = restApiTool.getDebug()
-            assert(body.getList<Map<String, String>>("blockchain")).hasSize(1)
-            assert(body.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
-            assert(body.getString("blockchain[0].node-type")).isEqualTo("Validator")
+            assertDebugInfo(restApiTool.getDebug())
         }
+
+        // The same but via exec-in-container and curl
+        val curlTool = CurlTool(node1, apiPort1)
+        assertDebugInfo(curlTool.getDebug())
 
         node1.stop()
     }
@@ -309,26 +318,26 @@ class ChainZeroTest3E2ET {
         // Asserting node1 is signer and node2 and node3 are replicas via /_debug REST API
         val restApiTool1 = RestApiTool(node1.containerIpAddress, node1.getMappedPort(apiPort1))
         await().atMost(TEN_SECONDS).pollInterval(ONE_SECOND).untilAsserted {
-            val body = restApiTool1.getDebug()
-            assert(body.getList<Map<String, String>>("blockchain")).hasSize(1)
-            assert(body.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
-            assert(body.getString("blockchain[0].node-type")).isEqualTo("Validator")
+            val debug = restApiTool1.getDebug()
+            assert(debug.getList<Map<String, String>>("blockchain")).hasSize(1)
+            assert(debug.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
+            assert(debug.getString("blockchain[0].node-type")).isEqualTo("Validator")
         }
 
-        val restApiTool2 = RestApiTool(node2.containerIpAddress, node2.getMappedPort(apiPort2))
+        var restApiTool2 = RestApiTool(node2.containerIpAddress, node2.getMappedPort(apiPort2))
         await().atMost(TEN_SECONDS).pollInterval(ONE_SECOND).untilAsserted {
-            val body = restApiTool2.getDebug()
-            assert(body.getList<Map<String, String>>("blockchain")).hasSize(1)
-            assert(body.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
-            assert(body.getString("blockchain[0].node-type")).isEqualTo("Replica")
+            val debug = restApiTool2.getDebug()
+            assert(debug.getList<Map<String, String>>("blockchain")).hasSize(1)
+            assert(debug.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
+            assert(debug.getString("blockchain[0].node-type")).isEqualTo("Replica")
         }
 
         val restApiTool3 = RestApiTool(node3.containerIpAddress, node3.getMappedPort(apiPort3))
         await().atMost(TEN_SECONDS).pollInterval(ONE_SECOND).untilAsserted {
-            val body = restApiTool3.getDebug()
-            assert(body.getList<Map<String, String>>("blockchain")).hasSize(1)
-            assert(body.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
-            assert(body.getString("blockchain[0].node-type")).isEqualTo("Replica")
+            val debug = restApiTool3.getDebug()
+            assert(debug.getList<Map<String, String>>("blockchain")).hasSize(1)
+            assert(debug.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
+            assert(debug.getString("blockchain[0].node-type")).isEqualTo("Replica")
         }
 
         // Retrieving current height for node1/chain-zero:
@@ -344,24 +353,24 @@ class ChainZeroTest3E2ET {
 
         // Asserting node1 and node2 are signers and node3 is replica via /_debug REST API
         await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
-            val body = restApiTool1.getDebug()
-            assert(body.getList<Map<String, String>>("blockchain")).hasSize(1)
-            assert(body.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
-            assert(body.getString("blockchain[0].node-type")).isEqualTo("Validator")
+            val debug = restApiTool1.getDebug()
+            assert(debug.getList<Map<String, String>>("blockchain")).hasSize(1)
+            assert(debug.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
+            assert(debug.getString("blockchain[0].node-type")).isEqualTo("Validator")
         }
 
         await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
-            val body = restApiTool2.getDebug()
-            assert(body.getList<Map<String, String>>("blockchain")).hasSize(1)
-            assert(body.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
-            assert(body.getString("blockchain[0].node-type")).isEqualTo("Validator")
+            val debug = restApiTool2.getDebug()
+            assert(debug.getList<Map<String, String>>("blockchain")).hasSize(1)
+            assert(debug.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
+            assert(debug.getString("blockchain[0].node-type")).isEqualTo("Validator")
         }
 
         await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
-            val body = restApiTool3.getDebug()
-            assert(body.getList<Map<String, String>>("blockchain")).hasSize(1)
-            assert(body.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
-            assert(body.getString("blockchain[0].node-type")).isEqualTo("Replica")
+            val debug = restApiTool3.getDebug()
+            assert(debug.getList<Map<String, String>>("blockchain")).hasSize(1)
+            assert(debug.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
+            assert(debug.getString("blockchain[0].node-type")).isEqualTo("Replica")
         }
 
 
@@ -436,6 +445,49 @@ class ChainZeroTest3E2ET {
             val height = parseLogLastHeight(node3.logs)!!
             assert(height).isNotNull()
             assert(height).isGreaterThan(height11_3!!)
+        }
+
+
+        /**
+         * Test 12: make node3 as signer (reconfigure the network) (cf. Test 10)
+         */
+        // Retrieving current height for node1/chain-zero:
+        val height12 = parseLogLastHeight(node1.logs)!!
+        // Adding chain-zero's config at height (height12 + 3).
+        txSender1.postAddBlockchainConfigurationTx(
+                readResourceFile("/e2e/test10/02.gtv"), height12 + 3)
+
+        // Asserting chain-zero knows about tree configs (initial 00.gtv, 01.gtv, 02.gtv)
+        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+            assert(dbTool1.getBlockchainConfigsHeights()).hasSize(3)
+        }
+
+        // Asserting node1, node2 and node3 are signers via /_debug REST API
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
+            val debug = restApiTool1.getDebug()
+            assert(debug.getString("version")).isNotNull()
+            assert(debug.getList<Map<String, String>>("blockchain")).hasSize(1)
+            assert(debug.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
+            assert(debug.getString("blockchain[0].node-type")).isEqualTo("Validator")
+        }
+
+        // To get debug info we use curl via exec-in-container b/c
+        // after stop/start of container exposed ports are broken.
+        val curlTool2 = CurlTool(node2, apiPort2)
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
+            val debug = curlTool2.getDebug()
+            assert(debug.getString("version")).isNotNull()
+            assert(debug.getList<Map<String, String>>("blockchain")).hasSize(1)
+            assert(debug.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
+            assert(debug.getString("blockchain[0].node-type")).isEqualTo("Validator")
+        }
+
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
+            val debug = restApiTool3.getDebug()
+            assert(debug.getString("version")).isNotNull()
+            assert(debug.getList<Map<String, String>>("blockchain")).hasSize(1)
+            assert(debug.getString("blockchain[0].blockchain-rid").toUpperCase()).isEqualTo(blockchainRid0.toUpperCase())
+            assert(debug.getString("blockchain[0].node-type")).isEqualTo("Validator")
         }
 
 

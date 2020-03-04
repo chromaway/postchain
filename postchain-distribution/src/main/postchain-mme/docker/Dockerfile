@@ -2,8 +2,8 @@
 # Postchain Node Docker file
 FROM openjdk:8-jre-alpine
 
-# Install bash
-RUN apk update && apk add bash
+# Install bash, curl
+RUN apk update && apk add bash curl
 
 ADD ./postchain-mme-3.2.0-SNAPSHOT-dist.tar.gz /opt/chromaway/
 ADD ./entrypoint.sh /opt/chromaway/postchain-mme/entrypoint.sh
