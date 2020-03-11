@@ -1,6 +1,7 @@
 package net.postchain.e2e.managedmode
 
 import assertk.assert
+import assertk.assertions.containsAll
 import assertk.assertions.hasSize
 import assertk.assertions.isEqualTo
 import io.restassured.path.json.JsonPath
@@ -171,6 +172,37 @@ class ChainCityE2ET : End2EndTests() {
             assert(
                     debug.getString("blockchain.find { it.'blockchain-rid' == '$blockchainRidCity' }.node-type")
             ).isEqualTo("Replica")
+        }
+
+
+        /**
+         * Test 15: add 2 cities to the city dapp via node1
+         */
+
+        // *** WHEN ***
+
+        // Adding cities
+        val cityTxSender1 = buildCityTxSender(node1, apiPort1, privKey1, pubKey1)
+        cityTxSender1.postAddCityTx("Stockholm")
+        cityTxSender1.postAddCityTx("New York")
+
+        // *** THEN ***
+
+        // Asserting that all peers have the same list of cities
+        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+            val expected = arrayOf("Stockholm", "New York")
+
+            val actual1 = dbTool1.getCities()
+            assert(actual1).hasSize(expected.size)
+            assert(actual1).containsAll(*expected)
+
+            val actual2 = dbTool2.getCities()
+            assert(actual2).hasSize(expected.size)
+            assert(actual2).containsAll(*expected)
+
+            val actual3 = dbTool3.getCities()
+            assert(actual3).hasSize(expected.size)
+            assert(actual3).containsAll(*expected)
         }
 
     }
