@@ -129,49 +129,20 @@ class ChainCityE2ET : End2EndTests() {
 
         // Asserting that node1 runs chain-zero as Validator and runs chain-city as Validator too
         await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
-            val debug = restApiTool1.getDebug()
-            assert(debug.getList<Map<String, String>>("blockchain")).hasSize(2)
-
-            /*
-            RestAssured uses GPath instead of JsonPath
-            See https://github.com/rest-assured/rest-assured/issues/969
-            val filter0 = "blockchain[?(@[\"blockchain-rid\"]=='$blockchainRid0')]"
-             */
-            assert(
-                    debug.getString("blockchain.find { it.'blockchain-rid' == '$blockchainRid0' }.node-type")
-            ).isEqualTo("Validator")
-
-            assert(
-                    debug.getString("blockchain.find { it.'blockchain-rid' == '$blockchainRidCity' }.node-type")
-            ).isEqualTo("Validator")
+            assertNodeRunsChainZeroAndChainCity(
+                    restApiTool1.getDebug(), "Validator", "Validator")
         }
 
         // Asserting that node2 runs chain-zero as Validator and runs chain-city as Replica
         await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
-            val debug = restApiTool2.getDebug()
-            assert(debug.getList<Map<String, String>>("blockchain")).hasSize(2)
-
-            assert(
-                    debug.getString("blockchain.find { it.'blockchain-rid' == '$blockchainRid0' }.node-type")
-            ).isEqualTo("Validator")
-
-            assert(
-                    debug.getString("blockchain.find { it.'blockchain-rid' == '$blockchainRidCity' }.node-type")
-            ).isEqualTo("Replica")
+            assertNodeRunsChainZeroAndChainCity(
+                    restApiTool2.getDebug(), "Validator", "Replica")
         }
 
         // Asserting that node3 runs chain-zero as Validator and runs chain-city as Replica
         await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
-            val debug = restApiTool3.getDebug()
-            assert(debug.getList<Map<String, String>>("blockchain")).hasSize(2)
-
-            assert(
-                    debug.getString("blockchain.find { it.'blockchain-rid' == '$blockchainRid0' }.node-type")
-            ).isEqualTo("Validator")
-
-            assert(
-                    debug.getString("blockchain.find { it.'blockchain-rid' == '$blockchainRidCity' }.node-type")
-            ).isEqualTo("Replica")
+            assertNodeRunsChainZeroAndChainCity(
+                    restApiTool3.getDebug(), "Validator", "Replica")
         }
 
 
@@ -205,38 +176,59 @@ class ChainCityE2ET : End2EndTests() {
             assert(actual3).containsAll(*expected)
         }
 
+
+        /**
+         *
+         */
+
+        // *** WHEN ***
+
+        // Adding a new configuration where node1 and node2 are validators and node3 is replica
+        // - retrieving current height for node1/chain-zero:
+        val currentHeight1 = parseLogLastHeight(node1.logs, "[0C:2D]")!!
+        // - adding chain-city's config at height (currentHeight1 + 5).
+        // We use '+5' (not '+3') b/c BlockchainConfig::maxblocktime = 2000 (not 5000)
+        txSender1.postAddBlockchainConfigurationTx(
+                blockchainRidCity, readResourceFile("/e2e/chain-city/11.gtv"), currentHeight1 + 5)
+
+
+        // *** THEN ***
+
+        // Asserting that node1 runs chain-zero as Validator and runs chain-city as Validator too
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
+            assertNodeRunsChainZeroAndChainCity(
+                    restApiTool1.getDebug(), "Validator", "Validator")
+        }
+
+        // Asserting that node2 runs chain-zero as Validator and runs chain-city as Validator too
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
+            assertNodeRunsChainZeroAndChainCity(
+                    restApiTool2.getDebug(), "Validator", "Validator")
+        }
+
+        // Asserting that node3 runs chain-zero as Validator and runs chain-city as Replica
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
+            assertNodeRunsChainZeroAndChainCity(
+                    restApiTool3.getDebug(), "Validator", "Replica")
+        }
+
     }
 
-    @Test
-    fun testJsonPath() {
-        val json = """
-            {
-              "version": "3.0.1",
-              "pub-key": "0350fe40766bc0ce8d08b3f5b810e49a8352fdd458606bd5fafe5acdcdc8ff3f57",
-              "blockchain": [
-                {
-                  "blockchain-rid": "D9A1466EEE33A01293FE9FE8BE2E5BAF502AF37B7A3E138D9D267D710E146626",
-                  "node-type": "Validator",
-                  "peers": {},
-                  "price": 10
-                },
-                {
-                  "blockchain-rid": "0C0A20BA590074B034F169ADB4F89D0DCC376C0BAB09CDAB4A9747CFC031EF2D",
-                  "node-type": "Validator",
-                  "peers": {},
-                  "price": 15
-                }
-              ]
-            }
-        """.trimIndent()
+    private fun assertNodeRunsChainZeroAndChainCity(debug: JsonPath, chainZeroNodeType: String, chainCityNodeType: String) {
+        assert(debug.getList<Map<String, String>>("blockchain")).hasSize(2)
 
-        val jsonPath = JsonPath.from(json)
+        /*
+        RestAssured uses GPath instead of JsonPath
+        See https://github.com/rest-assured/rest-assured/issues/969
+        val filter0 = "blockchain[?(@[\"blockchain-rid\"]=='$blockchainRid0')]"
+         */
+        assert(
+                debug.getString("blockchain.find { it.'blockchain-rid' == '$blockchainRid0' }.node-type")
+        ).isEqualTo(chainZeroNodeType)
 
-        val filter = "blockchain.findAll { it.'blockchain-rid' == '$blockchainRid0' }"
-        val res = jsonPath.getList<String>("$filter.node-type")
-
-        println(res)
-
+        assert(
+                debug.getString("blockchain.find { it.'blockchain-rid' == '$blockchainRidCity' }.node-type")
+        ).isEqualTo(chainCityNodeType)
     }
 
 }

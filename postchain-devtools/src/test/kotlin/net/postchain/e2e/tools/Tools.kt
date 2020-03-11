@@ -9,8 +9,20 @@ internal val SECONDS_11 = TEN_SECONDS.plus(1)
 
 internal fun postgresUrl(host: String, port: Int): String = "jdbc:postgresql://$host:$port/postchain"
 
-internal fun parseLogLastHeight(log: String): Int? {
-    val pattern = "(height: (?<h>[0-9]+))".toPattern()
+/**
+ * Returns last value of `height` of chain with `chainId` in the `log`.
+ */
+internal fun parseLogLastHeight(log: String, chainId: String = ""): Int? {
+    val pattern = if (chainId.isEmpty()) {
+        "(height: (?<h>[0-9]+))".toPattern()
+    } else {
+        val escapedChainId = chainId
+                .replace("[", "\\[")
+                .replace("]", "\\]")
+                .replace(":", "\\:")
+        "/$escapedChainId.*(height: (?<h>[0-9]+))".toPattern()
+    }
+
     val matcher = pattern.matcher(log)
 
     var res: Int? = null
