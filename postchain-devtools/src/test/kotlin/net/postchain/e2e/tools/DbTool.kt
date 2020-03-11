@@ -23,6 +23,12 @@ class DbTool(
         }
     }
 
+    fun getCities(): List<String> {
+        return dataSource.connection.use { connection ->
+            QueryRunner().query(connection, "SELECT name FROM $databaseSchema.\"c100.city\"", ColumnListHandler<String>())
+        }
+    }
+
     fun getPeerIds(): List<ByteArray> {
         return dataSource.connection.use { connection ->
             QueryRunner().query(connection, "SELECT pubkey FROM $databaseSchema.\"c0.peer_info\"", ColumnListHandler<ByteArray>())

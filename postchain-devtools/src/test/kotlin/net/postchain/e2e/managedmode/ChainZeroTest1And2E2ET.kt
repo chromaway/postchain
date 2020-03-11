@@ -3,9 +3,9 @@ package net.postchain.e2e.managedmode
 import assertk.assert
 import assertk.assertions.contains
 import assertk.assertions.isEqualTo
+import net.postchain.e2e.tools.ChainZeroTxSender
 import net.postchain.e2e.tools.DbTool
 import net.postchain.e2e.tools.KDockerComposeContainer
-import net.postchain.e2e.tools.TxSender
 import net.postchain.e2e.tools.postgresUrl
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration.ONE_MINUTE
@@ -71,12 +71,12 @@ class ChainZeroTest1And2E2ET {
         }
     }
 
-    private fun buildTxSender(service: String, port: Int): TxSender {
+    private fun buildTxSender(service: String, port: Int): ChainZeroTxSender {
         val exposedHost = environment.getServiceHost(service, port)
         val exposedPort = environment.getServicePort(service, port)
         val serviceUrl = "http://$exposedHost:$exposedPort"
 
-        return TxSender(serviceUrl, blockchainRid0, privKey1, pubKey1)
+        return ChainZeroTxSender(serviceUrl, blockchainRid0, privKey1, pubKey1)
     }
 
     private fun buildDbTool(service: String, port: Int, dbScheme: String): DbTool {

@@ -10,39 +10,29 @@
                 <gtv path="blockstrategy/maxblocktime"><int>2000</int></gtv>
                 <gtv path="blockstrategy/maxblocktransactions"><int>500</int></gtv>
                 <gtv path="gtx/rell/moduleArgs">
-                  <dict>
-                    <entry key="admin"><bytea>0350fe40766bc0ce8d08b3f5b810e49a8352fdd458606bd5fafe5acdcdc8ff3f57</bytea></entry>
-                  </dict>
+                    <dict>
+                        <entry key="admin"><bytea>0350fe40766bc0ce8d08b3f5b810e49a8352fdd458606bd5fafe5acdcdc8ff3f57</bytea></entry>
+                    </dict>
                 </gtv>
             </config>
+
             <config height="1">
                 <app module="main" />
-                <gtv path="blockstrategy/blockdelay"><int>10000</int></gtv>
-                <gtv path="blockstrategy/maxblocktime"><int>10000</int></gtv>
+                <gtv path="blockstrategy/blockdelay"><int>2000</int></gtv>
+                <gtv path="blockstrategy/maxblocktime"><int>2000</int></gtv>
                 <gtv path="blockstrategy/maxblocktransactions"><int>500</int></gtv>
                 <gtv path="gtx/rell/moduleArgs">
-                  <dict>
-                    <entry key="admin"><bytea>0350fe40766bc0ce8d08b3f5b810e49a8352fdd458606bd5fafe5acdcdc8ff3f57</bytea></entry>
-                  </dict>
-                </gtv>
-            </config>
-            <config height="2">
-                <app module="main" />
-                <gtv path="blockstrategy/blockdelay"><int>10000</int></gtv>
-                <gtv path="blockstrategy/maxblocktime"><int>10000</int></gtv>
-                <gtv path="blockstrategy/maxblocktransactions"><int>500</int></gtv>
-                <gtv path="gtx/rell/moduleArgs">
-                  <dict>
-                    <entry key="admin"><bytea>0350fe40766bc0ce8d08b3f5b810e49a8352fdd458606bd5fafe5acdcdc8ff3f57</bytea></entry>
-                  </dict>
+                    <dict>
+                        <entry key="admin"><bytea>0350fe40766bc0ce8d08b3f5b810e49a8352fdd458606bd5fafe5acdcdc8ff3f57</bytea></entry>
+                    </dict>
                 </gtv>
                 <gtv path="signers">
                     <array>
                         <bytea>02B99A05912B01B7797D84D6660E9ED35FAEE078BD5BDF40026E0CC6E0CB2EF50C</bytea>
-                        <bytea>02839DDE1D2121CE72794E54180F5F5C3AD23543D419CB4C3640A854ACB1ADA9E6</bytea>
                     </array>
                 </gtv>
             </config>
+
         </chain>
     </chains>
 </run>

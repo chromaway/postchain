@@ -10,9 +10,8 @@ import net.postchain.common.hexStringToByteArray
 import net.postchain.gtv.GtvByteArray
 import net.postchain.gtv.GtvInteger
 import net.postchain.gtv.GtvString
-import kotlin.random.Random
 
-class TxSender(
+abstract class TxSender(
         val apiUrl: String,
         val blockchainRid: String,
         val privKey: String,
@@ -20,13 +19,6 @@ class TxSender(
 ) {
 
     private val cryptoSystem = SECP256K1CryptoSystem()
-
-    fun postNopTx() {
-        postTx { txBuilder ->
-            val nonce = Random.Default.nextInt(1000).toString()
-            txBuilder.addOperation("nop", arrayOf(GtvString(nonce)))
-        }
-    }
 
     fun postAddPeerAsReplicaTx(peerPubkey: String, host: String, port: Int, peerReplicaPubkey: String) {
         postTx { txBuilder ->
@@ -43,6 +35,10 @@ class TxSender(
     }
 
     fun postAddBlockchainConfigurationTx(blockchainConfigData: ByteArray, height: Int) {
+        postAddBlockchainConfigurationTx(blockchainRid, blockchainConfigData, height)
+    }
+
+    fun postAddBlockchainConfigurationTx(blockchainRid: String, blockchainConfigData: ByteArray, height: Int) {
         postTx { txBuilder ->
             txBuilder.addOperation(
                     "add_blockchain_configuration",
@@ -55,7 +51,8 @@ class TxSender(
         }
     }
 
-    private fun postTx(addOperations: (GTXTransactionBuilder) -> Unit) {
+
+    protected fun postTx(addOperations: (GTXTransactionBuilder) -> Unit) {
         val nodeResolver = PostchainClientFactory.makeSimpleNodeResolver(apiUrl)
         val sigMaker = cryptoSystem.buildSigMaker(pubKey.hexStringToByteArray(), privKey.hexStringToByteArray())
         val signer = DefaultSigner(sigMaker, pubKey.hexStringToByteArray())
