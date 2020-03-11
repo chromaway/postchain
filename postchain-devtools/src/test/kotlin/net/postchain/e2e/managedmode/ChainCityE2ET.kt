@@ -212,6 +212,37 @@ class ChainCityE2ET : End2EndTests() {
                     restApiTool3.getDebug(), "Validator", "Replica")
         }
 
+
+        /**
+         * Test 17: add 2 cities to the city dapp via node2
+         */
+
+        // *** WHEN ***
+
+        // Adding cities
+        val cityTxSender2 = buildCityTxSender(node2, apiPort2, privKey2, pubKey2)
+        cityTxSender2.postAddCityTx("Berlin")
+        cityTxSender2.postAddCityTx("Paris")
+
+        // *** THEN ***
+
+        // Asserting that all peers have the same list of cities
+        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+            val expected = arrayOf("Stockholm", "New York", "Berlin", "Paris")
+
+            val actual1 = dbTool1.getCities()
+            assert(actual1).hasSize(expected.size)
+            assert(actual1).containsAll(*expected)
+
+            val actual2 = dbTool2.getCities()
+            assert(actual2).hasSize(expected.size)
+            assert(actual2).containsAll(*expected)
+
+            val actual3 = dbTool3.getCities()
+            assert(actual3).hasSize(expected.size)
+            assert(actual3).containsAll(*expected)
+        }
+
     }
 
     private fun assertNodeRunsChainZeroAndChainCity(debug: JsonPath, chainZeroNodeType: String, chainCityNodeType: String) {
