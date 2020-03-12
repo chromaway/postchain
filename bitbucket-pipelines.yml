@@ -8,7 +8,7 @@ pipelines:
           - maven
         script:
           - export TESTCONTAINERS_RYUK_DISABLED=true
-          - export MAVEN_OPTS="-Xms1g -Xmx4g"
+          - export MAVEN_OPTS="-Xms1024m -Xmx8192m"
           - printenv MAVEN_OPTS
           - mvn -e -B -P ci clean install
         services:
