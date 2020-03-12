@@ -8,9 +8,10 @@ import net.postchain.common.toHex
 import net.postchain.e2e.tools.*
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration.*
+import org.junit.Ignore
 import org.junit.Test
 
-
+@Ignore
 class ChainZeroE2ET : End2EndTests() {
 
     companion object : KLogging()

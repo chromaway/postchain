@@ -10,8 +10,10 @@ import net.postchain.e2e.tools.parseLogLastHeight
 import net.postchain.e2e.tools.postgresUrl
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration.*
+import org.junit.Ignore
 import org.junit.Test
 
+@Ignore
 class ChainCityE2ET : End2EndTests() {
 
     @Test
