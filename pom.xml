@@ -1,6 +1,7 @@
 <!-- Copyright (c) 2017 ChromaWay Inc. See README for license information. -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.postchain</groupId>
@@ -290,7 +291,8 @@
                             <goal>write-project-properties</goal>
                         </goals>
                         <configuration>
-                            <outputFile>${project.build.outputDirectory}/${project.artifactId}-maven.properties</outputFile>
+                            <outputFile>${project.build.outputDirectory}/${project.artifactId}-maven.properties
+                            </outputFile>
                         </configuration>
                     </execution>
                 </executions>
@@ -308,7 +310,8 @@
                             <goal>list</goal>
                         </goals>
                         <configuration>
-                            <outputFile>${project.build.outputDirectory}/${project.artifactId}-dependencies.txt</outputFile>
+                            <outputFile>${project.build.outputDirectory}/${project.artifactId}-dependencies.txt
+                            </outputFile>
                             <sort>true</sort>
                         </configuration>
                     </execution>
@@ -356,9 +359,9 @@
                         <version>${maven-surefire-plugin.version}</version>
                         <configuration>
                             <includes>
-<!--                                <include>**/*Test.java</include>-->
-<!--                                <include>**/*IT.java</include>-->
-<!--                                <include>**/*Nightly.java</include>-->
+                                <include>**/*Test.java</include>
+                                <include>**/*IT.java</include>
+                                <include>**/*Nightly.java</include>
                                 <include>**/*E2ET.*</include>
                                 <!--                                <include>**/FourPeersReconfigurationTest.java</include>-->
                             </includes>
