@@ -8,7 +8,7 @@ pipelines:
           - maven
         script:
           - export TESTCONTAINERS_RYUK_DISABLED=true
-          - mvn -B -P ci clean install
+          - mvn -e -X -B -P ci clean install
         services:
           - postgres
           - docker
