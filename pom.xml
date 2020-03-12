@@ -356,9 +356,9 @@
                         <version>${maven-surefire-plugin.version}</version>
                         <configuration>
                             <includes>
-                                <include>**/*Test.java</include>
-                                <include>**/*IT.java</include>
-                                <include>**/*Nightly.java</include>
+<!--                                <include>**/*Test.java</include>-->
+<!--                                <include>**/*IT.java</include>-->
+<!--                                <include>**/*Nightly.java</include>-->
                                 <include>**/*E2ET.*</include>
                                 <!--                                <include>**/FourPeersReconfigurationTest.java</include>-->
                             </includes>
