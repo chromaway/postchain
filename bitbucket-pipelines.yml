@@ -3,13 +3,14 @@ image: maven:3.6-jdk-8-alpine
 pipelines:
   default:
     - step:
+        size: 2x
         max-time: 60
         caches:
           - maven
         script:
           - export TESTCONTAINERS_RYUK_DISABLED=true
-          - export MAVEN_OPTS="-Xms1024m -Xmx8192m"
-          - printenv MAVEN_OPTS
+#          - export MAVEN_OPTS="-Xms1024m -Xmx8192m"
+#          - printenv MAVEN_OPTS
           - mvn -e -B -P ci clean install
         services:
           - postgres
