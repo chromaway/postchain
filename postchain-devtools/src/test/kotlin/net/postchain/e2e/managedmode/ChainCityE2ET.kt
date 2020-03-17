@@ -102,11 +102,11 @@ class ChainCityE2ET : End2EndTests() {
 
         // Asserting that node1 and node3 receives 5 txs
         val dbTool1 = buildDbTool(postgres, POSTGRES_PORT, postgresDbScheme1)
-        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
             assert(dbTool1.getTxsCount()).isEqualTo(2 + 2 + 10L)
         }
 
-        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
             assert(dbTool3.getTxsCount()).isEqualTo(2 + 2 + 10L)
         }
 
