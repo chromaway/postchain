@@ -12,7 +12,6 @@ import org.awaitility.Awaitility.await
 import org.awaitility.Duration.*
 import org.junit.Test
 
-//@Ignore
 class ChainCityE2ET : End2EndTests() {
 
     @Test

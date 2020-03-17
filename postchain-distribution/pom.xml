@@ -38,6 +38,9 @@
 
     </dependencies>
 
+    <!--
+        Uncomment this to build dist package for postchain-mme docker image
+    -->
     <!--<build>
         <plugins>
             <plugin>
