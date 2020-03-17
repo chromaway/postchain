@@ -10,7 +10,7 @@ import org.awaitility.Awaitility.await
 import org.awaitility.Duration.*
 import org.junit.Test
 
-
+//@Ignore
 class ChainZeroE2ET : End2EndTests() {
 
     companion object : KLogging()
@@ -325,21 +325,21 @@ class ChainZeroE2ET : End2EndTests() {
          */
         // Asserting the network builds blocks
         var height11_1: Int? = parseLogLastHeight(node1.logs)
-        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
             val height = parseLogLastHeight(node1.logs)!!
             assert(height).isNotNull()
             assert(height).isGreaterThan(height11_1!!)
         }
 
         var height11_2: Int? = parseLogLastHeight(node2.logs)
-        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
             val height = parseLogLastHeight(node2.logs)!!
             assert(height).isNotNull()
             assert(height).isGreaterThan(height11_2!!)
         }
 
         var height11_3: Int? = parseLogLastHeight(node3.logs)
-        await().atMost(ONE_MINUTE).pollInterval(ONE_SECOND).untilAsserted {
+        await().atMost(TWO_MINUTES).pollInterval(ONE_SECOND).untilAsserted {
             val height = parseLogLastHeight(node3.logs)!!
             assert(height).isNotNull()
             assert(height).isGreaterThan(height11_3!!)
