@@ -10,7 +10,7 @@ import net.postchain.gtx.CompositeGTXModule
 import net.postchain.gtx.GTXModule
 import net.postchain.gtx.GTXModuleFactory
 
-class TestBlockchainConfigurationFactory : BlockchainConfigurationFactory {
+open class TestBlockchainConfigurationFactory : BlockchainConfigurationFactory {
 
     override fun makeBlockchainConfiguration(configData: Any): BlockchainConfiguration {
         return TestBlockchainConfiguration(
@@ -20,7 +20,7 @@ class TestBlockchainConfigurationFactory : BlockchainConfigurationFactory {
     }
 
     // FYI: Copied from GTXBlockchainConfigurationFactory.createGtxModule()
-    private fun createGtxModule(blockchainRID: BlockchainRid, data: Gtv): GTXModule {
+    protected fun createGtxModule(blockchainRID: BlockchainRid, data: Gtv): GTXModule {
         val gtxConfig = data["gtx"]!!
         val list = gtxConfig["modules"]!!.asArray().map { it.asString() }
         if (list.isEmpty()) {
