@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2020 ChromaWay AB. See README for license information. -->
+
 <test>
     <block>
         <transaction blockchainRID="78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"

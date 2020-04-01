@@ -1,6 +1,9 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.network.x
 
-import net.postchain.base.*
+import net.postchain.base.NetworkNodes
+import net.postchain.base.PeerInfo
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.UserMistake
 import org.junit.Before

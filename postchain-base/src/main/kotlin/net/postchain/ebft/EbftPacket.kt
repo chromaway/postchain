@@ -1,11 +1,13 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.ebft
 
 import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.common.toHex
 import net.postchain.core.UserMistake
-import net.postchain.ebft.message.Message
 import net.postchain.ebft.message.Identification
+import net.postchain.ebft.message.Message
 import net.postchain.ebft.message.SignedMessage
 import net.postchain.network.*
 

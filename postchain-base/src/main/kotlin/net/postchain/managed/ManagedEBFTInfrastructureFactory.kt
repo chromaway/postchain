@@ -1,10 +1,11 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.managed
 
 import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.BlockchainInfrastructure
 import net.postchain.core.BlockchainProcessManager
-import net.postchain.debug.DefaultNodeDiagnosticContext
 import net.postchain.debug.NodeDiagnosticContext
 import net.postchain.ebft.BaseEBFTInfrastructureFactory
 

@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.modules.esplix_r4
 
 import net.postchain.base.CryptoSystem

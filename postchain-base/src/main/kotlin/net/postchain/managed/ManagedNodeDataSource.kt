@@ -1,7 +1,8 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.managed
 
 import net.postchain.config.node.PeerInfoDataSource
-import net.postchain.core.EContext
 
 interface ManagedNodeDataSource : PeerInfoDataSource {
     fun getPeerListVersion(): Long

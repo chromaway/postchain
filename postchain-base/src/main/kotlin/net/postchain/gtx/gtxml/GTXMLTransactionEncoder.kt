@@ -1,10 +1,11 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtx.gtxml
 
 import net.postchain.base.gtxml.ObjectFactory
 import net.postchain.base.gtxml.OperationsType
 import net.postchain.base.gtxml.SignaturesType
 import net.postchain.base.gtxml.SignersType
-import net.postchain.common.toHex
 import net.postchain.gtv.gtvml.GtvMLEncoder
 import net.postchain.gtx.GTXTransactionData
 import net.postchain.gtx.OpData

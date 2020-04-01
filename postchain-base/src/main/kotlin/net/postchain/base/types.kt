@@ -1,11 +1,11 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.base
 
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.core.BlockEContext
-import net.postchain.core.EContext
 import net.postchain.core.ByteArrayKey
+import net.postchain.core.EContext
 import net.postchain.core.TxEContext
 import java.sql.Connection
 

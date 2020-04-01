@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.integrationtest.reconnection
 
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
@@ -10,8 +12,7 @@ import org.awaitility.Duration
 import org.junit.Assert
 import org.junit.Test
 
-// TODO: this tests breaks with a weird duplicate tx issue once in a while
-class FourPeersReconnectionTest : ReconnectionTest() {
+class FourPeersReconnectionTestNightly : ReconnectionTest() {
 
     @Test
     fun test4Peers() {

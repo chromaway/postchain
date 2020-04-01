@@ -1,10 +1,15 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv.merkle.proof
 
 import net.postchain.base.merkle.*
 import net.postchain.base.merkle.proof.*
 import net.postchain.core.UserMistake
 import net.postchain.gtv.*
-import net.postchain.gtv.merkle.*
+import net.postchain.gtv.merkle.GtvArrayHeadNode
+import net.postchain.gtv.merkle.GtvBinaryTree
+import net.postchain.gtv.merkle.GtvDictHeadNode
+import net.postchain.gtv.merkle.GtvMerkleBasics
 import net.postchain.gtv.path.*
 
 

@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv.merkle.hash
 
 import net.postchain.base.merkle.TreeHelper

@@ -1,8 +1,9 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv.merkle
 
-import net.postchain.base.merkle.*
-import net.postchain.base.merkle.proof.MerkleProofTreeFactory
-
+import net.postchain.base.merkle.BinaryTreeElement
+import net.postchain.base.merkle.BinaryTreeFactory
 import net.postchain.gtv.*
 import net.postchain.gtv.merkle.factory.GtvBinaryTreeFactoryArray
 import net.postchain.gtv.merkle.factory.GtvBinaryTreeFactoryDict

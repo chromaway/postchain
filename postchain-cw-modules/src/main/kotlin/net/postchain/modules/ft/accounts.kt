@@ -1,15 +1,15 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.modules.ft
 
 import net.postchain.base.BlockchainRid
 import net.postchain.base.CryptoSystem
 import net.postchain.core.UserMistake
-import net.postchain.gtv.GtvNull
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvArray
 import net.postchain.gtv.GtvEncoder.encodeGtv
 import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtv.GtvNull
 
 /**
  * FT works through accounts. Accounts has their own balance, history and what authorization is necessary to initiate

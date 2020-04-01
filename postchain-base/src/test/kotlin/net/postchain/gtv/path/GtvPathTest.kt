@@ -1,7 +1,9 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv.path
 
-import org.junit.Test
 import org.junit.Assert
+import org.junit.Test
 
 class GtvPathTest {
 
