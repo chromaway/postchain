@@ -15,17 +15,32 @@ import org.apache.commons.dbutils.handlers.ScalarHandler
 /**
  * nop operation can be useful as nonce or identifier which has no meaning on consensus level
  */
-class GTX_nop(u: Unit, opData: ExtOpData) : GTXOperation(opData) {
+class GtxNop(u: Unit, opData: ExtOpData) : GTXOperation(opData) {
+
+    companion object {
+        const val OP_NAME = "nop"
+    }
+
     override fun apply(ctx: TxEContext): Boolean {
         return true
     }
 
     override fun isCorrect(): Boolean {
-        return true
+        // Validation: To prevent spam from entering the BC we validate the arguments
+        return OpData.validateSimpleOperationArgs(data.args, GtxNop.OP_NAME)
     }
 }
 
-class GTX_timeb(u: Unit, opData: ExtOpData) : GTXOperation(opData) {
+/**
+ * Will take one or two arguments "from" and "to".
+ * If current timestamp in within this interval we return true.
+ */
+class GtxTimeB(u: Unit, opData: ExtOpData) : GTXOperation(opData) {
+
+    companion object {
+        const val OP_NAME = "timeb"
+    }
+
     override fun isCorrect(): Boolean {
         if (data.args.size != 2) return false
         val from = data.args[0].asInteger()
@@ -84,8 +99,8 @@ fun txConfirmationTime(config: Unit, ctx: EContext, args: Gtv): Gtv {
 
 
 class StandardOpsGTXModule : SimpleGTXModule<Unit>(Unit, mapOf(
-        "nop" to ::GTX_nop,
-        "timeb" to ::GTX_timeb
+        GtxNop.OP_NAME to ::GtxNop,
+        GtxTimeB.OP_NAME to ::GtxTimeB
 ), mapOf(
         "last_block_info" to ::lastBlockInfoQuery,
         "tx_confirmation_time" to ::txConfirmationTime

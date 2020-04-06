@@ -54,12 +54,51 @@ class GTXTransaction (
             }
         }
 
-        for (op in ops) {
-            if (!op.isCorrect()) return false
-        }
+        if (!areOperationsValid()) return false
 
         isChecked = true
         return true
+    }
+
+    /**
+     * The business rules for a TX to be valid are here to prevent spam from entering the blockchain.
+     * Ideally we want at least one operation where the module will validate the signer somehow, so it's not just
+     * anyone sending TXs, and this is why we require a transaction to include at least one "custom" operation.
+     * We still have one attack vector where the Dapp developer creates custom operation where no signer check is
+     * included, b/c this opens up to anonymous attacks.
+     */
+    fun areOperationsValid(): Boolean {
+        var hasCustomOperation = false
+        var foundNop = false
+        var foundTimeB = false
+        for (op in ops) {
+            when (op) {
+                is GtxNop -> {
+                    if (foundNop) {
+                        // "This transaction includes multiple nop operations. Classed as spam."
+                        return false
+                    } else {
+                        foundNop = true
+                    }
+                }
+                is GtxTimeB -> {
+                    if (foundTimeB) {
+                        // "This transaction includes multiple timeb operations. Classed as spam."
+                        return false
+                    } else {
+                        foundTimeB = true
+                    }
+                }
+                else -> {
+                    hasCustomOperation = true
+                }
+            }
+
+            if (!op.isCorrect()) return false
+        }
+
+        // "This transaction must have at least one operation (nop and timeb not counted) or be classed as spam."
+        return hasCustomOperation
     }
 
     @Synchronized
