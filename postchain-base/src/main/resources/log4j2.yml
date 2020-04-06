@@ -21,15 +21,26 @@ Configuration:
     RollingFile:
       name: FileAppender
       fileName: "${logs}/${filename}.${fileExt}"
-      filePattern: "${logs}/${filename}-%d{yyyy-MM-dd-HH-mm}.%i.${fileExt}.gz"
+      filePattern: "${logs}/${filename}-%d{yyyy-MM-dd-HH}.%i.${fileExt}.gz"
       Policies:
         TimeBasedTriggeringPolicy:
           interval: 60
           modulate: true
         SizeBasedTriggeringPolicy:
           size: 10 MB
+      # Delete file older than 14days but keep most recent 1 GB
       DefaultRollOverStrategy:
-        max: 100
+        max: 5
+        Delete:
+          basePath: "${logs}"
+          maxDepth: 2
+          IfFileName:
+            glob: "${filename}*.${fileExt}.gz"
+          IfLastModified:
+            age: 14d
+            IfAny:
+              IfAccumulatedFileSize:
+                exceeds: 1 GB
       PatternLayout:
         # pattern: "[%X{node-id}] %-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
         pattern: "%-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
