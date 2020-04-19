@@ -330,8 +330,6 @@ class RestApi(
                 value = JsonPrimitive(paramValue.toBoolean())
             } else if (paramValue.toIntOrNull() != null){
                 value = JsonPrimitive(paramValue.toInt())
-            } else if (paramValue.toDoubleOrNull() != null) {
-                value = JsonPrimitive(paramValue.toDouble())
             }
             jsonQuery.add(it.key, value)
         }
