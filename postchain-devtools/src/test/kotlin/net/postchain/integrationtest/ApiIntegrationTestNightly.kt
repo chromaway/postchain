@@ -105,6 +105,38 @@ class ApiIntegrationTestNightly : IntegrationTest() {
     }
 
     @Test
+    fun testGetQuery() {
+        val nodesCount = 1
+        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
+        configOverrides.setProperty("api.port", 0)
+        val nodes = createNodes(nodesCount, "/net/postchain/devtools/api/blockchain_config_getquery.xml")
+        val blockchainRIDBytes = nodes[0].getBlockchainRid(1L)!! // Just take first chain from first node.
+        val blockchainRID = blockchainRIDBytes.toHex()
+
+        buildBlockAndCommit(nodes[0])
+
+        val expect1 = "1000000"
+
+        var returnVal = given().port(nodes[0].getRestApiHttpPort())
+                .get("/query/$blockchainRID?type=test_query&i=1000&flag=true")
+                .then()
+                .statusCode(200)
+                .extract().asString()
+
+        assertEquals(expect1, returnVal)
+
+        val expect2 = "1000"
+
+        returnVal = given().port(nodes[0].getRestApiHttpPort())
+                .get("/query/$blockchainRID?type=test_query&i=1000&flag=false")
+                .then()
+                .statusCode(200)
+                .extract().asString()
+
+        assertEquals(expect2, returnVal)
+    }
+
+    @Test
     fun testBatchQueriesApi() {
         val nodesCount = 1
         val blocksCount = 1

@@ -94,3 +94,21 @@ class TestDQueryModule : SimpleGTXModule<Unit>(Unit,
 
     }
 }
+
+class TestGetQueryModule : SimpleGTXModule<Unit>(Unit,
+        mapOf(),
+        mapOf("test_query" to { u, ctxt, args ->
+                val flag = (args as GtvDictionary).get("flag")!!.asBoolean()
+                val number = (args as GtvDictionary).get("i")!!.asInteger()
+                if (flag) {
+                    gtv(number * number)
+                } else {
+                    gtv(number)
+                }
+            }
+        )
+) {
+    override fun initializeDB(ctx: EContext) {
+
+    }
+}

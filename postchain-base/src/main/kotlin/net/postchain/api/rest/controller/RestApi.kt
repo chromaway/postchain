@@ -2,9 +2,7 @@
 
 package net.postchain.api.rest.controller
 
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonElement
+import com.google.gson.*
 import mu.KLogging
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_HEADERS
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_METHODS
@@ -198,7 +196,7 @@ class RestApi(
             }, gson::toJson)
 
             http.post("/query/$PARAM_BLOCKCHAIN_RID") { request, _ ->
-                handleQuery(request)
+                handlePostQuery(request)
             }
 
             http.post("/batch_query/$PARAM_BLOCKCHAIN_RID") { request, _ ->
@@ -208,6 +206,10 @@ class RestApi(
             // direct query. That should be used as example: <img src="http://node/dquery/brid?type=get_picture&id=4555" />
             http.get("/dquery/$PARAM_BLOCKCHAIN_RID") { request, response ->
                 handleDirectQuery(request, response)
+            }
+
+            http.get("query/$PARAM_BLOCKCHAIN_RID") { request, response ->
+                handleGetQuery(request)
             }
 
             http.post("/query_gtx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
@@ -311,11 +313,29 @@ class RestApi(
         return gson.toJson(ErrorBody(error.message ?: "Unknown error"))
     }
 
-    private fun handleQuery(request: Request): String {
+    private fun handlePostQuery(request: Request): String {
         logger.debug("Request body: ${request.body()}")
         return model(request)
                 .query(Query(request.body()))
                 .json
+    }
+
+    private fun handleGetQuery(request: Request) : String {
+        val queryMap = request.queryMap()
+        val jsonQuery = JsonObject()
+        queryMap.toMap().forEach {
+            val paramValue = queryMap.value(it.key)
+            var value = JsonPrimitive(paramValue)
+            if (paramValue == "true" || paramValue == "false") {
+                value = JsonPrimitive(paramValue.toBoolean())
+            } else if (paramValue.toIntOrNull() != null){
+                value = JsonPrimitive(paramValue.toInt())
+            } else if (paramValue.toDoubleOrNull() != null) {
+                value = JsonPrimitive(paramValue.toDouble())
+            }
+            jsonQuery.add(it.key, value)
+        }
+        return model(request).query(Query(gson.toJson(jsonQuery))).json
     }
 
     private fun handleDirectQuery(request: Request, response: Response): Any {
