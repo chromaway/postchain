@@ -1,0 +1,1 @@
+copy ..\..\..\..\target\postchain-single-dapp-?.?.?-SNAPSHOT-dist.tar.gz .
