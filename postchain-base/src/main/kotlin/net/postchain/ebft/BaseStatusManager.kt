@@ -180,18 +180,18 @@ class BaseStatusManager(
      */
     @Synchronized
     override fun onReceivedBlock(blockRID: ByteArray, mySignature: Signature): Boolean {
-        val _intent = intent
-        if (_intent is FetchUnfinishedBlockIntent) {
-            if (_intent.isThisTheBlockWeAreWaitingFor(blockRID)) {
+        val theIntent = intent
+        return if (theIntent is FetchUnfinishedBlockIntent) {
+            if (theIntent.isThisTheBlockWeAreWaitingFor(blockRID)) {
                 acceptBlock(blockRID, mySignature)
-                return true
+                true
             } else {
-                logger.error("Received block which is irrelevant. Need ${_intent.blockRID.toHex()}, got ${blockRID.toHex()}")
-                return false
+                logger.error("Received block which is irrelevant. Need ${theIntent.blockRID.toHex()}, got ${blockRID.toHex()}")
+                false
             }
         } else {
-            logger.error("Received block which is irrelevant, intent was ${_intent::class.simpleName}")
-            return false
+            logger.error("Received block which is irrelevant, intent was ${theIntent::class.simpleName}")
+            false
         }
     }
 

@@ -1,6 +1,7 @@
 <!-- Copyright (c) 2020 ChromaWay AB. See README for license information. -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.postchain</groupId>
@@ -13,6 +14,7 @@
         <module>postchain-cw-modules</module>
         <module>postchain-docker</module>
         <module>postchain-client</module>
+        <module>postchain-distribution</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -29,8 +31,9 @@
         <junitparams.version>1.1.1</junitparams.version>
         <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
         <kotlin.compiler.incremental>false</kotlin.compiler.incremental>
-        <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
-        <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
+        <maven.surefire.plugin.version>2.22.1</maven.surefire.plugin.version>
+        <maven.compiler.plugin.version>3.5.1</maven.compiler.plugin.version>
+        <maven.assembly.plugin.version>3.2.0</maven.assembly.plugin.version>
 
         <!-- Logging -->
         <kotlin-logging.version>1.6.26</kotlin-logging.version>
@@ -39,7 +42,7 @@
         <jackson.version>2.10.1</jackson.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
+        <maven.source.plugin.version>3.0.1</maven.source.plugin.version>
         <jgitflow.maven.plugin.version>1.0-m5.1</jgitflow.maven.plugin.version>
     </properties>
 
@@ -197,7 +200,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven-compiler-plugin.version}</version>
+                <version>${maven.compiler.plugin.version}</version>
                 <executions>
                     <!-- Replacing default-compile as it is treated specially by maven -->
                     <execution>
@@ -233,7 +236,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>${maven-source-plugin.version}</version>
+                <version>${maven.source.plugin.version}</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -289,7 +292,8 @@
                             <goal>write-project-properties</goal>
                         </goals>
                         <configuration>
-                            <outputFile>${project.build.outputDirectory}/${project.artifactId}-maven.properties</outputFile>
+                            <outputFile>${project.build.outputDirectory}/${project.artifactId}-maven.properties
+                            </outputFile>
                         </configuration>
                     </execution>
                 </executions>
@@ -307,7 +311,8 @@
                             <goal>list</goal>
                         </goals>
                         <configuration>
-                            <outputFile>${project.build.outputDirectory}/${project.artifactId}-dependencies.txt</outputFile>
+                            <outputFile>${project.build.outputDirectory}/${project.artifactId}-dependencies.txt
+                            </outputFile>
                             <sort>true</sort>
                         </configuration>
                     </execution>
@@ -352,12 +357,13 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>${maven-surefire-plugin.version}</version>
+                        <version>${maven.surefire.plugin.version}</version>
                         <configuration>
                             <includes>
                                 <include>**/*Test.java</include>
                                 <include>**/*IT.java</include>
                                 <include>**/*Nightly.java</include>
+                                <include>**/*E2ET.*</include>
                                 <!--                                <include>**/FourPeersReconfigurationTest.java</include>-->
                             </includes>
                         </configuration>

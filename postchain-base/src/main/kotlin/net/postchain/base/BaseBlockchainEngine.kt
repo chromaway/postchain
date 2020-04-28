@@ -94,11 +94,11 @@ open class BaseBlockchainEngine(
     }
 
     override fun addBlock(block: BlockDataWithWitness) {
-        val blockBuilder = loadUnfinishedBlock(block)
+        val (blockBuilder, exception) = loadUnfinishedBlock(block)
         blockBuilder.commit(block.witness)
     }
 
-    override fun loadUnfinishedBlock(block: BlockData): ManagedBlockBuilder {
+    override fun loadUnfinishedBlock(block: BlockData): Pair<ManagedBlockBuilder, Exception?> {
         return if (useParallelDecoding)
             parallelLoadUnfinishedBlock(block)
         else
@@ -118,13 +118,13 @@ open class BaseBlockchainEngine(
         else throw UserMistake("Transaction is not correct")
     }
 
-    private fun sequentialLoadUnfinishedBlock(block: BlockData): ManagedBlockBuilder {
+    private fun sequentialLoadUnfinishedBlock(block: BlockData): Pair<ManagedBlockBuilder, Exception?> {
         return loadUnfinishedBlockImpl(block) { txs ->
             txs.map { smartDecodeTransaction(it) }
         }
     }
 
-    private fun parallelLoadUnfinishedBlock(block: BlockData): ManagedBlockBuilder {
+    private fun parallelLoadUnfinishedBlock(block: BlockData): Pair<ManagedBlockBuilder, Exception?> {
         return loadUnfinishedBlockImpl(block) { txs ->
             val txsLazy = txs.map { tx ->
                 task { smartDecodeTransaction(tx) }
@@ -134,88 +134,106 @@ open class BaseBlockchainEngine(
         }
     }
 
-    private fun loadUnfinishedBlockImpl(block: BlockData, transactionsDecoder: (List<ByteArray>) -> List<Transaction>): ManagedBlockBuilder {
+    private fun loadUnfinishedBlockImpl(
+            block: BlockData,
+            transactionsDecoder: (List<ByteArray>) -> List<Transaction>
+    ): Pair<ManagedBlockBuilder, Exception?> {
+
         val grossStart = System.nanoTime()
         val blockBuilder = makeBlockBuilder()
-        blockBuilder.begin(block.header)
+        var exception: Exception? = null
 
-        val netStart = System.nanoTime()
-        val decodedTxs = transactionsDecoder(block.transactions)
-        decodedTxs.forEach(blockBuilder::appendTransaction)
-        val netEnd = System.nanoTime()
+        try {
+            blockBuilder.begin(block.header)
 
-        blockBuilder.finalizeAndValidate(block.header)
-        val grossEnd = System.nanoTime()
+            val netStart = System.nanoTime()
+            val decodedTxs = transactionsDecoder(block.transactions)
+            decodedTxs.forEach(blockBuilder::appendTransaction)
+            val netEnd = System.nanoTime()
 
-        if (LOG_STATS) {
-            val prettyBlockHeader = prettyBlockHeader(
-                    block.header, block.transactions.size, 0, grossStart to grossEnd, netStart to netEnd)
-            logger.info("$processName: Loaded block: $prettyBlockHeader")
+            blockBuilder.finalizeAndValidate(block.header)
+            val grossEnd = System.nanoTime()
+
+            if (LOG_STATS) {
+                val prettyBlockHeader = prettyBlockHeader(
+                        block.header, block.transactions.size, 0, grossStart to grossEnd, netStart to netEnd)
+                logger.info("$processName: Loaded block: $prettyBlockHeader")
+            }
+
+        } catch (e: Exception) {
+            exception = e
         }
 
-        return blockBuilder
+        return blockBuilder to exception
     }
 
-    override fun buildBlock(): ManagedBlockBuilder {
+    override fun buildBlock(): Pair<ManagedBlockBuilder, Exception?> {
         TimeLog.startSum("BaseBlockchainEngine.buildBlock().buildBlock")
         val grossStart = System.nanoTime()
 
         val blockBuilder = makeBlockBuilder()
-        blockBuilder.begin(null)
-        val abstractBlockBuilder = ((blockBuilder as BaseManagedBlockBuilder).blockBuilder as AbstractBlockBuilder)
-        val netStart = System.nanoTime()
+        var exception: Exception? = null
 
-        // TODO Potential problem: if the block fails for some reason,
-        // the transaction queue is gone. This could potentially happen
-        // during a revolt. We might need a "transactional" tx queue...
+        try {
+            blockBuilder.begin(null)
+            val abstractBlockBuilder = ((blockBuilder as BaseManagedBlockBuilder).blockBuilder as AbstractBlockBuilder)
+            val netStart = System.nanoTime()
 
-        TimeLog.startSum("BaseBlockchainEngine.buildBlock().appendtransactions")
-        var acceptedTxs = 0
-        var rejectedTxs = 0
+            // TODO Potential problem: if the block fails for some reason,
+            // the transaction queue is gone. This could potentially happen
+            // during a revolt. We might need a "transactional" tx queue...
 
-        while (true) {
-            logger.debug("$processName: Checking transaction queue")
-            TimeLog.startSum("BaseBlockchainEngine.buildBlock().takeTransaction")
-            val tx = transactionQueue.takeTransaction()
-            TimeLog.end("BaseBlockchainEngine.buildBlock().takeTransaction")
-            if (tx != null) {
-                logger.debug("$processName: Appending transaction ${tx.getRID().toHex()}")
-                TimeLog.startSum("BaseBlockchainEngine.buildBlock().maybeApppendTransaction")
-                val exception = blockBuilder.maybeAppendTransaction(tx)
-                TimeLog.end("BaseBlockchainEngine.buildBlock().maybeApppendTransaction")
-                if (exception != null) {
-                    rejectedTxs++
-                    transactionQueue.rejectTransaction(tx, exception)
-                } else {
-                    acceptedTxs++
-                    // tx is fine, consider stopping
-                    if (strategy.shouldStopBuildingBlock(abstractBlockBuilder)) {
-                        logger.debug("$processName: Block size limit is reached")
-                        break
+            TimeLog.startSum("BaseBlockchainEngine.buildBlock().appendtransactions")
+            var acceptedTxs = 0
+            var rejectedTxs = 0
+
+            while (true) {
+                logger.debug("$processName: Checking transaction queue")
+                TimeLog.startSum("BaseBlockchainEngine.buildBlock().takeTransaction")
+                val tx = transactionQueue.takeTransaction()
+                TimeLog.end("BaseBlockchainEngine.buildBlock().takeTransaction")
+                if (tx != null) {
+                    logger.debug("$processName: Appending transaction ${tx.getRID().toHex()}")
+                    TimeLog.startSum("BaseBlockchainEngine.buildBlock().maybeApppendTransaction")
+                    val exception = blockBuilder.maybeAppendTransaction(tx)
+                    TimeLog.end("BaseBlockchainEngine.buildBlock().maybeApppendTransaction")
+                    if (exception != null) {
+                        rejectedTxs++
+                        transactionQueue.rejectTransaction(tx, exception)
+                    } else {
+                        acceptedTxs++
+                        // tx is fine, consider stopping
+                        if (strategy.shouldStopBuildingBlock(abstractBlockBuilder)) {
+                            logger.debug("$processName: Block size limit is reached")
+                            break
+                        }
                     }
+                } else { // tx == null
+                    break
                 }
-            } else { // tx == null
-                break
             }
+
+            TimeLog.end("BaseBlockchainEngine.buildBlock().appendtransactions")
+
+            val netEnd = System.nanoTime()
+            val blockHeader = blockBuilder.finalizeBlock()
+            val grossEnd = System.nanoTime()
+
+            TimeLog.end("BaseBlockchainEngine.buildBlock().buildBlock")
+
+            if (LOG_STATS) {
+                val prettyBlockHeader = prettyBlockHeader(
+                        blockHeader, acceptedTxs, rejectedTxs, grossStart to grossEnd, netStart to netEnd)
+                logger.info("$processName: Block is finalized: $prettyBlockHeader")
+            } else {
+                logger.info("$processName: Block is finalized")
+            }
+
+        } catch (e: Exception) {
+            exception = e
         }
 
-        TimeLog.end("BaseBlockchainEngine.buildBlock().appendtransactions")
-
-        val netEnd = System.nanoTime()
-        val blockHeader = blockBuilder.finalizeBlock()
-        val grossEnd = System.nanoTime()
-
-        TimeLog.end("BaseBlockchainEngine.buildBlock().buildBlock")
-
-        if (LOG_STATS) {
-            val prettyBlockHeader = prettyBlockHeader(
-                    blockHeader, acceptedTxs, rejectedTxs, grossStart to grossEnd, netStart to netEnd)
-            logger.info("$processName: Block is finalized: $prettyBlockHeader")
-        } else {
-            logger.info("$processName: Block is finalized")
-        }
-
-        return blockBuilder
+        return blockBuilder to exception
     }
 
     private fun prettyBlockHeader(

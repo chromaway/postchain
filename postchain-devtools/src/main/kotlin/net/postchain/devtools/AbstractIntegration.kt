@@ -46,7 +46,7 @@ abstract class AbstractIntegration {
     }
 
     protected fun buildBlockAndCommit(engine: BlockchainEngine) {
-        val blockBuilder = engine.buildBlock()
+        val (blockBuilder, _) = engine.buildBlock()
         commitBlock(blockBuilder)
     }
 
@@ -54,7 +54,8 @@ abstract class AbstractIntegration {
         commitBlock(node
                 .getBlockchainInstance()
                 .getEngine()
-                .buildBlock())
+                .buildBlock()
+                .first)
     }
 
     private fun commitBlock(blockBuilder: BlockBuilder): BlockWitness {

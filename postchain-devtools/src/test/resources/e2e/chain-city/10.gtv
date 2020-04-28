@@ -1,0 +1,13 @@
+¤‚¹0‚µ0•blockstrategy¤ƒ0€0
+blockdelay£Ğ0maxblocktime£Ğ0maxblocktransactions£ô06name¢.,net.postchain.base.BaseBlockBuildingStrategy0Mconfigurationfactory¢53net.postchain.gtx.GTXBlockchainConfigurationFactory0‚–gtx¤‚0‚‰0omodules¥d0b¢64net.postchain.rell.module.RellPostchainModuleFactory¢(&net.postchain.gtx.StandardOpsGTXModule0‚rell¤‚
+0‚0>
+moduleArgs¤00.0,admin¡#!Pş@vkÀÎ³õ¸äšƒRıÔX`kÕúşZÍÍÈÿ?W0modules¥
+0¢main0¬sources_v0.10¤š0—0”	main.rell¢†ƒmodule;
+
+entity city { key name; }
+
+operation add_city (name) { create city (name); }
+
+query get_cities () { return city @* {}; }
+
+02signers¥'0%¡#!Pş@vkÀÎ³õ¸äšƒRıÔX`kÕúşZÍÍÈÿ?W

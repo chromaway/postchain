@@ -1,0 +1,29 @@
+<run wipe-db="true">
+    <nodes>
+        <config src="../node-config.properties" add-signers="true" />
+    </nodes>
+    <chains>
+        <chain name="chain_zero" iid="0">
+            <config height="0">
+                <app module="chain_zero" />
+                <gtv path="blockstrategy/blockdelay"><int>5000</int></gtv>
+                <gtv path="blockstrategy/maxblocktime"><int>5000</int></gtv>
+                <gtv path="blockstrategy/maxblocktransactions"><int>500</int></gtv>
+                <gtv path="gtx/rell/moduleArgs">
+                  <dict>
+                    <entry key="admin"><bytea>0350fe40766bc0ce8d08b3f5b810e49a8352fdd458606bd5fafe5acdcdc8ff3f57</bytea></entry>
+                    <entry key="directory_blockchain_rid"><bytea>000000000000000000000000000000000000000000000000000000000000000000</bytea></entry>
+                  </dict>
+                </gtv>
+                <!--
+                <gtv path="signers">
+                    <array>
+                        <bytea>02B99A05912B01B7797D84D6660E9ED35FAEE078BD5BDF40026E0CC6E0CB2EF50C</bytea>
+                        <bytea>02839DDE1D2121CE72794E54180F5F5C3AD23543D419CB4C3640A854ACB1ADA9E6</bytea>
+                    </array>
+                </gtv>
+                -->
+            </config>
+        </chain>
+    </chains>
+</run>

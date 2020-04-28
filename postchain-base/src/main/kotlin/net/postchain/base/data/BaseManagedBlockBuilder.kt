@@ -121,9 +121,10 @@ class BaseManagedBlockBuilder(
     }
 
     override fun rollback() {
-        logger.debug("${eContext.nodeID} BaseManagedBlockBuilder.rollback()")
+        logger.debug("${eContext.nodeID} rolling back block - start -------------------")
         if (closed) throw ProgrammerMistake("Already closed")
         closed = true
         storage.closeWriteConnection(eContext, false)
+        logger.debug("${eContext.nodeID} rolling back block - end -------------------")
     }
 }

@@ -162,7 +162,8 @@ class BlockchainEngineTest : IntegrationTestSetup() {
 
         try {
             loadUnfinishedAndCommit(node1, blockData)
-        } catch (e : Exception) {}
+        } catch (e: Exception) {
+        }
 
         assertEquals(-1, getBestHeight(node1))
     }
@@ -175,7 +176,8 @@ class BlockchainEngineTest : IntegrationTestSetup() {
 
         try {
             loadUnfinishedAndCommit(node1, blockData)
-        } catch (e : Exception) {}
+        } catch (e: Exception) {
+        }
 
         assertEquals(0, getBestHeight(node1))
     }
@@ -191,12 +193,16 @@ class BlockchainEngineTest : IntegrationTestSetup() {
         (startId until startId + txCount).forEach {
             engine.getTransactionQueue().enqueue(TestTransaction(it))
         }
-        return engine.buildBlock()
+        return engine.buildBlock().first
     }
 
     private fun loadUnfinishedAndCommit(node: PostchainTestNode, blockData: BlockData) {
-        val blockBuilder = node.getBlockchainInstance().getEngine().loadUnfinishedBlock(blockData)
-        commitBlock(blockBuilder)
+        val (blockBuilder, exception) = node.getBlockchainInstance().getEngine().loadUnfinishedBlock(blockData)
+        if (exception != null) {
+            throw exception
+        } else {
+            commitBlock(blockBuilder)
+        }
     }
 
     private fun commitBlock(blockBuilder: BlockBuilder): BlockWitness {

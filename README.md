@@ -10,10 +10,10 @@ Technical information & user guide is
 
 ## Copyright & License information
 
-Copyright (c) 2017 ChromaWay Inc. All rights reserved.
+Copyright (c) 2017-2020 ChromaWay AB. All rights reserved.
 
 This software can used either under terms of commercial license
-obtained from ChromaWay Inc., or, alternatively, under the terms
+obtained from ChromaWay AB, or, alternatively, under the terms
 of the GNU General Public License with additional linking exceptions.
 See file LICENSE for details.
 

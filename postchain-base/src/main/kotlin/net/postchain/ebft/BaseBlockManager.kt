@@ -3,16 +3,18 @@
 package net.postchain.ebft
 
 import mu.KLogging
+import net.postchain.common.toHex
 import net.postchain.core.BlockBuildingStrategy
 import net.postchain.core.BlockData
 import net.postchain.core.BlockDataWithWitness
+import net.postchain.debug.BlockchainProcessName
 import nl.komponents.kovenant.Promise
-import java.util.*
 
 /**
  * Manages intents and acts as a wrapper for [blockDatabase] and [statusManager]
  */
 class BaseBlockManager(
+        private val processName: BlockchainProcessName,
         val blockDB: BlockDatabase,
         val statusManager: StatusManager,
         val blockStrategy: BlockBuildingStrategy
@@ -28,53 +30,59 @@ class BaseBlockManager(
     @Volatile
     override var currentBlock: BlockData? = null
 
-    protected fun <RT> runDBOp(op: () -> Promise<RT, Exception>, onSuccess: (RT) -> Unit) {
+    protected fun <RT> runDBOp(op: () -> Promise<RT, Exception>, onSuccess: (RT) -> Unit, onFailure: (Exception) -> Unit = {}) {
         if (!processing) {
-            synchronized (statusManager) {
+            synchronized(statusManager) {
                 processing = true
                 intent = DoNothingIntent
-                val promise = op()
-                promise.success { res ->
-                    synchronized (statusManager) {
+
+                op() success { res ->
+                    synchronized(statusManager) {
                         onSuccess(res)
                         processing = false
                     }
-                }
-                promise.fail { err ->
-                    processing = false
-                    logger.debug("Error in runDBOp()", err)
+                } fail { err ->
+                    synchronized(statusManager) {
+                        onFailure(err)
+                        processing = false
+                        logger.debug("Error in runDBOp()", err)
+                    }
                 }
             }
         }
     }
 
     override fun onReceivedUnfinishedBlock(block: BlockData) {
-        synchronized (statusManager) {
+        synchronized(statusManager) {
             val theIntent = intent
-            if (theIntent is FetchUnfinishedBlockIntent
-                    && Arrays.equals(theIntent.blockRID, block.header.blockRID)) {
+            if (theIntent is FetchUnfinishedBlockIntent && theIntent.blockRID.contentEquals(block.header.blockRID)) {
                 runDBOp({
                     blockDB.loadUnfinishedBlock(block)
-                }, { sig ->
-                    if (statusManager.onReceivedBlock(block.header.blockRID, sig)) {
+                }, { signature ->
+                    if (statusManager.onReceivedBlock(block.header.blockRID, signature)) {
                         currentBlock = block
                     }
+                }, { exception ->
+                    logger.error("$processName: Can't parse unfinished block ${theIntent.blockRID.toHex()}: " +
+                            "${exception.message}")
                 })
             }
         }
     }
 
     override fun onReceivedBlockAtHeight(block: BlockDataWithWitness, height: Long) {
-        synchronized (statusManager) {
+        synchronized(statusManager) {
             val theIntent = intent
-            if (theIntent is FetchBlockAtHeightIntent
-                    && theIntent.height == height) {
+            if (theIntent is FetchBlockAtHeightIntent && theIntent.height == height) {
                 runDBOp({
                     blockDB.addBlock(block)
                 }, {
                     if (statusManager.onHeightAdvance(height + 1)) {
                         currentBlock = null
                     }
+                }, { exception ->
+                    logger.error("$processName: Can't parse received block ${block.header.blockRID.toHex()} " +
+                            "at height $height: ${exception.message}")
                 })
             }
         }
@@ -83,12 +91,13 @@ class BaseBlockManager(
     // this is called only in getBlockIntent which is synchronized on status manager
     protected fun update() {
         if (processing) return
-        val smIntent = statusManager.getBlockIntent()
+        val blockIntent = statusManager.getBlockIntent()
         intent = DoNothingIntent
-        when (smIntent) {
+        when (blockIntent) {
+
             is CommitBlockIntent -> {
                 if (currentBlock == null) {
-                    logger.error("Don't have a block StatusManager wants me to commit")
+                    logger.error("$processName: Don't have a block StatusManager wants me to commit")
                     return
                 }
                 runDBOp({
@@ -96,8 +105,12 @@ class BaseBlockManager(
                 }, {
                     statusManager.onCommittedBlock(currentBlock!!.header.blockRID)
                     currentBlock = null
+                }, { exception ->
+                    logger.error("$processName: Can't commit block ${currentBlock!!.header.blockRID.toHex()}: " +
+                            "${exception.message}")
                 })
             }
+
             is BuildBlockIntent -> {
                 // It's our turn to build a block. But we need to consult the
                 // BlockBuildingStrategy in order to figure out if this is the
@@ -117,9 +130,13 @@ class BaseBlockManager(
                     if (statusManager.onBuiltBlock(block.header.blockRID, signature)) {
                         currentBlock = block
                     }
+                }, { exception ->
+                    // TODO: POS-111: Put `blockRID` to log message
+                    logger.error("$processName: Can't build block _____: ${exception.message}")
                 })
             }
-            else -> intent = smIntent
+
+            else -> intent = blockIntent
         }
     }
 
@@ -129,7 +146,7 @@ class BaseBlockManager(
     }
 
     override fun getBlockIntent(): BlockIntent {
-        synchronized (statusManager) {
+        synchronized(statusManager) {
             update()
         }
         return intent

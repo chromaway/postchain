@@ -138,7 +138,7 @@ open class GtxTxIntegrationTestSetup: IntegrationTestSetup()  {
             systemSetup.nodeMap.values.forEach { node ->
                 val nodeId = node.sequenceNumber.nodeNumber
                 node.chainsToSign.forEach { chain ->
-                    buildBlocks(nodeId, chain.toLong(), block) // The block we can build ourselves
+                    buildBlocks(nodeId, chain.toLong(), block) // The block we can buildgetPeerInfoMap ourselves
                 }
             }
         }

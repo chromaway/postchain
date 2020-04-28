@@ -14,7 +14,7 @@ open class TestBlockchainConfiguration(
         val module: GTXModule
 ) : BaseBlockchainConfiguration(configData) {
 
-    val transactionFactory = TestTransactionFactory()
+    open val transactionFactory = TestTransactionFactory()
 
     companion object : KLogging()
 
