@@ -15,7 +15,7 @@ import net.postchain.gtx.GTXTransactionFactory
  *
  * Out of simplicity, this is a one-operation only transaction.
  *
- * @property factory is what we will use to buildFromFile the TX with
+ * @property factory is what we will use to build the TX with
  * @property id is used to make this TX unique, it is used as the argument of the operation
  * @property op_name is the name of the operation
  * @property signers are the binary IDs of the sigers

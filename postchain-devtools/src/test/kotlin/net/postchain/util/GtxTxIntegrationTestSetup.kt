@@ -100,7 +100,7 @@ open class GtxTxIntegrationTestSetup: IntegrationTestSetup()  {
      * Note that we are enqueueing real GTX TXs here.
      * We are assuming that the relevant chains have been added and started on the nodes.
      *
-     * @param blocksCount number of blocks to buildFromFile
+     * @param blocksCount number of blocks to build
      * @param txPerBlock number of TX in each block
      * @param chainList all BC we will use
      * @param nodeNameWithBlockchainsArr = null if all nodes have the same chains, else with a value
@@ -138,7 +138,7 @@ open class GtxTxIntegrationTestSetup: IntegrationTestSetup()  {
             systemSetup.nodeMap.values.forEach { node ->
                 val nodeId = node.sequenceNumber.nodeNumber
                 node.chainsToSign.forEach { chain ->
-                    buildBlocks(nodeId, chain.toLong(), block) // The block we can buildFromFile ourselves
+                    buildBlocks(nodeId, chain.toLong(), block) // The block we can build ourselves
                 }
             }
         }

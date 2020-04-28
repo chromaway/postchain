@@ -45,7 +45,7 @@ object NodeConfigurationProviderGenerator {
     }
 
     /**
-     * Transforms the [PropertiesConfiguration] -> [CompositeConfig] -> [AppConfig] and use the [NodeConfigurationProviderFactory] to buildFromFile a real instance.
+     * Transforms the [PropertiesConfiguration] -> [CompositeConfig] -> [AppConfig] and use the [NodeConfigurationProviderFactory] to build a real instance.
      *
      * @param baseConfig is the config we have built so far
      * @param configOverrides is the configurations we always want
