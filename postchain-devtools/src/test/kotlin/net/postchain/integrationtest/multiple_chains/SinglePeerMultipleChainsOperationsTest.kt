@@ -1,7 +1,8 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.integrationtest.multiple_chains
 
 import mu.KLogging
-import net.postchain.common.hexStringToByteArray
 import net.postchain.devtools.IntegrationTest
 import net.postchain.integrationtest.addBlockchainAndStart
 import net.postchain.integrationtest.assertChainNotStarted

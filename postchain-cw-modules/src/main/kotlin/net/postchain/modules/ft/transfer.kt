@@ -1,14 +1,14 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.modules.ft
 
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.TxEContext
 import net.postchain.core.UserMistake
-import net.postchain.gtx.ExtOpData
-import net.postchain.gtx.GTXOperation
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvArray
+import net.postchain.gtx.ExtOpData
+import net.postchain.gtx.GTXOperation
 
 class TransferElement<AccountT>(val account: AccountT,
                                 val assetID: String,

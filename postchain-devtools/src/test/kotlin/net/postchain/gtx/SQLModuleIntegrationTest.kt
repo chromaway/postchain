@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtx
 
 import net.postchain.base.BlockchainRid
@@ -5,8 +7,8 @@ import net.postchain.core.UserMistake
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
-import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.*
+import net.postchain.gtv.GtvFactory.gtv
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Ignore

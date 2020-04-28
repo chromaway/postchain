@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.cli
 
 import com.beust.jcommander.Parameter
@@ -56,8 +58,9 @@ class CommandRunNodeAuto : Command {
                             chainIds.add(chainId)
 
                             dir.listFiles()
-                                    ?.filter { it.extension == "xml" }
-                                    ?.forEach { file ->
+                                    .filter { it.extension == "xml" }
+                                    .sortedBy { it.nameWithoutExtension.split(".")[0].toLong() }
+                                    .forEach { file ->
                                         val blockchainConfigFile = file.absolutePath
                                         val height = (file.nameWithoutExtension.split(".")[0]).toLong()
                                         if (height.toInt() == 0) {

@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.devtools
 
 import com.google.gson.GsonBuilder
@@ -5,7 +7,6 @@ import mu.KLogging
 import net.postchain.StorageBuilder
 import net.postchain.base.BlockchainRid
 import net.postchain.base.gtxml.TestType
-import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
 import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.core.NODE_ID_TODO

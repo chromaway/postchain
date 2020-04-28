@@ -1,9 +1,13 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.devtools.testinfra
 
 import net.postchain.base.merkle.Hash
 import net.postchain.devtools.KeyPairHelper
 import net.postchain.gtv.GtvFactory
-import net.postchain.gtx.*
+import net.postchain.gtx.GTXDataBuilder
+import net.postchain.gtx.GTXTransaction
+import net.postchain.gtx.GTXTransactionFactory
 
 /**
  * This represents a "real" GTX transaction (which means it can be transformed to GTV and GTX without generating errors)

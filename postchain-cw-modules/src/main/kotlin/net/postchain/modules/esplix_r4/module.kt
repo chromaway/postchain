@@ -1,9 +1,14 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.modules.esplix_r4
 
 import net.postchain.base.BlockchainRid
 import net.postchain.core.EContext
-import net.postchain.gtx.*
 import net.postchain.gtv.Gtv
+import net.postchain.gtx.GTXModule
+import net.postchain.gtx.GTXModuleFactory
+import net.postchain.gtx.GTXSchemaManager
+import net.postchain.gtx.SimpleGTXModule
 
 class EsplixModule(val config: EsplixConfig) : SimpleGTXModule<EsplixConfig>(
         config,

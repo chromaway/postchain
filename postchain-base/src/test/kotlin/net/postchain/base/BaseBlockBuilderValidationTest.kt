@@ -1,12 +1,12 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.base
 
-import net.postchain.base.data.*
+import net.postchain.base.data.BaseBlockBuilder
+import net.postchain.base.data.BaseBlockStore
+import net.postchain.base.data.BaseTransactionFactory
+import net.postchain.base.data.DatabaseAccess
 import net.postchain.common.hexStringToByteArray
-import net.postchain.core.BlockEContext
-import net.postchain.core.EContext
-import net.postchain.core.ExecutionContext
 import net.postchain.core.InitialBlockData
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey

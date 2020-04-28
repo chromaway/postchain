@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.integrationtest.reconnection
 
 import net.postchain.hasSize
@@ -7,7 +9,6 @@ import net.postchain.integrationtest.assertNodeConnectedWith
 import net.postchain.isEmpty
 import org.awaitility.Awaitility
 import org.awaitility.Duration
-import org.junit.Ignore
 import org.junit.Test
 
 // TODO: this test seems flaky, investigate

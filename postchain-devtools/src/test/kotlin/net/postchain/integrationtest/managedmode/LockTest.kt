@@ -1,10 +1,10 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.integrationtest.managedmode
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import mu.KLogging
-import org.junit.Ignore
-import org.junit.Test
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock

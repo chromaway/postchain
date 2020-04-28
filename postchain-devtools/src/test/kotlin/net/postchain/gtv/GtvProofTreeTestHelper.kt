@@ -1,11 +1,13 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv
 
 import net.postchain.base.merkle.proof.SERIALIZATION_HASH_LEAF_TYPE
 import net.postchain.base.merkle.proof.SERIALIZATION_NODE_TYPE
 import net.postchain.base.merkle.proof.SERIALIZATION_VALUE_LEAF_TYPE
+import net.postchain.common.hexStringToByteArray
 import net.postchain.gtv.merkle.proof.SERIALIZATION_ARRAY_TYPE
 import net.postchain.gtv.merkle.proof.SERIALIZATION_DICT_TYPE
-import net.postchain.common.hexStringToByteArray
 
 object GtvProofTreeTestHelper {
 

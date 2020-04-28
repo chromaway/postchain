@@ -1,10 +1,12 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv.gtvml
 
 import assertk.assert
 import assertk.assertions.isEqualTo
 import assertk.assertions.isIn
-import org.junit.Test
 import net.postchain.gtv.*
+import org.junit.Test
 
 class GtvMLEncodeDictsTest {
 

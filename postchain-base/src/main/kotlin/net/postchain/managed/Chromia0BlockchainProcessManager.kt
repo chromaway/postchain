@@ -1,7 +1,8 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.managed
 
 import net.postchain.base.BaseBlockWitness
-import net.postchain.base.BaseBlockchainProcessManager
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.base.withReadConnection
@@ -11,15 +12,10 @@ import net.postchain.core.BlockchainInfrastructure
 import net.postchain.core.ByteArrayKey
 import net.postchain.core.RestartHandler
 import net.postchain.debug.NodeDiagnosticContext
-import net.postchain.devtools.KeyPairHelper
 import net.postchain.gtv.GtvArray
 import net.postchain.gtv.GtvByteArray
 import net.postchain.gtv.GtvDecoder
-import net.postchain.gtv.GtvFactory
-import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtx.GTXDataBuilder
-import net.postchain.gtx.GTXTransactionFactory
-import java.lang.Exception
 
 class Chromia0BlockchainProcessManager(
         blockchainInfrastructure: BlockchainInfrastructure,

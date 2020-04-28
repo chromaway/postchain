@@ -1,9 +1,9 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.integrationtest.multiple_chains
 
-import assertk.assertions.isFalse
 import mu.KLogging
 import net.postchain.StorageBuilder
-import net.postchain.common.hexStringToByteArray
 import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.core.NODE_ID_TODO
 import net.postchain.devtools.PostchainTestNode

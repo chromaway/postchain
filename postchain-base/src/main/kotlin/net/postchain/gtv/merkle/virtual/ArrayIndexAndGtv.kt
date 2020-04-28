@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv.merkle.virtual
 
 import net.postchain.base.merkle.proof.MerkleProofElement
