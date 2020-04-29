@@ -78,7 +78,7 @@ class RestApi(
         if (model != null) {
             bridByIID.remove(model.chainIID)
             models.remove(blockchainRID.toUpperCase())
-        }  else throw ProgrammerMistake("Blockchain $blockchainRID not attached")
+        } else throw ProgrammerMistake("Blockchain $blockchainRID not attached")
     }
 
     override fun retrieveModel(blockchainRID: String): Model? {
@@ -208,7 +208,7 @@ class RestApi(
                 handleDirectQuery(request, response)
             }
 
-            http.get("query/$PARAM_BLOCKCHAIN_RID") { request, response ->
+            http.get("/query/$PARAM_BLOCKCHAIN_RID") { request, response ->
                 handleGetQuery(request)
             }
 
@@ -228,8 +228,8 @@ class RestApi(
                 handleDebugQuery(request)
             }
 
-            http.get( "/brid/$PARAM_BLOCKCHAIN_RID") {
-                request, _ ->  checkBlockchainRID(request)
+            http.get("/brid/$PARAM_BLOCKCHAIN_RID") { request, _ ->
+                checkBlockchainRID(request)
 
             }
         }
@@ -320,19 +320,21 @@ class RestApi(
                 .json
     }
 
-    private fun handleGetQuery(request: Request) : String {
+    private fun handleGetQuery(request: Request): String {
         val queryMap = request.queryMap()
         val jsonQuery = JsonObject()
+
         queryMap.toMap().forEach {
             val paramValue = queryMap.value(it.key)
             var value = JsonPrimitive(paramValue)
             if (paramValue == "true" || paramValue == "false") {
                 value = JsonPrimitive(paramValue.toBoolean())
-            } else if (paramValue.toIntOrNull() != null){
+            } else if (paramValue.toIntOrNull() != null) {
                 value = JsonPrimitive(paramValue.toInt())
             }
             jsonQuery.add(it.key, value)
         }
+
         return model(request).query(Query(gson.toJson(jsonQuery))).json
     }
 
@@ -351,12 +353,10 @@ class RestApi(
         // first element is content-type
         response.type(array[0].asString())
         val content = array[1]
-        if (content.type == GtvType.STRING) {
-            return content.asString()
-        } else if (content.type == GtvType.BYTEARRAY) {
-            return content.asByteArray()
-        } else {
-            throw UserMistake("Unexpected content")
+        return when (content.type) {
+            GtvType.STRING -> content.asString()
+            GtvType.BYTEARRAY -> content.asByteArray()
+            else -> throw UserMistake("Unexpected content")
         }
     }
 

@@ -39,7 +39,7 @@
         <dict>
             <entry key="modules">
                 <array>
-                    <string>net.postchain.configurations.TestDQueryModule</string>
+                    <string>net.postchain.integrationtest.api.TestDQueryModule</string>
                     <string>net.postchain.gtx.StandardOpsGTXModule</string>
                 </array>
             </entry>

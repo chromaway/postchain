@@ -1,6 +1,6 @@
 // Copyright (c) 2020 ChromaWay AB. See README for license information.
 
-package net.postchain.integrationtest
+package net.postchain.integrationtest.api
 
 import io.restassured.RestAssured.given
 import net.postchain.base.BaseBlockHeader
@@ -21,6 +21,7 @@ import net.postchain.gtv.merkle.proof.GtvMerkleProofTreeFactory
 import net.postchain.gtv.merkle.proof.merkleHash
 import net.postchain.gtx.GTXDataBuilder
 import net.postchain.gtx.GTXTransactionFactory
+import net.postchain.integrationtest.JsonTools
 import net.postchain.integrationtest.JsonTools.jsonAsMap
 import org.awaitility.Awaitility
 import org.hamcrest.core.IsEqual
@@ -83,24 +84,22 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
         buildBlockAndCommit(nodes[0])
 
+        // /get_picture
         val expect1 = "abcd"
-
         val byteArray = given().port(nodes[0].getRestApiHttpPort())
                 .get("/dquery/$blockchainRID?type=get_picture&id=1234")
                 .then()
                 .statusCode(200)
                 .extract().asByteArray()
-
         assertEquals(expect1, String(byteArray))
 
+        // /get_front_page
         val expect2 = "<h1>it works!</h1>"
-
         val text = given().port(nodes[0].getRestApiHttpPort())
                 .get("/dquery/$blockchainRID?type=get_front_page&id=1234")
                 .then()
                 .statusCode(200)
                 .extract().asString()
-
         assertEquals(expect2, text)
     }
 
@@ -115,24 +114,23 @@ class ApiIntegrationTestNightly : IntegrationTest() {
 
         buildBlockAndCommit(nodes[0])
 
+        // returns `num * num`
+        val num = 1000
         val expect1 = "1000000"
-
         var returnVal = given().port(nodes[0].getRestApiHttpPort())
-                .get("/query/$blockchainRID?type=test_query&i=1000&flag=true")
+                .get("/query/$blockchainRID?type=test_query&i=$num&flag=true")
                 .then()
                 .statusCode(200)
                 .extract().asString()
-
         assertEquals(expect1, returnVal)
 
+        // returns `num`
         val expect2 = "1000"
-
         returnVal = given().port(nodes[0].getRestApiHttpPort())
-                .get("/query/$blockchainRID?type=test_query&i=1000&flag=false")
+                .get("/query/$blockchainRID?type=test_query&i=$num&flag=false")
                 .then()
                 .statusCode(200)
                 .extract().asString()
-
         assertEquals(expect2, returnVal)
     }
 
