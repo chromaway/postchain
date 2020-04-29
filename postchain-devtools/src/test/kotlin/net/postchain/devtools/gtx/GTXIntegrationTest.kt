@@ -61,7 +61,7 @@ class GTXIntegrationTest : IntegrationTestSetup() {
                 node.getBlockchainInstance().getEngine().getTransactionQueue().enqueue(tx)
                 return tx
             } catch (e: Exception) {
-                println(e)
+                logger.error(e) { "Can't enqueue tx" }
             }
             return null
         }
@@ -90,7 +90,7 @@ class GTXIntegrationTest : IntegrationTestSetup() {
         enqueueTx(makeTestTx(2, "false", bcRid))!!
 
         // Tx 3: Nop (invalid, since need more ops)
-        val x =makeNOPGTX(bcRid)
+        val x = makeNOPGTX(bcRid)
         enqueueTx(x)
 
         // -------------------------
