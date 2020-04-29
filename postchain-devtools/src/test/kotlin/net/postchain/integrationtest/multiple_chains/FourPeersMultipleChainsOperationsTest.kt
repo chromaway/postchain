@@ -3,8 +3,7 @@
 package net.postchain.integrationtest.multiple_chains
 
 import mu.KLogging
-import net.postchain.common.hexStringToByteArray
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.ConfigFileBasedIntegrationTest
 import net.postchain.integrationtest.addBlockchainAndStart
 import net.postchain.integrationtest.assertChainNotStarted
 import net.postchain.integrationtest.assertChainStarted
@@ -14,7 +13,7 @@ import org.awaitility.Duration
 import org.junit.Ignore
 import org.junit.Test
 
-class FourPeersMultipleChainsOperationsTest : IntegrationTest() {
+class FourPeersMultipleChainsOperationsTest : ConfigFileBasedIntegrationTest() {
 
     companion object : KLogging()
 
@@ -32,13 +31,11 @@ class FourPeersMultipleChainsOperationsTest : IntegrationTest() {
 
         // chain 1 (peers 0, 1, 2, 3)
         val chainId1 = 1L
-        val blockchainRid1 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3".hexStringToByteArray()
         val blockchainConfig1 = readBlockchainConfig(
                 "/net/postchain/devtools/multiple_chains/chains_ops/four_peers/blockchain_config_1.xml")
 
         // chain 2 (peers 0, 1, 2)
         val chainId2 = 2L
-        val blockchainRid2 = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a4".hexStringToByteArray()
         val blockchainConfig2 = readBlockchainConfig(
                 "/net/postchain/devtools/multiple_chains/chains_ops/four_peers/blockchain_config_2.xml")
 

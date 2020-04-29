@@ -4,6 +4,7 @@ package net.postchain.config.node
 
 import net.postchain.base.PeerInfo
 import net.postchain.common.hexStringToByteArray
+import net.postchain.common.toHex
 import net.postchain.config.app.AppConfig
 import net.postchain.network.x.XPeerID
 import org.apache.commons.configuration2.Configuration

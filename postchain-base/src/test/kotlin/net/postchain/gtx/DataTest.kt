@@ -12,9 +12,6 @@ import net.postchain.gtv.GtvNull
 import org.junit.Assert.*
 import org.junit.Test
 
-// TODO: figure out why we get different results
-// val testBlockchainRID = SECP256K1CryptoSystem().digest("Test blockchainRID".toByteArray())
-//val testBlockchainRID = BlockchainRid.buildFromHex("78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3")
 
 fun mustThrowError(msg: String, code: () -> Unit) {
     try {

@@ -5,7 +5,7 @@ package net.postchain.devtools.modules.esplix
 import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.toHex
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.gtv.GtvFactory.gtv
@@ -18,7 +18,7 @@ import org.junit.Test
 val testBlockchainRID = BlockchainRid.buildFromHex("78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3")
 val myCS = SECP256K1CryptoSystem()
 
-class EsplixIntegrationTest : IntegrationTest() {
+class EsplixIntegrationTest : IntegrationTestSetup() {
 
     fun makeCreateChainTx(creator: Int, nonce: ByteArray, payload: ByteArray, bcRid: BlockchainRid): ByteArray {
         val b = GTXDataBuilder(bcRid, arrayOf(pubKey(creator)), myCS)
@@ -45,7 +45,8 @@ class EsplixIntegrationTest : IntegrationTest() {
     fun testEsplix() {
         val creator = 0
         val user = 1
-        val node = createNode(0, "/net/postchain/esplix/blockchain_config.xml")
+        val nodes = createNodes(1, "/net/postchain/esplix/blockchain_config.xml")
+        val node = nodes[0]
         var currentBlockHeight = -1L
 
         fun buildBlockAndCommitWithTx(data: ByteArray, fail: Boolean = false) {

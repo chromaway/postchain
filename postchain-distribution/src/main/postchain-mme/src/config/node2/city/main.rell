@@ -1,0 +1,8 @@
+module;
+
+entity city { key name; }
+
+operation add_city (name) { create city (name); }
+
+query get_cities () { return city @* {}; }
+

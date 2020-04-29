@@ -7,12 +7,17 @@ import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.spy
 import com.nhaarman.mockitokotlin2.verify
 import net.postchain.base.BlockchainRid
+import net.postchain.client.core.ConfirmationLevel
+import net.postchain.client.core.DefaultSigner
+import net.postchain.client.core.PostchainClient
+import net.postchain.client.core.PostchainClientFactory
 import net.postchain.common.toHex
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.TransactionStatus
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.KeyPairHelper
 import net.postchain.devtools.PostchainTestNode
+import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtx.GTXDataBuilder
 import org.awaitility.Awaitility.await
@@ -22,7 +27,7 @@ import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals
 
-class PostChainClientTest : IntegrationTest() {
+class PostChainClientTest : IntegrationTestSetup() {
 
     private val blockchainRIDStr = "ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB"
     private val blockchainRID = BlockchainRid.buildFromHex(blockchainRIDStr)
@@ -30,13 +35,14 @@ class PostChainClientTest : IntegrationTest() {
     private val privKey0 = KeyPairHelper.privKey(0)
     private val sigMaker0 = cryptoSystem.buildSigMaker(pubKey0, privKey0)
     private val defaultSigner = DefaultSigner(sigMaker0, pubKey0)
-    private val postchainClientFactory = PostchainClientFactory()
     private val randomStr = "hello${Random().nextLong()}"
 
     private fun createTestNodes(nodesCount: Int, configFileName: String): Array<PostchainTestNode> {
-        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-        configOverrides.setProperty("api.port", 0)
-        return createNodes(nodesCount, configFileName)
+        val sysSetup =  SystemSetupFactory.buildSystemSetup(mapOf(1 to configFileName))
+        sysSetup.needRestApi = true
+        assertEquals(nodesCount, sysSetup.nodeMap.size)
+        createNodesFromSystemSetup(sysSetup)
+        return nodes.toTypedArray()
     }
 
     private fun createGtxDataBuilder(bcRid: BlockchainRid): GTXDataBuilder {
@@ -48,8 +54,8 @@ class PostChainClientTest : IntegrationTest() {
     }
 
     private fun createPostChainClient(bcRid: BlockchainRid): PostchainClient {
-        val resolver = postchainClientFactory.makeSimpleNodeResolver("http://127.0.0.1:${nodes[0].getRestApiHttpPort()}")
-        return postchainClientFactory.getClient(resolver, bcRid, defaultSigner)
+        val resolver = PostchainClientFactory.makeSimpleNodeResolver("http://127.0.0.1:${nodes[0].getRestApiHttpPort()}")
+        return PostchainClientFactory.getClient(resolver, bcRid, defaultSigner)
     }
 
     @Test
@@ -98,7 +104,7 @@ class PostChainClientTest : IntegrationTest() {
     @Test
     fun testPostTransactionApiConfirmLevelNoWait() {
         val nodes = createTestNodes(1, "/net/postchain/devtools/api/blockchain_config_1.xml")
-        val blockchainRid = nodes[0].getBlockchainRid(1L)!! // Just pick the first node and we only have one chain
+        val blockchainRid = systemSetup.blockchainMap[1]!!.rid
         val builder = createGtxDataBuilder(blockchainRid!!)
         val client = createPostChainClient(blockchainRid)
         val result = client.postTransactionSync(builder, ConfirmationLevel.NO_WAIT)
@@ -108,7 +114,7 @@ class PostChainClientTest : IntegrationTest() {
     @Test
     fun testPostTransactionApiConfirmLevelNoWaitPromise() {
         val nodes = createTestNodes(1, "/net/postchain/devtools/api/blockchain_config_1.xml")
-        val blockchainRid = nodes[0].getBlockchainRid(1L)!! // Just pick the first node and we only have one chain
+        val blockchainRid = systemSetup.blockchainMap[1]!!.rid
         val builder = createGtxDataBuilder(blockchainRid)
         val client = createPostChainClient(blockchainRid)
 
@@ -122,7 +128,7 @@ class PostChainClientTest : IntegrationTest() {
     @Test
     fun testPostTransactionApiConfirmLevelUnverified() {
         val nodes = createTestNodes(3, "/net/postchain/devtools/api/blockchain_config.xml")
-        val blockchainRid = nodes[0].getBlockchainRid(1L)!! // Just pick the first node and we only have one chain
+        val blockchainRid = systemSetup.blockchainMap[1]!!.rid
         val builder = createGtxDataBuilder(blockchainRid)
         val client = createPostChainClient(blockchainRid)
         val result = client.postTransactionSync(builder, ConfirmationLevel.UNVERIFIED)
@@ -132,7 +138,7 @@ class PostChainClientTest : IntegrationTest() {
     @Test
     fun testPostTransactionApiConfirmLevelUnverifiedPromise() {
         val nodes = createTestNodes(3, "/net/postchain/devtools/api/blockchain_config.xml")
-        val blockchainRid = nodes[0].getBlockchainRid(1L)!! // Just pick the first node and we only have one chain
+        val blockchainRid = systemSetup.blockchainMap[1]!!.rid
         val builder = createGtxDataBuilder(blockchainRid)
         val client = createPostChainClient(blockchainRid)
 
@@ -146,7 +152,7 @@ class PostChainClientTest : IntegrationTest() {
     @Test
     fun testQueryGtxClientApiPromise() {
         val nodes = createTestNodes(3, "/net/postchain/devtools/api/blockchain_config.xml")
-        val blockchainRid = nodes[0].getBlockchainRid(1L)!! // Just pick the first node and we only have one chain
+        val blockchainRid = systemSetup.blockchainMap[1]!!.rid
         val builder = createGtxDataBuilder(blockchainRid)
         val client = createPostChainClient(blockchainRid)
         client.postTransactionSync(builder, ConfirmationLevel.UNVERIFIED)

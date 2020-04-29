@@ -3,7 +3,7 @@
 package net.postchain.integrationtest.multiple_chains
 
 import mu.KLogging
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.ConfigFileBasedIntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.integrationtest.assertChainStarted
@@ -16,7 +16,7 @@ import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import kotlin.test.assertNotNull
 
-open class FullEbftMultipleChainsTestNightly : IntegrationTest() {
+open class FullEbftMultipleChainsTestNightly : ConfigFileBasedIntegrationTest() {
 
     companion object : KLogging()
 

@@ -108,6 +108,13 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.12.5</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -116,7 +123,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven-surefire-plugin.version}</version>
+                <version>${maven.surefire.plugin.version}</version>
                 <configuration>
                     <properties>
                         <property>
@@ -136,7 +143,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.6</version>
+                <version>${maven.assembly.plugin.version}</version>
                 <executions>
                     <execution>
                         <id>make-executable-jar</id>
@@ -183,7 +190,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>${maven-surefire-plugin.version}</version>
+                        <version>${maven.surefire.plugin.version}</version>
                         <configuration>
                             <properties>
                                 <property>
@@ -195,6 +202,7 @@
                                 <include>**/*Test.java</include>
                                 <include>**/*IT.java</include>
                                 <include>**/*Nightly.java</include>
+                                <include>**/*E2ET.*</include>
                                 <!--                                <include>**/FourPeersReconfigurationTest.java</include>-->
                             </includes>
                         </configuration>

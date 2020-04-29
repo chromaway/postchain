@@ -2,10 +2,10 @@
 
 package net.postchain.devtools.gtx
 
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import org.junit.Test
 
-class GTXClientTestBackendManual : IntegrationTest() {
+class GTXClientTestBackendManual : IntegrationTestSetup() {
 
     @Test
     fun testBuildBlock() {

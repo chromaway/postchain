@@ -18,7 +18,11 @@ import org.apache.commons.dbutils.handlers.ScalarHandler
 private val r = QueryRunner()
 private val nullableStringReader = ScalarHandler<String?>()
 
-class GTXTestOp(u: Unit, opdata: ExtOpData): GTXOperation(opdata) {
+class GTXTestOp(u: Unit, opdata: ExtOpData) : GTXOperation(opdata) {
+
+    /**
+     * The only way for the [GtxTestOp] to be considered correct is if first argument is "1" and the second is a string.
+     */
     override fun isCorrect(): Boolean {
         if (data.args.size != 2) return false
         data.args[1].asString()
@@ -35,7 +39,7 @@ class GTXTestOp(u: Unit, opdata: ExtOpData): GTXOperation(opdata) {
     }
 }
 
-class GTXTestModule: SimpleGTXModule<Unit>(Unit,
+class GTXTestModule : SimpleGTXModule<Unit>(Unit,
         mapOf("gtx_test" to ::GTXTestOp),
         mapOf("gtx_test_get_value" to { u, ctxt, args ->
             val txRID = (args as GtvDictionary).get("txRID")
@@ -63,30 +67,5 @@ CREATE TABLE gtx_test_value(tx_iid BIGINT PRIMARY KEY, value TEXT NOT NULL)
             """)
             GTXSchemaManager.setModuleVersion(ctx, moduleName, 0)
         }
-    }
-}
-
-//  Test Direct Query purpose
-class TestDQueryModule : SimpleGTXModule<Unit>(Unit,
-        mapOf(),
-        mapOf("get_front_page" to { u, ctxt, args ->
-                val id = (args as GtvDictionary).get("id")
-                if (id == null) {
-                    throw UserMistake("get_front_page can not take id as null")
-                }
-                gtv(gtv("text/html"), gtv("<h1>it works!</h1>"))
-            },
-              "get_picture" to { u, ctxt, args ->
-                    val id = (args as GtvDictionary).get("id")
-                    if (id == null) {
-                        throw UserMistake("get_picture can not take id as null")
-                    }
-                 gtv(gtv("image/png"), gtv("abcd".toByteArray()))
-            }
-        )
-
-) {
-    override fun initializeDB(ctx: EContext) {
-
     }
 }

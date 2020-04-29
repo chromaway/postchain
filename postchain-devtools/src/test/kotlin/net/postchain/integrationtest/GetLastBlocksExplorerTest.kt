@@ -9,25 +9,27 @@ import assertk.assertions.isTrue
 import net.postchain.common.toHex
 import net.postchain.core.Transaction
 import net.postchain.core.TxDetail
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.devtools.testinfra.TestTransaction
+import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.Before
 import org.junit.Test
 
-class GetLastBlocksExplorerTest : IntegrationTest() {
+class GetLastBlocksExplorerTest : IntegrationTestSetup() {
 
     @Before
     fun setup() {
         val nodesCount = 1
-        configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
-        val nodeConfig = "classpath:/net/postchain/rest_api/node0.properties"
+        //configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         val blockchainConfig = "/net/postchain/devtools/blockexplorer/blockchain_config.xml"
+        val sysSetup = SystemSetupFactory.buildSystemSetup(mapOf(1 to blockchainConfig))
+        sysSetup.needRestApi = true // We need the API to be running for this test.
 
         // Creating all nodes
-        createSingleNode(0, nodesCount, nodeConfig, blockchainConfig)
+        createNodesFromSystemSetup(sysSetup)
 
         // Asserting chain 1 is started for all nodes
         await().atMost(Duration.TEN_SECONDS)

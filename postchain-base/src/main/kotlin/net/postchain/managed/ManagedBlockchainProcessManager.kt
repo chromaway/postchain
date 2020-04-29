@@ -67,7 +67,7 @@ open class ManagedBlockchainProcessManager(
                 dataSource = buildChain0ManagedDataSource()
 
                 // TODO: [POS-97]: Put this to DiagnosticContext
-                logger.debug { "${nodeConfigProvider.javaClass}" }
+//                logger.debug { "${nodeConfigProvider.javaClass}" }
 
                 // Setting up managed data source to the nodeConfig
                 (nodeConfigProvider as? ManagedNodeConfigurationProvider)
@@ -75,7 +75,7 @@ open class ManagedBlockchainProcessManager(
                         ?: logger.warn { "Node config is not managed, no peer info updates possible" }
 
                 // TODO: [POS-97]: Put this to DiagnosticContext
-                logger.debug { "${blockchainConfigProvider.javaClass}" }
+//                logger.debug { "${blockchainConfigProvider.javaClass}" }
 
                 // Setting up managed data source to the blockchainConfig
                 (blockchainConfigProvider as? ManagedBlockchainConfigurationProvider)
@@ -152,19 +152,20 @@ open class ManagedBlockchainProcessManager(
             }
         }
 
-        fun wrappedRestardHandler (): Boolean {
-            try {
-                return synchronizer.withLock {
+        fun wrappedRestartHandler (): Boolean {
+            return try {
+                synchronizer.withLock {
                     if (chainId == 0L) restartHandlerChain0() else restartHandlerChainN()
                 }
             } catch (e: Exception) {
                 logger.error("Exception in restard handler: ${e.toString()}")
                 e.printStackTrace()
                 reloadBlockchainConfigAsync(chainId)
-                return true // let's hope restarting a blockchain fixes the problem
+                true // let's hope restarting a blockchain fixes the problem
             }
         }
-        return ::wrappedRestardHandler
+
+        return ::wrappedRestartHandler
     }
 
     private fun buildChain0ManagedDataSource(): ManagedNodeDataSource {
@@ -200,16 +201,16 @@ open class ManagedBlockchainProcessManager(
 
             // Reloading
             // FYI: For testing only. It can be deleted later.
-            /*
+
             logger.info {
                 val pubKey = nodeConfigProvider.getConfiguration().pubKey
                 val peerInfos = nodeConfigProvider.getConfiguration().peerInfoMap
                 "reloadBlockchainsAsync: " +
                         "pubKey: $pubKey" +
-                        ", peerInfos: ${peerInfos.keys.toTypedArray().contentToString()} " +
+                        ", peerInfos: ${peerInfos.keys.toTypedArray().contentToString()}" +
                         ", chains to launch: ${toLaunch.contentDeepToString()}"
             }
-             */
+
 
             // Starting blockchains: at first chain0, then the rest
             logger.info { "Launching blockchain 0" }

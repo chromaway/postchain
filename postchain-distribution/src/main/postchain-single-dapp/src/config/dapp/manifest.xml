@@ -1,0 +1,20 @@
+<run wipe-db="true">
+    <nodes>
+        <config src="../node-config.properties" add-signers="true" />
+    </nodes>
+    <chains>
+        <chain name="city" iid="1">
+            <config height="0">
+                <app module="main" />
+                <gtv path="blockstrategy/blockdelay"><int>2000</int></gtv>
+                <gtv path="blockstrategy/maxblocktime"><int>2000</int></gtv>
+                <gtv path="blockstrategy/maxblocktransactions"><int>500</int></gtv>
+                <gtv path="gtx/rell/moduleArgs">
+                    <dict>
+                        <entry key="admin"><bytea>0350fe40766bc0ce8d08b3f5b810e49a8352fdd458606bd5fafe5acdcdc8ff3f57</bytea></entry>
+                    </dict>
+                </gtv>
+            </config>
+        </chain>
+    </chains>
+</run>

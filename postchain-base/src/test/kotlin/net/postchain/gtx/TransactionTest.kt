@@ -9,6 +9,7 @@ import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.gtv.GtvFactory.gtv
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.test.assertFalse
 
 val myCS = SECP256K1CryptoSystem()
 
@@ -32,6 +33,6 @@ class GTXTransactionTest {
         assertTrue(tx.getRID().size > 1)
         assertTrue(tx.getRawData().size > 1)
         assertTrue((tx as GTXTransaction).ops.size == 1)
-        assertTrue(tx.isCorrect())
+        assertFalse(tx.isCorrect()) // Since we are not allowed to just use nop.
     }
 }

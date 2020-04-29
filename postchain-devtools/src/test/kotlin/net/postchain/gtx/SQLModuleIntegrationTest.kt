@@ -4,20 +4,18 @@ package net.postchain.gtx
 
 import net.postchain.base.BlockchainRid
 import net.postchain.core.UserMistake
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-@Ignore
-class SQLModuleIntegrationTest : IntegrationTest() {
+class SQLModuleIntegrationTest : IntegrationTestSetup() {
 
     private fun makeTx(ownerIdx: Int, key: String, value: String, bcRid: BlockchainRid): ByteArray {
         val owner = pubKey(ownerIdx)
@@ -33,7 +31,8 @@ class SQLModuleIntegrationTest : IntegrationTest() {
     @Test
     fun testBuildBlock() {
         configOverrides.setProperty("infrastructure", "base/test")
-        val node = createNode(0, "/net/postchain/devtools/gtx/blockchain_config.xml")
+        val nodes = createNodes(1, "/net/postchain/devtools/gtx/blockchain_config.xml")
+        val node = nodes[0]
         val bcRid = node.getBlockchainRid(1L)!!
 
         enqueueTx(node, makeTx(0, "k", "v", bcRid), 0)
@@ -91,7 +90,8 @@ class SQLModuleIntegrationTest : IntegrationTest() {
     @Test
     fun testQueryWithMultipleParams() {
         configOverrides.setProperty("infrastructure", "base/test")
-        val node = createNode(0, "/net/postchain/devtools/gtx/blockchain_config.xml")
+        val nodes = createNodes(1, "/net/postchain/devtools/gtx/blockchain_config.xml")
+        val node = nodes[0]
         val bcRid = node.getBlockchainRid(1L)!!
 
         enqueueTx(node, makeTx(0, "k", "v", bcRid), 0)
@@ -104,11 +104,11 @@ class SQLModuleIntegrationTest : IntegrationTest() {
         assertEquals(1, gtxResult.getSize())
     }
 
-    @Test @Ignore
-    //TODO: fix the test
+    @Test
     fun testQuerySupportNullableValue() {
         configOverrides.setProperty("infrastructure", "base/test")
-        val node = createNode(0, "/net/postchain/devtools/gtx/blockchain_config.xml")
+        val nodes = createNodes(1, "/net/postchain/devtools/gtx/blockchain_config.xml")
+        val node = nodes[0]
         val bcRid = node.getBlockchainRid(1L)!!
 
         enqueueTx(node, makeTx(0, "k", "v", bcRid), 0)
