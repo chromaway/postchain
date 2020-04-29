@@ -1,19 +1,26 @@
 image: maven:3.6-jdk-8-alpine
+
 pipelines:
   default:
     - step:
+        size: 2x
         max-time: 60
         caches:
           - maven
         script:
-          - mvn -B -P ci clean install
-        services: 
+          - export TESTCONTAINERS_RYUK_DISABLED=true
+          - mvn -e -B -P ci clean install
+        services:
           - postgres
-definitions: 
-  services: 
-    postgres: 
-      image: postgres 
-      environment: 
-        POSTGRES_DB: 'postchain' 
+          - docker
+
+definitions:
+  services:
+    docker:
+      memory: 4096
+    postgres:
+      image: postgres
+      environment:
+        POSTGRES_DB: 'postchain'
         POSTGRES_USER: 'postchain'
         POSTGRES_PASSWORD: 'postchain'

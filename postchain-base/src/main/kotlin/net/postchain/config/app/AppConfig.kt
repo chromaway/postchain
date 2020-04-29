@@ -8,6 +8,10 @@ import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder
 import org.apache.commons.configuration2.builder.fluent.Parameters
 import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler
 
+/**
+ * Wrapper to the generic [Configuration]
+ * Adding some convenience fields, for example regarding database connection.
+ */
 class AppConfig(val config: Configuration) {
 
     companion object {

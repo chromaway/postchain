@@ -4,6 +4,7 @@ package net.postchain.base
 
 import mu.KLogging
 import net.postchain.StorageBuilder
+import net.postchain.base.data.DatabaseAccess
 import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*

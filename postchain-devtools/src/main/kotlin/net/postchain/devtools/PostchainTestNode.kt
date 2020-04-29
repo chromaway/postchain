@@ -9,12 +9,29 @@ import net.postchain.api.rest.controller.Model
 import net.postchain.base.*
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.base.data.DatabaseAccess
+import net.postchain.common.hexStringToByteArray
+import net.postchain.common.toHex
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
 import net.postchain.ebft.EBFTSynchronizationInfrastructure
+import net.postchain.core.BlockchainProcess
+import net.postchain.core.NODE_ID_TODO
+import net.postchain.devtools.utils.configuration.BlockchainSetup
+import net.postchain.gtv.GtvEncoder.encodeGtv
 import net.postchain.gtv.Gtv
+import net.postchain.gtv.gtvml.GtvMLParser
 
-class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider, preWipeDatabase: Boolean = false) : PostchainNode(nodeConfigProvider) {
+/**
+ * This node is used in integration tests.
+ *
+ * @property nodeConfigProvider gives us the configuration of the node
+ * @property preWipeDatabase is true if we want to start up clean (usually the case when we run tests)
+ *
+ */
+class PostchainTestNode(
+        nodeConfigProvider: NodeConfigurationProvider,
+        preWipeDatabase: Boolean = false
+) : PostchainNode(nodeConfigProvider) {
 
     private val testStorage: Storage
     val pubKey: String
@@ -44,6 +61,10 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider, preWipeDa
         isInitialized = true
     }
 
+    fun addBlockchain(chainSetup: BlockchainSetup) {
+        addBlockchain(chainSetup.chainId.toLong(), chainSetup.bcGtv)
+    }
+
     fun addBlockchain(chainId: Long, blockchainConfig: Gtv): BlockchainRid {
         initDb(chainId)
         return addConfiguration(chainId, 0, blockchainConfig)
@@ -53,6 +74,7 @@ class PostchainTestNode(nodeConfigProvider: NodeConfigurationProvider, preWipeDa
         check(isInitialized) { "PostchainNode is not initialized" }
 
         return withReadWriteConnection(testStorage, chainId) { eContext: EContext ->
+            logger.debug("Adding configuration for chain: $chainId, height: $height")
             BaseConfigurationDataStore.addConfigurationData(
                     eContext, height, blockchainConfig)
         }

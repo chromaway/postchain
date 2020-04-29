@@ -15,7 +15,8 @@ class FTBasicIntegrationTest : FTIntegrationTest() {
     @Test
     fun testEverything() {
         configOverrides.setProperty("infrastructure", "base/test")
-        val node = createNode(0, "/net/postchain/ft_basic/blockchain_config.xml")
+        val nodes = createNodes(1, "/net/postchain/ft_basic/blockchain_config.xml")
+        val node = nodes[0]
         val validTxs = mutableListOf<Transaction>()
         var currentBlockHeight = -1L
         val bcRid = node.getBlockchainRid(1L)!!

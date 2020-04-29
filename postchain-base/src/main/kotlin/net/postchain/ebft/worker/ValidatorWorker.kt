@@ -47,6 +47,7 @@ class ValidatorWorker(
                 blockchainEngine, blockchainEngine.getBlockQueries(), nodeIndex)
 
         blockManager = BaseBlockManager(
+                processName,
                 blockDatabase,
                 statusManager,
                 blockchainEngine.getBlockBuildingStrategy())

@@ -6,7 +6,7 @@ import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.toHex
 import net.postchain.core.Transaction
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.gtv.GtvFactory.gtv
@@ -17,7 +17,7 @@ import org.junit.Test
 
 val myCS = SECP256K1CryptoSystem()
 
-class GTXIntegrationTest : IntegrationTest() {
+class GTXIntegrationTest : IntegrationTestSetup() {
 
     fun makeNOPGTX(bcRid: BlockchainRid): ByteArray {
         val b = GTXDataBuilder(bcRid, arrayOf(pubKey(0)), myCS)
@@ -51,8 +51,9 @@ class GTXIntegrationTest : IntegrationTest() {
     @Test
     fun testBuildBlock() {
         configOverrides.setProperty("infrastructure", "base/test")
-        val node = createNode(0, "/net/postchain/devtools/gtx_it/blockchain_config.xml")
-        val bcRid = node.getBlockchainRid(1L)!! // Just assume we have chain 1
+        val nodes = createNodes(1, "/net/postchain/devtools/gtx_it/blockchain_config.xml")
+        val node = nodes[0]
+        val bcRid = systemSetup.blockchainMap[1]!!.rid // Just assume we have chain 1
 
         fun enqueueTx(data: ByteArray): Transaction? {
             try {
@@ -60,7 +61,7 @@ class GTXIntegrationTest : IntegrationTest() {
                 node.getBlockchainInstance().getEngine().getTransactionQueue().enqueue(tx)
                 return tx
             } catch (e: Exception) {
-                println(e)
+                logger.error(e) { "Can't enqueue tx" }
             }
             return null
         }
@@ -89,7 +90,7 @@ class GTXIntegrationTest : IntegrationTest() {
         enqueueTx(makeTestTx(2, "false", bcRid))!!
 
         // Tx 3: Nop (invalid, since need more ops)
-        val x =makeNOPGTX(bcRid)
+        val x = makeNOPGTX(bcRid)
         enqueueTx(x)
 
         // -------------------------

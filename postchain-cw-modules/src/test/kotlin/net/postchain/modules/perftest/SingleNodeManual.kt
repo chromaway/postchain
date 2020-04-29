@@ -3,7 +3,7 @@
 package net.postchain.modules.perftest
 
 import net.postchain.common.TimeLog
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.PostchainTestNode
 import org.junit.Test
 
@@ -25,7 +25,7 @@ import org.junit.Test
  * the warp-up period will be included in the profile.
  *
  */
-class SingleNodeManual : IntegrationTest() {
+class SingleNodeManual : IntegrationTestSetup() {
 
     @Test
     fun runSingleFTNode() {
@@ -39,7 +39,8 @@ class SingleNodeManual : IntegrationTest() {
 
     private fun runSingleNode(name: String, blockchainConfig: String) {
         configOverrides.setProperty("api.port", 8383)
-        val node = createNode(0, blockchainConfig)
+        val nodes = createNodes(1, blockchainConfig)
+        val node = nodes[0]
 
         // warm up
         val warmupDuration = 30000

@@ -2,7 +2,7 @@
 
 package net.postchain.integrationtest.reconfiguration
 
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.ConfigFileBasedIntegrationTest
 import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.devtools.testinfra.TestTransaction
@@ -12,7 +12,7 @@ import net.postchain.integrationtest.buildBlocksUpTo
 import net.postchain.integrationtest.query
 import kotlin.test.assertNotNull
 
-open class ReconfigurationTest : IntegrationTest() {
+open class ReconfigurationTest : ConfigFileBasedIntegrationTest() {
 
     protected fun tx(id: Int): TestTransaction = TestTransaction(id)
 

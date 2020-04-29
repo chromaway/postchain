@@ -5,13 +5,13 @@ package net.postchain.integrationtest
 import net.postchain.api.rest.controller.Model
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.common.toHex
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
 import org.junit.Assert
 import org.junit.Test
 
-class ThreeTxForwardingTest : IntegrationTest() {
+class ThreeTxForwardingTest : IntegrationTestSetup() {
 
     private fun strategy(node: PostchainTestNode): ThreeTxStrategy {
         return node

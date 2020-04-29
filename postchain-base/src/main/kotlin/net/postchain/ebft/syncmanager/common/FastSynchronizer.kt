@@ -168,7 +168,7 @@ class FastSynchronizer(
                 .map { it.key }
                 .toMutableList()
                 .also {
-                    if (!it.isEmpty()) {
+                    if (it.isNotEmpty()) {
                         it.shuffle()
                         fastSyncAlgorithmTelemetry.askForBlock(height, blockHeight)
                         val timer = parallelRequestsState[height]

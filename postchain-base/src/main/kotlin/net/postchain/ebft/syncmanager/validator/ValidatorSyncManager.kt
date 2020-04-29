@@ -133,8 +133,11 @@ class ValidatorSyncManager(
                                     }
                                 }
                                 is UnfinishedBlock -> {
-                                    blockManager.onReceivedUnfinishedBlock(decodeBlockData(BlockData(message.header, message.transactions),
-                                            blockchainConfiguration))
+                                    blockManager.onReceivedUnfinishedBlock(
+                                            decodeBlockData(
+                                                    BlockData(message.header, message.transactions),
+                                                    blockchainConfiguration)
+                                    )
                                 }
                                 is GetUnfinishedBlock -> sendUnfinishedBlock(nodeIndex)
                                 is GetBlockSignature -> sendBlockSignature(nodeIndex, message.blockRID)

@@ -10,6 +10,7 @@ import net.postchain.config.app.AppConfigDbLayer
 import net.postchain.core.ByteArrayKey
 import java.sql.Connection
 import java.time.Instant
+import java.time.Instant.EPOCH
 
 class ManagedNodeConfigurationProvider(
         appConfig: AppConfig,
@@ -30,19 +31,21 @@ class ManagedNodeConfigurationProvider(
 
     override fun getConfiguration(): NodeConfig {
         return object : NodeConfig(appConfig) {
-            override val peerInfoMap = getPeerInfoMap(appConfig)
+            override val peerInfoMap = getPeerInfoCollection(appConfig)
+                    .associateBy(PeerInfo::peerId)
             override val nodeReplicas = managedPeerSource?.getNodeReplicaMap() ?: mapOf()
             override val blockchainReplicaNodes = managedPeerSource?.getBlockchainReplicaNodeMap() ?: mapOf()
         }
     }
 
+    // TODO: [et]: Make it protected
     override fun getPeerInfoCollection(appConfig: AppConfig): Array<PeerInfo> {
         val peerInfoMap = mutableMapOf<ByteArrayKey, PeerInfo>()
 
         // Define pick function
         val peerInfoPicker: (PeerInfo) -> Unit = { peerInfo ->
             peerInfoMap.merge(peerInfo.peerId(), peerInfo) { old, new ->
-                if (old.timestamp ?: Instant.EPOCH < new.timestamp ?: Instant.EPOCH) new else old
+                if (old.timestamp ?: EPOCH < new.timestamp ?: EPOCH) new else old
             }
         }
 

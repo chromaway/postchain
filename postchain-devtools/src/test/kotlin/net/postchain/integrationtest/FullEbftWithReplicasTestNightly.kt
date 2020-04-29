@@ -29,7 +29,7 @@ class FullEbftWithReplicasTestNightly : FullEbftTestNightlyCore() {
         }
 
         configOverrides.setProperty("testpeerinfos", createPeerInfosWithReplicas(nodesCount, replicasCount))
-        createNodesWithReplicas(nodesCount, replicasCount, "/net/postchain/devtools/full_ebft/blockchain_config_$nodesCount.xml")
+        createNodesWithReplicas(nodesCount, replicasCount, "/net/postchain/full_ebft/blockchain_config_$nodesCount.xml")
 
         runXNodesWithYTxPerBlockTest(blocksCount, txPerBlock)
     }

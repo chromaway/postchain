@@ -10,3 +10,4 @@ postchain-base/start.sh
 *.log
 *.log.lck
 logs
+postchain-distribution/lib

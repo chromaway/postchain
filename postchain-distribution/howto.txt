@@ -1,0 +1,13 @@
+How To
+ver. 0.0.1
+
+// TODO: Write this manual
+
+1. Put additional jars (rell-runtime only for now [*]) to ./lib
+
+2. Build distribution module
+
+
+
+[*] original-rellr-0.10.1-jar-with-dependencies.jar
+

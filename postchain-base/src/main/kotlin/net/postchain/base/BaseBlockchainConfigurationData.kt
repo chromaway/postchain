@@ -26,16 +26,16 @@ class BaseBlockchainConfigurationData(
     }
 
     fun getSigners(): List<ByteArray> {
-        return data["signers"]!!.asArray().map { it.asByteArray() }
+        return data[KEY_SIGNERS]!!.asArray().map { it.asByteArray() }
     }
 
     fun getBlockBuildingStrategyName(): String {
-        val stratDict = data["blockstrategy"]
-        return stratDict?.get("name")?.asString() ?: ""
+        val stratDict = data[KEY_BLOCKSTRATEGY]
+        return stratDict?.get(KEY_BLOCKSTRATEGY_NAME)?.asString() ?: ""
     }
 
     fun getHistoricBRID(): BlockchainRid? {
-        val bytes = data["historic_brid"]?.asByteArray()
+        val bytes = data[KEY_HISTORIC_BRID]?.asByteArray()
         return if (bytes != null)
             BlockchainRid(bytes)
         else
@@ -43,41 +43,24 @@ class BaseBlockchainConfigurationData(
     }
 
     fun getBlockBuildingStrategy(): Gtv? {
-        return data["blockstrategy"]
+        return data[KEY_BLOCKSTRATEGY]
     }
 
     // default is 26 MiB
     fun getMaxBlockSize(): Long {
-        val stratDict = data["blockstrategy"]
-        return stratDict?.get("maxblocksize")?.asInteger() ?: 26 * 1024 * 1024
+        val stratDict = data[KEY_BLOCKSTRATEGY]
+        return stratDict?.get(KEY_BLOCKSTRATEGY_MAXBLOCKSIZE)?.asInteger() ?: 26 * 1024 * 1024
     }
 
     fun getMaxBlockTransactions(): Long {
-        val stratDict = data["blockstrategy"]
-        return stratDict?.get("maxblocktransactions")?.asInteger() ?: 100
+        val stratDict = data[KEY_BLOCKSTRATEGY]
+        return stratDict?.get(KEY_BLOCKSTRATEGY_MAXBLOCKTRANSACTIONS)?.asInteger() ?: 100
     }
 
     fun getDependenciesAsList(): List<BlockchainRelatedInfo> {
-        val dep = data["dependencies"]
+        val dep = data[KEY_DEPENDENCIES]
         return if (dep != null) {
-            try {
-                // Should contain an array of String, ByteArr pairs
-                val gtvDepArray = dep as GtvArray
-                val depList = mutableListOf<BlockchainRelatedInfo>()
-                for (element in gtvDepArray.array) {
-                    val elemArr = element as GtvArray
-                    val nickname = elemArr[0] as GtvString
-                    val blockchainRid = elemArr[1] as GtvByteArray
-                    depList.add(
-                            BlockchainRelatedInfo(BlockchainRid(blockchainRid.bytearray), nickname.string, null)
-                    )
-
-                }
-                depList.toList()
-            } catch (e: Exception) {
-                throw BadDataMistake(BadDataType.BAD_CONFIGURATION,
-                        "Dependencies must be array of array and have two parts, one string (description) and one bytea (blokchain RID)", e)
-            }
+            BaseDependencyFactory.build(dep!!)
         } else {
             // It is allowed to have no dependencies
             listOf<BlockchainRelatedInfo>()
@@ -86,11 +69,28 @@ class BaseBlockchainConfigurationData(
 
     // default is 25 MiB
     fun getMaxTransactionSize(): Long {
-        val gtxDict = data["gtx"]
-        return gtxDict?.get("max_transaction_size")?.asInteger() ?: 25 * 1024 * 1024
+        val gtxDict = data[KEY_GTX]
+        return gtxDict?.get(KEY_GTX_TX_SIZE)?.asInteger() ?: 25 * 1024 * 1024
     }
 
     companion object {
+
+        const val KEY_BLOCKSTRATEGY = "blockstrategy"
+        const val KEY_BLOCKSTRATEGY_NAME = "name"
+        const val KEY_BLOCKSTRATEGY_MAXBLOCKSIZE = "maxblocksize"
+        const val KEY_BLOCKSTRATEGY_MAXBLOCKTRANSACTIONS = "maxblocktransactions"
+
+        const val KEY_CONFIGURATIONFACTORY = "configurationfactory"
+
+        const val KEY_SIGNERS = "signers"
+
+        const val KEY_GTX = "gtx"
+        const val KEY_GTX_MODULES = "modules"
+        const val KEY_GTX_TX_SIZE = "max_transaction_size"
+
+        const val KEY_DEPENDENCIES = "dependencies"
+
+        const val KEY_HISTORIC_BRID = "historic_brid"
 
 
         @Deprecated("Deprecated in v2.4.4. Will be deleted in v3.0")
@@ -127,29 +127,6 @@ class BaseBlockchainConfigurationData(
 
             if (config.containsKey("gtx.rellSrcModule")) {
                 properties.add("rellSrcModule" to gtv(config.getString("gtx.rellSrcModule")))
-            }
-
-            return gtv(*properties.toTypedArray())
-        }
-
-        @Deprecated("Deprecated in v2.4.4. Will be deleted in v3.0")
-        private fun convertConfigToGtv(config: Configuration): Gtv {
-
-            fun blockStrategy(config: Configuration): Gtv {
-                return gtv(
-                        "name" to gtv(config.getString("blockstrategy"))
-                )
-            }
-
-            val properties = mutableListOf(
-                    "blockstrategy" to blockStrategy(config),
-                    "configurationfactory" to gtv(config.getString("configurationfactory")),
-                    "signers" to gtv(config.getStringArray("signers").map { gtv(it.hexStringToByteArray()) }),
-                    "blocksigningprivkey" to gtv(config.getString("blocksigningprivkey").hexStringToByteArray())
-            )
-
-            if (config.containsKey("gtx.modules")) {
-                properties.add(Pair("gtx", convertGTXConfigToGtv(config)))
             }
 
             return gtv(*properties.toTypedArray())

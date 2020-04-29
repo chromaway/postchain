@@ -1,0 +1,84 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+
+    <id>dist</id>
+    <formats>
+        <format>tar.gz</format>
+        <format>dir</format>
+    </formats>
+
+    <baseDirectory>postchain-mme</baseDirectory>
+
+    <!-- Project modules jars -->
+    <files>
+        <!-- postchain-base -->
+        <file>
+            <source>
+                ../postchain-base/target/postchain-base-${project.version}-${executable-classifier}.jar
+            </source>
+            <outputDirectory>./postchain-node/lib</outputDirectory>
+        </file>
+        <file>
+            <source>
+                ./src/main/postchain-mme/src/log4j2.yml
+            </source>
+            <outputDirectory>./postchain-node/lib</outputDirectory>
+        </file>
+
+        <!-- postchain-devtools -->
+        <file>
+            <source>
+                ../postchain-devtools/target/postchain-devtools-${project.version}-${executable-classifier}.jar
+            </source>
+            <outputDirectory>./postchain-node/lib</outputDirectory>
+        </file>
+
+        <!-- postchain-client -->
+        <file>
+            <source>
+                ../postchain-client/target/postchain-client-${project.version}-${executable-classifier}.jar
+            </source>
+            <outputDirectory>./postchain-node/lib</outputDirectory>
+        </file>
+    </files>
+
+    <fileSets>
+        <!-- External lib jars -->
+        <fileSet>
+            <directory>./lib</directory>
+            <outputDirectory>./postchain-node/lib</outputDirectory>
+            <includes>
+                <include>*.jar</include>
+            </includes>
+        </fileSet>
+
+        <!-- Scripts -->
+        <fileSet>
+            <directory>./src/main/postchain-mme/src</directory>
+            <outputDirectory>./</outputDirectory>
+            <includes>
+                <include>*.sh</include>
+            </includes>
+            <fileMode>0755</fileMode>
+            <filtered>true</filtered>
+        </fileSet>
+
+        <fileSet>
+            <directory>./src/main/postchain-mme/src/postchain-node/</directory>
+            <outputDirectory>./postchain-node/</outputDirectory>
+            <includes>
+                <include>*.sh</include>
+            </includes>
+            <fileMode>0755</fileMode>
+            <filtered>true</filtered>
+        </fileSet>
+
+        <!-- postchain-config and dApps -->
+        <fileSet>
+            <directory>./src/main/postchain-mme/src/config/</directory>
+            <outputDirectory>./config/</outputDirectory>
+        </fileSet>
+
+    </fileSets>
+
+</assembly>

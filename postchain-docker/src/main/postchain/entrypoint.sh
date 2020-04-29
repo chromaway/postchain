@@ -9,16 +9,16 @@ CHAIN_ID=${ENV_CHAIN_ID:-1}
 
 # Test connection with database
 java -cp $POSTCHAIN_CP net.postchain.AppKt wait-db \
-	-nc $NODE_CONFIG
+  -nc $NODE_CONFIG
 
 # Add Blockchain defined in blockchain config file
 java -cp $POSTCHAIN_CP net.postchain.AppKt add-blockchain \
-	-nc $NODE_CONFIG \
-	-brid $ENV_BLOCKCHAIN_RID \
-	-cid $CHAIN_ID \
-    -bc $ENV_BLOCKCHAIN_CONFIG
+  -nc $NODE_CONFIG \
+  -brid $ENV_BLOCKCHAIN_RID \
+  -cid $CHAIN_ID \
+  -bc $ENV_BLOCKCHAIN_CONFIG
 
 # Launch Postchain node
 java -cp $POSTCHAIN_CP net.postchain.AppKt run-node \
-    -nc $NODE_CONFIG \
-    -cid $CHAIN_ID
+  -nc $NODE_CONFIG \
+  -cid $CHAIN_ID
