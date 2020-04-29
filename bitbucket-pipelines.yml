@@ -9,7 +9,8 @@ pipelines:
           - maven
         script:
           - export TESTCONTAINERS_RYUK_DISABLED=true
-          - mvn -e -B -P ci-test clean install
+#          - mvn -e -B -P ci clean install
+          - mvn -DfailIfNoTests=false -Dtest=GTXIntegrationTest test
         services:
           - postgres
           - docker
