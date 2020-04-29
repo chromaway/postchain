@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.gtx
 
@@ -8,22 +8,22 @@ import mu.KLogging
 import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.configurations.GTXTestModule
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
+import net.postchain.devtools.PostchainTestNode
+import net.postchain.ebft.worker.ValidatorWorker
 import net.postchain.gtv.GtvFactory
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtx.factory.GtxTransactionDataFactory
-import net.postchain.devtools.PostchainTestNode
-import net.postchain.ebft.worker.ValidatorWorker
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.system.measureNanoTime
 
 @RunWith(JUnitParamsRunner::class)
-class GTXPerformanceTestNightly : IntegrationTest() {
+class GTXPerformanceTestNightly : IntegrationTestSetup() {
 
     companion object : KLogging()
 
@@ -121,12 +121,12 @@ class GTXPerformanceTestNightly : IntegrationTest() {
         val blocksCount = 2
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodeCount))
         val nodes = createNodes(nodeCount, "/net/postchain/devtools/performance/blockchain_config_$nodeCount.xml")
-        val blockchainRid = nodes[0].getBlockchainRid(1L) // We only have one chain so just pick it from first node
+        val blockchainRid = systemSetup.blockchainMap[1]!!.rid
 
         var txId = 0
         val statusManager = (nodes[0].getBlockchainInstance() as ValidatorWorker).statusManager
         for (i in 0 until blocksCount) {
-            val txs = (1..txPerBlock).map { makeTestTx(1, (txId++).toString(), blockchainRid!!) }
+            val txs = (1..txPerBlock).map { makeTestTx(1, (txId++).toString(), blockchainRid) }
 
             val engine = nodes[statusManager.primaryIndex()]
                     .getBlockchainInstance()

@@ -1,12 +1,14 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.modules.ft
 
 import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
-import net.postchain.gtx.GTXTransaction
-import net.postchain.gtx.GTXTransactionFactory
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.modules.ft.FTIntegrationTest
+import net.postchain.gtx.GTXTransaction
+import net.postchain.gtx.GTXTransactionFactory
 import org.junit.Assert
 import org.junit.Test
 import kotlin.system.measureNanoTime

@@ -1,5 +1,7 @@
-Postchain software can be used either under terms of a commercial
-license obtained from ChromaWay Inc., or under terms of the GNU
+Copyright (c) 2017-2020 ChromaWay AB. All rights reserved.
+
+This software can be used either under terms of a commercial
+license obtained from ChromaWay AB, or under terms of the GNU
 General Public License (with a special exception described below).
 
 A copy of GNU General Public License (GPL) is included in this
@@ -14,4 +16,3 @@ from all GPL terms).
 As a special exception, the copyright holders of this software give you
 permission to link this software with independent modules, regardless
 of the license terms of these independent modules.
-Exact conditions of distribution in this case are to be defined later.

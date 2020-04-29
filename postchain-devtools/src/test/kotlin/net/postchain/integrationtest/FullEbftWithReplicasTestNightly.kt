@@ -1,12 +1,10 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.integrationtest
 
 import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import junitparams.naming.TestCaseName
-import net.postchain.common.toHex
-import net.postchain.devtools.KeyPairHelper
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,7 +29,7 @@ class FullEbftWithReplicasTestNightly : FullEbftTestNightlyCore() {
         }
 
         configOverrides.setProperty("testpeerinfos", createPeerInfosWithReplicas(nodesCount, replicasCount))
-        createNodesWithReplicas(nodesCount, replicasCount, "/net/postchain/devtools/full_ebft/blockchain_config_$nodesCount.xml")
+        createNodesWithReplicas(nodesCount, replicasCount, "/net/postchain/full_ebft/blockchain_config_$nodesCount.xml")
 
         runXNodesWithYTxPerBlockTest(blocksCount, txPerBlock)
     }

@@ -1,26 +1,24 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.devtools.modules.ft
 
 import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
-import net.postchain.common.hexStringToByteArray
 import net.postchain.core.Transaction
-import net.postchain.gtx.GTXDataBuilder
-import net.postchain.gtv.Gtv
-import net.postchain.gtv.GtvFactory.gtv
-import net.postchain.modules.ft.AccountUtil
-import net.postchain.modules.ft.BasicAccount
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.PostchainTestNode
-import javax.management.Descriptor
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtx.GTXDataBuilder
+import net.postchain.modules.ft.AccountUtil
+import net.postchain.modules.ft.BasicAccount
 
 //val testBlockchainRID = BlockchainRid.buildFromHex("78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3")
 val myCS = SECP256K1CryptoSystem()
 
-open class FTIntegrationTest : IntegrationTest() {
+open class FTIntegrationTest : IntegrationTestSetup() {
 
     val issuerPubKeys = arrayOf(pubKey(0), pubKey(1))
     val issuerPrivKeys = arrayOf(privKey(0), privKey(1))

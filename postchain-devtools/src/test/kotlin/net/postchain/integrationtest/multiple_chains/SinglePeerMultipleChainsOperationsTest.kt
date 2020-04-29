@@ -1,8 +1,9 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.integrationtest.multiple_chains
 
 import mu.KLogging
-import net.postchain.common.hexStringToByteArray
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.ConfigFileBasedIntegrationTest
 import net.postchain.integrationtest.addBlockchainAndStart
 import net.postchain.integrationtest.assertChainNotStarted
 import net.postchain.integrationtest.assertChainStarted
@@ -10,7 +11,7 @@ import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.Test
 
-class SinglePeerMultipleChainsOperationsTest : IntegrationTest() {
+class SinglePeerMultipleChainsOperationsTest : ConfigFileBasedIntegrationTest() {
 
     companion object : KLogging()
 

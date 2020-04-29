@@ -1,12 +1,12 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.gtv
 
+import com.google.gson.*
 import net.postchain.common.toHex
 import net.postchain.core.ProgrammerMistake
-import com.google.gson.*
-import java.lang.reflect.Type
 import net.postchain.gtv.GtvFactory.gtv
+import java.lang.reflect.Type
 
 class GtvAdapter : JsonDeserializer<Gtv>, JsonSerializer<Gtv> {
 

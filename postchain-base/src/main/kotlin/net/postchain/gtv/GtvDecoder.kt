@@ -1,8 +1,10 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv
 
 import net.postchain.core.ProgrammerMistake
-import java.io.ByteArrayInputStream
 import net.postchain.gtv.messages.RawGtv
+import java.io.ByteArrayInputStream
 
 object GtvDecoder {
 

@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<dict>
+    <entry key="blockstrategy">
+        <dict>
+            <entry key="blockdelay">
+                <int>5000</int>
+            </entry>
+            <entry key="maxblocktime">
+                <int>5000</int>
+            </entry>
+            <entry key="maxblocktransactions">
+                <int>500</int>
+            </entry>
+            <entry key="name">
+                <string>net.postchain.base.BaseBlockBuildingStrategy</string>
+            </entry>
+        </dict>
+    </entry>
+    <entry key="configurationfactory">
+        <string>net.postchain.gtx.GTXBlockchainConfigurationFactory</string>
+    </entry>
+    <entry key="gtx">
+        <dict>
+            <entry key="modules">
+                <array>
+                    <string>net.postchain.rell.module.RellPostchainModuleFactory</string>
+                    <string>net.postchain.gtx.StandardOpsGTXModule</string>
+                </array>
+            </entry>
+            <entry key="rell">
+                <dict>
+                    <entry key="moduleArgs">
+                        <dict>
+                            <entry key="admin">
+                                <bytea>0350FE40766BC0CE8D08B3F5B810E49A8352FDD458606BD5FAFE5ACDCDC8FF3F57</bytea>
+                            </entry>
+                            <entry key="directory_blockchain_rid">
+                                <bytea>000000000000000000000000000000000000000000000000000000000000000000</bytea>
+                            </entry>
+                        </dict>
+                    </entry>
+                    <entry key="modules">
+                        <array>
+                            <string>chain_zero</string>
+                        </array>
+                    </entry>
+                    <entry key="sources_v0.10">
+                        <dict>
+                            <entry key="chain_zero.rell">
+                                <string>module;
+
+/* moduleArgs -&gt; module_args doesn't work
+struct module_args {
+    admin: pubkey;
+    directory_blockchain_rid: byte_array;
+}
+*/
+
+entity peer_info {
+    key host: text, port: integer;
+    key pubkey;
+}
+
+entity replica {
+    key peerPubkey: pubkey, peerReplicaPubkey: pubkey;
+}
+
+entity blockchain {
+    key rid: byte_array;
+}
+
+entity blockchain_configuration {
+    key blockchain, height: integer;
+    data: byte_array;
+}
+
+object peer_list_version {
+    mutable n: integer = 0;
+}
+
+function require_admin () {
+    // TODO: [et]
+    //require(is_signer(chain_context.args.admin));
+}
+
+operation add_peer (host: text, port: integer, pubkey) {
+    require_admin();
+    create peer_info (host, port, pubkey);
+    peer_list_version.n += 1;
+}
+
+operation add_peer_replica (peerPubkey: pubkey, host: text, port: integer, peerReplicaPubkey: pubkey) {
+    require_admin();
+
+    create peer_info (host, port, peerReplicaPubkey);
+    create replica (peerPubkey, peerReplicaPubkey);
+
+    peer_list_version.n += 1;
+}
+
+operation nop (arg: text) {
+    
+}
+
+operation remove_peer (pubkey) {
+    require_admin();
+    delete peer_info @ {pubkey};
+    peer_list_version.n += 1;
+}
+
+operation add_blockchain_configuration (brid: byte_array, height: integer, data: byte_array) {
+    require_admin();
+    
+    val blockchain = if (height == 0)
+        create blockchain (brid)
+    else blockchain @ { brid };
+    
+    create blockchain_configuration (blockchain, height, data);
+}
+
+query nm_get_peer_infos () = peer_info @* {} (_ = .host, _ = .port, _ = .pubkey/*, _=.last_updated*/);
+query nm_get_peer_list_version () = peer_list_version.n;
+
+// TODO: [et]: chain0 has been added as default first element
+query nm_compute_blockchain_list (node_id: byte_array): list&lt;byte_array&gt; {
+    /*
+    val result = [
+        // byte_array('0000000000000000000000000000000000000000000000000000000000000000')
+        //, byte_array('dd967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577cc')
+    ];
+    val otherChains = blockchain @* {} (.rid);
+    result.add_all(otherChains);
+    return result;
+    */
+
+    return blockchain @* {} (.rid);
+}
+
+query nm_find_next_configuration_height (blockchain_rid: byte_array, height: integer) {
+    val bc = blockchain @? { blockchain_rid };
+    if (bc == null) return null;
+    return blockchain_configuration @? { bc!!, .height &gt; height }
+        (sort .height) limit 1;
+}
+
+query nm_get_blockchain_configuration (blockchain_rid: byte_array, height: integer): byte_array? {
+    val bc = blockchain @ { blockchain_rid };
+    // find configuration height -- the latest height up to given height
+    val ch = blockchain_configuration @? { bc , .height &lt;= height } (-sort .height) limit 1;
+    if (ch != null) 
+        return blockchain_configuration @ { .blockchain == bc, .height == ch } .data;
+    else
+        return null;
+}
+
+entity system_peer {
+    key peer_info;
+    key pubkey;
+}
+
+operation add_system_peer (pubkey) {
+    require_admin();
+    create system_peer ( peer_info @ { pubkey }, pubkey );
+    //refresh_system_configuration();
+}
+
+/*
+function refresh_system_configuration () {
+    val sys_blockchain = blockchain @ { chain_context.args.directory_blockchain_rid };
+    val last_config = blockchain_configuration @ { sys_blockchain } (-sort .height, .data) limit 1;
+    val config_dict = map&lt;text, gtv&gt;.from_gtv(gtv.from_bytes(last_config.data));
+    config_dict["signers"] = (system_peer @+ {} .pubkey).to_gtv();
+    val last_height = block @ {} (-sort .block_height) limit 1;
+    
+    create blockchain_configuration (
+        sys_blockchain,
+        height = last_height + 5,
+        data = config_dict.to_gtv().to_bytes()
+    );
+}
+*/
+
+
+query nm_get_blockchain_replica_node_map(blockchain_rids: list&lt;byte_array&gt;) = list&lt;list&lt;byte_array&gt;&gt;();
+
+query nm_get_node_replica_map(): list&lt;list&lt;byte_array&gt;&gt; {
+    val replicas = map&lt;byte_array, list&lt;byte_array&gt;&gt;();
+
+    for (r in replica @* {}) {
+        if (not replicas.contains(r.peerPubkey)) {
+            replicas.put(r.peerPubkey, list&lt;byte_array&gt;());
+        };
+        replicas[r.peerPubkey].add(r.peerReplicaPubkey);
+    };
+
+    val res = list&lt;list&lt;byte_array&gt;&gt;();
+    for ((p, r) in replicas) {
+        val pr = list&lt;byte_array&gt;();
+        pr.add(p);
+        pr.add_all(r);
+        res.add(pr);
+    };
+
+    return res;
+}
+
+
+</string>
+                            </entry>
+                        </dict>
+                    </entry>
+                </dict>
+            </entry>
+        </dict>
+    </entry>
+    <entry key="signers">
+        <array>
+            <bytea>0350FE40766BC0CE8D08B3F5B810E49A8352FDD458606BD5FAFE5ACDCDC8FF3F57</bytea>
+        </array>
+    </entry>
+</dict>

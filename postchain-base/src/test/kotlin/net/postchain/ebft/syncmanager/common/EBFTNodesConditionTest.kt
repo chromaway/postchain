@@ -192,12 +192,14 @@ class EBFTNodesConditionTest {
     fun manyNodes_with_Quorum() {
         val nodesCount = 1000
         val quorum = nodesCount - (nodesCount - 1) / 3 // 667
-        val rest = nodesCount - quorum // 332
+        val rest = nodesCount - quorum // 333
         val statuses = mutableListOf<NodeStatus>()
         repeat(quorum) { statuses.add(NodeStatus(10, 0)) }
         repeat(rest) { statuses.add(NodeStatus(1, 0)) }
 
-        val sut = EBFTNodesCondition(statuses.toTypedArray()) { status -> status.height > 5 }
+        val sut = EBFTNodesCondition(statuses.apply { shuffle() }.toTypedArray()) {
+            status -> status.height > 5
+        }
 
         assertEquals(true, sut.satisfied())
     }
@@ -206,12 +208,14 @@ class EBFTNodesConditionTest {
     fun manyNodes_with_NoQuorum() {
         val nodesCount = 1000
         val quorum = nodesCount - (nodesCount - 1) / 3 // 667
-        val rest = nodesCount - quorum // 332
+        val rest = nodesCount - quorum // 333
         val statuses = mutableListOf<NodeStatus>()
         repeat(quorum - 1) { statuses.add(NodeStatus(10, 0)) }
         repeat(rest + 1) { statuses.add(NodeStatus(1, 0)) }
 
-        val sut = EBFTNodesCondition(statuses.toTypedArray()) { status -> status.height > 5 }
+        val sut = EBFTNodesCondition(statuses.apply { shuffle() }.toTypedArray()) {
+            status -> status.height > 5
+        }
 
         assertEquals(false, sut.satisfied())
     }

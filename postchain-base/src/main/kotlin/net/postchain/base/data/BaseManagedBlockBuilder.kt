@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.base.data
 
@@ -121,9 +121,10 @@ class BaseManagedBlockBuilder(
     }
 
     override fun rollback() {
-        logger.debug("${eContext.nodeID} BaseManagedBlockBuilder.rollback()")
+        logger.debug("${eContext.nodeID} rolling back block - start -------------------")
         if (closed) throw ProgrammerMistake("Already closed")
         closed = true
         storage.closeWriteConnection(eContext, false)
+        logger.debug("${eContext.nodeID} rolling back block - end -------------------")
     }
 }

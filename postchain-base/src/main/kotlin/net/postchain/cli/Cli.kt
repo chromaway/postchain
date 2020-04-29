@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.cli
 
 import com.beust.jcommander.JCommander
@@ -32,7 +34,7 @@ class Cli {
 
     init {
         jCommander = with(JCommander.newBuilder()) {
-            commands.forEach { key, command -> addCommand(key, command) }
+            commands.forEach { (key, command) -> addCommand(key, command) }
             build()
         }
     }

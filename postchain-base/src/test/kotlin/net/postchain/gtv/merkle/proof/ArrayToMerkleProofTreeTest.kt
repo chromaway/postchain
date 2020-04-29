@@ -1,8 +1,13 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.base.merkle.proof
 
-import net.postchain.base.merkle.*
+import net.postchain.base.merkle.PrintableTreeFactory
+import net.postchain.base.merkle.TreeHelper
 import net.postchain.base.merkle.TreeHelper.stripWhite
-import net.postchain.gtv.*
+import net.postchain.base.merkle.TreePrinter
+import net.postchain.gtv.GtvArray
+import net.postchain.gtv.generateProof
 import net.postchain.gtv.merkle.ArrayToGtvBinaryTreeHelper
 import net.postchain.gtv.merkle.ArrayToGtvBinaryTreeHelper.expected1ElementArrayMerkleRoot
 import net.postchain.gtv.merkle.ArrayToGtvBinaryTreeHelper.expected4ElementArrayMerkleRoot

@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.devtools
 
 import com.google.gson.GsonBuilder
@@ -5,7 +7,6 @@ import mu.KLogging
 import net.postchain.StorageBuilder
 import net.postchain.base.BlockchainRid
 import net.postchain.base.gtxml.TestType
-import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
 import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.core.NODE_ID_TODO
@@ -13,6 +14,7 @@ import net.postchain.core.UserMistake
 import net.postchain.core.byteArrayKeyOf
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.devtools.utils.configuration.NodeSeqNumber
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.gtvml.GtvMLParser
 import net.postchain.gtx.gtxml.GTXMLTransactionParser
@@ -24,9 +26,9 @@ import javax.xml.bind.JAXBElement
 import javax.xml.bind.util.ValidationEventCollector
 
 /**
- * TODO: [et]: Maybe redesign this implementation based on [IntegrationTest] currently
+ * TODO: [et]: Maybe redesign this implementation based on [IntegrationTestSetup] currently
  */
-class TestLauncher : IntegrationTest() {
+class TestLauncher : IntegrationTestSetup() {
 
     companion object : KLogging()
 
@@ -47,7 +49,7 @@ class TestLauncher : IntegrationTest() {
         }
     }
 
-    private fun createTestNode(configFile: String, blockchainRid: BlockchainRid, blockchainConfigFile: String): PostchainTestNode {
+    private fun createTestNode(configFile: String, blockchainConfigFile: String): PostchainTestNode {
         val appConfig = AppConfig.fromPropertiesFile(configFile)
         val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(appConfig)
 
@@ -74,6 +76,7 @@ class TestLauncher : IntegrationTest() {
             mapBlockchainRID(chainId, blockchainRID)
             startBlockchain()
             nodes.add(this)
+            nodeMap[NodeSeqNumber(0)] = this
         }
     }
 
@@ -105,7 +108,7 @@ class TestLauncher : IntegrationTest() {
         val testType: TestType
         try {
             // TODO: Resolve nullability here and above: !! vs ?.
-            node = createTestNode(nodeConfigFile!!, blockchainRID, blockchainConfigFile!!)
+            node = createTestNode(nodeConfigFile!!, blockchainConfigFile!!)
         } catch (e: Exception) {
             return TestOutput(false, false, e, listOf())
         }
