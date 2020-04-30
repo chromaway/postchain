@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.ebft
 
 import net.postchain.base.BasePeerCommConfiguration
@@ -89,19 +91,15 @@ class EBFTSynchronizationInfrastructure(
     ): CommunicationManager<Message> {
         val nodeConfigCopy = nodeConfig
 
-        val myPeerID = XPeerID(nodeConfigCopy.pubKey.hexStringToByteArray())
+        val myPeerID = XPeerID(nodeConfigCopy.pubKeyByteArray)
         val signers = blockchainConfig.signers.map { XPeerID(it) }
-        val signerReplicas = signers.flatMap {
+        val signersReplicas = signers.flatMap {
             nodeConfigCopy.nodeReplicas[it] ?: listOf()
         }
-        val blockchainReplicaNodes = nodeConfigCopy.blockchainReplicaNodes[
-                blockchainConfig.blockchainRID
-        ] ?: listOf();
+        val blockchainReplicas = nodeConfigCopy.blockchainReplicaNodes[blockchainConfig.blockchainRID] ?: listOf()
+
         val relevantPeerMap = nodeConfigCopy.peerInfoMap.filterKeys {
-            signers.contains(it)
-                    || signerReplicas.contains(it)
-                    || blockchainReplicaNodes.contains(it)
-                    || it.equals(myPeerID)
+            it in signers || it in signersReplicas || it in blockchainReplicas || it == myPeerID
         }
 
         val communicationConfig = BasePeerCommConfiguration.build(

@@ -1,0 +1,25 @@
+# Copyright (c) 2017 ChromaWay Inc. See README for license information.
+version: '3.1'
+
+services:
+
+  postgres:
+    image: chromaway/postgres:2.4.3-beta
+    restart: always
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: postchain
+
+  postchain-mme:
+    image: chromaway/postchain-mme:3.2.0
+    ports:
+      - 7740:7740
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
+  postchain_config:

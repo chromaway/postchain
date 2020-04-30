@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.base.data
 
@@ -314,7 +314,7 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
             }
 
         } else {
-            // meta table does not exist! Assume database does not exist.
+            logger.info("Meta table does not exist! Assume database does not exist and create it (version: $expectedDbVersion).")
             queryRunner.update(connection, sqlCommands.createTableMeta)
             queryRunner.update(
                     connection,
@@ -411,11 +411,11 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
 
         return blocksInfo.map { blockInfo ->
             val blockRid = blockInfo.get("block_rid") as ByteArray
-            val blockHeight = blockInfo.get("block_height") as Long
+            val heightOfBlock = blockInfo.get("block_height") as Long
             val blockHeader = blockInfo.get("block_header_data") as ByteArray
             val blockWitness = blockInfo.get("block_witness") as ByteArray
             val timestamp = blockInfo.get("timestamp") as Long
-            DatabaseAccess.BlockInfoExt(blockRid, blockHeight, blockHeader, blockWitness, timestamp)
+            DatabaseAccess.BlockInfoExt(blockRid, heightOfBlock, blockHeader, blockWitness, timestamp)
         }
     }
 

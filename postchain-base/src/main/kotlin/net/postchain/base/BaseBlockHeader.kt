@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.base
 
@@ -10,7 +10,6 @@ import net.postchain.core.BlockHeader
 import net.postchain.core.ByteArrayKey
 import net.postchain.core.InitialBlockData
 import net.postchain.core.UserMistake
-import net.postchain.gtv.GtvDecoder
 import net.postchain.gtv.GtvEncoder
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.generateProof

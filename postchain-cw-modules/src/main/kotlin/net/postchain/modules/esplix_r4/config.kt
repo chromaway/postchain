@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.modules.esplix_r4
 
 import net.postchain.base.CryptoSystem
@@ -10,11 +12,11 @@ open class EsplixConfig (
 )
 
 fun makeBaseEsplixConfig(data: Gtv, blockchainRID: ByteArray): EsplixConfig {
-    val blockchainRID = blockchainRID
+    val blockchainRid = blockchainRID
 
     val cs = SECP256K1CryptoSystem()
     return EsplixConfig(
             cs,
-            blockchainRID
+            blockchainRid
     )
 }

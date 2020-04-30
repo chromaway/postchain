@@ -1,7 +1,8 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.common
 
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 

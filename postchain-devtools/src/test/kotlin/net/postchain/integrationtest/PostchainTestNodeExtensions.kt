@@ -1,9 +1,10 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.integrationtest
 
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import junit.framework.Assert.assertNotNull
-import net.postchain.base.BlockchainRid
 import net.postchain.containsExactlyKeys
 import net.postchain.core.BlockQueries
 import net.postchain.core.MultiSigBlockWitness

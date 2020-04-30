@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Copyright (c) 2020 ChromaWay AB. See README for license information. -->
+
 <dict>
     <entry key="blockstrategy">
         <!--
@@ -37,7 +39,7 @@
         <dict>
             <entry key="modules">
                 <array>
-                    <string>net.postchain.configurations.TestDQueryModule</string>
+                    <string>net.postchain.integrationtest.api.TestDQueryModule</string>
                     <string>net.postchain.gtx.StandardOpsGTXModule</string>
                 </array>
             </entry>

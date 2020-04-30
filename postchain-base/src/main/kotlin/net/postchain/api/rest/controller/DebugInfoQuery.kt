@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.api.rest.controller
 
 import com.google.gson.JsonObject

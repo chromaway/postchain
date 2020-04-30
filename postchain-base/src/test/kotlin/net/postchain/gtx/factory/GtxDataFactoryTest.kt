@@ -1,16 +1,18 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtx.factory
 
 import net.postchain.base.BlockchainRid
 import net.postchain.common.hexStringToByteArray
 import net.postchain.gtv.GtvArray
 import net.postchain.gtv.GtvByteArray
-import org.junit.Assert
-import org.junit.Test
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.GtvString
 import net.postchain.gtx.GTXTransactionBodyData
 import net.postchain.gtx.GTXTransactionData
 import net.postchain.gtx.OpData
+import org.junit.Assert
+import org.junit.Test
 
 class GtxDataFactoryTest {
 

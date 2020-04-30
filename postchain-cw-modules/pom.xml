@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2020 ChromaWay AB. See README for license information. -->
+
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>postchain</artifactId>
@@ -27,7 +29,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.6</version>
+                <version>${maven.assembly.plugin.version}</version>
                 <executions>
                     <execution>
                         <id>esplix-package</id>
@@ -39,7 +41,6 @@
                             <descriptors>
                                 <descriptor>src/main/assembly/esplix-targz.xml</descriptor>
                             </descriptors>
-                            <classifier>${dist-classifier}</classifier>
                         </configuration>
                     </execution>
                 </executions>

@@ -1,11 +1,11 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.gtv
 
-import net.postchain.common.hexStringToByteArray
-import net.postchain.gtv.GtvFactory.gtv
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
+import net.postchain.common.hexStringToByteArray
+import net.postchain.gtv.GtvFactory.gtv
 import org.junit.Assert
 import org.junit.Test
 

@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.devtools.testinfra
 
 import net.postchain.core.Transaction
@@ -5,7 +7,11 @@ import net.postchain.core.TxEContext
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 
-open class TestTransaction(val id: Int, val good: Boolean = true, val correct: Boolean = true) : Transaction {
+open class TestTransaction(
+        val id: Int,
+        val good: Boolean = true,
+        val correct: Boolean = true
+) : Transaction {
 
     override fun isCorrect(): Boolean {
         return correct

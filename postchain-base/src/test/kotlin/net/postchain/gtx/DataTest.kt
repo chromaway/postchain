@@ -1,21 +1,17 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.gtx
 
 import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
-import net.postchain.common.hexStringToByteArray
 import net.postchain.core.Signature
-import net.postchain.gtv.*
-import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtv.GtvNull
 import org.junit.Assert.*
 import org.junit.Test
 
-// TODO: figure out why we get different results
-// val testBlockchainRID = SECP256K1CryptoSystem().digest("Test blockchainRID".toByteArray())
-//val testBlockchainRID = BlockchainRid.buildFromHex("78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3")
 
 fun mustThrowError(msg: String, code: () -> Unit) {
     try {
@@ -68,8 +64,8 @@ class GTXDataTest {
             b2.addSignature(Signature(signerPub[2], signerPub[2]), true)
         }
         mustThrowError("Allows signature from wrong participant") {
-            val sigMaker = crypto.buildSigMaker(signerPub[3], signerPriv[3])
-            val wrongSignature = sigMaker.signDigest(txBodyMerkleRoot)
+            val signatureMaker = crypto.buildSigMaker(signerPub[3], signerPriv[3])
+            val wrongSignature = signatureMaker.signDigest(txBodyMerkleRoot)
             b2.addSignature(wrongSignature, true)
         }
 

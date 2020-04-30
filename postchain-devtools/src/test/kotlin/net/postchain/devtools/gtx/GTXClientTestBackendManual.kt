@@ -1,11 +1,11 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.devtools.gtx
 
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.IntegrationTestSetup
 import org.junit.Test
 
-class GTXClientTestBackendManual : IntegrationTest() {
+class GTXClientTestBackendManual : IntegrationTestSetup() {
 
     @Test
     fun testBuildBlock() {

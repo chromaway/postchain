@@ -1,10 +1,12 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.integrationtest.multiple_chains
 
 import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import junitparams.naming.TestCaseName
 import mu.KLogging
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.ConfigFileBasedIntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.integrationtest.assertChainStarted
@@ -20,7 +22,7 @@ import org.junit.runner.RunWith
 import kotlin.test.assertNotNull
 
 @RunWith(JUnitParamsRunner::class)
-class FullEbftMultipleChainsWithReplicasTestNightly : IntegrationTest() {
+class FullEbftMultipleChainsWithReplicasTestNightly : ConfigFileBasedIntegrationTest() {
 
     companion object : KLogging()
 

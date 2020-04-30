@@ -1,11 +1,12 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.base
 
 import net.postchain.common.toHex
-import org.junit.Assert.*
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.util.Random
+import java.util.*
 
 class SECP256K1CryptoSystemTest {
     @Test

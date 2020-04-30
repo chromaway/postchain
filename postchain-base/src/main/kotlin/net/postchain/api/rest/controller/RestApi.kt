@@ -1,10 +1,8 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.api.rest.controller
 
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonElement
+import com.google.gson.*
 import mu.KLogging
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_HEADERS
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_METHODS
@@ -18,7 +16,6 @@ import net.postchain.api.rest.json.JsonFactory
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.GTXQuery
 import net.postchain.api.rest.model.TxRID
-import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.common.TimeLog
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
@@ -68,7 +65,7 @@ class RestApi(
     init {
         buildErrorHandler(http)
         buildRouter(http)
-        logger.info { "Rest API listening on port ${actualPort()}" }
+        logger.info { "Rest API listening on port ${actualPort()} and were given $listenPort" }
         logger.info { "Rest API attached on $basePath/" }
     }
 
@@ -82,7 +79,7 @@ class RestApi(
         if (model != null) {
             bridByIID.remove(model.chainIID)
             models.remove(blockchainRID.toUpperCase())
-        }  else throw ProgrammerMistake("Blockchain $blockchainRID not attached")
+        } else throw ProgrammerMistake("Blockchain $blockchainRID not attached")
     }
 
     override fun retrieveModel(blockchainRID: String): Model? {
@@ -227,7 +224,7 @@ class RestApi(
             }, gson::toJson)
 
             http.post("/query/$PARAM_BLOCKCHAIN_RID") { request, _ ->
-                handleQuery(request)
+                handlePostQuery(request)
             }
 
             http.post("/batch_query/$PARAM_BLOCKCHAIN_RID") { request, _ ->
@@ -237,6 +234,10 @@ class RestApi(
             // direct query. That should be used as example: <img src="http://node/dquery/brid?type=get_picture&id=4555" />
             http.get("/dquery/$PARAM_BLOCKCHAIN_RID") { request, response ->
                 handleDirectQuery(request, response)
+            }
+
+            http.get("/query/$PARAM_BLOCKCHAIN_RID") { request, response ->
+                handleGetQuery(request)
             }
 
             http.post("/query_gtx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
@@ -255,8 +256,8 @@ class RestApi(
                 handleDebugQuery(request)
             }
 
-            http.get( "/brid/$PARAM_BLOCKCHAIN_RID") {
-                request, _ ->  checkBlockchainRID(request)
+            http.get("/brid/$PARAM_BLOCKCHAIN_RID") { request, _ ->
+                checkBlockchainRID(request)
 
             }
         }
@@ -303,11 +304,29 @@ class RestApi(
         return gson.toJson(ErrorBody(error.message ?: "Unknown error"))
     }
 
-    private fun handleQuery(request: Request): String {
+    private fun handlePostQuery(request: Request): String {
         logger.debug("Request body: ${request.body()}")
         return model(request)
                 .query(Query(request.body()))
                 .json
+    }
+
+    private fun handleGetQuery(request: Request): String {
+        val queryMap = request.queryMap()
+        val jsonQuery = JsonObject()
+
+        queryMap.toMap().forEach {
+            val paramValue = queryMap.value(it.key)
+            var value = JsonPrimitive(paramValue)
+            if (paramValue == "true" || paramValue == "false") {
+                value = JsonPrimitive(paramValue.toBoolean())
+            } else if (paramValue.toIntOrNull() != null) {
+                value = JsonPrimitive(paramValue.toInt())
+            }
+            jsonQuery.add(it.key, value)
+        }
+
+        return model(request).query(Query(gson.toJson(jsonQuery))).json
     }
 
     private fun handleDirectQuery(request: Request, response: Response): Any {
@@ -325,12 +344,10 @@ class RestApi(
         // first element is content-type
         response.type(array[0].asString())
         val content = array[1]
-        if (content.type == GtvType.STRING) {
-            return content.asString()
-        } else if (content.type == GtvType.BYTEARRAY) {
-            return content.asByteArray()
-        } else {
-            throw UserMistake("Unexpected content")
+        return when (content.type) {
+            GtvType.STRING -> content.asString()
+            GtvType.BYTEARRAY -> content.asByteArray()
+            else -> throw UserMistake("Unexpected content")
         }
     }
 

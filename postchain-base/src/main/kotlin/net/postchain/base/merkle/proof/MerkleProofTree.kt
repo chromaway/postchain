@@ -1,6 +1,8 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.base.merkle.proof
 
-import net.postchain.base.merkle.*
+import net.postchain.base.merkle.Hash
 import net.postchain.base.merkle.MerkleBasics.HASH_PREFIX_NODE
 import net.postchain.base.merkle.MerkleBasics.UNKNOWN_SIZE_IN_BYTE
 import java.util.*

@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.devtools.testinfra
 
 import mu.KLogging
@@ -12,7 +14,7 @@ open class TestBlockchainConfiguration(
         val module: GTXModule
 ) : BaseBlockchainConfiguration(configData) {
 
-    val transactionFactory = TestTransactionFactory()
+    open val transactionFactory = TestTransactionFactory()
 
     companion object : KLogging()
 

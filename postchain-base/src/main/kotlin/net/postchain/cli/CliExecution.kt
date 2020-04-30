@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.cli
 
 import net.postchain.PostchainNode
@@ -6,7 +8,6 @@ import net.postchain.base.BlockchainRelatedInfo
 import net.postchain.base.BlockchainRid
 import net.postchain.base.data.BaseBlockStore
 import net.postchain.base.data.DatabaseAccess
-import net.postchain.common.toHex
 import net.postchain.config.app.AppConfig
 import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.gtv.Gtv

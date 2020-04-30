@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.integrationtest.reconfiguration
 
 import com.google.gson.Gson
@@ -16,7 +18,7 @@ object TxChartHelper {
     fun buildTxChart(
             node: PostchainTestNode,
             chainId: Long,
-            heightLimit: Long = Long.MAX_VALUE,
+            maxHeight: Long = Long.MAX_VALUE,
             txPayloadName: String = "id"
     ): String {
 
@@ -26,7 +28,7 @@ object TxChartHelper {
 
         val height = minOf(
                 node.query(chainId) { it.getBestHeight() } ?: -1L,
-                heightLimit)
+                maxHeight)
 
         (0..height).forEach { h ->
             val blockRid = node.query(chainId) { it.getBlockRid(h) }
