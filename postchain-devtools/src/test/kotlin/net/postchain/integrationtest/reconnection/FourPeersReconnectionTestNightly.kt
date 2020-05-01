@@ -1,5 +1,6 @@
 package net.postchain.integrationtest.reconnection
 
+import net.postchain.devtools.KeyPairHelper
 import net.postchain.integrationtest.assertChainStarted
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
@@ -8,10 +9,16 @@ import org.junit.Test
 
 class FourPeersReconnectionTestNightly : FourPeersReconnectionImpl() {
 
+    private val nodeIndexShift = 10
+
     @Before
     fun setUp() {
         reset()
     }
+
+    private fun mapNodeId(nodeId: Int): Int = nodeId + nodeIndexShift
+
+    override fun generatePubKey(nodeId: Int): ByteArray = KeyPairHelper.pubKey(mapNodeId(nodeId))
 
     @Test
     fun test4Peers() {
@@ -19,15 +26,15 @@ class FourPeersReconnectionTestNightly : FourPeersReconnectionImpl() {
         configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         val blockchainConfig = "/net/postchain/devtools/reconnection/blockchain_config_4.xml"
         val nodeConfigsFilenames = arrayOf(
-                "classpath:/net/postchain/reconnection/node0.properties",
-                "classpath:/net/postchain/reconnection/node1.properties",
-                "classpath:/net/postchain/reconnection/node2.properties",
-                "classpath:/net/postchain/reconnection/node3.properties"
+                "classpath:/net/postchain/reconnection/four/node0.properties",
+                "classpath:/net/postchain/reconnection/four/node1.properties",
+                "classpath:/net/postchain/reconnection/four/node2.properties",
+                "classpath:/net/postchain/reconnection/four/node3.properties"
         )
 
         // Creating all peers
         nodeConfigsFilenames.forEachIndexed { i, nodeConfig ->
-            createSingleNode(i, nodesCount, nodeConfig, blockchainConfig)
+            createSingleNode(mapNodeId(i), nodesCount, nodeConfig, blockchainConfig)
         }
 
         // Asserting that chain is started
@@ -58,7 +65,7 @@ class FourPeersReconnectionTestNightly : FourPeersReconnectionImpl() {
         buildNotEmptyBlocks(6, randNode3())
 
         println("Stating peer 3 ...")
-        createSingleNode(3, nodesCount, nodeConfigsFilenames[1], blockchainConfig)
+        createSingleNode(mapNodeId(3), nodesCount, nodeConfigsFilenames[1], blockchainConfig)
 
         // Asserting that node3 is a part of network
         assertChainStarted(true, true, true, true)

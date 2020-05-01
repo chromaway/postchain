@@ -301,17 +301,19 @@ open class ConfigFileBasedIntegrationTest: AbstractIntegration() {
         return GtvFactory.gtv(*Array(nodeCount) { GtvFactory.gtv(KeyPairHelper.pubKey(it)) })
     }
 
+    open fun generatePubKey(nodeId: Int): ByteArray = KeyPairHelper.pubKey(nodeId)
+
     fun createPeerInfosWithReplicas(nodeCount: Int, replicasCount: Int): Array<PeerInfo> {
         if (peerInfos == null) {
             peerInfos =
-                    Array(nodeCount) { PeerInfo("localhost", BASE_PORT + it, KeyPairHelper.pubKey(it)) } +
-                            Array(replicasCount) { PeerInfo("localhost", BASE_PORT - it - 1, KeyPairHelper.pubKey(-it - 1)) }
+                    Array(nodeCount) { PeerInfo("localhost", BASE_PORT + it, generatePubKey(it)) } +
+                            Array(replicasCount) { PeerInfo("localhost", BASE_PORT - it - 1, generatePubKey(-it - 1)) }
         }
 
         return peerInfos!!
     }
 
-    fun createPeerInfos(nodeCount: Int): Array<PeerInfo> = createPeerInfosWithReplicas(nodeCount, 0)
+    open fun createPeerInfos(nodeCount: Int): Array<PeerInfo> = createPeerInfosWithReplicas(nodeCount, 0)
 
 
 }

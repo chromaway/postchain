@@ -71,7 +71,10 @@ class BaseBlockDatabase(
             maybeRollback()
             val (theBlockBuilder, exception) = engine.loadUnfinishedBlock(block)
             if (exception != null) {
-                theBlockBuilder.rollback()
+                try {
+                    theBlockBuilder.rollback()
+                } catch (ignore: Exception) {
+                }
                 throw UserMistake("Can't add block", exception)
             } else {
                 theBlockBuilder.commit(block.witness)
@@ -84,7 +87,10 @@ class BaseBlockDatabase(
             maybeRollback()
             val (theBlockBuilder, exception) = engine.loadUnfinishedBlock(block)
             if (exception != null) {
-                theBlockBuilder.rollback()
+                try {
+                    theBlockBuilder.rollback()
+                } catch (ignore: Exception) {
+                }
                 throw UserMistake("Can't load unfinished block", exception)
             } else {
                 blockBuilder = theBlockBuilder
@@ -108,7 +114,10 @@ class BaseBlockDatabase(
             maybeRollback()
             val (theBlockBuilder, exception) = engine.buildBlock()
             if (exception != null) {
-                theBlockBuilder.rollback()
+                try {
+                    theBlockBuilder.rollback()
+                } catch (ignore: Exception) {
+                }
                 throw UserMistake("Can't build block", exception)
             } else {
                 blockBuilder = theBlockBuilder
