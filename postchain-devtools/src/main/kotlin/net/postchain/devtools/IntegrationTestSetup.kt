@@ -117,7 +117,7 @@ open class IntegrationTestSetup: AbstractIntegration() {
             throw IllegalArgumentException("The blockchain conf expected ${sysSetup.nodeMap.size} signers, but you expected: $nodesCount")
         }
 
-        // 3. Create the configuraton provider
+        // 3. Create the configuration provider
         createNodesFromSystemSetup(sysSetup, preWipeDatabase, setupAction)
         return nodes.toTypedArray()
     }

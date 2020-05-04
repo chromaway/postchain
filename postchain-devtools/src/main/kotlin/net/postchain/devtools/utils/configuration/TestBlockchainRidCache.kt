@@ -3,7 +3,6 @@ package net.postchain.devtools.utils.configuration
 import net.postchain.base.BlockchainRid
 import net.postchain.base.BlockchainRidFactory
 import net.postchain.gtv.Gtv
-import java.lang.IllegalStateException
 
 /**
  * This cache will save us some CPU and get us out of situations where we really should have gone to the DB to fetch the RID / IID.
@@ -12,8 +11,8 @@ import java.lang.IllegalStateException
  */
 object TestBlockchainRidCache {
 
-        val cacheRid = mutableMapOf<Int, BlockchainRid>()
-        val cacheChainId = mutableMapOf<BlockchainRid, Int>()
+    val cacheRid = mutableMapOf<Int, BlockchainRid>()
+    val cacheChainId = mutableMapOf<BlockchainRid, Int>()
 
     fun clear() {
         cacheRid.clear()
@@ -21,13 +20,14 @@ object TestBlockchainRidCache {
     }
 
     fun add(chainIid: Int, bcRid: BlockchainRid) {
-        cacheChainId[bcRid]  = chainIid
-        cacheRid[chainIid]= bcRid
+        cacheChainId[bcRid] = chainIid
+        cacheRid[chainIid] = bcRid
     }
 
     fun getRid(chainId: Int, bcGtv: Gtv): BlockchainRid = cacheRid[chainId] ?: calcAndAdd(chainId, bcGtv)
 
-    fun getChainId(rid: BlockchainRid): Int = cacheChainId[rid] ?: throw IllegalStateException("Is ${rid.toShortHex()} a dependency bc RID? This chain must be added to the cache before it can be found. (${this.toString()}")
+    fun getChainId(rid: BlockchainRid): Int = cacheChainId[rid]
+            ?: throw IllegalStateException("Is ${rid.toShortHex()} a dependency bc RID? This chain must be added to the cache before it can be found. (${this.toString()}")
 
     fun calcAndAdd(chainId: Int, bcGtv: Gtv): BlockchainRid {
         val newRid = BlockchainRidFactory.calculateBlockchainRID(bcGtv)
@@ -37,7 +37,7 @@ object TestBlockchainRidCache {
 
     override fun toString(): String {
         val sb = StringBuffer()
-        for (chainId in cacheRid.keys)  {
+        for (chainId in cacheRid.keys) {
             sb.append("[$chainId]= ${cacheRid[chainId]!!.toShortHex()}, ")
         }
         return sb.toString()

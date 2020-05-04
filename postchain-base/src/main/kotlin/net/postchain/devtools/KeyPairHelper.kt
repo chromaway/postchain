@@ -44,7 +44,7 @@ object KeyPairHelper {
         return getCachedPubKey(index).second
     }
 
-    // TODO: Is there any way to do the same smart calculation? No fun if we return "null" here
+    // TODO: [olle] Is there any way to do the same smart calculation? No fun if we return "null" here
     fun pubKeyFromByteArray(pubKeyHex: String): Int? {
         return pubKeyHexToIndex[pubKeyHex]
     }

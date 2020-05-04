@@ -1,15 +1,14 @@
 package net.postchain.devtools.utils.configuration
 
 import mu.KLogging
-import net.postchain.base.BaseBlockchainConfigurationData.Companion.KEY_SIGNERS
 import net.postchain.base.BaseBlockchainConfigurationData.Companion.KEY_DEPENDENCIES
+import net.postchain.base.BaseBlockchainConfigurationData.Companion.KEY_SIGNERS
 import net.postchain.base.BaseDependencyFactory
 import net.postchain.base.BlockchainRid
 import net.postchain.common.toHex
 import net.postchain.devtools.KeyPairHelper
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.gtvml.GtvMLParser
-import java.lang.IllegalStateException
 
 object BlockchainSetupFactory : KLogging() {
 
@@ -23,7 +22,7 @@ object BlockchainSetupFactory : KLogging() {
      * @param blockchainConfigFilename is the file path
      */
     fun buildFromFile(chainIid: Int, blockchainConfigFilename: String): BlockchainSetup {
-        val gtv =  GtvMLParser.parseGtvML(
+        val gtv = GtvMLParser.parseGtvML(
                 javaClass.getResource(blockchainConfigFilename).readText())
         val res = buildFromGtv(chainIid, gtv)
         logger.debug("Translated Filename: $blockchainConfigFilename -> Setup with bc chainId: $chainIid, bc Rid: ${res.rid.toShortHex()}")
@@ -48,6 +47,7 @@ object BlockchainSetupFactory : KLogging() {
         // 1. Get the signers
         val signers = mutableListOf<NodeSeqNumber>()
         val signersArr = bcGtv[KEY_SIGNERS]!!
+
         for (pubkey in signersArr.asArray()) {
             val byteArray = pubkey.asByteArray()
             val nodeId = try {
@@ -65,7 +65,7 @@ object BlockchainSetupFactory : KLogging() {
         if (dep != null) {
             val bcRelatedInfos = BaseDependencyFactory.build(dep!!)
             for (bcRelatedInfo in bcRelatedInfos) {
-              chainRidDependencies.add(bcRelatedInfo.blockchainRid)
+                chainRidDependencies.add(bcRelatedInfo.blockchainRid)
             }
         }
 
