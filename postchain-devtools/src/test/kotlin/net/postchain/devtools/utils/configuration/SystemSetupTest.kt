@@ -3,12 +3,12 @@ package net.postchain.devtools.utils.configuration
 import net.postchain.devtools.utils.configuration.pre.BlockchainPreSetup
 import net.postchain.devtools.utils.configuration.pre.SystemPreSetup
 import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
+import org.junit.After
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class SystemSetupTest {
-
 
     val nodeNr1 = NodeSeqNumber(1)
     val nodeNr2 = NodeSeqNumber(2)
@@ -34,6 +34,11 @@ class SystemSetupTest {
             chainId4 to bcSetup4)
 
     val sysPreSetup = SystemPreSetup(bcPreSetupMap)
+
+    @After
+    fun tearDown() {
+        TestBlockchainRidCache.clear()
+    }
 
     @Test
     fun checkNoDeps() {

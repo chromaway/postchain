@@ -59,11 +59,11 @@ class ManualNodeConfigProviderTest : ConfigFileBasedIntegrationTest() {
 
     @After
     override fun tearDown() {
-        super.tearDown()
         tearDownNode(0)
         tearDownNode(1)
         tearDownNode(2)
         tearDownNode(3)
+        super.tearDown()
     }
 
     @Test

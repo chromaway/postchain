@@ -13,11 +13,13 @@ import org.junit.Test
 import java.sql.Connection
 
 class BaseBlockStoreTest {
+
     val cryptoSystem = SECP256K1CryptoSystem()
     val blockchainRID = BlockchainRid(cryptoSystem.digest("Test BlockchainRID".toByteArray()))
     lateinit var sut: BaseBlockStore
     lateinit var db: DatabaseAccess
     lateinit var ctx: EContext
+
     @Before
     fun setup() {
         sut = BaseBlockStore()

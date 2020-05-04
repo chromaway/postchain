@@ -7,18 +7,15 @@ import net.postchain.base.PeerInfo
 import net.postchain.config.app.AppConfig
 import net.postchain.config.node.NodeConfig
 import net.postchain.config.node.NodeConfigurationProvider
-import net.postchain.core.*
+import net.postchain.core.Transaction
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.utils.configuration.*
 import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
-import net.postchain.gtv.Gtv
-import net.postchain.gtv.GtvFactory.gtv
-import net.postchain.gtv.gtvml.GtvMLParser
 import org.apache.commons.configuration2.MapConfiguration
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertTrue
-import java.lang.IllegalArgumentException
+import org.junit.Before
 
 /**
  * This class uses the [SystemSetup] helper class to construct tests, and this way skips node config files, but
@@ -27,7 +24,7 @@ import java.lang.IllegalArgumentException
  * If you need to provide unusual configurations in your config files, you can use [ConfigFileBasedIntegrationTest]
  * instead (but usually we can sneak in settings via [configOverrides] etc  even here, so it SHOULDN'T be needed)
  */
-open class IntegrationTestSetup: AbstractIntegration() {
+open class IntegrationTestSetup : AbstractIntegration() {
 
     protected lateinit var systemSetup: SystemSetup
     protected val nodes = mutableListOf<PostchainTestNode>()
@@ -157,7 +154,7 @@ open class IntegrationTestSetup: AbstractIntegration() {
      * @param systemSetup is holds the configuration of all the nodes and chains
      * @return list of [PostchainTestNode] s.
      */
-    protected fun createMultiChainNodesFromSystemSetup(systemSetup: SystemSetup) =  systemSetup.toTestNodes().toTypedArray()
+    protected fun createMultiChainNodesFromSystemSetup(systemSetup: SystemSetup) = systemSetup.toTestNodes().toTypedArray()
 
     /**
      * Takes a [SystemSetup] and adds [NodeConfigurationProvider] to all [NodeSetup] in it.
@@ -166,7 +163,7 @@ open class IntegrationTestSetup: AbstractIntegration() {
             systemSetup: SystemSetup,
             configOverrides: MapConfiguration,
             setupAction: (appConfig: AppConfig, nodeConfig: NodeConfig) -> Unit = { _, _ -> Unit }
-    )  {
+    ) {
         val testName = this::class.simpleName!!
         for (nodeSetup in systemSetup.nodeMap.values) {
 
@@ -196,7 +193,6 @@ open class IntegrationTestSetup: AbstractIntegration() {
     }
 
     fun createPeerInfos(nodeCount: Int): Array<PeerInfo> = createPeerInfosWithReplicas(nodeCount, 0)
-
 
 
 }

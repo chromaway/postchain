@@ -11,6 +11,7 @@ import net.postchain.ebft.BaseBlockManager
 import net.postchain.ebft.BaseStatusManager
 import net.postchain.ebft.BlockManager
 import net.postchain.ebft.message.Message
+import net.postchain.ebft.syncmanager.SyncManager
 import net.postchain.ebft.syncmanager.validator.ValidatorSyncManager
 import net.postchain.network.CommunicationManager
 
@@ -32,7 +33,7 @@ class ValidatorWorker(
     override val blockDatabase: BaseBlockDatabase
     private val blockManager: BlockManager
     val statusManager: BaseStatusManager
-    override val syncManager: ValidatorSyncManager
+    override val syncManager: SyncManager
     override val networkAwareTxQueue: NetworkAwareTxQueue
     override val nodeStateTracker = NodeStateTracker()
 
