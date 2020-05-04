@@ -37,7 +37,7 @@ class BaseBlockDatabase(
         maybeRollback()
     }
 
-    private fun <RT> runOp(name: String, op: () -> RT): Promise<RT, Exception> {
+    private fun <RT> runOpAsync(name: String, op: () -> RT): Promise<RT, Exception> {
         logger.trace("BaseBlockDatabase $nodeIndex putting a job")
 
         val deferred = deferred<RT, Exception>()
@@ -67,7 +67,7 @@ class BaseBlockDatabase(
     }
 
     override fun addBlock(block: BlockDataWithWitness): Promise<Unit, Exception> {
-        return runOp("addBlock ${block.header.blockRID.toHex()}") {
+        return runOpAsync("addBlock ${block.header.blockRID.toHex()}") {
             maybeRollback()
             val (theBlockBuilder, exception) = engine.loadUnfinishedBlock(block)
             if (exception != null) {
@@ -83,7 +83,7 @@ class BaseBlockDatabase(
     }
 
     override fun loadUnfinishedBlock(block: BlockData): Promise<Signature, Exception> {
-        return runOp("loadUnfinishedBlock ${block.header.blockRID.toHex()}") {
+        return runOpAsync("loadUnfinishedBlock ${block.header.blockRID.toHex()}") {
             maybeRollback()
             val (theBlockBuilder, exception) = engine.loadUnfinishedBlock(block)
             if (exception != null) {
@@ -101,7 +101,7 @@ class BaseBlockDatabase(
     }
 
     override fun commitBlock(signatures: Array<Signature?>): Promise<Unit, Exception> {
-        return runOp("commitBlock") {
+        return runOpAsync("commitBlock") {
             // TODO: process signatures
             blockBuilder!!.commit(witnessBuilder!!.getWitness())
             blockBuilder = null
@@ -110,7 +110,7 @@ class BaseBlockDatabase(
     }
 
     override fun buildBlock(): Promise<Pair<BlockData, Signature>, Exception> {
-        return runOp("buildBlock") {
+        return runOpAsync("buildBlock") {
             maybeRollback()
             val (theBlockBuilder, exception) = engine.buildBlock()
             if (exception != null) {
