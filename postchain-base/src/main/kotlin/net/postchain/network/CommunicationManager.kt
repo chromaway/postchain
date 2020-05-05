@@ -1,6 +1,7 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.network
 
-import net.postchain.base.PeerInfo
 import net.postchain.core.Shutdownable
 import net.postchain.network.x.XPeerID
 

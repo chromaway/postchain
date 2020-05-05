@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.base.data
 
@@ -6,7 +6,6 @@ import net.postchain.base.BaseEContext
 import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.core.EContext
-import net.postchain.core.UserMistake
 import org.easymock.EasyMock.*
 import org.junit.Assert.assertArrayEquals
 import org.junit.Before
@@ -14,11 +13,13 @@ import org.junit.Test
 import java.sql.Connection
 
 class BaseBlockStoreTest {
+
     val cryptoSystem = SECP256K1CryptoSystem()
     val blockchainRID = BlockchainRid(cryptoSystem.digest("Test BlockchainRID".toByteArray()))
     lateinit var sut: BaseBlockStore
     lateinit var db: DatabaseAccess
     lateinit var ctx: EContext
+
     @Before
     fun setup() {
         sut = BaseBlockStore()

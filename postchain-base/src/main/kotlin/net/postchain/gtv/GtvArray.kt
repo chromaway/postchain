@@ -1,7 +1,9 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv
 
-import java.util.*
 import net.postchain.gtv.messages.RawGtv
+import java.util.*
 
 
 data class GtvArray(val array: Array<out Gtv>) : GtvCollection() {

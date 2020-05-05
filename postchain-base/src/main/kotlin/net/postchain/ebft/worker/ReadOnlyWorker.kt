@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.ebft.worker
 
@@ -9,6 +9,7 @@ import net.postchain.core.NodeStateTracker
 import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.BaseBlockDatabase
 import net.postchain.ebft.message.Message
+import net.postchain.ebft.syncmanager.SyncManager
 import net.postchain.ebft.syncmanager.replica.ReplicaSyncManager
 import net.postchain.network.CommunicationManager
 
@@ -24,7 +25,7 @@ class ReadOnlyWorker(
 ) : AbstractBlockchainProcess() {
 
     override val blockDatabase: BaseBlockDatabase
-    override val syncManager: ReplicaSyncManager
+    override val syncManager: SyncManager
     override val networkAwareTxQueue: NetworkAwareTxQueue
     override val nodeStateTracker = NodeStateTracker()
 

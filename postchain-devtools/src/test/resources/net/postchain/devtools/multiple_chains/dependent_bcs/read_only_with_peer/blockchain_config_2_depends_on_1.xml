@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Copyright (c) 2020 ChromaWay AB. See README for license information. -->
+
+<dict>
+    <entry key="blockstrategy">
+        <!--
+        This block strategy is the default one if no config is made
+        maxblocktime=30000 (milliseconds)
+        blockdelay=1000 (milliseconds)
+        -->
+        <dict>
+            <entry key="name">
+                <string>net.postchain.devtools.OnDemandBlockBuildingStrategy</string>
+            </entry>
+        </dict>
+    </entry>
+    <entry key="configurationfactory">
+        <!--
+        This is the main blockchain configuration class for chain 1
+        Examples:
+        * Single node GTX: SingleNodeGtxBlockchainConfigurationFactory
+        * Normal Gtx: GTXBlockchainConfigurationFactory
+        -->
+        <string>net.postchain.gtx.GTXBlockchainConfigurationFactory</string>
+    </entry>
+    <entry key="signers">
+        <array>
+            <!-- Key0 -->
+            <bytea>031B84C5567B126440995D3ED5AABA0565D71E1834604819FF9C17F5E9D5DD078F</bytea>
+        </array>
+    </entry>
+    <entry key="gtx">
+        <!--
+        If multiple GTX modules are used, allowoverrides will decide if query- and operation names of
+        modules are overridable. If false (default) an error will be thrown on startup if two or more
+        modules have name collisions. If true, The last module with a colliding name will take precedence
+        (blockchain.1.gtx.allowoverrides=true).
+        -->
+        <dict>
+            <entry key="modules">
+                <array>
+                    <string>net.postchain.configurations.GTXTestModule</string>
+                    <string>net.postchain.gtx.StandardOpsGTXModule</string>
+                </array>
+            </entry>
+        </dict>
+    </entry>
+    <entry key="dependencies">
+        <array>
+            <array>
+                <string>My first dependency</string>
+                <bytea>47388EDE43E8326379C14BE5FB7FF87F35A49EA304CFEEFACC7907B1C9462EE7</bytea>
+            </array>
+        </array>
+    </entry>
+</dict>

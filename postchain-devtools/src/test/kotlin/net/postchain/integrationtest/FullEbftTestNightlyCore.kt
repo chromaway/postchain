@@ -1,9 +1,9 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.integrationtest
 
 import mu.KLogging
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.ConfigFileBasedIntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
@@ -11,7 +11,7 @@ import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import kotlin.test.assertNotNull
 
-open class FullEbftTestNightlyCore : IntegrationTest() {
+open class FullEbftTestNightlyCore : ConfigFileBasedIntegrationTest() {
 
     companion object : KLogging()
 
@@ -44,22 +44,22 @@ open class FullEbftTestNightlyCore : IntegrationTest() {
         val referenceHeight = queries.getBestHeight().get()
         logger.info { "$blocksCount, refHe: $referenceHeight" }
         nodes.forEach { node ->
-            val queries = node.getBlockchainInstance().getEngine().getBlockQueries()
+            val blockQueries = node.getBlockchainInstance().getEngine().getBlockQueries()
             assertEquals(referenceHeight, queries.getBestHeight().get())
 
             for (height in 0..referenceHeight) {
                 logger.info { "Verifying height $height" }
-                val rid = queries.getBlockRid(height).get()
+                val rid = blockQueries.getBlockRid(height).get()
                 assertNotNull(rid)
 
-                val txs = queries.getBlockTransactionRids(rid!!).get()
+                val txs = blockQueries.getBlockTransactionRids(rid!!).get()
                 assertEquals(txPerBlock, txs.size)
 
                 for (tx in 0 until txPerBlock) {
                     val expectedTx = TestTransaction((height * txPerBlock + tx).toInt())
                     assertArrayEquals(expectedTx.getRID(), txs[tx])
 
-                    val actualTx = queries.getTransaction(txs[tx]).get()
+                    val actualTx = blockQueries.getTransaction(txs[tx]).get()
                     assertArrayEquals(expectedTx.getRID(), actualTx?.getRID())
                     assertArrayEquals(expectedTx.getRawData(), actualTx!!.getRawData())
                 }

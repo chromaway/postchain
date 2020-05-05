@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.base.gtv
 
 import net.postchain.base.merkle.Hash
@@ -60,11 +62,11 @@ data class BlockHeaderData(
             is GtvArray -> {
                 val lastBlockRidArray = arrayOfNulls<Hash>(gtvDependencies.getSize())
                 var i = 0
-                for (bRid in gtvDependencies.array) {
-                    lastBlockRidArray[i] = when (bRid) {
-                        is GtvByteArray -> bRid.bytearray
+                for (blockRid in gtvDependencies.array) {
+                    lastBlockRidArray[i] = when (blockRid) {
+                        is GtvByteArray -> blockRid.bytearray
                         is GtvNull -> null // Allowed
-                        else -> throw UserMistake("Cannot use type ${bRid.type} in dependency list (at pos: $i)")
+                        else -> throw UserMistake("Cannot use type ${blockRid.type} in dependency list (at pos: $i)")
                     }
                     i++
                 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.ebft.message
 
@@ -159,12 +159,12 @@ class Status(val blockRID: ByteArray?, val height: Long, val revolting: Boolean,
 
 
     override fun toGtv(): Gtv {
-        val bRid: Gtv = if (blockRID != null) {
+        val currentBlockRid: Gtv = if (blockRID != null) {
             GtvFactory.gtv(blockRID)
         } else {
             GtvNull
         }
-        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), bRid, GtvFactory.gtv(height),
+        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), currentBlockRid, GtvFactory.gtv(height),
                 GtvFactory.gtv(revolting), GtvFactory.gtv(round), GtvFactory.gtv(serial), GtvFactory.gtv(state.toLong()))
     }
 }

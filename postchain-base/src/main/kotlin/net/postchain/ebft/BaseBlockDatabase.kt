@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.ebft
 
@@ -37,7 +37,7 @@ class BaseBlockDatabase(
         maybeRollback()
     }
 
-    private fun <RT> runOp(name: String, op: () -> RT): Promise<RT, Exception> {
+    private fun <RT> runOpAsync(name: String, op: () -> RT): Promise<RT, Exception> {
         logger.trace("BaseBlockDatabase $nodeIndex putting a job")
 
         val deferred = deferred<RT, Exception>()
@@ -67,24 +67,41 @@ class BaseBlockDatabase(
     }
 
     override fun addBlock(block: BlockDataWithWitness): Promise<Unit, Exception> {
-        return runOp("addBlock ${block.header.blockRID.toHex()}") {
+        return runOpAsync("addBlock ${block.header.blockRID.toHex()}") {
             maybeRollback()
-            engine.addBlock(block)
+            val (theBlockBuilder, exception) = engine.loadUnfinishedBlock(block)
+            if (exception != null) {
+                try {
+                    theBlockBuilder.rollback()
+                } catch (ignore: Exception) {
+                }
+                throw UserMistake("Can't add block", exception)
+            } else {
+                theBlockBuilder.commit(block.witness)
+            }
         }
     }
 
-
     override fun loadUnfinishedBlock(block: BlockData): Promise<Signature, Exception> {
-        return runOp("loadUnfinishedBlock ${block.header.blockRID.toHex()}") {
+        return runOpAsync("loadUnfinishedBlock ${block.header.blockRID.toHex()}") {
             maybeRollback()
-            blockBuilder = engine.loadUnfinishedBlock(block)
-            witnessBuilder = blockBuilder!!.getBlockWitnessBuilder() as MultiSigBlockWitnessBuilder
-            witnessBuilder!!.getMySignature()
+            val (theBlockBuilder, exception) = engine.loadUnfinishedBlock(block)
+            if (exception != null) {
+                try {
+                    theBlockBuilder.rollback()
+                } catch (ignore: Exception) {
+                }
+                throw UserMistake("Can't load unfinished block", exception)
+            } else {
+                blockBuilder = theBlockBuilder
+                witnessBuilder = blockBuilder!!.getBlockWitnessBuilder() as MultiSigBlockWitnessBuilder
+                witnessBuilder!!.getMySignature()
+            }
         }
     }
 
     override fun commitBlock(signatures: Array<Signature?>): Promise<Unit, Exception> {
-        return runOp("commitBlock") {
+        return runOpAsync("commitBlock") {
             // TODO: process signatures
             blockBuilder!!.commit(witnessBuilder!!.getWitness())
             blockBuilder = null
@@ -93,23 +110,33 @@ class BaseBlockDatabase(
     }
 
     override fun buildBlock(): Promise<Pair<BlockData, Signature>, Exception> {
-        return runOp("buildBlock") {
+        return runOpAsync("buildBlock") {
             maybeRollback()
-            blockBuilder = engine.buildBlock()
-            witnessBuilder = blockBuilder!!.getBlockWitnessBuilder() as MultiSigBlockWitnessBuilder
-            Pair(blockBuilder!!.getBlockData(), witnessBuilder!!.getMySignature())
+            val (theBlockBuilder, exception) = engine.buildBlock()
+            if (exception != null) {
+                try {
+                    theBlockBuilder.rollback()
+                } catch (ignore: Exception) {
+                }
+                throw UserMistake("Can't build block", exception)
+            } else {
+                blockBuilder = theBlockBuilder
+                witnessBuilder = blockBuilder!!.getBlockWitnessBuilder() as MultiSigBlockWitnessBuilder
+                Pair(blockBuilder!!.getBlockData(), witnessBuilder!!.getMySignature())
+            }
         }
     }
 
     override fun verifyBlockSignature(s: Signature): Boolean {
-        if (witnessBuilder == null) {
-            return false
-        }
-        return try {
-            witnessBuilder!!.applySignature(s)
-            true
-        } catch (e: Exception) {
-            logger.debug("Signature invalid", e)
+        return if (witnessBuilder != null) {
+            try {
+                witnessBuilder!!.applySignature(s)
+                true
+            } catch (e: Exception) {
+                logger.debug("Signature invalid", e)
+                false
+            }
+        } else {
             false
         }
     }

@@ -1,9 +1,17 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class BFTTest {
+
+    @Test
+    fun testGetBFTRequiredSignatureCount_0() {
+        val result = getBFTRequiredSignatureCount(0)
+        assertEquals(0, result)
+    }
 
     @Test
     fun testGetBFTRequiredSignatureCount_1() {

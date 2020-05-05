@@ -1,15 +1,18 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv.merkle.factory
 
 import net.postchain.base.merkle.BinaryTreeElement
 import net.postchain.base.merkle.EmptyLeaf
-import net.postchain.base.merkle.MerkleHashMemoization
 import net.postchain.base.merkle.Node
-import net.postchain.gtv.*
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvDictionary
+import net.postchain.gtv.GtvString
 import net.postchain.gtv.merkle.GtvBinaryTreeFactory
 import net.postchain.gtv.merkle.GtvDictHeadNode
 import net.postchain.gtv.path.GtvPath
 import net.postchain.gtv.path.GtvPathSet
-import java.util.SortedSet
+import java.util.*
 
 object GtvBinaryTreeFactoryDict {
 

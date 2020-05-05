@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.core
 
 import net.postchain.base.BlockchainRid
@@ -32,6 +34,17 @@ open class BlockDetail(
         val transactions: List<TxDetail>,
         val witness: ByteArray,
         val timestamp: Long)
+
+open class TransactionInfoExt(
+        val blockRID: ByteArray,
+        val blockHeight: Long,
+        val blockHeader: ByteArray,
+        val witness: ByteArray,
+        val timestamp: Long,
+        val txRID: ByteArray,
+        val txHash: ByteArray,
+        val txData: ByteArray?
+)
 
 data class ValidationResult(
         val result: Boolean,

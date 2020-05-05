@@ -1,10 +1,12 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.integrationtest.managedmode
 
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
 import net.postchain.config.SimpleDatabaseConnector
 import net.postchain.config.app.AppConfigDbLayer
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.ConfigFileBasedIntegrationTest
 import net.postchain.hasSize
 import net.postchain.integrationtest.assertChainNotStarted
 import net.postchain.integrationtest.assertChainStarted
@@ -14,7 +16,7 @@ import org.awaitility.Duration
 import org.junit.Ignore
 import org.junit.Test
 
-class ManagedModeTest : IntegrationTest() {
+class ManagedModeTest : ConfigFileBasedIntegrationTest() {
 
     @Test
     fun singlePeer_loadsBlockchain0Configuration_fromManagedDataSource_and_reconfigures() {

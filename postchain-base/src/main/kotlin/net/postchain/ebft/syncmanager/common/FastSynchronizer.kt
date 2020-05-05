@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.ebft.syncmanager.common
 
 import net.postchain.core.BlockDataWithWitness
@@ -11,9 +13,9 @@ import net.postchain.ebft.message.*
 import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockDataWithWitness
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
-import java.lang.Integer.max
 import java.lang.Integer.min
 import java.util.*
+import kotlin.math.abs
 
 class FastSynchronizer(
         processName: BlockchainProcessName,
@@ -26,7 +28,6 @@ class FastSynchronizer(
     private val fastSyncAlgorithmTelemetry = FastSynchronizerTelemetry(processName)
     private val validatorNodes: List<XPeerID> = signers.map { XPeerID(it) }
     private val parallelism = 10
-    private val nodePoolCount: Int = max(1, signers.count() / 2) // TODO: [et] ?
     private val defaultBackoffDelta = 1000
     private val maxBackoffDelta = 30 * defaultBackoffDelta
 
@@ -46,16 +47,15 @@ class FastSynchronizer(
         dispatchMessages()
     }
 
-    fun isUpToDate(): Boolean {
-        val highest = nodeStatuses().map { it.height }.max() ?: Long.MAX_VALUE
-        return if (blockHeight == -1L || ((highest - blockHeight) > blockHeightAheadCount)) {
-            false
-        } else {
-            // TODO: [et]: Extract out the mutations
-            parallelRequestsState.clear()
-            blocks.clear()
-            true
-        }
+    fun reset() {
+        parallelRequestsState.clear()
+        blocks.clear()
+    }
+
+    fun isAlmostUpToDate(): Boolean {
+        return blockHeight != -1L && EBFTNodesCondition(nodeStatuses()) { status ->
+            abs(status.height - blockHeight) < blockHeightAheadCount
+        }.satisfied()
     }
 
     fun nodeStatuses() = nodesStatuses.values.toTypedArray()
@@ -68,7 +68,7 @@ class FastSynchronizer(
                 when {
                     it <= blockHeight -> blocks.remove()
                     it == blockHeight + 1 ->
-                            commitBlock(blocks.remove().block)
+                        commitBlock(blocks.remove().block)
                     else -> Unit
                 }
             }
@@ -163,21 +163,20 @@ class FastSynchronizer(
     }
 
     private fun askForBlock(height: Long) {
-        nodesWithBlocks
+        val aheadNodes = nodesWithBlocks
                 .filter { it.value >= height }
                 .map { it.key }
                 .toMutableList()
-                .also {
-                    it.shuffle()
-                    if (it.count() >= nodePoolCount) {
-                        fastSyncAlgorithmTelemetry.askForBlock(height, blockHeight)
-                        val timer = parallelRequestsState[height]
-                                ?: IssuedRequestTimer(defaultBackoffDelta, Date().time)
-                        val backoffDelta = min((timer.backoffDelta.toDouble() * 1.1).toInt(), maxBackoffDelta)
-                        communicationManager.sendPacket(GetBlockAtHeight(height), it.first())
-                        parallelRequestsState[height] = timer.copy(backoffDelta = backoffDelta, lastSentTimestamp = Date().time)
-                    }
-                }
+
+        if (aheadNodes.isNotEmpty()) {
+            aheadNodes.shuffle()
+            fastSyncAlgorithmTelemetry.askForBlock(height, blockHeight)
+            val timer = parallelRequestsState[height]
+                    ?: IssuedRequestTimer(defaultBackoffDelta, Date().time)
+            val backoffDelta = min((timer.backoffDelta.toDouble() * 1.1).toInt(), maxBackoffDelta)
+            communicationManager.sendPacket(GetBlockAtHeight(height), aheadNodes.first())
+            parallelRequestsState[height] = timer.copy(backoffDelta = backoffDelta, lastSentTimestamp = Date().time)
+        }
     }
 
     private fun doesQueueContainsBlock(height: Long) = blocks.firstOrNull { it.height == height } != null

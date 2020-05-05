@@ -1,10 +1,11 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtx.gtxml
 
 import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.common.toHex
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
-import net.postchain.devtools.MockCryptoSystem
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

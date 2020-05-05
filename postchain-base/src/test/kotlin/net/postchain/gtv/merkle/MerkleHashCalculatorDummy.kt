@@ -1,7 +1,11 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv.merkle
 
 import net.postchain.base.CryptoSystem
-import net.postchain.base.merkle.*
+import net.postchain.base.merkle.Hash
+import net.postchain.base.merkle.MerkleHashCalculator
+import net.postchain.base.merkle.TreeHelper
 import net.postchain.gtv.*
 import java.nio.charset.Charset
 
@@ -56,9 +60,8 @@ fun dummyAddOneHashFun(bArr: ByteArray, cryptoSystem: CryptoSystem?): Hash {
  *
  * @property memoization is possible to override with some other version (for example that prunes more often)
  */
-class MerkleHashCalculatorDummy(memoization: GtvMerkleHashMemoization): MerkleHashCalculator<Gtv>(null, memoization) {
+class MerkleHashCalculatorDummy(): MerkleHashCalculator<Gtv>(null) {
 
-    constructor(): this(GtvMerkleHashMemoization(100, 10))
 
     override fun calculateLeafHash(value: Gtv): Hash {
         val hash = calculateHashOfValueInternal(value, ::dummySerializatorFun, ::dummyAddOneHashFun)

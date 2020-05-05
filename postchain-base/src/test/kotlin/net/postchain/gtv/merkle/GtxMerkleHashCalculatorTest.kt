@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv.merkle
 
 import net.postchain.base.SECP256K1CryptoSystem

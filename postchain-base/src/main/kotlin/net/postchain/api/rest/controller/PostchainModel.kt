@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.api.rest.controller
 
@@ -51,8 +51,19 @@ open class PostchainModel(
                 ?.let { ApiTx(it.getRawData().toHex()) }
     }
 
-    override fun getBlocks(blockHeight: Long, asc: Boolean, limit: Int, hashesOnly: Boolean): List<BlockDetail> {
-        return blockQueries.getBlocks(blockHeight, asc, limit, hashesOnly).get()
+    override fun getTransactionInfo(txRID: TxRID): TransactionInfoExt? {
+        return blockQueries.getTransactionInfo(txRID.bytes).get()
+    }
+    override fun getTransactionsInfo(beforeTime: Long, limit: Int): List<TransactionInfoExt> {
+        return blockQueries.getTransactionsInfo(beforeTime, limit).get()
+    }
+
+    override fun getBlocks(beforeTime: Long, limit: Int, partialTx: Boolean): List<BlockDetail> {
+        return blockQueries.getBlocks(beforeTime, limit, partialTx).get()
+    }
+
+    override fun getBlock(blockRID: ByteArray, partialTx: Boolean): BlockDetail? {
+        return blockQueries.getBlock(blockRID, partialTx).get()
     }
 
     override fun getConfirmationProof(txRID: TxRID): ConfirmationProof? {

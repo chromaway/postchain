@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.gtx
 
@@ -9,7 +9,9 @@ import net.postchain.base.BlockchainRid
 import net.postchain.base.Storage
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.core.*
-import net.postchain.gtv.*
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.gtvToJSON
+import net.postchain.gtv.make_gtv_gson
 import nl.komponents.kovenant.Promise
 
 open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationData, val module: GTXModule)

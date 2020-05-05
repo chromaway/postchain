@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.integrationtest.config
 
 import com.nhaarman.mockitokotlin2.doReturn
@@ -13,7 +15,7 @@ import net.postchain.common.toHex
 import net.postchain.config.SimpleDatabaseConnector
 import net.postchain.config.app.AppConfig
 import net.postchain.config.app.AppConfigDbLayer
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.ConfigFileBasedIntegrationTest
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.assertNodeConnectedWith
@@ -30,7 +32,7 @@ import java.sql.Timestamp
 import java.time.Instant
 
 @Ignore
-class ManualNodeConfigProviderTest : IntegrationTest() {
+class ManualNodeConfigProviderTest : ConfigFileBasedIntegrationTest() {
 
     private val peerInfos = arrayOf(
             PeerInfo(
@@ -57,11 +59,11 @@ class ManualNodeConfigProviderTest : IntegrationTest() {
 
     @After
     override fun tearDown() {
-        super.tearDown()
         tearDownNode(0)
         tearDownNode(1)
         tearDownNode(2)
         tearDownNode(3)
+        super.tearDown()
     }
 
     @Test

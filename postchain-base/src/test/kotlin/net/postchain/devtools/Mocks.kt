@@ -1,9 +1,12 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.devtools
 
-import net.postchain.base.*
+import net.postchain.base.CryptoSystem
+import net.postchain.base.SigMaker
+import net.postchain.base.Verifier
 import net.postchain.base.merkle.Hash
+import net.postchain.base.secp256k1_verify
 import net.postchain.core.Signature
 import java.security.MessageDigest
 import kotlin.experimental.xor

@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.base.data
 
@@ -8,12 +8,14 @@ import net.postchain.base.BlockchainRid
 import net.postchain.common.toHex
 import net.postchain.core.*
 import org.apache.commons.dbutils.QueryRunner
+import org.apache.commons.dbutils.ResultSetHandler
 import org.apache.commons.dbutils.handlers.*
 import java.sql.Connection
 
 interface DatabaseAccess {
     class BlockInfo(val blockIid: Long, val blockHeader: ByteArray, val witness: ByteArray)
     class BlockInfoExt(val blockRid: ByteArray, val blockHeight: Long, val blockHeader: ByteArray, val witness: ByteArray, val timestamp: Long)
+
 
     fun initialize(connection: Connection, expectedDbVersion: Int)
     fun getChainId(ctx: EContext, blockchainRID: BlockchainRid): Long?
@@ -41,7 +43,10 @@ interface DatabaseAccess {
     fun getBlockTxHashes(ctx: EContext, blokcIid: Long): List<ByteArray>
     fun getTxBytes(ctx: EContext, txRID: ByteArray): ByteArray?
     fun isTransactionConfirmed(ctx: EContext, txRID: ByteArray): Boolean
-    fun getBlocks(ctx: EContext, blockHeight: Long, asc: Boolean, limit: Int): List<BlockInfoExt>
+    fun getBlock(ctx: EContext, blockRID: ByteArray): BlockInfoExt?
+    fun getBlocks(ctx: EContext, blockTime: Long, limit: Int): List<BlockInfoExt>
+    fun getTransactionInfo(ctx: EContext, txRID: ByteArray): TransactionInfoExt?
+    fun getTransactionsInfo(ctx: EContext, beforeTime: Long, limit: Int): List<TransactionInfoExt>
 
     // Blockchain configurations
     fun findConfigurationHeightForBlock(context: EContext, height: Long): Long?
@@ -209,6 +214,48 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
         return DatabaseAccess.BlockInfo(blockIid, blockHeader, witness)
     }
 
+    override fun getTransactionInfo(ctx: EContext, txRID: ByteArray): TransactionInfoExt? {
+        val txInfo = queryRunner.query(ctx.conn,
+                """
+                    SELECT b.block_rid, b.block_height, b.block_header_data, b.block_witness, b.timestamp, t.tx_rid, t.tx_hash, t.tx_data 
+                    FROM blocks as b JOIN transactions as t ON (t.block_iid = b.block_iid) 
+                    WHERE b.chain_iid=? and t.tx_rid = ?
+                    ORDER BY b.block_height DESC 
+                    LIMIT 1;
+                """, mapListHandler, ctx.chainID, txRID)
+        if(txInfo.isEmpty()) return null
+        val blockRID = txInfo[0].get("block_rid") as ByteArray
+        val blockHeight = txInfo[0].get("block_height") as Long
+        val blockHeader = txInfo[0].get("block_header_data") as ByteArray
+        val blockWitness = txInfo[0].get("block_witness") as ByteArray
+        val blockTimestamp = txInfo[0].get("timestamp") as Long
+        val txRID = txInfo[0].get("tx_rid") as ByteArray
+        val txHash = txInfo[0].get("tx_hash") as ByteArray
+        val txData = txInfo[0].get("tx_data") as ByteArray
+        return TransactionInfoExt(blockRID, blockHeight, blockHeader, blockWitness, blockTimestamp, txRID, txHash, txData)
+    }
+    override fun getTransactionsInfo(ctx: EContext, beforeTime: Long, limit: Int): List<TransactionInfoExt> {
+        val transactions = queryRunner.query(ctx.conn,
+                """
+                    SELECT b.block_rid, b.block_height, b.block_header_data, b.block_witness, b.timestamp, t.tx_rid, t.tx_hash, t.tx_data 
+                    FROM blocks as b JOIN transactions as t ON (t.block_iid = b.block_iid) 
+                    WHERE b.chain_iid=? and b.timestamp < ? 
+                    ORDER BY b.block_height DESC 
+                    LIMIT ?;
+                """, mapListHandler, ctx.chainID, beforeTime, limit)
+        return transactions.map { txInfo ->
+            val blockRID = txInfo.get("block_rid") as ByteArray
+            val blockHeight = txInfo.get("block_height") as Long
+            val blockHeader = txInfo.get("block_header_data") as ByteArray
+            val blockWitness = txInfo.get("block_witness") as ByteArray
+            val blockTimestamp = txInfo.get("timestamp") as Long
+            val txRID = txInfo.get("tx_rid") as ByteArray
+            val txHash = txInfo.get("tx_hash") as ByteArray
+            val txData = txInfo.get("tx_data") as ByteArray
+            TransactionInfoExt(blockRID, blockHeight, blockHeader, blockWitness, blockTimestamp, txRID, txHash, txData)
+        }
+    }
+
     override fun getTxHash(ctx: EContext, txRID: ByteArray): ByteArray {
         return queryRunner.query(ctx.conn,
                 "SELECT tx_hash FROM transactions WHERE tx_rid = ? and chain_iid=?",
@@ -267,7 +314,7 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
             }
 
         } else {
-            // meta table does not exist! Assume database does not exist.
+            logger.info("Meta table does not exist! Assume database does not exist and create it (version: $expectedDbVersion).")
             queryRunner.update(connection, sqlCommands.createTableMeta)
             queryRunner.update(
                     connection,
@@ -332,23 +379,43 @@ open class SQLDatabaseAccess(val sqlCommands: SQLCommands) : DatabaseAccess {
         }
     }
 
-    override fun getBlocks(context: EContext, blockHeight: Long, asc: Boolean, limit: Int): List<DatabaseAccess.BlockInfoExt> {
+    override fun getBlock(context: EContext, blockRID: ByteArray): DatabaseAccess.BlockInfoExt? {
+        val blockInfo = queryRunner.query(context.conn,
+                "SELECT block_rid, block_height, block_header_data, block_witness, timestamp " +
+                        "FROM blocks WHERE  chain_iid=? and block_rid = ? " +
+                        "LIMIT 1",
+                mapListHandler,
+                context.chainID,
+                blockRID
+        )
+        if(blockInfo.isEmpty()) return null
+
+        val blockRid = blockInfo[0].get("block_rid") as ByteArray
+        val blockHeight = blockInfo[0].get("block_height") as Long
+        val blockHeader = blockInfo[0].get("block_header_data") as ByteArray
+        val blockWitness = blockInfo[0].get("block_witness") as ByteArray
+        val timestamp = blockInfo[0].get("timestamp") as Long
+        return DatabaseAccess.BlockInfoExt(blockRid, blockHeight, blockHeader, blockWitness, timestamp)
+    }
+
+    override fun getBlocks(context: EContext, blockTime: Long, limit: Int): List<DatabaseAccess.BlockInfoExt> {
         val blocksInfo = queryRunner.query(context.conn,
                 "SELECT block_rid, block_height, block_header_data, block_witness, timestamp " +
-                        "FROM blocks WHERE block_height ${if (asc) ">" else "<"} ? " +
-                        "ORDER BY timestamp ${if (asc) "ASC" else "DESC"} " +
+                        "FROM blocks WHERE  chain_iid=? and timestamp < ? " +
+                        "ORDER BY timestamp DESC " +
                         "LIMIT ?",
                 mapListHandler,
-                blockHeight,
+                context.chainID,
+                blockTime,
                 limit)
 
         return blocksInfo.map { blockInfo ->
             val blockRid = blockInfo.get("block_rid") as ByteArray
-            val blockHeight = blockInfo.get("block_height") as Long
+            val heightOfBlock = blockInfo.get("block_height") as Long
             val blockHeader = blockInfo.get("block_header_data") as ByteArray
             val blockWitness = blockInfo.get("block_witness") as ByteArray
             val timestamp = blockInfo.get("timestamp") as Long
-            DatabaseAccess.BlockInfoExt(blockRid, blockHeight, blockHeader, blockWitness, timestamp)
+            DatabaseAccess.BlockInfoExt(blockRid, heightOfBlock, blockHeader, blockWitness, timestamp)
         }
     }
 

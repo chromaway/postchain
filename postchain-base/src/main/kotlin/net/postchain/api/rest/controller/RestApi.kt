@@ -1,10 +1,8 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.api.rest.controller
 
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonElement
+import com.google.gson.*
 import mu.KLogging
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_HEADERS
 import net.postchain.api.rest.controller.HttpHelper.Companion.ACCESS_CONTROL_ALLOW_METHODS
@@ -18,7 +16,6 @@ import net.postchain.api.rest.json.JsonFactory
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.GTXQuery
 import net.postchain.api.rest.model.TxRID
-import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.common.TimeLog
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
@@ -56,6 +53,7 @@ class RestApi(
     val MAX_NUMBER_OF_BLOCKS_PER_REQUEST = 100
     val DEFAULT_BLOCK_HEIGHT_REQUEST = Long.MAX_VALUE
     val DEFAULT_ENTRY_RESULTS_REQUEST = 25
+    val MAX_NUMBER_OF_TXS_PER_REQUEST = 600
 
     companion object : KLogging()
 
@@ -67,7 +65,7 @@ class RestApi(
     init {
         buildErrorHandler(http)
         buildRouter(http)
-        logger.info { "Rest API listening on port ${actualPort()}" }
+        logger.info { "Rest API listening on port ${actualPort()} and were given $listenPort" }
         logger.info { "Rest API attached on $basePath/" }
     }
 
@@ -81,7 +79,7 @@ class RestApi(
         if (model != null) {
             bridByIID.remove(model.chainIID)
             models.remove(blockchainRID.toUpperCase())
-        }  else throw ProgrammerMistake("Blockchain $blockchainRID not attached")
+        } else throw ProgrammerMistake("Blockchain $blockchainRID not attached")
     }
 
     override fun retrieveModel(blockchainRID: String): Model? {
@@ -182,6 +180,19 @@ class RestApi(
                 }
             }, gson::toJson)
 
+            http.get("/transactions/$PARAM_BLOCKCHAIN_RID/$PARAM_HASH_HEX", "application/json", { request, _ ->
+                  runTxActionOnModel(request) { model, txRID ->
+                      model.getTransactionInfo(txRID)
+                  }
+            }, gson::toJson)
+            http.get("/transactions/$PARAM_BLOCKCHAIN_RID", "application/json", { request, _ ->
+                val model = model(request)
+                val paramsMap = request.queryMap()
+                val limit = paramsMap.get("limit")?.value()?.toIntOrNull()?.coerceIn(0, MAX_NUMBER_OF_TXS_PER_REQUEST) ?: DEFAULT_ENTRY_RESULTS_REQUEST
+                val beforeTime = paramsMap.get("before-time")?.value()?.toLongOrNull() ?: Long.MAX_VALUE
+                model.getTransactionsInfo(beforeTime, limit)
+            }, gson::toJson)
+
             http.get("/tx/$PARAM_BLOCKCHAIN_RID/$PARAM_HASH_HEX/confirmationProof", { request, _ ->
                 runTxActionOnModel(request) { model, txRID ->
                     model.getConfirmationProof(txRID)
@@ -194,12 +205,26 @@ class RestApi(
                 }
             }, gson::toJson)
 
-            http.get("/blocks/$PARAM_BLOCKCHAIN_RID", { request, _ ->
-                handleBlocksQuery(request)
+            http.get("/blocks/$PARAM_BLOCKCHAIN_RID", "application/json", { request, _ ->
+                val model = model(request)
+                val paramsMap = request.queryMap()
+                val beforeTime = paramsMap.get("before-time")?.value()?.toLongOrNull() ?: Long.MAX_VALUE
+                val limit = paramsMap.get("limit")?.value()?.toIntOrNull()?.coerceIn(0, MAX_NUMBER_OF_BLOCKS_PER_REQUEST) ?: DEFAULT_ENTRY_RESULTS_REQUEST
+                val partialTxs = paramsMap.get("txs")?.value() != "true"
+                model.getBlocks(beforeTime, limit, partialTxs)
+
+            }, gson::toJson)
+
+            http.get("/blocks/$PARAM_BLOCKCHAIN_RID/$PARAM_HASH_HEX", "applicatin/json", { request, _ ->
+                val model = model(request)
+                val blockRID = request.params(PARAM_HASH_HEX).hexStringToByteArray()
+                val paramsMap = request.queryMap()
+                val partialTx = paramsMap.get("txs").value() != "true"
+                model.getBlock(blockRID, partialTx)
             }, gson::toJson)
 
             http.post("/query/$PARAM_BLOCKCHAIN_RID") { request, _ ->
-                handleQuery(request)
+                handlePostQuery(request)
             }
 
             http.post("/batch_query/$PARAM_BLOCKCHAIN_RID") { request, _ ->
@@ -209,6 +234,10 @@ class RestApi(
             // direct query. That should be used as example: <img src="http://node/dquery/brid?type=get_picture&id=4555" />
             http.get("/dquery/$PARAM_BLOCKCHAIN_RID") { request, response ->
                 handleDirectQuery(request, response)
+            }
+
+            http.get("/query/$PARAM_BLOCKCHAIN_RID") { request, response ->
+                handleGetQuery(request)
             }
 
             http.post("/query_gtx/$PARAM_BLOCKCHAIN_RID") { request, _ ->
@@ -227,50 +256,13 @@ class RestApi(
                 handleDebugQuery(request)
             }
 
-            http.get( "/brid/$PARAM_BLOCKCHAIN_RID") {
-                request, _ ->  checkBlockchainRID(request)
+            http.get("/brid/$PARAM_BLOCKCHAIN_RID") { request, _ ->
+                checkBlockchainRID(request)
 
             }
         }
 
         http.awaitInitialization()
-    }
-
-    private fun handleBlocksQuery(request: Request): List<BlockDetail> {
-        var blockHeight = DEFAULT_BLOCK_HEIGHT_REQUEST
-        var orderAsc = false
-        var limit = DEFAULT_ENTRY_RESULTS_REQUEST // max number of blocks that is possible to request is 600
-        var hashesOnly = true
-        var fromTransaction: ByteArray? = null
-
-        val params = request.queryMap()
-        for ((name, value) in params.toMap()) {
-            when (name) {
-                "before_block" -> {
-                    blockHeight = value[0].toLongOrNull() ?: blockHeight
-                    orderAsc = false
-                }
-                "after_block" -> {
-                    blockHeight = value[0].toLongOrNull() ?: blockHeight
-                    orderAsc = true
-                }
-                "limit" -> {
-                    limit = value[0].toIntOrNull() ?: limit
-                    limit = if (limit < 0 || limit > MAX_NUMBER_OF_BLOCKS_PER_REQUEST)
-                        DEFAULT_ENTRY_RESULTS_REQUEST
-                    else limit
-                }
-                "hashesOnly" -> {
-                    hashesOnly = value[0] == "true"
-                }
-                "from_transaction" -> {
-                    fromTransaction = value[0].hexStringToByteArray()
-                }
-            }
-        }
-
-        return model(request).getBlocks(blockHeight, orderAsc, limit, hashesOnly)
-
     }
 
     private fun toTransaction(request: Request): ApiTx {
@@ -312,11 +304,29 @@ class RestApi(
         return gson.toJson(ErrorBody(error.message ?: "Unknown error"))
     }
 
-    private fun handleQuery(request: Request): String {
+    private fun handlePostQuery(request: Request): String {
         logger.debug("Request body: ${request.body()}")
         return model(request)
                 .query(Query(request.body()))
                 .json
+    }
+
+    private fun handleGetQuery(request: Request): String {
+        val queryMap = request.queryMap()
+        val jsonQuery = JsonObject()
+
+        queryMap.toMap().forEach {
+            val paramValue = queryMap.value(it.key)
+            var value = JsonPrimitive(paramValue)
+            if (paramValue == "true" || paramValue == "false") {
+                value = JsonPrimitive(paramValue.toBoolean())
+            } else if (paramValue.toIntOrNull() != null) {
+                value = JsonPrimitive(paramValue.toInt())
+            }
+            jsonQuery.add(it.key, value)
+        }
+
+        return model(request).query(Query(gson.toJson(jsonQuery))).json
     }
 
     private fun handleDirectQuery(request: Request, response: Response): Any {
@@ -334,12 +344,10 @@ class RestApi(
         // first element is content-type
         response.type(array[0].asString())
         val content = array[1]
-        if (content.type == GtvType.STRING) {
-            return content.asString()
-        } else if (content.type == GtvType.BYTEARRAY) {
-            return content.asByteArray()
-        } else {
-            throw UserMistake("Unexpected content")
+        return when (content.type) {
+            GtvType.STRING -> content.asString()
+            GtvType.BYTEARRAY -> content.asByteArray()
+            else -> throw UserMistake("Unexpected content")
         }
     }
 

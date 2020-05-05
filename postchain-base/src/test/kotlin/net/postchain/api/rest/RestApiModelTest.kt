@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.api.rest
 
 import com.google.gson.JsonParser
@@ -8,9 +10,12 @@ import net.postchain.api.rest.controller.RestApi
 import net.postchain.api.rest.json.JsonFactory
 import net.postchain.api.rest.model.ApiTx
 import net.postchain.api.rest.model.TxRID
+import net.postchain.base.cryptoSystem
 import net.postchain.common.hexStringToByteArray
+import net.postchain.common.toHex
 import net.postchain.config.app.AppConfig
 import net.postchain.core.BlockDetail
+import net.postchain.core.TransactionInfoExt
 import net.postchain.core.TxDetail
 import net.postchain.ebft.NodeState
 import net.postchain.ebft.rest.contract.EBFTstateNodeStatusContract
@@ -268,7 +273,7 @@ class RestApiModelTest {
                         "signatures".toByteArray(),
                         1574849940)
         )
-        expect(model.getBlocks(Long.MAX_VALUE, false, 25, false))
+        expect(model.getBlocks(Long.MAX_VALUE, 25, false))
                 .andReturn(response)
 
         replay(model)
@@ -276,7 +281,7 @@ class RestApiModelTest {
         restApi.attachModel(blockchainRID1, model)
 
         given().basePath(basePath).port(restApi.actualPort())
-                .get("/blocks/$blockchainRID1?before_block=${Long.MAX_VALUE}&limit=${25}&hashesOnly=false")
+                .get("/blocks/$blockchainRID1?before-time=${Long.MAX_VALUE}&limit=${25}&txs=true")
                 .then()
                 .statusCode(200)
                 .assertThat().body(equalTo(gson.toJson(response).toString()))
@@ -308,7 +313,8 @@ class RestApiModelTest {
                         "signatures".toByteArray(),
                         1574849940)
         )
-        expect(model.getBlocks(3, false, 2, true))
+
+        expect(model.getBlocks(1574849940,2, true))
                 .andReturn(response)
 
         replay(model)
@@ -316,11 +322,159 @@ class RestApiModelTest {
         restApi.attachModel(blockchainRID1, model)
 
         given().basePath(basePath).port(restApi.actualPort())
-                .get("/blocks/$blockchainRID1?before_block=${3}&limit=${2}&txs=false")
+                .get("/blocks/$blockchainRID1?before-time=${1574849940}&limit=${2}&txs=false")
                 .then()
                 .statusCode(200)
                 .assertThat().body(equalTo(gson.toJson(response).toString()))
 
         verify(model)
+    }
+
+    @Test
+    fun test_blocks_get_no_params() {
+
+        val blocks = listOf(
+                BlockDetail("blockRid001".toByteArray(), blockchainRID3.toByteArray(), "some header".toByteArray(), 0, listOf<TxDetail>(),"signatures".toByteArray(), 1574849700),
+                BlockDetail(
+                        "blockRid002".toByteArray(),
+                        "blockRid001".toByteArray(),
+                        "some other header".toByteArray(),
+                        1,
+                        listOf<TxDetail>(
+                            TxDetail(
+                                    cryptoSystem.digest("tx1".toByteArray()),
+                                    "tx1 - 001".toByteArray().slice(IntRange(0,4)).toByteArray(),
+                                    "tx1".toByteArray()
+                            )
+                        ),
+                        "signatures".toByteArray(),
+                        1574849760
+                ),
+                BlockDetail(
+                        "blockRid003".toByteArray(),
+                        "blockRid002".toByteArray(),
+                        "yet another header".toByteArray(),
+                        2,
+                        listOf<TxDetail>(),
+                        "signatures".toByteArray(),
+                        1574849880
+                ),
+                BlockDetail(
+                        "blockRid004".toByteArray(),
+                        "blockRid003".toByteArray(),
+                        "guess what? Another header".toByteArray(),
+                        3,
+                        listOf<TxDetail>(
+                                TxDetail(
+                                        cryptoSystem.digest("tx2".toByteArray()),
+                                        "tx2 - 002".toByteArray().slice(IntRange(0, 4)).toByteArray(),
+                                        "tx2".toByteArray()
+                                ),
+                                TxDetail(
+                                        cryptoSystem.digest("tx3".toByteArray()),
+                                        "tx3 - 003".toByteArray().slice(IntRange(0, 4)).toByteArray(),
+                                        "tx3".toByteArray()
+                                ),
+                                TxDetail(
+                                        cryptoSystem.digest("tx4".toByteArray()),
+                                        "tx4 - 004".toByteArray().slice(IntRange(0, 4)).toByteArray(),
+                                        "tx4".toByteArray()
+                                )
+                        ),
+                        "signatures".toByteArray(),
+                        1574849940
+                )
+        )
+
+        expect(model.getBlocks(Long.MAX_VALUE, 25, true))
+                .andReturn(blocks)
+
+        replay(model)
+
+        restApi.attachModel(blockchainRID1, model)
+
+        given().basePath(basePath).port(restApi.actualPort())
+                .get("/blocks/$blockchainRID1")
+                .then()
+                .statusCode(200)
+
+        verify(model)
+    }
+
+    @Test
+    fun test_transactions_get_all() {
+
+        val response = listOf<TransactionInfoExt> (
+                TransactionInfoExt("blockRid002".toByteArray(),  1, "some other header".toByteArray(), "signatures".toByteArray(), 1574849760, cryptoSystem.digest("tx1".toByteArray()), "tx1 - 001".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx1".toByteArray()),
+                TransactionInfoExt("blockRid004".toByteArray(),  3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx2".toByteArray()), "tx2 - 002".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx2".toByteArray()),
+                TransactionInfoExt("blockRid004".toByteArray(),  3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx3".toByteArray()), "tx3 - 003".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx3".toByteArray()),
+                TransactionInfoExt("blockRid004".toByteArray(),  3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx4".toByteArray()), "tx4 - 004".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx4".toByteArray())
+        )
+        expect(model.getTransactionsInfo(Long.MAX_VALUE, 300))
+                .andReturn(response)
+        replay(model)
+        restApi.attachModel(blockchainRID1, model)
+
+        given().basePath(basePath).port(restApi.actualPort())
+                .get("/transactions/$blockchainRID1?before-time=${Long.MAX_VALUE}&limit=${300}")
+                .then()
+                .statusCode(200)
+                .assertThat().body(equalTo(gson.toJson(response).toString()))
+
+        verify(model)
+    }
+
+    @Test
+    fun test_transactions_get_no_params() {
+        val response = listOf(
+            TransactionInfoExt("blockRid002".toByteArray(),  1, "some other header".toByteArray(), "signatures".toByteArray(), 1574849760, cryptoSystem.digest("tx1".toByteArray()), "tx1 - 001".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx1".toByteArray()),
+            TransactionInfoExt("blockRid004".toByteArray(),  3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx2".toByteArray()), "tx2 - 002".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx2".toByteArray()),
+            TransactionInfoExt("blockRid004".toByteArray(),  3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx3".toByteArray()), "tx3 - 003".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx3".toByteArray()),
+            TransactionInfoExt("blockRid004".toByteArray(),  3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx4".toByteArray()), "tx4 - 004".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx4".toByteArray())
+        )
+        expect(model.getTransactionsInfo(Long.MAX_VALUE, 25))
+                .andReturn(response)
+        replay(model)
+        restApi.attachModel(blockchainRID1, model)
+
+        given().basePath(basePath).port(restApi.actualPort())
+                .get("/transactions/$blockchainRID1")
+                .then()
+                .statusCode(200)
+                .assertThat().body(equalTo(gson.toJson(response).toString()))
+        verify(model)
+    }
+
+    @Test
+    fun test_block_get_one() {
+        val tx = "tx2".toByteArray()
+        val txRID = cryptoSystem.digest(tx)
+        val response = TransactionInfoExt("blockRid004".toByteArray(),  3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, txRID, "tx2 - 002".toByteArray().slice(IntRange(0,4)).toByteArray(), tx)
+        expect(model.getTransactionInfo(TxRID(txRID)))
+                .andReturn(response)
+        replay(model)
+        restApi.attachModel(blockchainRID1, model)
+
+        given().basePath(basePath).port(restApi.actualPort())
+                .get("/transactions/$blockchainRID1/${txRID.toHex()}")
+                .then()
+                .statusCode(200)
+                .assertThat().body(equalTo(gson.toJson(response).toString()))
+    }
+
+    @Test
+    fun test_block_get_by_RID() {
+        val blockRID = "blockRid001".toByteArray()
+        val response = BlockDetail("blockRid001".toByteArray(), blockchainRID3.toByteArray(), "some header".toByteArray(), 0, listOf<TxDetail>(),"signatures".toByteArray(), 1574849700)
+        expect(model.getBlock(blockRID, true))
+                .andReturn(response)
+        replay(model)
+        restApi.attachModel(blockchainRID1, model)
+
+        given().basePath(basePath).port(restApi.actualPort())
+                .get("/blocks/$blockchainRID1/${blockRID.toHex()}")
+                .then()
+                .statusCode(200)
+                .assertThat().body(equalTo(gson.toJson(response).toString()))
     }
 }

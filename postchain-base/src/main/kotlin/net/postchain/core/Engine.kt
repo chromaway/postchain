@@ -1,3 +1,5 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.core
 
 import net.postchain.base.BlockchainRid
@@ -17,9 +19,12 @@ interface Synchronizable {
 interface BlockchainEngine : Shutdownable {
     fun initializeDB()
     fun setRestartHandler(restartHandler: RestartHandler)
+
+    // TODO: POS-111: Remove `addBlock()` and rename `loadUnfinishedBlock()` to `loadBlock()`
     fun addBlock(block: BlockDataWithWitness)
-    fun loadUnfinishedBlock(block: BlockData): ManagedBlockBuilder
-    fun buildBlock(): ManagedBlockBuilder
+    fun loadUnfinishedBlock(block: BlockData): Pair<ManagedBlockBuilder, Exception?>
+
+    fun buildBlock(): Pair<ManagedBlockBuilder, Exception?>
     fun getTransactionQueue(): TransactionQueue
     fun getBlockBuildingStrategy(): BlockBuildingStrategy
     fun getBlockQueries(): BlockQueries

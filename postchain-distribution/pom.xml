@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>postchain</artifactId>
+        <groupId>net.postchain</groupId>
+        <version>3.2.0</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>postchain-distribution</artifactId>
+    <name>Postchain Distribution</name>
+
+    <properties>
+        <executable-classifier>jar-with-dependencies</executable-classifier>
+        <dist-classifier>dist</dist-classifier>
+    </properties>
+
+    <dependencies>
+        <!-- Postchain -->
+        <dependency>
+            <groupId>net.postchain</groupId>
+            <artifactId>postchain-base</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.postchain</groupId>
+            <artifactId>postchain-devtools</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.postchain</groupId>
+            <artifactId>postchain-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>postchain-mme</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>${maven.assembly.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>postchain-mme</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <finalName>postchain-mme-${project.version}</finalName>
+                                    <descriptors>
+                                        <descriptor>src/main/postchain-mme/assembly/dist.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>postchain-single-dapp</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>${maven.assembly.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>postchain-single-dapp</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <finalName>postchain-single-dapp-${project.version}</finalName>
+                                    <descriptors>
+                                        <descriptor>src/main/postchain-single-dapp/assembly/dist.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>

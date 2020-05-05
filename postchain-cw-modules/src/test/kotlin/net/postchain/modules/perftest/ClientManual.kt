@@ -1,11 +1,12 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.modules.perftest
 
-import io.restassured.RestAssured.*
+import io.restassured.RestAssured.given
 import net.postchain.common.toHex
-import net.postchain.gtx.GTXDataBuilder
-import net.postchain.gtv.GtvFactory.gtv
-import net.postchain.modules.ft.testBlockchainRID
 import net.postchain.devtools.modules.ft.FTIntegrationTest
+import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.gtx.GTXDataBuilder
 import org.junit.Test
 import java.util.*
 

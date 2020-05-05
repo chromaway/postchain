@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.base.data
 
@@ -86,27 +86,44 @@ class BaseBlockStore : BlockStore {
                 .map { it.data as ByteArray }
     }
 
+    override fun getTransactionInfo(ctx: EContext, txRID: ByteArray): TransactionInfoExt? {
+        return DatabaseAccess.of(ctx).getTransactionInfo(ctx, txRID)
+    }
+
+    override fun getTransactionsInfo(ctx: EContext, beforeTime: Long, limit: Int): List<TransactionInfoExt> {
+        return DatabaseAccess.of(ctx).getTransactionsInfo(ctx, beforeTime, limit)
+    }
+
     override fun getWitnessData(ctx: EContext, blockRID: ByteArray): ByteArray {
         return DatabaseAccess.of(ctx).getWitnessData(ctx, blockRID)
     }
 
-    override fun getBlocks(ctx: EContext, blockHeight: Long, asc: Boolean, limit: Int, hashesOnly: Boolean): List<BlockDetail> {
+    override fun getBlock(ctx: EContext, blockRID: ByteArray, hashesOnly: Boolean): BlockDetail? {
         val db = DatabaseAccess.of(ctx)
-        val blocks = db.getBlocks(ctx, blockHeight, asc, limit)
-        return blocks.map { block ->
-            val txs = db.getBlockTransactions(ctx, block.blockRid, hashesOnly)
+        val blockInfo = db.getBlock(ctx, blockRID) ?: return null
+        var txDetails = listOf<TxDetail>()
+        txDetails = db.getBlockTransactions(ctx, blockInfo.blockRid, hashesOnly)
+        val blockHeaderDecoded = BaseBlockHeader(blockInfo.blockHeader, SECP256K1CryptoSystem()) // TODO can I do this on the node or is it too computational expensive
+        return BlockDetail(blockInfo.blockRid, blockHeaderDecoded.prevBlockRID, blockInfo.blockHeader, blockInfo.blockHeight, txDetails, blockInfo.witness, blockInfo.timestamp)
+    }
+
+    override fun getBlocks(ctx: EContext, blockTime: Long, limit: Int, hashesOnly: Boolean): List<BlockDetail> {
+        val db = DatabaseAccess.of(ctx)
+        val blocksInfo = db.getBlocks(ctx, blockTime, limit)
+        return blocksInfo.map { blockInfo ->
+            val txs = db.getBlockTransactions(ctx, blockInfo.blockRid, hashesOnly)
 
             // Decode block header
-            val blockHeaderDecoded = BaseBlockHeader(block.blockHeader, SECP256K1CryptoSystem())
+            val blockHeaderDecoded = BaseBlockHeader(blockInfo.blockHeader, SECP256K1CryptoSystem())
 
             BlockDetail(
-                    block.blockRid,
+                    blockInfo.blockRid,
                     blockHeaderDecoded.prevBlockRID,
-                    block.blockHeader,
-                    block.blockHeight,
+                    blockInfo.blockHeader,
+                    blockInfo.blockHeight,
                     txs,
-                    block.witness,
-                    block.timestamp)
+                    blockInfo.witness,
+                    blockInfo.timestamp)
         }
     }
 

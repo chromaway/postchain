@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ChromaWay Inc. See README for license information.
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
 
 package net.postchain.ebft.syncmanager.validator
 
@@ -16,6 +16,7 @@ import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockData
 import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockDataWithWitness
 import net.postchain.ebft.syncmanager.StatusLogInterval
 import net.postchain.ebft.syncmanager.SyncManager
+import net.postchain.ebft.syncmanager.common.EBFTNodesCondition
 import net.postchain.ebft.syncmanager.common.FastSynchronizer
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
@@ -95,9 +96,6 @@ class ValidatorSyncManager(
                             // validator consensus logic
                             when (message) {
                                 is Status -> {
-                                    useFastSyncAlgorithm = (message.height - statusManager.myStatus.height) >=
-                                            fastSynchronizer.blockHeightAheadCount
-
                                     NodeStatus(message.height, message.serial)
                                             .apply {
                                                 blockRID = message.blockRID
@@ -107,6 +105,8 @@ class ValidatorSyncManager(
                                             }.also {
                                                 statusManager.onStatusUpdate(nodeIndex, it)
                                             }
+
+                                    tryToSwitchToFastSync()
                                 }
                                 is BlockSignature -> {
                                     val signature = Signature(message.sig.subjectID, message.sig.data)
@@ -133,8 +133,11 @@ class ValidatorSyncManager(
                                     }
                                 }
                                 is UnfinishedBlock -> {
-                                    blockManager.onReceivedUnfinishedBlock(decodeBlockData(BlockData(message.header, message.transactions),
-                                            blockchainConfiguration))
+                                    blockManager.onReceivedUnfinishedBlock(
+                                            decodeBlockData(
+                                                    BlockData(message.header, message.transactions),
+                                                    blockchainConfiguration)
+                                    )
                                 }
                                 is GetUnfinishedBlock -> sendUnfinishedBlock(nodeIndex)
                                 is GetBlockSignature -> sendBlockSignature(nodeIndex, message.blockRID)
@@ -338,15 +341,22 @@ class ValidatorSyncManager(
         }
     }
 
+    private fun tryToSwitchToFastSync() {
+        useFastSyncAlgorithm = EBFTNodesCondition(statusManager.nodeStatuses) { status ->
+            status.height - statusManager.myStatus.height >= fastSynchronizer.blockHeightAheadCount
+        }.satisfied()
+    }
+
     /**
      * Process peer messages, how we should proceed with the current block, updating the revolt tracker and
      * notify peers of our current status.
      */
     override fun update() {
         if (useFastSyncAlgorithm) {
-            synchronized (statusManager) {
+            synchronized(statusManager) {
                 fastSynchronizer.sync()
-                if (fastSynchronizer.isUpToDate()) {
+                if (fastSynchronizer.isAlmostUpToDate()) {
+                    fastSynchronizer.reset()
                     // turn off fast sync, reset current block to null, and query for the last known state from db to prevent
                     // possible race conditions
                     useFastSyncAlgorithm = false

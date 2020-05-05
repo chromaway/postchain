@@ -1,8 +1,10 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv
 
+import net.postchain.gtv.messages.RawGtv
 import org.openmuc.jasn1.ber.types.BerInteger
 import java.math.BigInteger
-import net.postchain.gtv.messages.RawGtv
 
 data class GtvInteger(val integer: BigInteger) : GtvPrimitive() {
 

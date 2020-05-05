@@ -1,9 +1,12 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv.merkle
 
 import net.postchain.base.CryptoSystem
-import net.postchain.base.merkle.*
+import net.postchain.base.merkle.Hash
+import net.postchain.base.merkle.MerkleBasics
+import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.core.ProgrammerMistake
-
 import net.postchain.gtv.*
 import net.postchain.gtv.GtvEncoder.encodeGtv
 
@@ -32,7 +35,7 @@ fun serializeGtvToByteArary(gtv: Gtv): ByteArray {
  * The calculator intended to be used is production for trees that hold [Gtv]
  */
 class GtvMerkleHashCalculator(cryptoSystem: CryptoSystem):
-        MerkleHashCalculator<Gtv>(cryptoSystem, GtvMerkleHashCache.gtvMerkleHashMemoization) {
+        MerkleHashCalculator<Gtv>(cryptoSystem) {
 
     override fun calculateNodeHash(prefix: Byte, hashLeft: Hash, hashRight: Hash): Hash {
         return calculateNodeHashInternal(prefix, hashLeft, hashRight, MerkleBasics::hashingFun)

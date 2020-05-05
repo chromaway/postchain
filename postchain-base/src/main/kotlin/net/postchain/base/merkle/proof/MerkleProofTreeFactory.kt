@@ -1,7 +1,12 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.base.merkle.proof
 
 import mu.KLogging
-import net.postchain.base.merkle.*
+import net.postchain.base.merkle.BinaryTree
+import net.postchain.base.merkle.BinaryTreeElement
+import net.postchain.base.merkle.MerkleHashCalculator
+import net.postchain.base.merkle.Node
 
 /**
  * Base class for building [MerkleProofTree] (but needs to be overridden to actually do something)

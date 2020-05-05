@@ -1,6 +1,8 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.integrationtest
 
-import net.postchain.devtools.IntegrationTest
+import net.postchain.devtools.ConfigFileBasedIntegrationTest
 import net.postchain.devtools.testinfra.TestTransaction
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
@@ -13,7 +15,7 @@ import org.junit.Test
  * See [FourPeersReconnectionTest], [FourPeersReconfigurationTest], [FourPeersMultipleChainsOperationsTest].
  */
 @Ignore
-class MixedFourPeersTest : IntegrationTest() {
+class MixedFourPeersTest : ConfigFileBasedIntegrationTest() {
 
     private val tx1_0 = TestTransaction(10)
     private val tx1_1 = TestTransaction(11)

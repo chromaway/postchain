@@ -1,10 +1,15 @@
+// Copyright (c) 2020 ChromaWay AB. See README for license information.
+
 package net.postchain.gtv.merkle.proof
 
 import net.postchain.base.merkle.*
 import net.postchain.base.merkle.proof.*
 import net.postchain.core.UserMistake
 import net.postchain.gtv.*
-import net.postchain.gtv.merkle.*
+import net.postchain.gtv.merkle.GtvArrayHeadNode
+import net.postchain.gtv.merkle.GtvBinaryTree
+import net.postchain.gtv.merkle.GtvDictHeadNode
+import net.postchain.gtv.merkle.GtvMerkleBasics
 import net.postchain.gtv.path.*
 
 
@@ -72,17 +77,10 @@ class GtvMerkleProofTreeFactory: MerkleProofTreeFactory<Gtv>()   {
                     } else {
                         // We don't have paths and we are not in the root element, so we are free to look in cache
                         if (content is GtvPrimitive) {
-                            val cachedSummary = calculator.memoization.findMerkleHash(content)
-                            if (cachedSummary != null) {
-                                cachedSummary.merkleHash
-                            } else {
-                                // Not GtvNull -> Make it a hash
-                                if (logger.isTraceEnabled) { logger.debug("Hash the leaf with content: $content") }
-                                val hashCarrier = calculator.calculateLeafHash(content)
-                                val summary = MerkleHashSummary(hashCarrier, currentElement.getNrOfBytes())
-                                calculator.memoization.add(content, summary)
-                                hashCarrier
-                            }
+                            // Not GtvNull -> Make it a hash
+                            if (logger.isTraceEnabled) { logger.debug("Hash the leaf with content: $content") }
+                            val hashCarrier = calculator.calculateLeafHash(content)
+                            hashCarrier
                         } else {
                             logger.warn("What is this leaf that's not a primitive? type: ${content.type}")
                             calculator.calculateLeafHash(content)
