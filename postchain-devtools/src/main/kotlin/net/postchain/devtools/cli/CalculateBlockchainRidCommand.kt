@@ -10,7 +10,7 @@ import net.postchain.gtv.gtvml.GtvMLParser
 import java.io.File
 
 class CalculateBlockchainRidCommand : CliktCommand(
-        name = "calculate-blockchain-rid",
+        name = "blockchain-rid",
         help = "Calculates blockchain RID by blockchain configuration in GtxML format"
 ) {
 

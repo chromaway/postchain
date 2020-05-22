@@ -11,7 +11,10 @@ import java.io.File
 /**
  * Cli test command
  */
-class RunTestCommand : CliktCommand(name = "run-test", help = "Tests gtxml file") {
+class RunTestCommand : CliktCommand(
+        name = "run-test",
+        help = "Tests gtxml file"
+) {
 
     private val filename by option(
             names = *arrayOf("--filename", "-f"),
