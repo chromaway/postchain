@@ -2,10 +2,8 @@
 
 package net.postchain.base
 
-import net.postchain.base.data.DatabaseAccess
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
-import net.postchain.core.EContext
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtv.merkleHash
@@ -14,33 +12,6 @@ object BlockchainRidFactory {
 
     val cryptoSystem = SECP256K1CryptoSystem()
     private val merkleHashCalculator = GtvMerkleHashCalculator(cryptoSystem)
-
-    /**
-     * Check if there is a Blockchain RID for this chain already
-     * If no Blockchain RID, we use this config to create a BC RID, since this MUST be the first config, and store to DB.
-     *
-     * TODO: Olle Can we check in any other way if the GTV config we are holding is NOT the first config?
-     * TODO: [POS-128]: Eliminate this method
-     *
-     * @param data is the [Gtv] data of the configuration
-     * @param merkleHashCalculator needed if the BC RID does not exist
-     * @param eContext
-     * @return the blockchain's RID, either old or just created
-     */
-    @Deprecated("TODO: [POS-128]")
-    fun resolveBlockchainRID(
-            data: Gtv,
-            eContext: EContext
-    ): BlockchainRid {
-        val dbBcRid = DatabaseAccess.of(eContext).getBlockchainRid(eContext)
-        return if (dbBcRid != null) {
-            dbBcRid // We have it in the DB so don't do anything (if it's in here it must be correct)
-        } else {
-            val newRid = calculateBlockchainRid(data)
-            DatabaseAccess.of(eContext).checkBlockchainRID(eContext, newRid)
-            newRid
-        }
-    }
 
     /**
      * Calculates blockchain RID by the given blockchain configuration.

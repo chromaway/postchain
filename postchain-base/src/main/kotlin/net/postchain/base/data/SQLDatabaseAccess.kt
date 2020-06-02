@@ -374,28 +374,6 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
         return queryRunner.query(ctx.conn, sql, nullableLongRes)
     }
 
-    // TODO: POS-128: Check it
-    @Deprecated("TODO: [POS-128]")
-    override fun checkBlockchainRID(ctx: EContext, blockchainRID: BlockchainRid) {
-        // Check that the blockchainRID is present for chain_iid
-        val sql = "SELECT blockchain_rid from ${tableBlockchains()} where chain_iid=?"
-        val rid = queryRunner.query(ctx.conn, sql, nullableByteArrayRes, ctx.chainID)
-
-        logger.debug("chainId = ${ctx.chainID}, BC RID = ${rid?.toHex() ?: "null"}")
-
-        if (rid == null) {
-            logger.info("Blockchain RID: ${blockchainRID.toHex()} doesn't exist in DB, so we add it.")
-            val sql = "INSERT INTO ${tableBlockchains()} (chain_iid, blockchain_rid) values (?, ?)"
-            queryRunner.update(ctx.conn, sql, ctx.chainID, blockchainRID.data)
-
-        } else if (!rid.contentEquals(blockchainRID.data)) {
-            throw UserMistake("The blockchainRID in db for chainId ${ctx.chainID} " +
-                    "is ${rid.toHex()}, but the expected rid is ${blockchainRID.toHex()}")
-        } else {
-            logger.debug("Verified that Blockchain RID: ${blockchainRID.toHex()} exists in DB.")
-        }
-    }
-
     override fun getBlock(ctx: EContext, blockRID: ByteArray): DatabaseAccess.BlockInfoExt? {
         val sql = "SELECT block_rid, block_height, block_header_data, block_witness, timestamp " +
                 "FROM ${tableBlocks(ctx)} WHERE  chain_iid=? and block_rid = ? " +

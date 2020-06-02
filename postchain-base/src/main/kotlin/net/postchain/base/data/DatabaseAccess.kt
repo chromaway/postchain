@@ -33,9 +33,6 @@ interface DatabaseAccess {
     fun getChainId(ctx: EContext, blockchainRid: BlockchainRid): Long?
     fun getMaxChainId(ctx: EContext): Long?
 
-    @Deprecated("TODO: [POS-128]")
-    fun checkBlockchainRID(ctx: EContext, blockchainRid: BlockchainRid)
-
     fun getBlockchainRid(ctx: EContext): BlockchainRid?
     fun insertBlock(ctx: EContext, height: Long): Long
     fun insertTransaction(ctx: BlockEContext, tx: Transaction): Long

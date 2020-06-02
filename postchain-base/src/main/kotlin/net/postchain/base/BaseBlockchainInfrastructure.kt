@@ -95,7 +95,4 @@ class BaseBlockchainInfrastructure(
                 .also(apiInfrastructure::connectProcess)
     }
 
-    override fun makeStorage(): Storage {
-        return StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration().appConfig, NODE_ID_TODO)
-    }
 }
