@@ -34,7 +34,7 @@ class EncodeBlockchainConfigurationCommand : CliktCommand(
 
             // brid
             val bridFilename = "brid.txt"
-            val blockchainRid = BlockchainRidFactory.calculateBlockchainRID(gtv)
+            val blockchainRid = BlockchainRidFactory.calculateBlockchainRid(gtv)
             File(bridFilename).writeText(blockchainRid.toHex())
             println("Brid file has been created: brid.txt")
 

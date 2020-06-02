@@ -43,13 +43,14 @@ class CommandCheckBlockchain : Command {
                 toStringExclude(this, "dbAccess", ToStringStyle.SHORT_PREFIX_STYLE))
 
         return try {
-            CliExecution().checkBlockchain(nodeConfigFile, chainId, blockchainRID)
+            CliExecution.checkBlockchain(nodeConfigFile, chainId, blockchainRID)
             Ok("Okay")
         } catch (e: CliError.Companion.CliException) {
             CliError.CheckBlockChain(message = e.message)
         }
     }
 
+    // TODO: [POS-128]: Is it necessary?
     private fun toStringExclude(obj: Any, excludeField: String, style: ToStringStyle): String {
         return object : ReflectionToStringBuilder(obj, style) {
             override fun accept(field: java.lang.reflect.Field): Boolean {

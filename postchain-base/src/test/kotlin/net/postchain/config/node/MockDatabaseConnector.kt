@@ -6,6 +6,7 @@ import com.nhaarman.mockitokotlin2.mock
 import net.postchain.config.DatabaseConnector
 import java.sql.Connection
 
+@Deprecated("POS-128")
 class MockDatabaseConnector : DatabaseConnector {
 
     override fun <Result> withReadConnection(action: (Connection) -> Result): Result = action(mock())

@@ -5,13 +5,11 @@ package net.postchain.config.node
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isSameAs
-import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import net.postchain.base.PeerInfo
 import net.postchain.base.peerId
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
-import net.postchain.config.app.AppConfigDbLayer
 import org.junit.Test
 import java.time.Instant
 
@@ -30,13 +28,10 @@ class ManualNodeConfigurationProviderTest {
 
         // Mock
         val appConfig = AppConfig(mock())
-        val mockAppConfigDbLayer: AppConfigDbLayer = mock {
-            on { getPeerInfoCollection() } doReturn expected
-        }
+        val mockStorage = MockStorage.mock(expected)
 
         // SUT
-        val provider = ManualNodeConfigurationProvider(
-                appConfig, { MockDatabaseConnector() }, { _, _ -> mockAppConfigDbLayer })
+        val provider = ManualNodeConfigurationProvider(appConfig) { mockStorage }
 
         // Assert
         val config = provider.getConfiguration()
@@ -51,13 +46,10 @@ class ManualNodeConfigurationProviderTest {
         val actual = arrayOf(peerInfo1, peerInfo0)
 
         // Mock
-        val mockAppConfigDbLayer: AppConfigDbLayer = mock {
-            on { getPeerInfoCollection() } doReturn expected
-        }
+        val mockStorage = MockStorage.mock(expected)
 
         // SUT
-        val provider = ManualNodeConfigurationProvider(
-                mock(), { MockDatabaseConnector() }, { _, _ -> mockAppConfigDbLayer })
+        val provider = ManualNodeConfigurationProvider(mock()) { mockStorage }
 
         // Assert
         val peerInfos = provider.getPeerInfoCollection(mock())

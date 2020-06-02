@@ -11,8 +11,6 @@ import net.postchain.config.node.ManagedNodeConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
 import net.postchain.debug.NodeDiagnosticContext
-import org.apache.commons.dbutils.QueryRunner
-import org.apache.commons.dbutils.handlers.ScalarHandler
 import kotlin.concurrent.withLock
 
 /**
@@ -148,11 +146,11 @@ open class ManagedBlockchainProcessManager(
                 reloadBlockchainConfigAsync(chainId)
                 true
             } else {
-               false
+                false
             }
         }
 
-        fun wrappedRestartHandler (): Boolean {
+        fun wrappedRestartHandler(): Boolean {
             return try {
                 synchronizer.withLock {
                     if (chainId == 0L) restartHandlerChain0() else restartHandlerChainN()
@@ -169,27 +167,21 @@ open class ManagedBlockchainProcessManager(
     }
 
     private fun buildChain0ManagedDataSource(): ManagedNodeDataSource {
-        val chainId = 0L
-        var blockQueries: BlockQueries? = null
+        val chain0 = 0L
+        val storage = StorageBuilder.buildStorage(
+                nodeConfigProvider.getConfiguration().appConfig, NODE_ID_NA)
 
-        withWriteConnection(storage, chainId) { eContext ->
-            val configuration = blockchainConfigProvider.getConfiguration(eContext, chainId)
+        val blockQueries = withReadWriteConnection(storage, chain0) { ctx0 ->
+            val configuration = blockchainConfigProvider.getConfiguration(ctx0, chain0)
                     ?: throw ProgrammerMistake("chain0 configuration not found")
 
             val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(
-                    configuration,
-                    eContext,
-                    NODE_ID_AUTO,
-                    chainId)
+                    configuration, ctx0, NODE_ID_AUTO, chain0)
 
-            blockchainConfig.initializeDB(eContext)
-
-            val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration().appConfig, NODE_ID_NA)
-            blockQueries = blockchainConfig.makeBlockQueries(storage)
-            true
+            blockchainConfig.makeBlockQueries(storage)
         }
 
-        return GTXManagedNodeDataSource(blockQueries!!, nodeConfigProvider.getConfiguration())
+        return GTXManagedNodeDataSource(blockQueries, nodeConfigProvider.getConfiguration())
     }
 
     /**
@@ -277,9 +269,9 @@ open class ManagedBlockchainProcessManager(
      */
     private fun loadBlockchainConfiguration(chainId: Long) {
         withWriteConnection(storage, chainId) { ctx ->
-            val dbAccess = DatabaseAccess.of(ctx)
-            val brid = dbAccess.getBlockchainRID(ctx)!! // We can only load chains this way if we know their BC RID.
-            val height = dbAccess.getLastBlockHeight(ctx)
+            val db = DatabaseAccess.of(ctx)
+            val brid = db.getBlockchainRid(ctx)!! // We can only load chains this way if we know their BC RID.
+            val height = db.getLastBlockHeight(ctx)
             val nextConfigHeight = dataSource.findNextConfigurationHeight(brid.data, height)
             if (nextConfigHeight != null) {
                 logger.info { "Next config height found in managed-mode module: $nextConfigHeight" }
@@ -310,21 +302,21 @@ open class ManagedBlockchainProcessManager(
         val blockchains = mutableListOf(0L)
 
         withWriteConnection(storage, 0) { ctx0 ->
-            val dba = DatabaseAccess.of(ctx0)
+            val db = DatabaseAccess.of(ctx0)
             dataSource.computeBlockchainList()
                     .map { brid ->
                         val blockchainRid = BlockchainRid(brid)
-                        val chainIid = dba.getChainId(ctx0, blockchainRid)
-                        logger.debug("Computed bc list: chainIid: $chainIid,  BC RID: ${blockchainRid.toShortHex()}  ")
-                        if (chainIid == null) {
-                            val newChainId = maxOf(
-                                    QueryRunner().query(ctx0.conn, "SELECT MAX(chain_iid) FROM blockchains", ScalarHandler<Long>()) + 1,
-                                    100)
-                            val newCtx = BaseEContext(ctx0.conn, newChainId, ctx0.nodeID, dba)
-                            dba.checkBlockchainRID(newCtx, blockchainRid)
+                        val chainId = db.getChainId(ctx0, blockchainRid)
+                        logger.debug("Computed bc list: chainIid: $chainId,  BC RID: ${blockchainRid.toShortHex()}  ")
+                        if (chainId == null) {
+                            val newChainId = db.getMaxChainId(ctx0)
+                                    ?.let { maxOf(it + 1, 100) }
+                                    ?: 100
+                            val newCtx = storage.newWritableContext(newChainId)
+                            db.initializeBlockchain(newCtx, blockchainRid)
                             newChainId
                         } else {
-                            chainIid
+                            chainId
                         }
                     }
                     .filter { it != 0L }

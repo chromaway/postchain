@@ -30,7 +30,7 @@ object TestBlockchainRidCache {
             ?: throw IllegalStateException("Is ${rid.toShortHex()} a dependency bc RID? This chain must be added to the cache before it can be found. (${this.toString()}")
 
     fun calcAndAdd(chainId: Int, bcGtv: Gtv): BlockchainRid {
-        val newRid = BlockchainRidFactory.calculateBlockchainRID(bcGtv)
+        val newRid = BlockchainRidFactory.calculateBlockchainRid(bcGtv)
         add(chainId, newRid)
         return newRid
     }

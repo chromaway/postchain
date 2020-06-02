@@ -12,7 +12,6 @@ import net.postchain.base.PeerInfo
 import net.postchain.base.peerId
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
-import net.postchain.config.app.AppConfigDbLayer
 import org.junit.Test
 import java.time.Instant
 
@@ -35,13 +34,10 @@ class ManagedNodeConfigurationProviderTest {
 
         // Mock
         val appConfig = AppConfig(mock())
-        val mockAppConfigDbLayer: AppConfigDbLayer = mock {
-            on { getPeerInfoCollection() } doReturn expected
-        }
+        val mockStorage = MockStorage.mock(expected)
 
         // SUT
-        val provider = ManualNodeConfigurationProvider(
-                appConfig, { MockDatabaseConnector() }, { _, _ -> mockAppConfigDbLayer })
+        val provider = ManualNodeConfigurationProvider(appConfig) { mockStorage }
 
         // Assert
         val config = provider.getConfiguration()
@@ -58,18 +54,15 @@ class ManagedNodeConfigurationProviderTest {
             expected: Array<PeerInfo>
     ) {
         // Mock
-        val mockAppConfigDbLayer: AppConfigDbLayer = mock {
-            on { getPeerInfoCollection() } doReturn manual
-        }
+        val mockStorage = MockStorage.mock(manual)
 
         val mockManagedPeerInfos: PeerInfoDataSource = mock {
             on { getPeerInfos() } doReturn managed
         }
 
         // SUT
-        val provider = ManagedNodeConfigurationProvider(
-                mock(), { MockDatabaseConnector() }, { _, _ -> mockAppConfigDbLayer }
-        ).apply {
+        val provider = ManagedNodeConfigurationProvider(mock()) { mockStorage }
+        provider.apply {
             setPeerInfoDataSource(mockManagedPeerInfos)
         }
 
@@ -110,9 +103,7 @@ class ManagedNodeConfigurationProviderTest {
     @Test
     fun getPeerInfoCollection__provider_returns_managedPeerInfos_iff_managedDataSource_isNotNull() {
         // Mock
-        val mockAppConfigDbLayer: AppConfigDbLayer = mock {
-            on { getPeerInfoCollection() } doReturn emptyArray()
-        }
+        val mockStorage = MockStorage.mock(emptyArray())
 
         val mockManagedPeerInfos: PeerInfoDataSource = mock {
             on { getPeerInfos() } doReturn arrayOf(peerInfo0)
@@ -123,9 +114,7 @@ class ManagedNodeConfigurationProviderTest {
         }
 
         // SUT
-        val provider = ManagedNodeConfigurationProvider(
-                mock(), { MockDatabaseConnector() }, { _, _ -> mockAppConfigDbLayer }
-        )
+        val provider = ManagedNodeConfigurationProvider(mock()) { mockStorage }
 
         // Assert
         // 1. managedPeerInfoDataSource field is set

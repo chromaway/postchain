@@ -5,31 +5,20 @@ package net.postchain.integrationtest.config
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import net.postchain.base.PeerInfo
-import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS
-import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_HOST
-import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_PORT
-import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_PUBKEY
-import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_TIMESTAMP
+import net.postchain.base.data.DatabaseAccess
+import net.postchain.base.runStorageCommand
 import net.postchain.common.hexStringToByteArray
-import net.postchain.common.toHex
-import net.postchain.config.SimpleDatabaseConnector
 import net.postchain.config.app.AppConfig
-import net.postchain.config.app.AppConfigDbLayer
 import net.postchain.devtools.ConfigFileBasedIntegrationTest
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.integrationtest.assertChainStarted
 import net.postchain.integrationtest.assertNodeConnectedWith
-import org.apache.commons.dbutils.QueryRunner
-import org.apache.commons.dbutils.handlers.ScalarHandler
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.After
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
-import java.sql.Connection
-import java.sql.Timestamp
-import java.time.Instant
 
 @Ignore
 class ManualNodeConfigProviderTest : ConfigFileBasedIntegrationTest() {
@@ -108,33 +97,19 @@ class ManualNodeConfigProviderTest : ConfigFileBasedIntegrationTest() {
 
     private fun setUpNode(nodeIndex: Int) {
         val appConfig = buildAppConfig(nodeIndex)
-
-        fun insertPeerInfo(connection: Connection, peerInfo: PeerInfo) {
-            val ts = Timestamp(Instant.now().toEpochMilli())
-            QueryRunner().insert(
-                    connection,
-                    "INSERT INTO $TABLE_PEERINFOS " +
-                            "($TABLE_PEERINFOS_FIELD_HOST, $TABLE_PEERINFOS_FIELD_PORT, $TABLE_PEERINFOS_FIELD_PUBKEY, $TABLE_PEERINFOS_FIELD_TIMESTAMP) " +
-                            "VALUES (?, ?, ?, ?)",
-                    ScalarHandler<Long>(), peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex(), ts)
+        runStorageCommand(appConfig) { ctx ->
+            peerInfos.forEach { peerInfo ->
+                DatabaseAccess.of(ctx).addPeerInfo(ctx, peerInfo)
+            }
         }
-
-        SimpleDatabaseConnector(appConfig)
-                .withWriteConnection { connection ->
-                    AppConfigDbLayer(appConfig, connection) // Init DB layer
-                    peerInfos.forEach { peerInfo ->
-                        insertPeerInfo(connection, peerInfo)
-                    }
-                }
     }
 
     private fun tearDownNode(nodeIndex: Int) {
         val appConfig = buildAppConfig(nodeIndex)
-
-        SimpleDatabaseConnector(appConfig)
-                .withWriteConnection { connection ->
-                    QueryRunner().update(connection, "DROP SCHEMA ${appConfig.databaseSchema} CASCADE")
-                }
+        runStorageCommand(appConfig) { ctx ->
+            DatabaseAccess.of(ctx).dropSchemaCascade(
+                    ctx.conn, appConfig.databaseSchema)
+        }
     }
 
 }

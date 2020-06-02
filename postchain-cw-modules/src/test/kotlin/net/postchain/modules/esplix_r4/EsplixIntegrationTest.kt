@@ -15,12 +15,11 @@ import net.postchain.modules.esplix_r4.computeMessageID
 import org.junit.Assert
 import org.junit.Test
 
-val testBlockchainRID = BlockchainRid.buildFromHex("78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3")
-val myCS = SECP256K1CryptoSystem()
-
 class EsplixIntegrationTest : IntegrationTestSetup() {
 
-    fun makeCreateChainTx(creator: Int, nonce: ByteArray, payload: ByteArray, bcRid: BlockchainRid): ByteArray {
+    val myCS = SECP256K1CryptoSystem()
+
+    private fun makeCreateChainTx(creator: Int, nonce: ByteArray, payload: ByteArray, bcRid: BlockchainRid): ByteArray {
         val b = GTXDataBuilder(bcRid, arrayOf(pubKey(creator)), myCS)
         b.addOperation("R4createChain", arrayOf(
                 gtv(nonce),
@@ -31,7 +30,7 @@ class EsplixIntegrationTest : IntegrationTestSetup() {
 
     }
 
-    fun makePostMessage(poster: Int, prevID: ByteArray, payload: ByteArray, bcRid: BlockchainRid): ByteArray {
+    private fun makePostMessage(poster: Int, prevID: ByteArray, payload: ByteArray, bcRid: BlockchainRid): ByteArray {
         val b = GTXDataBuilder(bcRid, arrayOf(pubKey(poster)), myCS)
         b.addOperation("R4postMessage", arrayOf(
                 gtv(prevID),

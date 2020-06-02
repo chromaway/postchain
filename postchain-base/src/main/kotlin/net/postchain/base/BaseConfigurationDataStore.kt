@@ -8,10 +8,8 @@ import net.postchain.core.ConfigurationDataStore
 import net.postchain.core.EContext
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvEncoder
-import net.postchain.gtv.GtvFactory
 
 object BaseConfigurationDataStore : KLogging(), ConfigurationDataStore {
-
 
     override fun findConfigurationHeightForBlock(context: EContext, height: Long): Long? {
         return DatabaseAccess.of(context).findConfigurationHeightForBlock(context, height)
@@ -21,12 +19,14 @@ object BaseConfigurationDataStore : KLogging(), ConfigurationDataStore {
         return DatabaseAccess.of(context).getConfigurationData(context, height)
     }
 
-    override fun addConfigurationData(context: EContext, height: Long, binData: ByteArray): BlockchainRid {
-        return addConfigurationDataInternal(context, height, binData, GtvFactory.decodeGtv(binData))
+    override fun addConfigurationData(context: EContext, height: Long, binData: ByteArray) {
+        return DatabaseAccess.of(context).addConfigurationData(
+                context, height, binData)
     }
 
-    override fun addConfigurationData(context: EContext, height: Long, gtvData: Gtv): BlockchainRid {
-        return addConfigurationDataInternal(context, height, GtvEncoder.encodeGtv(gtvData), gtvData)
+    override fun addConfigurationData(context: EContext, height: Long, gtvData: Gtv) {
+        DatabaseAccess.of(context).addConfigurationData(
+                context, height, GtvEncoder.encodeGtv(gtvData))
     }
 
     /**
@@ -41,28 +41,33 @@ object BaseConfigurationDataStore : KLogging(), ConfigurationDataStore {
      * @param merkleHashCalculator used to calculate BC RID if needed.
      * @return the Blockchain RID of the chain.
      */
+    @Deprecated("POS-128")
     private fun addConfigurationDataInternal(
             context: EContext,
             height: Long,
             binData: ByteArray,
             gtvData: Gtv
     ): BlockchainRid {
-        val bcRidInDB = DatabaseAccess.of(context).getBlockchainRID(context)
-        val bcRid = if (height > 0L) {
-            bcRidInDB ?: throw IllegalStateException("Chain ${context.chainID} doesn't have a BC RID, but must have since we are creating a configuration for height $height")
+
+        val db = DatabaseAccess.of(context)
+        val bridInDB = db.getBlockchainRid(context)
+        val brid = if (height > 0L) {
+            bridInDB ?: throw IllegalStateException(
+                    "Chain ${context.chainID} doesn't have a BC RID, but must have since we are creating a configuration for height $height")
         } else {
             // This is the first conf for the chain.
-            if (bcRidInDB == null) {
-                val newBcRid = BlockchainRidFactory.resolveBlockchainRID(gtvData, context)
-                logger.info("Creating initial configuration for chain ${context.chainID} with BC RID: $newBcRid")
-                newBcRid
+            if (bridInDB == null) {
+                val brid = BlockchainRidFactory.calculateBlockchainRid(gtvData)
+                db.checkBlockchainRID(context, brid)
+                logger.info("Creating initial configuration for chain ${context.chainID} with BC RID: $brid")
+                brid
             } else {
                 logger.warn { "How did the BC RID for chain ${context.chainID} get in here before chain configuration were added? Investigate. " }
-                bcRidInDB
+                bridInDB
             }
         }
 
-        DatabaseAccess.of(context).addConfigurationData(context, height, binData)
-        return bcRid
+        db.addConfigurationData(context, height, binData)
+        return brid
     }
 }

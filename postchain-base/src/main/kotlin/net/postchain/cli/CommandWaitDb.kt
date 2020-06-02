@@ -28,7 +28,7 @@ class CommandWaitDb : Command {
 
     override fun execute(): CliResult {
         return try {
-            CliExecution().waitDb(retryTimes, retryInterval, nodeConfigFile)
+            CliExecution.waitDb(retryTimes, retryInterval, nodeConfigFile)
         } catch (e: CliError.Companion.CliException) {
             CliError.CommandNotAllowed(message = e.message)
         }

@@ -21,8 +21,8 @@ interface BlockchainInfrastructure : SynchronizationInfrastructure {
 
     fun makeBlockchainConfiguration(rawConfigurationData: ByteArray,
                                     eContext: EContext,
-                                    nodeID: Int,
-                                    chainID: Long
+                                    nodeId: Int,
+                                    chainId: Long
     ): BlockchainConfiguration
 
     fun makeBlockchainEngine(
@@ -31,6 +31,7 @@ interface BlockchainInfrastructure : SynchronizationInfrastructure {
             restartHandler: RestartHandler
     ): BlockchainEngine
 
+    @Deprecated("POS-128")
     fun makeStorage(): Storage
 }
 

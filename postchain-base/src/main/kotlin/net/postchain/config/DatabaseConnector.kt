@@ -4,6 +4,7 @@ package net.postchain.config
 
 import java.sql.Connection
 
+@Deprecated("POS-128")
 interface DatabaseConnector {
 
     fun <Result> withReadConnection(action: (Connection) -> Result): Result

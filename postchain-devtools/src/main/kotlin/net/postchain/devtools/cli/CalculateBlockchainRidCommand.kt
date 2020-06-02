@@ -24,7 +24,7 @@ class CalculateBlockchainRidCommand : CliktCommand(
 
         try {
             val gtv = GtvMLParser.parseGtvML(File(blockchainConfigFilename).readText())
-            val blockchainRid = BlockchainRidFactory.calculateBlockchainRID(gtv)
+            val blockchainRid = BlockchainRidFactory.calculateBlockchainRid(gtv)
 
             println("Blockchain RID: $blockchainRid")
 

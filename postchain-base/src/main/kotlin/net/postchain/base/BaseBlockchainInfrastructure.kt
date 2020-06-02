@@ -3,8 +3,10 @@
 package net.postchain.base
 
 import net.postchain.StorageBuilder
+import net.postchain.base.BaseBlockchainConfigurationData.Companion.KEY_CONFIGURATIONFACTORY
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.base.data.BaseTransactionQueue
+import net.postchain.base.data.DatabaseAccess
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
 import net.postchain.debug.BlockchainProcessName
@@ -40,30 +42,31 @@ class BaseBlockchainInfrastructure(
      *
      * @param rawConfigurationData is the byte array with the configuration.
      * @param eContext is the DB context
-     * @param nodeID
-     * @param chainID
+     * @param nodeId
+     * @param chainId
      * @param initialBlockchainRID is null or a blokchain RID
      * @return the newly created [BlockchainConfiguration]
      */
     override fun makeBlockchainConfiguration(
             rawConfigurationData: ByteArray,
             eContext: EContext,
-            nodeID: Int,
-            chainID: Long
+            nodeId: Int,
+            chainId: Long
     ): BlockchainConfiguration {
 
-        val gtxData = GtvFactory.decodeGtv(rawConfigurationData)
+        val gtvData = GtvFactory.decodeGtv(rawConfigurationData)
+        val brid = DatabaseAccess.of(eContext).getBlockchainRid(eContext)!!
 
-        val blockchainRID = BlockchainRidFactory.resolveBlockchainRID(gtxData, eContext)
+        val context = BaseBlockchainContext(brid, nodeId, chainId, subjectID)
+        val confData = BaseBlockchainConfigurationData(gtvData as GtvDictionary, context, blockSigMaker)
 
-        val actualContext = BaseBlockchainContext(blockchainRID, nodeID, chainID, subjectID)
-
-        val confData = BaseBlockchainConfigurationData(gtxData as GtvDictionary, actualContext, blockSigMaker)
-
-        val bcfClass = Class.forName(confData.data["configurationfactory"]!!.asString())
+        val bcfClass = Class.forName(confData.data[KEY_CONFIGURATIONFACTORY]!!.asString())
         val factory = (bcfClass.newInstance() as BlockchainConfigurationFactory)
 
-        return factory.makeBlockchainConfiguration(confData)
+        val config = factory.makeBlockchainConfiguration(confData)
+        config.initializeDB(eContext)
+
+        return config
     }
 
     override fun makeBlockchainEngine(
@@ -72,7 +75,9 @@ class BaseBlockchainInfrastructure(
             restartHandler: RestartHandler
     ): BaseBlockchainEngine {
 
-        val storage = StorageBuilder.buildStorage(nodeConfigProvider.getConfiguration().appConfig, NODE_ID_TODO)
+        val storage = StorageBuilder.buildStorage(
+                nodeConfigProvider.getConfiguration().appConfig, NODE_ID_TODO)
+
         // TODO: [et]: Maybe extract 'queuecapacity' param from ''
         val transactionQueue = BaseTransactionQueue(
                 (configuration as BaseBlockchainConfiguration)
@@ -81,7 +86,7 @@ class BaseBlockchainInfrastructure(
         return BaseBlockchainEngine(processName, configuration, storage, configuration.chainID, transactionQueue)
                 .apply {
                     setRestartHandler(restartHandler)
-                    initializeDB()
+                    initialize()
                 }
     }
 

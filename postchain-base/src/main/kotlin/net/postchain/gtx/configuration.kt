@@ -16,7 +16,7 @@ import nl.komponents.kovenant.Promise
 
 open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationData, val module: GTXModule)
     : BaseBlockchainConfiguration(configData) {
-    val txFactory = GTXTransactionFactory(
+    private val txFactory = GTXTransactionFactory(
             effectiveBlockchainRID, module, cryptoSystem, configData.getMaxTransactionSize())
 
     companion object : KLogging()
@@ -60,7 +60,7 @@ open class GTXBlockchainConfigurationFactory : BlockchainConfigurationFactory {
 
     override fun makeBlockchainConfiguration(configurationData: Any): BlockchainConfiguration {
         val cfData = configurationData as BaseBlockchainConfigurationData
-        val effectiveBRID = cfData.getHistoricBRID() ?:  configurationData.context.blockchainRID
+        val effectiveBRID = cfData.getHistoricBRID() ?: configurationData.context.blockchainRID
         return GTXBlockchainConfiguration(
                 cfData,
                 createGtxModule(effectiveBRID, configurationData.data))

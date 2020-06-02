@@ -4,9 +4,6 @@ package net.postchain.config.app
 
 import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerInfo
-import net.postchain.base.data.SQLCommandsFactory
-import net.postchain.base.data.SQLDatabaseAccess
-import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_HOST
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_PORT
 import net.postchain.base.data.SQLDatabaseAccess.Companion.TABLE_PEERINFOS_FIELD_PUBKEY
@@ -20,6 +17,7 @@ import java.sql.Connection
 import java.sql.Timestamp
 import java.time.Instant
 
+@Deprecated("POS-128")
 class AppConfigDbLayer(
         private val appConfig: AppConfig,
         private val connection: Connection
@@ -30,10 +28,15 @@ class AppConfigDbLayer(
         createTablesIfNotExists(appConfig, connection)
     }
 
+    @Deprecated("POS-128")
+    val TABLE_PEERINFOS = "@Deprecated(\"POS-128\")"
+
+    @Deprecated("POS-128")
     fun getPeerInfoCollection(): Array<PeerInfo> {
         return findPeerInfo(null, null, null)
     }
 
+    @Deprecated("POS-128")
     fun findPeerInfo(host: String?, port: Int?, pubKeyPattern: String?): Array<PeerInfo> {
         // Collecting where's conditions
         val conditions = mutableListOf<String>()
@@ -73,10 +76,12 @@ class AppConfigDbLayer(
         }.toTypedArray()
     }
 
+    @Deprecated("POS-128")
     fun addPeerInfo(peerInfo: PeerInfo): Boolean {
         return addPeerInfo(peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex())
     }
 
+    @Deprecated("POS-128")
     fun addPeerInfo(host: String, port: Int, pubKey: String, timestamp: Instant? = null): Boolean {
         val time = getTimestamp(timestamp)
         return pubKey == QueryRunner().insert(
@@ -88,6 +93,7 @@ class AppConfigDbLayer(
                 ScalarHandler<String>(), host, port, pubKey, time)
     }
 
+    @Deprecated("POS-128")
     fun updatePeerInfo(host: String, port: Int, pubKey: String, timestamp: Instant? = null): Boolean {
         val time = getTimestamp(timestamp)
         val updated = QueryRunner().update(
@@ -100,6 +106,7 @@ class AppConfigDbLayer(
         return (updated >= 1)
     }
 
+    @Deprecated("POS-128")
     fun removePeerInfo(pubKey: String): Array<PeerInfo> {
         val result = mutableListOf<PeerInfo>()
 
@@ -118,6 +125,7 @@ class AppConfigDbLayer(
         return result.toTypedArray()
     }
 
+    @Deprecated("POS-128")
     fun getBlockchainRid(chainIid: Long): BlockchainRid? {
         val queryRunner = QueryRunner()
         val data = queryRunner.query(connection, "SELECT blockchain_rid FROM blockchains WHERE chain_iid= ?",
@@ -125,6 +133,7 @@ class AppConfigDbLayer(
         return if (data == null) null else BlockchainRid(data)
     }
 
+    @Deprecated("POS-128")
     private fun getTimestamp(time: Instant? = null): Timestamp {
         return if (time == null) {
             Timestamp(Instant.now().toEpochMilli())
@@ -133,14 +142,16 @@ class AppConfigDbLayer(
         }
     }
 
+    @Deprecated("POS-128")
     private fun createSchemaIfNotExists(connection: Connection) {
         QueryRunner().update(connection, "CREATE SCHEMA IF NOT EXISTS ${appConfig.databaseSchema}")
         connection.commit()
     }
 
+    @Deprecated("POS-128")
     private fun createTablesIfNotExists(appConfig: AppConfig, connection: Connection) {
-        val sqlCommands = SQLCommandsFactory.getSQLCommands(appConfig.databaseDriverclass)
-        SQLDatabaseAccess(sqlCommands).initialize(connection, expectedDbVersion = 1) // TODO: [et]: Extract version
-        connection.commit()
+//        val sqlCommands = SQLCommandsFactory.getSQLCommands(appConfig.databaseDriverclass)
+//        SQLDatabaseAccess(sqlCommands).initialize(connection, expectedDbVersion = 1) // TODO: [et]: Extract version
+//        connection.commit()
     }
 }

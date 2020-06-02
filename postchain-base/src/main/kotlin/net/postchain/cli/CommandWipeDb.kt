@@ -26,7 +26,5 @@ class CommandWipeDb : Command {
         } catch (e: CliError.Companion.CliException) {
             CliError.CommandNotAllowed(message = e.message)
         }
-
     }
-
 }

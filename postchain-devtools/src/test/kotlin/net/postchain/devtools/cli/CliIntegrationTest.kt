@@ -34,7 +34,7 @@ class CliIntegrationTest {
         // add-blockchain goes here
         val chainId: Long = 1;
         val blockChainConfig = fullPath("blockchain_config_4_signers.xml")
-        val brid = CliExecution().addBlockchain(nodeConfigPath, chainId, blockChainConfig, AlreadyExistMode.FORCE)
+        val brid = CliExecution.addBlockchain(nodeConfigPath, chainId, blockChainConfig, AlreadyExistMode.FORCE)
 
         val node = PostchainNode(nodeConfigProvider)
         node.startBlockchain(chainId)
@@ -64,7 +64,7 @@ class CliIntegrationTest {
         // add-blockchain goes here
         val chainId: Long = 1;
         val blockChainConfig = fullPath("blockchain_config_4_signers.xml")
-        CliExecution().addBlockchain(nodeConfigPath, chainId, blockChainConfig, AlreadyExistMode.FORCE)
+        CliExecution.addBlockchain(nodeConfigPath, chainId, blockChainConfig, AlreadyExistMode.FORCE)
 
         val node = PostchainNode(nodeConfigProvider)
         node.startBlockchain(chainId)
@@ -94,8 +94,7 @@ class CliIntegrationTest {
         // add-blockchain goes here
         val chainId = 1L
         val blockChainConfig = fullPath("blockchain_config.xml")
-        val cliExecution = CliExecution()
-        val brid = cliExecution.addBlockchain(nodeConfigPath, chainId, blockChainConfig, AlreadyExistMode.FORCE)
+        val brid = CliExecution.addBlockchain(nodeConfigPath, chainId, blockChainConfig, AlreadyExistMode.FORCE)
 
         // start blockchain with one signer first
         val node = PostchainNode(nodeConfigProvider)
@@ -109,7 +108,7 @@ class CliIntegrationTest {
 
         // change configuration with 4 signer and height is 10
         val secondBlockChainConfig = fullPath("blockchain_config_4_signers.xml")
-        cliExecution.addConfiguration(nodeConfigPath, secondBlockChainConfig, chainId, 10L, AlreadyExistMode.FORCE)
+        CliExecution.addConfiguration(nodeConfigPath, secondBlockChainConfig, chainId, 10L, AlreadyExistMode.FORCE)
 
         Assert.assertTrue("Internal problem with the test", queries.getBestHeight().get() < 10)
         waitUntilBlock(queries, 10, 500) // wait until node builds 10 blocks
@@ -122,7 +121,7 @@ class CliIntegrationTest {
         node.shutdown()
     }
 
-    fun waitUntilBlock(queries: BlockQueries, height: Int, maxWaitTime: Int) {
+    private fun waitUntilBlock(queries: BlockQueries, height: Int, maxWaitTime: Int) {
         var count: Int = 0;
         while (count < maxWaitTime) {
             Thread.sleep(10)

@@ -13,7 +13,6 @@ import net.postchain.api.rest.model.TxRID
 import net.postchain.base.cryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
-import net.postchain.config.app.AppConfig
 import net.postchain.core.BlockDetail
 import net.postchain.core.TransactionInfoExt
 import net.postchain.core.TxDetail
@@ -42,8 +41,7 @@ class RestApiModelTest {
         model = createMock(Model::class.java)
         expect(model.chainIID).andReturn(1L).anyTimes()
 
-        val config = AppConfig(DummyConfig.getDummyConfig())
-        restApi = RestApi(0, basePath, config)
+        restApi = RestApi(0, basePath)
 
         // We're doing this test by test instead
         // restApi.attachModel(blockchainRID, model)
@@ -314,7 +312,7 @@ class RestApiModelTest {
                         1574849940)
         )
 
-        expect(model.getBlocks(1574849940,2, true))
+        expect(model.getBlocks(1574849940, 2, true))
                 .andReturn(response)
 
         replay(model)
@@ -334,18 +332,18 @@ class RestApiModelTest {
     fun test_blocks_get_no_params() {
 
         val blocks = listOf(
-                BlockDetail("blockRid001".toByteArray(), blockchainRID3.toByteArray(), "some header".toByteArray(), 0, listOf<TxDetail>(),"signatures".toByteArray(), 1574849700),
+                BlockDetail("blockRid001".toByteArray(), blockchainRID3.toByteArray(), "some header".toByteArray(), 0, listOf<TxDetail>(), "signatures".toByteArray(), 1574849700),
                 BlockDetail(
                         "blockRid002".toByteArray(),
                         "blockRid001".toByteArray(),
                         "some other header".toByteArray(),
                         1,
                         listOf<TxDetail>(
-                            TxDetail(
-                                    cryptoSystem.digest("tx1".toByteArray()),
-                                    "tx1 - 001".toByteArray().slice(IntRange(0,4)).toByteArray(),
-                                    "tx1".toByteArray()
-                            )
+                                TxDetail(
+                                        cryptoSystem.digest("tx1".toByteArray()),
+                                        "tx1 - 001".toByteArray().slice(IntRange(0, 4)).toByteArray(),
+                                        "tx1".toByteArray()
+                                )
                         ),
                         "signatures".toByteArray(),
                         1574849760
@@ -404,11 +402,11 @@ class RestApiModelTest {
     @Test
     fun test_transactions_get_all() {
 
-        val response = listOf<TransactionInfoExt> (
-                TransactionInfoExt("blockRid002".toByteArray(),  1, "some other header".toByteArray(), "signatures".toByteArray(), 1574849760, cryptoSystem.digest("tx1".toByteArray()), "tx1 - 001".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx1".toByteArray()),
-                TransactionInfoExt("blockRid004".toByteArray(),  3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx2".toByteArray()), "tx2 - 002".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx2".toByteArray()),
-                TransactionInfoExt("blockRid004".toByteArray(),  3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx3".toByteArray()), "tx3 - 003".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx3".toByteArray()),
-                TransactionInfoExt("blockRid004".toByteArray(),  3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx4".toByteArray()), "tx4 - 004".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx4".toByteArray())
+        val response = listOf<TransactionInfoExt>(
+                TransactionInfoExt("blockRid002".toByteArray(), 1, "some other header".toByteArray(), "signatures".toByteArray(), 1574849760, cryptoSystem.digest("tx1".toByteArray()), "tx1 - 001".toByteArray().slice(IntRange(0, 4)).toByteArray(), "tx1".toByteArray()),
+                TransactionInfoExt("blockRid004".toByteArray(), 3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx2".toByteArray()), "tx2 - 002".toByteArray().slice(IntRange(0, 4)).toByteArray(), "tx2".toByteArray()),
+                TransactionInfoExt("blockRid004".toByteArray(), 3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx3".toByteArray()), "tx3 - 003".toByteArray().slice(IntRange(0, 4)).toByteArray(), "tx3".toByteArray()),
+                TransactionInfoExt("blockRid004".toByteArray(), 3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx4".toByteArray()), "tx4 - 004".toByteArray().slice(IntRange(0, 4)).toByteArray(), "tx4".toByteArray())
         )
         expect(model.getTransactionsInfo(Long.MAX_VALUE, 300))
                 .andReturn(response)
@@ -427,10 +425,10 @@ class RestApiModelTest {
     @Test
     fun test_transactions_get_no_params() {
         val response = listOf(
-            TransactionInfoExt("blockRid002".toByteArray(),  1, "some other header".toByteArray(), "signatures".toByteArray(), 1574849760, cryptoSystem.digest("tx1".toByteArray()), "tx1 - 001".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx1".toByteArray()),
-            TransactionInfoExt("blockRid004".toByteArray(),  3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx2".toByteArray()), "tx2 - 002".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx2".toByteArray()),
-            TransactionInfoExt("blockRid004".toByteArray(),  3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx3".toByteArray()), "tx3 - 003".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx3".toByteArray()),
-            TransactionInfoExt("blockRid004".toByteArray(),  3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx4".toByteArray()), "tx4 - 004".toByteArray().slice(IntRange(0,4)).toByteArray(), "tx4".toByteArray())
+                TransactionInfoExt("blockRid002".toByteArray(), 1, "some other header".toByteArray(), "signatures".toByteArray(), 1574849760, cryptoSystem.digest("tx1".toByteArray()), "tx1 - 001".toByteArray().slice(IntRange(0, 4)).toByteArray(), "tx1".toByteArray()),
+                TransactionInfoExt("blockRid004".toByteArray(), 3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx2".toByteArray()), "tx2 - 002".toByteArray().slice(IntRange(0, 4)).toByteArray(), "tx2".toByteArray()),
+                TransactionInfoExt("blockRid004".toByteArray(), 3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx3".toByteArray()), "tx3 - 003".toByteArray().slice(IntRange(0, 4)).toByteArray(), "tx3".toByteArray()),
+                TransactionInfoExt("blockRid004".toByteArray(), 3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, cryptoSystem.digest("tx4".toByteArray()), "tx4 - 004".toByteArray().slice(IntRange(0, 4)).toByteArray(), "tx4".toByteArray())
         )
         expect(model.getTransactionsInfo(Long.MAX_VALUE, 25))
                 .andReturn(response)
@@ -449,7 +447,7 @@ class RestApiModelTest {
     fun test_block_get_one() {
         val tx = "tx2".toByteArray()
         val txRID = cryptoSystem.digest(tx)
-        val response = TransactionInfoExt("blockRid004".toByteArray(),  3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, txRID, "tx2 - 002".toByteArray().slice(IntRange(0,4)).toByteArray(), tx)
+        val response = TransactionInfoExt("blockRid004".toByteArray(), 3, "guess what? Another header".toByteArray(), "signatures".toByteArray(), 1574849940, txRID, "tx2 - 002".toByteArray().slice(IntRange(0, 4)).toByteArray(), tx)
         expect(model.getTransactionInfo(TxRID(txRID)))
                 .andReturn(response)
         replay(model)
@@ -465,7 +463,7 @@ class RestApiModelTest {
     @Test
     fun test_block_get_by_RID() {
         val blockRID = "blockRid001".toByteArray()
-        val response = BlockDetail("blockRid001".toByteArray(), blockchainRID3.toByteArray(), "some header".toByteArray(), 0, listOf<TxDetail>(),"signatures".toByteArray(), 1574849700)
+        val response = BlockDetail("blockRid001".toByteArray(), blockchainRID3.toByteArray(), "some header".toByteArray(), 0, listOf<TxDetail>(), "signatures".toByteArray(), 1574849700)
         expect(model.getBlock(blockRID, true))
                 .andReturn(response)
         replay(model)

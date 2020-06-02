@@ -3,24 +3,18 @@
 package net.postchain.config.node
 
 import net.postchain.base.PeerInfo
+import net.postchain.base.Storage
 import net.postchain.base.peerId
-import net.postchain.config.DatabaseConnector
 import net.postchain.config.app.AppConfig
-import net.postchain.config.app.AppConfigDbLayer
 import net.postchain.core.ByteArrayKey
-import java.sql.Connection
-import java.time.Instant
 import java.time.Instant.EPOCH
 
 class ManagedNodeConfigurationProvider(
         appConfig: AppConfig,
-        databaseConnector: (AppConfig) -> DatabaseConnector,
-        appConfigDbLayer: (AppConfig, Connection) -> AppConfigDbLayer
-
+        storageSupplier: (AppConfig) -> Storage
 ) : ManualNodeConfigurationProvider(
         appConfig,
-        databaseConnector,
-        appConfigDbLayer
+        storageSupplier
 ) {
 
     private var managedPeerSource: PeerInfoDataSource? = null

@@ -17,7 +17,7 @@ interface Synchronizable {
  * Blockchain engine used for building and adding new blocks
  */
 interface BlockchainEngine : Shutdownable {
-    fun initializeDB()
+    fun initialize()
     fun setRestartHandler(restartHandler: RestartHandler)
 
     // TODO: POS-111: Remove `addBlock()` and rename `loadUnfinishedBlock()` to `loadBlock()`

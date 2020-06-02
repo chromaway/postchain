@@ -3,11 +3,9 @@
 package net.postchain.cli
 
 import net.postchain.PostchainNode
-import net.postchain.base.BaseConfigurationDataStore
-import net.postchain.base.BlockchainRelatedInfo
-import net.postchain.base.BlockchainRid
-import net.postchain.base.data.BaseBlockStore
+import net.postchain.base.*
 import net.postchain.base.data.DatabaseAccess
+import net.postchain.base.data.DependenciesValidator
 import net.postchain.config.app.AppConfig
 import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.gtv.Gtv
@@ -18,7 +16,7 @@ import java.io.File
 import java.sql.Connection
 import java.sql.SQLException
 
-class CliExecution {
+object CliExecution {
 
     /**
      * @return blockchain RID
@@ -30,21 +28,23 @@ class CliExecution {
             mode: AlreadyExistMode = AlreadyExistMode.IGNORE,
             givenDependencies: List<BlockchainRelatedInfo> = listOf()
     ): BlockchainRid {
-        val gtvBcConf = getGtvFromFile(blockchainConfigFile)
-        var bcRID: BlockchainRid? = null
-        runDBCommandBody(nodeConfigFile, chainId) { eContext ->
+
+        val gtvData = parseGtvML(blockchainConfigFile)
+
+        return runStorageCommand(nodeConfigFile, chainId) { ctx ->
+            val db = DatabaseAccess.of(ctx)
 
             fun init(): BlockchainRid {
-                val bcRid = BaseConfigurationDataStore.addConfigurationData(eContext, 0, gtvBcConf)
-                BaseBlockStore().initialValidation(eContext, givenDependencies)
-                return bcRid
+                val brid = BlockchainRidFactory.calculateBlockchainRid(gtvData)
+                db.initializeBlockchain(ctx, brid)
+                DependenciesValidator.validateBlockchainRids(ctx, givenDependencies)
+                BaseConfigurationDataStore.addConfigurationData(ctx, 0, gtvData)
+                return brid
             }
 
-            val db = DatabaseAccess.of(eContext)
-
-            bcRID = when (mode) {
+            when (mode) {
                 AlreadyExistMode.ERROR -> {
-                    if (db.getBlockchainRID(eContext) == null) {
+                    if (db.getBlockchainRid(ctx) == null) {
                         init()
                     } else {
                         throw CliError.Companion.CliException(
@@ -56,12 +56,11 @@ class CliExecution {
                     init()
                 }
 
-                else -> {
-                    db.getBlockchainRID(eContext) ?: init()
+                AlreadyExistMode.IGNORE -> {
+                    db.getBlockchainRid(ctx) ?: init()
                 }
             }
         }
-        return bcRID!!
     }
 
     fun addConfiguration(
@@ -72,16 +71,16 @@ class CliExecution {
             mode: AlreadyExistMode = AlreadyExistMode.IGNORE
     ) {
 
-        val gtvBcConf = getGtvFromFile(blockchainConfigFile)
-        runDBCommandBody(nodeConfigFile, chainId) { eContext ->
+        val configStore = BaseConfigurationDataStore
+        val gtvConfig = parseGtvML(blockchainConfigFile)
 
-            fun init() {
-                BaseConfigurationDataStore.addConfigurationData(eContext, height, gtvBcConf)
-            }
+        runStorageCommand(nodeConfigFile, chainId) { ctx ->
+
+            fun init() = configStore.addConfigurationData(ctx, height, gtvConfig)
 
             when (mode) {
                 AlreadyExistMode.ERROR -> {
-                    if (BaseConfigurationDataStore.getConfigurationData(eContext, height) == null) {
+                    if (configStore.getConfigurationData(ctx, height) == null) {
                         init()
                     } else {
                         throw CliError.Companion.CliException("Blockchain configuration of chainId $chainId at " +
@@ -93,8 +92,8 @@ class CliExecution {
                     init()
                 }
 
-                else -> {
-                    if (BaseConfigurationDataStore.getConfigurationData(eContext, height) == null) {
+                AlreadyExistMode.IGNORE -> {
+                    if (configStore.getConfigurationData(ctx, height) == null) {
                         init()
                     } else {
                         println("Blockchain configuration of chainId $chainId at height $height already exists")
@@ -104,30 +103,30 @@ class CliExecution {
         }
     }
 
-    fun runNode(nodeConfigFile: String, chainIDs: List<Long>) {
+    fun runNode(nodeConfigFile: String, chainIds: List<Long>) {
         val nodeConfigProvider = NodeConfigurationProviderFactory.createProvider(
                 AppConfig.fromPropertiesFile(nodeConfigFile))
 
         with(PostchainNode(nodeConfigProvider)) {
-            chainIDs.forEach { startBlockchain(it) }
+            chainIds.forEach { startBlockchain(it) }
         }
     }
 
     fun checkBlockchain(nodeConfigFile: String, chainId: Long, blockchainRID: String) {
-        runDBCommandBody(nodeConfigFile, chainId) { eContext ->
-            val chainIdBlockchainRid = DatabaseAccess.of(eContext).getBlockchainRID(eContext)
+        runStorageCommand(nodeConfigFile, chainId) { ctx ->
+            val currentBrid = DatabaseAccess.of(ctx).getBlockchainRid(ctx)
             when {
-                chainIdBlockchainRid == null -> {
+                currentBrid == null -> {
                     throw CliError.Companion.CliException("Unknown chain-id: $chainId")
                 }
-                !blockchainRID.equals(chainIdBlockchainRid.toHex(), true) -> {
+                !blockchainRID.equals(currentBrid.toHex(), true) -> {
                     throw CliError.Companion.CliException("""
                         BlockchainRids are not equal:
                             expected: $blockchainRID
-                            actual: ${chainIdBlockchainRid.toHex()}
+                            actual: ${currentBrid.toHex()}
                     """.trimIndent())
                 }
-                BaseConfigurationDataStore.findConfigurationHeightForBlock(eContext, 0) == null -> {
+                BaseConfigurationDataStore.findConfigurationHeightForBlock(ctx, 0) == null -> {
                     throw CliError.Companion.CliException("No configuration found")
                 }
                 else -> {
@@ -164,7 +163,7 @@ class CliExecution {
         }
     }
 
-    private fun getGtvFromFile(blockchainConfigFile: String): Gtv {
+    private fun parseGtvML(blockchainConfigFile: String): Gtv {
         return GtvMLParser.parseGtvML(File(blockchainConfigFile).readText())
     }
 }

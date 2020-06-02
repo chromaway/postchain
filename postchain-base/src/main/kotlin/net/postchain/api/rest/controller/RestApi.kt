@@ -19,11 +19,6 @@ import net.postchain.api.rest.model.TxRID
 import net.postchain.common.TimeLog
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
-import net.postchain.config.DatabaseConnector
-import net.postchain.config.SimpleDatabaseConnector
-import net.postchain.config.app.AppConfig
-import net.postchain.config.app.AppConfigDbLayer
-import net.postchain.core.BlockDetail
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.UserMistake
 import net.postchain.gtv.*
@@ -31,7 +26,6 @@ import net.postchain.gtv.GtvFactory.gtv
 import spark.Request
 import spark.Response
 import spark.Service
-import java.sql.Connection
 
 /**
  * Contains information on the rest API, such as network parameters and available queries
@@ -39,15 +33,8 @@ import java.sql.Connection
 class RestApi(
         private val listenPort: Int,
         private val basePath: String,
-        private val appConfig: AppConfig,
         private val sslCertificate: String? = null,
-        private val sslCertificatePassword: String? = null,
-        private val databaseConnector: (AppConfig) -> DatabaseConnector = { applicationConfig ->
-            SimpleDatabaseConnector(applicationConfig)
-        },
-        private val appConfigDbLayer: (AppConfig, Connection) -> AppConfigDbLayer = { applicationConfig, connection ->
-            AppConfigDbLayer(applicationConfig, connection)
-        }
+        private val sslCertificatePassword: String? = null
 ) : Modellable {
 
     val MAX_NUMBER_OF_BLOCKS_PER_REQUEST = 100
@@ -181,14 +168,15 @@ class RestApi(
             }, gson::toJson)
 
             http.get("/transactions/$PARAM_BLOCKCHAIN_RID/$PARAM_HASH_HEX", "application/json", { request, _ ->
-                  runTxActionOnModel(request) { model, txRID ->
-                      model.getTransactionInfo(txRID)
-                  }
+                runTxActionOnModel(request) { model, txRID ->
+                    model.getTransactionInfo(txRID)
+                }
             }, gson::toJson)
             http.get("/transactions/$PARAM_BLOCKCHAIN_RID", "application/json", { request, _ ->
                 val model = model(request)
                 val paramsMap = request.queryMap()
-                val limit = paramsMap.get("limit")?.value()?.toIntOrNull()?.coerceIn(0, MAX_NUMBER_OF_TXS_PER_REQUEST) ?: DEFAULT_ENTRY_RESULTS_REQUEST
+                val limit = paramsMap.get("limit")?.value()?.toIntOrNull()?.coerceIn(0, MAX_NUMBER_OF_TXS_PER_REQUEST)
+                        ?: DEFAULT_ENTRY_RESULTS_REQUEST
                 val beforeTime = paramsMap.get("before-time")?.value()?.toLongOrNull() ?: Long.MAX_VALUE
                 model.getTransactionsInfo(beforeTime, limit)
             }, gson::toJson)
@@ -209,7 +197,8 @@ class RestApi(
                 val model = model(request)
                 val paramsMap = request.queryMap()
                 val beforeTime = paramsMap.get("before-time")?.value()?.toLongOrNull() ?: Long.MAX_VALUE
-                val limit = paramsMap.get("limit")?.value()?.toIntOrNull()?.coerceIn(0, MAX_NUMBER_OF_BLOCKS_PER_REQUEST) ?: DEFAULT_ENTRY_RESULTS_REQUEST
+                val limit = paramsMap.get("limit")?.value()?.toIntOrNull()?.coerceIn(0, MAX_NUMBER_OF_BLOCKS_PER_REQUEST)
+                        ?: DEFAULT_ENTRY_RESULTS_REQUEST
                 val partialTxs = paramsMap.get("txs")?.value() != "true"
                 model.getBlocks(beforeTime, limit, partialTxs)
 
@@ -445,11 +434,9 @@ class RestApi(
     }
 
     private fun model0(request: Request): Model {
-        val dbBcRid = databaseConnector(appConfig).withWriteConnection { connection ->
-            appConfigDbLayer(appConfig, connection).getBlockchainRid(0L)
-        }
-        val chain0Rid = dbBcRid?.toHex()
+        val chain0Rid = bridByIID[0L]
                 ?: throw NotFoundError("Can't find chain0 in DB. Is this node in managed mode?")
+
         return models[chain0Rid]
                 ?: throw NotFoundError("Can't find blockchain with blockchainRID: $chain0Rid")
     }

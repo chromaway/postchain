@@ -14,7 +14,6 @@ import net.postchain.base.ConfirmationProof
 import net.postchain.base.cryptoSystem
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
-import net.postchain.config.app.AppConfig
 import net.postchain.core.*
 import net.postchain.gtv.Gtv
 import org.junit.After
@@ -37,8 +36,7 @@ class RestApiMockForClientManual {
     @Test
     fun startMockRestApi() {
         val model = MockModel()
-        val appConfig = AppConfig(DummyConfig.getDummyConfig())
-        restApi = RestApi(listenPort, basePath, appConfig)
+        restApi = RestApi(listenPort, basePath)
         restApi.attachModel(blockchainRID, model)
         logger.info("Ready to serve on port ${restApi.actualPort()}")
         Thread.sleep(600000) // Wait 10 minutes
@@ -46,7 +44,7 @@ class RestApiMockForClientManual {
 
     class MockModel : Model {
         override val chainIID: Long
-            get() =  5L
+            get() = 5L
         private val blockchainRID = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a1"
         val statusUnknown = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         val statusRejected = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
@@ -138,8 +136,8 @@ class RestApiMockForClientManual {
         }
 
         //TODO Should tests in base have knowledge of GTV? If yes, convert getTransactionsInfo to use GTV
-        override fun query(query: Gtv): Gtv {        
-        	TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        override fun query(query: Gtv): Gtv {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
 
         override fun nodeQuery(subQuery: String): String = TODO()
@@ -154,24 +152,24 @@ class RestApiMockForClientManual {
         }
 
         override fun getTransactionInfo(txRID: TxRID): TransactionInfoExt {
-            val block = blocks.filter { block -> block.transactions.filter { tx -> cryptoSystem.digest(tx.data!!).contentEquals(txRID.bytes) }.size >0 }[0]
+            val block = blocks.filter { block -> block.transactions.filter { tx -> cryptoSystem.digest(tx.data!!).contentEquals(txRID.bytes) }.size > 0 }[0]
             val tx = block.transactions.filter { tx -> cryptoSystem.digest(tx.data!!).contentEquals(txRID.bytes) }[0]
-            return TransactionInfoExt(block.rid, block.height, block.header, block.witness, block.timestamp, cryptoSystem.digest(tx.data!!), tx.data!!.slice(IntRange(0,4)).toByteArray(), tx.data!!)
+            return TransactionInfoExt(block.rid, block.height, block.header, block.witness, block.timestamp, cryptoSystem.digest(tx.data!!), tx.data!!.slice(IntRange(0, 4)).toByteArray(), tx.data!!)
         }
 
         override fun getTransactionsInfo(beforeTime: Long, limit: Int): List<TransactionInfoExt> {
             var queryBlocks = blocks
             var transactionsInfo: MutableList<TransactionInfoExt> = mutableListOf()
-            queryBlocks = queryBlocks.sortedByDescending { blockDetail ->  blockDetail.height }
+            queryBlocks = queryBlocks.sortedByDescending { blockDetail -> blockDetail.height }
             for (block in queryBlocks) {
-                for(tx in block.transactions) {
-                    transactionsInfo.add(TransactionInfoExt(block.rid, block.height, block.header, block.witness, block.timestamp, cryptoSystem.digest(tx.data!!), tx.data!!.slice(IntRange(0,4)).toByteArray(), tx.data!!))
+                for (tx in block.transactions) {
+                    transactionsInfo.add(TransactionInfoExt(block.rid, block.height, block.header, block.witness, block.timestamp, cryptoSystem.digest(tx.data!!), tx.data!!.slice(IntRange(0, 4)).toByteArray(), tx.data!!))
                 }
             }
             return transactionsInfo.toList()
         }
 
-		override fun debugQuery(subQuery: String?): String {
+        override fun debugQuery(subQuery: String?): String {
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
 

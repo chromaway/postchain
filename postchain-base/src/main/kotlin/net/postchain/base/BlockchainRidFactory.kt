@@ -20,21 +20,23 @@ object BlockchainRidFactory {
      * If no Blockchain RID, we use this config to create a BC RID, since this MUST be the first config, and store to DB.
      *
      * TODO: Olle Can we check in any other way if the GTV config we are holding is NOT the first config?
+     * TODO: [POS-128]: Eliminate this method
      *
      * @param data is the [Gtv] data of the configuration
      * @param merkleHashCalculator needed if the BC RID does not exist
      * @param eContext
      * @return the blockchain's RID, either old or just created
      */
+    @Deprecated("TODO: [POS-128]")
     fun resolveBlockchainRID(
             data: Gtv,
             eContext: EContext
     ): BlockchainRid {
-        val dbBcRid = DatabaseAccess.of(eContext).getBlockchainRID(eContext)
+        val dbBcRid = DatabaseAccess.of(eContext).getBlockchainRid(eContext)
         return if (dbBcRid != null) {
             dbBcRid // We have it in the DB so don't do anything (if it's in here it must be correct)
         } else {
-            val newRid = calculateBlockchainRID(data)
+            val newRid = calculateBlockchainRid(data)
             DatabaseAccess.of(eContext).checkBlockchainRID(eContext, newRid)
             newRid
         }
@@ -46,7 +48,7 @@ object BlockchainRidFactory {
      * @param data is the [Gtv] data of the configuration
      * @return the blockchain RID
      */
-    fun calculateBlockchainRID(data: Gtv): BlockchainRid {
+    fun calculateBlockchainRid(data: Gtv): BlockchainRid {
         // Need to calculate it the RID, and we do it the usual way (same as merkle root of block)
         val bcBinary = data.merkleHash(merkleHashCalculator)
         return BlockchainRid(bcBinary)

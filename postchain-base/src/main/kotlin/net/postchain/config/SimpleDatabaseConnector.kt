@@ -6,6 +6,7 @@ import net.postchain.config.app.AppConfig
 import org.apache.commons.dbcp2.BasicDataSource
 import java.sql.Connection
 
+@Deprecated("POS-128")
 class SimpleDatabaseConnector(private val appConfig: AppConfig) : DatabaseConnector {
 
     override fun <Result> withReadConnection(action: (Connection) -> Result): Result {

@@ -87,10 +87,7 @@ data class NodeSetup(
 
         require (configurationProvider != null) {"Cannot build a PostchainTestNode without a NodeConfigurationProvider set"}
 
-        val x = configurationProvider!!.getConfiguration()
-        //logger.debug("Peers: ${x.peerInfoMap.size}")
         val node = PostchainTestNode(configurationProvider!!, preWipeDatabase)
-
 
         if (chainsToRead.isNotEmpty()) {
             logger.debug("Node ${sequenceNumber.nodeNumber}: Start all read only blockchains (dependencies must be installed first)")
@@ -106,7 +103,7 @@ data class NodeSetup(
         }
 
         logger.debug("Node ${sequenceNumber.nodeNumber}: Start all blockchains we should sign")
-        chainsToSign.forEach {chainId ->
+        chainsToSign.forEach { chainId ->
             val chainSetup = systemSetup.blockchainMap[chainId]!!
             logger.debug("Node ${sequenceNumber.nodeNumber}: Begin starting chainId: $chainId ")
             node.addBlockchain(chainSetup)
