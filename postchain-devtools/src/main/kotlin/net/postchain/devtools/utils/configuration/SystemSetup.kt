@@ -138,10 +138,6 @@ data class SystemSetup(
         }
         return retList
     }
-
-
-
-
 }
 
 

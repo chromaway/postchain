@@ -3,14 +3,13 @@
 package net.postchain.core
 
 import net.postchain.base.BlockchainRid
-import java.util.concurrent.locks.Lock
 
 interface Shutdownable {
     fun shutdown()
 }
 
 interface Synchronizable {
-    var synchronizer: Lock
+    val synchronizer: Any
 }
 
 /**

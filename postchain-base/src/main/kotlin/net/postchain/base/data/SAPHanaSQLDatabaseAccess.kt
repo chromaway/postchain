@@ -51,7 +51,7 @@ class SAPHanaSQLDatabaseAccess : SQLDatabaseAccess() {
                 "    tx_rid VARBINARY(1000) NOT NULL," +
                 "    tx_data BLOB NOT NULL," +
                 "    tx_hash VARBINARY(1000) NOT NULL," +
-                "    block_iid BIGINT NOT NULL REFERENCES blocks(block_iid)," +
+                "    block_iid BIGINT NOT NULL REFERENCES ${tableBlocks(ctx)}(block_iid)," +
                 "    UNIQUE (chain_iid, tx_rid))"
     }
 

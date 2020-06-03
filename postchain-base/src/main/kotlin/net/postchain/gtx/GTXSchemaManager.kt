@@ -7,6 +7,7 @@ import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.core.EContext
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.ScalarHandler
+import org.apache.commons.lang3.text.StrSubstitutor
 import java.util.*
 
 // TODO: [POS-128]: Refactor SQL part of GTXModule
@@ -15,9 +16,14 @@ object GTXSchemaManager {
     private val queryRunner = QueryRunner()
     private val nullableLongRes = ScalarHandler<Long?>()
 
+    // See SQLDatabaseAccess
+    private fun tablePref(ctx: EContext): String {
+        return "c${ctx.chainID}."
+    }
+
     fun initializeDB(ctx: EContext) {
         val db = (DatabaseAccess.of(ctx) as SQLDatabaseAccess)
-        if (!db.tableExists(ctx.conn, db.chainTableName(ctx, "gtx_module_version"))) {
+        if (!db.tableExists(ctx.conn, db.tableName(ctx, "gtx_module_version"))) {
             queryRunner.update(ctx.conn, db.cmdCreateTableGtxModuleVersion(ctx))
         }
     }
@@ -44,8 +50,14 @@ object GTXSchemaManager {
     }
 
     private fun loadModuleSQLSchema(ctx: EContext, jClass: Class<*>, name: String) {
-        val schemaSQL = Scanner(jClass.getResourceAsStream(name), "UTF-8")
-                .useDelimiter("\\A").next()
+        val sql = jClass.getResource(name).readText()
+
+        // TODO: [POS-128]: Improve this
+        val pref = tablePref(ctx)
+        val tables = mapOf("pref" to pref)
+        val sql2 = StrSubstitutor.replace(sql, tables)
+
+        val schemaSQL = Scanner(sql2).useDelimiter("\\A").next()
         queryRunner.update(ctx.conn, schemaSQL)
     }
 

@@ -22,6 +22,8 @@ interface DatabaseAccess {
             val witness: ByteArray,
             val timestamp: Long)
 
+    fun tableName(ctx: EContext, table: String): String
+
     fun isSavepointSupported(): Boolean
     fun isSchemaExists(connection: Connection, schema: String): Boolean
     fun createSchema(connection: Connection, schema: String)

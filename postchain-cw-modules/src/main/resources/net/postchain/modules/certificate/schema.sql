@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS certificate (
+CREATE TABLE IF NOT EXISTS "${pref}certificate" (
   certificate_iid SERIAL PRIMARY KEY,
   id        TEXT   NOT NULL,
   name      TEXT   NOT NULL,

@@ -11,7 +11,6 @@ import net.postchain.config.node.ManagedNodeConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
 import net.postchain.debug.NodeDiagnosticContext
-import kotlin.concurrent.withLock
 
 /**
  * Extends on the [BaseBlockchainProcessManager] with managed mode. "Managed" means that the nodes automatically
@@ -152,7 +151,7 @@ open class ManagedBlockchainProcessManager(
 
         fun wrappedRestartHandler(): Boolean {
             return try {
-                synchronizer.withLock {
+                synchronized(synchronizer) {
                     if (chainId == 0L) restartHandlerChain0() else restartHandlerChainN()
                 }
             } catch (e: Exception) {

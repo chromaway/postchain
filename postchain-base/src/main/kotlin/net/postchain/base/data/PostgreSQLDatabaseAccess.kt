@@ -52,7 +52,7 @@ class PostgreSQLDatabaseAccess : SQLDatabaseAccess() {
                 "    tx_rid bytea NOT NULL," +
                 "    tx_data bytea NOT NULL," +
                 "    tx_hash bytea NOT NULL," +
-                "    block_iid bigint NOT NULL REFERENCES blocks(block_iid)," +
+                "    block_iid bigint NOT NULL REFERENCES ${tableBlocks(ctx)}(block_iid)," +
                 "    UNIQUE (chain_iid, tx_rid))"
     }
 

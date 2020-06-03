@@ -7,6 +7,7 @@ import net.postchain.core.EContext
 import net.postchain.core.UserMistake
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvFactory.gtv
+import net.postchain.modules.esplix_r4.DbUtils.tableName
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.MapListHandler
 import org.apache.commons.dbutils.handlers.ScalarHandler
@@ -18,8 +19,8 @@ fun getTxRIDQ(config: EsplixConfig, ctx: EContext, args: Gtv): Gtv {
     val r = QueryRunner()
 
     val messageID = args["messageID"]!!.asByteArray(true)
-    val res = r.query(ctx.conn, "SELECT tx_rid FROM r4_messages m " +
-            "INNER JOIN transactions t ON m.tx_iid = t.tx_iid " +
+    val res = r.query(ctx.conn, "SELECT tx_rid FROM ${tableName(ctx, "r4_messages")} m " +
+            "INNER JOIN ${tableName(ctx, "transactions")} t ON m.tx_iid = t.tx_iid " +
             "WHERE m.message_id = ?", ScalarHandler<ByteArray>(), messageID)
     return gtv("txRID" to gtv(res))
 }
@@ -29,10 +30,9 @@ fun getMessagesQ(config: EsplixConfig, ctx: EContext, args: Gtv): Gtv {
     val mapListHandler = MapListHandler()
 
     val chainID = args["chainID"]?.asString()?.hexStringToByteArray()
-    if (chainID == null)
-        throw UserMistake("Invalid ChainID")
+            ?: throw UserMistake("Invalid ChainID")
 
-    var sinceMessageID : ByteArray? = null
+    var sinceMessageID: ByteArray? = null
     args["sinceMessageID"]?.let {
         if (!it.isNull())
             sinceMessageID = it.asString().hexStringToByteArray()
@@ -42,17 +42,17 @@ fun getMessagesQ(config: EsplixConfig, ctx: EContext, args: Gtv): Gtv {
     if (maxHits < 1 || maxHits > 1000) throw UserMistake("Invalid maxHits")
 
     fun getMessages(ctx: EContext, chainID: ByteArray, sinceMessageID: ByteArray?, maxHits: Int): List<MessageEntry> {
-        val res = r.query(ctx.conn, "SELECT * FROM r4_getMessages(?, ?, ?)", mapListHandler,
+        val res = r.query(ctx.conn, "SELECT * FROM ${tableName(ctx, "r4_getMessages")}(?, ?, ?)", mapListHandler,
                 chainID,
                 sinceMessageID,
                 maxHits)
-        return List<MessageEntry>(res.size, { index ->
+        return List<MessageEntry>(res.size) { index ->
             MessageEntry(
                     res[index]["tx_data"] as ByteArray,
                     res[index]["tx_rid"] as ByteArray,
                     (res[index]["op_indexes"] as PgArray).getArray() as Array<Int>
             )
-        })
+        }
     }
 
     val messages = getMessages(ctx, chainID, sinceMessageID, maxHits)

@@ -5,6 +5,8 @@ package net.postchain.modules.ft
 import net.postchain.base.BlockchainRid
 import net.postchain.core.TxEContext
 import net.postchain.gtv.GtvArray
+import net.postchain.modules.esplix_r4.DbUtils
+import net.postchain.modules.esplix_r4.DbUtils.tableName
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.MapListHandler
 
@@ -28,10 +30,10 @@ class AssuranceContract(
         val r = QueryRunner()
         return r.query(ctx.conn,
                 """SELECT h1.delta as amount, acc.account_id as account_id
-        FROM ft_history h1
-        INNER JOIN ft_history h2
+        FROM ${tableName(ctx, "ft_history")} h1
+        INNER JOIN ${tableName(ctx, "ft_history")} h2
         ON (h1.tx_iid = h2.tx_iid) AND (h1.op_index = h2.op_index) AND (h2.delta < 0)
-        INNER JOIN ft_accounts acc
+        INNER JOIN ${tableName(ctx, "ft_accounts")} acc
         ON acc.account_iid = h2.account_iid
         WHERE h1.account_iid = ft_find_account(?, ?)
              AND h1.asset_iid = ft_find_asset(?, ?)

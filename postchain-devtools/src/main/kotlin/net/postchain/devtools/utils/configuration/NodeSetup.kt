@@ -26,14 +26,14 @@ data class NodeSetup(
         var configurationProvider: NodeConfigurationProvider? = null // We might not set this at first
 ) {
 
-    companion object: KLogging() {
-        const val DEFAULT_PORT_BASE_NR= 9870 // Just some made up number. Can be used if there is no other test running in parallel on this machine.
+    companion object : KLogging() {
+        const val DEFAULT_PORT_BASE_NR = 9870 // Just some made up number. Can be used if there is no other test running in parallel on this machine.
         const val DEFAULT_API_PORT_BASE = 7740 // Made up number, used for the REST API
 
         fun buildSimple(nodeNr: NodeSeqNumber,
                         signerChains: Set<Int>,
                         replicaChains: Set<Int>
-                        ): NodeSetup {
+        ): NodeSetup {
 
             return NodeSetup(
                     nodeNr,
@@ -63,8 +63,7 @@ data class NodeSetup(
      * @param systemSetup
      * @return all nodes this node should know about
      */
-    fun calculateAllNodeConnections(systemSetup: SystemSetup): Set<NodeSeqNumber>
-    {
+    fun calculateAllNodeConnections(systemSetup: SystemSetup): Set<NodeSeqNumber> {
         val retSet = mutableSetOf<NodeSeqNumber>()
 
         val totalBcs = this.chainsToRead.plus(this.chainsToRead)
@@ -85,7 +84,7 @@ data class NodeSetup(
             preWipeDatabase: Boolean = true
     ): PostchainTestNode {
 
-        require (configurationProvider != null) {"Cannot build a PostchainTestNode without a NodeConfigurationProvider set"}
+        require(configurationProvider != null) { "Cannot build a PostchainTestNode without a NodeConfigurationProvider set" }
 
         val node = PostchainTestNode(configurationProvider!!, preWipeDatabase)
 
@@ -93,26 +92,33 @@ data class NodeSetup(
             logger.debug("Node ${sequenceNumber.nodeNumber}: Start all read only blockchains (dependencies must be installed first)")
             // TODO: These chains can in turn be depending on each other, so they should be "sorted" first
             chainsToRead.forEach { chainId ->
-                val chainSetup = systemSetup.blockchainMap[chainId]!!
-                logger.debug("Node ${sequenceNumber.nodeNumber}: Begin starting read only chainId: $chainId ")
-                node.addBlockchain(chainSetup)
-                node.mapBlockchainRID(chainId.toLong(), chainSetup.rid)
-                node.startBlockchain(chainId.toLong())
-                logger.debug("Node ${sequenceNumber.nodeNumber}: Finished starting read only chainId: $chainId ")
+                val chainSetup = systemSetup.blockchainMap[chainId]
+                        ?: error("Incorrect SystemSetup")
+                startChain(node, chainSetup, "read only")
             }
         }
 
         logger.debug("Node ${sequenceNumber.nodeNumber}: Start all blockchains we should sign")
         chainsToSign.forEach { chainId ->
-            val chainSetup = systemSetup.blockchainMap[chainId]!!
-            logger.debug("Node ${sequenceNumber.nodeNumber}: Begin starting chainId: $chainId ")
-            node.addBlockchain(chainSetup)
-            node.mapBlockchainRID(chainId.toLong(), chainSetup.rid)
-            node.startBlockchain(chainId.toLong())
-            logger.debug("Node ${sequenceNumber.nodeNumber}: Finished starting chainId: $chainId ")
+            val chainSetup = systemSetup.blockchainMap[chainId]
+                    ?: error("Incorrect SystemSetup")
+            startChain(node, chainSetup, "")
         }
 
         return node
+    }
+
+    private fun startChain(node: PostchainTestNode, chain: BlockchainSetup, chainLogType: String) {
+        val launched = node.retrieveBlockchain(chain.chainId.toLong()) != null
+        if (launched) {
+            logger.debug("Node ${sequenceNumber.nodeNumber}: Chain is already running: chainId: ${chain.chainId}")
+        } else {
+            logger.debug("Node ${sequenceNumber.nodeNumber}: Begin starting $chainLogType chainId: ${chain.chainId}")
+            node.addBlockchain(chain)
+            node.mapBlockchainRID(chain.chainId.toLong(), chain.rid)
+            node.startBlockchain(chain.chainId.toLong())
+            logger.debug("Node ${sequenceNumber.nodeNumber}: Finished starting $chainLogType chainId: ${chain.chainId}")
+        }
     }
 
 }
