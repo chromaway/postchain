@@ -31,12 +31,11 @@ class PostgreSQLDatabaseAccess : SQLDatabaseAccess() {
                 " (block_iid BIGSERIAL PRIMARY KEY," +
                 "  block_height BIGINT NOT NULL, " +
                 "  block_rid BYTEA," +
-                "  chain_iid BIGINT NOT NULL," +
                 "  block_header_data BYTEA," +
                 "  block_witness BYTEA," +
                 "  timestamp BIGINT," +
-                "  UNIQUE (chain_iid, block_rid)," +
-                "  UNIQUE (chain_iid, block_height))"
+                "  UNIQUE (block_rid)," +
+                "  UNIQUE (block_height))"
     }
 
     override fun cmdCreateTableBlockchains(): String {
@@ -48,20 +47,17 @@ class PostgreSQLDatabaseAccess : SQLDatabaseAccess() {
     override fun cmdCreateTableTransactions(ctx: EContext): String {
         return "CREATE TABLE ${tableTransactions(ctx)} (" +
                 "    tx_iid BIGSERIAL PRIMARY KEY, " +
-                "    chain_iid bigint NOT NULL," +
-                "    tx_rid bytea NOT NULL," +
-                "    tx_data bytea NOT NULL," +
-                "    tx_hash bytea NOT NULL," +
+                "    tx_rid BYTEA NOT NULL," +
+                "    tx_data BYTEA NOT NULL," +
+                "    tx_hash BYTEA NOT NULL," +
                 "    block_iid bigint NOT NULL REFERENCES ${tableBlocks(ctx)}(block_iid)," +
-                "    UNIQUE (chain_iid, tx_rid))"
+                "    UNIQUE (tx_rid))"
     }
 
     override fun cmdCreateTableConfigurations(ctx: EContext): String {
         return "CREATE TABLE ${tableConfigurations(ctx)} (" +
-                " chain_iid bigint NOT NULL" +
-                ", height BIGINT NOT NULL" +
-                ", configuration_data bytea NOT NULL" +
-                ", PRIMARY KEY (chain_iid, height)" +
+                "height BIGINT PRIMARY KEY" +
+                ", configuration_data BYTEA NOT NULL" +
                 ")"
     }
 
@@ -79,17 +75,17 @@ class PostgreSQLDatabaseAccess : SQLDatabaseAccess() {
     }
 
     override fun cmdInsertBlocks(ctx: EContext): String {
-        return "INSERT INTO ${tableBlocks(ctx)} (chain_iid, block_height) VALUES (?, ?)"
+        return "INSERT INTO ${tableBlocks(ctx)} (block_height) VALUES (?)"
     }
 
     override fun cmdInsertTransactions(ctx: EContext): String {
-        return "INSERT INTO ${tableTransactions(ctx)} (chain_iid, tx_rid, tx_data, tx_hash, block_iid) " +
-                "VALUES (?, ?, ?, ?, ?)"
+        return "INSERT INTO ${tableTransactions(ctx)} (tx_rid, tx_data, tx_hash, block_iid) " +
+                "VALUES (?, ?, ?, ?)"
     }
 
     override fun cmdInsertConfiguration(ctx: EContext): String {
-        return "INSERT INTO ${tableConfigurations(ctx)} (chain_iid, height, configuration_data) " +
-                "VALUES (?, ?, ?) ON CONFLICT (chain_iid, height) DO UPDATE SET configuration_data = ?"
+        return "INSERT INTO ${tableConfigurations(ctx)} (height, configuration_data) " +
+                "VALUES (?, ?) ON CONFLICT (height) DO UPDATE SET configuration_data = ?"
     }
 
     override fun cmdCreateTableGtxModuleVersion(ctx: EContext): String {
@@ -99,40 +95,19 @@ class PostgreSQLDatabaseAccess : SQLDatabaseAccess() {
     }
 
     override fun insertBlock(ctx: EContext, height: Long): Long {
-        val sql = "INSERT INTO ${tableBlocks(ctx)} (chain_iid, block_height) " +
-                "VALUES (?, ?) RETURNING block_iid"
-
-        return queryRunner.query(
-                ctx.conn,
-                sql,
-                longRes,
-                ctx.chainID,
-                height)
+        val sql = "INSERT INTO ${tableBlocks(ctx)} (block_height) " +
+                "VALUES (?) RETURNING block_iid"
+        return queryRunner.query(ctx.conn, sql, longRes, height)
     }
 
     override fun insertTransaction(ctx: BlockEContext, tx: Transaction): Long {
-        val sql = "INSERT INTO ${tableTransactions(ctx)} (chain_iid, tx_rid, tx_data, tx_hash, block_iid) " +
-                "VALUES (?, ?, ?, ?, ?) RETURNING tx_iid"
+        val sql = "INSERT INTO ${tableTransactions(ctx)} (tx_rid, tx_data, tx_hash, block_iid) " +
+                "VALUES (?, ?, ?, ?) RETURNING tx_iid"
 
-        return queryRunner.query(
-                ctx.conn,
-                sql,
-                longRes,
-                ctx.chainID,
-                tx.getRID(),
-                tx.getRawData(),
-                tx.getHash(),
-                ctx.blockIID)
+        return queryRunner.query(ctx.conn, sql, longRes, tx.getRID(), tx.getRawData(), tx.getHash(), ctx.blockIID)
     }
 
     override fun addConfigurationData(ctx: EContext, height: Long, data: ByteArray) {
-        queryRunner.insert(
-                ctx.conn,
-                cmdInsertConfiguration(ctx),
-                longRes,
-                ctx.chainID,
-                height,
-                data,
-                data)
+        queryRunner.insert(ctx.conn, cmdInsertConfiguration(ctx), longRes, height, data, data)
     }
 }

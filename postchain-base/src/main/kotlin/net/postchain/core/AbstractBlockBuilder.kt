@@ -23,10 +23,9 @@ import net.postchain.common.toHex
 abstract class AbstractBlockBuilder(
         val ectx: EContext,
         val blockchainRID: BlockchainRid,
-
         val store: BlockStore,
         val txFactory: TransactionFactory
-        ) : BlockBuilder {
+) : BlockBuilder {
 
     // functions which need to be implemented in a concrete BlockBuilder:
     abstract fun makeBlockHeader(): BlockHeader
