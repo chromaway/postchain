@@ -91,6 +91,24 @@ open class ManagedBlockchainProcessManager(
         }
     }
 
+    private fun buildChain0ManagedDataSource(): ManagedNodeDataSource {
+        val chain0 = 0L
+        val storage = StorageBuilder.buildStorage(
+                nodeConfigProvider.getConfiguration().appConfig, NODE_ID_NA)
+
+        val blockQueries = withReadWriteConnection(storage, chain0) { ctx0 ->
+            val configuration = blockchainConfigProvider.getConfiguration(ctx0, chain0)
+                    ?: throw ProgrammerMistake("chain0 configuration not found")
+
+            val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(
+                    configuration, ctx0, NODE_ID_AUTO, chain0)
+
+            blockchainConfig.makeBlockQueries(storage)
+        }
+
+        return GTXManagedNodeDataSource(blockQueries, nodeConfigProvider.getConfiguration())
+    }
+
     /**
      * @return a [RestartHandler] which is a lambda (This lambda will be called by the Engine after each block
      *          has been committed.)
@@ -136,11 +154,11 @@ open class ManagedBlockchainProcessManager(
          */
         fun restartHandlerChainN(): Boolean {
             // Checking out for a chain configuration changes
-            val reloadBlockchainConfig = withReadConnection(storage, chainId) { eContext ->
+            val reloadConfig = withReadConnection(storage, chainId) { eContext ->
                 (blockchainConfigProvider.needsConfigurationChange(eContext, chainId))
             }
 
-            return if (reloadBlockchainConfig) {
+            return if (reloadConfig) {
                 reloadBlockchainConfigAsync(chainId)
                 true
             } else {
@@ -162,24 +180,6 @@ open class ManagedBlockchainProcessManager(
         }
 
         return ::wrappedRestartHandler
-    }
-
-    private fun buildChain0ManagedDataSource(): ManagedNodeDataSource {
-        val chain0 = 0L
-        val storage = StorageBuilder.buildStorage(
-                nodeConfigProvider.getConfiguration().appConfig, NODE_ID_NA)
-
-        val blockQueries = withReadWriteConnection(storage, chain0) { ctx0 ->
-            val configuration = blockchainConfigProvider.getConfiguration(ctx0, chain0)
-                    ?: throw ProgrammerMistake("chain0 configuration not found")
-
-            val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(
-                    configuration, ctx0, NODE_ID_AUTO, chain0)
-
-            blockchainConfig.makeBlockQueries(storage)
-        }
-
-        return GTXManagedNodeDataSource(blockQueries, nodeConfigProvider.getConfiguration())
     }
 
     /**
@@ -342,10 +342,4 @@ open class ManagedBlockchainProcessManager(
         return blockchains.toTypedArray()
     }
 
-    // TODO: [POS-90]: Redesign this
-    private fun inManagedMode(): Boolean {
-        // TODO: We are using isInitialized as a measure of being in managed mode. Doesn't seem right?
-//        logger.warn("We are using isInitialized as a measure of being in managed mode. Doesn't seem right? ")
-        return ::dataSource.isInitialized
-    }
 }
