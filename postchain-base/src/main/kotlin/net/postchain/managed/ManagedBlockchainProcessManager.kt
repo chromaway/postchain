@@ -59,33 +59,36 @@ open class ManagedBlockchainProcessManager(
      * Check if this is the "chain zero" and if so we need to set the dataSource in a few objects before we go on.
      */
     override fun startBlockchain(chainId: Long): BlockchainRid? {
-        try {
-            if (chainId == 0L) {
-                dataSource = buildChain0ManagedDataSource()
+        if (chainId == 0L) {
+            initManagedEnvironment()
+        }
+        return super.startBlockchain(chainId)
+    }
 
-                // TODO: [POS-97]: Put this to DiagnosticContext
+    private fun initManagedEnvironment() {
+        try {
+            dataSource = buildChain0ManagedDataSource()
+
+            // TODO: [POS-97]: Put this to DiagnosticContext
 //                logger.debug { "${nodeConfigProvider.javaClass}" }
 
-                // Setting up managed data source to the nodeConfig
-                (nodeConfigProvider as? ManagedNodeConfigurationProvider)
-                        ?.setPeerInfoDataSource(dataSource)
-                        ?: logger.warn { "Node config is not managed, no peer info updates possible" }
+            // Setting up managed data source to the nodeConfig
+            (nodeConfigProvider as? ManagedNodeConfigurationProvider)
+                    ?.setPeerInfoDataSource(dataSource)
+                    ?: logger.warn { "Node config is not managed, no peer info updates possible" }
 
-                // TODO: [POS-97]: Put this to DiagnosticContext
+            // TODO: [POS-97]: Put this to DiagnosticContext
 //                logger.debug { "${blockchainConfigProvider.javaClass}" }
 
-                // Setting up managed data source to the blockchainConfig
-                (blockchainConfigProvider as? ManagedBlockchainConfigurationProvider)
-                        ?.setDataSource(dataSource)
-                        ?: logger.warn { "Blockchain config is not managed" }
-            }
+            // Setting up managed data source to the blockchainConfig
+            (blockchainConfigProvider as? ManagedBlockchainConfigurationProvider)
+                    ?.setDataSource(dataSource)
+                    ?: logger.warn { "Blockchain config is not managed" }
 
         } catch (e: Exception) {
             // TODO: [POS-90]: Improve error handling here
             logger.error { e.message }
         }
-
-        return super.startBlockchain(chainId)
     }
 
     /**
@@ -115,15 +118,11 @@ open class ManagedBlockchainProcessManager(
                 true
 
             } else {
-                val toLaunch = retrieveBlockchainsToLaunch()
-                val launched = blockchainProcesses.keys
-
                 // Checking out for a chain0 configuration changes
                 val reloadChain0 = withReadConnection(storage, 0L) { eContext ->
                     blockchainConfigProvider.needsConfigurationChange(eContext, 0L)
                 }
-
-                startStopBlockchainsAsync(toLaunch, launched, reloadChain0)
+                startStopBlockchainsAsync(reloadChain0)
                 reloadChain0
             }
         }
@@ -189,28 +188,27 @@ open class ManagedBlockchainProcessManager(
     private fun reloadBlockchainsAsync() {
         executor.submit {
             val toLaunch = retrieveBlockchainsToLaunch()
-
-            // Reloading
-            // FYI: For testing only. It can be deleted later.
-
-            logger.info {
-                val pubKey = nodeConfigProvider.getConfiguration().pubKey
-                val peerInfos = nodeConfigProvider.getConfiguration().peerInfoMap
-                "reloadBlockchainsAsync: " +
-                        "pubKey: $pubKey" +
-                        ", peerInfos: ${peerInfos.keys.toTypedArray().contentToString()}" +
-                        ", chains to launch: ${toLaunch.contentDeepToString()}"
-            }
-
+            val launched = blockchainProcesses.keys
+            logChains(toLaunch, launched, true)
 
             // Starting blockchains: at first chain0, then the rest
             logger.info { "Launching blockchain 0" }
             startBlockchain(0L)
 
-            toLaunch.filter { it != 0L }.forEach {
-                logger.info { "Launching blockchain $it" }
-                startBlockchain(it)
-            }
+            // Launching new blockchains except blockchain 0
+            toLaunch.filter { it != 0L }
+                    .forEach {
+                        logger.info { "Launching blockchain $it" }
+                        startBlockchain(it)
+                    }
+
+            // Stopping launched blockchains
+            launched.filterNot(toLaunch::contains)
+                    .filter { retrieveBlockchain(it) != null }
+                    .forEach {
+                        logger.info { "Stopping blockchain $it" }
+                        stopBlockchain(it)
+                    }
         }
     }
 
@@ -222,19 +220,17 @@ open class ManagedBlockchainProcessManager(
      * @param launched is the old chains. Maybe stop some of them.
      * @param reloadChain0 is true if the chain zero must be restarted.
      */
-    private fun startStopBlockchainsAsync(toLaunch: Array<Long>, launched: Set<Long>, reloadChain0: Boolean) {
+    private fun startStopBlockchainsAsync(reloadChain0: Boolean) {
         executor.submit {
+            val toLaunch = retrieveBlockchainsToLaunch()
+            val launched = blockchainProcesses.keys
+            logChains(toLaunch, launched, reloadChain0)
+
             // Launching blockchain 0
             if (reloadChain0) {
                 logger.info { "Reloading of blockchain 0 is required" }
                 logger.info { "Launching blockchain 0" }
                 startBlockchain(0L)
-            }
-
-            if (logger.isDebugEnabled) {
-                val toL = toLaunch.map { it.toString() }.reduce { s1, s2 -> "$s1 , $s2" }
-                val l = launched.map { it.toString() }.reduce { s1, s2 -> "$s1 , $s2" }
-                logger.debug("Chains to launch: $toL. Chains already launched: $l")
             }
 
             // Launching new blockchains except blockchain 0
@@ -258,6 +254,23 @@ open class ManagedBlockchainProcessManager(
     private fun reloadBlockchainConfigAsync(chainId: Long) {
         executor.submit {
             startBlockchain(chainId)
+        }
+    }
+
+    private fun logChains(toLaunch: Array<Long>, launched: Set<Long>, reloadChain0: Boolean = false) {
+        // FYI: Message for testing only. It can be deleted later.
+        if (logger.isInfoEnabled /*isDebugEnabled*/) {
+            val toLaunch0 = if (reloadChain0 && 0L !in toLaunch) toLaunch.plus(0L) else toLaunch
+
+            logger.info /*debug*/ {
+                val pubKey = nodeConfigProvider.getConfiguration().pubKey
+                val peerInfos = nodeConfigProvider.getConfiguration().peerInfoMap
+                "reloadBlockchainsAsync: " +
+                        "pubKey: $pubKey" +
+                        ", peerInfos: ${peerInfos.keys.toTypedArray().contentToString()}" +
+                        ", chains to launch: ${toLaunch0.contentDeepToString()}" +
+                        ", chains launched: ${launched.toTypedArray().contentDeepToString()}"
+            }
         }
     }
 
