@@ -119,12 +119,12 @@ open class ManagedBlockchainProcessManager(
                 val launched = blockchainProcesses.keys
 
                 // Checking out for a chain0 configuration changes
-                val reloadBlockchainConfig = withReadConnection(storage, 0L) { eContext ->
+                val reloadChain0 = withReadConnection(storage, 0L) { eContext ->
                     blockchainConfigProvider.needsConfigurationChange(eContext, 0L)
                 }
 
-                startStopBlockchainsAsync(toLaunch, launched, reloadBlockchainConfig)
-                reloadBlockchainConfig
+                startStopBlockchainsAsync(toLaunch, launched, reloadChain0)
+                reloadChain0
             }
         }
 
@@ -155,7 +155,7 @@ open class ManagedBlockchainProcessManager(
                     if (chainId == 0L) restartHandlerChain0() else restartHandlerChainN()
                 }
             } catch (e: Exception) {
-                logger.error("Exception in restard handler: ${e.toString()}")
+                logger.error("Exception in restart handler: $e")
                 e.printStackTrace()
                 reloadBlockchainConfigAsync(chainId)
                 true // let's hope restarting a blockchain fixes the problem

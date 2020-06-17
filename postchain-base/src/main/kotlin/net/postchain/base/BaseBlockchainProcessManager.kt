@@ -44,7 +44,7 @@ open class BaseBlockchainProcessManager(
      *
      * @param chainId is the chain to start.
      */
-    override fun startBlockchainAsync(chainId: Long) {
+    protected fun startBlockchainAsync(chainId: Long) {
         executor.execute {
             try {
                 startBlockchain(chainId)
@@ -153,7 +153,7 @@ open class BaseBlockchainProcessManager(
      * @return a newly created [RestartHandler]. This method will be much more complex is
      * the sublcass [ManagedBlockchainProcessManager].
      */
-    override fun restartHandler(chainId: Long): RestartHandler {
+    protected open fun restartHandler(chainId: Long): RestartHandler {
         return {
             val doRestart = withReadConnection(storage, chainId) { eContext ->
                 blockchainConfigProvider.needsConfigurationChange(eContext, chainId)
