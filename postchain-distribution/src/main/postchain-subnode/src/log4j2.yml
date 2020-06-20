@@ -1,0 +1,69 @@
+Configuration:
+  name: Default
+  monitorInterval: 30 # sec.
+
+  Properties:
+    Property:
+    - name: logs
+      value: "logs"
+    - name: filename
+      value: "log"
+    - name: fileExt
+      value: "log"
+
+  Appenders:
+    Console:
+      name: ConsoleAppender
+      target: SYSTEM_OUT
+      PatternLayout:
+        # pattern: "[%X{node-id}] %-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
+        pattern: "%-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
+    RollingFile:
+      name: FileAppender
+      fileName: "${logs}/${filename}.${fileExt}"
+      filePattern: "${logs}/${filename}-%d{yyyy-MM-dd-HH-mm}.%i.${fileExt}.gz"
+      Policies:
+        TimeBasedTriggeringPolicy:
+          interval: 60
+          modulate: true
+        SizeBasedTriggeringPolicy:
+          size: 10 MB
+      DefaultRollOverStrategy:
+        max: 100
+      PatternLayout:
+        # pattern: "[%X{node-id}] %-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
+        pattern: "%-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n"
+
+  Loggers:
+
+    Root:
+      level: warn
+      AppenderRef:
+      - ref: ConsoleAppender
+      - ref: FileAppender
+
+    Logger:
+
+    - name: net.postchain
+      level: info
+      additivity: false
+      AppenderRef:
+      - ref: ConsoleAppender
+      - ref: FileAppender
+
+    - name: net.postchain.base.BaseBlockchainProcessManager
+      level: info
+      additivity: false
+      AppenderRef:
+      - ref: ConsoleAppender
+      - ref: FileAppender
+        level: off
+
+    - name: net.postchain.network.x.DefaultXCommunicationManager
+      level: info
+      additivity: false
+      AppenderRef:
+      - ref: ConsoleAppender
+      - ref: FileAppender
+
+
