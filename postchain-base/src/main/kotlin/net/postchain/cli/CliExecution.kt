@@ -9,10 +9,9 @@ import net.postchain.base.data.DependenciesValidator
 import net.postchain.config.app.AppConfig
 import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.gtv.Gtv
-import net.postchain.gtv.gtvml.GtvMLParser
+import net.postchain.gtv.GtvFileReader
 import org.apache.commons.configuration2.ex.ConfigurationException
 import org.apache.commons.dbcp2.BasicDataSource
-import java.io.File
 import java.sql.Connection
 import java.sql.SQLException
 
@@ -28,17 +27,26 @@ object CliExecution {
             mode: AlreadyExistMode = AlreadyExistMode.IGNORE,
             givenDependencies: List<BlockchainRelatedInfo> = listOf()
     ): BlockchainRid {
+        val gtv = GtvFileReader.readFile(blockchainConfigFile)
+        return addBlockchainGtv(nodeConfigFile, chainId, gtv, mode, givenDependencies)
+    }
 
-        val gtvData = parseGtvML(blockchainConfigFile)
+    private fun addBlockchainGtv(
+            nodeConfigFile: String,
+            chainId: Long,
+            blockchainConfig: Gtv,
+            mode: AlreadyExistMode = AlreadyExistMode.IGNORE,
+            givenDependencies: List<BlockchainRelatedInfo> = listOf()
+    ): BlockchainRid {
 
         return runStorageCommand(nodeConfigFile, chainId) { ctx ->
             val db = DatabaseAccess.of(ctx)
 
             fun init(): BlockchainRid {
-                val brid = BlockchainRidFactory.calculateBlockchainRid(gtvData)
+                val brid = BlockchainRidFactory.calculateBlockchainRid(blockchainConfig)
                 db.initializeBlockchain(ctx, brid)
                 DependenciesValidator.validateBlockchainRids(ctx, givenDependencies)
-                BaseConfigurationDataStore.addConfigurationData(ctx, 0, gtvData)
+                BaseConfigurationDataStore.addConfigurationData(ctx, 0, blockchainConfig)
                 return brid
             }
 
@@ -70,13 +78,23 @@ object CliExecution {
             height: Long,
             mode: AlreadyExistMode = AlreadyExistMode.IGNORE
     ) {
+        val gtv = GtvFileReader.readFile(blockchainConfigFile)
+        addConfigurationGtv(nodeConfigFile, gtv, chainId, height, mode)
+    }
+
+    private fun addConfigurationGtv(
+            nodeConfigFile: String,
+            blockchainConfig: Gtv,
+            chainId: Long,
+            height: Long,
+            mode: AlreadyExistMode = AlreadyExistMode.IGNORE
+    ) {
 
         val configStore = BaseConfigurationDataStore
-        val gtvConfig = parseGtvML(blockchainConfigFile)
 
         runStorageCommand(nodeConfigFile, chainId) { ctx ->
 
-            fun init() = configStore.addConfigurationData(ctx, height, gtvConfig)
+            fun init() = configStore.addConfigurationData(ctx, height, blockchainConfig)
 
             when (mode) {
                 AlreadyExistMode.ERROR -> {
@@ -163,7 +181,4 @@ object CliExecution {
         }
     }
 
-    private fun parseGtvML(blockchainConfigFile: String): Gtv {
-        return GtvMLParser.parseGtvML(File(blockchainConfigFile).readText())
-    }
 }
