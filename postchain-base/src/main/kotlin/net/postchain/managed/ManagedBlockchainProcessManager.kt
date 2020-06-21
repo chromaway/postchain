@@ -265,8 +265,7 @@ open class ManagedBlockchainProcessManager(
             logger.info /*debug*/ {
                 val pubKey = nodeConfigProvider.getConfiguration().pubKey
                 val peerInfos = nodeConfigProvider.getConfiguration().peerInfoMap
-                "reloadBlockchainsAsync: " +
-                        "pubKey: $pubKey" +
+                "pubKey: $pubKey" +
                         ", peerInfos: ${peerInfos.keys.toTypedArray().contentToString()}" +
                         ", chains to launch: ${toLaunch0.contentDeepToString()}" +
                         ", chains launched: ${launched.toTypedArray().contentDeepToString()}"
@@ -319,13 +318,14 @@ open class ManagedBlockchainProcessManager(
                     .map { brid ->
                         val blockchainRid = BlockchainRid(brid)
                         val chainId = db.getChainId(ctx0, blockchainRid)
-                        logger.debug("Computed bc list: chainIid: $chainId,  BC RID: ${blockchainRid.toShortHex()}  ")
+                        logger.debug("blockchain to launch: chainIid: $chainId,  BC RID: ${blockchainRid.toShortHex()} ")
                         if (chainId == null) {
                             val newChainId = db.getMaxChainId(ctx0)
                                     ?.let { maxOf(it + 1, 100) }
                                     ?: 100
-                            val newCtx = storage.newWritableContext(newChainId)
-                            db.initializeBlockchain(newCtx, blockchainRid)
+                            withReadWriteConnection(storage, newChainId) { newCtx ->
+                                db.initializeBlockchain(newCtx, blockchainRid)
+                            }
                             newChainId
                         } else {
                             chainId
@@ -335,7 +335,6 @@ open class ManagedBlockchainProcessManager(
                     .forEach {
                         blockchains.add(it)
                     }
-
             true
         }
 
