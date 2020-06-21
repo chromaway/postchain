@@ -60,7 +60,7 @@ object StorageBuilder {
     private fun createBasicDataSource(appConfig: AppConfig, withSchema: Boolean = true): BasicDataSource {
         return BasicDataSource().apply {
             driverClassName = appConfig.databaseDriverclass
-            url = appConfig.databaseUrl // ?loggerLevel=OFF
+            url = appConfig.databaseUrl // + "?loggerLevel=TRACE&loggerFile=db.log"
             username = appConfig.databaseUsername
             password = appConfig.databasePassword
             defaultAutoCommit = false

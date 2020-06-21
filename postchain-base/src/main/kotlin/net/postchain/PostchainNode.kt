@@ -43,5 +43,6 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         // FYI: Order is important
         processManager.shutdown()
         blockchainInfrastructure.shutdown()
+        nodeConfigProvider.close()
     }
 }

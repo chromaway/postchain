@@ -21,7 +21,8 @@ class ReadOnlyWorker(
         override val processName: BlockchainProcessName,
         signers: List<ByteArray>,
         override val blockchainEngine: BlockchainEngine,
-        private val communicationManager: CommunicationManager<Message>
+        private val communicationManager: CommunicationManager<Message>,
+        val onShutdown: () -> Unit = {}
 ) : AbstractBlockchainProcess() {
 
     override val blockDatabase: BaseBlockDatabase
@@ -52,5 +53,6 @@ class ReadOnlyWorker(
     override fun shutdown() {
         super.shutdown()
         communicationManager.shutdown()
+        onShutdown()
     }
 }

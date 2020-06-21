@@ -10,7 +10,7 @@ import net.postchain.core.NODE_ID_NA
 
 object NodeConfigurationProviderFactory {
 
-    private val storageSupplier: (AppConfig) -> Storage = { appConfig ->
+    private val storageFactory: (AppConfig) -> Storage = { appConfig ->
         StorageBuilder.buildStorage(appConfig, NODE_ID_NA)
     }
 
@@ -19,10 +19,10 @@ object NodeConfigurationProviderFactory {
             Legacy.name.toLowerCase() -> LegacyNodeConfigurationProvider(appConfig)
 
             Manual.name.toLowerCase() -> ManualNodeConfigurationProvider(
-                    appConfig, storageSupplier)
+                    appConfig, storageFactory)
 
             Managed.name.toLowerCase() -> ManagedNodeConfigurationProvider(
-                    appConfig, storageSupplier)
+                    appConfig, storageFactory)
 
             // TODO: Change 'Legacy' to 'Manual' in v3.0
             else -> LegacyNodeConfigurationProvider(appConfig)

@@ -62,7 +62,7 @@ object NodeConfigurationProviderGenerator {
             addConfiguration(baseConfig)
         }
 
-        val appConfig =AppConfig(compositeConfig)
+        val appConfig = AppConfig(compositeConfig)
         val provider = NodeConfigurationProviderFactory.createProvider(appConfig)
 
         // Run the action, default won't do anything

@@ -27,7 +27,8 @@ class ValidatorWorker(
         signers: List<ByteArray>,
         override val blockchainEngine: BlockchainEngine,
         nodeIndex: Int,
-        private val communicationManager: CommunicationManager<Message>
+        private val communicationManager: CommunicationManager<Message>,
+        val onShutdown: () -> Unit = {}
 ) : AbstractBlockchainProcess() {
 
     override val blockDatabase: BaseBlockDatabase
@@ -82,5 +83,6 @@ class ValidatorWorker(
     override fun shutdown() {
         super.shutdown()
         communicationManager.shutdown()
+        onShutdown()
     }
 }

@@ -52,6 +52,9 @@ class EBFTSynchronizationInfrastructure(
 
     override fun makeBlockchainProcess(processName: BlockchainProcessName, engine: BlockchainEngine): BlockchainProcess {
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
+        val unregisterBlockchainDiagnosticData: () -> Unit = {
+            blockchainProcessesDiagnosticData.remove(blockchainConfig.blockchainRid)
+        }
 
         return if (blockchainConfig.configData.context.nodeID != NODE_ID_READ_ONLY) {
             registerBlockchainDiagnosticData(blockchainConfig.blockchainRid, DpNodeType.NODE_TYPE_VALIDATOR)
@@ -61,7 +64,9 @@ class EBFTSynchronizationInfrastructure(
                     blockchainConfig.signers,
                     engine,
                     blockchainConfig.configData.context.nodeID,
-                    buildXCommunicationManager(processName, blockchainConfig, false))
+                    buildXCommunicationManager(processName, blockchainConfig, false),
+                    unregisterBlockchainDiagnosticData
+            )
         } else {
             registerBlockchainDiagnosticData(blockchainConfig.blockchainRid, DpNodeType.NODE_TYPE_REPLICA)
 
@@ -69,7 +74,8 @@ class EBFTSynchronizationInfrastructure(
                     processName,
                     blockchainConfig.signers,
                     engine,
-                    buildXCommunicationManager(processName, blockchainConfig, true))
+                    buildXCommunicationManager(processName, blockchainConfig, true),
+                    unregisterBlockchainDiagnosticData)
         }
     }
 

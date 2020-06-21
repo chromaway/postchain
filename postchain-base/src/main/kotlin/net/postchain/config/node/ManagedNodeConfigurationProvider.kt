@@ -11,10 +11,10 @@ import java.time.Instant.EPOCH
 
 class ManagedNodeConfigurationProvider(
         appConfig: AppConfig,
-        storageSupplier: (AppConfig) -> Storage
+        createStorage: (AppConfig) -> Storage
 ) : ManualNodeConfigurationProvider(
         appConfig,
-        storageSupplier
+        createStorage
 ) {
 
     private var managedPeerSource: PeerInfoDataSource? = null

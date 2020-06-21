@@ -6,7 +6,7 @@ import net.postchain.base.PeerInfo
 import net.postchain.base.Storage
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.base.peerId
-import net.postchain.base.withWriteConnection
+import net.postchain.base.withReadConnection
 import net.postchain.config.app.AppConfig
 
 /**
@@ -14,14 +14,20 @@ import net.postchain.config.app.AppConfig
  */
 open class ManualNodeConfigurationProvider(
         protected val appConfig: AppConfig,
-        private val storageSupplier: (AppConfig) -> Storage
+        createStorage: (AppConfig) -> Storage
 ) : NodeConfigurationProvider {
+
+    private val storage = createStorage(appConfig)
 
     override fun getConfiguration(): NodeConfig {
         return object : NodeConfig(appConfig) {
             override val peerInfoMap = getPeerInfoCollection(appConfig)
                     .associateBy(PeerInfo::peerId)
         }
+    }
+
+    override fun close() {
+        storage.close()
     }
 
     /**
@@ -32,7 +38,7 @@ open class ManualNodeConfigurationProvider(
      */
     // TODO: [et]: Make it protected
     open fun getPeerInfoCollection(appConfig: AppConfig): Array<PeerInfo> {
-        return storageSupplier(appConfig).withWriteConnection { ctx ->
+        return storage.withReadConnection { ctx ->
             DatabaseAccess.of(ctx).getPeerInfoCollection(ctx)
         }
     }
