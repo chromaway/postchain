@@ -2,7 +2,6 @@
 
 package net.postchain.core
 
-import net.postchain.base.Storage
 import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.debug.BlockchainProcessName
@@ -21,8 +20,8 @@ interface BlockchainInfrastructure : SynchronizationInfrastructure {
 
     fun makeBlockchainConfiguration(rawConfigurationData: ByteArray,
                                     eContext: EContext,
-                                    nodeID: Int,
-                                    chainID: Long
+                                    nodeId: Int,
+                                    chainId: Long
     ): BlockchainConfiguration
 
     fun makeBlockchainEngine(
@@ -31,7 +30,6 @@ interface BlockchainInfrastructure : SynchronizationInfrastructure {
             restartHandler: RestartHandler
     ): BlockchainEngine
 
-    fun makeStorage(): Storage
 }
 
 interface ApiInfrastructure : Shutdownable {

@@ -5,10 +5,10 @@ package net.postchain.cli
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
 import net.postchain.base.PeerInfo
+import net.postchain.base.data.DatabaseAccess
+import net.postchain.base.runStorageCommand
 import net.postchain.common.toHex
-import net.postchain.config.SimpleDatabaseConnector
 import net.postchain.config.app.AppConfig
-import net.postchain.config.app.AppConfigDbLayer
 import net.postchain.config.node.LegacyNodeConfigurationProvider
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
@@ -35,7 +35,7 @@ class CommandPeerInfoImport : Command {
             val report = if (imported.isEmpty()) {
                 "No peerinfo have been imported"
             } else {
-                imported.mapIndexed(Templatter.PeerInfoTemplatter::renderPeerInfo)
+                imported.mapIndexed(Templater.PeerInfoTemplater::renderPeerInfo)
                         .joinToString(
                                 separator = "\n",
                                 prefix = "Peerinfo added (${imported.size}):\n")
@@ -48,24 +48,24 @@ class CommandPeerInfoImport : Command {
         }
     }
 
-    fun peerinfoImport(nodeConfigFile: String): Array<PeerInfo> {
+    private fun peerinfoImport(nodeConfigFile: String): Array<PeerInfo> {
         val appConfig = AppConfig.fromPropertiesFile(nodeConfigFile)
         val nodeConfig = LegacyNodeConfigurationProvider(appConfig).getConfiguration()
 
         return if (nodeConfig.peerInfoMap.isEmpty()) {
             emptyArray()
-
         } else {
-            SimpleDatabaseConnector(appConfig).withWriteConnection { connection ->
+            runStorageCommand(nodeConfigFile) { ctx ->
+                val db = DatabaseAccess.of(ctx)
                 val imported = mutableListOf<PeerInfo>()
 
-                val dbLayer = AppConfigDbLayer(appConfig, connection)
                 nodeConfig.peerInfoMap.values.forEach { peerInfo ->
-                    val found = (dbLayer.findPeerInfo(peerInfo.host, peerInfo.port, null).isNotEmpty()
-                            || dbLayer.findPeerInfo(null, null, peerInfo.pubKey.toHex()).isNotEmpty())
-                    if (!found) {
-                        val added = dbLayer.addPeerInfo(
-                                peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex(), peerInfo.timestamp)
+                    val noHostPort = db.findPeerInfo(ctx, peerInfo.host, peerInfo.port, null).isEmpty()
+                    val noPubKey = db.findPeerInfo(ctx, null, null, peerInfo.pubKey.toHex()).isEmpty()
+
+                    if (noHostPort && noPubKey) {
+                        val added = db.addPeerInfo(
+                                ctx, peerInfo.host, peerInfo.port, peerInfo.pubKey.toHex(), peerInfo.timestamp)
 
                         if (added) {
                             imported.add(peerInfo)

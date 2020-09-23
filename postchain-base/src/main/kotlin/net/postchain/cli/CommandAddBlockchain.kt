@@ -45,9 +45,8 @@ class CommandAddBlockchain : Command {
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
         return try {
-            val cliExecution = CliExecution()
             val mode = if (force) AlreadyExistMode.FORCE else AlreadyExistMode.ERROR
-            cliExecution.addBlockchain(nodeConfigFile, chainId, blockchainConfigFile, mode)
+            CliExecution.addBlockchain(nodeConfigFile, chainId, blockchainConfigFile, mode)
             Ok("Configuration has been added successfully")
         } catch (e: CliError.Companion.CliException) {
             CliError.CommandNotAllowed(message = e.message)

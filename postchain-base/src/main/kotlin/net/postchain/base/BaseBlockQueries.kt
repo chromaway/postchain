@@ -30,8 +30,12 @@ class ConfirmationProof(val txHash: ByteArray, val header: ByteArray, val witnes
  * @param mySubjectId Public key related to the private key used for signing blocks
  */
 open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfiguration,
-                       private val storage: Storage, private val blockStore: BlockStore,
-                       private val chainId: Long, private val mySubjectId: ByteArray) : BlockQueries {
+                            private val storage: Storage,
+                            private val blockStore: BlockStore,
+                            private val chainId: Long,
+                            private val mySubjectId: ByteArray
+) : BlockQueries {
+
     companion object : KLogging()
 
     /**
@@ -53,13 +57,12 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
     }
 
     override fun getBlockSignature(blockRID: ByteArray): Promise<Signature, Exception> {
-        return runOp({ ctx ->
+        return runOp { ctx ->
             val witnessData = blockStore.getWitnessData(ctx, blockRID)
             val witness = blockchainConfiguration.decodeWitness(witnessData) as MultiSigBlockWitness
             val signature = witness.getSignatures().find { it.subjectID.contentEquals(mySubjectId) }
-            signature ?:
-                    throw UserMistake("Trying to get a signature from a node that doesn't have one")
-        })
+            signature ?: throw UserMistake("Trying to get a signature from a node that doesn't have one")
+        }
     }
 
     override fun getBestHeight(): Promise<Long, Exception> {
@@ -76,11 +79,9 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
      */
     override fun getBlockTransactionRids(blockRID: ByteArray): Promise<List<ByteArray>, Exception> {
         return runOp {
+            // Shouldn't this be UserMistake?
             val height = blockStore.getBlockHeightFromOwnBlockchain(it, blockRID)
-            if (height == null) {
-                //Shouldn't this be UserMistake?
-                throw ProgrammerMistake("BlockRID does not exist")
-            }
+                    ?: throw ProgrammerMistake("BlockRID does not exist")
             blockStore.getTxRIDsAtHeight(it, height).toList()
         }
     }
@@ -108,7 +109,7 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
     }
 
     override fun getBlocks(beforeTime: Long, limit: Int, partialTx: Boolean): Promise<List<BlockDetail>, Exception> {
-        return runOp{
+        return runOp {
             blockStore.getBlocks(it, beforeTime, limit, partialTx)
         }
     }

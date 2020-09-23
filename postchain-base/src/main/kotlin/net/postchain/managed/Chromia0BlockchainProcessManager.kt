@@ -22,10 +22,10 @@ class Chromia0BlockchainProcessManager(
         nodeConfigProvider: NodeConfigurationProvider,
         blockchainConfigProvider: BlockchainConfigurationProvider,
         nodeDiagnosticContext: NodeDiagnosticContext
-): ManagedBlockchainProcessManager(blockchainInfrastructure, nodeConfigProvider,
+) : ManagedBlockchainProcessManager(blockchainInfrastructure, nodeConfigProvider,
         blockchainConfigProvider, nodeDiagnosticContext) {
 
-    fun anchorLastBlock(chainId: Long) {
+    private fun anchorLastBlock(chainId: Long) {
         withReadConnection(storage, chainId) { eContext ->
             val dba = DatabaseAccess.of(eContext)
             val blockRID = dba.getLastBlockRid(eContext, chainId)
@@ -34,7 +34,7 @@ class Chromia0BlockchainProcessManager(
                 val blockHeader = dba.getBlockHeader(eContext, blockRID)
                 val witnessData = dba.getWitnessData(eContext, blockRID)
                 val witness = BaseBlockWitness.fromBytes(witnessData)
-                val txb = GTXDataBuilder(chain0Engine.getConfiguration().blockchainRID,
+                val txb = GTXDataBuilder(chain0Engine.getConfiguration().blockchainRid,
                         arrayOf(), SECP256K1CryptoSystem())
                 // sorting signatures makes it more likely we can avoid duplicate anchor transactions
                 val sortedSignatures = witness.getSignatures().sortedBy { ByteArrayKey(it.subjectID) }
@@ -47,7 +47,7 @@ class Chromia0BlockchainProcessManager(
                                 GtvArray(
                                         sortedSignatures.map { GtvByteArray(it.data) }.toTypedArray()
                                 )
-                                )
+                        )
                 )
                 txb.finish()
                 val tx = chain0Engine.getConfiguration().getTransactionFactory().decodeTransaction(

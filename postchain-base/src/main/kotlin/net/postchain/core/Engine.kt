@@ -3,21 +3,20 @@
 package net.postchain.core
 
 import net.postchain.base.BlockchainRid
-import java.util.concurrent.locks.Lock
 
 interface Shutdownable {
     fun shutdown()
 }
 
 interface Synchronizable {
-    var synchronizer: Lock
+    val synchronizer: Any
 }
 
 /**
  * Blockchain engine used for building and adding new blocks
  */
 interface BlockchainEngine : Shutdownable {
-    fun initializeDB()
+    fun initialize()
     fun setRestartHandler(restartHandler: RestartHandler)
 
     // TODO: POS-111: Remove `addBlock()` and rename `loadUnfinishedBlock()` to `loadBlock()`

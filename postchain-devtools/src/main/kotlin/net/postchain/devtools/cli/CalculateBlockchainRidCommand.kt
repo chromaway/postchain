@@ -10,7 +10,7 @@ import net.postchain.gtv.gtvml.GtvMLParser
 import java.io.File
 
 class CalculateBlockchainRidCommand : CliktCommand(
-        name = "calculate-blockchain-rid",
+        name = "blockchain-rid",
         help = "Calculates blockchain RID by blockchain configuration in GtxML format"
 ) {
 
@@ -24,7 +24,7 @@ class CalculateBlockchainRidCommand : CliktCommand(
 
         try {
             val gtv = GtvMLParser.parseGtvML(File(blockchainConfigFilename).readText())
-            val blockchainRid = BlockchainRidFactory.calculateBlockchainRID(gtv)
+            val blockchainRid = BlockchainRidFactory.calculateBlockchainRid(gtv)
 
             println("Blockchain RID: $blockchainRid")
 

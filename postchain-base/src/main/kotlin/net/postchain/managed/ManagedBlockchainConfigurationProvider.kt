@@ -33,7 +33,7 @@ class ManagedBlockchainConfigurationProvider : BlockchainConfigurationProvider {
     override fun needsConfigurationChange(eContext: EContext, chainId: Long): Boolean {
         fun checkNeedConfChangeViaDataSource(): Boolean {
             val dba = DatabaseAccess.of(eContext)
-            val blockchainRID = dba.getBlockchainRID(eContext)
+            val blockchainRID = dba.getBlockchainRid(eContext)
             val height = dba.getLastBlockHeight(eContext)
             val nextConfigHeight = dataSource.findNextConfigurationHeight(blockchainRID!!.data, height)
             return (nextConfigHeight != null) && (nextConfigHeight == height + 1)
@@ -54,7 +54,7 @@ class ManagedBlockchainConfigurationProvider : BlockchainConfigurationProvider {
         val dba = DatabaseAccess.of(eContext)
         /* val newCtx = BaseEContext(eContext.conn,
                 eContext.chainID, eContext.nodeID, dba)*/
-        val blockchainRID = dba.getBlockchainRID(eContext)
+        val blockchainRID = dba.getBlockchainRid(eContext)
         val height = dba.getLastBlockHeight(eContext) + 1
         return dataSource.getConfiguration(blockchainRID!!.data, height)
     }

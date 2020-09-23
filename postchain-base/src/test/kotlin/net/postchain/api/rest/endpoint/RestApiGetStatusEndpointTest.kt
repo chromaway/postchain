@@ -2,18 +2,12 @@
 
 package net.postchain.api.rest.endpoint
 
-import com.nhaarman.mockitokotlin2.doReturn
 import io.restassured.RestAssured.given
-import net.postchain.api.rest.DummyConfig
 import net.postchain.api.rest.controller.Model
 import net.postchain.api.rest.controller.RestApi
 import net.postchain.api.rest.model.ApiStatus
 import net.postchain.api.rest.model.TxRID
-import net.postchain.base.BlockchainRid
 import net.postchain.common.hexStringToByteArray
-import net.postchain.config.app.AppConfig
-import net.postchain.config.app.AppConfigDbLayer
-import net.postchain.config.node.MockDatabaseConnector
 import net.postchain.core.TransactionStatus
 import org.easymock.EasyMock.*
 import org.hamcrest.Matchers.equalToIgnoringCase
@@ -32,10 +26,6 @@ class RestApiGetStatusEndpointTest {
     private lateinit var model: Model
     private val blockchainRID = "ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB"
 
-    // Mock
-    val mockAppConfigDbLayer: AppConfigDbLayer = com.nhaarman.mockitokotlin2.mock {
-        on { getBlockchainRid(1L) } doReturn BlockchainRid.buildFromHex(blockchainRID)
-    }
     private val chainIid = 1L
     private val txHashHex = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
@@ -44,15 +34,7 @@ class RestApiGetStatusEndpointTest {
         model = createMock(Model::class.java)
         expect(model.chainIID).andReturn(1L).anyTimes()
 
-        restApi = RestApi(
-                0,
-                basePath,
-                AppConfig(DummyConfig.getDummyConfig()),
-                null,
-                null,
-                { MockDatabaseConnector() },
-                { _, _ -> mockAppConfigDbLayer }
-        )
+        restApi = RestApi(0, basePath, null, null)
     }
 
     @After

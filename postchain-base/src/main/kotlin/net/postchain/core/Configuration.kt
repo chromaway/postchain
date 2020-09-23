@@ -12,7 +12,7 @@ import net.postchain.gtv.Gtv
  */
 interface BlockchainConfiguration {
     val chainID: Long
-    val blockchainRID: BlockchainRid
+    val blockchainRid: BlockchainRid
     val traits: Set<String>
 
     fun decodeBlockHeader(rawBlockHeader: ByteArray): BlockHeader
@@ -27,8 +27,8 @@ interface BlockchainConfiguration {
 interface ConfigurationDataStore {
     fun findConfigurationHeightForBlock(context: EContext, height: Long): Long?
     fun getConfigurationData(context: EContext, height: Long): ByteArray?
-    fun addConfigurationData(context: EContext, height: Long, binData: ByteArray): BlockchainRid
-    fun addConfigurationData(context: EContext, height: Long, gtvData: Gtv): BlockchainRid
+    fun addConfigurationData(context: EContext, height: Long, binData: ByteArray)
+    fun addConfigurationData(context: EContext, height: Long, gtvData: Gtv)
 }
 
 interface BlockchainConfigurationFactory {

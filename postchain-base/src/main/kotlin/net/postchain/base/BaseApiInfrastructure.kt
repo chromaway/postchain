@@ -23,14 +23,12 @@ class BaseApiInfrastructure(
                 RestApi(
                         restApiPort,
                         restApiBasePath,
-                        appConfig,
                         restApiSslCertificate,
                         restApiSslCertificatePassword)
             } else {
                 RestApi(
                         restApiPort,
-                        restApiBasePath,
-                        appConfig)
+                        restApiBasePath)
             }
         } else {
             null
@@ -38,7 +36,7 @@ class BaseApiInfrastructure(
     }
 
     override fun connectProcess(process: BlockchainProcess) {
-        restApi?.run {
+        if (restApi != null) {
             val engine = process.getEngine()
 
             val apiModel = PostchainEBFTModel(
@@ -50,7 +48,7 @@ class BaseApiInfrastructure(
                     DefaultDebugInfoQuery(nodeDiagnosticContext)
             )
 
-            attachModel(blockchainRID(process), apiModel)
+            restApi.attachModel(blockchainRID(process), apiModel)
         }
     }
 
@@ -64,6 +62,6 @@ class BaseApiInfrastructure(
 
     private fun blockchainRID(process: BlockchainProcess): String {
         return (process.getEngine().getConfiguration() as BaseBlockchainConfiguration) // TODO: [et]: Resolve type cast
-                .blockchainRID.toHex()
+                .blockchainRid.toHex()
     }
 }

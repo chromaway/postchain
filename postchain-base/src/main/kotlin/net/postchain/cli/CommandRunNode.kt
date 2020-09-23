@@ -35,8 +35,7 @@ class CommandRunNode : Command {
         nodeConfigFile = nodeConfigFile.takeIf { it != "" }
                 ?: "config/config.$nodeIndex.properties"
 
-        val cliExecution = CliExecution()
-        cliExecution.runNode(nodeConfigFile, chainIDs)
+        CliExecution.runNode(nodeConfigFile, chainIDs)
         return Ok("Postchain node is running", isLongRunning = true)
     }
 }

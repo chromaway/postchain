@@ -33,23 +33,13 @@ open class BaseBlockchainEngine(
     private var closed = false
     private var restartHandler: RestartHandler = { false }
 
-    override fun initializeDB() {
+    override fun initialize() {
         if (initialized) {
             throw ProgrammerMistake("Engine is already initialized")
         }
-
-        logger.debug("$processName: Initialize DB - begin")
-        withWriteConnection(storage, chainID) { ctx ->
-            blockchainConfiguration.initializeDB(ctx)
-            true
-        }
-
-        // BlockQueries should be instantiated only after
-        // database is initialized
         blockQueries = blockchainConfiguration.makeBlockQueries(storage)
         strategy = blockchainConfiguration.getBlockBuildingStrategy(blockQueries, transactionQueue)
         initialized = true
-        logger.debug("$processName: Initialize DB - end")
     }
 
     override fun setRestartHandler(handler: RestartHandler) {

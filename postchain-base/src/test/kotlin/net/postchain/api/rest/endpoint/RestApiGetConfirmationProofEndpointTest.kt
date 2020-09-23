@@ -3,14 +3,12 @@
 package net.postchain.api.rest.endpoint
 
 import io.restassured.RestAssured.given
-import net.postchain.api.rest.DummyConfig
 import net.postchain.api.rest.controller.Model
 import net.postchain.api.rest.controller.RestApi
 import net.postchain.api.rest.model.TxRID
 import net.postchain.base.BaseBlockWitness
 import net.postchain.base.ConfirmationProof
 import net.postchain.common.hexStringToByteArray
-import net.postchain.config.app.AppConfig
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
 import net.postchain.gtv.merkle.proof.ProofNodeGtvArrayHead
@@ -40,8 +38,7 @@ class RestApiGetConfirmationProofEndpointTest {
         model = createMock(Model::class.java)
         expect(model.chainIID).andReturn(1L).anyTimes()
 
-        val appConf = AppConfig(DummyConfig.getDummyConfig())
-        restApi = RestApi(0, basePath, appConf)
+        restApi = RestApi(0, basePath)
     }
 
     @After

@@ -4,8 +4,8 @@ package net.postchain.integrationtest.managedmode
 
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
-import net.postchain.config.SimpleDatabaseConnector
-import net.postchain.config.app.AppConfigDbLayer
+import net.postchain.base.data.DatabaseAccess
+import net.postchain.base.runStorageCommand
 import net.postchain.devtools.ConfigFileBasedIntegrationTest
 import net.postchain.hasSize
 import net.postchain.integrationtest.assertChainNotStarted
@@ -25,9 +25,8 @@ class ManagedModeTest : ConfigFileBasedIntegrationTest() {
 
         // Creating node0
         createSingleNode(0, 1, nodeConfig0, blockchainConfig0) { appConfig, _ ->
-            val dbConnector = SimpleDatabaseConnector(appConfig)
-            dbConnector.withWriteConnection { connection ->
-                AppConfigDbLayer(appConfig, connection).addPeerInfo(TestPeerInfos.peerInfo0)
+            runStorageCommand(appConfig) { ctx ->
+                DatabaseAccess.of(ctx).addPeerInfo(ctx, TestPeerInfos.peerInfo0)
             }
         }
 
@@ -73,9 +72,8 @@ class ManagedModeTest : ConfigFileBasedIntegrationTest() {
 
         // Creating node0
         createSingleNode(0, 1, nodeConfig0, blockchainConfig0) { appConfig, _ ->
-            val dbConnector = SimpleDatabaseConnector(appConfig)
-            dbConnector.withWriteConnection { connection ->
-                AppConfigDbLayer(appConfig, connection).addPeerInfo(TestPeerInfos.peerInfo0)
+            runStorageCommand(appConfig) { ctx ->
+                DatabaseAccess.of(ctx).addPeerInfo(ctx, TestPeerInfos.peerInfo0)
             }
         }
 
@@ -124,17 +122,15 @@ class ManagedModeTest : ConfigFileBasedIntegrationTest() {
 
         // Creating node0
         createSingleNode(0, 1, nodeConfig0, blockchainConfig0) { appConfig, _ ->
-            val dbConnector = SimpleDatabaseConnector(appConfig)
-            dbConnector.withWriteConnection { connection ->
-                AppConfigDbLayer(appConfig, connection).addPeerInfo(TestPeerInfos.peerInfo0)
+            runStorageCommand(appConfig) { ctx ->
+                DatabaseAccess.of(ctx).addPeerInfo(ctx, TestPeerInfos.peerInfo0)
             }
         }
 
         // Creating node1
         createSingleNode(0, 1, nodeConfig1, blockchainConfig1) { appConfig, _ ->
-            val dbConnector = SimpleDatabaseConnector(appConfig)
-            dbConnector.withWriteConnection { connection ->
-                AppConfigDbLayer(appConfig, connection).addPeerInfo(TestPeerInfos.peerInfo1)
+            runStorageCommand(appConfig) { ctx ->
+                DatabaseAccess.of(ctx).addPeerInfo(ctx, TestPeerInfos.peerInfo1)
             }
         }
 

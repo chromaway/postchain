@@ -147,7 +147,7 @@ open class BaseBlockBuilder(
     }
 
     private fun buildBlockchainDependenciesFromHeader(partialBlockHeader: BlockHeader): BlockchainDependencies {
-        return if (blockchainRelatedInfoDependencyList.size > 0) {
+        return if (blockchainRelatedInfoDependencyList.isNotEmpty()) {
 
             val baseBH = partialBlockHeader as BaseBlockHeader
             val givenDependencies = baseBH.blockHeightDependencyArray

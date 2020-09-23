@@ -54,7 +54,7 @@ class EBFTSynchronizationInfrastructure(
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
 
         return if (blockchainConfig.configData.context.nodeID != NODE_ID_READ_ONLY) {
-            registerBlockchainDiagnosticData(blockchainConfig.blockchainRID, DpNodeType.NODE_TYPE_VALIDATOR)
+            registerBlockchainDiagnosticData(blockchainConfig.blockchainRid, DpNodeType.NODE_TYPE_VALIDATOR)
 
             ValidatorWorker(
                     processName,
@@ -63,7 +63,7 @@ class EBFTSynchronizationInfrastructure(
                     blockchainConfig.configData.context.nodeID,
                     buildXCommunicationManager(processName, blockchainConfig, false))
         } else {
-            registerBlockchainDiagnosticData(blockchainConfig.blockchainRID, DpNodeType.NODE_TYPE_REPLICA)
+            registerBlockchainDiagnosticData(blockchainConfig.blockchainRid, DpNodeType.NODE_TYPE_REPLICA)
 
             ReadOnlyWorker(
                     processName,
@@ -96,7 +96,7 @@ class EBFTSynchronizationInfrastructure(
         val signersReplicas = signers.flatMap {
             nodeConfigCopy.nodeReplicas[it] ?: listOf()
         }
-        val blockchainReplicas = nodeConfigCopy.blockchainReplicaNodes[blockchainConfig.blockchainRID] ?: listOf()
+        val blockchainReplicas = nodeConfigCopy.blockchainReplicaNodes[blockchainConfig.blockchainRid] ?: listOf()
 
         val relevantPeerMap = nodeConfigCopy.peerInfoMap.filterKeys {
             it in signers || it in signersReplicas || it in blockchainReplicas || it == myPeerID
@@ -108,14 +108,14 @@ class EBFTSynchronizationInfrastructure(
                 nodeConfigCopy.privKeyByteArray,
                 myPeerID.byteArray)
 
-        val packetEncoder = EbftPacketEncoder(communicationConfig, blockchainConfig.blockchainRID)
+        val packetEncoder = EbftPacketEncoder(communicationConfig, blockchainConfig.blockchainRid)
         val packetDecoder = EbftPacketDecoder(communicationConfig)
 
         return DefaultXCommunicationManager(
                 connectionManager,
                 communicationConfig,
                 blockchainConfig.chainID,
-                blockchainConfig.blockchainRID,
+                blockchainConfig.blockchainRid,
                 packetEncoder,
                 packetDecoder,
                 processName

@@ -2,21 +2,16 @@
 
 package net.postchain.config.node
 
-import net.postchain.config.DatabaseConnector
-import net.postchain.config.SimpleDatabaseConnector
+import net.postchain.StorageBuilder
+import net.postchain.base.Storage
 import net.postchain.config.app.AppConfig
-import net.postchain.config.app.AppConfigDbLayer
 import net.postchain.config.node.NodeConfigProviders.*
-import java.sql.Connection
+import net.postchain.core.NODE_ID_NA
 
 object NodeConfigurationProviderFactory {
 
-    private val databaseConnectorFunction: (AppConfig) -> DatabaseConnector = { appConfig ->
-        SimpleDatabaseConnector(appConfig)
-    }
-
-    private val appConfigDbLayerFunction: (AppConfig, Connection) -> AppConfigDbLayer = { appConfig, connection ->
-        AppConfigDbLayer(appConfig, connection)
+    private val storageSupplier: (AppConfig) -> Storage = { appConfig ->
+        StorageBuilder.buildStorage(appConfig, NODE_ID_NA)
     }
 
     fun createProvider(appConfig: AppConfig): NodeConfigurationProvider {
@@ -24,10 +19,10 @@ object NodeConfigurationProviderFactory {
             Legacy.name.toLowerCase() -> LegacyNodeConfigurationProvider(appConfig)
 
             Manual.name.toLowerCase() -> ManualNodeConfigurationProvider(
-                    appConfig, databaseConnectorFunction, appConfigDbLayerFunction)
+                    appConfig, storageSupplier)
 
             Managed.name.toLowerCase() -> ManagedNodeConfigurationProvider(
-                    appConfig, databaseConnectorFunction, appConfigDbLayerFunction)
+                    appConfig, storageSupplier)
 
             // TODO: Change 'Legacy' to 'Manual' in v3.0
             else -> LegacyNodeConfigurationProvider(appConfig)

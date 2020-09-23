@@ -4,7 +4,6 @@ package net.postchain.base
 
 import mu.KLogging
 import net.postchain.StorageBuilder
-import net.postchain.base.data.DatabaseAccess
 import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
@@ -16,10 +15,7 @@ import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.Lock
-import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.timer
-import kotlin.concurrent.withLock
 
 /**
  * Will run many chains as [BlockchainProcess]:es and keep them in a map.
@@ -31,11 +27,12 @@ open class BaseBlockchainProcessManager(
         protected val nodeDiagnosticContext: NodeDiagnosticContext
 ) : BlockchainProcessManager {
 
-    override var synchronizer: Lock = ReentrantLock()
+    override val synchronizer = Any()
 
     val nodeConfig = nodeConfigProvider.getConfiguration()
     val storage = StorageBuilder.buildStorage(nodeConfig.appConfig, NODE_ID_TODO)
     protected val blockchainProcesses = mutableMapOf<Long, BlockchainProcess>()
+
     // FYI: [et]: For integration testing. Will be removed or refactored later
     private val blockchainProcessesLoggers = mutableMapOf<Long, Timer>() // TODO: [POS-90]: ?
     protected val executor: ExecutorService = Executors.newSingleThreadScheduledExecutor()
@@ -64,24 +61,21 @@ open class BaseBlockchainProcessManager(
      * @return the Blockchain's RID if successful, else null
      */
     override fun startBlockchain(chainId: Long): BlockchainRid? {
-        return synchronizer.withLock {
+        return synchronized(synchronizer) {
             try {
                 stopBlockchain(chainId)
 
                 logger.info("[${nodeName()}]: Starting of Blockchain: chainId: $chainId")
 
-                withReadConnection(storage, chainId) { eContext ->
+                withReadWriteConnection(storage, chainId) { eContext ->
                     val configuration = blockchainConfigProvider.getConfiguration(eContext, chainId)
                     if (configuration != null) {
 
                         val blockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(
-                                configuration,
-                                eContext,
-                                NODE_ID_AUTO,
-                                chainId)
+                                configuration, eContext, NODE_ID_AUTO, chainId)
 
                         val processName = BlockchainProcessName(
-                                nodeConfig.pubKey, blockchainConfig.blockchainRID)
+                                nodeConfig.pubKey, blockchainConfig.blockchainRid)
 
                         logger.debug { "$processName: BlockchainConfiguration has been created: chainId: $chainId" }
 
@@ -96,7 +90,7 @@ open class BaseBlockchainProcessManager(
                                 action = { logPeerTopology(chainId) }
                         )
                         logger.info("$processName: Blockchain has been started: chainId: $chainId")
-                        blockchainConfig.blockchainRID
+                        blockchainConfig.blockchainRid
 
                     } else {
                         logger.error("[${nodeName()}]: Can't start Blockchain chainId: $chainId due to configuration is absent")
@@ -122,7 +116,7 @@ open class BaseBlockchainProcessManager(
      * @param chainId is the chain to be stopped.
      */
     override fun stopBlockchain(chainId: Long) {
-        synchronizer.withLock {
+        synchronized(synchronizer) {
             logger.info("[${nodeName()}]: Stopping of Blockchain: chainId: $chainId")
 
             blockchainProcesses.remove(chainId)?.also {

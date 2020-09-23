@@ -31,7 +31,7 @@ open class PostchainModel(
 
         nonce = TimeLog.startSumConc("PostchainModel.postTransaction().isCorrect")
         if (!decodedTransaction.isCorrect()) {
-            throw UserMistake("Transaction ${decodedTransaction.getRID()} is not correct")
+            throw UserMistake("Transaction ${decodedTransaction.getRID().toHex()} is not correct")
         }
         TimeLog.end("PostchainModel.postTransaction().isCorrect", nonce)
         nonce = TimeLog.startSumConc("PostchainModel.postTransaction().enqueue")

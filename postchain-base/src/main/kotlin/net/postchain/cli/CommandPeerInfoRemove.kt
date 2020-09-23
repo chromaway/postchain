@@ -5,9 +5,8 @@ package net.postchain.cli
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
 import net.postchain.base.PeerInfo
-import net.postchain.config.SimpleDatabaseConnector
-import net.postchain.config.app.AppConfig
-import net.postchain.config.app.AppConfigDbLayer
+import net.postchain.base.data.DatabaseAccess
+import net.postchain.base.runStorageCommand
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
 
@@ -39,7 +38,7 @@ class CommandPeerInfoRemove : Command {
             val report = if (removed.isEmpty()) {
                 "No peerinfo has been removed"
             } else {
-                removed.mapIndexed(Templatter.PeerInfoTemplatter::renderPeerInfo)
+                removed.mapIndexed(Templater.PeerInfoTemplater::renderPeerInfo)
                         .joinToString(
                                 separator = "\n",
                                 prefix = "Peerinfo removed (${removed.size}):\n")
@@ -52,11 +51,9 @@ class CommandPeerInfoRemove : Command {
         }
     }
 
-    fun peerinfoRemove(nodeConfigFile: String, pubKey: String): Array<PeerInfo> {
-        val appConfig = AppConfig.fromPropertiesFile(nodeConfigFile)
-        return SimpleDatabaseConnector(appConfig).withWriteConnection { connection ->
-            AppConfigDbLayer(appConfig, connection)
-                    .removePeerInfo(pubKey)
+    private fun peerinfoRemove(nodeConfigFile: String, pubKey: String): Array<PeerInfo> {
+        return runStorageCommand(nodeConfigFile) {
+            DatabaseAccess.of(it).removePeerInfo(it, pubKey)
         }
     }
 }

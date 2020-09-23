@@ -9,6 +9,8 @@ import net.postchain.client.core.ConfirmationLevel
 import net.postchain.client.core.DefaultSigner
 import net.postchain.client.core.GTXTransactionBuilder
 import net.postchain.client.core.PostchainClientFactory
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvInteger
 import net.postchain.gtv.GtvString
 
 /**
@@ -31,7 +33,7 @@ class PostTxCommand : CliktCommand(name = "post-tx", help = "Posts tx") {
             val appConfig = AppConfig.fromProperties(configFile())
 
             postTx(appConfig) {
-                it.addOperation(opName, args.map(::GtvString).toTypedArray())
+                it.addOperation(opName, args.map(::encodeArg).toTypedArray())
             }
 
             println("Tx with the operation has been posted: $opName(${args.joinToString()})")
@@ -39,6 +41,15 @@ class PostTxCommand : CliktCommand(name = "post-tx", help = "Posts tx") {
         } catch (e: Exception) {
             println(e)
         }
+    }
+
+    /**
+     * Encodes numbers as GtvInteger and strings as GtvString values
+     */
+    private fun encodeArg(arg: String): Gtv {
+        return arg.toLongOrNull()
+                ?.let(::GtvInteger)
+                ?: GtvString(arg)
     }
 
     private fun postTx(appConfig: AppConfig, addOperations: (GTXTransactionBuilder) -> Unit) {

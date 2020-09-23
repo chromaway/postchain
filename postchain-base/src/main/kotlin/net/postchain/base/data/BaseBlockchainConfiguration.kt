@@ -12,7 +12,7 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
     val cryptoSystem = SECP256K1CryptoSystem()
     val blockStore = BaseBlockStore()
     override val chainID = configData.context.chainID
-    override val blockchainRID = configData.context.blockchainRID
+    override val blockchainRid = configData.context.blockchainRID
     val effectiveBlockchainRID = configData.getHistoricBRID() ?: configData.context.blockchainRID
     val signers = configData.getSigners()
 
@@ -41,7 +41,7 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
                 signers.toTypedArray(),
                 configData.blockSigMaker,
                 bcRelatedInfosDependencyList,
-                effectiveBlockchainRID != blockchainRID,
+                effectiveBlockchainRID != blockchainRid,
                 configData.getMaxBlockSize(),
                 configData.getMaxBlockTransactions())
     }
@@ -72,7 +72,7 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
     }
 
     override fun initializeDB(ctx: EContext) {
-        blockStore.initialValidation(ctx, bcRelatedInfosDependencyList)
+        DependenciesValidator.validateBlockchainRids(ctx, bcRelatedInfosDependencyList)
     }
 
     override fun getBlockBuildingStrategy(blockQueries: BlockQueries, txQueue: TransactionQueue): BlockBuildingStrategy {

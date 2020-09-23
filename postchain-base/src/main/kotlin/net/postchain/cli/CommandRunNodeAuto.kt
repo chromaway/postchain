@@ -46,11 +46,10 @@ class CommandRunNodeAuto : Command {
         val chains = Paths.get(configDirectory, BLOCKCHAIN_DIR).toFile()
         val nodeConfigFile = Paths.get(configDirectory, NODE_CONFIG_FILE).toString()
         val chainIds = mutableListOf<Long>()
-        val cliExecution = CliExecution()
 
         return try {
             if (chains.exists()) {
-                cliExecution.waitDb(50, 1000, nodeConfigFile)
+                CliExecution.waitDb(50, 1000, nodeConfigFile)
                 chains.listFiles()
                         ?.filter(File::isDirectory)
                         ?.forEach { dir ->
@@ -64,17 +63,17 @@ class CommandRunNodeAuto : Command {
                                         val blockchainConfigFile = file.absolutePath
                                         val height = (file.nameWithoutExtension.split(".")[0]).toLong()
                                         if (height.toInt() == 0) {
-                                            cliExecution.addBlockchain(
+                                            CliExecution.addBlockchain(
                                                     nodeConfigFile, chainId, blockchainConfigFile)
                                         } else {
-                                            cliExecution.addConfiguration(
+                                            CliExecution.addConfiguration(
                                                     nodeConfigFile, blockchainConfigFile, chainId, height)
                                         }
                                     }
                         }
             }
 
-            cliExecution.runNode(nodeConfigFile, chainIds.sorted())
+            CliExecution.runNode(nodeConfigFile, chainIds.sorted())
             Ok("Postchain node is running", isLongRunning = true)
 
         } catch (e: CliError.Companion.CliException) {

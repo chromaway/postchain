@@ -2,10 +2,8 @@
 
 package net.postchain.base
 
-import net.postchain.base.data.DatabaseAccess
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
-import net.postchain.core.EContext
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtv.merkleHash
@@ -16,37 +14,12 @@ object BlockchainRidFactory {
     private val merkleHashCalculator = GtvMerkleHashCalculator(cryptoSystem)
 
     /**
-     * Check if there is a Blockchain RID for this chain already
-     * If no Blockchain RID, we use this config to create a BC RID, since this MUST be the first config, and store to DB.
-     *
-     * TODO: Olle Can we check in any other way if the GTV config we are holding is NOT the first config?
-     *
-     * @param data is the [Gtv] data of the configuration
-     * @param merkleHashCalculator needed if the BC RID does not exist
-     * @param eContext
-     * @return the blockchain's RID, either old or just created
-     */
-    fun resolveBlockchainRID(
-            data: Gtv,
-            eContext: EContext
-    ): BlockchainRid {
-        val dbBcRid = DatabaseAccess.of(eContext).getBlockchainRID(eContext)
-        return if (dbBcRid != null) {
-            dbBcRid // We have it in the DB so don't do anything (if it's in here it must be correct)
-        } else {
-            val newRid = calculateBlockchainRID(data)
-            DatabaseAccess.of(eContext).checkBlockchainRID(eContext, newRid)
-            newRid
-        }
-    }
-
-    /**
      * Calculates blockchain RID by the given blockchain configuration.
      *
      * @param data is the [Gtv] data of the configuration
      * @return the blockchain RID
      */
-    fun calculateBlockchainRID(data: Gtv): BlockchainRid {
+    fun calculateBlockchainRid(data: Gtv): BlockchainRid {
         // Need to calculate it the RID, and we do it the usual way (same as merkle root of block)
         val bcBinary = data.merkleHash(merkleHashCalculator)
         return BlockchainRid(bcBinary)

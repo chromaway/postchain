@@ -9,17 +9,12 @@ import net.postchain.api.rest.controller.Model
 import net.postchain.base.*
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.base.data.DatabaseAccess
-import net.postchain.common.hexStringToByteArray
-import net.postchain.common.toHex
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
-import net.postchain.ebft.EBFTSynchronizationInfrastructure
-import net.postchain.core.BlockchainProcess
-import net.postchain.core.NODE_ID_TODO
 import net.postchain.devtools.utils.configuration.BlockchainSetup
-import net.postchain.gtv.GtvEncoder.encodeGtv
+import net.postchain.ebft.EBFTSynchronizationInfrastructure
 import net.postchain.gtv.Gtv
-import net.postchain.gtv.gtvml.GtvMLParser
+import kotlin.properties.Delegates
 
 /**
  * This node is used in integration tests.
@@ -35,13 +30,14 @@ class PostchainTestNode(
 
     private val testStorage: Storage
     val pubKey: String
-    private var isInitialized = false
+    private var isInitialized by Delegates.notNull<Boolean>()
     private val blockchainRidMap = mutableMapOf<Long, BlockchainRid>() // Used to keep track of the BC RIDs of the chains
 
     init {
         val nodeConfig = nodeConfigProvider.getConfiguration()
         testStorage = StorageBuilder.buildStorage(nodeConfig.appConfig, NODE_ID_TODO, preWipeDatabase)
         pubKey = nodeConfig.pubKey
+        isInitialized = true
     }
 
     companion object : KLogging() {
@@ -49,25 +45,20 @@ class PostchainTestNode(
         const val DEFAULT_CHAIN_IID = 1L
     }
 
-    private fun initDb(chainId: Long) {
-        // TODO: [et]: Is it necessary here after StorageBuilder.buildStorage() redesign?
-        withWriteConnection(testStorage, chainId) { eContext ->
-            with(DatabaseAccess.of(eContext)) {
-                initialize(eContext.conn, expectedDbVersion = 1)
-            }
-            true
-        }
-
-        isInitialized = true
-    }
-
     fun addBlockchain(chainSetup: BlockchainSetup) {
         addBlockchain(chainSetup.chainId.toLong(), chainSetup.bcGtv)
     }
 
     fun addBlockchain(chainId: Long, blockchainConfig: Gtv): BlockchainRid {
-        initDb(chainId)
-        return addConfiguration(chainId, 0, blockchainConfig)
+        check(isInitialized) { "PostchainNode is not initialized" }
+
+        return withReadWriteConnection(testStorage, chainId) { eContext: EContext ->
+            val brid = BlockchainRidFactory.calculateBlockchainRid(blockchainConfig)
+            logger.debug("Adding blockchain: chainId: $chainId, blockchainRid: ${brid.toHex()}")
+            DatabaseAccess.of(eContext).initializeBlockchain(eContext, brid)
+            BaseConfigurationDataStore.addConfigurationData(eContext, 0, blockchainConfig)
+            brid
+        }
     }
 
     fun addConfiguration(chainId: Long, height: Long, blockchainConfig: Gtv): BlockchainRid {
@@ -75,8 +66,9 @@ class PostchainTestNode(
 
         return withReadWriteConnection(testStorage, chainId) { eContext: EContext ->
             logger.debug("Adding configuration for chain: $chainId, height: $height")
-            BaseConfigurationDataStore.addConfigurationData(
-                    eContext, height, blockchainConfig)
+            val brid = BlockchainRidFactory.calculateBlockchainRid(blockchainConfig)
+            BaseConfigurationDataStore.addConfigurationData(eContext, height, blockchainConfig)
+            brid
         }
     }
 
@@ -142,6 +134,6 @@ class PostchainTestNode(
 
     private fun blockchainRID(process: BlockchainProcess): String {
         return (process.getEngine().getConfiguration() as BaseBlockchainConfiguration) // TODO: [et]: Resolve type cast
-                .blockchainRID.toHex()
+                .blockchainRid.toHex()
     }
 }

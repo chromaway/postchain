@@ -67,7 +67,7 @@ class GTXTransaction (
      * We still have one attack vector where the Dapp developer creates custom operation where no signer check is
      * included, b/c this opens up to anonymous attacks.
      */
-    fun areOperationsValid(): Boolean {
+    private fun areOperationsValid(): Boolean {
         var hasCustomOperation = false
         var foundNop = false
         var foundTimeB = false

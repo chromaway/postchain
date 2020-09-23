@@ -3,8 +3,10 @@
 package net.postchain.base.data
 
 import mu.KLogging
+import net.postchain.base.BaseAppContext
 import net.postchain.base.BaseEContext
 import net.postchain.base.Storage
+import net.postchain.core.AppContext
 import net.postchain.core.EContext
 import net.postchain.core.ProgrammerMistake
 import javax.sql.DataSource
@@ -13,14 +15,50 @@ class BaseStorage(
         private val readDataSource: DataSource,
         private val writeDataSource: DataSource,
         private val nodeId: Int,
-        private val dbAccess: DatabaseAccess,
+        private val db: DatabaseAccess,
         private val savepointSupport: Boolean = true
 ) : Storage {
 
     companion object : KLogging()
 
+    override fun newWritableContext(chainId: Long): EContext {
+        return BaseEContext(writeDataSource.connection, chainId, nodeId, db)
+    }
+
+    override fun openReadConnection(): AppContext {
+        val context = buildAppContext(readDataSource)
+        if (!context.conn.isReadOnly) {
+            throw ProgrammerMistake("Connection is not read-only")
+        }
+        return context
+    }
+
+    override fun closeReadConnection(context: AppContext) {
+        if (!context.conn.isReadOnly) {
+            throw ProgrammerMistake("Trying to close a writable connection as a read-only connection")
+        }
+        context.conn.close()
+    }
+
+    override fun openWriteConnection(): AppContext {
+        return buildAppContext(writeDataSource)
+    }
+
+    override fun closeWriteConnection(context: AppContext, commit: Boolean) {
+        with(context.conn) {
+            when {
+                isReadOnly -> throw ProgrammerMistake(
+                        "Trying to close a read-only connection as a writeable connection")
+                commit -> commit()
+                else -> rollback()
+            }
+
+            close()
+        }
+    }
+
     override fun openReadConnection(chainID: Long): EContext {
-        val context = getContext(chainID, readDataSource)
+        val context = buildEContext(chainID, readDataSource)
         if (!context.conn.isReadOnly) {
             throw ProgrammerMistake("Connection is not read-only")
         }
@@ -35,7 +73,7 @@ class BaseStorage(
     }
 
     override fun openWriteConnection(chainID: Long): EContext {
-        return getContext(chainID, writeDataSource)
+        return buildEContext(chainID, writeDataSource)
     }
 
     override fun closeWriteConnection(context: EContext, commit: Boolean) {
@@ -76,7 +114,9 @@ class BaseStorage(
         (writeDataSource as? AutoCloseable)?.close()
     }
 
-    private fun getContext(chainID: Long, dataSource: DataSource): EContext =
-            BaseEContext(dataSource.connection, chainID, nodeId, dbAccess)
-}
+    private fun buildAppContext(dataSource: DataSource): AppContext =
+            BaseAppContext(dataSource.connection, db)
 
+    private fun buildEContext(chainID: Long, dataSource: DataSource): EContext =
+            BaseEContext(dataSource.connection, chainID, nodeId, db)
+}

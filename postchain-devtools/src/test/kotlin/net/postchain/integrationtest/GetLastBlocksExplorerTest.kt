@@ -14,7 +14,6 @@ import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
-import net.postchain.gtv.Gtv
 import org.junit.Before
 import org.junit.Test
 
@@ -22,8 +21,6 @@ class GetLastBlocksExplorerTest : IntegrationTestSetup() {
 
     @Before
     fun setup() {
-        val nodesCount = 1
-        //configOverrides.setProperty("testpeerinfos", createPeerInfos(nodesCount))
         val blockchainConfig = "/net/postchain/devtools/blockexplorer/blockchain_config.xml"
         val sysSetup = SystemSetupFactory.buildSystemSetup(mapOf(1 to blockchainConfig))
         sysSetup.needRestApi = true // We need the API to be running for this test.
@@ -72,7 +69,7 @@ class GetLastBlocksExplorerTest : IntegrationTestSetup() {
     @Test
     fun test_get_all_blocks() {
         // Asserting blocks and txs
-        val blocks = nodes[0].getRestApiModel().getBlocks(Long.MAX_VALUE,25, false)
+        val blocks = nodes[0].getRestApiModel().getBlocks(Long.MAX_VALUE, 25, false)
         assertk.assert(blocks).hasSize(3)
 
         // Block #2

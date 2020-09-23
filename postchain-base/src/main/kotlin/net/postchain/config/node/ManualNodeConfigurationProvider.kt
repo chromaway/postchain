@@ -3,19 +3,18 @@
 package net.postchain.config.node
 
 import net.postchain.base.PeerInfo
+import net.postchain.base.Storage
+import net.postchain.base.data.DatabaseAccess
 import net.postchain.base.peerId
-import net.postchain.config.DatabaseConnector
+import net.postchain.base.withWriteConnection
 import net.postchain.config.app.AppConfig
-import net.postchain.config.app.AppConfigDbLayer
-import java.sql.Connection
 
 /**
  *
  */
 open class ManualNodeConfigurationProvider(
         protected val appConfig: AppConfig,
-        private val databaseConnector: (AppConfig) -> DatabaseConnector,
-        private val appConfigDbLayer: (AppConfig, Connection) -> AppConfigDbLayer
+        private val storageSupplier: (AppConfig) -> Storage
 ) : NodeConfigurationProvider {
 
     override fun getConfiguration(): NodeConfig {
@@ -25,7 +24,7 @@ open class ManualNodeConfigurationProvider(
         }
     }
 
-	/**
+    /**
      *
      *
      * @param appConfig is the
@@ -33,8 +32,8 @@ open class ManualNodeConfigurationProvider(
      */
     // TODO: [et]: Make it protected
     open fun getPeerInfoCollection(appConfig: AppConfig): Array<PeerInfo> {
-        return databaseConnector(appConfig).withWriteConnection { connection ->
-            appConfigDbLayer(appConfig, connection).getPeerInfoCollection()
+        return storageSupplier(appConfig).withWriteConnection { ctx ->
+            DatabaseAccess.of(ctx).getPeerInfoCollection(ctx)
         }
     }
 }

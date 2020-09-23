@@ -4,21 +4,24 @@ package net.postchain.core
 
 import java.sql.Connection
 
-interface ExecutionContext {
+interface AppContext {
     val conn: Connection
-    val chainID: Long
-    val nodeID: Int // TODO: [et]: Remove it?
     fun <T> getInterface(c: Class<T>): T? {
         return null
     }
 }
 
-interface EContext : ExecutionContext
+interface ExecutionContext : AppContext {
+    val chainID: Long
+    val nodeID: Int // TODO: [et]: Remove it?
+}
+
+typealias EContext = ExecutionContext
 
 interface BlockEContext : EContext {
     val blockIID: Long
     val timestamp: Long
-    fun getChainDependencyHeight(chainID:Long): Long
+    fun getChainDependencyHeight(chainID: Long): Long
 }
 
 interface TxEContext : BlockEContext {

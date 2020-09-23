@@ -5,9 +5,8 @@ package net.postchain.cli
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
 import net.postchain.base.PeerInfo
-import net.postchain.config.SimpleDatabaseConnector
-import net.postchain.config.app.AppConfig
-import net.postchain.config.app.AppConfigDbLayer
+import net.postchain.base.data.DatabaseAccess
+import net.postchain.base.runStorageCommand
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
 
@@ -33,7 +32,7 @@ class CommandPeerInfoList : Command {
             val report = if (peerInfos.isEmpty()) {
                 "No peerinfo found"
             } else {
-                peerInfos.mapIndexed(Templatter.PeerInfoTemplatter::renderPeerInfo)
+                peerInfos.mapIndexed(Templater.PeerInfoTemplater::renderPeerInfo)
                         .joinToString(
                                 separator = "\n",
                                 prefix = "Peerinfos (${peerInfos.size}):\n")
@@ -46,10 +45,9 @@ class CommandPeerInfoList : Command {
         }
     }
 
-    fun peerinfoList(nodeConfigFile: String): Array<PeerInfo> {
-        val appConfig = AppConfig.fromPropertiesFile(nodeConfigFile)
-        return SimpleDatabaseConnector(appConfig).withWriteConnection { connection ->
-            AppConfigDbLayer(appConfig, connection).findPeerInfo(null, null, null)
+    private fun peerinfoList(nodeConfigFile: String): Array<PeerInfo> {
+        return runStorageCommand(nodeConfigFile) {
+            DatabaseAccess.of(it).findPeerInfo(it, null, null, null)
         }
     }
 }
