@@ -34,6 +34,8 @@ class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
 
     override fun blockCommitted(blockData: BlockData) {
         lastBlockTime = (blockData.header as BaseBlockHeader).timestamp
+        lastTxSize = 0
+        lastTxTime = System.currentTimeMillis()
     }
 
     override fun shouldBuildBlock(): Boolean {
