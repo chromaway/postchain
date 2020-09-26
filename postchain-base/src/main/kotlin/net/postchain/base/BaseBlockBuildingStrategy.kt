@@ -14,7 +14,7 @@ class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
     private val strategyData = configData.getBlockBuildingStrategy()
     private val maxBlockTime = strategyData?.get("maxblocktime")?.asInteger() ?: 30000
     private val maxBlockTransactions = strategyData?.get("maxblocktransactions")?.asInteger() ?: 100
-    private val maxTxDelay = strategyData?.get("maxtxdelay")?.asInteger() ?: 10000
+    private val maxTxDelay = strategyData?.get("maxtxdelay")?.asInteger() ?: 1000
     private val minInterBlockInterval = strategyData?.get("mininterblockinterval")?.asInteger() ?: 25
 
     init {
