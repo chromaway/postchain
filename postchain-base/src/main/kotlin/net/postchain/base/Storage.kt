@@ -10,8 +10,6 @@ import net.postchain.core.EContext
  */
 interface Storage : AutoCloseable {
 
-    fun newWritableContext(chainId: Long): EContext
-
     // AppContext
     fun openReadConnection(): AppContext
     fun closeReadConnection(context: AppContext)

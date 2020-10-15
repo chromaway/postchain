@@ -93,6 +93,7 @@ open class NodeConfig(val appConfig: AppConfig) {
      * Active Chains
      *
      * Note: This is only needed for tests (asked Tykulov about it)
+     * TODO: [et]: Resolve this issue ('activeChainIds')
      */
     val activeChainIds: Array<String>
         get() {

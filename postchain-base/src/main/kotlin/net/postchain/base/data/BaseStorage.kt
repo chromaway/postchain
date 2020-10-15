@@ -21,10 +21,6 @@ class BaseStorage(
 
     companion object : KLogging()
 
-    override fun newWritableContext(chainId: Long): EContext {
-        return BaseEContext(writeDataSource.connection, chainId, nodeId, db)
-    }
-
     override fun openReadConnection(): AppContext {
         val context = buildAppContext(readDataSource)
         if (!context.conn.isReadOnly) {
