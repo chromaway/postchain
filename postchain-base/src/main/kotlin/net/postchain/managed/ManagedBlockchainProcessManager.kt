@@ -318,7 +318,7 @@ open class ManagedBlockchainProcessManager(
                     .map { brid ->
                         val blockchainRid = BlockchainRid(brid)
                         val chainId = db.getChainId(ctx0, blockchainRid)
-                        logger.debug("blockchain to launch: chainIid: $chainId,  BC RID: ${blockchainRid.toShortHex()} ")
+                        logger.debug("Blockchain to launch: chainIid: $chainId,  BC RID: ${blockchainRid.toShortHex()} ")
                         if (chainId == null) {
                             val newChainId = db.getMaxChainId(ctx0)
                                     ?.let { maxOf(it + 1, 100) }

@@ -15,7 +15,7 @@ class CommandAddConfiguration : Command {
             names = ["-nc", "--node-config"],
             description = "Configuration file of blockchain (.properties file)",
             required = true)
-    private var nodeConfigFile = ""
+    private var nodeConfigFile: String? = null
 
     @Parameter(
             names = ["-i", "--infrastructure"],
@@ -26,19 +26,18 @@ class CommandAddConfiguration : Command {
             names = ["-cid", "--chain-id"],
             description = "Id of blockchain",
             required = true)
-    private var chainId = 0L
+    private var chainId: Long? = null
 
     @Parameter(
             names = ["-h", "--height"],
-            description = "Height of configuration",
-            required = true)
+            description = "Height of configuration")
     private var height = 0L
 
     @Parameter(
             names = ["-bc", "--blockchain-config"],
             description = "Configuration file of blockchain (GtvML (*.xml) or Gtv (*.gtv))",
             required = true)
-    private var blockchainConfigFile = ""
+    private var blockchainConfigFile: String? = null
 
     @Parameter(
             names = ["-f", "--force"],
@@ -54,7 +53,7 @@ class CommandAddConfiguration : Command {
 
         return try {
             val mode = if (force) AlreadyExistMode.FORCE else AlreadyExistMode.ERROR
-            CliExecution.addConfiguration(nodeConfigFile, blockchainConfigFile, chainId, height, mode)
+            CliExecution.addConfiguration(nodeConfigFile!!, blockchainConfigFile!!, chainId!!, height, mode)
             Ok("Configuration has been added successfully")
         } catch (e: CliError.Companion.CliException) {
             CliError.CommandNotAllowed(message = e.message)

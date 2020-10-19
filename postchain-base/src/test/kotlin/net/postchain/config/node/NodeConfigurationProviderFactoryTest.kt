@@ -28,7 +28,9 @@ class NodeConfigurationProviderFactoryTest {
             on { nodeConfigProvider } doReturn "Manual"
         }
 
-        assert(createProvider(appConfig)).isInstanceOf(
+        val storageFactory = { _: AppConfig -> MockStorage.mock(emptyArray()) }
+
+        assert(createProvider(appConfig, storageFactory)).isInstanceOf(
                 ManualNodeConfigurationProvider::class)
     }
 
@@ -38,7 +40,9 @@ class NodeConfigurationProviderFactoryTest {
             on { nodeConfigProvider } doReturn "Managed"
         }
 
-        assert(createProvider(appConfig)).isInstanceOf(
+        val storageFactory = { _: AppConfig -> MockStorage.mock(emptyArray()) }
+
+        assert(createProvider(appConfig, storageFactory)).isInstanceOf(
                 ManagedNodeConfigurationProvider::class)
     }
 
