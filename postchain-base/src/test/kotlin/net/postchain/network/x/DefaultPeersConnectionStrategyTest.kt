@@ -2,90 +2,65 @@
 
 package net.postchain.network.x
 
-import net.postchain.base.NetworkNodes
-import net.postchain.base.PeerInfo
+import com.nhaarman.mockitokotlin2.*
 import net.postchain.common.hexStringToByteArray
-import net.postchain.core.UserMistake
-import org.junit.Before
+import org.awaitility.Awaitility
 import org.junit.Test
+import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 
 class DefaultPeersConnectionStrategyTest {
 
-    private lateinit var peer1: PeerInfo
-    private lateinit var peer2: PeerInfo
-    private lateinit var peer3: PeerInfo
-    private lateinit var peer4: PeerInfo
+    val peer1 = XPeerID("111111".hexStringToByteArray())
+    val peer2 = XPeerID("222222".hexStringToByteArray())
+    val peer3 = XPeerID("333333".hexStringToByteArray())
+    val peer4 = XPeerID("444444".hexStringToByteArray())
+    val peerCaptor = argumentCaptor<XPeerID>()
+    val peerCaptor2 = argumentCaptor<XPeerID>()
+    val chainCaptor = argumentCaptor<Long>()
+    val connMan : XConnectionManager = mock()
 
-    private lateinit var pubKey1: ByteArray
+    fun testConnectAll(me: XPeerID, peerIds: Set<XPeerID>, expectedConns: Set<XPeerID>) {
+        val strategy = DefaultPeersConnectionStrategy(connMan, me)
+        strategy.backupConnTimeMax = 102
+        strategy.backupConnTimeMin = 100
+        strategy.connectAll(0, peerIds)
 
-    private lateinit var pubKey2: ByteArray
+        verify(connMan, times(expectedConns.size)).connectChainPeer(chainCaptor.capture(), peerCaptor.capture())
+        assertEquals(expectedConns, peerCaptor.allValues.toSet())
 
-    private lateinit var pubKey3: ByteArray
+        reset(connMan)
+        val expectedResidual = peerIds.subtract(expectedConns)
+        whenever(connMan.getConnectedPeers(0)).thenReturn(expectedConns.toList())
 
-    private lateinit var pubKey4: ByteArray
-
-    @Before
-    fun setUp() {
-        pubKey1 = "11111111111111111111111111111111".hexStringToByteArray()
-        pubKey2 = "22222222222222222222222222222212".hexStringToByteArray()
-        pubKey3 = "33333333333333333333333333333333".hexStringToByteArray()
-        pubKey4 = "44444444444444444444444444444444".hexStringToByteArray()
-
-        peer1 = PeerInfo("localhost", 3331, pubKey1)
-        peer2 = PeerInfo("localhost", 3332, pubKey2)
-        peer3 = PeerInfo("localhost", 3333, pubKey3)
-        peer4 = PeerInfo("localhost", 3334, pubKey4)
+        Awaitility.await().atMost(1, TimeUnit.SECONDS).untilAsserted {
+            verify(connMan, times(expectedResidual.size)).connectChainPeer(chainCaptor.capture(), peerCaptor2.capture())
+            assertEquals(expectedResidual, peerCaptor2.allValues.toSet())
+        }
     }
 
     @Test
-    fun peer1_interaction_when_two_peers_and_pubkey2_provided() {
-        val config = object: PeerCommConfigurationDummy() {
-            override val networkNodes =NetworkNodes.buildNetworkNodes(setOf(peer1, peer2), XPeerID(pubKey2))
-            override val pubKey = pubKey2
-        }
-
-        var portList: MutableList<Int> = mutableListOf<Int>()
-        val action: (PeerInfo) -> Unit =  { portList.add(it.port) }
-
-        // When
-        DefaultPeersConnectionStrategy.forEach(config, action)
-
-        // Then
-        assertEquals(1, portList.size)
-        assertEquals(3331, portList[0])
+    fun singleConn() {
+        testConnectAll(peer2, setOf(peer1), setOf(peer1))
     }
 
     @Test
-    fun peer1_2_3_interactions_when_four_peers_and_pubkey4_provided() {
-        val config = object: PeerCommConfigurationDummy() {
-            override val networkNodes =NetworkNodes.buildNetworkNodes(setOf(peer1, peer2, peer3, peer4), XPeerID(pubKey4))
-            override val pubKey = pubKey4
-        }
-
-        var portList: MutableList<Int> = mutableListOf<Int>()
-        val action: (PeerInfo) -> Unit =  { portList.add(it.port) }
-
-        // When
-        DefaultPeersConnectionStrategy.forEach(config, action)
-
-        // Then
-        assertEquals(3, portList.size)
-        assertEquals(3331, portList[0])
-        assertEquals(3332, portList[1])
-        assertEquals(3333, portList[2])
+    fun threeConns() {
+        testConnectAll(peer4, setOf(peer1, peer2, peer3), setOf(peer1, peer2, peer3))
     }
 
-    @Test(expected = UserMistake::class)
-    fun will_result_in_exception_when_myIndex_too_big() {
-        val config = object: PeerCommConfigurationDummy() {
-            override val networkNodes =NetworkNodes.buildNetworkNodes(setOf(peer1, peer2), XPeerID(ByteArray(0)))
-        }
+    @Test
+    fun noConns() {
+        testConnectAll(peer1, setOf(), setOf())
+    }
 
-        var portList: MutableList<Int> = mutableListOf<Int>()
-        val action: (PeerInfo) -> Unit =  { portList.add(it.port) }
+    @Test
+    fun onlySingleBackup() {
+        testConnectAll(peer1, setOf(peer2), setOf())
+    }
 
-        // When
-        DefaultPeersConnectionStrategy.forEach(config, action)
+    @Test
+    fun onlySingleConnAndSingleBackup() {
+        testConnectAll(peer2, setOf(peer1, peer3), setOf(peer1))
     }
 }

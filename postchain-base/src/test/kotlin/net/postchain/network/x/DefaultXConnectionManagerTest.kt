@@ -151,14 +151,13 @@ class DefaultXConnectionManagerTest {
 
     @Test(expected = ProgrammerMistake::class)
     fun connectChainPeer_will_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(connectorFactory, mock(), mock(), mock(), cryptoSystem)
-                .connectChainPeer(1, peerInfo1.peerId())
+        emptyManager().connectChainPeer(1, peerInfo1.peerId())
     }
 
     @Test(expected = ProgrammerMistake::class)
     fun connectChainPeer_connects_unknown_peer_with_exception() {
         // Given
-        val communicationConfig: PeerCommConfiguration = mock()
+        val communicationConfig: PeerCommConfiguration = emptyCommConf()
         val chainPeerConfig: XChainPeerConfiguration = mock {
             on { chainID } doReturn 1L
             on { blockchainRID } doReturn blockchainRid
@@ -247,26 +246,22 @@ class DefaultXConnectionManagerTest {
 
     @Test(expected = ProgrammerMistake::class)
     fun disconnectChainPeer_will_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(connectorFactory, mock(), mock(), mock(), cryptoSystem)
-                .disconnectChainPeer(1L, peerInfo1.peerId())
+        emptyManager().disconnectChainPeer(1L, peerInfo1.peerId())
     }
 
     @Test
     fun disconnectChain_wont_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(connectorFactory, mock(), mock(), mock(), cryptoSystem)
-                .disconnectChain(1, mock())
+        emptyManager().disconnectChain(1, mock())
     }
 
     @Test(expected = ProgrammerMistake::class)
     fun isPeerConnected_will_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(connectorFactory, mock(), mock(), mock(), cryptoSystem)
-                .isPeerConnected(1, peerInfo1.peerId())
+        emptyManager().isPeerConnected(1, peerInfo1.peerId())
     }
 
     @Test(expected = ProgrammerMistake::class)
     fun getConnectedPeers_will_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(connectorFactory, mock(), mock(), mock(), cryptoSystem)
-                .getConnectedPeers(1)
+        emptyManager().getConnectedPeers(1)
     }
 
     @Test
@@ -336,8 +331,7 @@ class DefaultXConnectionManagerTest {
 
     @Test(expected = ProgrammerMistake::class)
     fun sendPacket_will_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(connectorFactory, mock(), mock(), mock(), cryptoSystem)
-                .sendPacket({ byteArrayOf() }, 1, peerInfo2.peerId())
+        emptyManager().sendPacket({ byteArrayOf() }, 1, peerInfo2.peerId())
     }
 
     @Test
@@ -382,8 +376,15 @@ class DefaultXConnectionManagerTest {
 
     @Test(expected = ProgrammerMistake::class)
     fun broadcastPacket_will_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(connectorFactory, mock(), mock(), mock(), cryptoSystem)
-                .broadcastPacket({ byteArrayOf() }, 1)
+        emptyManager().broadcastPacket({ byteArrayOf() }, 1)
+    }
+
+    private fun emptyManager() = DefaultXConnectionManager(connectorFactory, emptyCommConf(), mock(), mock(), cryptoSystem)
+
+    private fun emptyCommConf(): PeerCommConfiguration {
+        return mock {
+            on { myPeerInfo() } doReturn peerInfo1
+        }
     }
 
     @Test
