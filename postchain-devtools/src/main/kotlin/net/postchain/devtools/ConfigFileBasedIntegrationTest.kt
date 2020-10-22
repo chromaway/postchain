@@ -49,15 +49,19 @@ open class ConfigFileBasedIntegrationTest: AbstractIntegration() {
 
     @After
     override fun tearDown() {
-        logger.debug("Integration test -- TEARDOWN")
-        nodes.forEach { it.shutdown() }
-        nodes.clear()
-        nodesNames.clear()
-        logger.debug("Closed nodes")
-        peerInfos = null
-        expectedSuccessRids = mutableMapOf()
-        configOverrides.clear()
-        System.gc()
+        try {
+            logger.debug("Integration test -- TEARDOWN")
+            nodes.forEach { it.shutdown() }
+            nodes.clear()
+            nodesNames.clear()
+            logger.debug("Closed nodes")
+            peerInfos = null
+            expectedSuccessRids = mutableMapOf()
+            configOverrides.clear()
+            logger.debug("teadDown() done")
+        } catch (t: Throwable) {
+            logger.error("tearDown() failed", t)
+        }
     }
 
     // TODO: [et]: Check out nullability for return value

@@ -40,7 +40,7 @@ open class BaseBlockchainProcessManager(
     companion object : KLogging()
 
     /**
-     * Put the startup operation of chainId in the [Executor]'s work queue.
+     * Put the startup operation of chainId in the [executor]'s work queue.
      *
      * @param chainId is the chain to start.
      */
@@ -133,10 +133,11 @@ open class BaseBlockchainProcessManager(
     }
 
     override fun shutdown() {
+        logger.debug("[${nodeName()}]: Stopping BlockchainProcessManager")
         executor.shutdownNow()
         executor.awaitTermination(1000, TimeUnit.MILLISECONDS)
 
-        blockchainProcesses.forEach { (_, process) -> process.shutdown() }
+        blockchainProcesses.forEach {it.value.shutdown()}
         blockchainProcesses.clear()
 
         blockchainProcessesLoggers.forEach { (_, t) ->
@@ -145,13 +146,14 @@ open class BaseBlockchainProcessManager(
         }
 
         storage.close()
+        logger.debug("[${nodeName()}]: Stopped BlockchainProcessManager")
     }
 
     /**
      * Checks for configuration changes, and then does a async reboot of the given chain.
      *
      * @return a newly created [RestartHandler]. This method will be much more complex is
-     * the sublcass [ManagedBlockchainProcessManager].
+     * the sublcass [net.postchain.managed.ManagedBlockchainProcessManager].
      */
     protected open fun restartHandler(chainId: Long): RestartHandler {
         return {

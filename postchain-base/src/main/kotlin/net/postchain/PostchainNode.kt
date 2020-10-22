@@ -2,6 +2,7 @@
 
 package net.postchain
 
+import mu.KLogging
 import net.postchain.base.BlockchainRid
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.BaseInfrastructureFactoryProvider
@@ -10,6 +11,7 @@ import net.postchain.core.BlockchainProcessManager
 import net.postchain.core.Shutdownable
 import net.postchain.debug.DefaultNodeDiagnosticContext
 import net.postchain.debug.DiagnosticProperty
+import net.postchain.devtools.PeerNameHelper.peerName
 
 /**
  * Postchain node instantiates infrastructure and blockchain process manager.
@@ -19,6 +21,8 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
     protected val blockchainInfrastructure: BlockchainInfrastructure
     val processManager: BlockchainProcessManager
     private val diagnosticContext = DefaultNodeDiagnosticContext()
+
+    companion object : KLogging()
 
     init {
         val infrastructureFactory = BaseInfrastructureFactoryProvider().createInfrastructureFactory(nodeConfigProvider)
@@ -41,8 +45,16 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
 
     override fun shutdown() {
         // FYI: Order is important
+        logger.debug("${name()}: Stopping ProcessManager")
         processManager.shutdown()
+        logger.debug("${name()}: Stopping BlockchainInfrastructure")
         blockchainInfrastructure.shutdown()
+        logger.debug("${name()}: Closing NodeConfigurationProvider")
         nodeConfigProvider.close()
+        logger.debug("${name()}: Stopped PostchainNode")
+    }
+
+    private fun name(): String {
+        return peerName(nodeConfigProvider.getConfiguration().pubKey)
     }
 }

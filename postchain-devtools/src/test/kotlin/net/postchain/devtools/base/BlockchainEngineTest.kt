@@ -12,15 +12,19 @@ import net.postchain.devtools.testinfra.TestBlockchainConfiguration
 import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.devtools.testinfra.UnexpectedExceptionTransaction
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 
 class BlockchainEngineTest : IntegrationTestSetup() {
 
+    @Before
+    fun setTestInfrastructure() {
+        configOverrides.setProperty("infrastructure", "base/test")
+    }
+
     @Test
     fun testBuildBlock() {
-        configOverrides.setProperty("infrastructure", "base/test")
-
         val nodes = createNodes(1, "/net/postchain/devtools/blocks/blockchain_config.xml")
         val node = nodes[0]
         val txQueue = node.getBlockchainInstance().getEngine().getTransactionQueue()

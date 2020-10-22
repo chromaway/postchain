@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 /**
- * A basic imlementation of PeersConnectionStrategy. This class assumes that
+ * A basic implementation of PeersConnectionStrategy. This class assumes that
  * the connectionManager it uses takes care of synchronization.
  */
 class DefaultPeersConnectionStrategy(val connectionManager: XConnectionManager,

@@ -10,6 +10,7 @@ import net.postchain.core.Shutdownable
  */
 interface PeersConnectionStrategy: Shutdownable {
     fun connectAll(chainID: Long, peerIds: Set<XPeerID>)
+
     /**
      * Called when a connection has been closed for any reason. This method is responsible for
      * executing a strategy for how to handle this lost connection. It could be for example to

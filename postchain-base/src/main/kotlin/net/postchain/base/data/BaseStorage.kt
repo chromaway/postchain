@@ -9,6 +9,7 @@ import net.postchain.base.Storage
 import net.postchain.core.AppContext
 import net.postchain.core.EContext
 import net.postchain.core.ProgrammerMistake
+import java.sql.SQLException
 import javax.sql.DataSource
 
 class BaseStorage(
@@ -106,8 +107,17 @@ class BaseStorage(
     }
 
     override fun close() {
-        (readDataSource as? AutoCloseable)?.close()
-        (writeDataSource as? AutoCloseable)?.close()
+        try {
+            (readDataSource as? AutoCloseable)?.close()
+        } catch (e: SQLException) {
+            logger.debug("SQLException in BaseStorage.close()", e)
+        }
+        try {
+            (writeDataSource as? AutoCloseable)?.close()
+        } catch (e: SQLException) {
+            logger.debug("SQLException in BaseStorage.close()", e)
+        }
+
     }
 
     private fun buildAppContext(dataSource: DataSource): AppContext =

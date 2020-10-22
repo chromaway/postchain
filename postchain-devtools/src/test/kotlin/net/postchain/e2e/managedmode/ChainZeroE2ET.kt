@@ -8,9 +8,13 @@ import net.postchain.common.toHex
 import net.postchain.e2e.tools.*
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration.*
+import org.junit.Ignore
 import org.junit.Test
 
 
+// Ignoring because these tests often fail on Travis, and they're also not testing currently building version
+// of Postchain, but some old released hard-coded version. See End2EndTests.
+@Ignore
 class ChainZeroE2ET : End2EndTests() {
 
     companion object : KLogging()
@@ -270,7 +274,7 @@ class ChainZeroE2ET : End2EndTests() {
             assert(debug.getString("blockchain[0].node-type")).isEqualTo("Validator")
         }
 
-        var restApiTool2 = RestApiTool(node2.containerIpAddress, node2.getMappedPort(apiPort2))
+        val restApiTool2 = RestApiTool(node2.containerIpAddress, node2.getMappedPort(apiPort2))
         await().atMost(TEN_SECONDS).pollInterval(ONE_SECOND).untilAsserted {
             val debug = restApiTool2.getDebug()
             assert(debug.getList<Map<String, String>>("blockchain")).hasSize(1)
