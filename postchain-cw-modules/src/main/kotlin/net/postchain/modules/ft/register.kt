@@ -52,6 +52,10 @@ class FT_register_op (val config: FTConfig, data: ExtOpData): GTXOperation(data)
         return config.registerRules.applyStaticRules(registerData)
     }
 
+    override fun isSpecial(): Boolean {
+        return false
+    }
+
     /**
      * Operation is applied to the database, given that certain rules are followed
      *

@@ -31,19 +31,21 @@ open class BaseBlockBuilder(
         eContext: EContext,
         store: BlockStore,
         txFactory: TransactionFactory,
+        val specialTxHandler: SpecialTransactionHandler,
         val subjects: Array<ByteArray>,
         val blockSigMaker: SigMaker,
         val blockchainRelatedInfoDependencyList: List<BlockchainRelatedInfo>,
         val usingHistoricBRID: Boolean,
-        val maxBlockSize : Long = 20*1024*1024, // 20mb
-        val maxBlockTransactions : Long = 100
+        val maxBlockSize: Long = 20 * 1024 * 1024, // 20mb
+        val maxBlockTransactions: Long = 100
 ): AbstractBlockBuilder(eContext, blockchainRID, store, txFactory) {
 
     companion object : KLogging()
 
     private val calc = GtvMerkleHashCalculator(cryptoSystem)
 
-    private var blockSize : Long = 0L
+    private var blockSize: Long = 0L
+    private var haveSpecialEndTransaction = false
 
     /**
      * Computes the root hash for the Merkle tree of transactions currently in a block
@@ -63,6 +65,13 @@ open class BaseBlockBuilder(
             throw UserMistake("Cannot build new blocks in historic mode (check configuration)")
         }
         super.begin(partialBlockHeader)
+        if (buildingNewBlock
+                && specialTxHandler.needsSpecialTransaction(SpecialTransactionPosition.Begin)) {
+            appendTransaction(specialTxHandler.createSpecialTransaction(
+                    SpecialTransactionPosition.Begin,
+                    bctx
+            ))
+        }
     }
 
     /**
@@ -213,15 +222,52 @@ open class BaseBlockBuilder(
         return witnessBuilder
     }
 
+    override fun finalizeBlock(): BlockHeader {
+        if (buildingNewBlock && specialTxHandler.needsSpecialTransaction(SpecialTransactionPosition.End))
+            appendTransaction(specialTxHandler.createSpecialTransaction(SpecialTransactionPosition.End, bctx))
+        return super.finalizeBlock()
+    }
+
+    override fun finalizeAndValidate(blockHeader: BlockHeader) {
+        if (specialTxHandler.needsSpecialTransaction(SpecialTransactionPosition.End) && !haveSpecialEndTransaction)
+            throw BlockValidationMistake("End special transaction is missing")
+        super.finalizeAndValidate(blockHeader)
+    }
+
+    private fun checkSpecialTransaction(tx: Transaction) {
+        if (transactions.size == 0) {
+            // first transaction
+            if (specialTxHandler.needsSpecialTransaction(SpecialTransactionPosition.Begin)) {
+                if (!specialTxHandler.validateSpecialTransaction(SpecialTransactionPosition.Begin,
+                                tx, bctx))
+                    throw BlockValidationMistake("Special transaction validation failed")
+                else
+                    return // all is well, the first transaction is special and valid
+            }
+        }
+        if (tx.isSpecial()) {
+            // if tx is special it must be the end transaction
+            if (!specialTxHandler.needsSpecialTransaction(SpecialTransactionPosition.End))
+                throw BlockValidationMistake("Found unexpected special transaction")
+            if (!specialTxHandler.validateSpecialTransaction(SpecialTransactionPosition.End,
+                            tx, bctx))
+                throw BlockValidationMistake("Special transaction validation failed")
+            haveSpecialEndTransaction = true
+        }
+    }
+
     override fun appendTransaction(tx: Transaction) {
+        if (!buildingNewBlock) {
+            if (haveSpecialEndTransaction) throw BlockValidationMistake("Cannot append transactions after end special transaction")
+            checkSpecialTransaction(tx)
+        }
         super.appendTransaction(tx)
-        blockSize = transactions.map { t -> t.getRawData().size.toLong() }.sum()
+        blockSize += tx.getRawData().size
         if (blockSize >= maxBlockSize) {
             throw UserMistake("block size exceeds max block size ${maxBlockSize} bytes")
         } else if (transactions.size >= maxBlockTransactions) {
             throw UserMistake("Number of transactions exceeds max ${maxBlockTransactions} transactions in block")
         }
     }
-
 
 }

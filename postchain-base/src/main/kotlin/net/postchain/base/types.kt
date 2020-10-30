@@ -39,6 +39,7 @@ open class BaseEContext(
 
 open class BaseBlockEContext(
         val ectx: EContext,
+        override val height: Long,
         override val blockIID: Long,
         override val timestamp: Long,
         val dependencyHeightMap: Map<Long, Long>

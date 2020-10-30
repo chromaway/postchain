@@ -185,6 +185,10 @@ open class BaseBlockchainEngine(
                 if (tx != null) {
                     logger.debug("$processName: Appending transaction ${tx.getRID().toHex()}")
                     TimeLog.startSum("BaseBlockchainEngine.buildBlock().maybeApppendTransaction")
+                    if (tx.isSpecial()) {
+                        rejectedTxs++
+                        continue
+                    }
                     val exception = blockBuilder.maybeAppendTransaction(tx)
                     TimeLog.end("BaseBlockchainEngine.buildBlock().maybeApppendTransaction")
                     if (exception != null) {

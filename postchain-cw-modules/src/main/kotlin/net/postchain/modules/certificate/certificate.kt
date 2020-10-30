@@ -20,12 +20,17 @@ class certificate_op (val config: CertificateConfig, data: ExtOpData): GTXOperat
     private val r = QueryRunner()
     private val unitHandler = ScalarHandler<Unit>()
 
+
+    override fun isSpecial(): Boolean {
+        return false
+    }
+
     override fun isCorrect(): Boolean {
         if (data.args.size != 6)
             return false
         if (!data.signers.any { signer ->
-            signer.contentEquals(authority)
-        })
+                    signer.contentEquals(authority)
+                })
             return false
 
         if (pubkey.size != 33) return false

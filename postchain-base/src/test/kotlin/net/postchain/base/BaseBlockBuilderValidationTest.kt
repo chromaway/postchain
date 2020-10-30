@@ -26,7 +26,7 @@ class BaseBlockBuilderValidationTest {
     val tf = BaseTransactionFactory()
     val myBlockchainRid = BlockchainRid("bcRid".toByteArray())
     val empty32Bytes = ByteArray(32, { 0 })
-    val rootHash =    "46AF9064F12528CAD6A7C377204ACD0AC38CDC6912903E7DAB3703764C8DD5E5".hexStringToByteArray()
+    val rootHash = "46AF9064F12528CAD6A7C377204ACD0AC38CDC6912903E7DAB3703764C8DD5E5".hexStringToByteArray()
     val badRootHash = "46AF9064F12FFFFFFFFFFFFFF04ACD0AC38CDC6912903E7DAB3703764C8DD5E5".hexStringToByteArray()
     val subjects = arrayOf("test".toByteArray())
     val sigMaker = cryptoSystem.buildSigMaker(pubKey(0), privKey(0))
@@ -34,13 +34,15 @@ class BaseBlockBuilderValidationTest {
     // Objects using mocks
     val db = mock(DatabaseAccess::class.java)
     val ctx = BaseEContext(mockedConn, 2L, 0, db)
-    val bctx = BaseBlockEContext(ctx, 1, 10, mapOf())
-    val bbb = BaseBlockBuilder(BlockchainRid.buildFromHex("0000"), cryptoSystem, ctx, bbs, tf, subjects, sigMaker, listOf(), false)
+    val bctx = BaseBlockEContext(ctx, 0, 1, 10, mapOf())
+    val bbb = BaseBlockBuilder(BlockchainRid.buildFromHex("0000"), cryptoSystem, ctx, bbs, tf,
+            NullSpecialTransactionHandler(),
+            subjects, sigMaker, listOf(), false)
 
     @Test
     fun validateBlockHeader_valid() {
         val timestamp = 100L
-        val blockData = InitialBlockData(myBlockchainRid,2, 2, empty32Bytes, 1, timestamp, null)
+        val blockData = InitialBlockData(myBlockchainRid, 2, 2, empty32Bytes, 1, timestamp, null)
         val header = BaseBlockHeader.make(cryptoSystem, blockData, rootHash, timestamp)
         bbb.bctx = bctx
         bbb.initialBlockData = blockData

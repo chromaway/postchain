@@ -19,6 +19,7 @@ interface ExecutionContext : AppContext {
 typealias EContext = ExecutionContext
 
 interface BlockEContext : EContext {
+    val height: Long
     val blockIID: Long
     val timestamp: Long
     fun getChainDependencyHeight(chainID: Long): Long

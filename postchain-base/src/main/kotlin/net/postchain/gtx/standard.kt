@@ -21,6 +21,10 @@ class GtxNop(u: Unit, opData: ExtOpData) : GTXOperation(opData) {
         const val OP_NAME = "nop"
     }
 
+    override fun isSpecial(): Boolean {
+        return false
+    }
+
     override fun apply(ctx: TxEContext): Boolean {
         return true
     }
@@ -39,6 +43,10 @@ class GtxTimeB(u: Unit, opData: ExtOpData) : GTXOperation(opData) {
 
     companion object {
         const val OP_NAME = "timeb"
+    }
+
+    override fun isSpecial(): Boolean {
+        return false
     }
 
     override fun isCorrect(): Boolean {

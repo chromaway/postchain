@@ -45,6 +45,10 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
         return BaseTransactionFactory()
     }
 
+    open fun getSpecialTxHandler(): SpecialTransactionHandler {
+        return NullSpecialTransactionHandler()
+    }
+
     override fun makeBlockBuilder(ctx: EContext): BlockBuilder {
         addChainIDToDependencies(ctx) // We wait until now with this, b/c now we have an EContext
         return BaseBlockBuilder(
@@ -53,6 +57,7 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
                 ctx,
                 blockStore,
                 getTransactionFactory(),
+                getSpecialTxHandler(),
                 signers.toTypedArray(),
                 configData.blockSigMaker,
                 bcRelatedInfosDependencyList,

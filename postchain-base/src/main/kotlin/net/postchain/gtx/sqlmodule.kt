@@ -102,6 +102,11 @@ fun convertExtOpDataToPrimitives(opDesc: SQLOpDesc, opData: ExtOpData): MutableL
 class SQLGTXOperation(val opDesc: SQLOpDesc, opData: ExtOpData) :
         GTXOperation(opData) {
     lateinit var args: Array<Any?>
+
+    override fun isSpecial(): Boolean {
+        return opDesc.name.startsWith("__")
+    }
+
     override fun isCorrect(): Boolean {
         val myArgs = convertExtOpDataToPrimitives(opDesc, data)
         args = myArgs.toTypedArray()

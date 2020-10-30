@@ -15,7 +15,7 @@ open class BadDataMistake(val type: BadDataType, message: String, cause: Excepti
 }
 
 
-enum class BadDataType (val type: Int) {
+enum class BadDataType(val type: Int) {
     BAD_GTV(1), // Something wrong on GTV level, for example GtvDictionary is broken.
     BAD_GTX(2), // A TX is incorrectly represented (even though the GTV itself is correct)
     BAD_BLOCK(3), // The block's format is incorrect in some way (including header errors)

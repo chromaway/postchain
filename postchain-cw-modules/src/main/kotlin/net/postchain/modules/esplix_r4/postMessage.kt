@@ -36,6 +36,10 @@ class post_message_op(val config: EsplixConfig, data: ExtOpData) : GTXOperation(
         return true
     }
 
+    override fun isSpecial(): Boolean {
+        return false
+    }
+
     override fun apply(ctx: TxEContext): Boolean {
         r.query(ctx.conn, "SELECT ${tableName(ctx, "r4_postMessage")}(?, ?, ?, ?, ?)", unitHandler,
                 ctx.txIID, data.opIndex, messageID, prevID, payload)

@@ -33,6 +33,10 @@ private fun table_transactions(ctx: EContext): String {
 
 class GTXTestOp(u: Unit, opdata: ExtOpData) : GTXOperation(opdata) {
 
+    override fun isSpecial(): Boolean {
+        return false
+    }
+
     /**
      * The only way for the [GtxTestOp] to be considered correct is if first argument is "1" and the second is a string.
      */

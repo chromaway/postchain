@@ -38,6 +38,10 @@ class create_chain_op(val config: EsplixConfig, data: ExtOpData) : GTXOperation(
         return true
     }
 
+    override fun isSpecial(): Boolean {
+        return false
+    }
+
     override fun apply(ctx: TxEContext): Boolean {
         r.query(ctx.conn, "SELECT ${tableName(ctx, "r4_createChain")} (?, ?, ?, ?, ?)", longHandler,
                 nonce, chainID, ctx.txIID, data.opIndex, payload)

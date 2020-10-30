@@ -14,6 +14,10 @@ open class AbstractDummyModule : GTXModule {
 
     override fun makeTransactor(opData: ExtOpData): Transactor {
         return object : Transactor {
+            override fun isSpecial(): Boolean {
+                return false
+            }
+
             override fun isCorrect(): Boolean = true
             override fun apply(ctx: TxEContext): Boolean = true
         }

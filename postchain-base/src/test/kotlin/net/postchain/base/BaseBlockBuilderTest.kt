@@ -21,13 +21,15 @@ class BaseBlockBuilderTest {
     val tf = BaseTransactionFactory()
     val db = mock(DatabaseAccess::class.java)
     val ctx = BaseEContext(mock(Connection::class.java), 2L, 0, db)
-    val bctx = BaseBlockEContext(ctx, 1, 10, mapOf())
+    val bctx = BaseBlockEContext(ctx, 0, 1, 10, mapOf())
     val myMerkleRootHash = "46AF9064F12528CAD6A7C377204ACD0AC38CDC6912903E7DAB3703764C8DD5E5".hexStringToByteArray()
     val myBlockchainRid = BlockchainRid("bcRid".toByteArray())
     val dummy = ByteArray(32, { 0 })
     val subjects = arrayOf("test".toByteArray())
     val signer = cryptoSystem.buildSigMaker(pubKey(0), privKey(0))
-    val bbb = BaseBlockBuilder(myBlockchainRid, cryptoSystem, ctx, bbs, tf, subjects, signer, listOf(), false)
+    val bbb = BaseBlockBuilder(myBlockchainRid, cryptoSystem, ctx, bbs, tf,
+            NullSpecialTransactionHandler(),
+            subjects, signer, listOf(), false)
 
     @Test
     fun invalidMonotoneTimestamp() {

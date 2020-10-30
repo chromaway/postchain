@@ -3,10 +3,7 @@
 package net.postchain.gtx
 
 import mu.KLogging
-import net.postchain.base.BaseBlockQueries
-import net.postchain.base.BaseBlockchainConfigurationData
-import net.postchain.base.BlockchainRid
-import net.postchain.base.Storage
+import net.postchain.base.*
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.core.*
 import net.postchain.gtv.Gtv
@@ -18,11 +15,18 @@ open class GTXBlockchainConfiguration(configData: BaseBlockchainConfigurationDat
     : BaseBlockchainConfiguration(configData) {
     private val txFactory = GTXTransactionFactory(
             effectiveBlockchainRID, module, cryptoSystem, configData.getMaxTransactionSize())
+    private val specTxHandler = GTXSpecialTxHandler(module, effectiveBlockchainRID, cryptoSystem,
+            txFactory
+    )
 
     companion object : KLogging()
 
     override fun getTransactionFactory(): TransactionFactory {
         return txFactory
+    }
+
+    override fun getSpecialTxHandler(): SpecialTransactionHandler {
+        return specTxHandler
     }
 
     override fun initializeDB(ctx: EContext) {

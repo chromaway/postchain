@@ -46,6 +46,10 @@ class FT_issue_op (val config: FTConfig, data: ExtOpData): GTXOperation(data) {
         return config.issueRules.applyStaticRules(issueData)
     }
 
+    override fun isSpecial(): Boolean {
+        return false
+    }
+
     /**
      * Apply the operation, updating relevant database entries
      *

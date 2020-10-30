@@ -25,6 +25,10 @@ class SimpleGTXOperation(data: ExtOpData,
     override fun isCorrect(): Boolean {
         return isCorrectF()
     }
+
+    override fun isSpecial(): Boolean {
+        return data.opName.startsWith("__")
+    }
 }
 
 fun gtxOP(applyF: (TxEContext) -> Boolean): (Unit, ExtOpData) -> Transactor {
