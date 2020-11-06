@@ -14,7 +14,6 @@ import net.postchain.debug.BlockchainProcessName
 import net.postchain.devtools.PeerNameHelper.peerName
 import net.postchain.network.XPacketDecoderFactory
 import net.postchain.network.XPacketEncoderFactory
-import net.postchain.network.netty2.NettyClientPeerConnection
 
 class DefaultXConnectionManager<PacketType>(
         connectorFactory: XConnectorFactory<PacketType>,
@@ -165,11 +164,12 @@ class DefaultXConnectionManager<PacketType>(
     }
 
     @Synchronized
-    override fun onPeerConnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection): XPacketHandler? {
+    override fun onPeerConnected(connection: XPeerConnection): XPacketHandler? {
+        val descriptor = connection.descriptor()
         logger.info {
             "${logger(descriptor)}: Peer connected: peer = ${peerName(descriptor.peerId)}" +
                     ", blockchainRID: ${descriptor.blockchainRID}" +
-                    ", direction: ${if (isOutgoing(connection)) "outgoing" else "incoming"}" +
+                    ", direction: ${descriptor.dir}" +
                     ", (size of c4Brid: ${chainIDforBlockchainRID.size}, size of chains: ${chains.size}) "
         }
 
@@ -194,7 +194,7 @@ class DefaultXConnectionManager<PacketType>(
             val originalConn = chain.connections[descriptor.peerId]
             if (originalConn != null) {
                 logger.debug { "${logger(descriptor)}: onPeerConnected: Peer already connected: peer = ${peerName(descriptor.peerId)}" }
-                val isOriginalOutgoing = isOutgoing(originalConn)
+                val isOriginalOutgoing = originalConn.descriptor().isOutgoing()
                 if (peersConnectionStrategy.duplicateConnectionDetected(chainID, isOriginalOutgoing, descriptor.peerId)) {
                     disconnectChainPeer(chainID, descriptor.peerId)
                     chain.connections[descriptor.peerId] = connection
@@ -207,19 +207,18 @@ class DefaultXConnectionManager<PacketType>(
             } else {
                 chain.connections[descriptor.peerId] = connection
                 logger.debug { "${logger(descriptor)}: onPeerConnected: Peer connected: peer = ${peerName(descriptor.peerId)}" }
-                peersConnectionStrategy.connectionEstablished(chainID, isOutgoing(connection), descriptor.peerId)
+                peersConnectionStrategy.connectionEstablished(chainID, connection.descriptor().isOutgoing(), descriptor.peerId)
                 chain.peerConfig.packetHandler
             }
         }
     }
 
-    private fun isOutgoing(connection: XPeerConnection): Boolean {
-        return connection is NettyClientPeerConnection<*>
-    }
-
     @Synchronized
-    override fun onPeerDisconnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection) {
-        logger.debug { "${logger(descriptor)}: Peer disconnected: peer = ${peerName(descriptor.peerId)}" }
+    override fun onPeerDisconnected(connection: XPeerConnection) {
+        val descriptor = connection.descriptor()
+        logger.debug { "${logger(descriptor)}: Peer disconnected: peer = ${peerName(descriptor.peerId)}" +
+                ", direction: ${descriptor.dir}"
+        }
 
         val chainID = chainIDforBlockchainRID[descriptor.blockchainRID]
         val chain = if (chainID != null) chains[chainID] else null
@@ -234,7 +233,7 @@ class DefaultXConnectionManager<PacketType>(
         }
 
         if (chain.connectAll) {
-            peersConnectionStrategy.connectionLost(chainID!!, descriptor.peerId, isOutgoing(connection))
+            peersConnectionStrategy.connectionLost(chainID!!, descriptor.peerId, descriptor.isOutgoing())
         }
     }
 
@@ -249,7 +248,7 @@ class DefaultXConnectionManager<PacketType>(
         return chains[chainID]
                 ?.connections
                 ?.mapValues { connection ->
-                    (if (isOutgoing(connection.value)) "c-s" else "s-c") + ", " + connection.value.remoteAddress()
+                    (if (connection.value.descriptor().isOutgoing()) "c-s" else "s-c") + ", " + connection.value.remoteAddress()
                 }
                 ?: emptyMap()
     }

@@ -12,13 +12,15 @@ import net.postchain.network.XPacketEncoder
 import net.postchain.network.x.LazyPacket
 import net.postchain.network.x.XPacketHandler
 import net.postchain.network.x.XPeerConnection
+import net.postchain.network.x.XPeerConnectionDescriptor
 import nl.komponents.kovenant.task
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 
 class NettyClientPeerConnection<PacketType>(
         val peerInfo: PeerInfo,
-        private val packetEncoder: XPacketEncoder<PacketType>
+        private val packetEncoder: XPacketEncoder<PacketType>,
+        private val descriptor: XPeerConnectionDescriptor
 ) : ChannelInboundHandlerAdapter(), XPeerConnection {
 
     companion object : KLogging()
@@ -81,6 +83,10 @@ class NettyClientPeerConnection<PacketType>(
         task {
             nettyClient.shutdown()
         }
+    }
+
+    override fun descriptor(): XPeerConnectionDescriptor {
+        return descriptor
     }
 
     private fun peerAddress(): SocketAddress {
