@@ -20,6 +20,10 @@ enum class NodeState {
     Prepared   // PBFT: _prepared_ state, COMMIT message is sent
 }
 
+/**
+ * @param height The hight of the next block to be built. Ie current committed
+ * height + 1
+ */
 class NodeStatus (var height: Long, var serial: Long) {
 
     var state: NodeState = NodeState.WaitBlock

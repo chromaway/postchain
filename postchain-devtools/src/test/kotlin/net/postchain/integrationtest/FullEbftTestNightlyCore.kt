@@ -4,8 +4,6 @@ package net.postchain.integrationtest
 
 import mu.KLogging
 import net.postchain.devtools.ConfigFileBasedIntegrationTest
-import net.postchain.devtools.OnDemandBlockBuildingStrategy
-import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -14,13 +12,6 @@ import kotlin.test.assertNotNull
 open class FullEbftTestNightlyCore : ConfigFileBasedIntegrationTest() {
 
     companion object : KLogging()
-
-    private fun strategy(node: PostchainTestNode): OnDemandBlockBuildingStrategy {
-        return node
-                .getBlockchainInstance()
-                .getEngine()
-                .getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
-    }
 
     protected fun runXNodesWithYTxPerBlockTest(blocksCount: Int, txPerBlock: Int) {
         var txId = 0
@@ -35,9 +26,7 @@ open class FullEbftTestNightlyCore : ConfigFileBasedIntegrationTest() {
                 }
             }
             logger.info { "Trigger block" }
-            nodes.forEach { strategy(it).buildBlocksUpTo(i.toLong()) }
-            logger.info { "Await committed" }
-            nodes.forEach { strategy(it).awaitCommitted(i) }
+            buildBlock(i)
         }
 
         val queries = nodes[0].getBlockchainInstance().getEngine().getBlockQueries()

@@ -29,13 +29,6 @@ class GTXPerformanceTestNightly : IntegrationTestSetup() {
 
     val dummyBcRid = BlockchainRid.buildFromHex( "ABABAABABABABABABABABABABABABABAABABABABABABABABABABABABABAABABA")
 
-    private fun strategy(node: PostchainTestNode): OnDemandBlockBuildingStrategy {
-        return node
-                .getBlockchainInstance()
-                .getEngine()
-                .getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
-    }
-
     private fun makeTestTx(id: Long, value: String, blockchainRid: BlockchainRid): ByteArray {
         val b = GTXDataBuilder(blockchainRid, arrayOf(pubKey(0)), net.postchain.devtools.gtx.myCS)
         b.addOperation("gtx_test", arrayOf(gtv(id), gtv(value)))

@@ -57,6 +57,13 @@ open class IntegrationTestSetup : AbstractIntegration() {
         }
     }
 
+    protected fun strategy(node: PostchainTestNode): OnDemandBlockBuildingStrategy {
+        return node
+                .getBlockchainInstance()
+                .getEngine()
+                .getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
+    }
+
     // TODO: [et]: Check out nullability for return value
     protected fun enqueueTx(node: PostchainTestNode, data: ByteArray, expectedConfirmationHeight: Long): Transaction? {
         val blockchainEngine = node.getBlockchainInstance().getEngine()
