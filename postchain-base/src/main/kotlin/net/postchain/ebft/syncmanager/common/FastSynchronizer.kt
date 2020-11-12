@@ -178,7 +178,10 @@ class FastSynchronizer(
             committingBlocks.remove(p)
             fastSyncAlgorithmTelemetry.blockAppendedToDatabase(blockHeight)
             blockHeight += 1
-            checkBlock()
+            // Uncomment for now until a better, more robust approach is implemented.
+            // This means that we'll only commit a single block for each invocation
+            // of sync()
+//            checkBlock()
         }
         p.fail {
             committingBlocks.remove(p)
