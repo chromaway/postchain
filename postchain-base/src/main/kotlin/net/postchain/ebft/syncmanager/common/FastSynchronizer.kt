@@ -145,8 +145,6 @@ class FastSynchronizer(
                 when (message) {
                     is GetBlockAtHeight -> sendBlockAtHeight(xPeerId, message.height)
                     is CompleteBlock -> {
-                        // We have received a block, remove it from the list of states.
-                        parallelRequestsState.remove(message.height)
                         if (!doesQueueContainsBlock(message.height) && message.height > blockHeight) {
                             blocks.offer(
                                     IncomingBlock(
@@ -177,6 +175,7 @@ class FastSynchronizer(
         p.success {_ ->
             committingBlocks.remove(p)
             fastSyncAlgorithmTelemetry.blockAppendedToDatabase(blockHeight)
+            parallelRequestsState.remove(blockHeight)
             blockHeight += 1
             // Uncomment for now until a better, more robust approach is implemented.
             // This means that we'll only commit a single block for each invocation
@@ -184,6 +183,7 @@ class FastSynchronizer(
 //            checkBlock()
         }
         p.fail {
+            parallelRequestsState.remove(blockHeight)
             committingBlocks.remove(p)
             blockHeight = blockQueries.getBestHeight().get()
             fastSyncAlgorithmTelemetry.failedToAppendBlockToDatabase(blockHeight, it.message)
