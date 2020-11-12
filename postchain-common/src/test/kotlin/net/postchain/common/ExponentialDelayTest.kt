@@ -10,20 +10,20 @@ class ExponentialDelayTest {
     @Test
     fun happyTest() {
         val ed = ExponentialDelay(60000, 100)
-        val first = ed.getDelayMillis()
+        val first = ed.getDelayMillisAndIncrease()
         assertEquals(100L, first)
 
-        val second = ed.getDelayMillis()
+        val second = ed.getDelayMillisAndIncrease()
         assertEquals(200L, second)
 
-        val third = ed.getDelayMillis()
+        val third = ed.getDelayMillisAndIncrease()
         assertEquals(800L, third)
 
         for (i in 1..10) {
-            ed.getDelayMillis()
+            ed.getDelayMillisAndIncrease()
         }
 
-        val later = ed.getDelayMillis()
+        val later = ed.getDelayMillisAndIncrease()
         assertEquals(60000L, later)
 
 

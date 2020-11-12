@@ -25,8 +25,8 @@ class DefaultPeersConnectionStrategy(val connectionManager: XConnectionManager,
     var backupConnTimeMin = 1000
     var backupConnTimeMax = 2000
 
-    private val reconnectTimeMin = 100
-    private val reconnectTimeMax = 1000
+    var reconnectTimeMin = 100
+    var reconnectTimeMax = 1000
 
     override fun connectAll(chainID: Long, peerIds: Set<XPeerID>) {
         for (peerId in peerIds) {
@@ -69,9 +69,8 @@ class DefaultPeersConnectionStrategy(val connectionManager: XConnectionManager,
             val delayCounterInitialMillis = Random.nextInt(reconnectTimeMin, reconnectTimeMax).toLong()
             ExponentialDelay(delayCounterMillis = delayCounterInitialMillis)
         }
-        val (timeUnit, timeDelay) = prettyDelay(delay)
 
-        logger.info { "${peerName(me)}/${chainID}: Reconnecting in $timeDelay $timeUnit to peer = ${peerName(peerId)}" }
+        logger.info { "${peerName(me)}/${chainID}: Reconnecting in ${delay.delayCounterMillis} ms to peer = ${peerName(peerId)}" }
         timerQueue.schedule({
             logger.info { "${peerName(me)}/${chainID}: Reconnecting to peer: peer = ${peerName(peerId)}" }
             try {
@@ -79,7 +78,7 @@ class DefaultPeersConnectionStrategy(val connectionManager: XConnectionManager,
             } catch (e: ProgrammerMistake) {
                 // This happens if the chain has been disconnected while we waited
             }
-        }, delay.getDelayMillis(), TimeUnit.MILLISECONDS)
+        }, delay.getDelayMillisAndIncrease(), TimeUnit.MILLISECONDS)
     }
 
     override fun duplicateConnectionDetected(chainID: Long, isOriginalOutgoing: Boolean,
@@ -112,13 +111,5 @@ class DefaultPeersConnectionStrategy(val connectionManager: XConnectionManager,
      */
     private fun shouldIConnect(peer: XPeerID): Boolean {
         return me.toString() > peer.toString()
-    }
-
-    private fun prettyDelay(delay: ExponentialDelay): Pair<String, Long> {
-        return if (delay.getDelayMillis() < backupConnTimeMin) {
-            "milliseconds" to delay.getDelayMillis()
-        } else {
-            "seconds" to delay.getDelayMillis() / backupConnTimeMin
-        }
     }
 }
