@@ -2,7 +2,7 @@
 
 package net.postchain.integrationtest
 
-import net.postchain.devtools.ConfigFileBasedIntegrationTest
+import net.postchain.devtools.*
 import net.postchain.devtools.testinfra.TestTransaction
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration

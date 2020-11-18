@@ -3,8 +3,8 @@ package net.postchain.integrationtest.statemachine
 import net.postchain.devtools.IntegrationTest
 import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
-import net.postchain.integrationtest.assertChainStarted
-import net.postchain.integrationtest.enqueueTxsAndAwaitBuiltBlock
+import net.postchain.devtools.assertChainStarted
+import net.postchain.devtools.enqueueTxsAndAwaitBuiltBlock
 import net.postchain.integrationtest.reconfiguration.TxChartHelper
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration

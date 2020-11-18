@@ -1,16 +1,12 @@
 // Copyright (c) 2020 ChromaWay AB. See README for license information.
 
-package net.postchain.integrationtest
+package net.postchain.devtools
 
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
-import junit.framework.Assert.assertNotNull
-import net.postchain.containsExactlyKeys
 import net.postchain.core.BlockQueries
 import net.postchain.core.MultiSigBlockWitness
 import net.postchain.core.Signature
-import net.postchain.devtools.OnDemandBlockBuildingStrategy
-import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.testinfra.TestBlockchainConfiguration
 import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.gtv.Gtv
@@ -18,6 +14,8 @@ import net.postchain.gtx.CompositeGTXModule
 import net.postchain.gtx.GTXBlockchainConfiguration
 import net.postchain.gtx.GTXModule
 import nl.komponents.kovenant.Promise
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 
 fun PostchainTestNode.addBlockchainAndStart(chainId: Long, blockchainConfig: Gtv) {
     val bcRid = addBlockchain(chainId, blockchainConfig)
@@ -34,9 +32,7 @@ fun PostchainTestNode.assertChainNotStarted(chainId: Long = PostchainTestNode.DE
 }
 
 fun PostchainTestNode.assertNodeConnectedWith(chainId: Long, vararg nodes: PostchainTestNode) {
-    assertk.assert(networkTopology(chainId)).containsExactlyKeys(
-            *nodes.map(PostchainTestNode::pubKey).toTypedArray()
-    )
+    assertEquals(nodes.map(PostchainTestNode::pubKey).toSet(), networkTopology(chainId).keys)
 }
 
 fun <T> PostchainTestNode.query(chainId: Long, action: (BlockQueries) -> Promise<T, Exception>): T? {
@@ -62,18 +58,21 @@ fun PostchainTestNode.awaitedHeight(chainId: Long): Long {
 }
 
 fun PostchainTestNode.buildBlocksUpTo(chainId: Long, height: Long) {
-    val strategy = getBlockchainInstance(chainId).getEngine()
-            .getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
-
-    strategy.buildBlocksUpTo(height)
+    strategy(chainId).buildBlocksUpTo(height)
 }
 
+private fun PostchainTestNode.strategy(chainId: Long) =
+        blockBuildingStrategy(chainId) as OnDemandBlockBuildingStrategy
+
 fun PostchainTestNode.awaitBuiltBlock(chainId: Long, height: Long) {
-    val strategy = getBlockchainInstance(chainId).getEngine()
-            .getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
+    val strategy = strategy(chainId)
 
     strategy.buildBlocksUpTo(height)
     strategy.awaitCommitted(height.toInt())
+}
+
+fun PostchainTestNode.awaitHeight(chainId: Long, height: Long) {
+    strategy(chainId).awaitCommitted(height.toInt())
 }
 
 fun PostchainTestNode.enqueueTxs(chainId: Long, vararg txs: TestTransaction): Boolean {

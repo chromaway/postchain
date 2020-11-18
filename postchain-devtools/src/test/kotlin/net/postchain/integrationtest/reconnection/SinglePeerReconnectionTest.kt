@@ -2,8 +2,8 @@
 
 package net.postchain.integrationtest.reconnection
 
-import net.postchain.integrationtest.assertChainNotStarted
-import net.postchain.integrationtest.assertChainStarted
+import net.postchain.devtools.assertChainNotStarted
+import net.postchain.devtools.assertChainStarted
 import org.awaitility.Awaitility
 import org.awaitility.Duration
 import org.junit.Assert

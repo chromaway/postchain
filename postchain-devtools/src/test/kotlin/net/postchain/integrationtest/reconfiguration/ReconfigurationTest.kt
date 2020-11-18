@@ -7,9 +7,9 @@ import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
 import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.devtools.testinfra.TestTransactionFactory
-import net.postchain.integrationtest.awaitedHeight
-import net.postchain.integrationtest.buildBlocksUpTo
-import net.postchain.integrationtest.query
+import net.postchain.devtools.awaitedHeight
+import net.postchain.devtools.buildBlocksUpTo
+import net.postchain.devtools.query
 import kotlin.test.assertNotNull
 
 open class ReconfigurationTest : ConfigFileBasedIntegrationTest() {
@@ -20,20 +20,21 @@ open class ReconfigurationTest : ConfigFileBasedIntegrationTest() {
         val blockRids = node.query(DEFAULT_CHAIN_IID) { it.getBlockRid(height) }
         assertNotNull(blockRids)
 
-        val txsRids = node.query(DEFAULT_CHAIN_IID) { it.getBlockTransactionRids(blockRids!!) }
+        val txsRids = node.query(DEFAULT_CHAIN_IID) { it.getBlockTransactionRids(blockRids) }
         assertNotNull(txsRids)
 
         val txFactory = TestTransactionFactory()
-        return txsRids!!.asSequence().map { txRid ->
+        return txsRids.asSequence().map { txRid ->
             val tx = node.query(DEFAULT_CHAIN_IID) { it.getTransaction(txRid) }
             assertNotNull(tx)
 
-            (txFactory.decodeTransaction(tx!!.getRawData()) as TestTransaction).id
+            (txFactory.decodeTransaction(tx.getRawData()) as TestTransaction).id
         }.toSet()
     }
 
     protected fun awaitReconfiguration(height: Long) {
         nodes.first().buildBlocksUpTo(DEFAULT_CHAIN_IID, height - 1)
+        @Suppress("ControlFlowWithEmptyBody")
         while (nodes.any { it.awaitedHeight(DEFAULT_CHAIN_IID) < height });
     }
 }

@@ -32,7 +32,19 @@ class ManagedNodeConfigurationProvider(
         }
     }
 
-    // TODO: [et]: Make it protected
+    /**
+     * This will collect PeerInfos from two sources:
+     *
+     * 1. The global peerinfos table
+     * 2. The chain0 c0.node table
+     *
+     * If there are multiple peerInfos for a specific key, tha peerInfo
+     * with highest timestamp takes presedence. A null timestamp is considered
+     * older than a non-null timestamp.
+     *
+     * The timestamp is taken directly from the respective table, c0.node_list
+     * is not involved here.
+     */
     override fun getPeerInfoCollection(appConfig: AppConfig): Array<PeerInfo> {
         val peerInfoMap = mutableMapOf<ByteArrayKey, PeerInfo>()
 
@@ -43,8 +55,9 @@ class ManagedNodeConfigurationProvider(
             }
         }
 
-        // Collect peerInfos
+        // Collect peerInfos from global peerinfos table
         super.getPeerInfoCollection(appConfig).forEach(peerInfoPicker)
+        // get the peerInfos from the chain0.node table
         managedPeerSource?.getPeerInfos()?.forEach(peerInfoPicker)
 
         return peerInfoMap.values.toTypedArray()

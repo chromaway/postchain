@@ -2,13 +2,11 @@
 
 package net.postchain.integrationtest.reconfiguration
 
-//import com.fasterxml.jackson.databind.ObjectMapper
-//import com.fasterxml.jackson.databind.node.ArrayNode
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isTrue
+import net.postchain.devtools.*
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
-import net.postchain.integrationtest.*
 import net.postchain.integrationtest.reconfiguration.TxChartHelper.buildTxChart
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration

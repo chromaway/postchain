@@ -8,8 +8,8 @@ import net.postchain.StorageBuilder
 import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.core.NODE_ID_TODO
 import net.postchain.devtools.PostchainTestNode
-import net.postchain.integrationtest.assertChainStarted
-import net.postchain.integrationtest.getModules
+import net.postchain.devtools.assertChainStarted
+import net.postchain.devtools.getModules
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.Test
@@ -35,7 +35,7 @@ class SinglePeerReconfigurationTest : ReconfigurationTest() {
         PostchainTestNode(nodeConfigProvider)
                 .apply {
                     // Adding chain1 with blockchainConfig1 with DummyModule1
-                    val blockchainRid = addBlockchain(chainId, blockchainConfig1)
+                    addBlockchain(chainId, blockchainConfig1)
                     // Adding chain1's blockchainConfig2 with DummyModule2
                     addConfiguration(chainId, 5, blockchainConfig2)
                     startBlockchain()

@@ -3,9 +3,9 @@
 package net.postchain.integrationtest.reconnection
 
 import net.postchain.hasSize
-import net.postchain.integrationtest.assertChainNotStarted
-import net.postchain.integrationtest.assertChainStarted
-import net.postchain.integrationtest.assertNodeConnectedWith
+import net.postchain.devtools.assertChainNotStarted
+import net.postchain.devtools.assertChainStarted
+import net.postchain.devtools.assertNodeConnectedWith
 import net.postchain.isEmpty
 import org.awaitility.Awaitility
 import org.awaitility.Duration

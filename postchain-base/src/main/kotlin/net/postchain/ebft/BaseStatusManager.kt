@@ -323,8 +323,8 @@ class BaseStatusManager(
          * we might want to synch.
          */
         fun potentiallyDoSynch(): FlowStatus {
-            var sameHeightCount: Int = 0
-            var higherHeightCount: Int = 0
+            var sameHeightCount = 0
+            var higherHeightCount = 0
             for (ns in nodeStatuses) {
                 if (ns.height == myStatus.height) sameHeightCount++
                 else if (ns.height > myStatus.height) higherHeightCount++
@@ -362,8 +362,8 @@ class BaseStatusManager(
          * Handles possible revolts
          */
         fun potentiallyRevolt(): FlowStatus {
-            var nHighRound: Int = 0
-            var nRevolting: Int = 0
+            var nHighRound = 0
+            var nRevolting = 0
             for (ns in nodeStatuses) {
                 if (ns.height != myStatus.height) continue
                 if (ns.round == myStatus.round) {
@@ -488,7 +488,7 @@ class BaseStatusManager(
         }
 
         // We should make sure we have enough nodes who can participate in building a block.
-        // (If we are in [Perpared] state we ignore this check, it has been done before we got here)
+        // (If we are in [Prepared] state we ignore this check, it has been done before we got here)
         if (myStatus.state != NodeState.Prepared) {
             when (potentiallyDoSynch()) {
                 FlowStatus.Break -> return false

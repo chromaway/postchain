@@ -11,8 +11,8 @@ import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
 import net.postchain.devtools.ConfigFileBasedIntegrationTest
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
-import net.postchain.integrationtest.assertChainStarted
-import net.postchain.integrationtest.assertNodeConnectedWith
+import net.postchain.devtools.assertChainStarted
+import net.postchain.devtools.assertNodeConnectedWith
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.After

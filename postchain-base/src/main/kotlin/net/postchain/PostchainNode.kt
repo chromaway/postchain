@@ -55,6 +55,6 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
     }
 
     private fun name(): String {
-        return peerName(nodeConfigProvider.getConfiguration().pubKey)
+        return peerName(diagnosticContext.getProperty(DiagnosticProperty.PUB_KEY).toString())
     }
 }

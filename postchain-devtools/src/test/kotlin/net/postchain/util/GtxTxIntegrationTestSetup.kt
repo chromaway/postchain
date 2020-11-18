@@ -11,8 +11,8 @@ import net.postchain.devtools.testinfra.TestOneOpGtxTransaction
 import net.postchain.devtools.utils.configuration.NodeSeqNumber
 import net.postchain.devtools.utils.configuration.SystemSetup
 import net.postchain.gtx.GTXTransactionFactory
-import net.postchain.integrationtest.assertChainStarted
-import net.postchain.integrationtest.assertNodeConnectedWith
+import net.postchain.devtools.assertChainStarted
+import net.postchain.devtools.assertNodeConnectedWith
 import org.awaitility.Awaitility
 import org.awaitility.Duration
 import org.junit.Assert
@@ -199,7 +199,7 @@ open class GtxTxIntegrationTestSetup: IntegrationTestSetup()  {
             assertNotNull(blockRids)
 
             // Asserting txs count
-            val txs = queries.getBlockTransactionRids(blockRids!!).get()
+            val txs = queries.getBlockTransactionRids(blockRids).get()
             Assert.assertEquals(txPerBlock, txs.size)
 
             // Asserting txs content

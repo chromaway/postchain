@@ -8,9 +8,9 @@ import net.postchain.base.data.DatabaseAccess
 import net.postchain.base.runStorageCommand
 import net.postchain.devtools.ConfigFileBasedIntegrationTest
 import net.postchain.hasSize
-import net.postchain.integrationtest.assertChainNotStarted
-import net.postchain.integrationtest.assertChainStarted
-import net.postchain.integrationtest.getModules
+import net.postchain.devtools.assertChainNotStarted
+import net.postchain.devtools.assertChainStarted
+import net.postchain.devtools.getModules
 import org.awaitility.Awaitility
 import org.awaitility.Duration
 import org.junit.Ignore
@@ -32,7 +32,6 @@ class ManagedModeTest : ConfigFileBasedIntegrationTest() {
 
         // Asserting chain 0 is started for node0
         nodes[0].assertChainStarted(0L)
-        val chain0Rid = nodes[0].getBlockchainRid(0L)
 
         // TODO: [et]: Change comment: Waiting for height 5 when a new peer will be added to PeerInfos
         Awaitility.await().atMost(Duration.ONE_MINUTE)

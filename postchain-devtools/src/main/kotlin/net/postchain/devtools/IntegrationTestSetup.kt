@@ -9,6 +9,7 @@ import net.postchain.config.node.NodeConfig
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.Transaction
 import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.devtools.utils.configuration.*
 import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
 import org.apache.commons.configuration2.MapConfiguration
@@ -204,5 +205,19 @@ open class IntegrationTestSetup : AbstractIntegration() {
 
     fun createPeerInfos(nodeCount: Int): Array<PeerInfo> = createPeerInfosWithReplicas(nodeCount, 0)
 
+    protected fun buildBlock(chainId: Long, toHeight: Long, vararg txs: TestTransaction) {
+        nodes.forEach {
+            it.enqueueTxs(chainId, *txs)
+        }
+        nodes.forEach {
+            it.buildBlocksUpTo(chainId, toHeight)
+        }
+        awaitHeight(chainId, toHeight)
+    }
 
+    protected fun awaitHeight(chainId: Long, height: Long) {
+        nodes.forEach {
+            it.awaitHeight(chainId, height)
+        }
+    }
 }

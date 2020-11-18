@@ -9,7 +9,7 @@ import net.postchain.common.toHex
 import net.postchain.core.Transaction
 import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.testinfra.TestTransaction
-import net.postchain.integrationtest.query
+import net.postchain.devtools.query
 
 object TxChartHelper {
 

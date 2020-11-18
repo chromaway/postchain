@@ -2,14 +2,12 @@ package net.postchain.integrationtest.reconnection
 
 import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
-import net.postchain.devtools.testinfra.TestTransaction
-import net.postchain.integrationtest.assertChainNotStarted
-import net.postchain.integrationtest.assertChainStarted
-import net.postchain.integrationtest.assertNodeConnectedWith
+import net.postchain.devtools.assertChainNotStarted
+import net.postchain.devtools.assertChainStarted
+import net.postchain.devtools.assertNodeConnectedWith
 import org.awaitility.Awaitility
 import org.awaitility.Duration
 import org.junit.Assert
-import kotlin.random.Random
 
 open class FourPeersReconnectionImpl : ReconnectionTest() {
 
