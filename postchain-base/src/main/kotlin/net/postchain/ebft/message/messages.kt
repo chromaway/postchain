@@ -4,7 +4,8 @@ package net.postchain.ebft.message
 
 import net.postchain.base.BlockchainRid
 import net.postchain.common.toHex
-import net.postchain.core.ProgrammerMistake
+import net.postchain.core.BadDataMistake
+import net.postchain.core.BadDataType
 import net.postchain.core.UserMistake
 import net.postchain.gtv.*
 
@@ -33,7 +34,7 @@ class SignedMessage(val message: ByteArray, val pubKey: ByteArray, val signature
 
 enum class MessageType {
     ID, STATUS, TX, SIG, BLOCKSIG, BLOCKDATA, UNFINISHEDBLOCK,
-    GETBLOCKSIG, COMPLETEBLOCK, GETBLOCKATHEIGHT, GETUNFINISHEDBLOCK
+    GETBLOCKSIG, COMPLETEBLOCK, GETBLOCKATHEIGHT, GETUNFINISHEDBLOCK, GETBLOCKHEADERANDBLOCK, BLOCKHEADER
 }
 
 abstract class Message(val type: Int) {
@@ -54,7 +55,9 @@ abstract class Message(val type: Int) {
                 MessageType.GETBLOCKATHEIGHT.ordinal -> GetBlockAtHeight(data[1].asInteger()) as T
                 MessageType.GETUNFINISHEDBLOCK.ordinal -> GetUnfinishedBlock(data[1].asByteArray()) as T
                 MessageType.UNFINISHEDBLOCK.ordinal -> UnfinishedBlock(data[1].asByteArray(), data[2].asArray().map { it.asByteArray() }) as T
-                else -> throw ProgrammerMistake("Message type $type is not handled")
+                MessageType.GETBLOCKHEADERANDBLOCK.ordinal -> GetBlockHeaderAndBlock(data[1].asInteger()) as T
+                MessageType.BLOCKHEADER.ordinal -> BlockHeader(data[1].asByteArray(), data[2].asByteArray(), data[3].asInteger()) as T
+                else -> throw BadDataMistake(BadDataType.BAD_MESSAGE,"Message type $type is not handled")
             }
         }
 
@@ -62,7 +65,7 @@ abstract class Message(val type: Int) {
             return when (tmpGtv) {
                 is GtvNull -> null
                 is GtvByteArray -> tmpGtv.asByteArray()
-                else -> throw ProgrammerMistake("Incorrect EBFT status ${tmpGtv.type}")
+                else -> throw BadDataMistake(BadDataType.BAD_MESSAGE,"Incorrect EBFT status ${tmpGtv.type}")
             }
         }
     }
@@ -169,6 +172,32 @@ class Status(val blockRID: ByteArray?, val height: Long, val revolting: Boolean,
     }
 }
 
+/**
+ * Requests that the peer reply with two messages
+ *
+ * 1. The BlockHeader at height
+ * 2. The UnfinishedBlock at height
+ *
+ * If the peer doesn't have that block, it will reply with the BlockHeader of its tip
+ */
+class GetBlockHeaderAndBlock(val height: Long): Message(MessageType.GETBLOCKHEADERANDBLOCK.ordinal) {
+    override fun toGtv(): Gtv {
+        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), GtvFactory.gtv(height))
+    }
+}
+
+/**
+ * This represent a block header at a requested height or the highest blockheader
+ * if requestedHeight didn't exist. A BlockHeader with empty header and witness byte
+ * arrays represents that the node has no blocks at all.
+ */
+class BlockHeader(val header: ByteArray, val witness: ByteArray, val requestedHeight: Long)
+    : Message(MessageType.BLOCKHEADER.ordinal) {
+    override fun toGtv(): Gtv {
+        return GtvFactory.gtv(GtvFactory.gtv(type.toLong()), GtvFactory.gtv(header), GtvFactory.gtv(witness),
+                GtvFactory.gtv(requestedHeight))
+    }
+}
 
 
 

@@ -59,7 +59,7 @@ interface BlockWitness {
     fun getRawData(): ByteArray
 }
 
-open class BlockDataWithWitness(header: BlockHeader, transactions: List<ByteArray>, val witness: BlockWitness?)
+open class BlockDataWithWitness(header: BlockHeader, transactions: List<ByteArray>, val witness: BlockWitness)
     : BlockData(header, transactions)
 
 interface MultiSigBlockWitness : BlockWitness {

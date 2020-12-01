@@ -110,7 +110,7 @@ class BaseManagedBlockBuilder(
         return blockBuilder.getBlockWitnessBuilder()
     }
 
-    override fun commit(blockWitness: BlockWitness?) {
+    override fun commit(blockWitness: BlockWitness) {
         logger.debug("${eContext.nodeID} committing block - start -------------------")
 
         synchronized(storage) {

@@ -11,6 +11,7 @@ import net.postchain.core.NodeStateTracker
 import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.BaseBlockDatabase
 import net.postchain.ebft.syncmanager.SyncManager
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
 /**
@@ -34,23 +35,20 @@ abstract class AbstractBlockchainProcess : BlockchainProcess {
 
     override fun getEngine() = blockchainEngine
 
+    private val shutdown = AtomicBoolean(false)
+
     /**
      * Create and run the [updateLoop] thread
      * @param syncManager the syncronization manager
      */
     protected fun startUpdateLoop(syncManager: SyncManager) {
         updateLoop = thread(name = "updateLoop-$processName") {
-            while (!Thread.interrupted()) {
+            while (!shutdown.get()) {
                 try {
                     syncManager.update()
+                    Thread.sleep(20)
                 } catch (e: Exception) {
                     e.printStackTrace()
-                }
-
-                try {
-                    Thread.sleep(20)
-                } catch (e: InterruptedException) {
-                    Thread.currentThread().interrupt()
                 }
             }
         }
@@ -60,7 +58,7 @@ abstract class AbstractBlockchainProcess : BlockchainProcess {
      * Stop the postchain node
      */
     override fun shutdown() {
-        updateLoop.interrupt()
+        shutdown.set(true)
         updateLoop.join()
         blockchainEngine.shutdown()
         blockDatabase.stop()

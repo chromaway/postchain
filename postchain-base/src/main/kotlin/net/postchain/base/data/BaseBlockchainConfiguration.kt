@@ -4,6 +4,7 @@ package net.postchain.base.data
 
 import net.postchain.base.*
 import net.postchain.core.*
+import net.postchain.getBFTRequiredSignatureCount
 
 open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurationData)
     : BlockchainConfiguration {
@@ -24,6 +25,20 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
 
     override fun decodeWitness(rawWitness: ByteArray): BlockWitness {
         return BaseBlockWitness.fromBytes(rawWitness)
+    }
+
+    // This is basically a duplicate of BaseBlockBuilder.validateWitness.
+    // We should find a common place to put this code.
+    fun verifyBlockHeader(blockHeader: BlockHeader, blockWitness: BlockWitness): Boolean {
+        if (!(blockWitness is MultiSigBlockWitness)) {
+            throw ProgrammerMistake("Invalid BlockWitness impelmentation.")
+        }
+        val signers = configData.getSigners().toTypedArray()
+        val witnessBuilder = BaseBlockWitnessBuilder(cryptoSystem, blockHeader, signers, getBFTRequiredSignatureCount(signers.size))
+        for (signature in blockWitness.getSignatures()) {
+            witnessBuilder.applySignature(signature)
+        }
+        return witnessBuilder.isComplete()
     }
 
     override fun getTransactionFactory(): TransactionFactory {

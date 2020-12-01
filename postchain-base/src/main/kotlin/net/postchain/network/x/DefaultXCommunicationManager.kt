@@ -11,6 +11,7 @@ import net.postchain.devtools.PeerNameHelper.peerName
 import net.postchain.network.CommunicationManager
 import net.postchain.network.XPacketDecoder
 import net.postchain.network.XPacketEncoder
+import java.lang.Exception
 
 class DefaultXCommunicationManager<PacketType>(
         val connectionManager: XConnectionManager,
@@ -65,6 +66,17 @@ class DefaultXCommunicationManager<PacketType>(
         connectionManager.broadcastPacket(
                 { packetEncoder.encodePacket(packet) },
                 chainID)
+    }
+
+    override fun sendToRandomPeer(packet: PacketType, excludedPeers: Set<XPeerID>): XPeerID? {
+        try {
+            val peer = connectionManager.getConnectedPeers(chainID).minus(excludedPeers).random()
+            logger.trace { "$processName: sendToRandomPeer($packet, ${peerName(peer.toString())})" }
+            sendPacket(packet, peer)
+            return peer
+        } catch (e: Exception) {
+            return null
+        }
     }
 
     override fun shutdown() {

@@ -70,9 +70,13 @@ class BaseStatusManager(
     override fun onStatusUpdate(nodeIndex: Int, status: NodeStatus) {
         val existingStatus = nodeStatuses[nodeIndex]
         if (
-                (status.serial > existingStatus.serial)
-                || (status.height > existingStatus.height)
-                || ((status.height == existingStatus.height) && (status.round > existingStatus.round))
+            // A restarted peer will have its serial reset, but
+            // this will not cause a problem because the serial is
+            // initialized based on current time. See init block
+            // of this class
+            (status.serial > existingStatus.serial)
+            || (status.height > existingStatus.height)
+            || ((status.height == existingStatus.height) && (status.round > existingStatus.round))
         ) {
             nodeStatuses[nodeIndex] = status
             recomputeStatus()
@@ -125,18 +129,19 @@ class BaseStatusManager(
     /**
      * Fast forward height
      *
-     * @param height the new height
+     * @param committedHeight the new committed height
      * @return success or failure
      */
     @Synchronized
-    override fun fastForwardHeight(height: Long): Boolean {
-        if (height < myStatus.height) {
+    override fun fastForwardHeight(committedHeight: Long): Boolean {
+        val nextHeight = committedHeight + 1
+        if (nextHeight < myStatus.height) {
             logger.error("Failed to fast forward negative increment.")
             return false
         }
 
-        logger.debug("Advancing block height from ${myStatus.height} to ${height + 1} ...")
-        (myStatus.height..height).forEach { _ -> advanceHeight() }
+        logger.debug("Advancing block height from ${myStatus.height} to $nextHeight ...")
+        (myStatus.height until nextHeight).forEach { _ -> advanceHeight() }
 
         logger.debug("Current state: ${myStatus.height}")
         return true

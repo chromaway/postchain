@@ -4,7 +4,7 @@ package net.postchain.network.netty2
 
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
-import io.netty.channel.ChannelInboundHandlerAdapter
+import mu.KLogging
 import net.postchain.core.ProgrammerMistake
 import net.postchain.network.XPacketDecoder
 import net.postchain.network.x.LazyPacket
@@ -14,7 +14,7 @@ import net.postchain.network.x.XPeerConnectionDescriptor
 
 class NettyServerPeerConnection<PacketType>(
         private val packetDecoder: XPacketDecoder<PacketType>
-) : ChannelInboundHandlerAdapter(), XPeerConnection {
+) : NettyPeerConnection() {
 
     private lateinit var context: ChannelHandlerContext
     private var packetHandler: XPacketHandler? = null
@@ -22,6 +22,8 @@ class NettyServerPeerConnection<PacketType>(
 
     private var onConnectedHandler: ((XPeerConnection) -> Unit)? = null
     private var onDisconnectedHandler: ((XPeerConnection) -> Unit)? = null
+
+    companion object: KLogging()
 
     override fun accept(handler: XPacketHandler) {
         this.packetHandler = handler
@@ -56,18 +58,19 @@ class NettyServerPeerConnection<PacketType>(
     }
 
     override fun channelRead(ctx: ChannelHandlerContext?, msg: Any?) {
-        val message = Transport.unwrapMessage(msg as ByteBuf)
-        if (packetDecoder.isIdentPacket(message)) {
-            val identPacketInfo = packetDecoder.parseIdentPacket(Transport.unwrapMessage(msg))
-            peerConnectionDescriptor = XPeerConnectionDescriptor.createFromIdentPacketInfo(identPacketInfo)
-            onConnectedHandler?.invoke(this)
-
-        } else {
-            if (peerConnectionDescriptor != null) {
-                packetHandler?.invoke(message, peerConnectionDescriptor!!.peerId)
+        handleSafely(peerConnectionDescriptor?.peerId) {
+            val message = Transport.unwrapMessage(msg as ByteBuf)
+            if (packetDecoder.isIdentPacket(message)) {
+                val identPacketInfo = packetDecoder.parseIdentPacket(Transport.unwrapMessage(msg))
+                peerConnectionDescriptor = XPeerConnectionDescriptor.createFromIdentPacketInfo(identPacketInfo)
+                onConnectedHandler?.invoke(this)
+            } else {
+                if (peerConnectionDescriptor != null) {
+                    packetHandler?.invoke(message, peerConnectionDescriptor!!.peerId)
+                }
             }
+            (msg as ByteBuf).release()
         }
-        (msg as ByteBuf).release()
     }
 
     override fun channelActive(ctx: ChannelHandlerContext?) {
@@ -80,5 +83,9 @@ class NettyServerPeerConnection<PacketType>(
         if (peerConnectionDescriptor != null) {
             onDisconnectedHandler?.invoke(this)
         }
+    }
+
+    override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
+        logger.debug("Error on connection.", cause)
     }
 }

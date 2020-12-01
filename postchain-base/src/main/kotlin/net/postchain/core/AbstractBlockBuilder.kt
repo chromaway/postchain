@@ -142,8 +142,8 @@ abstract class AbstractBlockBuilder(
      * @param blockWitness The witness for the block
      * @throws ProgrammerMistake If the witness is invalid
      */
-    override fun commit(blockWitness: BlockWitness?) {
-        if (blockWitness != null && !validateWitness(blockWitness)) {
+    override fun commit(blockWitness: BlockWitness) {
+        if (!validateWitness(blockWitness)) {
             throw ProgrammerMistake("Invalid witness")
         }
         store.commitBlock(bctx, blockWitness)

@@ -48,7 +48,7 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
             try {
                 operation(ctx)
             } catch (e: Exception) {
-                logger.error("An error occurred", e)
+                logger.trace("An error occurred", e)
                 throw e
             } finally {
                 storage.closeReadConnection(ctx)
@@ -162,15 +162,18 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
      * Retrieve the full block at a specified height by first retrieving the wanted block RID and then
      * getting each element of that block that will allow us to build the full block.
      *
+     * If includeTransactions is false (default = true), no transaction data will be included
+     * in the result, which means that only the header+witness is returned.
+     *
      * @throws UserMistake No block could be found at the specified height
      * @throws ProgrammerMistake Too many blocks (>1) found at the specified height
      */
-    override fun getBlockAtHeight(height: Long): Promise<BlockDataWithWitness, Exception> {
+    override fun getBlockAtHeight(height: Long, includeTransactions: Boolean): Promise<BlockDataWithWitness, Exception> {
         return runOp {
             val blockRID = blockStore.getBlockRID(it, height) ?: throw UserMistake("No block at height $height")
             val headerBytes = blockStore.getBlockHeader(it, blockRID)
             val witnessBytes = blockStore.getWitnessData(it, blockRID)
-            val txBytes = blockStore.getBlockTransactions(it, blockRID)
+            val txBytes = if (includeTransactions) blockStore.getBlockTransactions(it, blockRID) else listOf()
             val header = blockchainConfiguration.decodeBlockHeader(headerBytes)
             val witness = blockchainConfiguration.decodeWitness(witnessBytes)
 

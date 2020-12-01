@@ -52,8 +52,7 @@ class BaseBlockStore : BlockStore {
     }
 
 
-    override fun commitBlock(bctx: BlockEContext, w: BlockWitness?) {
-        if (w == null) return
+    override fun commitBlock(bctx: BlockEContext, w: BlockWitness) {
         DatabaseAccess.of(bctx).commitBlock(bctx, w)
     }
 

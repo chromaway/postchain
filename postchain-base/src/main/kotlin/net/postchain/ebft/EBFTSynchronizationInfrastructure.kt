@@ -24,7 +24,6 @@ import net.postchain.network.netty2.NettyConnectorFactory
 import net.postchain.network.x.DefaultXCommunicationManager
 import net.postchain.network.x.DefaultXConnectionManager
 import net.postchain.network.x.XConnectionManager
-import net.postchain.network.x.XPeerID
 
 class EBFTSynchronizationInfrastructure(
         val nodeConfigProvider: NodeConfigurationProvider,
@@ -32,13 +31,15 @@ class EBFTSynchronizationInfrastructure(
 ) : SynchronizationInfrastructure {
 
     private val nodeConfig get() = nodeConfigProvider.getConfiguration()
+    val peerCommConfiguration: PeerCommConfiguration
     val connectionManager: XConnectionManager
     private val blockchainProcessesDiagnosticData = mutableMapOf<BlockchainRid, MutableMap<String, Any>>()
 
     init {
+        peerCommConfiguration = buildPeerCommConfiguration(nodeConfig)
         connectionManager = DefaultXConnectionManager(
                 NettyConnectorFactory(),
-                buildInternalPeerCommConfiguration(nodeConfig),
+                peerCommConfiguration,
                 EbftPacketEncoderFactory(),
                 EbftPacketDecoderFactory(),
                 SECP256K1CryptoSystem())
@@ -64,7 +65,7 @@ class EBFTSynchronizationInfrastructure(
                     blockchainConfig.signers,
                     engine,
                     blockchainConfig.configData.context.nodeID,
-                    buildXCommunicationManager(processName, blockchainConfig, false),
+                    buildXCommunicationManager(processName, blockchainConfig),
                     unregisterBlockchainDiagnosticData
             )
         } else {
@@ -74,7 +75,7 @@ class EBFTSynchronizationInfrastructure(
                     processName,
                     blockchainConfig.signers,
                     engine,
-                    buildXCommunicationManager(processName, blockchainConfig, true),
+                    buildXCommunicationManager(processName, blockchainConfig),
                     unregisterBlockchainDiagnosticData)
         }
     }
@@ -92,34 +93,14 @@ class EBFTSynchronizationInfrastructure(
 
     private fun buildXCommunicationManager(
             processName: BlockchainProcessName,
-            blockchainConfig: BaseBlockchainConfiguration,
-            isReplica: Boolean
+            blockchainConfig: BaseBlockchainConfiguration
     ): CommunicationManager<Message> {
-        val nodeConfigCopy = nodeConfig
-
-        val myPeerID = XPeerID(nodeConfigCopy.pubKeyByteArray)
-        val signers = blockchainConfig.signers.map { XPeerID(it) }
-        val signersReplicas = signers.flatMap {
-            nodeConfigCopy.nodeReplicas[it] ?: listOf()
-        }
-        val blockchainReplicas = nodeConfigCopy.blockchainReplicaNodes[blockchainConfig.blockchainRid] ?: listOf()
-
-        val relevantPeerMap = nodeConfigCopy.peerInfoMap.filterKeys {
-            it in signers || it in signersReplicas || it in blockchainReplicas || it == myPeerID
-        }
-
-        val communicationConfig = BasePeerCommConfiguration.build(
-                relevantPeerMap,
-                SECP256K1CryptoSystem(),
-                nodeConfigCopy.privKeyByteArray,
-                myPeerID.byteArray)
-
-        val packetEncoder = EbftPacketEncoder(communicationConfig, blockchainConfig.blockchainRid)
-        val packetDecoder = EbftPacketDecoder(communicationConfig)
+        val packetEncoder = EbftPacketEncoder(peerCommConfiguration, blockchainConfig.blockchainRid)
+        val packetDecoder = EbftPacketDecoder(peerCommConfiguration)
 
         return DefaultXCommunicationManager(
                 connectionManager,
-                communicationConfig,
+                peerCommConfiguration,
                 blockchainConfig.chainID,
                 blockchainConfig.blockchainRid,
                 packetEncoder,
@@ -128,7 +109,7 @@ class EBFTSynchronizationInfrastructure(
         ).apply { init() }
     }
 
-    private fun buildInternalPeerCommConfiguration(nodeConfig: NodeConfig): PeerCommConfiguration {
+    private fun buildPeerCommConfiguration(nodeConfig: NodeConfig): PeerCommConfiguration {
         return BasePeerCommConfiguration.build(
                 nodeConfig.peerInfoMap,
                 SECP256K1CryptoSystem(),

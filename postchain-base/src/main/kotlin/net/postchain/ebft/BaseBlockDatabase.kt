@@ -145,8 +145,8 @@ class BaseBlockDatabase(
         return blockQueries.getBlockSignature(blockRID)
     }
 
-    override fun getBlockAtHeight(height: Long): Promise<BlockDataWithWitness, Exception> {
-        return blockQueries.getBlockAtHeight(height)
+    override fun getBlockAtHeight(height: Long, includeTransactions: Boolean): Promise<BlockDataWithWitness, Exception> {
+        return blockQueries.getBlockAtHeight(height, includeTransactions)
     }
 
 }

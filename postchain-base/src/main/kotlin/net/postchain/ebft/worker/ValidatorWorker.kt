@@ -34,7 +34,7 @@ class ValidatorWorker(
     override val blockDatabase: BaseBlockDatabase
     private val blockManager: BlockManager
     val statusManager: BaseStatusManager
-    override val syncManager: SyncManager
+    override val syncManager: ValidatorSyncManager
     override val networkAwareTxQueue: NetworkAwareTxQueue
     override val nodeStateTracker = NodeStateTracker()
 
@@ -81,6 +81,7 @@ class ValidatorWorker(
      * Stop the postchain node
      */
     override fun shutdown() {
+        syncManager.shutdown()
         super.shutdown()
         communicationManager.shutdown()
         onShutdown()

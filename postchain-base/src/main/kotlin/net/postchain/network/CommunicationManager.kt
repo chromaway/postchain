@@ -11,4 +11,12 @@ interface CommunicationManager<PacketType> : Shutdownable {
     fun getPackets(): MutableList<Pair<XPeerID, PacketType>>
     fun sendPacket(packet: PacketType, recipient: XPeerID)
     fun broadcastPacket(packet: PacketType)
+    /**
+     * Sends the packet to a peer selected by random.
+     *
+     * @param excludedPeers Exclude these peers when selecting a random peer.
+     * @return the selected peer that the packet was sent to. If there
+     * were no peers available, null is returned.
+     */
+    fun sendToRandomPeer(packet: PacketType, excludedPeers: Set<XPeerID>): XPeerID?
 }

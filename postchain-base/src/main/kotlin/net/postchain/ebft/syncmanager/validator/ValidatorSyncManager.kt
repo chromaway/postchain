@@ -18,6 +18,7 @@ import net.postchain.ebft.syncmanager.StatusLogInterval
 import net.postchain.ebft.syncmanager.SyncManager
 import net.postchain.ebft.syncmanager.common.EBFTNodesCondition
 import net.postchain.ebft.syncmanager.common.FastSynchronizer
+import net.postchain.ebft.syncmanager.common.Messaging
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
 import nl.komponents.kovenant.task
@@ -32,12 +33,12 @@ class ValidatorSyncManager(
         private val statusManager: StatusManager,
         private val blockManager: BlockManager,
         private val blockDatabase: BlockDatabase,
-        private val blockQueries: BlockQueries,
-        private val communicationManager: CommunicationManager<Message>,
+        blockQueries: BlockQueries,
+        communicationManager: CommunicationManager<Message>,
         private val nodeStateTracker: NodeStateTracker,
         private val txQueue: TransactionQueue,
         private val blockchainConfiguration: BlockchainConfiguration
-) : SyncManager {
+) : Messaging(blockQueries, communicationManager), SyncManager {
 
     private val revoltTracker = RevoltTracker(10000, statusManager)
     private val statusSender = StatusSender(1000, statusManager, communicationManager)
@@ -47,11 +48,8 @@ class ValidatorSyncManager(
     private var processingIntentDeadline = 0L
     private var lastStatusLogged: Long
 
-    @Volatile
-    private var useFastSyncAlgorithm: Boolean = false
+    private var useFastSyncAlgorithm: Boolean = true
     private val fastSynchronizer = FastSynchronizer(
-            processName,
-            signers.minus(signers.elementAt(statusManager.getMyIndex())),
             communicationManager,
             blockDatabase,
             blockchainConfiguration,
@@ -90,7 +88,10 @@ class ValidatorSyncManager(
                 when (message) {
                     // same case for replica and validator node
                     is GetBlockAtHeight -> sendBlockAtHeight(xPeerId, message.height)
-
+                    is GetBlockHeaderAndBlock -> {
+                        sendBlockHeaderAndBlock(xPeerId, message.height,
+                                this.statusManager.myStatus.height-1)
+                    }
                     else -> {
                         if (!isReadOnlyNode) { // TODO: [POS-90]: Is it necessary here `isReadOnlyNode`?
                             // validator consensus logic
@@ -197,24 +198,6 @@ class ValidatorSyncManager(
         } fail {
             logger.debug("$processName: Error sending BlockSignature", it)
         }
-    }
-
-    /**
-     * Send message to node including the block at [height]. This is a response to the [fetchBlockAtHeight] request.
-     *
-     * @param xPeerId XPeerID of receiving node
-     * @param height requested block height
-     */
-    private fun sendBlockAtHeight(xPeerId: XPeerID, height: Long) {
-        val blockAtHeight = blockDatabase.getBlockAtHeight(height)
-        blockAtHeight success {
-            val packet = CompleteBlock(
-                    BlockData(it.header.rawData, it.transactions),
-                    height,
-                    it.witness!!.getRawData()
-            )
-            communicationManager.sendPacket(packet, xPeerId)
-        } fail { logger.debug("$processName: Error sending CompleteBlock", it) }
     }
 
     /**
@@ -343,7 +326,7 @@ class ValidatorSyncManager(
 
     private fun tryToSwitchToFastSync() {
         useFastSyncAlgorithm = EBFTNodesCondition(statusManager.nodeStatuses) { status ->
-            status.height - statusManager.myStatus.height >= fastSynchronizer.blockHeightAheadCount
+            status.height - statusManager.myStatus.height >= 3
         }.satisfied()
     }
 
@@ -354,16 +337,13 @@ class ValidatorSyncManager(
     override fun update() {
         if (useFastSyncAlgorithm) {
             synchronized(statusManager) {
-                fastSynchronizer.sync()
-                if (fastSynchronizer.isAlmostUpToDate()) {
-                    fastSynchronizer.reset()
-                    // turn off fast sync, reset current block to null, and query for the last known state from db to prevent
-                    // possible race conditions
-                    useFastSyncAlgorithm = false
-                    val currentBlockHeight = blockQueries.getBestHeight().get()
-                    statusManager.fastForwardHeight(currentBlockHeight)
-                    blockManager.currentBlock = null
-                }
+                fastSynchronizer.syncUntilResponsiveNodesDrained()
+                // turn off fast sync, reset current block to null, and query for the last known state from db to prevent
+                // possible race conditions
+                useFastSyncAlgorithm = false
+                val currentBlockHeight = blockQueries.getBestHeight().get()
+                statusManager.fastForwardHeight(currentBlockHeight)
+                blockManager.currentBlock = null
             }
         } else {
             synchronized(statusManager) {
@@ -399,5 +379,9 @@ class ValidatorSyncManager(
                 }
             }
         }
+    }
+
+    fun shutdown() {
+        fastSynchronizer.shutdown()
     }
 }
