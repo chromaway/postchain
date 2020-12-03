@@ -49,6 +49,7 @@ class ReadOnlyWorker(
     override fun shutdown() {
         communicationManager.shutdown()
         fastSynchronizer.shutdown()
+        blockchainEngine.shutdown()
         done.await()
         onShutdown()
     }

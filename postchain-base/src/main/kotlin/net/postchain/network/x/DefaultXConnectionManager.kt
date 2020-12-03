@@ -17,12 +17,18 @@ import net.postchain.network.XPacketEncoderFactory
 
 class DefaultXConnectionManager<PacketType>(
         connectorFactory: XConnectorFactory<PacketType>,
-        val peerCommConfiguration: PeerCommConfiguration,
+        private val peerCommConfiguration: PeerCommConfiguration,
         private val packetEncoderFactory: XPacketEncoderFactory<PacketType>,
         private val packetDecoderFactory: XPacketDecoderFactory<PacketType>,
         cryptoSystem: CryptoSystem
 ) : XConnectionManager, XConnectorEvents {
 
+
+    // One problem with initiating the connector before connecting all chains
+    // is that we might close legit incoming connections that are for blockchains
+    // that haven't been connected yet.
+    // During startup, It'd be better to create the connector once all
+    // currently known chains have been connected.
     private val connector = connectorFactory.createConnector(
             peerCommConfiguration.myPeerInfo(),
             packetDecoderFactory.create(peerCommConfiguration),
@@ -149,13 +155,14 @@ class DefaultXConnectionManager<PacketType>(
     override fun disconnectChain(chainID: Long, loggingPrefix: () -> String) {
         logger.debug { "${loggingPrefix()}: Disconnecting chain: $chainID" }
 
-        val chain = chains[chainID]
+        // Remove the chain before closing connections so that we won't
+        // reconnect in onPeerDisconnected()
+        val chain = chains.remove(chainID)
         if (chain != null) {
             chain.connections.forEach { (_, conn) ->
                 conn.close()
             }
             chain.connections.clear()
-            chains.remove(chainID)
             logger.debug { "${loggingPrefix()}: Chain disconnected: $chainID" }
 
         } else {
@@ -167,9 +174,8 @@ class DefaultXConnectionManager<PacketType>(
     override fun onPeerConnected(connection: XPeerConnection): XPacketHandler? {
         val descriptor = connection.descriptor()
         logger.info {
-            "${logger(descriptor)}: Peer connected: peer = ${peerName(descriptor.peerId)}" +
+            "${logger(descriptor)}: New ${descriptor.dir} connection: peer = ${peerName(descriptor.peerId)}" +
                     ", blockchainRID: ${descriptor.blockchainRID}" +
-                    ", direction: ${descriptor.dir}" +
                     ", (size of c4Brid: ${chainIDforBlockchainRID.size}, size of chains: ${chains.size}) "
         }
 
@@ -190,7 +196,6 @@ class DefaultXConnectionManager<PacketType>(
             logger.debug { "${logger(descriptor)}: onPeerConnected: Peer not behaving well, so ignore: peer = ${peerName(descriptor.peerId)}" }
             null
         } else {
-
             val originalConn = chain.connections[descriptor.peerId]
             if (originalConn != null) {
                 logger.debug { "${logger(descriptor)}: onPeerConnected: Peer already connected: peer = ${peerName(descriptor.peerId)}" }
@@ -206,7 +211,7 @@ class DefaultXConnectionManager<PacketType>(
                 }
             } else {
                 chain.connections[descriptor.peerId] = connection
-                logger.debug { "${logger(descriptor)}: onPeerConnected: Peer connected: peer = ${peerName(descriptor.peerId)}" }
+                logger.debug { "${logger(descriptor)}: onPeerConnected: Connection accepted: peer = ${peerName(descriptor.peerId)}" }
                 peersConnectionStrategy.connectionEstablished(chainID, connection.descriptor().isOutgoing(), descriptor.peerId)
                 chain.peerConfig.packetHandler
             }

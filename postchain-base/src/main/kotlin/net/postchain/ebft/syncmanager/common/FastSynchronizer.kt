@@ -385,7 +385,7 @@ class FastSynchronizer(
 /**
  * Keeps track of peer's statuses. The currently trackeed statuses are
  *
- * Blacklisted: We have received invalid data from the peer
+ * Blacklisted: We have received invalid data from the peer, or it's otherwise misbehaving
  * Unresponsive: We haven't received a timely response from the peer
  * NotDrained: This class doesn't have any useful information about the peer
  * Drained: The peer's tip is reached.
@@ -400,28 +400,27 @@ class PeerStatuses: KLogging() {
         private enum class State {
             BLACKLISTED, UNRESPONSIVE, NOT_DRAINED, DRAINED
         }
-        private var time: Long = System.currentTimeMillis()
-            private set
-        private var receivedHeight: Long = -1
-        private var drainedHeight: Long = -2
         private var state = State.NOT_DRAINED
+
+        private var unresponsiveTime: Long = System.currentTimeMillis()
+        private var drainedTime: Long = System.currentTimeMillis()
+        private var drainedHeight: Long = -2
 
         fun isBlacklisted() = state == State.BLACKLISTED
         fun isUnresponsive() = state == State.UNRESPONSIVE
         private fun isDrained() = state == State.DRAINED
         fun isDrained(h: Long) = isDrained() && drainedHeight < h
+
         fun drained(height: Long) {
             state = State.DRAINED
             if (height > drainedHeight) {
                 drainedHeight = height
+                drainedTime = System.currentTimeMillis()
             }
         }
         fun received(height: Long) {
             if (state == State.DRAINED && height > drainedHeight) {
                 state = State.NOT_DRAINED
-            }
-            if (receivedHeight < height) {
-                receivedHeight = height
             }
         }
         fun statusReceived(height: Long) {
@@ -433,16 +432,18 @@ class PeerStatuses: KLogging() {
             }
         }
         fun unresponsive() {
-            this.state = State.UNRESPONSIVE
+            if (this.state != State.UNRESPONSIVE) {
+                this.state = State.UNRESPONSIVE
+                unresponsiveTime = System.currentTimeMillis()
+            }
         }
         fun blacklist() {
             this.state = State.BLACKLISTED
         }
         fun resurrect(now: Long) {
-            if (isDrained() && time + RESURRECTDRAINEDTIME < now ||
-                    isUnresponsive() && time + RESURRECTUNRESPONSIVE < now) {
+            if (isDrained() && drainedTime + RESURRECTDRAINEDTIME < now ||
+                    isUnresponsive() && unresponsiveTime + RESURRECTUNRESPONSIVE < now) {
                 state = State.NOT_DRAINED
-                time = now
             }
         }
     }
@@ -450,7 +451,6 @@ class PeerStatuses: KLogging() {
 
     private fun resurrectDrainedAndUnresponsivePeers() {
         val now = System.currentTimeMillis()
-        // Resurrect drained and unresponsive nodes
         statuses.forEach {
             it.value.resurrect(now)
         }

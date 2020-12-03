@@ -1,5 +1,6 @@
 package net.postchain.integrationtest.sync
 
+import mu.KLogging
 import net.postchain.StorageBuilder
 import net.postchain.base.PeerInfo
 import net.postchain.base.Storage
@@ -23,6 +24,7 @@ import org.junit.Test
 
 class SyncTest : IntegrationTestSetup() {
 
+    companion object: KLogging()
 
     /*
     The problem seems to be the same as in other p2p systems: How to find initial peers?
@@ -74,30 +76,45 @@ class SyncTest : IntegrationTestSetup() {
         syncSigners(signerCount, replicaCount, setOf(syncIndex), setOf())
     }
 
+    private fun n(index: Int): String {
+        var p = nodes[index].pubKey
+        return p.substring(0, 4) + ":" + p.substring(64)
+    }
+
     fun syncSigners(signerCount: Int, replicaCount: Int, syncIndex: Set<Int>, stopIndex: Set<Int> = setOf()) {
         val nodeSetups = runNodes(signerCount, replicaCount)
-
+        logger.debug { "All nodes started" }
         buildBlock(0, 0)
+        logger.debug { "All nodes have block 0" }
+
         val expectedBlockRid = nodes[0].blockQueries(0).getBlockRid(0).get()
 
         val peerInfos = nodeSetups[0].configurationProvider!!.getConfiguration().peerInfoMap
         stopIndex.forEach {
+            logger.debug { "Shutting down ${n(it)}" }
             nodes[it].shutdown()
+            logger.debug { "Shutting down ${n(it)} done" }
         }
         syncIndex.forEach {
+            logger.debug { "Restarting clean ${n(it)}" }
             restartNodeClean(nodeSetups[it])
+            logger.debug { "Restarting clean ${n(it)} done" }
         }
 
         syncIndex.forEach {
+            logger.debug { "Awaiting height 0 on ${n(it)}" }
             nodes[it].awaitHeight(0, 0)
             val actualBlockRid = nodes[it].blockQueries(0).getBlockRid(0).get()
             assertArrayEquals(expectedBlockRid, actualBlockRid)
+            logger.debug { "Awaiting height 0 on ${n(it)} done" }
         }
 
         stopIndex.forEach {
+            logger.debug { "Start ${n(it)} again" }
             startOldNode(it, peerInfos, nodeSetups[it])
         }
         buildBlock(0, 1)
+        logger.debug { "All nodes has block 1" }
     }
 
     @Test

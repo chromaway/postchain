@@ -32,9 +32,7 @@ class DefaultXCommunicationManager<PacketType>(
                 chainID,
                 blockchainRID,
                 config,
-                { data: ByteArray, peerID: XPeerID -> decodeAndEnqueue(peerID, data) },
-                packetEncoder,
-                packetDecoder
+                { data: ByteArray, peerID: XPeerID -> decodeAndEnqueue(peerID, data) }
         )
 
         connectionManager.connectChain(peerConfig, true) { processName.toString() }
