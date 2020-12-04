@@ -4,6 +4,7 @@ package net.postchain.ebft.syncmanager.validator
 
 import mu.KLogging
 import net.postchain.common.toHex
+import net.postchain.config.node.NodeConfig
 import net.postchain.core.*
 import net.postchain.core.Signature
 import net.postchain.debug.BlockchainProcessName
@@ -35,6 +36,7 @@ class ValidatorSyncManager(
         private val blockDatabase: BlockDatabase,
         blockQueries: BlockQueries,
         communicationManager: CommunicationManager<Message>,
+        nodeConfig: NodeConfig,
         private val nodeStateTracker: NodeStateTracker,
         private val txQueue: TransactionQueue,
         private val blockchainConfiguration: BlockchainConfiguration
@@ -53,7 +55,8 @@ class ValidatorSyncManager(
             communicationManager,
             blockDatabase,
             blockchainConfiguration,
-            blockQueries
+            blockQueries,
+            nodeConfig.fastSyncParameters
     )
 
     companion object : KLogging()

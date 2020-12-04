@@ -32,6 +32,7 @@ class ThreeTxForwardingTest : IntegrationTestSetup() {
         val count = 3
         configOverrides.setProperty("testpeerinfos", createPeerInfos(count))
         configOverrides.setProperty("api.port", 0)
+        configOverrides.setProperty("fastsync.discovery_timeout", 0L)
         createNodes(count, "/net/postchain/devtools/three_tx/blockchain_config.xml")
 
         apiModel(0).postTransaction(tx(0))

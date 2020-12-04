@@ -16,7 +16,7 @@ import net.postchain.network.XPacketDecoderFactory
 import net.postchain.network.XPacketEncoderFactory
 
 class DefaultXConnectionManager<PacketType>(
-        connectorFactory: XConnectorFactory<PacketType>,
+        private val connectorFactory: XConnectorFactory<PacketType>,
         private val peerCommConfiguration: PeerCommConfiguration,
         private val packetEncoderFactory: XPacketEncoderFactory<PacketType>,
         private val packetDecoderFactory: XPacketDecoderFactory<PacketType>,
@@ -24,15 +24,7 @@ class DefaultXConnectionManager<PacketType>(
 ) : XConnectionManager, XConnectorEvents {
 
 
-    // One problem with initiating the connector before connecting all chains
-    // is that we might close legit incoming connections that are for blockchains
-    // that haven't been connected yet.
-    // During startup, It'd be better to create the connector once all
-    // currently known chains have been connected.
-    private val connector = connectorFactory.createConnector(
-            peerCommConfiguration.myPeerInfo(),
-            packetDecoderFactory.create(peerCommConfiguration),
-            this)
+    private var connector: XConnector<PacketType>? = null
 
     companion object : KLogging()
 
@@ -50,7 +42,7 @@ class DefaultXConnectionManager<PacketType>(
             DefaultPeersConnectionStrategy(this, peerCommConfiguration.myPeerInfo().peerId())
 
     override fun shutdown() {
-        connector.shutdown()
+        connector?.shutdown()
         peersConnectionStrategy.shutdown()
         synchronized(this) {
             isShutDown = true
@@ -79,6 +71,21 @@ class DefaultXConnectionManager<PacketType>(
         chains[peerConfig.chainID] = Chain(peerConfig, autoConnectAll)
         chainIDforBlockchainRID[peerConfig.blockchainRID] = peerConfig.chainID
 
+        // We used to create the connector at object init. But a
+        // problem with initiating the connector before connecting all chains
+        // is that we might close legit incoming connections that are for blockchains
+        // that haven't been connected yet.
+        // During startup, It'd be better to create the connector once all
+        // currently known chains have been connected.
+        // This solution is getting us half-way. We solve the issue for the first
+        // blockchain started, but not for subsequent ones.
+        if (connector == null) {
+            connector = connectorFactory.createConnector(
+                    peerCommConfiguration.myPeerInfo(),
+                    packetDecoderFactory.create(peerCommConfiguration),
+                    this)
+        }
+
         if (autoConnectAll) {
             val commConf = peerConfig.commConfiguration
             peersConnectionStrategy.connectAll(chainID, commConf.networkNodes.getPeerIds())
@@ -103,7 +110,7 @@ class DefaultXConnectionManager<PacketType>(
                 peerConfig.commConfiguration,
                 peerConfig.blockchainRID)
 
-        connector.connectPeer(peerConnectionDescriptor, peerInfo, packetEncoder)
+        connector?.connectPeer(peerConnectionDescriptor, peerInfo, packetEncoder)
     }
 
     @Synchronized

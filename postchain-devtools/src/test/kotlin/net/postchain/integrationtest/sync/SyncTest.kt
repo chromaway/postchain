@@ -32,44 +32,22 @@ class SyncTest : IntegrationTestSetup() {
     Problems to solve:
 
     When a node (old or new) comes online it might not become aware of any currently
-    active nodes due to sync from.
+    active nodes because its nodelist might be outdated (network has evolved over time).
 
     It doesn’t have to happen at blockheight -1. This can happen at any height
     when the node has been offline for a while. This can only happen on chain0,
     because that's where all blockchain configurations and nodes are being tracked.
     As long as chain0 is fully synced, a node should be able to sync any other blockchain
-    in that domain.
+    in that domain, because it has the most recent signerlist.
 
-    I think we should do a manual approach, where we eg. provide a list of nodes
-    to sync from (let’s call it synclist) at startup. For example
+    Non-obvious tests to implement:
 
-            ./postchain.sh -synclist 192.168.1.13:9878,192.168.1.14:9962 bla bla bla
 
-    1. If synclist is provided the node will use that to catch up (It doesn’t
-    care what pubkey that node uses).
+    1 Sync a managed blockchain (not chain0) from newest nodes, where none of the initial nodes exist. (Should work fine)
+    2 Sync chain0 from newest nodes, where none of the initial nodes exist. Should work because newest nodes know about me.
+    3 Test 2, but give it a syncnode via configuration (Should work)
+    4 Sync single sole node from single nodelist (should wait for discovery timeout)
 
-    2. If no synclist is provided or previous step failed, the node will use
-    whatever is in the db to catch up
-
-    3. If there’s nothing in the db or previous step failed, and this node is the
-    sole signer, it will start building blocks on its own.
-
-    4. If it’s not a signer quit with error message.
-
-    Note that if you sync from a replica, and a configuration change occurrs, and
-    that new config is also outdated.
-
-    I think it's a bit odd to have the list of nodes (ip, port) being part of consensus.
-    It's only the keys that should be part of consensus. Where nodes are located is irrelevant.
-    We should see this consensus-driven node list as a help in getting new nodes connected,
-    but the nodes in that list should be overridable. Suppose there are currently 10 signing nodes,
-    and you happen to know where 1 of them are.
-
-    What to test?
-
-    * A node connects to replicas
-    * A replica connects to nodes
-    * A replica connects to replica
      */
 
     fun syncSigner(signerCount: Int, replicaCount: Int, syncIndex: Int) {
@@ -144,7 +122,7 @@ class SyncTest : IntegrationTestSetup() {
         var i = 0
         val nodeSetups = peerInfos.associate { NodeSeqNumber(i) to nodeSetup(i, peerInfos, i++<signerNodeCount, true) }
 
-        val blockchainPreSetup = BlockchainPreSetup.simpleBuild(0, listOf(NodeSeqNumber(0)))
+        val blockchainPreSetup = BlockchainPreSetup.simpleBuild(0, (0 until signerNodeCount).map { NodeSeqNumber(it) })
         val blockchainSetup = BlockchainSetup.buildFromGtv(0, blockchainPreSetup.toGtvConfig(mapOf()))
 
         val systemSetup = SystemSetup(nodeSetups, mapOf(0 to blockchainSetup), true, "managed", "managed", "base/ebft", true)

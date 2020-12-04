@@ -6,6 +6,7 @@ import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.devtools.TestLegacyNodeConfigProducer
 import org.apache.commons.configuration2.CompositeConfiguration
+import org.apache.commons.configuration2.Configuration
 import org.apache.commons.configuration2.MapConfiguration
 import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder
@@ -37,7 +38,7 @@ object NodeConfigurationProviderGenerator {
 
         // TODO [Olle] I'm uncertain about this: could the Logic in TestLegacyNodeConfProducer be the same for managed mode too?
         val baseConfig = when (systemSetup.nodeConfProvider) {
-            "legacy", "manual" -> TestLegacyNodeConfigProducer.createNodeConfig(testName, nodeSetup, systemSetup, null, configOverrides)
+            "legacy", "manual" -> TestLegacyNodeConfigProducer.createNodeConfig(testName, nodeSetup, systemSetup, null)
             "managed" -> throw IllegalArgumentException("Managed not implemented yet") // TODO [Olle] Implement
             else -> throw IllegalArgumentException("Don't know this provider")
         }
@@ -53,7 +54,7 @@ object NodeConfigurationProviderGenerator {
      * @return a conf provider where we have overidden the base config with the given overrides.
      */
     private fun buildBase(
-            baseConfig: PropertiesConfiguration,
+            baseConfig: Configuration,
             configOverrides: MapConfiguration,
             setupAction: (appConfig: AppConfig, nodeConfig: NodeConfig) -> Unit = { _, _ -> Unit }
     ): NodeConfigurationProvider {

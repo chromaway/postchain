@@ -66,6 +66,7 @@ class EBFTSynchronizationInfrastructure(
                     engine,
                     blockchainConfig.configData.context.nodeID,
                     buildXCommunicationManager(processName, blockchainConfig),
+                    nodeConfig,
                     unregisterBlockchainDiagnosticData
             )
         } else {
@@ -76,6 +77,7 @@ class EBFTSynchronizationInfrastructure(
                     blockchainConfig.signers,
                     engine,
                     buildXCommunicationManager(processName, blockchainConfig),
+                    nodeConfig,
                     unregisterBlockchainDiagnosticData)
         }
     }

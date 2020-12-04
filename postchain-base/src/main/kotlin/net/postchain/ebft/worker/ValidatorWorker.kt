@@ -3,6 +3,7 @@
 package net.postchain.ebft.worker
 
 import net.postchain.base.NetworkAwareTxQueue
+import net.postchain.config.node.NodeConfig
 import net.postchain.core.BlockchainEngine
 import net.postchain.core.NodeStateTracker
 import net.postchain.debug.BlockchainProcessName
@@ -28,6 +29,7 @@ class ValidatorWorker(
         override val blockchainEngine: BlockchainEngine,
         nodeIndex: Int,
         private val communicationManager: CommunicationManager<Message>,
+        nodeConfig: NodeConfig,
         val onShutdown: () -> Unit = {}
 ) : AbstractBlockchainProcess() {
 
@@ -64,6 +66,7 @@ class ValidatorWorker(
                 blockDatabase,
                 blockchainEngine.getBlockQueries(),
                 communicationManager,
+                nodeConfig,
                 nodeStateTracker,
                 blockchainEngine.getTransactionQueue(),
                 blockchainEngine.getConfiguration())

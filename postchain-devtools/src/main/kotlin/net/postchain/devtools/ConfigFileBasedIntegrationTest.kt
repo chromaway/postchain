@@ -266,18 +266,10 @@ open class ConfigFileBasedIntegrationTest: AbstractIntegration() {
             : AppConfig {
 
         val file = File(configFile)
-        /*
-        if (file.isFile) {
-            throw IllegalArgumentException("Node conf file on path: $configFile cannot be found.")
-        } else {
-            logger.debug("Node conf file found: $configFile")
-        }
-         */
 
         // Read first file directly via the builder
         val params = Parameters()
                 .fileBased()
-//                .setLocationStrategy(ClasspathLocationStrategy())
                 .setLocationStrategy(UniversalFileLocationStrategy())
                 .setListDelimiterHandler(DefaultListDelimiterHandler(','))
                 .setFile(file)
@@ -303,6 +295,12 @@ open class ConfigFileBasedIntegrationTest: AbstractIntegration() {
 
             baseConfig.setProperty("messaging.privkey", KeyPairHelper.privKeyHex(nodeIndex))
             baseConfig.setProperty("messaging.pubkey", KeyPairHelper.pubKeyHex(nodeIndex))
+        }
+
+        if (nodeCount == 1) {
+            // We only have one node. Skip time consuming node discovery
+            // in FastSynchronizer
+            baseConfig.setProperty("fastsync.discovery_timeout", 0) // ms
         }
 
         val appConfig = CompositeConfiguration().apply {

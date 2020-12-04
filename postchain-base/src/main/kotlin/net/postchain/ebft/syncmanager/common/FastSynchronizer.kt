@@ -6,6 +6,7 @@ import mu.KLogging
 import net.postchain.base.BaseBlockHeader
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.core.*
+import net.postchain.core.BlockHeader
 import net.postchain.ebft.BlockDatabase
 import net.postchain.ebft.message.*
 import net.postchain.network.CommunicationManager
@@ -17,6 +18,27 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.collections.HashMap
 import net.postchain.ebft.message.BlockHeader as BlockHeaderMessage
 
+
+/**
+ * Tuning parameters for FastSychronizer. All times are in ms.
+ */
+data class FastSyncParameters(var resurrectDrainedTime: Long = 10000,
+                              var resurrectUnresponsiveTime: Long = 20000,
+                              var parallelism: Int = 10,
+                              /**
+                               * How long to wait before deciding that we are the sole node
+                               *
+                               * Sane values:
+                               *
+                               * Replicas: Long.MAX_LONG
+                               * Signers: 60000ms
+                               * Tests with single node: 0 // skip fastsync
+                               */
+                              var discoveryTimeout: Long = 60000,
+                              var pollPeersInterval: Long = 10000,
+                              var jobTimeout: Long = 10000,
+                              var loopInteval: Long = 100)
+
 /**
  * This class syncs blocks from its peers by requesting <parallelism> blocks
  * from random peers simultaneously.
@@ -24,26 +46,46 @@ import net.postchain.ebft.message.BlockHeader as BlockHeaderMessage
  * The peers respond to the requests using a BlockHeader immediately followed
  * by an UnfinishedBlock, but if they don't have the block, they respond with
  * their latest BlockHeader and the height that was requested. If they
- * don't have any blocks at all, they don't reply.
+ * don't have any blocks at all, they reply with a BlockHeader with empty header
+ * and witness.
  *
- * Requests that times out: When a request to a peer has been outstanding for a long time
- * we must timeout and stop using that peer, at least temporarily. Otherwise it will hold up the syncing
- * process every now and then when that peer has been randomly selected.
+ * Requests that times out: When a request to a peer has been outstanding for a
+ * long time (fastSyncParams.jobTimeout), we must timeout and stop using that
+ * peer, at least temporarily. Otherwise it will hold up the syncing process
+ * every now and then when that peer has been (randomly) selected.
+ *
+ * When we start this process we have no knowledge of which peers we are connected
+ * to. It's important to quickly get to know as many peers as possible, because the more
+ * peers we have the more reliable we can determine if we're up-to-date or not.
+ *
+ * That's hidden by the CommunicationManager. Instead we rely on two discovery mechanisms:
+ *
+ * 1. Request blocks from random peers via communicationManager.sendToRandomPeer(), which returns
+ * the peerId of the peer that the request was sent to.
+ *
+ * 2. Listen for messages from our peers. For example Status messages from peers that
+ * are in normal sync mode are typically sent every ~1s, and block requests from peers in fastsync
+ * mode are sent as often as they can, spread randomly across its peers, so the more peers it has,
+ * the less often we receive requests from it. On the other hand if there are lots of peers we don't
+ * need all peers to sync.
+ *
+ * These two methods should give us a pretty complete picture of the network within a few seconds.
+ *
+ * If this is the sole node, it will wait [params.discoveryTimeout] until it leaves fastsync and starts
+ * building blocks on its own. This is not a problem in a real world scenario, since you can wait a minute
+ * or so upon first start. But in tests, this can be really annoying. So tests that only runs a single node
+ * should set [params.discoveryTimeout] to 0. For replicas, it should be set to MAX_LONG, because replicas
+ * should stay in FastSync until shutdown.
  */
 class FastSynchronizer(
         communicationManager: CommunicationManager<Message>,
         val blockDatabase: BlockDatabase,
         private val blockchainConfiguration: BlockchainConfiguration,
-        blockQueries: BlockQueries
+        blockQueries: BlockQueries,
+        val params: FastSyncParameters
 ): Messaging(blockQueries, communicationManager) {
-    private val parallelism = 10
-    private val discoveryTimeout = 60000
-    private val pollPeersInterval = 10000
-    private val jobTimeout = pollPeersInterval
-    private val loopInterval = 100L // milliseconds
-
     private val jobs = TreeMap<Long, Job>()
-    private val peerStatuses = PeerStatuses()
+    private val peerStatuses = PeerStatuses(params)
 
     // This is the communication mechanism from the async commitBlock callback to main loop
     private val finishedJobs = LinkedBlockingQueue<Job>()
@@ -79,7 +121,7 @@ class FastSynchronizer(
                 processMessages()
                 processDoneJobs()
                 processStaleJobs()
-                sleep(loopInterval)
+                sleep(params.loopInteval)
             }
         } catch (e: Exception) {
             logger.debug("Exception in syncWhile()", e)
@@ -177,7 +219,8 @@ class FastSynchronizer(
         val now = System.currentTimeMillis()
         val toRestart = mutableListOf<Job>()
         for (j in jobs.values) {
-            if (j.block == null && j.startTime + jobTimeout < now) {
+            if (j.block == null && j.startTime + params.jobTimeout < now) {
+                logger.debug { "Fastsync: Marking job ${j.height} for peer ${j.peerId} unresponsive" }
                 peerStatuses.unresponsive(j.peerId)
                 toRestart.add(j)
             }
@@ -189,7 +232,11 @@ class FastSynchronizer(
     }
 
     private fun startFirstJob(): Boolean {
-        val timeout = System.currentTimeMillis() + discoveryTimeout
+        logger.debug("Fastsync: Discovery timeout: ${params.discoveryTimeout}")
+        if (params.discoveryTimeout == 0L) {
+            return false
+        }
+        val startTime = System.currentTimeMillis()
         while (!startNextJob()) {
             if (shutdown.get()) {
                 return false
@@ -197,7 +244,7 @@ class FastSynchronizer(
             // We haven't got any connections yet, or we are sole node.
             // We don't know which. Retry after a while and fail after
             // timeout.
-            if (System.currentTimeMillis() > timeout) {
+            if (System.currentTimeMillis()-startTime > params.discoveryTimeout) {
                 // Assume we're sole node
                 return false
             }
@@ -207,7 +254,7 @@ class FastSynchronizer(
     }
 
     private fun refillJobs() {
-        (jobs.size until parallelism).forEach {
+        (jobs.size until params.parallelism).forEach {
             startNextJob()
         }
     }
@@ -342,10 +389,6 @@ class FastSynchronizer(
         }
     }
 
-    private fun handleStatus(peerId: XPeerID, height: Long) {
-        peerStatuses.statusReceived(peerId, height)
-    }
-
     private fun commitBlock(job: Job) {
         val p = blockDatabase.addBlock(job.block!!)
         p.success {_ ->
@@ -361,22 +404,23 @@ class FastSynchronizer(
 
     private fun processMessages() {
         for (packet in communicationManager.getPackets()) {
-            val xPeerId = packet.first
-            if (peerStatuses.isBlacklisted(xPeerId)) {
+            val peerId = packet.first
+            if (peerStatuses.isBlacklisted(peerId)) {
                 continue
             }
+            peerStatuses.addPeer(peerId)
             val message = packet.second
             try {
                 when (message) {
-                    is GetBlockAtHeight -> sendBlockAtHeight(xPeerId, message.height)
-                    is GetBlockHeaderAndBlock -> sendBlockHeaderAndBlock(xPeerId, message.height, blockHeight)
-                    is BlockHeaderMessage -> handleBlockHeader(xPeerId, message.header, message.witness, message.requestedHeight)
-                    is UnfinishedBlock -> handleUnfinishedBlock(xPeerId, message.header, message.transactions)
-                    is Status -> handleStatus(xPeerId, message.height-1)
-                    else -> logger.debug("Unhandled type ${message} from peer $xPeerId")
+                    is GetBlockAtHeight -> sendBlockAtHeight(peerId, message.height)
+                    is GetBlockHeaderAndBlock -> sendBlockHeaderAndBlock(peerId, message.height, blockHeight)
+                    is BlockHeaderMessage -> handleBlockHeader(peerId, message.header, message.witness, message.requestedHeight)
+                    is UnfinishedBlock -> handleUnfinishedBlock(peerId, message.header, message.transactions)
+                    is Status -> peerStatuses.statusReceived(peerId, message.height-1)
+                    else -> logger.debug("Unhandled type ${message} from peer $peerId")
                 }
             } catch (e: Exception) {
-                logger.info("Couldn't handle message $message from peer $xPeerId. Ignoring and continuing", e)
+                logger.info("Couldn't handle message $message from peer $peerId. Ignoring and continuing", e)
             }
         }
     }
@@ -390,13 +434,32 @@ class FastSynchronizer(
  * NotDrained: This class doesn't have any useful information about the peer
  * Drained: The peer's tip is reached.
  */
-class PeerStatuses: KLogging() {
-    companion object {
-        const val RESURRECTDRAINEDTIME = 10000
-        const val RESURRECTUNRESPONSIVE = 20000
-    }
+class PeerStatuses(val params: FastSyncParameters): KLogging() {
 
-    private class KnownState() {
+    /**
+     * Keeps notes on a single peer. Some rules:
+     *
+     * When a peer has been marked DRAINED or UNRESPONSIVE for a certain
+     * amount of time ([params.resurrectDrainedTime] and
+     * [params.resurrectUnresponsiveTime] resp.) it will be given
+     * a new chance to serve us blocks. Otherwise we might run out of
+     * peers to sync from over time.
+     *
+     * Peers that are marked BLACKLISTED, should never be given another chance
+     * because they have been proven to provide bad data (deliberately or not).
+     *
+     * The DRAINED state is reset to NOT_DRAINED whenever we receive a valid header for a
+     * height higher than the height at which it was drained or when we
+     * receive a Status message (which is sent regurarly from peers in normal
+     * sync mode).
+     *
+     * We use Status messages as indication that there are headers
+     * available at that Status' height-1 (The height in the Status
+     * message indicates the height that they're working on, ie their committed
+     * height + 1). They also serve as a discovery mechanism, in which we become
+     * aware of our neiborhood.
+     */
+    private class KnownState(val params: FastSyncParameters) {
         private enum class State {
             BLACKLISTED, UNRESPONSIVE, NOT_DRAINED, DRAINED
         }
@@ -441,8 +504,8 @@ class PeerStatuses: KLogging() {
             this.state = State.BLACKLISTED
         }
         fun resurrect(now: Long) {
-            if (isDrained() && drainedTime + RESURRECTDRAINEDTIME < now ||
-                    isUnresponsive() && unresponsiveTime + RESURRECTUNRESPONSIVE < now) {
+            if (isDrained() && drainedTime + params.resurrectDrainedTime < now ||
+                    isUnresponsive() && unresponsiveTime + params.resurrectUnresponsiveTime < now) {
                 state = State.NOT_DRAINED
             }
         }
@@ -490,7 +553,6 @@ class PeerStatuses: KLogging() {
         if (status.isBlacklisted()) {
             return
         }
-        logger.debug("Fastsync: marking unresponsive: $peerId")
         status.unresponsive()
     }
 
@@ -501,7 +563,7 @@ class PeerStatuses: KLogging() {
     private fun stateOf(peerId: XPeerID): KnownState {
         var knownState = statuses[peerId]
         if (knownState == null) {
-            knownState = KnownState()
+            knownState = KnownState(params)
             statuses[peerId] = knownState
         }
         return knownState

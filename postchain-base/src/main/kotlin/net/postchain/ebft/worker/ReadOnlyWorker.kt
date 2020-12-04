@@ -2,6 +2,7 @@
 
 package net.postchain.ebft.worker
 
+import net.postchain.config.node.NodeConfig
 import net.postchain.core.BlockchainEngine
 import net.postchain.core.BlockchainProcess
 import net.postchain.core.NODE_ID_READ_ONLY
@@ -22,6 +23,7 @@ class ReadOnlyWorker(
         signers: List<ByteArray>,
         private val blockchainEngine: BlockchainEngine,
         private val communicationManager: CommunicationManager<Message>,
+        nodeConfig: NodeConfig,
         private val onShutdown: () -> Unit = {}
 ) : BlockchainProcess {
 
@@ -35,11 +37,15 @@ class ReadOnlyWorker(
         val blockDatabase = BaseBlockDatabase(
                 blockchainEngine, blockchainEngine.getBlockQueries(), NODE_ID_READ_ONLY)
 
+        val fastSyncParameters = nodeConfig.fastSyncParameters
+        fastSyncParameters.discoveryTimeout = Long.MAX_VALUE
+
         fastSynchronizer = FastSynchronizer(
                 communicationManager,
                 blockDatabase,
                 blockchainEngine.getConfiguration(),
-                blockchainEngine.getBlockQueries())
+                blockchainEngine.getBlockQueries(),
+                fastSyncParameters)
         thread(name = "replicaSync-$processName") {
             fastSynchronizer.syncUntilShutdown()
             done.countDown()
