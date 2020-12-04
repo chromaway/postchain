@@ -384,6 +384,10 @@ class ValidatorSyncManager(
         }
     }
 
+    fun isInFastSync(): Boolean {
+        return useFastSyncAlgorithm
+    }
+
     fun shutdown() {
         fastSynchronizer.shutdown()
     }

@@ -12,11 +12,12 @@ import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.devtools.utils.configuration.*
 import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
+import net.postchain.ebft.worker.ValidatorWorker
 import org.apache.commons.configuration2.MapConfiguration
+import org.awaitility.kotlin.await
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertTrue
-import org.junit.Before
 
 /**
  * This class uses the [SystemSetup] helper class to construct tests, and this way skips node config files, but
@@ -154,6 +155,27 @@ open class IntegrationTestSetup : AbstractIntegration() {
             // TODO: not nice to mutate the "nodes" object like this, should return the list of PTNodes instead for testability
             nodes.add(newPTNode)
             nodeMap[nodeSetup.sequenceNumber] = newPTNode
+        }
+        // Await FastSynch to complete. This is to prevent a situation where
+        // 1. Test starts all nodes
+        // 2. post a transaction
+        // 3. await block 0 (with timeout of 10 seconds)
+        // 4. Fastsync doesn't succeed within a timeout of X>10 seconds
+        // This can happen in rare occations. It's common enough to happen at avery
+        // other -Pci build on travis.
+        // This code waits for sync on all signer nodes before returning in step 1.
+        systemSetup.nodeMap.values.forEach {
+            val ns = it
+            it.chainsToSign.forEach {
+                val process = nodes[ns.sequenceNumber.nodeNumber].getBlockchainInstance(it.toLong())
+                await.until {
+                    if (process is ValidatorWorker) {
+                        !process.syncManager.isInFastSync()
+                    } else {
+                        true
+                    }
+                }
+            }
         }
     }
 
