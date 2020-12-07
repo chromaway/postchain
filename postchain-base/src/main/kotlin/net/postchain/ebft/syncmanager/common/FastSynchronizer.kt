@@ -37,7 +37,8 @@ data class FastSyncParameters(var resurrectDrainedTime: Long = 10000,
                               var discoveryTimeout: Long = 60000,
                               var pollPeersInterval: Long = 10000,
                               var jobTimeout: Long = 10000,
-                              var loopInteval: Long = 100)
+                              var loopInteval: Long = 100,
+                              var processName: String = "")
 
 /**
  * This class syncs blocks from its peers by requesting <parallelism> blocks
@@ -95,22 +96,30 @@ class FastSynchronizer(
     var blockHeight: Long = blockQueries.getBestHeight().get()
         private set
 
-    class Job(val height: Long, var peerId: XPeerID) {
+    inner class Job(val height: Long, var peerId: XPeerID) {
         var header: BlockHeader? = null
         var witness: BlockWitness? = null
         var block: BlockDataWithWitness? = null
         var blockCommitting = false
         var success = false
         val startTime = System.currentTimeMillis()
+        var hasRestartFailed = false
+        override fun toString(): String {
+            return "${this@FastSynchronizer.params.processName}-h${height}-${peerId.shortString()}"
+        }
     }
 
     private val shutdown = AtomicBoolean(false)
 
+    fun debug(message: String, e: Exception? = null) {
+        logger.debug("${params.processName}: $message", e)
+    }
+    
     fun syncWhile(condition: () -> Boolean) {
         try {
-            logger.debug("Fastsync: Start fastsync")
+            debug("Start fastsync")
             blockHeight = blockQueries.getBestHeight().get()
-            logger.debug("Fastsync: Best height $blockHeight")
+            debug("Best height $blockHeight")
             if (!startFirstJob()) {
                 // There are no nodes to sync from. We're
                 // probably the sole live node
@@ -124,14 +133,14 @@ class FastSynchronizer(
                 sleep(params.loopInteval)
             }
         } catch (e: Exception) {
-            logger.debug("Exception in syncWhile()", e)
+            debug("Exception in syncWhile()", e)
         } finally {
-            logger.debug("Fastsync: Await commits")
+            debug("Await commits")
             awaitCommits()
             jobs.clear()
             finishedJobs.clear()
             peerStatuses.clear()
-            logger.debug("Fastsync: Exit fastsync")
+            debug("Exit fastsync")
         }
     }
 
@@ -189,6 +198,7 @@ class FastSynchronizer(
     fun processDoneJobs() {
         var j = finishedJobs.poll()
         while (j != null) {
+            debug("Processing done job $j")
             processDoneJob(j)
             j = finishedJobs.poll()
         }
@@ -197,16 +207,13 @@ class FastSynchronizer(
     private fun processDoneJob(j: Job, final: Boolean = false) {
         if (j.success) {
             // Add new job and remove old job
-            // Important to start new job before removing old, because
-            // isAlmostFinished uses "jobs.size < 3" to decide whether almost
-            // finished.
-            // Don't ask drained nodes for it.
             if (!final) {
                 startNextJob()
             }
             blockHeight++
             removeJob(j)
         } else {
+            debug("Invalid block ${j}. Blacklisting.")
             // Peer sent us an invalid block. Blacklist the peer and restart job
             peerStatuses.blacklist(j.peerId)
             if (!final) {
@@ -219,8 +226,16 @@ class FastSynchronizer(
         val now = System.currentTimeMillis()
         val toRestart = mutableListOf<Job>()
         for (j in jobs.values) {
-            if (j.block == null && j.startTime + params.jobTimeout < now) {
-                logger.debug { "Fastsync: Marking job ${j.height} for peer ${j.peerId} unresponsive" }
+            if (j.hasRestartFailed) {
+                // These are jobs that couldn't be restarted because there
+                // were no peers available at the time. Try again every
+                // time, because there is virtually no cost in doing so.
+                // It's just a check against a local datastructure.
+                toRestart.add(j)
+            } else if (j.block == null && j.startTime + params.jobTimeout < now) {
+                // We have waited for response from j.peerId fo a long time.
+                // Let's mark it unresponsive and restart the job.
+                debug("Marking job ${j} unresponsive")
                 peerStatuses.unresponsive(j.peerId)
                 toRestart.add(j)
             }
@@ -232,7 +247,7 @@ class FastSynchronizer(
     }
 
     private fun startFirstJob(): Boolean {
-        logger.debug("Fastsync: Discovery timeout: ${params.discoveryTimeout}")
+        debug("Discovery timeout: ${params.discoveryTimeout}")
         if (params.discoveryTimeout == 0L) {
             return false
         }
@@ -253,6 +268,10 @@ class FastSynchronizer(
         return true
     }
 
+    /**
+     * This makes sure that we have <parallelism> jobs running
+     * concurrently.
+     */
     private fun refillJobs() {
         (jobs.size until params.parallelism).forEach {
             startNextJob()
@@ -261,7 +280,9 @@ class FastSynchronizer(
 
     private fun restartJob(job: Job) {
         if (!startJob(job.height)) {
-            removeJob(job)
+            // We had no peers available for this height, we'll have to try
+            // again later. see processStaleJobs()
+            job.hasRestartFailed = true
         }
     }
 
@@ -275,8 +296,9 @@ class FastSynchronizer(
         if (peer == null) {
             return false
         }
-        addJob(Job(height, peer))
-        logger.debug("Fastsync: Started job for height $height, peer $peer")
+        val j = Job(height, peer)
+        addJob(j)
+        debug("Started job $j")
         return true
     }
 
@@ -286,7 +308,12 @@ class FastSynchronizer(
 
     private fun addJob(job: Job) {
         peerStatuses.addPeer(job.peerId)
-        jobs.put(job.height, job)
+        val replaced = jobs.put(job.height, job)
+        if (replaced == null) {
+            debug("Added new job $job")
+        } else {
+            debug("Replaced job $replaced with $job")
+        }
     }
 
     private fun handleBlockHeader(peerId: XPeerID, header: ByteArray, witness: ByteArray, requestedHeight: Long) {
@@ -303,7 +330,7 @@ class FastSynchronizer(
 
         if (header.size == 0 && witness.size == 0) {
             // The peer says it has no blocks, try another peer
-            logger.debug { "Peer $peerId drained at height -1, requested height $requestedHeight" }
+            debug("Peer for job $j drained at height -1")
             peerStatuses.drained(peerId, -1)
             restartJob(j)
             return
@@ -313,7 +340,7 @@ class FastSynchronizer(
         val peerBestHeight = getHeight(h)
 
         if (peerBestHeight != j.height) {
-            logger.debug { "Peer $peerId drained at height $peerBestHeight, requested height $requestedHeight" }
+            debug("Peer for $j drained at height $peerBestHeight")
             // The peer didn't have the block we wanted
             // Remember its height and try another peer
             peerStatuses.drained(peerId, peerBestHeight)
@@ -325,7 +352,7 @@ class FastSynchronizer(
         if ((blockchainConfiguration as BaseBlockchainConfiguration).verifyBlockHeader(h, w)) {
             j.header = h
             j.witness = w
-            logger.debug { "Header for height ${j.height} received from $peerId" }
+            debug("Header for ${j} received")
             peerStatuses.headerReceived(peerId, peerBestHeight)
         } else {
             // There may be two resaons for verification failures.
@@ -337,7 +364,7 @@ class FastSynchronizer(
             // 2. The blockchain will restart before requestedHeight is added, so the
             // sync process will restart fresh with new configuration. Worst case is if
             // we download parallelism blocks before restarting.
-            logger.debug { "Invalid header received from $peerId at height ${j.height}. Blacklisting." }
+            debug("Invalid header received for $j. Blacklisting.")
             peerStatuses.blacklist(peerId)
         }
     }
@@ -366,11 +393,13 @@ class FastSynchronizer(
         }
         val height = getHeight(h)
         val j = jobs[height]?:return
+        debug("handleUnfinishedBlock received for $j")
         val expectedHeader = j.header
         if (j.block != null || peerId != j.peerId ||
                 expectedHeader == null ||
                 !(expectedHeader.rawData contentEquals header)) {
             // Got a block when we didn't expect one. Ignore it.
+            debug("handleUnfinishedBlock didn't expect $j")
             return
         }
         // The witness has already been verified in handleBlockHeader().
@@ -380,9 +409,11 @@ class FastSynchronizer(
             // The values are iterated in key-ascending order (see TreeMap)
             if (job.block == null) {
                 // The next block to be committed hasn't arrived yet
+                debug("handleUnfinishedBlock done. Next job, ${job}, to commit hasn't arrived yet.")
                 return
             }
             if (!job.blockCommitting) {
+                debug("handleUnfinishedBlock committing block for ${job}")
                 job.blockCommitting = true
                 commitBlock(job)
             }
@@ -398,6 +429,7 @@ class FastSynchronizer(
         p.fail {
             // We got an invalid block from peer. Let's blacklist this
             // peer and try another peer
+            debug("Exception committing block ${job}", it)
             finishedJobs.add(job)
         }
     }
@@ -417,7 +449,7 @@ class FastSynchronizer(
                     is BlockHeaderMessage -> handleBlockHeader(peerId, message.header, message.witness, message.requestedHeight)
                     is UnfinishedBlock -> handleUnfinishedBlock(peerId, message.header, message.transactions)
                     is Status -> peerStatuses.statusReceived(peerId, message.height-1)
-                    else -> logger.debug("Unhandled type ${message} from peer $peerId")
+                    else -> debug("Unhandled type ${message} from peer $peerId")
                 }
             } catch (e: Exception) {
                 logger.info("Couldn't handle message $message from peer $peerId. Ignoring and continuing", e)

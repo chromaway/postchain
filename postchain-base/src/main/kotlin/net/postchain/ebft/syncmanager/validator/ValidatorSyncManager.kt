@@ -51,20 +51,23 @@ class ValidatorSyncManager(
     private var lastStatusLogged: Long
 
     private var useFastSyncAlgorithm: Boolean = true
-    private val fastSynchronizer = FastSynchronizer(
-            communicationManager,
-            blockDatabase,
-            blockchainConfiguration,
-            blockQueries,
-            nodeConfig.fastSyncParameters
-    )
-
     companion object : KLogging()
+
+    private val fastSynchronizer: FastSynchronizer
 
     init {
         this.currentTimeout = defaultTimeout
         this.processingIntent = DoNothingIntent
         this.lastStatusLogged = Date().time
+        val params = nodeConfig.fastSyncParameters
+        params.processName = processName.toString()
+        fastSynchronizer = FastSynchronizer(
+                communicationManager,
+                blockDatabase,
+                blockchainConfiguration,
+                blockQueries,
+                params
+        )
     }
 
     //    private val nodes = communicationManager.peers().map { XPeerID(it.pubKey) }

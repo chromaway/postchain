@@ -10,7 +10,9 @@ import net.postchain.common.toHex
 import net.postchain.config.app.AppConfig
 import net.postchain.config.node.ManagedNodeConfigurationProvider
 import net.postchain.core.NODE_ID_NA
-import net.postchain.devtools.*
+import net.postchain.devtools.IntegrationTestSetup
+import net.postchain.devtools.KeyPairHelper
+import net.postchain.devtools.awaitHeight
 import net.postchain.devtools.utils.configuration.BlockchainSetup
 import net.postchain.devtools.utils.configuration.NodeSeqNumber
 import net.postchain.devtools.utils.configuration.NodeSetup
@@ -21,10 +23,33 @@ import org.apache.commons.configuration2.Configuration
 import org.apache.commons.configuration2.MapConfiguration
 import org.junit.Assert.assertArrayEquals
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
-class SyncTest : IntegrationTestSetup() {
+@RunWith(Parameterized::class)
+class SyncTest(val signerCount: Int, val replicaCount: Int, val syncIndex: Set<Int>, val stopIndex: Set<Int>, val blocksToSync: Int) : IntegrationTestSetup() {
 
-    companion object: KLogging()
+    private companion object: KLogging() {
+
+        @JvmStatic
+        @Parameterized.Parameters
+        fun testArguments() = listOf(
+                // Single block test
+                arrayOf(1, 1, setOf(0), setOf<Int>(), 1),
+                arrayOf(1, 1, setOf(1), setOf<Int>(), 1),
+                arrayOf(1, 2, setOf(1), setOf<Int>(0), 1),
+                arrayOf(2, 0, setOf(1), setOf<Int>(), 1),
+
+                // Multi block test
+                arrayOf(1, 1, setOf(0), setOf<Int>(), 50),
+                arrayOf(1, 1, setOf(1), setOf<Int>(), 50),
+                arrayOf(1, 2, setOf(1), setOf<Int>(0), 50),
+                arrayOf(2, 0, setOf(1), setOf<Int>(), 50),
+
+                // Multi node multi blocks
+                arrayOf(4, 4, setOf(0, 1, 2, 4, 5), setOf<Int>(3, 6), 50)
+        )
+    }
 
     /*
     The problem seems to be the same as in other p2p systems: How to find initial peers?
@@ -50,22 +75,19 @@ class SyncTest : IntegrationTestSetup() {
 
      */
 
-    fun syncSigner(signerCount: Int, replicaCount: Int, syncIndex: Int) {
-        syncSigners(signerCount, replicaCount, setOf(syncIndex), setOf())
-    }
-
     private fun n(index: Int): String {
         var p = nodes[index].pubKey
         return p.substring(0, 4) + ":" + p.substring(64)
     }
 
-    fun syncSigners(signerCount: Int, replicaCount: Int, syncIndex: Set<Int>, stopIndex: Set<Int> = setOf()) {
+    @Test
+    fun sync() {
         val nodeSetups = runNodes(signerCount, replicaCount)
         logger.debug { "All nodes started" }
-        buildBlock(0, 0)
-        logger.debug { "All nodes have block 0" }
+        buildBlock(0, blocksToSync-1L)
+        logger.debug { "All nodes have block ${blocksToSync-1}" }
 
-        val expectedBlockRid = nodes[0].blockQueries(0).getBlockRid(0).get()
+        val expectedBlockRid = nodes[0].blockQueries(0).getBlockRid(blocksToSync-1L).get()
 
         val peerInfos = nodeSetups[0].configurationProvider!!.getConfiguration().peerInfoMap
         stopIndex.forEach {
@@ -81,8 +103,8 @@ class SyncTest : IntegrationTestSetup() {
 
         syncIndex.forEach {
             logger.debug { "Awaiting height 0 on ${n(it)}" }
-            nodes[it].awaitHeight(0, 0)
-            val actualBlockRid = nodes[it].blockQueries(0).getBlockRid(0).get()
+            nodes[it].awaitHeight(0, blocksToSync-1L)
+            val actualBlockRid = nodes[it].blockQueries(0).getBlockRid(blocksToSync-1L).get()
             assertArrayEquals(expectedBlockRid, actualBlockRid)
             logger.debug { "Awaiting height 0 on ${n(it)} done" }
         }
@@ -91,28 +113,8 @@ class SyncTest : IntegrationTestSetup() {
             logger.debug { "Start ${n(it)} again" }
             startOldNode(it, peerInfos, nodeSetups[it])
         }
-        buildBlock(0, 1)
-        logger.debug { "All nodes has block 1" }
-    }
-
-    @Test
-    fun testSyncSignerFromReplica() {
-        syncSigner(1, 1, 0)
-    }
-
-    @Test
-    fun testSyncReplicaFromSigner() {
-        syncSigner(1, 1, 1)
-    }
-
-    @Test
-    fun testSyncReplicaFromReplica() {
-        syncSigners(1, 2, setOf(1), setOf(0))
-    }
-
-    @Test
-    fun testSyncSignerFromSigner() {
-        syncSigner(2, 0, 1)
+        buildBlock(0, blocksToSync.toLong())
+        logger.debug { "All nodes has block $blocksToSync" }
     }
 
     private fun runNodes(signerNodeCount: Int, replicaCount: Int): Array<NodeSetup> {

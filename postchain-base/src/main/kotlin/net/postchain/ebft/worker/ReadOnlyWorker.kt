@@ -39,7 +39,7 @@ class ReadOnlyWorker(
 
         val fastSyncParameters = nodeConfig.fastSyncParameters
         fastSyncParameters.discoveryTimeout = Long.MAX_VALUE
-
+        fastSyncParameters.processName = processName.toString()
         fastSynchronizer = FastSynchronizer(
                 communicationManager,
                 blockDatabase,
