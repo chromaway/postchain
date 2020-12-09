@@ -342,15 +342,13 @@ class ValidatorSyncManager(
      */
     override fun update() {
         if (useFastSyncAlgorithm) {
-            synchronized(statusManager) {
-                fastSynchronizer.syncUntilResponsiveNodesDrained()
-                // turn off fast sync, reset current block to null, and query for the last known state from db to prevent
-                // possible race conditions
-                useFastSyncAlgorithm = false
-                val currentBlockHeight = blockQueries.getBestHeight().get()
-                statusManager.fastForwardHeight(currentBlockHeight)
-                blockManager.currentBlock = null
-            }
+            fastSynchronizer.syncUntilResponsiveNodesDrained()
+            // turn off fast sync, reset current block to null, and query for the last known state from db to prevent
+            // possible race conditions
+            useFastSyncAlgorithm = false
+            val currentBlockHeight = blockQueries.getBestHeight().get()
+            statusManager.fastForwardHeight(currentBlockHeight)
+            blockManager.currentBlock = null
         } else {
             synchronized(statusManager) {
                 // Process all messages from peers, one at a time. Some

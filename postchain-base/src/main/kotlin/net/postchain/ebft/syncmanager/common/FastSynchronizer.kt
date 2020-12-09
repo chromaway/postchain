@@ -213,6 +213,19 @@ class FastSynchronizer(
             blockHeight++
             removeJob(j)
         } else {
+            // If the job failed because the block is already in the database
+            // then it means that fastsync started before all addBlock jobs
+            // from normal sync were done. If this has happened, we
+            // will increase the blockheight and consider this job done (but
+            // not by us).
+            val bestHeight = blockQueries.getBestHeight().get()
+            if (bestHeight >= j.height) {
+                debug("Add block failed for job ${j} because block already in db.")
+                blockHeight++ // as if this block was successful.
+                removeJob(j)
+                return
+            }
+
             debug("Invalid block ${j}. Blacklisting.")
             // Peer sent us an invalid block. Blacklist the peer and restart job
             peerStatuses.blacklist(j.peerId)

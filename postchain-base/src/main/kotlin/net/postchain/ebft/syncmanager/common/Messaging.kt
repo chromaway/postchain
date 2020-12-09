@@ -10,6 +10,20 @@ abstract class Messaging(val blockQueries: BlockQueries, val communicationManage
     companion object: KLogging()
 
     /**
+     * We're going to get a lot of requests from peers in fastsync mode. We should cache our tip
+     * to be able to answer quicker and not bother the database with repeated queries.
+     *
+     * At least the header needs caching because we're sending it very often as a "I'm drained" signal,
+     * but the full block might also be a good idea. Let's start with caching the header and see
+     * if we need to cache the full block too.
+     *
+     * This cache sped up the SyncTest with 8 peers and 50 blocks (see SyncTest) from
+     * about 40-56 seconds to about 34-47 seconds.
+     */
+    private var tipHeight: Long = -1
+    private var tipHeader: BlockHeader = BlockHeader(byteArrayOf(), byteArrayOf(), 0)
+
+    /**
      * Send message to node including the block at [height]. This is a response to the [GetBlockAtHeight] request.
      *
      * @param peerId XPeerID of receiving node
@@ -25,28 +39,51 @@ abstract class Messaging(val blockQueries: BlockQueries, val communicationManage
         }
     }
 
-    fun sendBlockHeaderAndBlock(peerID: XPeerID, height: Long, myHeight: Long) {
-        logger.debug("GetBlockHeaderAndBlock from peer $peerID for height $height, myHeight is $myHeight")
-        val blockData = blockQueries.getBlockAtHeight(height)
+    fun sendBlockHeaderAndBlock(peerID: XPeerID, requestedHeight: Long, myHeight: Long) {
+        logger.debug("GetBlockHeaderAndBlock from peer $peerID for height $requestedHeight, myHeight is $myHeight")
+
+        if (myHeight == -1L) {
+            sendHeader(peerID, byteArrayOf(), byteArrayOf(), -1, requestedHeight)
+            return
+        }
+
+        if (myHeight < requestedHeight) {
+            if (tipHeight == myHeight) {
+                // We have a cached header. Make a copy with the correct requested height and send the copy.
+                sendHeader(peerID, tipHeader.header, tipHeader.witness, tipHeight, requestedHeight)
+                return
+            }
+            val block = blockQueries.getBlockAtHeight(myHeight, false).get()
+            val h = sendHeader(peerID, block.header.rawData, block.witness.getRawData(), myHeight, requestedHeight)
+            tipHeader = h
+            tipHeight = myHeight
+            return
+        }
+
+        if (requestedHeight == tipHeight) {
+            sendHeader(peerID, tipHeader.header, tipHeader.witness, tipHeight, requestedHeight)
+        }
+
+        val blockData = blockQueries.getBlockAtHeight(requestedHeight)
         blockData success {
-            val header = BlockHeader(it.header.rawData, it.witness.getRawData(), height)
-            logger.debug("Replying with BlockHeader to peer $peerID for height $height")
-            communicationManager.sendPacket(header, peerID)
+            val header = sendHeader(peerID, it.header.rawData, it.witness.getRawData(), requestedHeight, requestedHeight)
+            if (requestedHeight == myHeight) {
+                tipHeight = myHeight
+                tipHeader = header
+            }
+
             val unfinishedBlock = UnfinishedBlock(it.header.rawData, it.transactions)
-            logger.debug("Replying with UnfinishedBlock to peer $peerID for height $height")
+            logger.debug("Replying with UnfinishedBlock to peer $peerID for height $requestedHeight")
             communicationManager.sendPacket(unfinishedBlock, peerID)
         } fail {
-            if (myHeight >= 0) {
-                val block = blockQueries.getBlockAtHeight(myHeight, false).get()
-                val header = BlockHeader(block.header.rawData, block.witness.getRawData(), height)
-                logger.debug("Drained. Replying with BlockHeader to peer $peerID for height $myHeight")
-                communicationManager.sendPacket(header, peerID)
-            } else {
-                // Send empty block header to signal that we have no blocks.
-                val header = BlockHeader(byteArrayOf(), byteArrayOf(), height)
-                logger.debug("Drained (no blocks). Replying with empty BlockHeader to peer $peerID")
-                communicationManager.sendPacket(header, peerID)
-            }
+            logger.error("Couldn't get block at height $requestedHeight from database", it)
         }
+    }
+
+    private fun sendHeader(peerID: XPeerID, header: ByteArray, witness: ByteArray, sentHeight: Long, requestedHeight: Long): BlockHeader {
+        val h = BlockHeader(header, witness, requestedHeight)
+        logger.debug("Replying with BlockHeader at height $sentHeight to peer $peerID for requested height $requestedHeight")
+        communicationManager.sendPacket(h, peerID)
+        return h
     }
 }
