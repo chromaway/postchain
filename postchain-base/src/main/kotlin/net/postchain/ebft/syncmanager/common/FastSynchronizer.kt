@@ -9,6 +9,7 @@ import net.postchain.core.*
 import net.postchain.core.BlockHeader
 import net.postchain.ebft.BlockDatabase
 import net.postchain.ebft.message.*
+import net.postchain.ebft.message.BlockData
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
 import java.lang.Thread.sleep
@@ -247,10 +248,28 @@ class FastSynchronizer(
                 toRestart.add(j)
             } else if (j.block == null && j.startTime + params.jobTimeout < now) {
                 // We have waited for response from j.peerId fo a long time.
-                // Let's mark it unresponsive and restart the job.
-                debug("Marking job ${j} unresponsive")
-                peerStatuses.unresponsive(j.peerId)
-                toRestart.add(j)
+                // This might be because it's a legacy node and thus doesn't respond to
+                // GetBlockHeaderAndBlock messages or because it's just unresponsive
+                if (peerStatuses.isConfirmedModern(j.peerId)) {
+                    debug("Marking job ${j} unresponsive")
+                    peerStatuses.unresponsive(j.peerId)
+                    toRestart.add(j)
+                } else if (peerStatuses.isMaybeLegacy(j.peerId)) {
+                    // Peer is marked as legacy, but still appears unresponsive.
+                    // This probably wasn't a legacy node, but simply an unresponsive one.
+                    // It *could* still be a legacy node, but we give it another chance to
+                    // prove itself a modern node after the timeout
+                    peerStatuses.setMaybeLegacy(j.peerId, false)
+                    debug("Marking job ${j} unresponsive")
+                    peerStatuses.unresponsive(j.peerId)
+                    toRestart.add(j)
+                } else {
+                    // Let's assume this is a legacy node and use GetCompleteBlock for the
+                    // next try.
+                    // If that try is unresponsive too, we'll mark it as unresponsive
+                    peerStatuses.setMaybeLegacy(j.peerId, true)
+                    toRestart.add(j)
+                }
             }
         }
         // Avoid ConcurrentModificationException by restartingJob after for loop
@@ -304,10 +323,17 @@ class FastSynchronizer(
     }
 
     private fun startJob(height: Long): Boolean {
-        val excludedPeers = peerStatuses.exclDrainedAndUnresponsive(height)
+        val excludedPeers = peerStatuses.exclDrainedAndUnresponsiveAndLegacy(height)
         var peer = communicationManager.sendToRandomPeer(GetBlockHeaderAndBlock(height), excludedPeers)
         if (peer == null) {
-            return false
+            // There were no modern nodes to sync from. Let's try with a legacy node instead
+            peer = peerStatuses.getRandomLegacyPeer(height)
+            if (peer == null) {
+                // there were no peers at all to sync from. give up.
+                return false
+            }
+            // Make a legacy request for block
+            communicationManager.sendPacket(GetBlockAtHeight(height), peer)
         }
         val j = Job(height, peer)
         addJob(j)
@@ -329,7 +355,7 @@ class FastSynchronizer(
         }
     }
 
-    private fun handleBlockHeader(peerId: XPeerID, header: ByteArray, witness: ByteArray, requestedHeight: Long) {
+    private fun handleBlockHeader(peerId: XPeerID, header: ByteArray, witness: ByteArray, requestedHeight: Long): Boolean {
         val j = jobs[requestedHeight]
         if (j == null || j.header != null || peerId != j.peerId) {
             // Didn't expect header for this height or from this peer
@@ -338,7 +364,7 @@ class FastSynchronizer(
             // as much as they can. But hard to distinguish this from
             // legitimate glitches, for example that the peer has timed
             // out in earlier job but just now comes back with the response.
-            return
+            return false
         }
 
         if (header.size == 0 && witness.size == 0) {
@@ -346,7 +372,7 @@ class FastSynchronizer(
             debug("Peer for job $j drained at height -1")
             peerStatuses.drained(peerId, -1)
             restartJob(j)
-            return
+            return false
         }
 
         val h = blockchainConfiguration.decodeBlockHeader(header)
@@ -358,7 +384,7 @@ class FastSynchronizer(
             // Remember its height and try another peer
             peerStatuses.drained(peerId, peerBestHeight)
             restartJob(j)
-            return
+            return false
         }
 
         val w = blockchainConfiguration.decodeWitness(witness)
@@ -367,6 +393,7 @@ class FastSynchronizer(
             j.witness = w
             debug("Header for ${j} received")
             peerStatuses.headerReceived(peerId, peerBestHeight)
+            return true
         } else {
             // There may be two resaons for verification failures.
             // 1. The peer is a scumbag, sending us invalid headers
@@ -379,6 +406,7 @@ class FastSynchronizer(
             // we download parallelism blocks before restarting.
             debug("Invalid header received for $j. Blacklisting.")
             peerStatuses.blacklist(peerId)
+            return false
         }
     }
 
@@ -433,6 +461,24 @@ class FastSynchronizer(
         }
     }
 
+    /**
+     * This is used for syncing from old nodes that doesn't have this new FastSynchronizer algorithm
+     */
+    private fun handleCompleteBlock(peerId: XPeerID, blockData: BlockData, height: Long, witness: ByteArray) {
+        // We expect height to be the requested height. If the peer didn't have the block we wouldn't
+        // get any block at all.
+        if (!peerStatuses.isMaybeLegacy(peerId)) {
+            // We only expect CompleteBlock from legacy nodes.
+            return
+        }
+
+        val saveBlock = handleBlockHeader(peerId, blockData.header, witness, height)
+        if (!saveBlock) {
+            return
+        }
+        handleUnfinishedBlock(peerId, blockData.header, blockData.transactions)
+    }
+
     private fun commitBlock(job: Job) {
         val p = blockDatabase.addBlock(job.block!!)
         p.success {_ ->
@@ -455,12 +501,16 @@ class FastSynchronizer(
             }
             peerStatuses.addPeer(peerId)
             val message = packet.second
+            if (message is GetBlockHeaderAndBlock || message is BlockHeaderMessage ) {
+                peerStatuses.confirmModern(peerId)
+            }
             try {
                 when (message) {
                     is GetBlockAtHeight -> sendBlockAtHeight(peerId, message.height)
                     is GetBlockHeaderAndBlock -> sendBlockHeaderAndBlock(peerId, message.height, blockHeight)
                     is BlockHeaderMessage -> handleBlockHeader(peerId, message.header, message.witness, message.requestedHeight)
                     is UnfinishedBlock -> handleUnfinishedBlock(peerId, message.header, message.transactions)
+                    is CompleteBlock -> handleCompleteBlock(peerId, message.data, message.height, message.witness)
                     is Status -> peerStatuses.statusReceived(peerId, message.height-1)
                     else -> debug("Unhandled type ${message} from peer $peerId")
                 }
@@ -509,13 +559,22 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
             BLACKLISTED, UNRESPONSIVE, NOT_DRAINED, DRAINED
         }
         private var state = State.NOT_DRAINED
-
+        /**
+         * [maybeLegacy] and [confirmedModern] are transitional and should be
+         * removed once most nodes have upgraded, because then
+         * nodes will be able to sync from modern nodes and we no longer
+         * need to be able to sync from old nodes.
+         */
+        private var maybeLegacy = false
+        private var confirmedModern = false
         private var unresponsiveTime: Long = System.currentTimeMillis()
         private var drainedTime: Long = System.currentTimeMillis()
         private var drainedHeight: Long = -2
 
         fun isBlacklisted() = state == State.BLACKLISTED
         fun isUnresponsive() = state == State.UNRESPONSIVE
+        fun isMaybeLegacy() = !confirmedModern && maybeLegacy
+        fun isConfirmedModern() = confirmedModern
         private fun isDrained() = state == State.DRAINED
         fun isDrained(h: Long) = isDrained() && drainedHeight < h
 
@@ -545,6 +604,15 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
                 unresponsiveTime = System.currentTimeMillis()
             }
         }
+        fun maybeLegacy(isLegacy: Boolean) {
+            if (!this.confirmedModern) {
+                this.maybeLegacy = isLegacy
+            }
+        }
+        fun confirmedModern() {
+            this.confirmedModern = true
+            this.maybeLegacy = false
+        }
         fun blacklist() {
             this.state = State.BLACKLISTED
         }
@@ -564,9 +632,17 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
         }
     }
 
-    fun exclDrainedAndUnresponsive(height: Long): Set<XPeerID> {
+    fun exclDrainedAndUnresponsiveAndLegacy(height: Long): Set<XPeerID> {
         resurrectDrainedAndUnresponsivePeers()
-        return statuses.filterValues { it.isDrained(height) || it.isUnresponsive() || it.isBlacklisted() }.keys
+        return statuses.filterValues { it.isDrained(height) || it.isUnresponsive() || it.isMaybeLegacy() || it.isBlacklisted() }.keys
+    }
+
+    fun getRandomLegacyPeer(height: Long): XPeerID? {
+        val legacyPeers = statuses.filterValues { it.isMaybeLegacy() && !it.isDrained(height) && !it.isBlacklisted() }.keys
+        if (legacyPeers.isEmpty()) {
+            return null
+        }
+        return legacyPeers.random()
     }
 
     fun drained(peerId: XPeerID, height: Long) {
@@ -599,6 +675,24 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
             return
         }
         status.unresponsive()
+    }
+
+    fun setMaybeLegacy(peerId: XPeerID, isLegacy: Boolean) {
+        val status = stateOf(peerId)
+        if (status.isBlacklisted()) {
+            return
+        }
+        status.maybeLegacy(isLegacy)
+    }
+
+    fun isMaybeLegacy(peerId: XPeerID): Boolean {
+        return stateOf(peerId).isMaybeLegacy()
+    }
+    fun isConfirmedModern(peerId: XPeerID): Boolean {
+        return stateOf(peerId).isConfirmedModern()
+    }
+    fun confirmModern(peerId: XPeerID) {
+        stateOf(peerId).confirmedModern()
     }
 
     fun blacklist(peerId: XPeerID) {
