@@ -10,7 +10,7 @@ class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
                                 private val txQueue: TransactionQueue
 ) : BlockBuildingStrategy {
     private var lastBlockTime: Long
-    private var firstTxTime = System.currentTimeMillis()
+    private var firstTxTime = 0L
     private val strategyData = configData.getBlockBuildingStrategy()
     private val maxBlockTime = strategyData?.get("maxblocktime")?.asInteger() ?: 30000
     private val maxBlockTransactions = strategyData?.get("maxblocktransactions")?.asInteger() ?: 100
@@ -20,7 +20,7 @@ class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
     init {
         val height = blockQueries.getBestHeight().get()
         lastBlockTime = if (height == -1L) {
-            System.currentTimeMillis()
+            0
         } else {
             val blockRID = blockQueries.getBlockRid(height).get()!!
             (blockQueries.getBlockHeader(blockRID).get() as BaseBlockHeader).timestamp
@@ -34,28 +34,20 @@ class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
 
     override fun blockCommitted(blockData: BlockData) {
         lastBlockTime = (blockData.header as BaseBlockHeader).timestamp
-        firstTxTime = System.currentTimeMillis()
+        firstTxTime = 0
     }
 
     override fun shouldBuildBlock(): Boolean {
-        if (System.currentTimeMillis() - lastBlockTime < minInterBlockInterval ) {
-            return false
-        }
+        val now = System.currentTimeMillis()
 
-        if (System.currentTimeMillis() - lastBlockTime > maxBlockTime) {
-            firstTxTime = System.currentTimeMillis()
-            return true
-        }
+        if (now - lastBlockTime > maxBlockTime) return true
+        if (now - lastBlockTime < minInterBlockInterval) return false
+        if (now - firstTxTime > maxTxDelay) return true
+
         val transactionQueueSize = txQueue.getTransactionQueueSize()
-        if (transactionQueueSize > 0) {
-            if (transactionQueueSize >= maxBlockTransactions) {
-                firstTxTime = System.currentTimeMillis()
-                return true
-            }
-            if ((firstTxTime + maxTxDelay) < System.currentTimeMillis()) {
-                firstTxTime = System.currentTimeMillis()
-                return true
-            }
+        if (transactionQueueSize >= maxBlockTransactions) return true
+        if (firstTxTime == 0L && transactionQueueSize > 0) {
+            firstTxTime = now
             return false
         }
         return false
