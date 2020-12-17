@@ -19,12 +19,12 @@ class GTXSpecialTxHandler(val module: GTXModule,
                           val cs: CryptoSystem,
                           val factory: GTXTransactionFactory
 ) : SpecialTransactionHandler {
-    val needBeginTx = module.getOperations().contains(OP_BEGIN_BLOCK)
-    val needEndTx = module.getOperations().contains(OP_END_BLOCK)
 
     override fun needsSpecialTransaction(position: SpecialTransactionPosition): Boolean {
-        if (position == SpecialTransactionPosition.End) return needEndTx
-        else return needBeginTx
+        return module.getOperations().contains(
+                if (position == SpecialTransactionPosition.End)
+                    OP_END_BLOCK else OP_BEGIN_BLOCK
+        )
     }
 
     override fun createSpecialTransaction(position: SpecialTransactionPosition, bctx: BlockEContext): Transaction {
