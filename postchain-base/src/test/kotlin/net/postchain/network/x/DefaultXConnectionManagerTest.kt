@@ -151,14 +151,13 @@ class DefaultXConnectionManagerTest {
 
     @Test(expected = ProgrammerMistake::class)
     fun connectChainPeer_will_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(connectorFactory, mock(), mock(), mock(), cryptoSystem)
-                .connectChainPeer(1, peerInfo1.peerId())
+        emptyManager().connectChainPeer(1, peerInfo1.peerId())
     }
 
     @Test(expected = ProgrammerMistake::class)
     fun connectChainPeer_connects_unknown_peer_with_exception() {
         // Given
-        val communicationConfig: PeerCommConfiguration = mock()
+        val communicationConfig: PeerCommConfiguration = emptyCommConf()
         val chainPeerConfig: XChainPeerConfiguration = mock {
             on { chainID } doReturn 1L
             on { blockchainRID } doReturn blockchainRid
@@ -232,7 +231,7 @@ class DefaultXConnectionManagerTest {
             connectChain(chainPeerConfig, true, mock()) // Auto connect all peers
 
             // Emulates call of onPeerConnected() by XConnector
-            onPeerConnected(peerConnectionDescriptor1, mock())
+            onPeerConnected(mockConnection(peerConnectionDescriptor1))
 
             connectChainPeer(1, peerInfo1.peerId())
         }
@@ -247,26 +246,22 @@ class DefaultXConnectionManagerTest {
 
     @Test(expected = ProgrammerMistake::class)
     fun disconnectChainPeer_will_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(connectorFactory, mock(), mock(), mock(), cryptoSystem)
-                .disconnectChainPeer(1L, peerInfo1.peerId())
+        emptyManager().disconnectChainPeer(1L, peerInfo1.peerId())
     }
 
     @Test
     fun disconnectChain_wont_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(connectorFactory, mock(), mock(), mock(), cryptoSystem)
-                .disconnectChain(1, mock())
+        emptyManager().disconnectChain(1, mock())
     }
 
     @Test(expected = ProgrammerMistake::class)
     fun isPeerConnected_will_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(connectorFactory, mock(), mock(), mock(), cryptoSystem)
-                .isPeerConnected(1, peerInfo1.peerId())
+        emptyManager().isPeerConnected(1, peerInfo1.peerId())
     }
 
     @Test(expected = ProgrammerMistake::class)
     fun getConnectedPeers_will_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(connectorFactory, mock(), mock(), mock(), cryptoSystem)
-                .getConnectedPeers(1)
+        emptyManager().getConnectedPeers(1)
     }
 
     @Test
@@ -299,8 +294,8 @@ class DefaultXConnectionManagerTest {
             assert(getConnectedPeers(1L).toTypedArray()).isEmpty()
 
             // Emulates call of onPeerConnected() by XConnector
-            onPeerConnected(peerConnectionDescriptor1, mock())
-            onPeerConnected(peerConnectionDescriptor2, mock())
+            onPeerConnected(mockConnection(peerConnectionDescriptor1))
+            onPeerConnected(mockConnection(peerConnectionDescriptor2))
 
             // Then / after peers connected
             // - isPeerConnected
@@ -336,8 +331,7 @@ class DefaultXConnectionManagerTest {
 
     @Test(expected = ProgrammerMistake::class)
     fun sendPacket_will_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(connectorFactory, mock(), mock(), mock(), cryptoSystem)
-                .sendPacket({ byteArrayOf() }, 1, peerInfo2.peerId())
+        emptyManager().sendPacket({ byteArrayOf() }, 1, peerInfo2.peerId())
     }
 
     @Test
@@ -354,8 +348,8 @@ class DefaultXConnectionManagerTest {
             on { blockchainRID } doReturn blockchainRid
             on { commConfiguration } doReturn communicationConfig
         }
-        val connection1: XPeerConnection = mock()
-        val connection2: XPeerConnection = mock()
+        val connection1: XPeerConnection = mockConnection(peerConnectionDescriptor1)
+        val connection2: XPeerConnection = mockConnection(peerConnectionDescriptor2)
 
         // When
         val connectionManager = DefaultXConnectionManager(
@@ -364,8 +358,8 @@ class DefaultXConnectionManagerTest {
             connectChain(chainPeerConfig, true, mock()) // With autoConnect
 
             // Emulates call of onPeerConnected() by XConnector
-            onPeerConnected(peerConnectionDescriptor1, connection1)
-            onPeerConnected(peerConnectionDescriptor2, connection2)
+            onPeerConnected(connection1)
+            onPeerConnected(connection2)
 
             sendPacket({ byteArrayOf(0x04, 0x02) }, 1L, peerInfo2.peerId())
         }
@@ -382,8 +376,15 @@ class DefaultXConnectionManagerTest {
 
     @Test(expected = ProgrammerMistake::class)
     fun broadcastPacket_will_result_in_exception_if_chain_is_not_connected() {
-        DefaultXConnectionManager(connectorFactory, mock(), mock(), mock(), cryptoSystem)
-                .broadcastPacket({ byteArrayOf() }, 1)
+        emptyManager().broadcastPacket({ byteArrayOf() }, 1)
+    }
+
+    private fun emptyManager() = DefaultXConnectionManager(connectorFactory, emptyCommConf(), mock(), mock(), cryptoSystem)
+
+    private fun emptyCommConf(): PeerCommConfiguration {
+        return mock {
+            on { myPeerInfo() } doReturn peerInfo1
+        }
     }
 
     @Test
@@ -400,8 +401,8 @@ class DefaultXConnectionManagerTest {
             on { blockchainRID } doReturn blockchainRid
             on { commConfiguration } doReturn communicationConfig
         }
-        val connection1: XPeerConnection = mock()
-        val connection2: XPeerConnection = mock()
+        val connection1: XPeerConnection = mockConnection(peerConnectionDescriptor1)
+        val connection2: XPeerConnection = mockConnection(peerConnectionDescriptor2)
 
         // When
         val connectionManager = DefaultXConnectionManager(
@@ -410,8 +411,8 @@ class DefaultXConnectionManagerTest {
             connectChain(chainPeerConfig, true, mock()) // With autoConnect
 
             // Emulates call of onPeerConnected() by XConnector
-            onPeerConnected(peerConnectionDescriptor1, connection1)
-            onPeerConnected(peerConnectionDescriptor2, connection2)
+            onPeerConnected(connection1)
+            onPeerConnected(connection2)
 
             broadcastPacket({ byteArrayOf(0x04, 0x02) }, 1L)
         }
@@ -429,4 +430,9 @@ class DefaultXConnectionManagerTest {
         connectionManager.shutdown()
     }
 
+    fun mockConnection(descriptor: XPeerConnectionDescriptor): XPeerConnection {
+        val m: XPeerConnection = mock()
+        whenever(m.descriptor()).thenReturn(descriptor)
+        return m
+    }
 }

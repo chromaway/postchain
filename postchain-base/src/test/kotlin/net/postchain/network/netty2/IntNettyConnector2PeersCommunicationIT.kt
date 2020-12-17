@@ -58,15 +58,15 @@ class IntNettyConnector2PeersCommunicationIT {
         context1.peer.connectPeer(peerDescriptor2, peerInfo2, context1.packetEncoder)
 
         // Waiting for all connections to be established
-        val (descriptor1, connection1) = argumentCaptor2<XPeerConnectionDescriptor, XPeerConnection>()
-        val (descriptor2, connection2) = argumentCaptor2<XPeerConnectionDescriptor, XPeerConnection>()
+        val connection1 = argumentCaptor<XPeerConnection>()
+        val connection2 = argumentCaptor<XPeerConnection>()
         await().atMost(FIVE_SECONDS)
                 .untilAsserted {
-                    verify(context1.events).onPeerConnected(descriptor1.capture(), connection1.capture())
-                    assert(descriptor1.firstValue.peerId.byteArray).isContentEqualTo(peerInfo2.pubKey)
+                    verify(context1.events).onPeerConnected(connection1.capture())
+                    assert(connection1.firstValue.descriptor().peerId.byteArray).isContentEqualTo(peerInfo2.pubKey)
 
-                    verify(context2.events).onPeerConnected(descriptor2.capture(), connection2.capture())
-                    assert(descriptor2.firstValue.peerId.byteArray).isContentEqualTo(peerInfo1.pubKey)
+                    verify(context2.events).onPeerConnected(connection2.capture())
+                    assert(connection2.firstValue.descriptor().peerId.byteArray).isContentEqualTo(peerInfo1.pubKey)
                 }
 
         // Sending packets

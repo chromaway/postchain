@@ -41,17 +41,27 @@ open class IntegrationTestSetup : AbstractIntegration() {
 
     @After
     override fun tearDown() {
-        logger.debug("Integration test -- TEARDOWN")
-        nodes.forEach { it.shutdown() }
-        nodes.clear()
-        nodeMap.clear()
-        logger.debug("Closed nodes")
-        peerInfos = null
-        expectedSuccessRids = mutableMapOf()
-        configOverrides.clear()
-        TestBlockchainRidCache.clear()
+        try {
+            logger.debug("Integration test -- TEARDOWN")
+            nodes.forEach { it.shutdown() }
+            nodes.clear()
+            nodeMap.clear()
+            logger.debug("Closed nodes")
+            peerInfos = null
+            expectedSuccessRids = mutableMapOf()
+            configOverrides.clear()
+            TestBlockchainRidCache.clear()
+            logger.debug("teadDown() done")
+        } catch (t: Throwable) {
+            logger.error("tearDown() failed", t)
+        }
+    }
 
-        System.gc()
+    protected fun strategy(node: PostchainTestNode): OnDemandBlockBuildingStrategy {
+        return node
+                .getBlockchainInstance()
+                .getEngine()
+                .getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
     }
 
     // TODO: [et]: Check out nullability for return value

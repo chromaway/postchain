@@ -33,27 +33,10 @@ class SinglePeerReconnectionTest : ReconnectionTest() {
         // Asserting height is -1 for all peers
         Assert.assertEquals(-1, queries(nodes[0]) { it.getBestHeight() })
 
-        // Building a block 0
-        nodes[0].let {
-            enqueueTransactions(it, tx0, tx1)
-            awaitBuiltBlock(it, 0)
-        }
-        // * Asserting height is 0 for all peers
-        Awaitility.await().atMost(Duration.FIVE_SECONDS)
-                .untilAsserted {
-                    Assert.assertEquals(0, queries(nodes[0]) { it.getBestHeight() })
-                }
 
-        // Again: Building a block 1
-        nodes[0].let {
-            enqueueTransactions(it, tx10, tx11)
-            awaitBuiltBlock(it, 1)
-        }
-        // * Asserting height is 1 for all peers
-        Awaitility.await().atMost(Duration.FIVE_SECONDS)
-                .untilAsserted {
-                    Assert.assertEquals(1, queries(nodes[0]) { it.getBestHeight() })
-                }
+        buildBlock(0, tx0, tx1)
+
+        buildBlock(1, tx10, tx11)
 
         // Shutting down peer 0
         nodes[0].shutdown()

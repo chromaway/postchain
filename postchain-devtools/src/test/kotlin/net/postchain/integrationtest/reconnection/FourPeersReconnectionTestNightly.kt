@@ -47,9 +47,7 @@ class FourPeersReconnectionTestNightly : FourPeersReconnectionImpl() {
         assertHeightForAllNodes(-1)
 
         // Building 6 blocks
-        buildNotEmptyBlocks(6, randNode())
-        // Asserting height is 5 for all peers
-        assertHeightForAllNodes(5)
+        buildNonEmptyBlocks(-1, 5)
 
         // Shutting down node 3
         nodes[3].shutdown()
@@ -62,7 +60,7 @@ class FourPeersReconnectionTestNightly : FourPeersReconnectionImpl() {
         nodes.removeAt(3)
 
         // Building additional 6 blocks
-        buildNotEmptyBlocks(6, randNode3())
+        buildNonEmptyBlocks(5, 11)
 
         println("Stating peer 3 ...")
         createSingleNode(mapNodeId(3), nodesCount, nodeConfigsFilenames[1], blockchainConfig)
@@ -72,13 +70,6 @@ class FourPeersReconnectionTestNightly : FourPeersReconnectionImpl() {
         assertTopology(0, 1, 2, 3)
 
         // Building additional 6 blocks
-        buildNotEmptyBlocks(6, randNode())
-        // Asserting height is "6 + 6 + 6 - 1" for all peers
-        assertHeightForAllNodes(6 + 6 + 6 - 1)
-
-        // And building additional 6 blocks via peer 3
-        buildNotEmptyBlocks(6, randNode())
-        // Asserting height is "6 + 6 + 6 + 6 - 1" for all peers
-        assertHeightForAllNodes(6 + 6 + 6 + 6 - 1)
+        buildNonEmptyBlocks(11, 23)
     }
 }

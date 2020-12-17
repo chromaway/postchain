@@ -35,7 +35,7 @@ class CommandAddConfiguration : Command {
 
     @Parameter(
             names = ["-bc", "--blockchain-config"],
-            description = "Configuration file of blockchain (gtxml or binary)",
+            description = "Configuration file of blockchain (GtvML (*.xml) or Gtv (*.gtv))",
             required = true)
     private var blockchainConfigFile: String? = null
 

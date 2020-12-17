@@ -7,6 +7,7 @@ import net.postchain.config.app.AppConfig
 import net.postchain.config.node.NodeConfig
 import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.core.*
+import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.devtools.utils.configuration.NodeNameWithBlockchains
 import net.postchain.devtools.utils.configuration.UniversalFileLocationStrategy
 import net.postchain.gtv.Gtv
@@ -43,28 +44,38 @@ open class ConfigFileBasedIntegrationTest: AbstractIntegration() {
     private var peerInfos: Array<PeerInfo>? = null
     private var expectedSuccessRids = mutableMapOf<Long, MutableList<ByteArray>>()
 
+    private var txCounter = 0
+
     companion object : KLogging() {
         const val DEFAULT_CONFIG_FILE = "config.properties"
     }
 
     @After
     override fun tearDown() {
-        logger.debug("Integration test -- TEARDOWN")
-        nodes.forEach { it.shutdown() }
-        nodes.clear()
-        nodesNames.clear()
-        logger.debug("Closed nodes")
-        peerInfos = null
-        expectedSuccessRids = mutableMapOf()
-        configOverrides.clear()
-        System.gc()
+        try {
+            logger.debug("Integration test -- TEARDOWN")
+            nodes.forEach { it.shutdown() }
+            nodes.clear()
+            nodesNames.clear()
+            logger.debug("Closed nodes")
+            peerInfos = null
+            expectedSuccessRids = mutableMapOf()
+            configOverrides.clear()
+            logger.debug("teadDown() done")
+        } catch (t: Throwable) {
+            logger.error("tearDown() failed", t)
+        }
+    }
+
+    protected fun nextTx(): TestTransaction {
+        return TestTransaction(txCounter++)
     }
 
     // TODO: [et]: Check out nullability for return value
     protected fun enqueueTx(node: PostchainTestNode, data: ByteArray, expectedConfirmationHeight: Long): Transaction? {
         val blockchainEngine = node.getBlockchainInstance().getEngine()
         val tx = blockchainEngine.getConfiguration().getTransactionFactory().decodeTransaction(data)
-        blockchainEngine.getTransactionQueue().enqueue(tx)
+        enqueueTransactions(node, tx)
 
         if (expectedConfirmationHeight >= 0) {
             expectedSuccessRids.getOrPut(expectedConfirmationHeight) { mutableListOf() }
@@ -72,6 +83,11 @@ open class ConfigFileBasedIntegrationTest: AbstractIntegration() {
         }
 
         return tx
+    }
+
+    protected fun enqueueTransactions(node: PostchainTestNode, vararg txs: Transaction) {
+        val txQueue = node.getBlockchainInstance().getEngine().getTransactionQueue()
+        txs.forEach { txQueue.enqueue(it) }
     }
 
     protected fun verifyBlockchainTransactions(node: PostchainTestNode) {
@@ -314,6 +330,27 @@ open class ConfigFileBasedIntegrationTest: AbstractIntegration() {
     }
 
     open fun createPeerInfos(nodeCount: Int): Array<PeerInfo> = createPeerInfosWithReplicas(nodeCount, 0)
+
+    protected fun strategy(node: PostchainTestNode): OnDemandBlockBuildingStrategy {
+        return node.getBlockchainInstance().getEngine().getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
+    }
+
+    protected fun buildBlock(toHeight: Int, vararg txs: TestTransaction) {
+        nodes.forEach {
+            enqueueTransactions(it, *txs)
+            strategy(it).buildBlocksUpTo(toHeight.toLong())
+        }
+        nodes.forEach {
+            strategy(it).awaitCommitted(toHeight)
+        }
+    }
+
+    protected fun buildNonEmptyBlocks(fromHeight: Int, toHeight: Int) {
+        repeat(toHeight-fromHeight) { c ->
+            val tx = nextTx()
+            buildBlock(fromHeight+1+c, tx)
+        }
+    }
 
 
 }

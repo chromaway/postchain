@@ -21,8 +21,8 @@ class IntTestContext(
     val packets: XPacketHandler = mock()
 
     val events: XConnectorEvents = mock {
-        on { onPeerConnected(any(), any()) } doReturn packets
-        on { onPeerDisconnected(any(), any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
+        on { onPeerConnected(any()) } doReturn packets
+        on { onPeerDisconnected(any()) }.doAnswer { } // FYI: Instead of `doNothing` or `doReturn Unit`
     }
 
     val peer = NettyConnector<Int>(events)

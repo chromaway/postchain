@@ -2,6 +2,7 @@
 
 package net.postchain.ebft.syncmanager.common
 
+import mu.KLogging
 import net.postchain.core.BlockDataWithWitness
 import net.postchain.core.BlockQueries
 import net.postchain.core.BlockchainConfiguration
@@ -13,8 +14,10 @@ import net.postchain.ebft.message.*
 import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockDataWithWitness
 import net.postchain.network.CommunicationManager
 import net.postchain.network.x.XPeerID
+import nl.komponents.kovenant.Promise
 import java.lang.Integer.min
 import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.math.abs
 
 class FastSynchronizer(
@@ -36,12 +39,23 @@ class FastSynchronizer(
     private var parallelRequestsState = hashMapOf<Long, IssuedRequestTimer>()
     private var blocks = PriorityQueue<IncomingBlock>(parallelism)
 
+    /**
+     * This is used to keep track of all blocks that are currently committing, on enqued
+     * to be committed. When we leave fast sync mode by calling reset(), we'll be able to know what
+     * work is currently ongoing, so that we can await that work to finish before returning from
+     * reset.
+     */
+    private val committingBlocks = ConcurrentLinkedQueue<Promise<Unit, Exception>>( )
+
     val blockHeightAheadCount = 3
+
+    companion object: KLogging()
 
     var blockHeight: Long = blockQueries.getBestHeight().get()
         private set
 
     fun sync() {
+        blockHeight = blockQueries.getBestHeight().get()
         checkBlock()
         processState()
         dispatchMessages()
@@ -50,6 +64,17 @@ class FastSynchronizer(
     fun reset() {
         parallelRequestsState.clear()
         blocks.clear()
+        // Await addBlock calls to be fulfilled to not interfere with normal sync.
+        // If we don't wait, blocks asynchronously added by this class might get
+        // committed AFTER normal sync is fastforwarded.
+        while (true) {
+            val p = committingBlocks.peek() ?: return
+            try {
+                p.get()
+            } catch (e: Exception) {
+                // Ignore here. It's handled in commitBlock()
+            }
+        }
     }
 
     fun isAlmostUpToDate(): Boolean {
@@ -95,7 +120,7 @@ class FastSynchronizer(
     }
 
     /**
-     * Send message to node including the block at [height]. This is a response to the [fetchBlockAtHeight] request.
+     * Send message to node including the block at [height]. This is a response to the [GetBlockAtHeight] request.
      *
      * @param peerId XPeerID of receiving node
      * @param height requested block height
@@ -145,21 +170,25 @@ class FastSynchronizer(
     }
 
     private fun commitBlock(block: BlockDataWithWitness) {
-        blockDatabase.addBlock(block)
-                .run {
-                    success {
-                        fastSyncAlgorithmTelemetry.blockAppendedToDatabase(blockHeight)
-                        parallelRequestsState.remove(blockHeight)
-                        blockHeight += 1
-                        checkBlock()
-                    }
-                    fail {
-                        parallelRequestsState.remove(blockHeight)
-                        blockHeight = blockQueries.getBestHeight().get()
-                        fastSyncAlgorithmTelemetry.failedToAppendBlockToDatabase(blockHeight, it.message)
-                        it.printStackTrace()
-                    }
-                }
+        val p = blockDatabase.addBlock(block)
+        committingBlocks.add(p)
+        p.success {_ ->
+            committingBlocks.remove(p)
+            fastSyncAlgorithmTelemetry.blockAppendedToDatabase(blockHeight)
+            parallelRequestsState.remove(blockHeight)
+            blockHeight += 1
+            // Uncomment for now until a better, more robust approach is implemented.
+            // This means that we'll only commit a single block for each invocation
+            // of sync()
+//            checkBlock()
+        }
+        p.fail {
+            parallelRequestsState.remove(blockHeight)
+            committingBlocks.remove(p)
+            blockHeight = blockQueries.getBestHeight().get()
+            fastSyncAlgorithmTelemetry.failedToAppendBlockToDatabase(blockHeight, it.message)
+            logger.debug("Error adding Block: ", it)
+        }
     }
 
     private fun askForBlock(height: Long) {

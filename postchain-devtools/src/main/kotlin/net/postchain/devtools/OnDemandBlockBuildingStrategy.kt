@@ -20,7 +20,7 @@ class OnDemandBlockBuildingStrategy(
     @Volatile
     var upToHeight: Long = -1
     @Volatile
-    var committedHeight = -1
+    var committedHeight = blockQueries.getBestHeight().get().toInt()
     val blocks = LinkedBlockingQueue<BlockData>()
 
     override fun shouldBuildBlock(): Boolean {

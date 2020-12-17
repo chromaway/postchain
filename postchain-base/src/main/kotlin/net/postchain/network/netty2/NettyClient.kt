@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit
 class NettyClient : Shutdownable {
 
     private lateinit var client: Bootstrap
-    lateinit var connectFuture: ChannelFuture
     private lateinit var channelHandler: ChannelHandler
     private lateinit var eventLoopGroup: EventLoopGroup
 
@@ -22,7 +21,7 @@ class NettyClient : Shutdownable {
         this.channelHandler = channelHandler
     }
 
-    fun connect(peerAddress: SocketAddress) {
+    fun connect(peerAddress: SocketAddress): ChannelFuture {
         eventLoopGroup = NioEventLoopGroup(1)
 
         client = Bootstrap()
@@ -41,13 +40,10 @@ class NettyClient : Shutdownable {
                     }
                 })
 
-        connectFuture = client.connect(peerAddress).sync()
+        return client.connect(peerAddress)
     }
 
     override fun shutdown() {
-//        connectFuture.channel().close().sync()
-//        connectFuture.channel().closeFuture().sync()
         eventLoopGroup.shutdownGracefully(0, 2000, TimeUnit.MILLISECONDS).sync()
-        //.syncUninterruptibly()
     }
 }

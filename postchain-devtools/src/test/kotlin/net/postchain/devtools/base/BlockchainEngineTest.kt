@@ -12,14 +12,19 @@ import net.postchain.devtools.testinfra.TestBlockchainConfiguration
 import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.devtools.testinfra.UnexpectedExceptionTransaction
 import org.junit.Assert.*
+import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 class BlockchainEngineTest : IntegrationTestSetup() {
 
+    @Before
+    fun setTestInfrastructure() {
+        configOverrides.setProperty("infrastructure", "base/test")
+    }
+
     @Test
     fun testBuildBlock() {
-        configOverrides.setProperty("infrastructure", "base/test")
-
         val nodes = createNodes(1, "/net/postchain/devtools/blocks/blockchain_config.xml")
         val node = nodes[0]
         val txQueue = node.getBlockchainInstance().getEngine().getTransactionQueue()
@@ -168,7 +173,9 @@ class BlockchainEngineTest : IntegrationTestSetup() {
         assertEquals(-1, getBestHeight(node1))
     }
 
+    // TODO: [et]: Fix this dead/silent/not-producing-anything test
     @Test
+    @Ignore
     fun testMaxBlockTransactionsOk() {
         val (node0, node1) = createNodes(2, "/net/postchain/devtools/blocks/blockchain_config_max_block_transaction.xml")
         val blockBuilder = createBlockWithTx(node0, 6)

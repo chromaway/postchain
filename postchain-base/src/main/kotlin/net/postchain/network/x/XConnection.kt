@@ -12,11 +12,12 @@ interface XPeerConnection {
     fun sendPacket(packet: LazyPacket)
     fun remoteAddress(): String
     fun close()
+    fun descriptor(): XPeerConnectionDescriptor
 }
 
 interface XConnectorEvents {
-    fun onPeerConnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection): XPacketHandler?
-    fun onPeerDisconnected(descriptor: XPeerConnectionDescriptor, connection: XPeerConnection)
+    fun onPeerConnected(connection: XPeerConnection): XPacketHandler?
+    fun onPeerDisconnected(connection: XPeerConnection)
 }
 
 interface XConnector<PacketType> : Shutdownable {

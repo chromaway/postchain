@@ -56,18 +56,22 @@ class CommandRunNodeAuto : Command {
                             val chainId = dir.name.toLong()
                             chainIds.add(chainId)
 
-                            dir.listFiles()
-                                    .filter { it.extension == "xml" }
-                                    .sortedBy { it.nameWithoutExtension.split(".")[0].toLong() }
-                                    .forEach { file ->
+                            val getHeight = { file: File ->
+                                file.nameWithoutExtension.substringBefore(".").toInt()
+                            }
+                            val configs = mutableMapOf<Int, File>()
+                            dir.listFiles()?.filter { it.extension == "xml" }?.associateByTo(configs, getHeight)
+                            dir.listFiles()?.filter { it.extension == "gtv" }?.associateByTo(configs, getHeight)
+
+                            configs.toSortedMap()
+                                    .forEach { (height, file) ->
                                         val blockchainConfigFile = file.absolutePath
-                                        val height = (file.nameWithoutExtension.split(".")[0]).toLong()
-                                        if (height.toInt() == 0) {
+                                        if (height == 0) {
                                             CliExecution.addBlockchain(
                                                     nodeConfigFile, chainId, blockchainConfigFile)
                                         } else {
                                             CliExecution.addConfiguration(
-                                                    nodeConfigFile, blockchainConfigFile, chainId, height)
+                                                    nodeConfigFile, blockchainConfigFile, chainId, height.toLong())
                                         }
                                     }
                         }

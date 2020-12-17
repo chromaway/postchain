@@ -93,6 +93,35 @@
                 </plugins>
             </build>
         </profile>
+
+        <profile>
+            <id>postchain-subnode</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>${maven.assembly.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>postchain-subnode</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <finalName>postchain-subnode-${project.version}</finalName>
+                                    <descriptors>
+                                        <descriptor>src/main/postchain-subnode/assembly/dist.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
     </profiles>
 
 </project>

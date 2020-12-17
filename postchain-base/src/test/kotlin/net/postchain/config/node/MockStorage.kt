@@ -21,6 +21,7 @@ object MockStorage {
 
         return mock {
             on { openWriteConnection() } doReturn mockContext
+            on { openReadConnection() } doReturn mockContext
         }
     }
 
