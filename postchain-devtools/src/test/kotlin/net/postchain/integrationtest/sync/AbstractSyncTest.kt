@@ -1,6 +1,7 @@
 package net.postchain.integrationtest.sync
 
 import net.postchain.StorageBuilder
+import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerInfo
 import net.postchain.base.Storage
 import net.postchain.base.data.DatabaseAccessFactory
@@ -11,6 +12,7 @@ import net.postchain.config.node.ManagedNodeConfigurationProvider
 import net.postchain.core.NODE_ID_NA
 import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.KeyPairHelper
+import net.postchain.devtools.awaitHeight
 import net.postchain.devtools.utils.configuration.BlockchainSetup
 import net.postchain.devtools.utils.configuration.NodeSeqNumber
 import net.postchain.devtools.utils.configuration.NodeSetup
@@ -19,6 +21,7 @@ import net.postchain.devtools.utils.configuration.pre.BlockchainPreSetup
 import net.postchain.network.x.XPeerID
 import org.apache.commons.configuration2.Configuration
 import org.apache.commons.configuration2.MapConfiguration
+import org.junit.Assert.assertArrayEquals
 
 open class AbstractSyncTest : IntegrationTestSetup() {
 
@@ -26,11 +29,10 @@ open class AbstractSyncTest : IntegrationTestSetup() {
 
         val peerInfos = createPeerInfosWithReplicas(signerNodeCount, replicaCount)
 
-        var i = 0
-        val nodeSetups = peerInfos.associate { NodeSeqNumber(i) to nodeSetup(i, peerInfos, i++<signerNodeCount, true) }
-
         val blockchainPreSetup = BlockchainPreSetup.simpleBuild(0, (0 until signerNodeCount).map { NodeSeqNumber(it) })
         val blockchainSetup = BlockchainSetup.buildFromGtv(0, blockchainPreSetup.toGtvConfig(mapOf()))
+        var i = 0
+        val nodeSetups = peerInfos.associate { NodeSeqNumber(i) to nodeSetup(i, peerInfos, i++<signerNodeCount, true, blockchainSetup.rid) }
 
         val systemSetup = SystemSetup(nodeSetups, mapOf(0 to blockchainSetup), true, "managed", "managed", "base/ebft", true)
 
@@ -42,20 +44,20 @@ open class AbstractSyncTest : IntegrationTestSetup() {
         StorageBuilder.buildStorage(it, NODE_ID_NA, true)
     }
 
-    protected fun restartNodeClean(nodeSetup: NodeSetup) {
+    protected fun restartNodeClean(nodeSetup: NodeSetup, brid: BlockchainRid) {
         val nodeIndex = nodeSetup.sequenceNumber.nodeNumber
         val peerInfoMap = nodeSetup.configurationProvider!!.getConfiguration().peerInfoMap
         nodes[nodeIndex].shutdown()
-        val newSetup = nodeSetup(nodeIndex, peerInfoMap.values.toTypedArray(), !nodeSetup.chainsToSign.isEmpty(), true)
+        val newSetup = nodeSetup(nodeIndex, peerInfoMap.values.toTypedArray(), !nodeSetup.chainsToSign.isEmpty(), true, brid)
         nodes[nodeIndex] = newSetup.toTestNodeAndStartAllChains(systemSetup, false)
     }
 
-    protected fun startOldNode(nodeIndex: Int, peerInfoMap: Map<XPeerID, PeerInfo>, nodeSetup: NodeSetup) {
-        val newSetup = nodeSetup(nodeIndex, peerInfoMap.values.toTypedArray(), !nodeSetup.chainsToSign.isEmpty(), false)
+    protected fun startOldNode(nodeIndex: Int, peerInfoMap: Map<XPeerID, PeerInfo>, nodeSetup: NodeSetup, brid: BlockchainRid) {
+        val newSetup = nodeSetup(nodeIndex, peerInfoMap.values.toTypedArray(), !nodeSetup.chainsToSign.isEmpty(), false, brid)
         nodes[nodeIndex] = newSetup.toTestNodeAndStartAllChains(systemSetup, false)
     }
 
-    private fun nodeSetup(nodeIndex: Int, peerInfos: Array<PeerInfo>, isSigner: Boolean, wipeDb: Boolean): NodeSetup {
+    open protected fun nodeSetup(nodeIndex: Int, peerInfos: Array<PeerInfo>, isSigner: Boolean, wipeDb: Boolean, brid: BlockchainRid): NodeSetup {
         val appConfig = AppConfig(nodeConfigurationMap(nodeIndex, peerInfos[nodeIndex]))
         val signer = if (isSigner) setOf(0) else setOf()
         val replica = if (isSigner) setOf() else setOf(0)
@@ -68,12 +70,15 @@ open class AbstractSyncTest : IntegrationTestSetup() {
             val dbAccess = DatabaseAccessFactory.createDatabaseAccess(appConfig.databaseDriverclass)
             peerInfos.forEach {
                 dbAccess.addPeerInfo(ctx, it)
+                if (!isSigner) {
+                    dbAccess.addBlockchainReplica(ctx, brid.toHex(), it.pubKey.toHex())
+                }
             }
         }
         return nodeSetup
     }
 
-    private fun nodeConfigurationMap(nodeIndex: Int, peerInfo: PeerInfo): Configuration {
+    fun nodeConfigurationMap(nodeIndex: Int, peerInfo: PeerInfo): Configuration {
         val privKey = KeyPairHelper.privKey(peerInfo.pubKey)
         return MapConfiguration(mapOf(
                 "database.driverclass" to "org.postgresql.Driver",
@@ -96,5 +101,49 @@ open class AbstractSyncTest : IntegrationTestSetup() {
             nodes.add(newPTNode)
             nodeMap[nodeSetup.sequenceNumber] = newPTNode
         }
+    }
+
+    private fun n(index: Int): String {
+        var p = nodes[index].pubKey
+        return p.substring(0, 4) + ":" + p.substring(64)
+    }
+
+    /* stopIndex: which nodes to stop
+    * syncIndex: which nodes to clean+restart and try to sync without help from stop index nodes
+    * blocksToSync: height when sync nodes are wiped.
+     */
+    fun doStuff(signerCount: Int, replicaCount: Int, syncIndex: Set<Int>, stopIndex: Set<Int>, blocksToSync: Int) {
+        val nodeSetups = runNodes(signerCount, replicaCount)
+        logger.debug { "All nodes started" }
+        buildBlock(0, blocksToSync-1L)
+        logger.debug { "All nodes have block ${blocksToSync-1}" }
+
+        val expectedBlockRid = nodes[0].blockQueries(0).getBlockRid(blocksToSync-1L).get()
+        val peerInfos = nodeSetups[0].configurationProvider!!.getConfiguration().peerInfoMap
+        stopIndex.forEach {
+            logger.debug { "Shutting down ${n(it)}" }
+            nodes[it].shutdown()
+            logger.debug { "Shutting down ${n(it)} done" }
+        }
+        syncIndex.forEach {
+            logger.debug { "Restarting clean ${n(it)}" }
+            restartNodeClean(nodeSetups[it], nodes[0].getBlockchainRid(0)!!)
+            logger.debug { "Restarting clean ${n(it)} done" }
+        }
+
+        syncIndex.forEach {
+            logger.debug { "Awaiting height 0 on ${n(it)}" }
+            nodes[it].awaitHeight(0, blocksToSync-1L)
+            val actualBlockRid = nodes[it].blockQueries(0).getBlockRid(blocksToSync-1L).get()
+            assertArrayEquals(expectedBlockRid, actualBlockRid)
+            logger.debug { "Awaiting height 0 on ${n(it)} done" }
+        }
+
+        stopIndex.forEach {
+            logger.debug { "Start ${n(it)} again" }
+            startOldNode(it, peerInfos, nodeSetups[it], nodes[0].getBlockchainRid(0)!!)
+        }
+        buildBlock(0, blocksToSync.toLong())
+        logger.debug { "All nodes has block $blocksToSync" }
     }
 }

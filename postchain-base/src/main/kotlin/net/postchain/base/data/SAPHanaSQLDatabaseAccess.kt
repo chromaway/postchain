@@ -69,6 +69,13 @@ class SAPHanaSQLDatabaseAccess : SQLDatabaseAccess() {
                 ")"
     }
 
+    override fun cmdCreateTableBlockchainReplicas(): String {
+        return "CREATE TABLE ${tableBlockchainReplicas()} (" +
+                ", $TABLE_REPLICAS_FIELD_BRID text NOT NULL" +
+                ", $TABLE_REPLICAS_FIELD_PUBKEY text NOT NULL" +
+                ", PRIMARY KEY ($TABLE_REPLICAS_FIELD_BRID, $TABLE_REPLICAS_FIELD_PUBKEY))"
+    }
+
     override fun cmdCreateTableMeta(): String {
         return "CREATE TABLE ${tableMeta()} (key VARCHAR(255) PRIMARY KEY, value VARCHAR(1000))"
     }

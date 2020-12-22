@@ -2,12 +2,10 @@
 
 package net.postchain.config.node
 
-import net.postchain.base.PeerInfo
-import net.postchain.base.Storage
+import net.postchain.base.*
 import net.postchain.base.data.DatabaseAccess
-import net.postchain.base.peerId
-import net.postchain.base.withReadConnection
 import net.postchain.config.app.AppConfig
+import net.postchain.network.x.XPeerID
 
 /**
  *
@@ -23,6 +21,7 @@ open class ManualNodeConfigurationProvider(
         return object : NodeConfig(appConfig) {
             override val peerInfoMap = getPeerInfoCollection(appConfig)
                     .associateBy(PeerInfo::peerId)
+            override val blockchainReplicaNodes = getBlockchainReplicaCollection(appConfig)
         }
     }
 
@@ -40,6 +39,11 @@ open class ManualNodeConfigurationProvider(
     open fun getPeerInfoCollection(appConfig: AppConfig): Array<PeerInfo> {
         return storage.withReadConnection { ctx ->
             DatabaseAccess.of(ctx).getPeerInfoCollection(ctx)
+        }
+    }
+    open fun getBlockchainReplicaCollection(appConfig: AppConfig): Map<BlockchainRid, List<XPeerID>> {
+        return storage.withReadConnection { ctx ->
+            DatabaseAccess.of(ctx).getBlockchainReplicaCollection(ctx)
         }
     }
 }

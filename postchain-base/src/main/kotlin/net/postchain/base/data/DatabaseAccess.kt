@@ -5,6 +5,7 @@ package net.postchain.base.data
 import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerInfo
 import net.postchain.core.*
+import net.postchain.network.x.XPeerID
 import java.sql.Connection
 import java.time.Instant
 
@@ -74,6 +75,12 @@ interface DatabaseAccess {
     fun addPeerInfo(ctx: AppContext, host: String, port: Int, pubKey: String, timestamp: Instant? = null): Boolean
     fun updatePeerInfo(ctx: AppContext, host: String, port: Int, pubKey: String, timestamp: Instant? = null): Boolean
     fun removePeerInfo(ctx: AppContext, pubKey: String): Array<PeerInfo>
+
+    // Extra nodes to sync from
+    fun getBlockchainReplicaCollection(ctx: AppContext): Map<BlockchainRid, List<XPeerID>>
+    fun existsBlockchainReplica(ctx: AppContext, brid: String?, pubKeyPattern: String?): Boolean
+    fun addBlockchainReplica(ctx: AppContext, brid: String, pubKey: String): Boolean
+    fun removeBlockchainReplica(ctx: AppContext, brid: String, pubKey: String): Map<BlockchainRid, XPeerID>
 
     companion object {
         fun of(ctx: AppContext): DatabaseAccess {

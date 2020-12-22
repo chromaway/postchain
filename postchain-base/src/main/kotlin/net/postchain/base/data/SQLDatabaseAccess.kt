@@ -7,6 +7,7 @@ import net.postchain.base.PeerInfo
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.network.x.XPeerID
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.*
 import java.sql.Connection
@@ -19,6 +20,7 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
     protected fun tableMeta(): String = "meta"
     protected fun tableBlockchains(): String = "blockchains"
     protected fun tablePeerinfos(): String = "peerinfos"
+    protected fun tableBlockchainReplicas(): String = "blockchain_replicas"
     protected fun tableConfigurations(ctx: EContext): String = tableName(ctx, "configurations")
     protected fun tableTransactions(ctx: EContext): String = tableName(ctx, "transactions")
     protected fun tableBlocks(ctx: EContext): String = tableName(ctx, "blocks")
@@ -36,6 +38,7 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
     protected abstract fun cmdCreateTableMeta(): String
     protected abstract fun cmdCreateTableBlockchains(): String
     protected abstract fun cmdCreateTablePeerInfos(): String
+    protected abstract fun cmdCreateTableBlockchainReplicas(): String
     protected abstract fun cmdCreateTableConfigurations(ctx: EContext): String
     protected abstract fun cmdCreateTableTransactions(ctx: EContext): String
     protected abstract fun cmdCreateTableBlocks(ctx: EContext): String
@@ -62,6 +65,9 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
         const val TABLE_PEERINFOS_FIELD_PORT = "port"
         const val TABLE_PEERINFOS_FIELD_PUBKEY = "pub_key"
         const val TABLE_PEERINFOS_FIELD_TIMESTAMP = "timestamp"
+
+        const val TABLE_REPLICAS_FIELD_BRID = "blockchain_rid"
+        const val TABLE_REPLICAS_FIELD_PUBKEY = "node"
     }
 
     override fun isSchemaExists(connection: Connection, schema: String): Boolean {
@@ -306,6 +312,7 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
             // there is some serious problem that needs manual work
             queryRunner.update(connection, cmdCreateTableBlockchains())
             queryRunner.update(connection, cmdCreateTablePeerInfos())
+            queryRunner.update(connection, cmdCreateTableBlockchainReplicas())
         }
     }
 
@@ -507,6 +514,93 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
         }
 
         return result.toTypedArray()
+    }
+
+    override fun addBlockchainReplica(ctx: AppContext, brid: String, pubKey: String): Boolean {
+        val sql = """
+            INSERT INTO ${tableBlockchainReplicas()} 
+            ($TABLE_REPLICAS_FIELD_BRID, $TABLE_REPLICAS_FIELD_PUBKEY) 
+            VALUES (?, ?) RETURNING $TABLE_REPLICAS_FIELD_PUBKEY
+        """.trimIndent()
+        return pubKey == queryRunner.insert(ctx.conn, sql, ScalarHandler<String>(), brid, pubKey)
+    }
+
+    override fun getBlockchainReplicaCollection(ctx: AppContext): Map<BlockchainRid, List<XPeerID>> {
+
+        val query = "SELECT * FROM ${tableBlockchainReplicas()}"
+
+        // Running the query
+        val raw: MutableList<MutableMap<String, Any>> = queryRunner.query(
+                ctx.conn, query, MapListHandler())
+
+        /*
+        Each MutableMap represents a row in the table.
+        MutableList is thus a list of rows in the table.
+         */
+        return raw.groupBy(keySelector =  { BlockchainRid((it[TABLE_REPLICAS_FIELD_BRID] as String).hexStringToByteArray()) },
+                valueTransform = { XPeerID((it[TABLE_REPLICAS_FIELD_PUBKEY] as String).hexStringToByteArray()) })
+    }
+
+    override fun existsBlockchainReplica(ctx: AppContext, brid: String?, pubKeyPattern: String?): Boolean {
+        // Collecting where's conditions
+        val conditions = mutableListOf<String>()
+        if (brid != null) {
+            conditions.add("$TABLE_REPLICAS_FIELD_BRID = '$brid'")
+        }
+
+        if (pubKeyPattern != null) {
+            conditions.add("$TABLE_REPLICAS_FIELD_PUBKEY ILIKE '%$pubKeyPattern%'")
+        }
+
+        // Building a query
+        val query = if (conditions.isEmpty()) {
+            "SELECT * FROM ${tableBlockchainReplicas()}"
+        } else {
+            conditions.joinToString(
+                    separator = " AND ",
+                    prefix = "SELECT * FROM ${tableBlockchainReplicas()} WHERE "
+            )
+        }
+        // Running the query
+        val res = queryRunner.query(ctx.conn, query, MapListHandler())
+        return res.isNotEmpty()
+    }
+
+    override fun removeBlockchainReplica(ctx: AppContext, brid: String, pubKeyPattern: String): Map<BlockchainRid, XPeerID> {
+        val result = mutableMapOf<BlockchainRid, XPeerID>()
+
+        //First check that the given node IS a replica.
+        val isBlockchainReplica = existsBlockchainReplica(ctx, null, pubKeyPattern)
+        if (!isBlockchainReplica) {
+            return result
+        }
+        val blockchainReplCollection = getBlockchainReplicaCollection(ctx)
+
+        //If brid = "". Remove key from all bcs.
+        if (brid == "") {
+            blockchainReplCollection.forEach { replicasPerBlockchain ->
+                val sql = """
+                DELETE FROM ${tableBlockchainReplicas()} 
+                WHERE $TABLE_REPLICAS_FIELD_PUBKEY = '$pubKeyPattern'
+                AND $TABLE_REPLICAS_FIELD_BRID = '${replicasPerBlockchain.key.toHex()}'
+            """.trimIndent()
+                val deleted = queryRunner.update(ctx.conn, sql)
+                if (deleted == 1) {
+                    result[replicasPerBlockchain.key] = XPeerID(pubKeyPattern.hexStringToByteArray())
+                }
+            }
+        } else {
+            val sql = """
+                DELETE FROM ${tableBlockchainReplicas()} 
+                WHERE $TABLE_REPLICAS_FIELD_PUBKEY = '$pubKeyPattern'
+                AND $TABLE_REPLICAS_FIELD_BRID = '$brid'
+            """.trimIndent()
+            val deleted = queryRunner.update(ctx.conn, sql)
+            if (deleted == 1) {
+                result[BlockchainRid(brid.hexStringToByteArray())] = XPeerID(pubKeyPattern.hexStringToByteArray())
+            }
+        }
+        return result
     }
 
     fun tableExists(connection: Connection, tableName: String): Boolean {

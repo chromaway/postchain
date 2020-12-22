@@ -2,6 +2,8 @@
 
 package net.postchain.base.data
 
+import net.postchain.base.PeerInfo
+import net.postchain.core.AppContext
 import net.postchain.core.BlockEContext
 import net.postchain.core.EContext
 import net.postchain.core.Transaction
@@ -68,6 +70,13 @@ class PostgreSQLDatabaseAccess : SQLDatabaseAccess() {
                 ", $TABLE_PEERINFOS_FIELD_PUBKEY text PRIMARY KEY NOT NULL" +
                 ", $TABLE_PEERINFOS_FIELD_TIMESTAMP timestamp NOT NULL" +
                 ")"
+    }
+
+    override fun cmdCreateTableBlockchainReplicas(): String {
+        return "CREATE TABLE ${tableBlockchainReplicas()} (" +
+                " $TABLE_REPLICAS_FIELD_BRID text NOT NULL" +
+                ", $TABLE_REPLICAS_FIELD_PUBKEY text NOT NULL" +
+                ", PRIMARY KEY ($TABLE_REPLICAS_FIELD_BRID, $TABLE_REPLICAS_FIELD_PUBKEY))"
     }
 
     override fun cmdCreateTableMeta(): String {

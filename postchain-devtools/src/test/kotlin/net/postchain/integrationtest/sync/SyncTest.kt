@@ -32,46 +32,8 @@ class SyncTest(val signerCount: Int, val replicaCount: Int, val syncIndex: Set<I
         )
     }
 
-    private fun n(index: Int): String {
-        var p = nodes[index].pubKey
-        return p.substring(0, 4) + ":" + p.substring(64)
-    }
-
     @Test
     fun sync() {
-        val nodeSetups = runNodes(signerCount, replicaCount)
-        logger.debug { "All nodes started" }
-        buildBlock(0, blocksToSync-1L)
-        logger.debug { "All nodes have block ${blocksToSync-1}" }
-
-        val expectedBlockRid = nodes[0].blockQueries(0).getBlockRid(blocksToSync-1L).get()
-
-        val peerInfos = nodeSetups[0].configurationProvider!!.getConfiguration().peerInfoMap
-        stopIndex.forEach {
-            logger.debug { "Shutting down ${n(it)}" }
-            nodes[it].shutdown()
-            logger.debug { "Shutting down ${n(it)} done" }
-        }
-        syncIndex.forEach {
-            logger.debug { "Restarting clean ${n(it)}" }
-            restartNodeClean(nodeSetups[it])
-            logger.debug { "Restarting clean ${n(it)} done" }
-        }
-
-        syncIndex.forEach {
-            logger.debug { "Awaiting height 0 on ${n(it)}" }
-            nodes[it].awaitHeight(0, blocksToSync-1L)
-            val actualBlockRid = nodes[it].blockQueries(0).getBlockRid(blocksToSync-1L).get()
-            assertArrayEquals(expectedBlockRid, actualBlockRid)
-            logger.debug { "Awaiting height 0 on ${n(it)} done" }
-        }
-
-        stopIndex.forEach {
-            logger.debug { "Start ${n(it)} again" }
-            startOldNode(it, peerInfos, nodeSetups[it])
-        }
-        buildBlock(0, blocksToSync.toLong())
-        logger.debug { "All nodes has block $blocksToSync" }
+        doStuff( signerCount, replicaCount, syncIndex ,stopIndex, blocksToSync)
     }
-
 }

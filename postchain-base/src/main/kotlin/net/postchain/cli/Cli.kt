@@ -30,6 +30,9 @@ class Cli {
             , CommandPeerInfoRemove()
             , CommandPeerInfoImport()
 
+            , CommandBlockchainReplicaAdd()
+            , CommandBlockchainReplicaRemove()
+
     ).map { it.key() to it }.toMap()
 
     init {
