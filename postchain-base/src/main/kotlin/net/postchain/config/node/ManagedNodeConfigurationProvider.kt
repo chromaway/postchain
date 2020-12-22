@@ -73,18 +73,26 @@ class ManagedNodeConfigurationProvider(
      *
      */
     override fun getBlockchainReplicaCollection(appConfig: AppConfig): Map<BlockchainRid, List<XPeerID>> {
-        val resMap = mutableMapOf<BlockchainRid, List<XPeerID>>()
         // Collect from local table (common for all bcs)
         val localResMap = super.getBlockchainReplicaCollection(appConfig)
         // get values from the chain0 table
         val chain0ResMap = (managedPeerSource?.getBlockchainReplicaNodeMap() ?: mutableMapOf<BlockchainRid, List<XPeerID>>())
 
+        val resMap = mutableMapOf<BlockchainRid, List<XPeerID>>()
         val allKeys = localResMap.keys + chain0ResMap.keys
         for (k in allKeys) {
-            resMap[k] = localResMap[k] ?: chain0ResMap[k]!!
+            resMap[k] = merge(localResMap[k], chain0ResMap[k])
         }
         return resMap
-
     }
 
+    fun merge(a: List<XPeerID>?, b: List<XPeerID>?): List<XPeerID> {
+        if (a == null) {
+            return b!!
+        }
+        if (b == null) {
+            return a
+        }
+        return setOf(*a.toTypedArray(), *b.toTypedArray()).toList()
+    }
 }

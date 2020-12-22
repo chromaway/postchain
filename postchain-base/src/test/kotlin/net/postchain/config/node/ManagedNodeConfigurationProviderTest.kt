@@ -12,8 +12,10 @@ import net.postchain.base.PeerInfo
 import net.postchain.base.peerId
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
+import net.postchain.network.x.XPeerID
 import org.junit.Test
 import java.time.Instant
+import kotlin.test.assertEquals
 
 class ManagedNodeConfigurationProviderTest {
 
@@ -197,5 +199,20 @@ class ManagedNodeConfigurationProviderTest {
                 arrayOf(peerInfo0New, peerInfo1, peerInfo2New),
                 arrayOf(peerInfo0New, peerInfo1New, peerInfo2New)
         )
+    }
+
+    @Test
+    fun testMerge() {
+        val a = listOf(p(1), p(2))
+        val b = listOf(p(3), p(2))
+        val expectedMerged = setOf(p(1), p(2), p(3))
+        val provider = ManagedNodeConfigurationProvider(mock()) { mock() }
+        val result = provider.merge(a, b)
+        assertEquals(expectedMerged.size, result.size)
+        assertEquals(expectedMerged, result.toSet())
+    }
+
+    fun p(s: Int): XPeerID {
+        return XPeerID(byteArrayOf(s.toByte()))
     }
 }
