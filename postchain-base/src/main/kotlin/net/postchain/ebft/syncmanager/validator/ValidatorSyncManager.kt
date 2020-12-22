@@ -18,6 +18,7 @@ import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockDataWithWitnes
 import net.postchain.ebft.syncmanager.StatusLogInterval
 import net.postchain.ebft.syncmanager.SyncManager
 import net.postchain.ebft.syncmanager.common.EBFTNodesCondition
+import net.postchain.ebft.syncmanager.common.FastSyncParameters
 import net.postchain.ebft.syncmanager.common.FastSynchronizer
 import net.postchain.ebft.syncmanager.common.Messaging
 import net.postchain.network.CommunicationManager
@@ -59,7 +60,8 @@ class ValidatorSyncManager(
         this.currentTimeout = defaultTimeout
         this.processingIntent = DoNothingIntent
         this.lastStatusLogged = Date().time
-        val params = nodeConfig.fastSyncParameters
+        val params = FastSyncParameters()
+        params.discoveryTimeout = nodeConfig.fastSyncDiscoveryTimeout
         params.processName = processName.toString()
         fastSynchronizer = FastSynchronizer(
                 communicationManager,

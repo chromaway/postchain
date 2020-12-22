@@ -9,6 +9,7 @@ import net.postchain.core.NODE_ID_READ_ONLY
 import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.BaseBlockDatabase
 import net.postchain.ebft.message.Message
+import net.postchain.ebft.syncmanager.common.FastSyncParameters
 import net.postchain.ebft.syncmanager.common.FastSynchronizer
 import net.postchain.network.CommunicationManager
 import java.util.concurrent.CountDownLatch
@@ -37,7 +38,7 @@ class ReadOnlyWorker(
         val blockDatabase = BaseBlockDatabase(
                 blockchainEngine, blockchainEngine.getBlockQueries(), NODE_ID_READ_ONLY)
 
-        val fastSyncParameters = nodeConfig.fastSyncParameters
+        val fastSyncParameters = FastSyncParameters()
         fastSyncParameters.discoveryTimeout = Long.MAX_VALUE
         fastSyncParameters.processName = processName.toString()
         fastSynchronizer = FastSynchronizer(

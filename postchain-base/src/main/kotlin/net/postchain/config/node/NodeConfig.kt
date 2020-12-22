@@ -7,7 +7,6 @@ import net.postchain.base.PeerInfo
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
 import net.postchain.core.Infrastructures
-import net.postchain.ebft.syncmanager.common.FastSyncParameters
 import net.postchain.network.x.XPeerID
 import org.apache.commons.configuration2.Configuration
 
@@ -81,7 +80,6 @@ open class NodeConfig(val appConfig: AppConfig) {
     val restApiSslCertificatePassword: String
         get() = config.getString("api.ssl_certificate.password", "")
 
-
     /**
      * Peers
      */
@@ -89,15 +87,8 @@ open class NodeConfig(val appConfig: AppConfig) {
     open val nodeReplicas: Map<XPeerID, List<XPeerID>> = mapOf()
     open val blockchainReplicaNodes: Map<BlockchainRid, List<XPeerID>> = mapOf()
 
-    open val fastSyncParameters: FastSyncParameters
-        get() {
-            val f = FastSyncParameters()
-            if (config.containsKey("fastsync.discovery_timeout")) {
-                f.discoveryTimeout = config.getLong("fastsync.discovery_timeout")
-            }
-            return f
-        }
-
+    val fastSyncDiscoveryTimeout: Long
+        get() = config.getLong("fastsync.discovery_timeout", 60000)
 
     /**
      * Active Chains

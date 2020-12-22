@@ -6,12 +6,13 @@ import mu.KLogging
 import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.common.toHex
+import net.postchain.core.BadDataMistake
+import net.postchain.core.BadDataType
 import net.postchain.debug.BlockchainProcessName
 import net.postchain.devtools.PeerNameHelper.peerName
 import net.postchain.network.CommunicationManager
 import net.postchain.network.XPacketDecoder
 import net.postchain.network.XPacketEncoder
-import java.lang.Exception
 
 class DefaultXCommunicationManager<PacketType>(
         val connectionManager: XConnectionManager,
@@ -82,13 +83,21 @@ class DefaultXCommunicationManager<PacketType>(
     }
 
     private fun decodeAndEnqueue(peerID: XPeerID, packet: ByteArray) {
-        // packet decoding should not be synchronized so we can make
-        // use of parallel processing in different threads
-        logger.trace("receiving a packet from peer: ${peerID.byteArray.toHex()}")
-        val decodedPacket = packetDecoder.decodePacket(peerID.byteArray, packet)
-        synchronized(this) {
-            logger.trace("Successfully decoded the package, now adding it ")
-            inboundPackets.add(peerID to decodedPacket)
+        try {
+            // packet decoding should not be synchronized so we can make
+            // use of parallel processing in different threads
+            logger.trace("receiving a packet from peer: ${peerID.byteArray.toHex()}")
+            val decodedPacket = packetDecoder.decodePacket(peerID.byteArray, packet)
+            synchronized(this) {
+                logger.trace("Successfully decoded the package, now adding it ")
+                inboundPackets.add(peerID to decodedPacket)
+            }
+        } catch (e: BadDataMistake) {
+            if (e.type == BadDataType.BAD_MESSAGE) {
+                logger.info("Bad message received from peer ${peerID}: ${e.message}")
+            } else {
+                logger.error("Error when receiving message from peer ${peerID}", e)
+            }
         }
     }
 }

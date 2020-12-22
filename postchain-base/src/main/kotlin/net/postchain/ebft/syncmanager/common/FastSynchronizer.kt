@@ -15,7 +15,6 @@ import java.lang.Thread.sleep
 import java.util.*
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.collections.HashMap
 import net.postchain.ebft.message.BlockHeader as BlockHeaderMessage
 
 
@@ -72,8 +71,8 @@ data class FastSyncParameters(var resurrectDrainedTime: Long = 10000,
  *
  * These two methods should give us a pretty complete picture of the network within a few seconds.
  *
- * If this is the sole node, it will wait [params.discoveryTimeout] until it leaves fastsync and starts
- * building blocks on its own. This is not a problem in a real world scenario, since you can wait a minute
+ * If there are no live peers, it will wait [params.discoveryTimeout] until it leaves fastsync and starts
+ * trying to build blocks on its own. This is not a problem in a real world scenario, since you can wait a minute
  * or so upon first start. But in tests, this can be really annoying. So tests that only runs a single node
  * should set [params.discoveryTimeout] to 0. For replicas, it should be set to MAX_LONG, because replicas
  * should stay in FastSync until shutdown.
@@ -156,7 +155,7 @@ class FastSynchronizer(
      * This is called by a validator to make reasonably sure it's up-to-date with peers before
      * starting to build blocks.
      *
-     * If no peer is responsive for X seconds, we'll assume we're the sole node and return.
+     * If no peer is responsive for X seconds, we'll assume we're the sole live node and return.
      *
      * Note that if we have contact with all current nodes, it doesn't mean that we can trust that group,
      * because we don't know if this is the final configuration. Even if they are current signers, any/all
@@ -168,7 +167,10 @@ class FastSynchronizer(
      *
      * All nodes are thus to be regarded as potentially adversarial/unreliable replicas.
      *
-     * We consider ourselves up-to-date when we have drained roof(75% of all known peers).
+     * We consider ourselves up-to-date when we have drained roof(75% of all known peers). If it turns that
+     * we aren't actually up to date, normal sync will detect this and enter fastsync mode again. The
+     * 75% target is somewhat arbitrarily chosen. It can be changed later, as it's just a local
+     * heuristic. Maybe this should be configurable in FastSyncParameters.
      */
     fun syncUntilResponsiveNodesDrained() {
         syncWhile {
@@ -269,11 +271,11 @@ class FastSynchronizer(
             if (shutdown.get()) {
                 return false
             }
-            // We haven't got any connections yet, or we are sole node.
+            // We haven't got any connections yet, or there are no live peers.
             // We don't know which. Retry after a while and fail after
             // timeout.
             if (System.currentTimeMillis()-startTime > params.discoveryTimeout) {
-                // Assume we're sole node
+                // Assume there are no live peers and give up
                 return false
             }
             sleep(10L)
@@ -471,169 +473,3 @@ class FastSynchronizer(
     }
 }
 
-/**
- * Keeps track of peer's statuses. The currently trackeed statuses are
- *
- * Blacklisted: We have received invalid data from the peer, or it's otherwise misbehaving
- * Unresponsive: We haven't received a timely response from the peer
- * NotDrained: This class doesn't have any useful information about the peer
- * Drained: The peer's tip is reached.
- */
-class PeerStatuses(val params: FastSyncParameters): KLogging() {
-
-    /**
-     * Keeps notes on a single peer. Some rules:
-     *
-     * When a peer has been marked DRAINED or UNRESPONSIVE for a certain
-     * amount of time ([params.resurrectDrainedTime] and
-     * [params.resurrectUnresponsiveTime] resp.) it will be given
-     * a new chance to serve us blocks. Otherwise we might run out of
-     * peers to sync from over time.
-     *
-     * Peers that are marked BLACKLISTED, should never be given another chance
-     * because they have been proven to provide bad data (deliberately or not).
-     *
-     * The DRAINED state is reset to NOT_DRAINED whenever we receive a valid header for a
-     * height higher than the height at which it was drained or when we
-     * receive a Status message (which is sent regurarly from peers in normal
-     * sync mode).
-     *
-     * We use Status messages as indication that there are headers
-     * available at that Status' height-1 (The height in the Status
-     * message indicates the height that they're working on, ie their committed
-     * height + 1). They also serve as a discovery mechanism, in which we become
-     * aware of our neiborhood.
-     */
-    private class KnownState(val params: FastSyncParameters) {
-        private enum class State {
-            BLACKLISTED, UNRESPONSIVE, NOT_DRAINED, DRAINED
-        }
-        private var state = State.NOT_DRAINED
-
-        private var unresponsiveTime: Long = System.currentTimeMillis()
-        private var drainedTime: Long = System.currentTimeMillis()
-        private var drainedHeight: Long = -2
-
-        fun isBlacklisted() = state == State.BLACKLISTED
-        fun isUnresponsive() = state == State.UNRESPONSIVE
-        private fun isDrained() = state == State.DRAINED
-        fun isDrained(h: Long) = isDrained() && drainedHeight < h
-
-        fun drained(height: Long) {
-            state = State.DRAINED
-            if (height > drainedHeight) {
-                drainedHeight = height
-                drainedTime = System.currentTimeMillis()
-            }
-        }
-        fun received(height: Long) {
-            if (state == State.DRAINED && height > drainedHeight) {
-                state = State.NOT_DRAINED
-            }
-        }
-        fun statusReceived(height: Long) {
-            // We take a Status message as an indication that
-            // there might be more blocks to fetch now. But
-            // we won't resurrect unresponsive peers.
-            if (state == State.DRAINED && height > drainedHeight) {
-                state = State.NOT_DRAINED
-            }
-        }
-        fun unresponsive() {
-            if (this.state != State.UNRESPONSIVE) {
-                this.state = State.UNRESPONSIVE
-                unresponsiveTime = System.currentTimeMillis()
-            }
-        }
-        fun blacklist() {
-            this.state = State.BLACKLISTED
-        }
-        fun resurrect(now: Long) {
-            if (isDrained() && drainedTime + params.resurrectDrainedTime < now ||
-                    isUnresponsive() && unresponsiveTime + params.resurrectUnresponsiveTime < now) {
-                state = State.NOT_DRAINED
-            }
-        }
-    }
-    private val statuses = HashMap<XPeerID, KnownState>()
-
-    private fun resurrectDrainedAndUnresponsivePeers() {
-        val now = System.currentTimeMillis()
-        statuses.forEach {
-            it.value.resurrect(now)
-        }
-    }
-
-    fun exclDrainedAndUnresponsive(height: Long): Set<XPeerID> {
-        resurrectDrainedAndUnresponsivePeers()
-        return statuses.filterValues { it.isDrained(height) || it.isUnresponsive() || it.isBlacklisted() }.keys
-    }
-
-    fun drained(peerId: XPeerID, height: Long) {
-        val status = stateOf(peerId)
-        if (status.isBlacklisted()) {
-            return
-        }
-        status.drained(height)
-    }
-
-    fun headerReceived(peerId: XPeerID, height: Long) {
-        val status = stateOf(peerId)
-        if (status.isBlacklisted()) {
-            return
-        }
-        status.received(height)
-    }
-
-    fun statusReceived(peerId: XPeerID, height: Long) {
-        val status = stateOf(peerId)
-        if (status.isBlacklisted()) {
-            return
-        }
-        status.statusReceived(height)
-    }
-
-    fun unresponsive(peerId: XPeerID) {
-        val status = stateOf(peerId)
-        if (status.isBlacklisted()) {
-            return
-        }
-        status.unresponsive()
-    }
-
-    fun blacklist(peerId: XPeerID) {
-        stateOf(peerId).blacklist()
-    }
-
-    private fun stateOf(peerId: XPeerID): KnownState {
-        var knownState = statuses[peerId]
-        if (knownState == null) {
-            knownState = KnownState(params)
-            statuses[peerId] = knownState
-        }
-        return knownState
-    }
-
-    /**
-     * Adds the peer if it doesn't exist. Do nothing if it exists.
-     */
-    fun addPeer(peerId: XPeerID) {
-        stateOf(peerId)
-    }
-
-    fun isBlacklisted(xPeerId: XPeerID): Boolean {
-        return stateOf(xPeerId).isBlacklisted()
-    }
-
-    fun countDrained(height: Long): Int {
-        return statuses.count { it.value.isDrained(height) }
-    }
-
-    fun countAll(): Int {
-        return statuses.size
-    }
-
-    fun clear() {
-        statuses.clear()
-    }
-}
