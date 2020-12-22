@@ -41,7 +41,7 @@ class CommandBlockchainReplicaAdd : Command {
             val added = addReplica(blockchainRID, pubKey)
             return when {
                 added -> Ok("Blockchain replica has been added successfully")
-                else -> Ok("Blockchain replica hasn't been added")
+                else -> Ok("Blockchain replica already exists")
             }
         } catch (e: CliError.Companion.CliException) {
             CliError.CommandNotAllowed(message = e.message)
@@ -58,10 +58,6 @@ class CommandBlockchainReplicaAdd : Command {
                 throw CliError.Companion.CliException("Given pubkey is not a peer. First add it as a peer.")
             }
 
-            val found = db.existsBlockchainReplica(ctx, brid, pubKey)
-            if (found) {
-                throw CliError.Companion.CliException("Node already added as replica for this blockchain.")
-            }
             db.addBlockchainReplica(ctx, brid, pubKey)
         }
     }

@@ -78,9 +78,9 @@ interface DatabaseAccess {
 
     // Extra nodes to sync from
     fun getBlockchainReplicaCollection(ctx: AppContext): Map<BlockchainRid, List<XPeerID>>
-    fun existsBlockchainReplica(ctx: AppContext, brid: String?, pubKeyPattern: String?): Boolean
+    fun existsBlockchainReplica(ctx: AppContext, brid: String, pubkey: String): Boolean
     fun addBlockchainReplica(ctx: AppContext, brid: String, pubKey: String): Boolean
-    fun removeBlockchainReplica(ctx: AppContext, brid: String, pubKey: String): Map<BlockchainRid, XPeerID>
+    fun removeBlockchainReplica(ctx: AppContext, brid: String?, pubKey: String): Set<BlockchainRid>
 
     companion object {
         fun of(ctx: AppContext): DatabaseAccess {

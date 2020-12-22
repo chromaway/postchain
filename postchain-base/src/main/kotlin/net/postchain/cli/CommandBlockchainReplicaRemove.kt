@@ -23,7 +23,7 @@ class CommandBlockchainReplicaRemove : Command {
     @Parameter(
             names = ["-brid", "--blockchain-rid"],
             description = "Blockchain RID",
-            required = true)
+            required = false)
     private var blockchainRID = ""
 
     @Parameter(
@@ -39,15 +39,16 @@ class CommandBlockchainReplicaRemove : Command {
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
         return try {
-            val removed = blockchainReplicaRemove(blockchainRID, pubKey)
+            val brid = if (blockchainRID == "") null else blockchainRID
+            val removed = blockchainReplicaRemove(brid, pubKey)
 
             val report = if (removed.isEmpty()) {
                 "No replica has been removed"
             } else {
-                val listRemoved = removed.map { it.key.toString() + '-' + it.value.shortString() }
+                val listRemoved = removed.map { it.toString() }
                 listRemoved.joinToString(
                                 separator = "\n",
-                                prefix = "Replica removed (${removed.size}):\n")
+                                prefix = "Replica $pubKey removed from brid (${removed.size}):\n")
             }
 
             Ok(report)
@@ -57,7 +58,7 @@ class CommandBlockchainReplicaRemove : Command {
         }
     }
 
-    private fun blockchainReplicaRemove(brid: String, pubKey: String): Map<BlockchainRid, XPeerID> {
+    private fun blockchainReplicaRemove(brid: String?, pubKey: String): Set<BlockchainRid> {
         return runStorageCommand(nodeConfigFile) {
             DatabaseAccess.of(it).removeBlockchainReplica(it, brid, pubKey)
         }

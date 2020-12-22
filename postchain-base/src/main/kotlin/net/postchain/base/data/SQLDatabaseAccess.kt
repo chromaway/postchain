@@ -517,19 +517,22 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
     }
 
     override fun addBlockchainReplica(ctx: AppContext, brid: String, pubKey: String): Boolean {
+        if (existsBlockchainReplica(ctx, brid, pubKey)) {
+            return false
+        }
         val sql = """
             INSERT INTO ${tableBlockchainReplicas()} 
             ($TABLE_REPLICAS_FIELD_BRID, $TABLE_REPLICAS_FIELD_PUBKEY) 
-            VALUES (?, ?) RETURNING $TABLE_REPLICAS_FIELD_PUBKEY
+            VALUES (?, ?)
         """.trimIndent()
-        return pubKey == queryRunner.insert(ctx.conn, sql, ScalarHandler<String>(), brid, pubKey)
+        queryRunner.insert(ctx.conn, sql, ScalarHandler<String>(), brid, pubKey)
+        return true
     }
 
     override fun getBlockchainReplicaCollection(ctx: AppContext): Map<BlockchainRid, List<XPeerID>> {
 
         val query = "SELECT * FROM ${tableBlockchainReplicas()}"
 
-        // Running the query
         val raw: MutableList<MutableMap<String, Any>> = queryRunner.query(
                 ctx.conn, query, MapListHandler())
 
@@ -541,66 +544,35 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
                 valueTransform = { XPeerID((it[TABLE_REPLICAS_FIELD_PUBKEY] as String).hexStringToByteArray()) })
     }
 
-    override fun existsBlockchainReplica(ctx: AppContext, brid: String?, pubKeyPattern: String?): Boolean {
-        // Collecting where's conditions
-        val conditions = mutableListOf<String>()
-        if (brid != null) {
-            conditions.add("$TABLE_REPLICAS_FIELD_BRID = '$brid'")
-        }
+    override fun existsBlockchainReplica(ctx: AppContext, brid: String, pubkey: String): Boolean {
+        val query = """
+            SELECT count($TABLE_REPLICAS_FIELD_PUBKEY) 
+            FROM ${tableBlockchainReplicas()}
+            WHERE $TABLE_REPLICAS_FIELD_BRID = '$brid' AND
+            lower($TABLE_REPLICAS_FIELD_PUBKEY) = lower('$pubkey') 
+            """.trimIndent()
 
-        if (pubKeyPattern != null) {
-            conditions.add("$TABLE_REPLICAS_FIELD_PUBKEY ILIKE '%$pubKeyPattern%'")
-        }
-
-        // Building a query
-        val query = if (conditions.isEmpty()) {
-            "SELECT * FROM ${tableBlockchainReplicas()}"
-        } else {
-            conditions.joinToString(
-                    separator = " AND ",
-                    prefix = "SELECT * FROM ${tableBlockchainReplicas()} WHERE "
-            )
-        }
-        // Running the query
-        val res = queryRunner.query(ctx.conn, query, MapListHandler())
-        return res.isNotEmpty()
+        return queryRunner.query(ctx.conn, query, ScalarHandler<Long>()) > 0
     }
 
-    override fun removeBlockchainReplica(ctx: AppContext, brid: String, pubKeyPattern: String): Map<BlockchainRid, XPeerID> {
-        val result = mutableMapOf<BlockchainRid, XPeerID>()
-
-        //First check that the given node IS a replica.
-        val isBlockchainReplica = existsBlockchainReplica(ctx, null, pubKeyPattern)
-        if (!isBlockchainReplica) {
-            return result
-        }
-        val blockchainReplCollection = getBlockchainReplicaCollection(ctx)
-
-        //If brid = "". Remove key from all bcs.
-        if (brid == "") {
-            blockchainReplCollection.forEach { replicasPerBlockchain ->
-                val sql = """
-                DELETE FROM ${tableBlockchainReplicas()} 
-                WHERE $TABLE_REPLICAS_FIELD_PUBKEY = '$pubKeyPattern'
-                AND $TABLE_REPLICAS_FIELD_BRID = '${replicasPerBlockchain.key.toHex()}'
+    override fun removeBlockchainReplica(ctx: AppContext, brid: String?, pubkey: String): Set<BlockchainRid> {
+        val delete = """DELETE FROM ${tableBlockchainReplicas()} 
+                WHERE $TABLE_REPLICAS_FIELD_PUBKEY = ?"""
+        val res = if (brid == null) {
+            val sql = """
+                $delete
+                RETURNING *
             """.trimIndent()
-                val deleted = queryRunner.update(ctx.conn, sql)
-                if (deleted == 1) {
-                    result[replicasPerBlockchain.key] = XPeerID(pubKeyPattern.hexStringToByteArray())
-                }
-            }
+            queryRunner.query(ctx.conn, sql, ColumnListHandler<String>(TABLE_REPLICAS_FIELD_BRID), pubkey)
         } else {
             val sql = """
-                DELETE FROM ${tableBlockchainReplicas()} 
-                WHERE $TABLE_REPLICAS_FIELD_PUBKEY = '$pubKeyPattern'
-                AND $TABLE_REPLICAS_FIELD_BRID = '$brid'
+                $delete
+                AND $TABLE_REPLICAS_FIELD_BRID = ?
+                RETURNING *
             """.trimIndent()
-            val deleted = queryRunner.update(ctx.conn, sql)
-            if (deleted == 1) {
-                result[BlockchainRid(brid.hexStringToByteArray())] = XPeerID(pubKeyPattern.hexStringToByteArray())
-            }
+            queryRunner.query(ctx.conn, sql, ColumnListHandler<String>(TABLE_REPLICAS_FIELD_BRID), pubkey, brid)
         }
-        return result
+        return res.map { BlockchainRid.buildFromHex(it) }.toSet()
     }
 
     fun tableExists(connection: Connection, tableName: String): Boolean {
