@@ -41,13 +41,22 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
             BLACKLISTED, UNRESPONSIVE, NOT_DRAINED, DRAINED
         }
         private var state = State.NOT_DRAINED
-
+        /**
+         * [maybeLegacy] and [confirmedModern] are transitional and should be
+         * removed once most nodes have upgraded, because then
+         * nodes will be able to sync from modern nodes and we no longer
+         * need to be able to sync from old nodes.
+         */
+        private var maybeLegacy = false
+        private var confirmedModern = false
         private var unresponsiveTime: Long = System.currentTimeMillis()
         private var drainedTime: Long = System.currentTimeMillis()
         private var drainedHeight: Long = -1
 
         fun isBlacklisted() = state == State.BLACKLISTED
         fun isUnresponsive() = state == State.UNRESPONSIVE
+        fun isMaybeLegacy() = !confirmedModern && maybeLegacy
+        fun isConfirmedModern() = confirmedModern
         private fun isDrained() = state == State.DRAINED
         fun isDrained(h: Long) = isDrained() && drainedHeight < h
 
@@ -77,6 +86,15 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
                 unresponsiveTime = System.currentTimeMillis()
             }
         }
+        fun maybeLegacy(isLegacy: Boolean) {
+            if (!this.confirmedModern) {
+                this.maybeLegacy = isLegacy
+            }
+        }
+        fun confirmedModern() {
+            this.confirmedModern = true
+            this.maybeLegacy = false
+        }
         fun blacklist() {
             this.state = State.BLACKLISTED
         }
@@ -96,9 +114,17 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
         }
     }
 
-    fun exclDrainedAndUnresponsive(height: Long): Set<XPeerID> {
+    fun exclDrainedAndUnresponsiveAndLegacy(height: Long): Set<XPeerID> {
         resurrectDrainedAndUnresponsivePeers()
-        return statuses.filterValues { it.isDrained(height) || it.isUnresponsive() || it.isBlacklisted() }.keys
+        return statuses.filterValues { it.isDrained(height) || it.isUnresponsive() || it.isMaybeLegacy() || it.isBlacklisted() }.keys
+    }
+
+    fun getRandomLegacyPeer(height: Long): XPeerID? {
+        val legacyPeers = statuses.filterValues { it.isMaybeLegacy() && !it.isDrained(height) && !it.isBlacklisted() }.keys
+        if (legacyPeers.isEmpty()) {
+            return null
+        }
+        return legacyPeers.random()
     }
 
     fun drained(peerId: XPeerID, height: Long) {
@@ -131,6 +157,24 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
             return
         }
         status.unresponsive()
+    }
+
+    fun setMaybeLegacy(peerId: XPeerID, isLegacy: Boolean) {
+        val status = stateOf(peerId)
+        if (status.isBlacklisted()) {
+            return
+        }
+        status.maybeLegacy(isLegacy)
+    }
+
+    fun isMaybeLegacy(peerId: XPeerID): Boolean {
+        return stateOf(peerId).isMaybeLegacy()
+    }
+    fun isConfirmedModern(peerId: XPeerID): Boolean {
+        return stateOf(peerId).isConfirmedModern()
+    }
+    fun confirmModern(peerId: XPeerID) {
+        stateOf(peerId).confirmedModern()
     }
 
     fun blacklist(peerId: XPeerID) {
