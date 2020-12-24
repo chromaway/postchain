@@ -14,6 +14,7 @@ import net.postchain.gtv.GtvType
 const val OP_BEGIN_BLOCK = "__begin_block"
 const val OP_END_BLOCK = "__end_block"
 
+// NOTE: we need to refactor this if we want to make it subclass-able
 class GTXSpecialTxHandler(val module: GTXModule,
                           val blockchainRID: BlockchainRid,
                           val cs: CryptoSystem,
@@ -39,15 +40,23 @@ class GTXSpecialTxHandler(val module: GTXModule,
     override fun validateSpecialTransaction(position: SpecialTransactionPosition, tx: Transaction, ectx: BlockEContext): Boolean {
         val gtx_tx = tx as GTXTransaction
         val gtx_data = gtx_tx.gtxData
-        if (gtx_data.transactionBodyData.operations.size != 1) return false
-        val op = gtx_data.transactionBodyData.operations[0]
-        if (op.opName != if (position == SpecialTransactionPosition.Begin)
+        if (gtx_data.transactionBodyData.operations.size < 1 ) return false
+        val op0 = gtx_data.transactionBodyData.operations[0]
+        if (op0.opName != if (position == SpecialTransactionPosition.Begin)
                     OP_BEGIN_BLOCK
                 else OP_END_BLOCK) return false
-        if (op.args.size != 1) return false
-        val arg = op.args[0]
+        if (op0.args.size != 1) return false
+        val arg = op0.args[0]
         if (arg.type !== GtvType.INTEGER) return false
         if (arg.asInteger() != ectx.height) return false
+
+        // allow single "nop" after begin_block
+        if (gtx_data.transactionBodyData.operations.size > 1) {
+            val op1 = gtx_data.transactionBodyData.operations[0]
+            if (op1.opName != "nop") return false
+            if (gtx_data.transactionBodyData.operations.size > 2) return false
+        }
+
         return true
     }
 }

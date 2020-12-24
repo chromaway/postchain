@@ -187,13 +187,14 @@ open class BaseBlockchainEngine(
                     TimeLog.startSum("BaseBlockchainEngine.buildBlock().maybeApppendTransaction")
                     if (tx.isSpecial()) {
                         rejectedTxs++
+                        transactionQueue.rejectTransaction(tx, ProgrammerMistake("special transactions can't enter queue"))
                         continue
                     }
-                    val exception = blockBuilder.maybeAppendTransaction(tx)
+                    val txException = blockBuilder.maybeAppendTransaction(tx)
                     TimeLog.end("BaseBlockchainEngine.buildBlock().maybeApppendTransaction")
                     if (exception != null) {
                         rejectedTxs++
-                        transactionQueue.rejectTransaction(tx, exception)
+                        transactionQueue.rejectTransaction(tx, txException)
                     } else {
                         acceptedTxs++
                         // tx is fine, consider stopping

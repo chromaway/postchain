@@ -230,43 +230,45 @@ open class BaseBlockBuilder(
 
     override fun finalizeAndValidate(blockHeader: BlockHeader) {
         if (specialTxHandler.needsSpecialTransaction(SpecialTransactionPosition.End) && !haveSpecialEndTransaction)
-            throw BlockValidationMistake("End special transaction is missing")
+            throw BadDataMistake(BadDataType.BAD_BLOCK,"End special transaction is missing")
         super.finalizeAndValidate(blockHeader)
     }
 
     private fun checkSpecialTransaction(tx: Transaction) {
-        if (transactions.size == 0) {
-            // first transaction
-            if (specialTxHandler.needsSpecialTransaction(SpecialTransactionPosition.Begin)) {
-                if (!specialTxHandler.validateSpecialTransaction(SpecialTransactionPosition.Begin,
-                                tx, bctx))
-                    throw BlockValidationMistake("Special transaction validation failed")
-                else
-                    return // all is well, the first transaction is special and valid
-            }
+        if (haveSpecialEndTransaction) {
+            throw BlockValidationMistake("Cannot append transactions after end special transaction")
         }
+        val expectBeginTx = specialTxHandler.needsSpecialTransaction(SpecialTransactionPosition.Begin) && transactions.size == 0
         if (tx.isSpecial()) {
-            // if tx is special it must be the end transaction
-            if (!specialTxHandler.needsSpecialTransaction(SpecialTransactionPosition.End))
+            if (expectBeginTx) {
+                if (!specialTxHandler.validateSpecialTransaction(SpecialTransactionPosition.Begin, tx, bctx)) {
+                    throw BlockValidationMistake("Special transaction validation failed")
+                }
+                return // all is well, the first transaction is special and valid
+            }
+            val needEndTx = specialTxHandler.needsSpecialTransaction(SpecialTransactionPosition.End)
+            if (!needEndTx) {
                 throw BlockValidationMistake("Found unexpected special transaction")
-            if (!specialTxHandler.validateSpecialTransaction(SpecialTransactionPosition.End,
-                            tx, bctx))
+            }
+            if (!specialTxHandler.validateSpecialTransaction(SpecialTransactionPosition.End, tx, bctx)) {
                 throw BlockValidationMistake("Special transaction validation failed")
+            }
             haveSpecialEndTransaction = true
+        } else {
+            if (expectBeginTx) {
+                throw BlockValidationMistake("First transaction must be special transaction")
+            }
         }
     }
 
     override fun appendTransaction(tx: Transaction) {
-        if (!buildingNewBlock) {
-            if (haveSpecialEndTransaction) throw BlockValidationMistake("Cannot append transactions after end special transaction")
-            checkSpecialTransaction(tx)
-        }
+        checkSpecialTransaction(tx) // note: we check even transactions we construct ourselves
         super.appendTransaction(tx)
         blockSize += tx.getRawData().size
         if (blockSize >= maxBlockSize) {
-            throw UserMistake("block size exceeds max block size ${maxBlockSize} bytes")
+            throw BlockValidationMistake("block size exceeds max block size ${maxBlockSize} bytes")
         } else if (transactions.size >= maxBlockTransactions) {
-            throw UserMistake("Number of transactions exceeds max ${maxBlockTransactions} transactions in block")
+            throw BlockValidationMistake("Number of transactions exceeds max ${maxBlockTransactions} transactions in block")
         }
     }
 

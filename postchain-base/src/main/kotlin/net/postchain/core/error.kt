@@ -14,6 +14,7 @@ open class BadDataMistake(val type: BadDataType, message: String, cause: Excepti
         get() = "$type: ${super.message}"
 }
 
+class BlockValidationMistake(message: String, cause: Exception? = null): BadDataMistake(BadDataType.BAD_BLOCK, message, cause)
 
 enum class BadDataType(val type: Int) {
     BAD_GTV(1), // Something wrong on GTV level, for example GtvDictionary is broken.
