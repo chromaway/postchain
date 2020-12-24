@@ -44,6 +44,7 @@ class EsplixIntegrationTest : IntegrationTestSetup() {
     fun testEsplix() {
         val creator = 0
         val user = 1
+        configOverrides.setProperty("infrastructure", "base/test")
         val nodes = createNodes(1, "/net/postchain/esplix/blockchain_config.xml")
         val node = nodes[0]
         var currentBlockHeight = -1L
