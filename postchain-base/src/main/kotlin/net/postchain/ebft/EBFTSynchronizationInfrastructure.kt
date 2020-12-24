@@ -2,9 +2,11 @@
 
 package net.postchain.ebft
 
-import net.postchain.base.*
+import net.postchain.base.BasePeerCommConfiguration
+import net.postchain.base.BlockchainRid
+import net.postchain.base.PeerCommConfiguration
+import net.postchain.base.SECP256K1CryptoSystem
 import net.postchain.base.data.BaseBlockchainConfiguration
-import net.postchain.common.hexStringToByteArray
 import net.postchain.config.node.NodeConfig
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
@@ -23,14 +25,25 @@ import net.postchain.network.x.DefaultXConnectionManager
 import net.postchain.network.x.XConnectionManager
 import net.postchain.network.x.XPeerID
 
+@Suppress("JoinDeclarationAndAssignment")
 class EBFTSynchronizationInfrastructure(
         val nodeConfigProvider: NodeConfigurationProvider,
         val nodeDiagnosticContext: NodeDiagnosticContext
 ) : SynchronizationInfrastructure {
 
     private val nodeConfig get() = nodeConfigProvider.getConfiguration()
-    lateinit var connectionManager: XConnectionManager
+    val connectionManager: XConnectionManager
     private val blockchainProcessesDiagnosticData = mutableMapOf<BlockchainRid, MutableMap<String, Any>>()
+
+    init {
+        connectionManager = DefaultXConnectionManager(
+                NettyConnectorFactory(),
+                EbftPacketEncoderFactory(),
+                EbftPacketDecoderFactory(),
+                SECP256K1CryptoSystem())
+
+        addBlockchainDiagnosticProperty()
+    }
 
     override fun shutdown() {
         connectionManager.shutdown()
@@ -38,20 +51,10 @@ class EBFTSynchronizationInfrastructure(
 
     override fun makeBlockchainProcess(processName: BlockchainProcessName, engine: BlockchainEngine): BlockchainProcess {
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
-        val peerCommConfiguration = buildPeerCommConfiguration(nodeConfig, blockchainConfig)
-
-        connectionManager = DefaultXConnectionManager(
-                NettyConnectorFactory(),
-                peerCommConfiguration,
-                EbftPacketEncoderFactory(),
-                EbftPacketDecoderFactory(),
-                SECP256K1CryptoSystem())
-
-        addBlockchainDiagnosticProperty()
-
         val unregisterBlockchainDiagnosticData: () -> Unit = {
             blockchainProcessesDiagnosticData.remove(blockchainConfig.blockchainRid)
         }
+        val peerCommConfiguration = buildPeerCommConfiguration(nodeConfig, blockchainConfig)
 
         return if (blockchainConfig.configData.context.nodeID != NODE_ID_READ_ONLY) {
             registerBlockchainDiagnosticData(blockchainConfig.blockchainRid, DpNodeType.NODE_TYPE_VALIDATOR)
@@ -109,25 +112,22 @@ class EBFTSynchronizationInfrastructure(
         ).apply { init() }
     }
 
-    private fun buildPeerCommConfiguration(nodeConfig: NodeConfig, blockchainConfig: BaseBlockchainConfiguration):
-            PeerCommConfiguration {
-        //Why do we need to make a copy here of nodeConfig?
-        val nodeConfigCopy = nodeConfig
-
-        val myPeerID = XPeerID(nodeConfigCopy.pubKeyByteArray)
+    private fun buildPeerCommConfiguration(nodeConfig: NodeConfig, blockchainConfig: BaseBlockchainConfiguration): PeerCommConfiguration {
+        val myPeerID = XPeerID(nodeConfig.pubKeyByteArray)
         val signers = blockchainConfig.signers.map { XPeerID(it) }
         val signersReplicas = signers.flatMap {
-            nodeConfigCopy.nodeReplicas[it] ?: listOf()
+            nodeConfig.nodeReplicas[it] ?: listOf()
         }
-        val blockchainReplicas = nodeConfigCopy.blockchainReplicaNodes[blockchainConfig.blockchainRid] ?: listOf()
-        val relevantPeerMap = nodeConfigCopy.peerInfoMap.filterKeys {
+        val blockchainReplicas = nodeConfig.blockchainReplicaNodes[blockchainConfig.blockchainRid] ?: listOf()
+        val relevantPeerMap = nodeConfig.peerInfoMap.filterKeys {
             it in signers || it in signersReplicas || it in blockchainReplicas || it == myPeerID
         }
+
         return BasePeerCommConfiguration.build(
-                relevantPeerMap,
+                relevantPeerMap.values,
                 SECP256K1CryptoSystem(),
                 nodeConfig.privKeyByteArray,
-                nodeConfig.pubKey.hexStringToByteArray())
+                nodeConfig.pubKeyByteArray)
     }
 
     private fun addBlockchainDiagnosticProperty() {

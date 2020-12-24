@@ -3,7 +3,6 @@
 package net.postchain.base
 
 import net.postchain.core.ByteArrayKey
-import net.postchain.network.x.XPeerID
 
 class BasePeerCommConfiguration(override val networkNodes: NetworkNodes,
                                 private val cryptoSystem: CryptoSystem,
@@ -12,22 +11,21 @@ class BasePeerCommConfiguration(override val networkNodes: NetworkNodes,
 ) : PeerCommConfiguration {
 
     companion object {
-        fun build(peerInfoArray: Array<PeerInfo>,
+        // Used in tests only
+        fun build(peers: Array<PeerInfo>,
                   cryptoSystem: CryptoSystem,
                   privKey: ByteArray,
-                  pubKey: ByteArray): BasePeerCommConfiguration {
-
-            val peers: Collection<PeerInfo> = peerInfoArray.toSet()
-            val nn = NetworkNodes.buildNetworkNodes(peers, ByteArrayKey(pubKey))
-            return BasePeerCommConfiguration(nn, cryptoSystem, privKey, pubKey)
+                  pubKey: ByteArray
+        ): BasePeerCommConfiguration {
+            return build(peers.toSet(), cryptoSystem, privKey, pubKey)
         }
 
-        fun build(peerInfoMap: Map<XPeerID, PeerInfo>,
+        fun build(peers: Collection<PeerInfo>,
                   cryptoSystem: CryptoSystem,
                   privKey: ByteArray,
-                  pubKey: ByteArray): BasePeerCommConfiguration {
-
-            val nn = NetworkNodes.buildNetworkNodes(peerInfoMap.values, ByteArrayKey(pubKey))
+                  pubKey: ByteArray
+        ): BasePeerCommConfiguration {
+            val nn = NetworkNodes.buildNetworkNodes(peers, ByteArrayKey(pubKey))
             return BasePeerCommConfiguration(nn, cryptoSystem, privKey, pubKey)
         }
     }

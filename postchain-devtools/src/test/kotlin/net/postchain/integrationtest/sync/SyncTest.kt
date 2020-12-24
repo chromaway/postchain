@@ -8,7 +8,7 @@ import org.junit.runners.Parameterized
 @RunWith(Parameterized::class)
 class SyncTest(val signerCount: Int, val replicaCount: Int, val syncIndex: Set<Int>, val stopIndex: Set<Int>, val blocksToSync: Int) : AbstractSyncTest() {
 
-    private companion object: KLogging() {
+    private companion object : KLogging() {
 
         @JvmStatic
         @Parameterized.Parameters
@@ -32,6 +32,6 @@ class SyncTest(val signerCount: Int, val replicaCount: Int, val syncIndex: Set<I
 
     @Test
     fun sync() {
-        doStuff( signerCount, replicaCount, syncIndex ,stopIndex, blocksToSync)
+        doStuff(signerCount, replicaCount, syncIndex, stopIndex, blocksToSync)
     }
 }

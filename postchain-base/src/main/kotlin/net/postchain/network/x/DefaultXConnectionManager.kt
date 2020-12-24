@@ -5,11 +5,10 @@ package net.postchain.network.x
 import mu.KLogging
 import net.postchain.base.BlockchainRid
 import net.postchain.base.CryptoSystem
-import net.postchain.base.PeerCommConfiguration
+import net.postchain.base.PeerInfo
 import net.postchain.base.peerId
 import net.postchain.common.toHex
 import net.postchain.core.ProgrammerMistake
-import net.postchain.core.byteArrayKeyOf
 import net.postchain.debug.BlockchainProcessName
 import net.postchain.devtools.PeerNameHelper.peerName
 import net.postchain.network.XPacketDecoderFactory
@@ -17,16 +16,18 @@ import net.postchain.network.XPacketEncoderFactory
 
 class DefaultXConnectionManager<PacketType>(
         private val connectorFactory: XConnectorFactory<PacketType>,
-        private val peerCommConfiguration: PeerCommConfiguration,
         private val packetEncoderFactory: XPacketEncoderFactory<PacketType>,
         private val packetDecoderFactory: XPacketDecoderFactory<PacketType>,
         cryptoSystem: CryptoSystem
 ) : XConnectionManager, XConnectorEvents {
 
+    companion object : KLogging()
 
     private var connector: XConnector<PacketType>? = null
+    private lateinit var peersConnectionStrategy: PeersConnectionStrategy
 
-    companion object : KLogging()
+    // Used by connection strategy, connector and loggers (to distinguish nodes in tests' logs).
+    private lateinit var myPeerInfo: PeerInfo
 
     private class Chain(
             val peerConfig: XChainPeerConfiguration,
@@ -37,9 +38,6 @@ class DefaultXConnectionManager<PacketType>(
     private val chains: MutableMap<Long, Chain> = mutableMapOf()
     private val chainIDforBlockchainRID = mutableMapOf<BlockchainRid, Long>()
     private var isShutDown = false
-
-    var peersConnectionStrategy: PeersConnectionStrategy =
-            DefaultPeersConnectionStrategy(this, peerCommConfiguration.myPeerInfo().peerId())
 
     override fun shutdown() {
         connector?.shutdown()
@@ -80,9 +78,11 @@ class DefaultXConnectionManager<PacketType>(
         // This solution is getting us half-way. We solve the issue for the first
         // blockchain started, but not for subsequent ones.
         if (connector == null) {
+            myPeerInfo = peerConfig.commConfiguration.myPeerInfo()
+            peersConnectionStrategy = DefaultPeersConnectionStrategy(this, myPeerInfo.peerId())
             connector = connectorFactory.createConnector(
-                    peerCommConfiguration.myPeerInfo(),
-                    packetDecoderFactory.create(peerCommConfiguration),
+                    myPeerInfo,
+                    packetDecoderFactory.create(peerConfig.commConfiguration),
                     this)
         }
 
@@ -199,7 +199,7 @@ class DefaultXConnectionManager<PacketType>(
             return null
         }
 
-        return if (!peerCommConfiguration.networkNodes.isNodeBehavingWell(descriptor.peerId, System.currentTimeMillis())) {
+        return if (!chain.peerConfig.commConfiguration.networkNodes.isNodeBehavingWell(descriptor.peerId, System.currentTimeMillis())) {
             logger.debug { "${logger(descriptor)}: onPeerConnected: Peer not behaving well, so ignore: peer = ${peerName(descriptor.peerId)}" }
             null
         } else {
@@ -228,8 +228,9 @@ class DefaultXConnectionManager<PacketType>(
     @Synchronized
     override fun onPeerDisconnected(connection: XPeerConnection) {
         val descriptor = connection.descriptor()
-        logger.debug { "${logger(descriptor)}: Peer disconnected: peer = ${peerName(descriptor.peerId)}" +
-                ", direction: ${descriptor.dir}"
+        logger.debug {
+            "${logger(descriptor)}: Peer disconnected: peer = ${peerName(descriptor.peerId)}" +
+                    ", direction: ${descriptor.dir}"
         }
 
         val chainID = chainIDforBlockchainRID[descriptor.blockchainRID]
@@ -266,7 +267,7 @@ class DefaultXConnectionManager<PacketType>(
     }
 
     private fun loggingPrefix(blockchainRid: BlockchainRid): String = BlockchainProcessName(
-            peerCommConfiguration.myPeerInfo().pubKey.byteArrayKeyOf().toString(),
+            myPeerInfo.peerId().toString(),
             blockchainRid
     ).toString()
 

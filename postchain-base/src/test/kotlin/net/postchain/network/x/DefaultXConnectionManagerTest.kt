@@ -75,14 +75,14 @@ class DefaultXConnectionManagerTest {
 
         // When
         val connectionManager = DefaultXConnectionManager(
-                connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
+                connectorFactory, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         )
                 .also { it.connectChain(chainPeerConfig, false, mock()) }
 
         // Then
         verify(chainPeerConfig, times(5)).chainID
         verify(chainPeerConfig, times(2 + 1)).blockchainRID
-        verify(chainPeerConfig, never()).commConfiguration
+        verify(chainPeerConfig, times(2)).commConfiguration
         verify(communicationConfig, never()).networkNodes
 
         connectionManager.shutdown()
@@ -103,7 +103,7 @@ class DefaultXConnectionManagerTest {
 
         // When
         val connectionManager = DefaultXConnectionManager(
-                connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem)
+                connectorFactory, packetEncoderFactory, packetDecoderFactory, cryptoSystem)
 
         try {
             connectionManager.also { it.connectChain(chainPeerConfig, true, mock()) }
@@ -112,7 +112,7 @@ class DefaultXConnectionManagerTest {
 
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
-        verify(chainPeerConfig, times(1)).commConfiguration
+        verify(chainPeerConfig, times(3)).commConfiguration
         verify(chainPeerConfig, times(2 + 1)).blockchainRID
         verify(communicationConfig).networkNodes
 
@@ -137,13 +137,13 @@ class DefaultXConnectionManagerTest {
 
         // When
         val connectionManager = DefaultXConnectionManager(
-                connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
+                connectorFactory, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         )
                 .also { it.connectChain(chainPeerConfig, true, mock()) }
 
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
-        verify(chainPeerConfig, times(1 + (2 - 1) * 2)).commConfiguration
+        verify(chainPeerConfig, times(5)).commConfiguration
         verify(chainPeerConfig, times(1 + 1 * 2 + 1 + 2)).blockchainRID
 
         connectionManager.shutdown()
@@ -166,7 +166,7 @@ class DefaultXConnectionManagerTest {
 
         // When / Then exception
         DefaultXConnectionManager(
-                connectorFactory, communicationConfig, mock(), mock(), cryptoSystem
+                connectorFactory, mock(), mock(), cryptoSystem
         ).apply {
             connectChain(chainPeerConfig, false, mock()) // Without connecting to peers
             connectChainPeer(1, unknownPeerInfo.peerId())
@@ -194,7 +194,7 @@ class DefaultXConnectionManagerTest {
 
         // When
         val connectionManager = DefaultXConnectionManager(
-                connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
+                connectorFactory, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         )
                 .apply {
                     connectChain(chainPeerConfig, false, mock()) // Without connecting to peers
@@ -203,7 +203,7 @@ class DefaultXConnectionManagerTest {
 
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
-        verify(chainPeerConfig, times(2)).commConfiguration
+        verify(chainPeerConfig, times(4)).commConfiguration
         verify(chainPeerConfig, times(1 + 2 + 1 + 2)).blockchainRID
 
         connectionManager.shutdown()
@@ -226,7 +226,7 @@ class DefaultXConnectionManagerTest {
 
         // When
         val connectionManager = DefaultXConnectionManager(
-                connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
+                connectorFactory, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         ).apply {
             connectChain(chainPeerConfig, true, mock()) // Auto connect all peers
 
@@ -238,7 +238,7 @@ class DefaultXConnectionManagerTest {
 
         // Then
         verify(chainPeerConfig, atLeast(3)).chainID
-        verify(chainPeerConfig, times(1 + (2 - 1) * 2)).commConfiguration
+        verify(chainPeerConfig, times(6)).commConfiguration
         verify(chainPeerConfig, times(1 + 2 + 1 + 2)).blockchainRID
 
         connectionManager.shutdown()
@@ -281,7 +281,7 @@ class DefaultXConnectionManagerTest {
 
         // When
         val connectionManager = DefaultXConnectionManager(
-                connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
+                connectorFactory, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         ).apply {
             connectChain(chainPeerConfig, true, mock()) // With autoConnect
 
@@ -353,7 +353,7 @@ class DefaultXConnectionManagerTest {
 
         // When
         val connectionManager = DefaultXConnectionManager(
-                connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
+                connectorFactory, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         ).apply {
             connectChain(chainPeerConfig, true, mock()) // With autoConnect
 
@@ -379,7 +379,7 @@ class DefaultXConnectionManagerTest {
         emptyManager().broadcastPacket({ byteArrayOf() }, 1)
     }
 
-    private fun emptyManager() = DefaultXConnectionManager(connectorFactory, emptyCommConf(), mock(), mock(), cryptoSystem)
+    private fun emptyManager() = DefaultXConnectionManager(connectorFactory, mock(), mock(), cryptoSystem)
 
     private fun emptyCommConf(): PeerCommConfiguration {
         return mock {
@@ -406,7 +406,7 @@ class DefaultXConnectionManagerTest {
 
         // When
         val connectionManager = DefaultXConnectionManager(
-                connectorFactory, communicationConfig, packetEncoderFactory, packetDecoderFactory, cryptoSystem
+                connectorFactory, packetEncoderFactory, packetDecoderFactory, cryptoSystem
         ).apply {
             connectChain(chainPeerConfig, true, mock()) // With autoConnect
 
