@@ -29,6 +29,7 @@ class ManagedNodeConfigurationProvider(
         return object : NodeConfig(appConfig) {
             override val peerInfoMap = getPeerInfoCollection(appConfig)
                     .associateBy(PeerInfo::peerId)
+            // nodeReplicas: for making a node a full clone of another node
             override val nodeReplicas = managedPeerSource?.getNodeReplicaMap() ?: mapOf()
             override val blockchainReplicaNodes = getBlockchainReplicaCollection(appConfig)
         }

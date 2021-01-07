@@ -108,9 +108,10 @@ open class AbstractSyncTest : IntegrationTestSetup() {
         return p.substring(0, 4) + ":" + p.substring(64)
     }
 
-    /* stopIndex: which nodes to stop
-    * syncIndex: which nodes to clean+restart and try to sync without help from stop index nodes
-    * blocksToSync: height when sync nodes are wiped.
+    /**
+     * @param stopIndex which nodes to stop
+     * @param syncIndex which nodes to clean+restart and try to sync without help from stop index nodes
+     * @param blocksToSync height when sync nodes are wiped.
      */
     fun doStuff(signerCount: Int, replicaCount: Int, syncIndex: Set<Int>, stopIndex: Set<Int>, blocksToSync: Int) {
         val nodeSetups = runNodes(signerCount, replicaCount)
