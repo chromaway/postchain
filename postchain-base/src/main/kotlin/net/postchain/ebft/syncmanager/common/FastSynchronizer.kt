@@ -35,6 +35,25 @@ data class FastSyncParameters(var resurrectDrainedTime: Long = 10000,
                                * Tests with single node: 0 // skip fastsync
                                */
                               var discoveryTimeout: Long = 60000,
+                              /**
+                               * Wait this amount of time before trying to sync from peers.
+                               * This gives the connection manager some time to accumulate
+                               * connections so that the random peer selection has more
+                               * peers to chose from, to avoid exiting fastsync
+                               * prematurely because one peer is faster at connecting, giving
+                               * us the impression that there is only one reachable node.
+                               *
+                               * Example: I'm A(height=-1), and B(-1),C(-1),D(0) are peers. When entering FastSync
+                               * we're only connected to B.
+                               *
+                               * * Send a GetBlockHeaderAndBlock to B
+                               * * B replies with block 0 and we mark it as drained.
+                               * * We conclude that we have draied all peers and exit fastsync
+                               * * C and D connections are established.
+                               *
+                               * We have exited fastsync before we had a chance to sync from C and D
+                               */
+                              var discoveryDelay: Long = 1000,
                               var pollPeersInterval: Long = 10000,
                               var jobTimeout: Long = 10000,
                               var loopInteval: Long = 100,
@@ -168,21 +187,11 @@ class FastSynchronizer(
      *
      * All nodes are thus to be regarded as potentially adversarial/unreliable replicas.
      *
-     * We consider ourselves up-to-date when we have drained roof(75% of all known peers). If it turns that
-     * we aren't actually up to date, normal sync will detect this and enter fastsync mode again. The
-     * 75% target is somewhat arbitrarily chosen. It can be changed later, as it's just a local
-     * heuristic. Maybe this should be configurable in FastSyncParameters.
+     * We consider ourselves up-to-date when we have drained all responsive peers.
      */
     fun syncUntilResponsiveNodesDrained() {
         syncWhile {
-            val peerCount = peerStatuses.countAll()
-            val drainedCount = peerStatuses.countDrained(blockHeight+1)
-            if (peerCount < 4) {
-                drainedCount == 0
-            } else {
-                // Integer version of "drainedCount.toDouble() / peerCount < 0.75"
-                drainedCount * 4 < peerCount * 3
-            }
+            peerStatuses.countNotDrained(blockHeight+1) > 0
         }
     }
 
@@ -286,6 +295,8 @@ class FastSynchronizer(
             return false
         }
         val startTime = System.currentTimeMillis()
+        // Give connection manager some time to establish a few connections
+        sleep(params.discoveryDelay)
         while (!startNextJob()) {
             if (shutdown.get()) {
                 return false

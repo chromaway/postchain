@@ -196,12 +196,8 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
         return stateOf(xPeerId).isBlacklisted()
     }
 
-    fun countDrained(height: Long): Int {
-        return statuses.count { it.value.isDrained(height) }
-    }
-
-    fun countAll(): Int {
-        return statuses.size
+    fun countNotDrained(height: Long): Int {
+        return statuses.count { !it.value.isUnresponsive() && !it.value.isBlacklisted() && !it.value.isDrained(height) }
     }
 
     fun clear() {
