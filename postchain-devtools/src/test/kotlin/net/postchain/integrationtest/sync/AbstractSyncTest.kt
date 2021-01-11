@@ -109,8 +109,8 @@ open class AbstractSyncTest : IntegrationTestSetup() {
     }
 
     /**
-     * @param stopIndex which nodes to stop
      * @param syncIndex which nodes to clean+restart and try to sync without help from stop index nodes
+     * @param stopIndex which nodes to stop
      * @param blocksToSync height when sync nodes are wiped.
      */
     fun doStuff(signerCount: Int, replicaCount: Int, syncIndex: Set<Int>, stopIndex: Set<Int>, blocksToSync: Int) {

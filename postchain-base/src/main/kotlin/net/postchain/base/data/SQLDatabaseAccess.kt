@@ -520,10 +520,15 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
         if (existsBlockchainReplica(ctx, brid, pubKey)) {
             return false
         }
+        /*
+        Due to reference integrity between tables peerInfos and BlockchainReplicas AND the fact that the pubkey string in peerInfos
+        can hold both lower and upper characters (historically), we use the exact (case sensitive) value from the peerInfos table when
+        adding the node as blockchain replica.
+         */
         val sql = """
             INSERT INTO ${tableBlockchainReplicas()} 
             ($TABLE_REPLICAS_FIELD_BRID, $TABLE_REPLICAS_FIELD_PUBKEY) 
-            VALUES (?, ?)
+            VALUES (?, (SELECT $TABLE_PEERINFOS_FIELD_PUBKEY FROM ${tablePeerinfos()} WHERE lower($TABLE_PEERINFOS_FIELD_PUBKEY) = lower(?)))
         """.trimIndent()
         queryRunner.insert(ctx.conn, sql, ScalarHandler<String>(), brid, pubKey)
         return true

@@ -23,5 +23,6 @@ enum class BadDataType(val type: Int) {
     BAD_CONFIGURATION(4), // The blockchain configuration's format is not allowed.
     MISSING_DEPENDENCY(5), // We don't have all dependencies required to process this block
     BAD_MESSAGE(6), // A network message couldn't be parsed
+    MISSING_PEERINFO(7), // The node does not exist in the peerinfo table.
     OTHER(100) // Please don't use, consider adding a new type instead
 }

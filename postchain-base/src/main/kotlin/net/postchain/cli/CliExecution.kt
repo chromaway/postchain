@@ -8,6 +8,8 @@ import net.postchain.base.data.DatabaseAccess
 import net.postchain.base.data.DependenciesValidator
 import net.postchain.config.app.AppConfig
 import net.postchain.config.node.NodeConfigurationProviderFactory
+import net.postchain.core.BadDataMistake
+import net.postchain.core.BadDataType
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvFileReader
 import org.apache.commons.configuration2.ex.ConfigurationException
@@ -76,10 +78,11 @@ object CliExecution {
             blockchainConfigFile: String,
             chainId: Long,
             height: Long,
-            mode: AlreadyExistMode = AlreadyExistMode.IGNORE
+            mode: AlreadyExistMode = AlreadyExistMode.IGNORE,
+            allowUnknownSigners: Boolean = false
     ) {
         val gtv = GtvFileReader.readFile(blockchainConfigFile)
-        addConfigurationGtv(nodeConfigFile, gtv, chainId, height, mode)
+        addConfigurationGtv(nodeConfigFile, gtv, chainId, height, mode, allowUnknownSigners)
     }
 
     private fun addConfigurationGtv(
@@ -87,14 +90,23 @@ object CliExecution {
             blockchainConfig: Gtv,
             chainId: Long,
             height: Long,
-            mode: AlreadyExistMode = AlreadyExistMode.IGNORE
+            mode: AlreadyExistMode = AlreadyExistMode.IGNORE,
+            allowUnknownSigners: Boolean
     ) {
 
         val configStore = BaseConfigurationDataStore
 
         runStorageCommand(nodeConfigFile, chainId) { ctx ->
 
-            fun init() = configStore.addConfigurationData(ctx, height, blockchainConfig)
+            fun init() = try {
+                configStore.addConfigurationData(ctx, height, blockchainConfig, allowUnknownSigners)
+            } catch (e: BadDataMistake) {
+                if (e.type == BadDataType.MISSING_PEERINFO) {
+                    throw CliError.Companion.CliException(e.message + " Please add node with command peerinfo-add or set flag --allow-unknown-signers.")
+                } else {
+                    throw CliError.Companion.CliException("Bad configuration format.")
+                }
+            }
 
             when (mode) {
                 AlreadyExistMode.ERROR -> {
@@ -116,6 +128,37 @@ object CliExecution {
                     } else {
                         println("Blockchain configuration of chainId $chainId at height $height already exists")
                     }
+                }
+            }
+        }
+    }
+
+    fun peerinfoAdd(nodeConfigFile: String, host: String, port: Int, pubKey: String, mode: AlreadyExistMode): Boolean {
+        return runStorageCommand(nodeConfigFile) { ctx ->
+            val db = DatabaseAccess.of(ctx)
+
+            val found: Array<PeerInfo> = db.findPeerInfo(ctx, host, port, null)
+            if (found.isNotEmpty()) {
+                throw CliError.Companion.CliException("Peerinfo with port, host already exists.")
+            }
+
+            val found2 = db.findPeerInfo(ctx, null, null, pubKey)
+            if (found2.isNotEmpty()) {
+                when (mode) {
+                    AlreadyExistMode.ERROR -> {
+                        throw CliError.Companion.CliException("Peerinfo with pubkey already exists. Using -f to force update")
+                    }
+                    AlreadyExistMode.FORCE -> {
+                        db.updatePeerInfo(ctx, host, port, pubKey)
+                    }
+                    else -> false
+                }
+            } else {
+                when (mode) {
+                    AlreadyExistMode.ERROR, AlreadyExistMode.FORCE -> {
+                        db.addPeerInfo(ctx, host, port, pubKey)
+                    }
+                    else -> false
                 }
             }
         }
