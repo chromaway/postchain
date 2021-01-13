@@ -134,7 +134,7 @@ class FastSynchronizer(
         logger.debug("${params.processName}: $message", e)
     }
     
-    fun syncWhile(condition: () -> Boolean) {
+    fun syncUntil(exitCondition: () -> Boolean) {
         try {
             debug("Start fastsync")
             blockHeight = blockQueries.getBestHeight().get()
@@ -144,7 +144,7 @@ class FastSynchronizer(
                 // probably the sole live node
                 return
             }
-            while (!shutdown.get() && condition()) {
+            while (!shutdown.get() && !exitCondition()) {
                 refillJobs()
                 processMessages()
                 processDoneJobs()
@@ -164,7 +164,7 @@ class FastSynchronizer(
     }
 
     fun syncUntilShutdown() {
-        syncWhile {true}
+        syncUntil {false}
     }
 
     /**
@@ -190,8 +190,8 @@ class FastSynchronizer(
      * We consider ourselves up-to-date when we have drained all responsive peers.
      */
     fun syncUntilResponsiveNodesDrained() {
-        syncWhile {
-            peerStatuses.countNotDrained(blockHeight+1) > 0
+        syncUntil {
+            peerStatuses.countSyncable(blockHeight+1) == 0
         }
     }
 
@@ -336,7 +336,7 @@ class FastSynchronizer(
     }
 
     private fun startJob(height: Long): Boolean {
-        val excludedPeers = peerStatuses.exclDrainedAndUnresponsiveAndLegacy(height)
+        val excludedPeers = peerStatuses.exclNonSyncable(height)
         var peer = communicationManager.sendToRandomPeer(GetBlockHeaderAndBlock(height), excludedPeers)
         if (peer == null) {
             // There were no modern nodes to sync from. Let's try with a legacy node instead

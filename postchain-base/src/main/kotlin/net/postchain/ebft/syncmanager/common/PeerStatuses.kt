@@ -25,7 +25,7 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
      * Peers that are marked BLACKLISTED, should never be given another chance
      * because they have been proven to provide bad data (deliberately or not).
      *
-     * The DRAINED state is reset to NOT_DRAINED whenever we receive a valid header for a
+     * The DRAINED state is reset to SYNCABLE whenever we receive a valid header for a
      * height higher than the height at which it was drained or when we
      * receive a Status message (which is sent regurarly from peers in normal
      * sync mode).
@@ -38,9 +38,9 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
      */
     private class KnownState(val params: FastSyncParameters) {
         private enum class State {
-            BLACKLISTED, UNRESPONSIVE, NOT_DRAINED, DRAINED
+            BLACKLISTED, UNRESPONSIVE, SYNCABLE, DRAINED
         }
-        private var state = State.NOT_DRAINED
+        private var state = State.SYNCABLE
         /**
          * [maybeLegacy] and [confirmedModern] are transitional and should be
          * removed once most nodes have upgraded, because then
@@ -57,8 +57,7 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
         fun isUnresponsive() = state == State.UNRESPONSIVE
         fun isMaybeLegacy() = !confirmedModern && maybeLegacy
         fun isConfirmedModern() = confirmedModern
-        private fun isDrained() = state == State.DRAINED
-        fun isDrained(h: Long) = isDrained() && drainedHeight < h
+        fun isSyncable(h: Long) = state == State.SYNCABLE || state == State.DRAINED && drainedHeight >= h
 
         fun drained(height: Long) {
             state = State.DRAINED
@@ -69,7 +68,7 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
         }
         fun headerReceived(height: Long) {
             if (state == State.DRAINED && height > drainedHeight) {
-                state = State.NOT_DRAINED
+                state = State.SYNCABLE
             }
         }
         fun statusReceived(height: Long) {
@@ -77,7 +76,7 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
             // there might be more blocks to fetch now. But
             // we won't resurrect unresponsive peers.
             if (state == State.DRAINED && height > drainedHeight) {
-                state = State.NOT_DRAINED
+                state = State.SYNCABLE
             }
         }
         fun unresponsive() {
@@ -99,9 +98,9 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
             this.state = State.BLACKLISTED
         }
         fun resurrect(now: Long) {
-            if (isDrained() && drainedTime + params.resurrectDrainedTime < now ||
+            if (state == State.DRAINED && drainedTime + params.resurrectDrainedTime < now ||
                     isUnresponsive() && unresponsiveTime + params.resurrectUnresponsiveTime < now) {
-                state = State.NOT_DRAINED
+                state = State.SYNCABLE
             }
         }
     }
@@ -114,13 +113,13 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
         }
     }
 
-    fun exclDrainedAndUnresponsiveAndLegacy(height: Long): Set<XPeerID> {
+    fun exclNonSyncable(height: Long): Set<XPeerID> {
         resurrectDrainedAndUnresponsivePeers()
-        return statuses.filterValues { it.isDrained(height) || it.isUnresponsive() || it.isMaybeLegacy() || it.isBlacklisted() }.keys
+        return statuses.filterValues { !it.isSyncable(height) }.keys
     }
 
     fun getRandomLegacyPeer(height: Long): XPeerID? {
-        val legacyPeers = statuses.filterValues { it.isMaybeLegacy() && !it.isDrained(height) && !it.isBlacklisted() }.keys
+        val legacyPeers = statuses.filterValues { it.isMaybeLegacy() && it.isSyncable(height) }.keys
         if (legacyPeers.isEmpty()) {
             return null
         }
@@ -196,8 +195,8 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
         return stateOf(xPeerId).isBlacklisted()
     }
 
-    fun countNotDrained(height: Long): Int {
-        return statuses.count { !it.value.isUnresponsive() && !it.value.isBlacklisted() && !it.value.isDrained(height) }
+    fun countSyncable(height: Long): Int {
+        return statuses.count { it.value.isSyncable(height) }
     }
 
     fun clear() {
