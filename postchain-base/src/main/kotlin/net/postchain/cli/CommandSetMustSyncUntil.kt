@@ -9,8 +9,8 @@ import net.postchain.base.runStorageCommand
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
 
-@Parameters(commandDescription = "Add info to system about blockchain replicas. To be used to sync this node.")
-class CommandBlockchainReplicaAdd : Command {
+@Parameters(commandDescription = "Set this to ensure that chain is not split after a database loss.")
+class CommandSetMustSyncUntil : Command {
 
     @Parameter(
             names = ["-nc", "--node-config"],
@@ -19,28 +19,27 @@ class CommandBlockchainReplicaAdd : Command {
     private var nodeConfigFile = ""
 
     @Parameter(
-            names = ["-pk", "--pub-key"],
-            description = "the node's public key",
-            required = true)
-    private var pubKey = ""
-
-    @Parameter(
             names = ["-brid", "--blockchain-rid"],
             description = "Blockchain RID",
             required = true)
     private var blockchainRID = ""
 
+    @Parameter(
+            names = ["-h", "--height"],
+            description = "Node must sync to this height before trying to build new blocks.",
+            required = true)
+    private var height = 0L
 
-    override fun key(): String = "blockchain-replica-add"
+    override fun key(): String = "must-sync-until"
 
     override fun execute(): CliResult {
         println(key() + " will be executed with options: " +
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
         return try {
-            val added = addReplica(blockchainRID, pubKey)
+            val added = setMustSyncUntil(blockchainRID, height)
             return when {
-                added -> Ok(key() + " finished successfully")
+                added -> Ok("Command " + key() + " finished successfully")
                 else -> Ok("Blockchain replica already exists")
             }
         } catch (e: CliError.Companion.CliException) {
@@ -48,17 +47,24 @@ class CommandBlockchainReplicaAdd : Command {
         }
     }
 
-    private fun addReplica(brid: String, pubKey: String): Boolean {
+    private fun setMustSyncUntil(blockchainRID: String, height: Long): Boolean {
         return runStorageCommand(nodeConfigFile) { ctx ->
             val db = DatabaseAccess.of(ctx)
-
-            // Node must be in PeerInfo, or else it is not allowed as blockchain replica.
-            val foundInPeerInfo = db.findPeerInfo(ctx, null, null, pubKey)
-            if (foundInPeerInfo.isEmpty()) {
-                throw CliError.Companion.CliException("Given pubkey is not a peer. First add it as a peer.")
-            }
-
-            db.addBlockchainReplica(ctx, brid, pubKey)
+            db.setMustSyncUntil(ctx, blockchainRID, height)
         }
     }
+
+//    private fun addReplica(brid: String, pubKey: String): Boolean {
+//        return runStorageCommand(nodeConfigFile) { ctx ->
+//            val db = DatabaseAccess.of(ctx)
+//
+//            // Node must be in PeerInfo, or else it is not allowed as blockchain replica.
+//            val foundInPeerInfo = db.findPeerInfo(ctx, null, null, pubKey)
+//            if (foundInPeerInfo.isEmpty()) {
+//                throw CliError.Companion.CliException("Given pubkey is not a peer. First add it as a peer.")
+//            }
+//
+//            db.addBlockchainReplica(ctx, brid, pubKey)
+//        }
+//    }
 }

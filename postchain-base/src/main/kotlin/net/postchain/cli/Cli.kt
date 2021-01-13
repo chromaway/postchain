@@ -33,6 +33,8 @@ class Cli {
             , CommandBlockchainReplicaAdd()
             , CommandBlockchainReplicaRemove()
 
+            , CommandSetMustSyncUntil()
+
     ).map { it.key() to it }.toMap()
 
     init {
@@ -78,7 +80,7 @@ class Cli {
                 .asSequence()
                 .sorted()
                 .map { cmd ->
-                    "${cmd.padEnd(25, ' ')}${jCommander.getCommandDescription(cmd)}"
+                    "${cmd.padEnd(28, ' ')}${jCommander.getCommandDescription(cmd)}"
                 }.joinToString(
                         separator = "\n  ",
                         prefix = "Commands:\n  "
