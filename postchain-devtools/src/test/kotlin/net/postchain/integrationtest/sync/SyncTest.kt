@@ -13,6 +13,10 @@ class SyncTest(val signerCount: Int, val replicaCount: Int, val syncIndex: Set<I
         @JvmStatic
         @Parameterized.Parameters
         fun testArguments() = listOf(
+                // Empty blockchain
+                arrayOf(1, 1, setOf(0), setOf<Int>(), 0),
+                arrayOf(1, 1, setOf(1), setOf<Int>(), 0),
+
                 // Single block test
                 arrayOf(1, 1, setOf(0), setOf<Int>(), 1),
                 arrayOf(1, 1, setOf(1), setOf<Int>(), 1),

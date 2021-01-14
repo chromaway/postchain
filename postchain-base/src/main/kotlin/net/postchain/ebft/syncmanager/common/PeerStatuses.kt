@@ -61,9 +61,9 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
 
         fun drained(height: Long) {
             state = State.DRAINED
+            drainedTime = System.currentTimeMillis()
             if (height > drainedHeight) {
                 drainedHeight = height
-                drainedTime = System.currentTimeMillis()
             }
         }
         fun headerReceived(height: Long) {
@@ -115,7 +115,7 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
 
     fun exclNonSyncable(height: Long): Set<XPeerID> {
         resurrectDrainedAndUnresponsivePeers()
-        return statuses.filterValues { !it.isSyncable(height) }.keys
+        return statuses.filterValues { !it.isSyncable(height) || it.isMaybeLegacy() }.keys
     }
 
     fun getRandomLegacyPeer(height: Long): XPeerID? {

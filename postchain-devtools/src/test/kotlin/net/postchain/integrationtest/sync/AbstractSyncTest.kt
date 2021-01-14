@@ -4,11 +4,13 @@ import net.postchain.StorageBuilder
 import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerInfo
 import net.postchain.base.Storage
+import net.postchain.base.data.DatabaseAccess
 import net.postchain.base.data.DatabaseAccessFactory
 import net.postchain.base.runStorageCommand
 import net.postchain.common.toHex
 import net.postchain.config.app.AppConfig
 import net.postchain.config.node.ManagedNodeConfigurationProvider
+import net.postchain.core.AppContext
 import net.postchain.core.NODE_ID_NA
 import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.KeyPairHelper
@@ -41,7 +43,7 @@ open class AbstractSyncTest : IntegrationTestSetup() {
     }
 
     val DEFAULT_STORAGE_FACTORY: (AppConfig) -> Storage = {
-        StorageBuilder.buildStorage(it, NODE_ID_NA, true)
+        StorageBuilder.buildStorage(it, NODE_ID_NA, false)
     }
 
     protected fun restartNodeClean(nodeSetup: NodeSetup, brid: BlockchainRid) {
@@ -57,7 +59,7 @@ open class AbstractSyncTest : IntegrationTestSetup() {
         nodes[nodeIndex] = newSetup.toTestNodeAndStartAllChains(systemSetup, false)
     }
 
-    open protected fun nodeSetup(nodeIndex: Int, peerInfos: Array<PeerInfo>, isSigner: Boolean, wipeDb: Boolean, brid: BlockchainRid): NodeSetup {
+    private fun nodeSetup(nodeIndex: Int, peerInfos: Array<PeerInfo>, isSigner: Boolean, wipeDb: Boolean, brid: BlockchainRid): NodeSetup {
         val appConfig = AppConfig(nodeConfigurationMap(nodeIndex, peerInfos[nodeIndex]))
         val signer = if (isSigner) setOf(0) else setOf()
         val replica = if (isSigner) setOf() else setOf(0)
@@ -65,17 +67,23 @@ open class AbstractSyncTest : IntegrationTestSetup() {
                 KeyPairHelper.privKeyHex(nodeIndex), ManagedNodeConfigurationProvider(appConfig, DEFAULT_STORAGE_FACTORY))
         StorageBuilder.buildStorage(appConfig, nodeIndex, wipeDb).close()
 
-        runStorageCommand(appConfig) {
-            val ctx = it
-            val dbAccess = DatabaseAccessFactory.createDatabaseAccess(appConfig.databaseDriverclass)
-            peerInfos.forEach {
-                dbAccess.addPeerInfo(ctx, it)
-                if (!isSigner) {
-                    dbAccess.addBlockchainReplica(ctx, brid.toHex(), it.pubKey.toHex())
+        if (wipeDb) {
+            runStorageCommand(appConfig) {
+                val ctx = it
+                val dbAccess = DatabaseAccessFactory.createDatabaseAccess(appConfig.databaseDriverclass)
+                peerInfos.forEach {
+                    addPeerInfo(dbAccess, ctx, it, isSigner, brid)
                 }
             }
         }
         return nodeSetup
+    }
+
+    open protected fun addPeerInfo(dbAccess: DatabaseAccess, ctx: AppContext, peerInfo: PeerInfo, isSigner: Boolean, brid: BlockchainRid) {
+        dbAccess.addPeerInfo(ctx, peerInfo)
+        if (!isSigner) {
+            dbAccess.addBlockchainReplica(ctx, brid.toHex(), peerInfo.pubKey.toHex())
+        }
     }
 
     fun nodeConfigurationMap(nodeIndex: Int, peerInfo: PeerInfo): Configuration {
@@ -88,6 +96,7 @@ open class AbstractSyncTest : IntegrationTestSetup() {
                 "database.schema" to this.javaClass.simpleName.toLowerCase() + "_$nodeIndex",
                 "messaging.pubkey" to peerInfo.pubKey.toHex(),
                 "messaging.privkey" to privKey.toHex(),
+                "fastsync.exit_delay" to 1000, // All tests are multinode, see FastSyncParameters.exitDelay
                 "api.port" to "-1"))
     }
 
@@ -104,7 +113,7 @@ open class AbstractSyncTest : IntegrationTestSetup() {
     }
 
     private fun n(index: Int): String {
-        var p = nodes[index].pubKey
+        val p = nodes[index].pubKey
         return p.substring(0, 4) + ":" + p.substring(64)
     }
 
@@ -133,18 +142,19 @@ open class AbstractSyncTest : IntegrationTestSetup() {
         }
 
         syncIndex.forEach {
-            logger.debug { "Awaiting height 0 on ${n(it)}" }
+            logger.debug { "Awaiting height ${blocksToSync-1L} on ${n(it)}" }
             nodes[it].awaitHeight(0, blocksToSync-1L)
             val actualBlockRid = nodes[it].blockQueries(0).getBlockRid(blocksToSync-1L).get()
             assertArrayEquals(expectedBlockRid, actualBlockRid)
-            logger.debug { "Awaiting height 0 on ${n(it)} done" }
+            logger.debug { "Awaiting height ${blocksToSync-1L} on ${n(it)} done" }
         }
 
         stopIndex.forEach {
             logger.debug { "Start ${n(it)} again" }
             startOldNode(it, peerInfos, nodeSetups[it], nodes[0].getBlockchainRid(0)!!)
         }
+        awaitHeight(0, blocksToSync-1L)
         buildBlock(0, blocksToSync.toLong())
-        logger.debug { "All nodes has block $blocksToSync" }
+        logger.debug { "All nodes have block $blocksToSync" }
     }
 }

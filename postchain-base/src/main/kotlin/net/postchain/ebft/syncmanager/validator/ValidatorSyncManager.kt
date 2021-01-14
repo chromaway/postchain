@@ -61,7 +61,7 @@ class ValidatorSyncManager(
         this.processingIntent = DoNothingIntent
         this.lastStatusLogged = Date().time
         val params = FastSyncParameters()
-        params.discoveryTimeout = nodeConfig.fastSyncDiscoveryTimeout
+        params.exitDelay = nodeConfig.fastSyncExitDelay
         params.processName = processName.toString()
         fastSynchronizer = FastSynchronizer(
                 communicationManager,

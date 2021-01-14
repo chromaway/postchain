@@ -39,7 +39,6 @@ class ReadOnlyWorker(
                 blockchainEngine, blockchainEngine.getBlockQueries(), NODE_ID_READ_ONLY)
 
         val fastSyncParameters = FastSyncParameters()
-        fastSyncParameters.discoveryTimeout = Long.MAX_VALUE
         fastSyncParameters.processName = processName.toString()
         fastSynchronizer = FastSynchronizer(
                 communicationManager,

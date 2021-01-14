@@ -49,10 +49,7 @@ object TestLegacyNodeConfigProducer {
     }
 
     fun setSyncTuningParams(systemSetup: SystemSetup, baseConfig: PropertiesConfiguration) {
-        if (systemSetup.nodeMap.size==1) {
-            // Skip discoverytimeout for single-node tests
-            baseConfig.setProperty("fastsync.discovery_timeout", 0)
-        }
+        baseConfig.setProperty("fastsync.exit_delay", if (systemSetup.nodeMap.size == 1) 0 else 1000)
     }
 
     fun setConfProvider(str: String, baseConfig: PropertiesConfiguration) {

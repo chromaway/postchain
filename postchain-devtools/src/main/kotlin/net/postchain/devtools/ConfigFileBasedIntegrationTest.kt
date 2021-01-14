@@ -291,11 +291,7 @@ open class ConfigFileBasedIntegrationTest : AbstractIntegration() {
             baseConfig.setProperty("messaging.pubkey", KeyPairHelper.pubKeyHex(nodeIndex))
         }
 
-        if (nodeCount == 1) {
-            // We only have one node. Skip time consuming node discovery
-            // in FastSynchronizer
-            baseConfig.setProperty("fastsync.discovery_timeout", 0) // ms
-        }
+        baseConfig.setProperty("fastsync.exit_delay", if (nodeCount == 1) 0 else 1000)
 
         val appConfig = CompositeConfiguration().apply {
             addConfiguration(configOverrides)

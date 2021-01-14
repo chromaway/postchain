@@ -87,8 +87,8 @@ open class NodeConfig(val appConfig: AppConfig) {
     open val nodeReplicas: Map<XPeerID, List<XPeerID>> = mapOf()
     open val blockchainReplicaNodes: Map<BlockchainRid, List<XPeerID>> = mapOf()
 
-    val fastSyncDiscoveryTimeout: Long
-        get() = config.getLong("fastsync.discovery_timeout", 60000)
+    val fastSyncExitDelay: Long
+        get() = config.getLong("fastsync.exit_delay", 60000)
 
     /**
      * Active Chains

@@ -26,34 +26,30 @@ data class FastSyncParameters(var resurrectDrainedTime: Long = 10000,
                               var resurrectUnresponsiveTime: Long = 20000,
                               var parallelism: Int = 10,
                               /**
-                               * How long to wait before deciding that we are the sole node
-                               *
-                               * Sane values:
-                               *
-                               * Replicas: Long.MAX_LONG
-                               * Signers: 60000ms
-                               * Tests with single node: 0 // skip fastsync
-                               */
-                              var discoveryTimeout: Long = 60000,
-                              /**
-                               * Wait this amount of time before trying to sync from peers.
+                               * Don't exit fastsync for at least this amount of time (ms).
                                * This gives the connection manager some time to accumulate
                                * connections so that the random peer selection has more
                                * peers to chose from, to avoid exiting fastsync
-                               * prematurely because one peer is faster at connecting, giving
+                               * prematurely because one peer is connected quicker, giving
                                * us the impression that there is only one reachable node.
                                *
                                * Example: I'm A(height=-1), and B(-1),C(-1),D(0) are peers. When entering FastSync
                                * we're only connected to B.
                                *
-                               * * Send a GetBlockHeaderAndBlock to B
-                               * * B replies with block 0 and we mark it as drained.
-                               * * We conclude that we have draied all peers and exit fastsync
+                               * * Send a GetBlockHeaderAndBlock(0) to B
+                               * * B replies with block 0 and we mark it as drained(0).
+                               * * We conclude that we have draied all peers at 0 and exit fastsync
                                * * C and D connections are established.
                                *
                                * We have exited fastsync before we had a chance to sync from C and D
+                               *
+                               * Sane values:
+                               * Replicas: not used
+                               * Signers: 60000ms
+                               * Tests with single node: 0
+                               * Tests with multiple nodes: 1000
                                */
-                              var discoveryDelay: Long = 1000,
+                              var exitDelay: Long = 60000,
                               var pollPeersInterval: Long = 10000,
                               var jobTimeout: Long = 10000,
                               var loopInteval: Long = 100,
@@ -78,7 +74,7 @@ data class FastSyncParameters(var resurrectDrainedTime: Long = 10000,
  * to. It's important to quickly get to know as many peers as possible, because the more
  * peers we have the more reliable we can determine if we're up-to-date or not.
  *
- * That's hidden by the CommunicationManager. Instead we rely on two discovery mechanisms:
+ * We rely on two discovery mechanisms:
  *
  * 1. Request blocks from random peers via communicationManager.sendToRandomPeer(), which returns
  * the peerId of the peer that the request was sent to.
@@ -91,11 +87,10 @@ data class FastSyncParameters(var resurrectDrainedTime: Long = 10000,
  *
  * These two methods should give us a pretty complete picture of the network within a few seconds.
  *
- * If there are no live peers, it will wait [params.discoveryTimeout] until it leaves fastsync and starts
+ * If there are no live peers, it will wait [params.exitDelay] until it leaves fastsync and starts
  * trying to build blocks on its own. This is not a problem in a real world scenario, since you can wait a minute
  * or so upon first start. But in tests, this can be really annoying. So tests that only runs a single node
- * should set [params.discoveryTimeout] to 0. For replicas, it should be set to MAX_LONG, because replicas
- * should stay in FastSync until shutdown.
+ * should set [params.exitDelay] to 0.
  */
 class FastSynchronizer(
         communicationManager: CommunicationManager<Message>,
@@ -139,11 +134,6 @@ class FastSynchronizer(
             debug("Start fastsync")
             blockHeight = blockQueries.getBestHeight().get()
             debug("Best height $blockHeight")
-            if (!startFirstJob()) {
-                // There are no nodes to sync from. We're
-                // probably the sole live node
-                return
-            }
             while (!shutdown.get() && !exitCondition()) {
                 refillJobs()
                 processMessages()
@@ -171,27 +161,37 @@ class FastSynchronizer(
      * Terminology:
      * current = our current view of the system
      * final = the actual effective configuration of the blockchain (that we may or may not have yet)
+     * drained(h) = peer that we have signalled that it hasn't any blocks *after* height h, ie h is its tip.
+     * syncable(h) = responsive peer that isn't (yet) drained(h)
      *
      * This is called by a validator to make reasonably sure it's up-to-date with peers before
      * starting to build blocks.
      *
      * If no peer is responsive for X seconds, we'll assume we're the sole live node and return.
      *
-     * Note that if we have contact with all current nodes, it doesn't mean that we can trust that group,
+     * Note that if we have contact with all current signers, it doesn't mean that we can trust that group,
      * because we don't know if this is the final configuration. Even if they are current signers, any/all
      * of those nodes could have turned rouge and got excluded from future signer lists. We'll have to
-     * hope they'll provide us with block.
+     * hope they'll provide us with correct blocks.
      *
      * When we have synced up to the final configuration, we *can* rely on the 2f+1 rule,
-     * but we don't know when that happens. Any current signer list can be adversarial.
+     * but we won't be aware of that when it happens. Any current signer list can be adversarial.
      *
      * All nodes are thus to be regarded as potentially adversarial/unreliable replicas.
      *
-     * We consider ourselves up-to-date when we have drained all responsive peers.
+     * We consider ourselves up-to-date when
+     * (a) at least [exitDelay] ms has passed since start and
+     * (b) we have no syncable peers at our own height.
+     *
+     * The time requirement (a) is to allow for connections to be established to as many peers as
+     * possible (within reasonable limit) before considering (b). Otherwise (b) might be trivially true
+     * if we only had time to connect to a single or very few nodes.
      */
     fun syncUntilResponsiveNodesDrained() {
+        val timeout = System.currentTimeMillis() + params.exitDelay
+        debug("exitDelay: ${params.exitDelay}")
         syncUntil {
-            peerStatuses.countSyncable(blockHeight+1) == 0
+            timeout < System.currentTimeMillis() && peerStatuses.countSyncable(blockHeight+1) == 0
         }
     }
 
@@ -287,30 +287,6 @@ class FastSynchronizer(
         toRestart.forEach {
             restartJob(it)
         }
-    }
-
-    private fun startFirstJob(): Boolean {
-        debug("Discovery timeout: ${params.discoveryTimeout}")
-        if (params.discoveryTimeout == 0L) {
-            return false
-        }
-        val startTime = System.currentTimeMillis()
-        // Give connection manager some time to establish a few connections
-        sleep(params.discoveryDelay)
-        while (!startNextJob()) {
-            if (shutdown.get()) {
-                return false
-            }
-            // We haven't got any connections yet, or there are no live peers.
-            // We don't know which. Retry after a while and fail after
-            // timeout.
-            if (System.currentTimeMillis()-startTime > params.discoveryTimeout) {
-                // Assume there are no live peers and give up
-                return false
-            }
-            sleep(10L)
-        }
-        return true
     }
 
     /**
