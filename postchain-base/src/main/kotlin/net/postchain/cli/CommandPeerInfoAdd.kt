@@ -53,7 +53,7 @@ class CommandPeerInfoAdd : Command {
         try {
             pubKey.hexStringToByteArray()
         } catch (e: Exception) {
-            return CliError.CommandNotAllowed(message = e.message + " Allowed characters in public key are 0-9, A-F")
+            return CliError.CommandNotAllowed(message = e.message + " Allowed characters in public keys are 0-9, a-f, A-F")
         }
 
         println("peerinfo-add will be executed with options: " +

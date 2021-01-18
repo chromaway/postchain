@@ -6,12 +6,13 @@ import net.postchain.PostchainNode
 import net.postchain.base.*
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.base.data.DependenciesValidator
+import net.postchain.common.toHex
 import net.postchain.config.app.AppConfig
 import net.postchain.config.node.NodeConfigurationProviderFactory
 import net.postchain.core.BadDataMistake
 import net.postchain.core.BadDataType
-import net.postchain.gtv.Gtv
-import net.postchain.gtv.GtvFileReader
+import net.postchain.core.EContext
+import net.postchain.gtv.*
 import org.apache.commons.configuration2.ex.ConfigurationException
 import org.apache.commons.dbcp2.BasicDataSource
 import java.sql.Connection
@@ -99,7 +100,8 @@ object CliExecution {
         runStorageCommand(nodeConfigFile, chainId) { ctx ->
 
             fun init() = try {
-                configStore.addConfigurationData(ctx, height, blockchainConfig, allowUnknownSigners)
+                configStore.addConfigurationData(ctx, height, blockchainConfig)
+                addFutureSignersAsReplicas(height, ctx, blockchainConfig, allowUnknownSigners)
             } catch (e: BadDataMistake) {
                 if (e.type == BadDataType.MISSING_PEERINFO) {
                     throw CliError.Companion.CliException(e.message + " Please add node with command peerinfo-add or set flag --allow-unknown-signers.")
@@ -133,6 +135,31 @@ object CliExecution {
         }
     }
 
+    /** When a new (height > 0) configuration is added, we automatically add signers in that config to table
+     * blockchainReplicaNodes (for current blockchain). Useful for synchronization.
+     */
+    private fun addFutureSignersAsReplicas(height: Long, eContext: EContext, gtvData: Gtv, allowUnknownSigners: Boolean) {
+        if (height > 0) {
+            val db = DatabaseAccess.of(eContext)
+            val brid = db.getBlockchainRid(eContext)!!
+            val confGtvDict = gtvData as GtvDictionary
+            val signers = confGtvDict[BaseBlockchainConfigurationData.KEY_SIGNERS]!!.asArray().map { it.asByteArray() }
+            for (sig in signers) {
+                val nodePubkey = sig.toHex()
+                // Node must be in PeerInfo, or else it cannot be a blockchain replica.
+                val foundInPeerInfo = db.findPeerInfo(eContext, null, null, nodePubkey)
+                if (foundInPeerInfo.isNotEmpty()) {
+                    db.addBlockchainReplica(eContext, brid.toHex(), nodePubkey)
+                    // If the node is not in the peerinfo table and we do not allow unknown signers in a configuration,
+                    // throw error
+                } else if (!allowUnknownSigners) {
+                    throw BadDataMistake(BadDataType.MISSING_PEERINFO,
+                            "Signer ${nodePubkey} does not exist in peerinfos.")
+                }
+            }
+        }
+    }
+
     fun peerinfoAdd(nodeConfigFile: String, host: String, port: Int, pubKey: String, mode: AlreadyExistMode): Boolean {
         return runStorageCommand(nodeConfigFile) { ctx ->
             val db = DatabaseAccess.of(ctx)
@@ -145,6 +172,7 @@ object CliExecution {
             val found2 = db.findPeerInfo(ctx, null, null, pubKey)
             if (found2.isNotEmpty()) {
                 when (mode) {
+                    // mode tells us how to react upon an error caused if pubkey already exist (throw error or force write).
                     AlreadyExistMode.ERROR -> {
                         throw CliError.Companion.CliException("Peerinfo with pubkey already exists. Using -f to force update")
                     }
@@ -155,6 +183,7 @@ object CliExecution {
                 }
             } else {
                 when (mode) {
+                    // In this branch, the pubkey do not already exist, thus we whant to add it, regarless of mode.
                     AlreadyExistMode.ERROR, AlreadyExistMode.FORCE -> {
                         db.addPeerInfo(ctx, host, port, pubKey)
                     }
@@ -195,6 +224,14 @@ object CliExecution {
             }
         }
     }
+
+    fun getConfiguration(nodeConfigFile: String, chainId: Long, height: Long): ByteArray? {
+        return runStorageCommand(nodeConfigFile, chainId) { ctx ->
+            val db = DatabaseAccess.of(ctx)
+            db.getConfigurationData(ctx, height)
+        }
+    }
+
 
     fun waitDb(retryTimes: Int, retryInterval: Long, nodeConfigFile: String): CliResult {
         return tryCreateBasicDataSource(nodeConfigFile)?.let { Ok() } ?: if (retryTimes > 0) {

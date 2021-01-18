@@ -28,7 +28,7 @@ interface ConfigurationDataStore {
     fun findConfigurationHeightForBlock(context: EContext, height: Long): Long?
     fun getConfigurationData(context: EContext, height: Long): ByteArray?
     fun addConfigurationData(context: EContext, height: Long, binData: ByteArray)
-    fun addConfigurationData(context: EContext, height: Long, gtvData: Gtv, allowUnknownSigners: Boolean = true)
+    fun addConfigurationData(context: EContext, height: Long, gtvData: Gtv)
     // setting default value of flag allowUnknownSigners = true to not risk breaking tests without populated peerinfo table.
 }
 

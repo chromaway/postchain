@@ -8,7 +8,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
 
 @Parameters(commandDescription = "Adds a blockchain configuration. All signers in the new configuration must " +
-        "exist in the list of added peerInfos ")
+        "exist in the list of added peerInfos. Else flag --allow-unknown-signers must be set.")
 class CommandAddConfiguration : Command {
 
     // TODO: Eliminate it later or reduce to DbConfig only
