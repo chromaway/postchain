@@ -18,11 +18,17 @@ class CommandSetMustSyncUntil : Command {
             required = true)
     private var nodeConfigFile = ""
 
+//    @Parameter(
+//            names = ["-brid", "--blockchain-rid"],
+//            description = "Blockchain RID",
+//            required = true)
+//    private var blockchainRID = ""
+
     @Parameter(
-            names = ["-brid", "--blockchain-rid"],
-            description = "Blockchain RID",
+            names = ["-cid", "--chain-id"],
+            description = "Local number id of blockchain",
             required = true)
-    private var blockchainRID = ""
+    private var chainId = 0L
 
     @Parameter(
             names = ["-h", "--height"],
@@ -37,7 +43,7 @@ class CommandSetMustSyncUntil : Command {
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
         return try {
-            val added = setMustSyncUntil(blockchainRID, height)
+            val added = setMustSyncUntil(chainId, height)
             return when {
                 added -> Ok("Command " + key() + " finished successfully")
                 else -> Ok("Blockchain replica already exists")
@@ -47,24 +53,10 @@ class CommandSetMustSyncUntil : Command {
         }
     }
 
-    private fun setMustSyncUntil(blockchainRID: String, height: Long): Boolean {
+    private fun setMustSyncUntil(chainId: Long, height: Long): Boolean {
         return runStorageCommand(nodeConfigFile) { ctx ->
             val db = DatabaseAccess.of(ctx)
-            db.setMustSyncUntil(ctx, blockchainRID, height)
+            db.setMustSyncUntil(ctx, chainId, height)
         }
     }
-
-//    private fun addReplica(brid: String, pubKey: String): Boolean {
-//        return runStorageCommand(nodeConfigFile) { ctx ->
-//            val db = DatabaseAccess.of(ctx)
-//
-//            // Node must be in PeerInfo, or else it is not allowed as blockchain replica.
-//            val foundInPeerInfo = db.findPeerInfo(ctx, null, null, pubKey)
-//            if (foundInPeerInfo.isEmpty()) {
-//                throw CliError.Companion.CliException("Given pubkey is not a peer. First add it as a peer.")
-//            }
-//
-//            db.addBlockchainReplica(ctx, brid, pubKey)
-//        }
-//    }
 }

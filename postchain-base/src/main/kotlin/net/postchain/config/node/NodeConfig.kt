@@ -86,7 +86,7 @@ open class NodeConfig(val appConfig: AppConfig) {
     open val peerInfoMap: Map<XPeerID, PeerInfo> = mapOf()
     open val nodeReplicas: Map<XPeerID, List<XPeerID>> = mapOf()
     open val blockchainReplicaNodes: Map<BlockchainRid, List<XPeerID>> = mapOf()
-    open val syncBlockchainUntilHeight: Map<BlockchainRid, Long> = mapOf()
+    open val mustSyncUntilHeight: Map<BlockchainRid, Long> = mapOf()
 
     val fastSyncExitDelay: Long
         get() = config.getLong("fastsync.exit_delay", 60000)

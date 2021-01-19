@@ -10,6 +10,7 @@ import net.postchain.core.*
 import net.postchain.network.x.XPeerID
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.*
+import java.math.BigInteger
 import java.sql.Connection
 import java.sql.Timestamp
 import java.time.Instant
@@ -71,7 +72,7 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
         const val TABLE_REPLICAS_FIELD_BRID = "blockchain_rid"
         const val TABLE_REPLICAS_FIELD_PUBKEY = "node"
 
-        const val TABLE_SYNC_UNTIL_FIELD_BRID = "blockchain_rid"
+        const val TABLE_SYNC_UNTIL_FIELD_CHAIN_IID = "blockchain_rid"
         const val TABLE_SYNC_UNTIL_FIELD_HEIGHT = "block_height"
     }
 
@@ -551,7 +552,7 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
         Each MutableMap represents a row in the table.
         MutableList is thus a list of rows in the table.
          */
-        return raw.groupBy(keySelector =  { BlockchainRid((it[TABLE_REPLICAS_FIELD_BRID] as String).hexStringToByteArray()) },
+        return raw.groupBy(keySelector = { BlockchainRid((it[TABLE_REPLICAS_FIELD_BRID] as String).hexStringToByteArray()) },
                 valueTransform = { XPeerID((it[TABLE_REPLICAS_FIELD_PUBKEY] as String).hexStringToByteArray()) })
     }
 
@@ -586,34 +587,48 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
         return res.map { BlockchainRid.buildFromHex(it) }.toSet()
     }
 
-    override fun setMustSyncUntil(ctx: AppContext, brid: String, height: Long): Boolean {
-    // If given brid exist in table (CONFLICT), update table with the given height parameter.
+    override fun setMustSyncUntil(ctx: AppContext, chainId: Long, height: Long): Boolean {
+        // If given brid exist in table (CONFLICT), update table with the given height parameter.
         val sql = """
             INSERT INTO ${tableMustSyncUntil()} 
-            ($TABLE_SYNC_UNTIL_FIELD_BRID, $TABLE_SYNC_UNTIL_FIELD_HEIGHT) 
-            VALUES (?, ?) ON CONFLICT ($TABLE_SYNC_UNTIL_FIELD_BRID) DO UPDATE SET $TABLE_SYNC_UNTIL_FIELD_HEIGHT = ?
-            
+            ($TABLE_SYNC_UNTIL_FIELD_CHAIN_IID, $TABLE_SYNC_UNTIL_FIELD_HEIGHT) 
+            VALUES ((SELECT chain_iid FROM ${tableBlockchains()} WHERE chain_iid = ?), ?) 
+            ON CONFLICT ($TABLE_SYNC_UNTIL_FIELD_CHAIN_IID) DO UPDATE SET $TABLE_SYNC_UNTIL_FIELD_HEIGHT = ?
         """.trimIndent()
-        queryRunner.insert(ctx.conn, sql, ScalarHandler<String>(), brid, height, height)
+        queryRunner.insert(ctx.conn, sql, ScalarHandler<String>(), chainId, height, height)
         return true
     }
 
     override fun getMustSyncUntil(ctx: AppContext): Map<BlockchainRid, Long> {
 
-        val query = "SELECT * FROM ${tableMustSyncUntil()}"
+        val query1 = "SELECT * FROM ${tableMustSyncUntil()}"
+        val raw1: MutableList<MutableMap<String, Any>> = queryRunner.query(
+                ctx.conn, query1, MapListHandler())
 
-
-        val raw: MutableList<MutableMap<String, Any>> = queryRunner.query(
-                ctx.conn, query, MapListHandler())
-
+        val query2 = "SELECT * FROM ${tableBlockchains()}"
+        val raw2: MutableList<MutableMap<String, Any>> = queryRunner.query(
+                ctx.conn, query2, MapListHandler())
         /*
         Each MutableMap represents a row in the table.
         MutableList is thus a list of rows in the table.
          */
-        return raw.map {
-            BlockchainRid((it[TABLE_SYNC_UNTIL_FIELD_BRID] as String).hexStringToByteArray()) to
+        val chainIdToBrid = raw2.map {
+            (it["chain_iid"] as BigInteger) to
+                    (it["blockchain_rid"] as ByteArray)
+        }.toMap()
+
+        val chainIdToHeight = raw1.map {
+            (it[TABLE_SYNC_UNTIL_FIELD_CHAIN_IID] as BigInteger) to
                     (it[TABLE_SYNC_UNTIL_FIELD_HEIGHT] as String).toLong()
         }.toMap()
+        val result = mutableMapOf<BlockchainRid, Long>()
+        for (x in chainIdToHeight) {
+            val newKeyBrid = chainIdToBrid[x.key]
+            result.put(BlockchainRid(newKeyBrid!!), x.value)
+
+        }
+        return result
+        //it.key = chainIdToBrid[it.value]}
     }
 
     fun tableExists(connection: Connection, tableName: String): Boolean {
