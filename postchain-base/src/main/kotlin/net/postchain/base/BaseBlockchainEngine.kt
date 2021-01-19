@@ -192,7 +192,7 @@ open class BaseBlockchainEngine(
                     }
                     val txException = blockBuilder.maybeAppendTransaction(tx)
                     TimeLog.end("BaseBlockchainEngine.buildBlock().maybeApppendTransaction")
-                    if (exception != null) {
+                    if (txException != null) {
                         rejectedTxs++
                         transactionQueue.rejectTransaction(tx, txException)
                     } else {
