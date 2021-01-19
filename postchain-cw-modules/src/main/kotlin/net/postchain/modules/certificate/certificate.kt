@@ -20,11 +20,6 @@ class certificate_op (val config: CertificateConfig, data: ExtOpData): GTXOperat
     private val r = QueryRunner()
     private val unitHandler = ScalarHandler<Unit>()
 
-
-    override fun isSpecial(): Boolean {
-        return false
-    }
-
     override fun isCorrect(): Boolean {
         if (data.args.size != 6)
             return false

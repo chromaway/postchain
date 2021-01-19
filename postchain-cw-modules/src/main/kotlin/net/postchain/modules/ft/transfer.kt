@@ -124,10 +124,6 @@ class FT_transfer_op (val config: FTConfig, data: ExtOpData): GTXOperation(data)
         return config.transferRules.applyStaticRules(transferData)
     }
 
-    override fun isSpecial(): Boolean {
-        return false
-    }
-
     /**
      * Operation is applied to the database, given that certain rules are followed
      *
