@@ -2,16 +2,11 @@
 
 package net.postchain.ebft.worker
 
-import net.postchain.config.node.NodeConfig
-import net.postchain.core.BlockchainEngine
 import net.postchain.core.BlockchainProcess
 import net.postchain.core.NODE_ID_READ_ONLY
-import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.BaseBlockDatabase
-import net.postchain.ebft.message.Message
 import net.postchain.ebft.syncmanager.common.FastSyncParameters
 import net.postchain.ebft.syncmanager.common.FastSynchronizer
-import net.postchain.network.CommunicationManager
 import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
 
@@ -19,16 +14,9 @@ import kotlin.concurrent.thread
  * A blockchain instance replica worker
  * @property updateLoop the main thread
  */
-class ReadOnlyWorker(
-        val processName: BlockchainProcessName,
-        signers: List<ByteArray>,
-        private val blockchainEngine: BlockchainEngine,
-        private val communicationManager: CommunicationManager<Message>,
-        nodeConfig: NodeConfig,
-        private val onShutdown: () -> Unit = {}
-) : BlockchainProcess {
+class ReadOnlyWorker(val workerContext: WorkerContext) : BlockchainProcess {
 
-    override fun getEngine() = blockchainEngine
+    override fun getEngine() = workerContext.engine
 
     private val fastSynchronizer: FastSynchronizer
 
@@ -36,27 +24,20 @@ class ReadOnlyWorker(
 
     init {
         val blockDatabase = BaseBlockDatabase(
-                blockchainEngine, blockchainEngine.getBlockQueries(), NODE_ID_READ_ONLY)
+                getEngine(), getEngine().getBlockQueries(), NODE_ID_READ_ONLY)
 
-        val fastSyncParameters = FastSyncParameters()
-        fastSyncParameters.processName = processName.toString()
-        fastSynchronizer = FastSynchronizer(
-                communicationManager,
+        fastSynchronizer = FastSynchronizer(workerContext,
                 blockDatabase,
-                blockchainEngine.getConfiguration(),
-                blockchainEngine.getBlockQueries(),
-                fastSyncParameters)
-        thread(name = "replicaSync-$processName") {
+                FastSyncParameters())
+        thread(name = "replicaSync-${workerContext.processName}") {
             fastSynchronizer.syncUntilShutdown()
             done.countDown()
         }
     }
 
     override fun shutdown() {
-        communicationManager.shutdown()
         fastSynchronizer.shutdown()
-        blockchainEngine.shutdown()
         done.await()
-        onShutdown()
+        workerContext.shutdown()
     }
 }

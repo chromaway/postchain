@@ -2,10 +2,9 @@
 
 package net.postchain.network
 
-import net.postchain.core.Shutdownable
 import net.postchain.network.x.XPeerID
 
-interface CommunicationManager<PacketType> : Shutdownable {
+interface CommunicationManager<PacketType> {
     fun init()
     //fun peerMap(): Map<XPeerID, PeerInfo>
     fun getPackets(): MutableList<Pair<XPeerID, PacketType>>
@@ -19,4 +18,5 @@ interface CommunicationManager<PacketType> : Shutdownable {
      * were no peers available, null is returned.
      */
     fun sendToRandomPeer(packet: PacketType, excludedPeers: Set<XPeerID>): XPeerID?
+    fun shutdown()
 }

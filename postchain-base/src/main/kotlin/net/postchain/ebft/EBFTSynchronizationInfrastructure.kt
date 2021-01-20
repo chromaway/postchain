@@ -18,6 +18,7 @@ import net.postchain.debug.NodeDiagnosticContext
 import net.postchain.ebft.message.Message
 import net.postchain.ebft.worker.ReadOnlyWorker
 import net.postchain.ebft.worker.ValidatorWorker
+import net.postchain.ebft.worker.WorkerContext
 import net.postchain.network.CommunicationManager
 import net.postchain.network.netty2.NettyConnectorFactory
 import net.postchain.network.x.DefaultXCommunicationManager
@@ -56,28 +57,19 @@ class EBFTSynchronizationInfrastructure(
         }
         val peerCommConfiguration = buildPeerCommConfiguration(nodeConfig, blockchainConfig)
 
+        val workerContext = WorkerContext(processName, blockchainConfig.signers, engine,
+                blockchainConfig.configData.context.nodeID,
+                buildXCommunicationManager(processName, blockchainConfig, peerCommConfiguration),
+                peerCommConfiguration,
+                nodeConfig,
+                unregisterBlockchainDiagnosticData)
+
         return if (blockchainConfig.configData.context.nodeID != NODE_ID_READ_ONLY) {
             registerBlockchainDiagnosticData(blockchainConfig.blockchainRid, DpNodeType.NODE_TYPE_VALIDATOR)
-
-            ValidatorWorker(
-                    processName,
-                    blockchainConfig.signers,
-                    engine,
-                    blockchainConfig.configData.context.nodeID,
-                    buildXCommunicationManager(processName, blockchainConfig, peerCommConfiguration),
-                    nodeConfig,
-                    unregisterBlockchainDiagnosticData
-            )
+            ValidatorWorker(workerContext)
         } else {
             registerBlockchainDiagnosticData(blockchainConfig.blockchainRid, DpNodeType.NODE_TYPE_REPLICA)
-
-            ReadOnlyWorker(
-                    processName,
-                    blockchainConfig.signers,
-                    engine,
-                    buildXCommunicationManager(processName, blockchainConfig, peerCommConfiguration),
-                    nodeConfig,
-                    unregisterBlockchainDiagnosticData)
+            ReadOnlyWorker(workerContext)
         }
     }
 

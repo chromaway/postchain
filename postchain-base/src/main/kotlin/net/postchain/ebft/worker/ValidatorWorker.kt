@@ -3,90 +3,96 @@
 package net.postchain.ebft.worker
 
 import net.postchain.base.NetworkAwareTxQueue
-import net.postchain.config.node.NodeConfig
 import net.postchain.core.BlockchainEngine
+import net.postchain.core.BlockchainProcess
 import net.postchain.core.NodeStateTracker
-import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.BaseBlockDatabase
 import net.postchain.ebft.BaseBlockManager
 import net.postchain.ebft.BaseStatusManager
-import net.postchain.ebft.BlockManager
-import net.postchain.ebft.message.Message
+import net.postchain.ebft.StatusManager
 import net.postchain.ebft.syncmanager.SyncManager
 import net.postchain.ebft.syncmanager.validator.ValidatorSyncManager
-import net.postchain.network.CommunicationManager
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.concurrent.thread
 
 /**
  * A blockchain instance worker
  *
- * @property updateLoop the main thread
- * @property blockManager manages intents and acts as a wrapper for [blockDatabase] and [statusManager]
- * @property statusManager manages the status of the consensus protocol
+ * @param workerContext The stuff needed to start working.
  */
-class ValidatorWorker(
-        override val processName: BlockchainProcessName,
-        signers: List<ByteArray>,
-        override val blockchainEngine: BlockchainEngine,
-        nodeIndex: Int,
-        private val communicationManager: CommunicationManager<Message>,
-        nodeConfig: NodeConfig,
-        val onShutdown: () -> Unit = {}
-) : AbstractBlockchainProcess() {
+class ValidatorWorker(val workerContext: WorkerContext
+) : BlockchainProcess {
 
-    override val blockDatabase: BaseBlockDatabase
-    private val blockManager: BlockManager
-    val statusManager: BaseStatusManager
-    override val syncManager: ValidatorSyncManager
-    override val networkAwareTxQueue: NetworkAwareTxQueue
-    override val nodeStateTracker = NodeStateTracker()
+    private lateinit var updateLoop: Thread
+    private val shutdown = AtomicBoolean(false)
+
+    private val blockDatabase: BaseBlockDatabase
+    val syncManager: ValidatorSyncManager
+    val networkAwareTxQueue: NetworkAwareTxQueue
+    val nodeStateTracker = NodeStateTracker()
+    val statusManager: StatusManager
+
+    override fun getEngine(): BlockchainEngine {
+        return workerContext.engine
+    }
 
     init {
-        val bestHeight = blockchainEngine.getBlockQueries().getBestHeight().get()
+        val bestHeight = getEngine().getBlockQueries().getBestHeight().get()
         statusManager = BaseStatusManager(
-                signers.size,
-                nodeIndex,
+                workerContext.signers.size,
+                workerContext.nodeId,
                 bestHeight + 1)
 
         blockDatabase = BaseBlockDatabase(
-                blockchainEngine, blockchainEngine.getBlockQueries(), nodeIndex)
+                getEngine(), getEngine().getBlockQueries(), workerContext.nodeId)
 
-        blockManager = BaseBlockManager(
-                processName,
+        val blockManager = BaseBlockManager(
+                workerContext.processName,
                 blockDatabase,
                 statusManager,
-                blockchainEngine.getBlockBuildingStrategy())
+                getEngine().getBlockBuildingStrategy())
 
-        // Give the SyncManager the BaseTransactionQueue and not the network-aware one,
+        // Give the SyncManager the BaseTransactionQueue (part of workerContext) and not the network-aware one,
         // because we don't want tx forwarding/broadcasting when received through p2p network
-        syncManager = ValidatorSyncManager(
-                processName,
-                signers,
+        syncManager = ValidatorSyncManager(workerContext,
                 statusManager,
                 blockManager,
                 blockDatabase,
-                blockchainEngine.getBlockQueries(),
-                communicationManager,
-                nodeConfig,
-                nodeStateTracker,
-                blockchainEngine.getTransactionQueue(),
-                blockchainEngine.getConfiguration())
+                nodeStateTracker)
 
         networkAwareTxQueue = NetworkAwareTxQueue(
-                blockchainEngine.getTransactionQueue(),
-                communicationManager)
+                getEngine().getTransactionQueue(),
+                workerContext.communicationManager)
 
         statusManager.recomputeStatus()
         startUpdateLoop(syncManager)
     }
 
+    /**
+     * Create and run the [updateLoop] thread
+     * @param syncManager the syncronization manager
+     */
+    protected fun startUpdateLoop(syncManager: SyncManager) {
+        updateLoop = thread(name = "updateLoop-${workerContext.processName}") {
+            while (!shutdown.get()) {
+                try {
+                    syncManager.update()
+                    Thread.sleep(20)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
 
     /**
      * Stop the postchain node
      */
     override fun shutdown() {
         syncManager.shutdown()
-        super.shutdown()
-        communicationManager.shutdown()
-        onShutdown()
+        shutdown.set(true)
+        updateLoop.join()
+        blockDatabase.stop()
+        workerContext.shutdown()
     }
 }

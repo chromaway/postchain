@@ -4,10 +4,8 @@ package net.postchain.ebft.syncmanager.validator
 
 import mu.KLogging
 import net.postchain.common.toHex
-import net.postchain.config.node.NodeConfig
 import net.postchain.core.*
 import net.postchain.core.Signature
-import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.*
 import net.postchain.ebft.message.*
 import net.postchain.ebft.message.BlockData
@@ -21,7 +19,7 @@ import net.postchain.ebft.syncmanager.common.EBFTNodesCondition
 import net.postchain.ebft.syncmanager.common.FastSyncParameters
 import net.postchain.ebft.syncmanager.common.FastSynchronizer
 import net.postchain.ebft.syncmanager.common.Messaging
-import net.postchain.network.CommunicationManager
+import net.postchain.ebft.worker.WorkerContext
 import net.postchain.network.x.XPeerID
 import nl.komponents.kovenant.task
 import java.util.*
@@ -29,28 +27,21 @@ import java.util.*
 /**
  * The ValidatorSyncManager handles communications with our peers.
  */
-class ValidatorSyncManager(
-        private val processName: BlockchainProcessName,
-        private val signers: List<ByteArray>,
-        private val statusManager: StatusManager,
-        private val blockManager: BlockManager,
-        private val blockDatabase: BlockDatabase,
-        blockQueries: BlockQueries,
-        communicationManager: CommunicationManager<Message>,
-        nodeConfig: NodeConfig,
-        private val nodeStateTracker: NodeStateTracker,
-        private val txQueue: TransactionQueue,
-        private val blockchainConfiguration: BlockchainConfiguration
-) : Messaging(blockQueries, communicationManager), SyncManager {
-
+class ValidatorSyncManager(private val workerContext: WorkerContext,
+                           private val statusManager: StatusManager,
+                           private val blockManager: BlockManager,
+                           private val blockDatabase: BlockDatabase,
+                           private val nodeStateTracker: NodeStateTracker
+) : Messaging(workerContext.engine.getBlockQueries(), workerContext.communicationManager), SyncManager {
+    private val blockchainConfiguration = workerContext.engine.getConfiguration()
     private val revoltTracker = RevoltTracker(10000, statusManager)
-    private val statusSender = StatusSender(1000, statusManager, communicationManager)
+    private val statusSender = StatusSender(1000, statusManager, workerContext.communicationManager)
     private val defaultTimeout = 1000
     private var currentTimeout: Int
     private var processingIntent: BlockIntent
     private var processingIntentDeadline = 0L
     private var lastStatusLogged: Long
-
+    private val processName = workerContext.processName
     private var useFastSyncAlgorithm: Boolean = true
     companion object : KLogging()
 
@@ -61,19 +52,15 @@ class ValidatorSyncManager(
         this.processingIntent = DoNothingIntent
         this.lastStatusLogged = Date().time
         val params = FastSyncParameters()
-        params.exitDelay = nodeConfig.fastSyncExitDelay
-        params.processName = processName.toString()
-        fastSynchronizer = FastSynchronizer(
-                communicationManager,
+        params.exitDelay = workerContext.nodeConfig.fastSyncExitDelay
+        fastSynchronizer = FastSynchronizer(workerContext,
                 blockDatabase,
-                blockchainConfiguration,
-                blockQueries,
                 params
         )
     }
 
     //    private val nodes = communicationManager.peers().map { XPeerID(it.pubKey) }
-    private val signersIds = signers.map { XPeerID(it) }
+    private val signersIds = workerContext.signers.map { XPeerID(it) }
 
     private fun indexOfValidator(peerId: XPeerID): Int = signersIds.indexOf(peerId)
     //        return nodes.indexOf(peerID)
@@ -173,7 +160,7 @@ class ValidatorSyncManager(
         // TODO: reject if queue is full
         task {
             val tx = blockchainConfiguration.getTransactionFactory().decodeTransaction(message.data)
-            txQueue.enqueue(tx)
+            workerContext.engine.getTransactionQueue().enqueue(tx)
         }
 
     }

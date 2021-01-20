@@ -10,7 +10,7 @@ import net.postchain.core.BlockHeader
 import net.postchain.ebft.BlockDatabase
 import net.postchain.ebft.message.*
 import net.postchain.ebft.message.BlockData
-import net.postchain.network.CommunicationManager
+import net.postchain.ebft.worker.WorkerContext
 import net.postchain.network.x.XPeerID
 import java.lang.Thread.sleep
 import java.util.*
@@ -52,8 +52,7 @@ data class FastSyncParameters(var resurrectDrainedTime: Long = 10000,
                               var exitDelay: Long = 60000,
                               var pollPeersInterval: Long = 10000,
                               var jobTimeout: Long = 10000,
-                              var loopInteval: Long = 100,
-                              var processName: String = "")
+                              var loopInteval: Long = 100)
 
 /**
  * This class syncs blocks from its peers by requesting <parallelism> blocks
@@ -92,13 +91,11 @@ data class FastSyncParameters(var resurrectDrainedTime: Long = 10000,
  * or so upon first start. But in tests, this can be really annoying. So tests that only runs a single node
  * should set [params.exitDelay] to 0.
  */
-class FastSynchronizer(
-        communicationManager: CommunicationManager<Message>,
-        val blockDatabase: BlockDatabase,
-        private val blockchainConfiguration: BlockchainConfiguration,
-        blockQueries: BlockQueries,
-        val params: FastSyncParameters
-): Messaging(blockQueries, communicationManager) {
+class FastSynchronizer(private val workerContext: WorkerContext,
+                       val blockDatabase: BlockDatabase,
+                       val params: FastSyncParameters
+): Messaging(workerContext.engine.getBlockQueries(), workerContext.communicationManager) {
+    private val blockchainConfiguration = workerContext.engine.getConfiguration()
     private val jobs = TreeMap<Long, Job>()
     private val peerStatuses = PeerStatuses(params)
 
@@ -107,7 +104,7 @@ class FastSynchronizer(
 
     companion object: KLogging()
 
-    var blockHeight: Long = blockQueries.getBestHeight().get()
+    var blockHeight: Long = workerContext.engine.getBlockQueries().getBestHeight().get()
         private set
 
     inner class Job(val height: Long, var peerId: XPeerID) {
@@ -119,14 +116,14 @@ class FastSynchronizer(
         val startTime = System.currentTimeMillis()
         var hasRestartFailed = false
         override fun toString(): String {
-            return "${this@FastSynchronizer.params.processName}-h${height}-${peerId.shortString()}"
+            return "${this@FastSynchronizer.workerContext.processName}-h${height}-${peerId.shortString()}"
         }
     }
 
     private val shutdown = AtomicBoolean(false)
 
     fun debug(message: String, e: Exception? = null) {
-        logger.debug("${params.processName}: $message", e)
+        logger.debug("${workerContext.processName}: $message", e)
     }
     
     fun syncUntil(exitCondition: () -> Boolean) {

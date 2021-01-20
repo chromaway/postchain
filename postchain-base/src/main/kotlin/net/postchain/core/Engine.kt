@@ -30,8 +30,9 @@ interface BlockchainEngine : Shutdownable {
     fun getConfiguration(): BlockchainConfiguration
 }
 
-interface BlockchainProcess : Shutdownable {
+interface BlockchainProcess {
     fun getEngine(): BlockchainEngine
+    fun shutdown()
 }
 
 interface BlockchainProcessManager : Shutdownable, Synchronizable {
