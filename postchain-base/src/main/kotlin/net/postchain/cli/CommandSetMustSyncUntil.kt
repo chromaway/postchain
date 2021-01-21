@@ -47,20 +47,14 @@ class CommandSetMustSyncUntil : Command {
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
         return try {
-            val added = setMustSyncUntil(BlockchainRid(bridString.hexStringToByteArray()), height)
+            val added = CliExecution.setMustSyncUntil(nodeConfigFile, BlockchainRid(bridString.hexStringToByteArray()),
+                    height)
             return when {
                 added -> Ok("Command " + key() + " finished successfully")
                 else -> Ok("Command " + key() + " failed")
             }
         } catch (e: CliError.Companion.CliException) {
             CliError.CommandNotAllowed(message = e.message)
-        }
-    }
-
-    private fun setMustSyncUntil(blockchainRID: BlockchainRid, height: Long): Boolean {
-        return runStorageCommand(nodeConfigFile) { ctx ->
-            val db = DatabaseAccess.of(ctx)
-            db.setMustSyncUntil(ctx, blockchainRID, height)
         }
     }
 }

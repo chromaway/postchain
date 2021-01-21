@@ -609,8 +609,8 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
         MutableList is thus a list of rows in the table.
          */
         return raw.map {
-            (it[TABLE_SYNC_UNTIL_FIELD_CHAIN_IID] as BigInteger).toLong() to
-                    (it[TABLE_SYNC_UNTIL_FIELD_HEIGHT] as BigInteger).toLong()
+            it[TABLE_SYNC_UNTIL_FIELD_CHAIN_IID] as Long to
+                    it[TABLE_SYNC_UNTIL_FIELD_HEIGHT] as Long
         }.toMap()
     }
 
@@ -621,7 +621,7 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
 
         return raw.map {
             BlockchainRid(it[TABLE_SYNC_UNTIL_FIELD_HEIGHT] as ByteArray) to
-                    (it["chain_iid"] as BigInteger).toLong()
+                    it["chain_iid"] as Long
         }.toMap()
     }
 
@@ -637,7 +637,6 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
                 return true
             }
         }
-
         return false
     }
 

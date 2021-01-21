@@ -160,6 +160,20 @@ object CliExecution {
         }
     }
 
+
+    fun setMustSyncUntil(nodeConfigFile: String, blockchainRID: BlockchainRid, height: Long): Boolean {
+        return runStorageCommand(nodeConfigFile) { ctx ->
+            val db = DatabaseAccess.of(ctx)
+            db.setMustSyncUntil(ctx, blockchainRID, height)
+        }
+    }
+
+    fun getMustSyncUntilHeight(nodeConfigFile: String): Map<Long, Long> {
+        return runStorageCommand(nodeConfigFile) { ctx ->
+            DatabaseAccess.of(ctx).getMustSyncUntil(ctx)
+        }
+    }
+
     fun peerinfoAdd(nodeConfigFile: String, host: String, port: Int, pubKey: String, mode: AlreadyExistMode): Boolean {
         return runStorageCommand(nodeConfigFile) { ctx ->
             val db = DatabaseAccess.of(ctx)
