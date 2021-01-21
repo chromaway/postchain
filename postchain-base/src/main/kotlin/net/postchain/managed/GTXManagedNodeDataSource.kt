@@ -72,7 +72,7 @@ class GTXManagedNodeDataSource(val queries: BlockQueries, val nodeConfig: NodeCo
         val blockchains = computeBlockchainList()
 //        query get_blockchain_last_height_map(blockchain_rids: list<byte_array>) : list<integer>
         val heights = queries.query(
-                "et_blockchain_last_height_map",
+                "nm_get_blockchain_last_height_map",
                 buildArgs("blockchain_rids" to GtvFactory.gtv(
                         *(blockchains.map { GtvFactory.gtv(it) }.toTypedArray())
                 ))

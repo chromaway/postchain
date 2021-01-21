@@ -14,7 +14,7 @@ fun String.hexStringToByteArray(): ByteArray {
         require(firstIndex != -1) { "Char ${this[i]} is not a hex digit" }
 
         val secondIndex = HEX_CHARS.indexOf(this[i + 1], ignoreCase = true)
-        require(secondIndex != -1) { "Char ${this[i]} is not a hex digit" }
+        require(secondIndex != -1) { "Char ${this[i + 1]} is not a hex digit" }
 
         val octet = firstIndex.shl(4).or(secondIndex)
         result[i.shr(1)] = octet.toByte()

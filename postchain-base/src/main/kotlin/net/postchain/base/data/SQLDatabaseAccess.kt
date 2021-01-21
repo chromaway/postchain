@@ -72,7 +72,7 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
         const val TABLE_REPLICAS_FIELD_BRID = "blockchain_rid"
         const val TABLE_REPLICAS_FIELD_PUBKEY = "node"
 
-        const val TABLE_SYNC_UNTIL_FIELD_CHAIN_IID = "blockchain_rid"
+        const val TABLE_SYNC_UNTIL_FIELD_CHAIN_IID = "chain_iid"
         const val TABLE_SYNC_UNTIL_FIELD_HEIGHT = "block_height"
     }
 
@@ -587,48 +587,42 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
         return res.map { BlockchainRid.buildFromHex(it) }.toSet()
     }
 
-    override fun setMustSyncUntil(ctx: AppContext, chainId: Long, height: Long): Boolean {
-        // If given brid exist in table (CONFLICT), update table with the given height parameter.
+    override fun setMustSyncUntil(ctx: AppContext, blockchainRID: BlockchainRid, height: Long): Boolean {
+        // If given brid (chainID) already exist in table ( => CONFLICT), update table with the given height parameter.
         val sql = """
             INSERT INTO ${tableMustSyncUntil()} 
             ($TABLE_SYNC_UNTIL_FIELD_CHAIN_IID, $TABLE_SYNC_UNTIL_FIELD_HEIGHT) 
-            VALUES ((SELECT chain_iid FROM ${tableBlockchains()} WHERE chain_iid = ?), ?) 
+            VALUES ((SELECT chain_iid FROM ${tableBlockchains()} WHERE blockchain_rid = ?), ?) 
             ON CONFLICT ($TABLE_SYNC_UNTIL_FIELD_CHAIN_IID) DO UPDATE SET $TABLE_SYNC_UNTIL_FIELD_HEIGHT = ?
         """.trimIndent()
-        queryRunner.insert(ctx.conn, sql, ScalarHandler<String>(), chainId, height, height)
+        queryRunner.insert(ctx.conn, sql, ScalarHandler<String>(), blockchainRID.data, height, height)
         return true
     }
 
-    override fun getMustSyncUntil(ctx: AppContext): Map<BlockchainRid, Long> {
+    override fun getMustSyncUntil(ctx: AppContext): Map<Long, Long> {
 
-        val query1 = "SELECT * FROM ${tableMustSyncUntil()}"
-        val raw1: MutableList<MutableMap<String, Any>> = queryRunner.query(
-                ctx.conn, query1, MapListHandler())
-
-        val query2 = "SELECT * FROM ${tableBlockchains()}"
-        val raw2: MutableList<MutableMap<String, Any>> = queryRunner.query(
-                ctx.conn, query2, MapListHandler())
+        val query = "SELECT * FROM ${tableMustSyncUntil()}"
+        val raw: MutableList<MutableMap<String, Any>> = queryRunner.query(
+                ctx.conn, query, MapListHandler())
         /*
         Each MutableMap represents a row in the table.
         MutableList is thus a list of rows in the table.
          */
-        val chainIdToBrid = raw2.map {
-            (it["chain_iid"] as BigInteger) to
-                    (it["blockchain_rid"] as ByteArray)
+        return raw.map {
+            (it[TABLE_SYNC_UNTIL_FIELD_CHAIN_IID] as BigInteger).toLong() to
+                    (it[TABLE_SYNC_UNTIL_FIELD_HEIGHT] as BigInteger).toLong()
         }.toMap()
+    }
 
-        val chainIdToHeight = raw1.map {
-            (it[TABLE_SYNC_UNTIL_FIELD_CHAIN_IID] as BigInteger) to
-                    (it[TABLE_SYNC_UNTIL_FIELD_HEIGHT] as String).toLong()
+    override fun getChainIds(ctx: AppContext): Map<BlockchainRid, Long> {
+        val sql = "SELECT * FROM ${tableBlockchains()}"
+        val raw: MutableList<MutableMap<String, Any>> = queryRunner.query(
+                ctx.conn, sql, MapListHandler())
+
+        return raw.map {
+            BlockchainRid(it[TABLE_SYNC_UNTIL_FIELD_HEIGHT] as ByteArray) to
+                    (it["chain_iid"] as BigInteger).toLong()
         }.toMap()
-        val result = mutableMapOf<BlockchainRid, Long>()
-        for (x in chainIdToHeight) {
-            val newKeyBrid = chainIdToBrid[x.key]
-            result.put(BlockchainRid(newKeyBrid!!), x.value)
-
-        }
-        return result
-        //it.key = chainIdToBrid[it.value]}
     }
 
     fun tableExists(connection: Connection, tableName: String): Boolean {
