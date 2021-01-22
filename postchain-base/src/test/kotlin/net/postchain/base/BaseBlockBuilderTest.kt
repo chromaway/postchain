@@ -8,12 +8,15 @@ import net.postchain.base.data.BaseTransactionFactory
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.InitialBlockData
+import net.postchain.core.ValidationResult.Result.INVALID_TIMESTAMP
+import net.postchain.core.ValidationResult.Result.OK
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.MockCryptoSystem
 import org.easymock.EasyMock.mock
 import org.junit.Test
 import java.sql.Connection
+import kotlin.test.assertEquals
 
 class BaseBlockBuilderTest {
     val cryptoSystem = MockCryptoSystem()
@@ -38,7 +41,7 @@ class BaseBlockBuilderTest {
         val header = BaseBlockHeader.make(cryptoSystem, blockData, myMerkleRootHash, timestamp)
         bbb.bctx = bctx
         bbb.initialBlockData = blockData
-        assert(!bbb.validateBlockHeader(header).result)
+        assertEquals(INVALID_TIMESTAMP, bbb.validateBlockHeader(header).result)
     }
 
     @Test
@@ -48,7 +51,7 @@ class BaseBlockBuilderTest {
         val header = BaseBlockHeader.make(cryptoSystem, blockData, myMerkleRootHash, timestamp)
         bbb.bctx = bctx
         bbb.initialBlockData = blockData
-        assert(!bbb.validateBlockHeader(header).result)
+        assertEquals(INVALID_TIMESTAMP, bbb.validateBlockHeader(header).result)
     }
 
     @Test
@@ -58,7 +61,7 @@ class BaseBlockBuilderTest {
         val header = BaseBlockHeader.make(cryptoSystem, blockData, myMerkleRootHash, timestamp)
         bbb.bctx = bctx
         bbb.initialBlockData = blockData
-        assert(bbb.validateBlockHeader(header).result)
+        assertEquals(OK, bbb.validateBlockHeader(header).result)
     }
 }
 /*

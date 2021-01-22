@@ -75,7 +75,7 @@ class BaseBlockDatabase(
                     theBlockBuilder.rollback()
                 } catch (ignore: Exception) {
                 }
-                throw UserMistake("Can't add block", exception)
+                throw exception
             } else {
                 theBlockBuilder.commit(block.witness)
             }
@@ -91,7 +91,7 @@ class BaseBlockDatabase(
                     theBlockBuilder.rollback()
                 } catch (ignore: Exception) {
                 }
-                throw UserMistake("Can't load unfinished block", exception)
+                throw exception
             } else {
                 blockBuilder = theBlockBuilder
                 witnessBuilder = blockBuilder!!.getBlockWitnessBuilder() as MultiSigBlockWitnessBuilder

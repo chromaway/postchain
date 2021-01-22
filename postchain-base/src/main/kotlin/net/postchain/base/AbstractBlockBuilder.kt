@@ -5,6 +5,8 @@ package net.postchain.base
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.core.ValidationResult.Result.OK
+import net.postchain.core.ValidationResult.Result.PREV_BLOCK_MISMATCH
 
 /**
  * This class includes the bare minimum functionality required by a real block builder
@@ -117,14 +119,15 @@ abstract class AbstractBlockBuilder(
      * @throws UserMistake Happens if validation of the block header fails
      */
     override fun finalizeAndValidate(blockHeader: BlockHeader) {
-        validateBlockHeader(blockHeader).run {
-            if (result) {
+        val validationResult = validateBlockHeader(blockHeader)
+        when (validationResult.result) {
+            OK -> {
                 store.finalizeBlock(bctx, blockHeader)
                 _blockData = BlockData(blockHeader, rawTransactions)
                 finalized = true
-            } else {
-                throw UserMistake("Invalid block header: $message")
             }
+            PREV_BLOCK_MISMATCH -> throw BadDataMistake(BadDataType.PREV_BLOCK_MISMATCH, validationResult.message)
+            else -> throw BadDataMistake(BadDataType.BAD_BLOCK, validationResult.message)
         }
     }
 

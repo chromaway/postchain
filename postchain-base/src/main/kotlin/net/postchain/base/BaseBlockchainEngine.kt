@@ -83,11 +83,6 @@ open class BaseBlockchainEngine(
                 })
     }
 
-    override fun addBlock(block: BlockDataWithWitness) {
-        val (blockBuilder, exception) = loadUnfinishedBlock(block)
-        blockBuilder.commit(block.witness)
-    }
-
     override fun loadUnfinishedBlock(block: BlockData): Pair<ManagedBlockBuilder, Exception?> {
         return if (useParallelDecoding)
             parallelLoadUnfinishedBlock(block)

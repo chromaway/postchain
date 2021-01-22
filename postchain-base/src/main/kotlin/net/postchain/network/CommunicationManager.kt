@@ -13,10 +13,11 @@ interface CommunicationManager<PacketType> {
     /**
      * Sends the packet to a peer selected by random.
      *
-     * @param excludedPeers Exclude these peers when selecting a random peer.
+     * @param amongPeers consider only these peers. The random choice will thus be made from the intersection of
+     * amongPeers and connected peers.
      * @return the selected peer that the packet was sent to. If there
      * were no peers available, null is returned.
      */
-    fun sendToRandomPeer(packet: PacketType, excludedPeers: Set<XPeerID>): XPeerID?
+    fun sendToRandomPeer(packet: PacketType, amongPeers: Set<XPeerID>): XPeerID?
     fun shutdown()
 }

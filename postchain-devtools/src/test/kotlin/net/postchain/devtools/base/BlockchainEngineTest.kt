@@ -136,27 +136,11 @@ class BlockchainEngineTest : IntegrationTestSetup() {
         try {
             loadUnfinishedAndCommit(node1, blockData)
             fail()
-        } catch (userMistake: UserMistake) {
+        } catch (userMistake: BadDataMistake) {
             // Expected
         }
         // Block must not have been created.
         assertEquals(-1, getBestHeight(node1))
-    }
-
-    @Test
-    fun testAddBlock() {
-        val (node0, node1) = createNodes(2, "/net/postchain/devtools/blocks/blockchain_config_2.xml")
-
-        val blockBuilder = createBlockWithTx(node0, 2)
-        val witness = commitBlock(blockBuilder)
-        val blockData = blockBuilder.getBlockData()
-        val blockWithWitness = BlockDataWithWitness(blockData.header, blockData.transactions, witness)
-
-        node1.getBlockchainInstance().getEngine().addBlock(blockWithWitness)
-
-        assertEquals(0, getBestHeight(node1))
-        val riDsAtHeight0 = getTxRidsAtHeight(node1, 0)
-        assertTrue(riDsAtHeight0.contentDeepEquals(Array(2) { TestTransaction(it).getRID() }))
     }
 
     @Test

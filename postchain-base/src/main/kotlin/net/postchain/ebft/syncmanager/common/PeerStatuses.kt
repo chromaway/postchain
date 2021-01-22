@@ -118,12 +118,8 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
         return statuses.filterValues { !it.isSyncable(height) || it.isMaybeLegacy() }.keys
     }
 
-    fun getRandomLegacyPeer(height: Long): XPeerID? {
-        val legacyPeers = statuses.filterValues { it.isMaybeLegacy() && it.isSyncable(height) }.keys
-        if (legacyPeers.isEmpty()) {
-            return null
-        }
-        return legacyPeers.random()
+    fun getLegacyPeers(height: Long): Set<XPeerID> {
+        return statuses.filterValues { it.isMaybeLegacy() && it.isSyncable(height) }.keys
     }
 
     fun drained(peerId: XPeerID, height: Long) {

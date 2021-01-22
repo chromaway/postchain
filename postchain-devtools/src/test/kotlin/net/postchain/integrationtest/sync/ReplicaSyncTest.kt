@@ -23,7 +23,7 @@ class ReplicaSyncTest : AbstractSyncTest() {
     @Test(expected = org.awaitility.core.ConditionTimeoutException::class)
     fun testRemove() {
         Awaitility.await().atMost(7, TimeUnit.SECONDS).until {
-            doStuff(1, 2, setOf(1), setOf(0), 1)
+            runSyncTest(1, 2, setOf(1), setOf(0), 1)
             true
         }
     }
@@ -32,12 +32,12 @@ class ReplicaSyncTest : AbstractSyncTest() {
     @Test
     fun testRemoveAndAddAgain() {
         addReplica = true
-        doStuff(1, 2, setOf(1), setOf(0), 1)
+        runSyncTest(1, 2, setOf(1), setOf(0), 1)
     }
 
-    override fun addPeerInfo(dbAccess: DatabaseAccess, ctx: AppContext, peerInfo: PeerInfo, isSigner: Boolean, brid: BlockchainRid) {
+    override fun addPeerInfo(dbAccess: DatabaseAccess, ctx: AppContext, peerInfo: PeerInfo, brid: BlockchainRid, isPeerSigner: Boolean) {
         dbAccess.addPeerInfo(ctx, peerInfo)
-        if (!isSigner && addReplica) {
+        if (!isPeerSigner && addReplica) {
             dbAccess.addBlockchainReplica(ctx, brid.toHex(), peerInfo.pubKey.toHex())
         }
     }

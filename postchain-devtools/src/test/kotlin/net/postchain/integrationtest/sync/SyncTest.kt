@@ -6,7 +6,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 @RunWith(Parameterized::class)
-class SyncTest(val signerCount: Int, val replicaCount: Int, val syncIndex: Set<Int>, val stopIndex: Set<Int>, val blocksToSync: Int) : AbstractSyncTest() {
+class SyncTest(val signers: Int, val replicas: Int, val syncIndex: Set<Int>, val stopIndex: Set<Int>, val blocksToSync: Int) : AbstractSyncTest() {
 
     private companion object : KLogging() {
 
@@ -36,6 +36,6 @@ class SyncTest(val signerCount: Int, val replicaCount: Int, val syncIndex: Set<I
 
     @Test
     fun sync() {
-        doStuff(signerCount, replicaCount, syncIndex, stopIndex, blocksToSync)
+        runSyncTest(signers, replicas, syncIndex, stopIndex, blocksToSync)
     }
 }

@@ -19,10 +19,7 @@ interface BlockchainEngine : Shutdownable {
     fun initialize()
     fun setRestartHandler(restartHandler: RestartHandler)
 
-    // TODO: POS-111: Remove `addBlock()` and rename `loadUnfinishedBlock()` to `loadBlock()`
-    fun addBlock(block: BlockDataWithWitness)
     fun loadUnfinishedBlock(block: BlockData): Pair<ManagedBlockBuilder, Exception?>
-
     fun buildBlock(): Pair<ManagedBlockBuilder, Exception?>
     fun getTransactionQueue(): TransactionQueue
     fun getBlockBuildingStrategy(): BlockBuildingStrategy

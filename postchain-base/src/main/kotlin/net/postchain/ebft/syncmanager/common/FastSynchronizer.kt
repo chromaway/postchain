@@ -96,8 +96,10 @@ class FastSynchronizer(private val workerContext: WorkerContext,
                        val params: FastSyncParameters
 ): Messaging(workerContext.engine.getBlockQueries(), workerContext.communicationManager) {
     private val blockchainConfiguration = workerContext.engine.getConfiguration()
+    private val configuredPeers = workerContext.peerCommConfiguration.networkNodes.getPeerIds()
     private val jobs = TreeMap<Long, Job>()
     private val peerStatuses = PeerStatuses(params)
+    private var lastJob: Job? = null
 
     // This is the communication mechanism from the async commitBlock callback to main loop
     private val finishedJobs = LinkedBlockingQueue<Job>()
@@ -112,7 +114,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
         var witness: BlockWitness? = null
         var block: BlockDataWithWitness? = null
         var blockCommitting = false
-        var success = false
+        var addBlockException: Exception? = null
         val startTime = System.currentTimeMillis()
         var hasRestartFailed = false
         override fun toString(): String {
@@ -125,7 +127,15 @@ class FastSynchronizer(private val workerContext: WorkerContext,
     fun debug(message: String, e: Exception? = null) {
         logger.debug("${workerContext.processName}: $message", e)
     }
-    
+
+    fun error(message: String, e: Exception? = null) {
+        logger.error("${workerContext.processName}: $message", e)
+    }
+
+    fun info(message: String, e: Exception? = null) {
+        logger.info("${workerContext.processName}: $message", e)
+    }
+
     fun syncUntil(exitCondition: () -> Boolean) {
         try {
             debug("Start fastsync")
@@ -138,6 +148,9 @@ class FastSynchronizer(private val workerContext: WorkerContext,
                 processStaleJobs()
                 sleep(params.loopInteval)
             }
+        } catch (e: BadDataMistake) {
+            error("Fatal error, shutting down blockchain for safety reasons. Needs manual investigation.", e)
+            throw e
         } catch (e: Exception) {
             debug("Exception in syncWhile()", e)
         } finally {
@@ -204,7 +217,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
         }
     }
 
-    fun processDoneJobs() {
+    private fun processDoneJobs() {
         var j = finishedJobs.poll()
         while (j != null) {
             debug("Processing done job $j")
@@ -214,14 +227,35 @@ class FastSynchronizer(private val workerContext: WorkerContext,
     }
 
     private fun processDoneJob(j: Job, final: Boolean = false) {
-        if (j.success) {
+        val exception = j.addBlockException
+        if (exception == null) {
             // Add new job and remove old job
             if (!final) {
                 startNextJob()
             }
             blockHeight++
             removeJob(j)
+            // Keep track of last block's job, in case of a BadDataType.PREV_BLOCK_MISMATCH on next job
+            // Discard bulky data we don't need
+            j.block = null
+            j.witness = null
+            lastJob = j
         } else {
+            if (exception is BadDataMistake && exception.type == BadDataType.PREV_BLOCK_MISMATCH) {
+                // If we can't connect block, then either
+                // previous block is bad or this block is bad. Unfortunately,
+                // we can't know which. Ideally, we'd like to take different actions:
+                // If this block is bad -> blacklist j.peer
+                // If previous block is bad -> Panic shutdown blockchain
+                //
+                // We take the cautious approach and always shutdown the
+                // blockchain. We also log this block's job and last block's job
+                info("Previous block mismatch. " +
+                        "Previous block ${lastJob?.header!!.blockRID} received from ${lastJob?.peerId}, " +
+                        "This block ${j.header!!.blockRID} received from ${j.peerId}.")
+                throw exception
+            }
+
             // If the job failed because the block is already in the database
             // then it means that fastsync started before all addBlock jobs
             // from normal sync were done. If this has happened, we
@@ -235,7 +269,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
                 return
             }
 
-            debug("Invalid block ${j}. Blacklisting.")
+            error("Invalid block ${j}. Blacklisting peer ${j.peerId}: ${exception.message}")
             // Peer sent us an invalid block. Blacklist the peer and restart job
             peerStatuses.blacklist(j.peerId)
             if (!final) {
@@ -252,10 +286,10 @@ class FastSynchronizer(private val workerContext: WorkerContext,
                 // These are jobs that couldn't be restarted because there
                 // were no peers available at the time. Try again every
                 // time, because there is virtually no cost in doing so.
-                // It's just a check against a local datastructure.
+                // It's just a check against some local datastructures.
                 toRestart.add(j)
             } else if (j.block == null && j.startTime + params.jobTimeout < now) {
-                // We have waited for response from j.peerId fo a long time.
+                // We have waited for response from j.peerId for a long time.
                 // This might be because it's a legacy node and thus doesn't respond to
                 // GetBlockHeaderAndBlock messages or because it's just unresponsive
                 if (peerStatuses.isConfirmedModern(j.peerId)) {
@@ -308,12 +342,27 @@ class FastSynchronizer(private val workerContext: WorkerContext,
         return startJob(blockHeight + jobs.size + 1)
     }
 
-    private fun startJob(height: Long): Boolean {
+    private fun sendLegacyRequest(height: Long): XPeerID? {
+        val peers = peerStatuses.getLegacyPeers(height).intersect(configuredPeers)
+        return sendToRandomPeer(peers, height)
+    }
+
+    private fun sendRequest(height: Long): XPeerID? {
         val excludedPeers = peerStatuses.exclNonSyncable(height)
-        var peer = communicationManager.sendToRandomPeer(GetBlockHeaderAndBlock(height), excludedPeers)
+        val peers = configuredPeers.minus(excludedPeers)
+        return sendToRandomPeer(peers, height)
+    }
+
+    private fun sendToRandomPeer(amongPeers: Set<XPeerID>, height: Long): XPeerID? {
+        if (amongPeers.isEmpty()) return null
+        return communicationManager.sendToRandomPeer(GetBlockHeaderAndBlock(height), amongPeers)
+    }
+
+    private fun startJob(height: Long): Boolean {
+        var peer = sendRequest(height)
         if (peer == null) {
             // There were no modern nodes to sync from. Let's try with a legacy node instead
-            peer = peerStatuses.getRandomLegacyPeer(height)
+            peer = sendLegacyRequest(height)
             if (peer == null) {
                 // there were no peers at all to sync from. give up.
                 return false
@@ -468,13 +517,13 @@ class FastSynchronizer(private val workerContext: WorkerContext,
     private fun commitBlock(job: Job) {
         val p = blockDatabase.addBlock(job.block!!)
         p.success {_ ->
-            job.success = true
             finishedJobs.add(job)
         }
         p.fail {
             // We got an invalid block from peer. Let's blacklist this
             // peer and try another peer
             debug("Exception committing block ${job}", it)
+            job.addBlockException = it
             finishedJobs.add(job)
         }
     }
@@ -485,7 +534,6 @@ class FastSynchronizer(private val workerContext: WorkerContext,
             if (peerStatuses.isBlacklisted(peerId)) {
                 continue
             }
-            peerStatuses.addPeer(peerId)
             val message = packet.second
             if (message is GetBlockHeaderAndBlock || message is BlockHeaderMessage ) {
                 peerStatuses.confirmModern(peerId)

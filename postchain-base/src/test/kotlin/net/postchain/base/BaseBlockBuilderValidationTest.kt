@@ -8,6 +8,7 @@ import net.postchain.base.data.BaseTransactionFactory
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.InitialBlockData
+import net.postchain.core.ValidationResult.Result.*
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.MockCryptoSystem
@@ -49,7 +50,7 @@ class BaseBlockBuilderValidationTest {
 
         val validation = bbb.validateBlockHeader(header)
 
-        assert(validation.result)
+        assertEquals(OK, validation.result)
     }
 
     @Test
@@ -62,8 +63,7 @@ class BaseBlockBuilderValidationTest {
 
         val validation = bbb.validateBlockHeader(header)
 
-        assert(!validation.result)
-        assertEquals(validation.message, "bctx.timestamp >= header.timestamp")
+        assertEquals(INVALID_TIMESTAMP, validation.result)
     }
 
     @Test
@@ -76,8 +76,7 @@ class BaseBlockBuilderValidationTest {
 
         val validation = bbb.validateBlockHeader(header)
 
-        assert(!validation.result)
-        assertEquals(validation.message, "bctx.timestamp >= header.timestamp")
+        assertEquals(INVALID_TIMESTAMP, validation.result)
     }
 
     @Test
@@ -90,8 +89,7 @@ class BaseBlockBuilderValidationTest {
 
         val validation = bbb.validateBlockHeader(header)
 
-        assert(!validation.result)
-        assertEquals(validation.message, "header.blockHeaderRec.rootHash != computeRootHash()")
+        assertEquals(INVALID_ROOT_HASH, validation.result)
     }
 
 }

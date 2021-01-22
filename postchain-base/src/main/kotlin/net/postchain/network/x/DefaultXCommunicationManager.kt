@@ -67,9 +67,9 @@ class DefaultXCommunicationManager<PacketType>(
                 chainID)
     }
 
-    override fun sendToRandomPeer(packet: PacketType, excludedPeers: Set<XPeerID>): XPeerID? {
+    override fun sendToRandomPeer(packet: PacketType, amongPeers: Set<XPeerID>): XPeerID? {
         try {
-            val peer = connectionManager.getConnectedPeers(chainID).minus(excludedPeers).random()
+            val peer = connectionManager.getConnectedPeers(chainID).intersect(amongPeers).random()
             logger.trace { "$processName: sendToRandomPeer($packet, ${peerName(peer.toString())})" }
             sendPacket(packet, peer)
             return peer

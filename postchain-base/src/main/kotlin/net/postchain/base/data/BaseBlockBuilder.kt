@@ -7,6 +7,7 @@ import net.postchain.base.*
 import net.postchain.base.merkle.Hash
 import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.core.ValidationResult.Result.*
 import net.postchain.getBFTRequiredSignatureCount
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
@@ -90,6 +91,8 @@ open class BaseBlockBuilder(
      * Validate block header:
      * - check that previous block RID is used in this block
      * - check for correct height
+     *   - If height is too low check if it's a split or dublicate
+     *   - If too high, it's from the future
      * - check that timestamp occurs after previous blocks timestamp
      * - check if all required dependencies are present
      * - check for correct root hash
@@ -100,25 +103,38 @@ open class BaseBlockBuilder(
         val header = blockHeader as BaseBlockHeader
 
         val computedMerkleRoot = computeMerkleRootHash()
+        val height = header.blockHeaderRec.getHeight()
+        val expectedHeight = initialBlockData.height
         return when {
             !header.prevBlockRID.contentEquals(initialBlockData.prevBlockRID) ->
-                ValidationResult(false, "header.prevBlockRID != initialBlockData.prevBlockRID," +
+                ValidationResult(PREV_BLOCK_MISMATCH, "header.prevBlockRID != initialBlockData.prevBlockRID," +
                         "( ${header.prevBlockRID.toHex()} != ${initialBlockData.prevBlockRID.toHex()} ), " +
-                        " height: ${header.blockHeaderRec.getHeight()} and ${initialBlockData.height} ")
+                        " height: $height and $expectedHeight ")
 
-            header.blockHeaderRec.getHeight() != initialBlockData.height ->
-                ValidationResult(false, "header.blockHeaderRec.height != initialBlockData.height")
+            // These checks are for belts-and-suspenders. We shouldn't call this method
+            // if there's a height mismatch, and we probably don't. But if we do, let's
+            // check the stuff we can before reporting an error.
+            height > expectedHeight ->
+                ValidationResult(BLOCK_FROM_THE_FUTURE, "Expected height: $expectedHeight, got: $height, Block RID: ${header.blockRID.toHex()}")
+            height < expectedHeight -> {
+                val ourBlockRID = store.getBlockRID(ectx, height)
+                if (ourBlockRID!!.contentEquals(header.blockRID))
+                    ValidationResult(DUPLICATE_BLOCK, "Duplicate block at height ${height}, Block RID: ${header.blockRID.toHex()}")
+                else
+                    ValidationResult(SPLIT, "Blockchain split detected at height $height. Our block: ${ourBlockRID.toHex()}, " +
+                            "received block: ${header.blockRID.toHex()}")
+            }
 
             bctx.timestamp >= header.timestamp ->
-                ValidationResult(false, "bctx.timestamp >= header.timestamp")
+                ValidationResult(INVALID_TIMESTAMP, "bctx.timestamp >= header.timestamp")
 
             !header.checkIfAllBlockchainDependenciesArePresent(blockchainRelatedInfoDependencyList) ->
-                ValidationResult(false, "checkIfAllBlockchainDependenciesArePresent() is false")
+                ValidationResult(MISSING_BLOCKCHAIN_DEPENDENCY, "checkIfAllBlockchainDependenciesArePresent() is false")
 
             !Arrays.equals(header.blockHeaderRec.getMerkleRootHash(), computedMerkleRoot) -> // Do this last since most expensive check!
-                ValidationResult(false, "header.blockHeaderRec.rootHash != computeRootHash()")
+                ValidationResult(INVALID_ROOT_HASH, "header.blockHeaderRec.rootHash != computeRootHash()")
 
-            else -> ValidationResult(true)
+            else -> ValidationResult(OK)
         }
     }
 
