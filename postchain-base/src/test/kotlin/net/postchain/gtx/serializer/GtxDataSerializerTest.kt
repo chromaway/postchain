@@ -18,7 +18,7 @@ class GtxDataSerializerTest {
 
     val op_name = "op_name"
     val op_args = listOf(1,2,3,4)
-    val blockchainRID = BlockchainRid.buildFromHex("222222")
+    val blockchainRID = BlockchainRid.buildRepeat(22)
     val aliceSigner: ByteArray = "010101".hexStringToByteArray()
     val aliceSignature: ByteArray = "DDDDDD".hexStringToByteArray()
 

@@ -12,13 +12,6 @@ import org.junit.Test
 class BlockchainRidTest {
 
     @Test
-    fun testConstructorEmpty() {
-        val actual = BlockchainRid.EMPTY_RID
-
-        assert(actual.data).isContentEqualTo(byteArrayOf())
-    }
-
-    @Test
     fun testBuildFromHex() {
         val ridString = "78967baa4768cbcef11c508326ffb13a956689fcb6dc3ba17f4b895cbb1577a3"
         val actual = BlockchainRid.buildFromHex(ridString)

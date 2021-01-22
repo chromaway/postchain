@@ -168,7 +168,7 @@ object CliExecution {
         }
     }
 
-    fun getMustSyncUntilHeight(nodeConfigFile: String): Map<Long, Long> {
+    fun getMustSyncUntilHeight(nodeConfigFile: String): Map<Long, Long>? {
         return runStorageCommand(nodeConfigFile) { ctx ->
             DatabaseAccess.of(ctx).getMustSyncUntil(ctx)
         }

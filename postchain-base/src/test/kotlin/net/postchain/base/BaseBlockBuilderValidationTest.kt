@@ -25,7 +25,7 @@ class BaseBlockBuilderValidationTest {
     // Real stuff
     var bbs = BaseBlockStore()
     val tf = BaseTransactionFactory()
-    val myBlockchainRid = BlockchainRid("bcRid".toByteArray())
+    val myBlockchainRid = BlockchainRid.EMPTY_RID
     val empty32Bytes = ByteArray(32, { 0 })
     val rootHash = "46AF9064F12528CAD6A7C377204ACD0AC38CDC6912903E7DAB3703764C8DD5E5".hexStringToByteArray()
     val badRootHash = "46AF9064F12FFFFFFFFFFFFFF04ACD0AC38CDC6912903E7DAB3703764C8DD5E5".hexStringToByteArray()
@@ -36,7 +36,7 @@ class BaseBlockBuilderValidationTest {
     val db = mock(DatabaseAccess::class.java)
     val ctx = BaseEContext(mockedConn, 2L, 0, db)
     val bctx = BaseBlockEContext(ctx, 0, 1, 10, mapOf())
-    val bbb = BaseBlockBuilder(BlockchainRid.buildFromHex("0000"), cryptoSystem, ctx, bbs, tf,
+    val bbb = BaseBlockBuilder(BlockchainRid.buildRepeat(0), cryptoSystem, ctx, bbs, tf,
             NullSpecialTransactionHandler(),
             subjects, sigMaker, listOf(), false)
 

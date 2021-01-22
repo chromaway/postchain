@@ -10,7 +10,6 @@ import net.postchain.core.*
 import net.postchain.network.x.XPeerID
 import org.apache.commons.dbutils.QueryRunner
 import org.apache.commons.dbutils.handlers.*
-import java.math.BigInteger
 import java.sql.Connection
 import java.sql.Timestamp
 import java.time.Instant
@@ -599,7 +598,7 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
         return true
     }
 
-    override fun getMustSyncUntil(ctx: AppContext): Map<Long, Long> {
+    override fun getMustSyncUntil(ctx: AppContext): Map<Long, Long>? {
 
         val query = "SELECT * FROM ${tableMustSyncUntil()}"
         val raw: MutableList<MutableMap<String, Any>> = queryRunner.query(
@@ -614,13 +613,13 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
         }.toMap()
     }
 
-    override fun getChainIds(ctx: AppContext): Map<BlockchainRid, Long> {
+    override fun getChainIds(ctx: AppContext): Map<BlockchainRid, Long>? {
         val sql = "SELECT * FROM ${tableBlockchains()}"
         val raw: MutableList<MutableMap<String, Any>> = queryRunner.query(
                 ctx.conn, sql, MapListHandler())
 
         return raw.map {
-            BlockchainRid(it[TABLE_SYNC_UNTIL_FIELD_HEIGHT] as ByteArray) to
+            BlockchainRid(it["blockchain_rid"] as ByteArray) to
                     it["chain_iid"] as Long
         }.toMap()
     }

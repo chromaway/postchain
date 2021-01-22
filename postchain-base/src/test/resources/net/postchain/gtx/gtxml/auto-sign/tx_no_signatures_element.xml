@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <!-- Copyright (c) 2020 ChromaWay AB. See README for license information. -->
 
-<transaction blockchainRID="23213213">
+<transaction blockchainRID="1234567812345678123456781234567812345678123456781234567812345678">
     <signers>
         <!-- pubKey(0) -->
         <bytea>03A301697BDFCD704313BA48E51D567543F2A182031EFD6915DDC07BBCC4E16070</bytea>

@@ -20,7 +20,7 @@ import kotlin.test.assertTrue
 
 class DefaultXConnectionManagerTest {
 
-    private val blockchainRid = BlockchainRid(byteArrayOf(0x01))
+    private val blockchainRid = BlockchainRid.buildRepeat(0x01)
     private val cryptoSystem = SECP256K1CryptoSystem()
     private lateinit var connectorFactory: XConnectorFactory<Int>
 
