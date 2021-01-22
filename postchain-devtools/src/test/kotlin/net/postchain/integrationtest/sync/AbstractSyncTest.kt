@@ -100,7 +100,7 @@ open class AbstractSyncTest : IntegrationTestSetup() {
                 "database.schema" to this.javaClass.simpleName.toLowerCase() + "_$nodeIndex",
                 "messaging.pubkey" to peerInfo.pubKey.toHex(),
                 "messaging.privkey" to privKey.toHex(),
-                "fastsync.exit_delay" to 1000, // All tests are multinode, see FastSyncParameters.exitDelay
+                "fastsync.exit_delay" to 2000, // All tests are multinode, see FastSyncParameters.exitDelay
                 "api.port" to "-1"))
     }
 
