@@ -73,6 +73,15 @@ class PostchainTestNode(
         }
     }
 
+    fun setMustSyncUntil(chainId: Long, brid: BlockchainRid, height: Long): Boolean {
+        check(isInitialized) { "PostchainNode is not initialized" }
+
+        return withReadWriteConnection(testStorage, chainId) { eContext: EContext ->
+            logger.debug("Set must_sync_until for chain: $brid, height: $height")
+            BaseConfigurationDataStore.setMustSyncUntil(eContext, brid, height)
+        }
+    }
+
     fun startBlockchain(): BlockchainRid? {
         return startBlockchain(DEFAULT_CHAIN_IID)
     }

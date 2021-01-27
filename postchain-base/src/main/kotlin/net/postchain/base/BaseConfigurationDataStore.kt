@@ -29,5 +29,8 @@ object BaseConfigurationDataStore : KLogging(), ConfigurationDataStore {
                 context, height, GtvEncoder.encodeGtv(gtvData))
     }
 
+    override fun setMustSyncUntil(context: EContext, brid: BlockchainRid, height: Long): Boolean {
+        return DatabaseAccess.of(context).setMustSyncUntil(context, brid, height)
+    }
 
 }
