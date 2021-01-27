@@ -3,13 +3,12 @@
 package net.postchain.base
 
 import net.postchain.api.rest.controller.DefaultDebugInfoQuery
+import net.postchain.api.rest.controller.PostchainModel
 import net.postchain.api.rest.controller.RestApi
 import net.postchain.base.data.BaseBlockchainConfiguration
-import net.postchain.base.data.BaseTransactionQueue
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.ApiInfrastructure
 import net.postchain.core.BlockchainProcess
-import net.postchain.core.NodeStateTracker
 import net.postchain.debug.NodeDiagnosticContext
 import net.postchain.ebft.rest.model.PostchainEBFTModel
 import net.postchain.ebft.worker.ValidatorWorker
@@ -40,15 +39,26 @@ class BaseApiInfrastructure(
     override fun connectProcess(process: BlockchainProcess) {
         if (restApi != null) {
             val engine = process.getEngine()
+            val apiModel: PostchainModel
 
-            val apiModel = PostchainEBFTModel(
-                    process.getEngine().getConfiguration().chainID,
-                    if (process is ValidatorWorker) process.nodeStateTracker else NodeStateTracker(),
-                    if (process is ValidatorWorker) process.networkAwareTxQueue else process.getEngine().getTransactionQueue(),
-                    engine.getConfiguration().getTransactionFactory(),
-                    engine.getBlockQueries() as BaseBlockQueries, // TODO: [et]: Resolve type cast
-                    DefaultDebugInfoQuery(nodeDiagnosticContext)
-            )
+            if (process is ValidatorWorker) { // TODO: EBFT-specific code, but pretty harmless
+                apiModel = PostchainEBFTModel(
+                        engine.getConfiguration().chainID,
+                        process.nodeStateTracker,
+                        process.networkAwareTxQueue,
+                        engine.getConfiguration().getTransactionFactory(),
+                        engine.getBlockQueries() as BaseBlockQueries, // TODO: [et]: Resolve type cast
+                        DefaultDebugInfoQuery(nodeDiagnosticContext)
+                )
+            } else {
+                apiModel = PostchainModel(
+                        engine.getConfiguration().chainID,
+                        engine.getTransactionQueue(),
+                        engine.getConfiguration().getTransactionFactory(),
+                        engine.getBlockQueries() as BaseBlockQueries,
+                        DefaultDebugInfoQuery(nodeDiagnosticContext)
+                )
+            }
 
             restApi.attachModel(blockchainRID(process), apiModel)
         }
