@@ -178,7 +178,7 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
     }
 
     override fun getLastBlockTimestamp(ctx: EContext): Long {
-        val sql = "SELECT timestamp FROM ${tableBlocks(ctx)} ORDER BY timestamp DESC LIMIT 1"
+        val sql = "SELECT timestamp FROM ${tableBlocks(ctx)} ORDER BY block_iid DESC LIMIT 1"
         return queryRunner.query(ctx.conn, sql, longRes) ?: -1L
     }
 
