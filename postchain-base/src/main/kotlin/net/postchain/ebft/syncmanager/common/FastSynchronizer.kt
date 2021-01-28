@@ -227,6 +227,16 @@ class FastSynchronizer(private val workerContext: WorkerContext,
     }
 
     private fun processDoneJob(j: Job, final: Boolean = false) {
+        // Set blockCommitting = false to avoid getting stuck in awaitCommits(). If we don't set false here
+        // AND
+        //
+        // * This is the last loop before exiting AND
+        // * j.peerId gets blacklisted below AND
+        // * restartJob(j) doesn't find a peer to send to, and thus doesn't remove it.
+        //
+        // then awaitCommits() will count this job, j, as currently committing and wait for more
+        // committing blocks as are actually committing.
+        j.blockCommitting = false
         val exception = j.addBlockException
         if (exception == null) {
             // Add new job and remove old job
@@ -272,7 +282,9 @@ class FastSynchronizer(private val workerContext: WorkerContext,
             error("Invalid block ${j}. Blacklisting peer ${j.peerId}: ${exception.message}")
             // Peer sent us an invalid block. Blacklist the peer and restart job
             peerStatuses.blacklist(j.peerId)
-            if (!final) {
+            if (final) {
+                removeJob(j)
+            } else {
                 restartJob(j)
             }
         }
@@ -281,6 +293,13 @@ class FastSynchronizer(private val workerContext: WorkerContext,
     fun processStaleJobs() {
         val now = System.currentTimeMillis()
         val toRestart = mutableListOf<Job>()
+        // Keep track of peers that we mark legacy. Otherwise, if same peer appears in
+        // multiple timed out jobs, we will
+        // 1) Mark it as maybeLegacy on first appearance
+        // 2) Mark it as unresponsive and not maybeLegacy on second appearance
+        // The result is that we won't send legacy request to that peer, since it's marked
+        // unresponsive.
+        val legacyPeers = mutableSetOf<XPeerID>()
         for (j in jobs.values) {
             if (j.hasRestartFailed) {
                 // These are jobs that couldn't be restarted because there
@@ -296,7 +315,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
                     debug("Marking job ${j} unresponsive")
                     peerStatuses.unresponsive(j.peerId)
                     toRestart.add(j)
-                } else if (peerStatuses.isMaybeLegacy(j.peerId)) {
+                } else if (!legacyPeers.contains(j.peerId) && peerStatuses.isMaybeLegacy(j.peerId)) {
                     // Peer is marked as legacy, but still appears unresponsive.
                     // This probably wasn't a legacy node, but simply an unresponsive one.
                     // It *could* still be a legacy node, but we give it another chance to
@@ -310,6 +329,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
                     // next try.
                     // If that try is unresponsive too, we'll mark it as unresponsive
                     peerStatuses.setMaybeLegacy(j.peerId, true)
+                    legacyPeers.add(j.peerId)
                     toRestart.add(j)
                 }
             }
