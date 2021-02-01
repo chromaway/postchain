@@ -210,7 +210,15 @@ class FastSynchronizer(private val workerContext: WorkerContext,
     }
 
     private fun awaitCommits() {
-        val committingJobs = jobs.count { it.value.blockCommitting }
+        // Check also hasRestartFailed to avoid getting stuck in awaitCommits(). If we don't check it
+        // AND
+        //
+        // * j.peerId was blacklisted in previous invocation of processDoneJob AND
+        // * restartJob(j) doesn't find a peer to send to, and thus doesn't remove it.
+        //
+        // then we will count this job as currently committing and wait for more
+        // committing blocks as are actually committing.
+        val committingJobs = jobs.count { it.value.blockCommitting && !it.value.hasRestartFailed }
         for (i in (0 until committingJobs)) {
             val j = finishedJobs.take()
             processDoneJob(j, true)
@@ -227,16 +235,6 @@ class FastSynchronizer(private val workerContext: WorkerContext,
     }
 
     private fun processDoneJob(j: Job, final: Boolean = false) {
-        // Set blockCommitting = false to avoid getting stuck in awaitCommits(). If we don't set false here
-        // AND
-        //
-        // * This is the last loop before exiting AND
-        // * j.peerId gets blacklisted below AND
-        // * restartJob(j) doesn't find a peer to send to, and thus doesn't remove it.
-        //
-        // then awaitCommits() will count this job, j, as currently committing and wait for more
-        // committing blocks as are actually committing.
-        j.blockCommitting = false
         val exception = j.addBlockException
         if (exception == null) {
             // Add new job and remove old job
