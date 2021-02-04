@@ -27,6 +27,7 @@ class GtxNop(u: Unit, opData: ExtOpData) : GTXOperation(opData) {
 
     override fun isCorrect(): Boolean {
         // Validation: To prevent spam from entering the BC we validate the arguments
+        //TODO: POS-151 Move the validation here, it is only for nops, and not for any other type of OpData.
         return OpData.validateSimpleOperationArgs(data.args, GtxNop.OP_NAME)
     }
 }
@@ -42,6 +43,10 @@ class GtxTimeB(u: Unit, opData: ExtOpData) : GTXOperation(opData) {
     }
 
 
+    /**
+     * 1. Nof args must be two
+     * 2. If arg1 is not null, it must be less than arg0
+     */
     override fun isCorrect(): Boolean {
         if (data.args.size != 2) return false
         val from = data.args[0].asInteger()
