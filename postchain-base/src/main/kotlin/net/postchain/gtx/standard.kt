@@ -2,12 +2,12 @@
 
 package net.postchain.gtx
 
+import mu.KLogging
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.base.data.SQLDatabaseAccess
 import net.postchain.core.EContext
 import net.postchain.core.TxEContext
-import net.postchain.gtv.Gtv
-import net.postchain.gtv.GtvDictionary
+import net.postchain.gtv.*
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.GtvNull
 import org.apache.commons.dbutils.handlers.ScalarHandler
@@ -17,8 +17,9 @@ import org.apache.commons.dbutils.handlers.ScalarHandler
  */
 class GtxNop(u: Unit, opData: ExtOpData) : GTXOperation(opData) {
 
-    companion object {
+    companion object : KLogging() {
         const val OP_NAME = "nop"
+        private const val MAX_SIZE = 64 // Number of bytes/chars we allow per argument
     }
 
     override fun apply(ctx: TxEContext): Boolean {
@@ -27,8 +28,36 @@ class GtxNop(u: Unit, opData: ExtOpData) : GTXOperation(opData) {
 
     override fun isCorrect(): Boolean {
         // Validation: To prevent spam from entering the BC we validate the arguments
-        //TODO: POS-151 Move the validation here, it is only for nops, and not for any other type of OpData.
-        return OpData.validateSimpleOperationArgs(data.args, GtxNop.OP_NAME)
+        return validateArgument(data.args[0])
+    }
+
+    /**
+     * Validates the nop argument, making sure it is simple and not too big.
+     */
+    private fun validateArgument(arg: Gtv): Boolean {
+        return when (arg) {
+            is GtvNull -> true
+            is GtvInteger -> checkSize(arg.nrOfBytes(), "GtvInteger")
+            is GtvByteArray -> checkSize(arg.nrOfBytes(), "GtvByteArray")
+            is GtvString -> checkSize(arg.asString().length, "GtvString")
+            else -> {
+                if (GtxNop.logger.isTraceEnabled) {
+                    GtxNop.logger.trace("Argument of type: ${arg.type} not allowed for operation: $OP_NAME. ")
+                }
+                false
+            }
+        }
+    }
+
+    private fun checkSize(size: Int, type: String): Boolean {
+        return if (size <= MAX_SIZE) {
+            true
+        } else {
+            if (GtxNop.logger.isTraceEnabled) {
+                GtxNop.logger.trace("Argument of type: $type too big. Max: $MAX_SIZE chains but was $size (operation: $OP_NAME) ")
+            }
+            false
+        }
     }
 }
 
@@ -43,10 +72,6 @@ class GtxTimeB(u: Unit, opData: ExtOpData) : GTXOperation(opData) {
     }
 
 
-    /**
-     * 1. Nof args must be two
-     * 2. If arg1 is not null, it must be less than arg0
-     */
     override fun isCorrect(): Boolean {
         if (data.args.size != 2) return false
         val from = data.args[0].asInteger()
