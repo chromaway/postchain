@@ -35,7 +35,7 @@ class GtxNop(u: Unit, opData: ExtOpData) : GTXOperation(opData) {
     override fun isCorrect(): Boolean {
         if (data.args.size > 1) return false
         if (data.args.isEmpty()) return true
-        // Validation: To prevent spam from entering the BC we validate the arguments
+        // Validation: To prevent spam from entering the BC we validate the argument
         return validateArgument(data.args[0])
     }
 

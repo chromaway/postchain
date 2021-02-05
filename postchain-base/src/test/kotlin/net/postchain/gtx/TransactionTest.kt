@@ -90,7 +90,7 @@ class GTXTransactionTest {
 
     @Test
     fun testNopOKString() {
-        val okString  = "1234567890123456789012345678901234567890123456789012345678901234"
+        val okString = "1234567890123456789012345678901234567890123456789012345678901234"
         val operationList = listOf(Pair("nop", arrayOf<Gtv>(gtv(okString))),
                 Pair("gtx_test", arrayOf<Gtv>(gtv(1), gtv("true"))))
         val tx = makeTransaction(operationList)
