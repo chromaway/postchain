@@ -79,7 +79,10 @@ class GtxTimeB(u: Unit, opData: ExtOpData) : GTXOperation(opData) {
         const val OP_NAME = "timeb"
     }
 
-
+    /**
+     * 1. Nof args must be two
+     * 2. If arg1 is not null, it must be less than arg0
+     */
     override fun isCorrect(): Boolean {
         if (data.args.size != 2) return false
         val from = data.args[0].asInteger()

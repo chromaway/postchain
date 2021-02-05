@@ -67,12 +67,19 @@ class GTXTransactionTest {
     }
 
     @Test
-    fun testNop2ArgsWithOp() {
-        // gtx_test: Need to add a valid dummy operation to make the entire TX valid
+    fun testNop2Args() {
         val operationList = listOf(Pair("nop", arrayOf<Gtv>(gtv(42), gtv(43))),
                 Pair("gtx_test", arrayOf<Gtv>(gtv(1), gtv("true"))))
         val tx = makeTransaction(operationList)
         assertFalse(tx.isCorrect())
+    }
+
+    @Test
+    fun testNop0Args() {
+        val operationList = listOf(Pair("nop", arrayOf()),
+                Pair("gtx_test", arrayOf<Gtv>(gtv(1), gtv("true"))))
+        val tx = makeTransaction(operationList)
+        assertTrue(tx.isCorrect())
     }
 
 
