@@ -26,7 +26,15 @@ class GtxNop(u: Unit, opData: ExtOpData) : GTXOperation(opData) {
         return true
     }
 
+    /**
+     * A Nop is correct if
+     * 1. It has not more than one argument
+     * 2. Argument is of type GtvNull, GtvString, GtvInteger or GtvByteArray
+     * 3. Argument is < 64 bytes
+     */
     override fun isCorrect(): Boolean {
+        if (data.args.size > 1) return false
+        if (data.args.isEmpty()) return true
         // Validation: To prevent spam from entering the BC we validate the arguments
         return validateArgument(data.args[0])
     }

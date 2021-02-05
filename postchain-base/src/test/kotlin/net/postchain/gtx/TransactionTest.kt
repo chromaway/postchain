@@ -7,6 +7,7 @@ import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
 import net.postchain.base.BlockchainRid
 import net.postchain.base.SECP256K1CryptoSystem
+import net.postchain.common.hexStringToByteArray
 import net.postchain.core.Transaction
 import net.postchain.core.Transactor
 import net.postchain.core.TxEContext
@@ -47,8 +48,8 @@ class GTXTransactionTest {
     fun testNopOnly() {
         val factory = GTXTransactionFactory(BlockchainRid.EMPTY_RID, standardModule, myCS)
         val operationList = listOf(Pair("nop", arrayOf<Gtv>(gtv(42))))
-        val gtxDataNop = makeTx(operationList)
-        val tx = factory.decodeTransaction(gtxDataNop)
+        val gtx = makeGTX(operationList)
+        val tx = factory.decodeTransaction(gtx)
         assertTrue(tx.getRID().size > 1)
         assertTrue(tx.getRawData().size > 1)
         assertTrue((tx as GTXTransaction).ops.size == 1)
@@ -57,28 +58,79 @@ class GTXTransactionTest {
 
     @Test
     fun testNopWithOp() {
-        val factory = GTXTransactionFactory(BlockchainRid.EMPTY_RID, compositModule, myCS)
         // gtx_test: Need to add a valid dummy operation to make the entire TX valid
-        val operationList = listOf(Pair("nop", arrayOf<Gtv>(gtv(42))), Pair("gtx_test", arrayOf<Gtv>(gtv(1), gtv("true"))))
-        val gtxDataCorrectNop = makeTx(operationList)
-        val tx = factory.decodeTransaction(gtxDataCorrectNop)
+        val operationList = listOf(Pair("nop", arrayOf<Gtv>(gtv(42))),
+                Pair("gtx_test", arrayOf<Gtv>(gtv(1), gtv("true"))))
+        val tx = makeTransaction(operationList)
         assertTrue((tx as GTXTransaction).ops.size == 2)
         assertTrue(tx.isCorrect())
     }
 
+    @Test
+    fun testNop2ArgsWithOp() {
+        // gtx_test: Need to add a valid dummy operation to make the entire TX valid
+        val operationList = listOf(Pair("nop", arrayOf<Gtv>(gtv(42), gtv(43))),
+                Pair("gtx_test", arrayOf<Gtv>(gtv(1), gtv("true"))))
+        val tx = makeTransaction(operationList)
+        assertFalse(tx.isCorrect())
+    }
+
+
     @Test(expected = java.lang.ArithmeticException::class)
     fun testTimeBHackerAttack() {
-        val tx = timeBtransaction(64) //-2^64. A too big value fit in a Long
+        val tx = timeBTransaction(64) //-2^64. A too big value fit in a Long
         tx.isCorrect()
     }
 
     @Test
     fun testTimeBCorrectArgs() {
-        val tx = timeBtransaction(14) //-2^14 is a not too big value for a Long
+        val tx = timeBTransaction(14) //-2^14 is a not too big value for a Long
         assertTrue(tx.isCorrect())
     }
 
-    private fun makeTx(opList: List<Pair<String, Array<Gtv>>>): ByteArray {
+    @Test
+    fun testNopOKString() {
+        val okString  = "1234567890123456789012345678901234567890123456789012345678901234"
+        val operationList = listOf(Pair("nop", arrayOf<Gtv>(gtv(okString))),
+                Pair("gtx_test", arrayOf<Gtv>(gtv(1), gtv("true"))))
+        val tx = makeTransaction(operationList)
+        assertTrue(tx.isCorrect())
+    }
+
+    @Test
+    fun testNopOKByteArray() {
+        val okByteArray = ("00010203040506070809101112131415" +
+                "00010203040506070809101112131415" +
+                "00010203040506070809101112131415" +
+                "00010203040506070809101112131415").hexStringToByteArray()
+        val operationList = listOf(Pair("nop", arrayOf<Gtv>(gtv(okByteArray))),
+                Pair("gtx_test", arrayOf<Gtv>(gtv(1), gtv("true"))))
+        val tx = makeTransaction(operationList)
+        assertTrue(tx.isCorrect())
+    }
+
+    @Test
+    fun testNopTooBigByteArray() {
+        val badByteArray = ("00010203040506070809101112131415" +
+                "00010203040506070809101112131415" +
+                "00010203040506070809101112131415" +
+                "0001020304050607080910111213141500").hexStringToByteArray()  // > 64 bytes
+        val operationList = listOf(Pair("nop", arrayOf<Gtv>(gtv(badByteArray))),
+                Pair("gtx_test", arrayOf<Gtv>(gtv(1), gtv("true"))))
+        val tx = makeTransaction(operationList)
+        assertFalse(tx.isCorrect())
+    }
+
+    @Test
+    fun testNopTooBigString() {
+        val badString = "12345678901234567890123456789012345678901234567890123456789012345" // > 64 chars
+        val operationList = listOf(Pair("nop", arrayOf<Gtv>(gtv(badString))),
+                Pair("gtx_test", arrayOf<Gtv>(gtv(1), gtv("true"))))
+        val tx = makeTransaction(operationList)
+        assertFalse(tx.isCorrect())
+    }
+
+    private fun makeGTX(opList: List<Pair<String, Array<Gtv>>>): ByteArray {
         val b = GTXDataBuilder(BlockchainRid.EMPTY_RID, arrayOf(pubKey(0)), myCS)
         for (operation in opList) {
             b.addOperation(operation.first, operation.second)
@@ -88,47 +140,17 @@ class GTXTransactionTest {
         return b.serialize()
     }
 
-    private fun timeBtransaction(i: Int): Transaction {
-        val factory = GTXTransactionFactory(BlockchainRid.EMPTY_RID, compositModule, myCS)
-        val arg0 = -(BigInteger.ONE).shiftLeft(i) //-2^i. A not too big value
+    private fun timeBTransaction(i: Int): Transaction {
+        val arg0 = -(BigInteger.ONE).shiftLeft(i) //-2^i
         // gtx_test: Need to add a valid dummy operation to make the entire TX valid
-        val operationList = listOf(Pair("timeb", arrayOf<Gtv>(gtv(arg0), GtvNull)), Pair("gtx_test", arrayOf<Gtv>(gtv(1), gtv("true"))))
-        val gtxDataTimeb = makeTx(operationList)
-        return factory.decodeTransaction(gtxDataTimeb)
+        val operationList = listOf(Pair("timeb", arrayOf<Gtv>(gtv(arg0), GtvNull)),
+                Pair("gtx_test", arrayOf<Gtv>(gtv(1), gtv("true"))))
+        return makeTransaction(operationList)
     }
 
-//    // Max 64 bytes
-//    val okByteArray = ("00010203040506070809101112131415" +
-//            "00010203040506070809101112131415" +
-//            "00010203040506070809101112131415" +
-//            "00010203040506070809101112131415").hexStringToByteArray()
-//    val badByteArray = ("00010203040506070809101112131415" +
-//            "00010203040506070809101112131415" +
-//            "00010203040506070809101112131415" +
-//            "0001020304050607080910111213141500").hexStringToByteArray()
-//
-//    // Max 64 chars
-//    val okString  = "1234567890123456789012345678901234567890123456789012345678901234"
-//    val badString = "12345678901234567890123456789012345678901234567890123456789012345"
-//
-//    // Check we can handle big long values
-//    val okInt = Long.MAX_VALUE
-//
-//    @Test
-//    fun happy() {
-//        val op = OpData("Olles op", arrayOf(gtv(okByteArray), gtv(okString), gtv(okInt), GtvNull))
-//        kotlin.test.assertTrue(OpData.validateSimpleOperationArgs(op.args, op.opName))
-//    }
-//
-//    @Test
-//    fun failTooBigByteArray() {
-//        val op = OpData("Olles op", arrayOf(gtv(badByteArray)))
-//        assertFalse(OpData.validateSimpleOperationArgs(op.args, op.opName))
-//    }
-//
-//    @Test
-//    fun failTooBigString() {
-//        val op = OpData("Olles op", arrayOf(gtv(badString)))
-//        assertFalse(OpData.validateSimpleOperationArgs(op.args, op.opName))
-//    }
+    private fun makeTransaction(operationList: List<Pair<String, Array<Gtv>>>): Transaction {
+        val gtx = makeGTX(operationList)
+        val factory = GTXTransactionFactory(BlockchainRid.EMPTY_RID, compositModule, myCS)
+        return factory.decodeTransaction(gtx)
+    }
 }
