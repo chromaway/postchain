@@ -14,7 +14,7 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
     val blockStore = BaseBlockStore()
     override val chainID = configData.context.chainID
     override val blockchainRid = configData.context.blockchainRID
-    val effectiveBlockchainRID = configData.getHistoricBRID() ?: configData.context.blockchainRID
+    override val effectiveBlockchainRID = configData.getHistoricBRID() ?: configData.context.blockchainRID
     val signers = configData.getSigners()
 
     val bcRelatedInfosDependencyList: List<BlockchainRelatedInfo> = configData.getDependenciesAsList()
@@ -31,9 +31,9 @@ open class BaseBlockchainConfiguration(val configData: BaseBlockchainConfigurati
     // We should find a common place to put this code.
     fun verifyBlockHeader(blockHeader: BlockHeader, blockWitness: BlockWitness): Boolean {
         if (!(blockWitness is MultiSigBlockWitness)) {
-            throw ProgrammerMistake("Invalid BlockWitness impelmentation.")
+            throw ProgrammerMistake("Invalid BlockWitness implementation.")
         }
-        val signers = configData.getSigners().toTypedArray()
+        val signers = signers.toTypedArray()
         val witnessBuilder = BaseBlockWitnessBuilder(cryptoSystem, blockHeader, signers, getBFTRequiredSignatureCount(signers.size))
         for (signature in blockWitness.getSignatures()) {
             witnessBuilder.applySignature(signature)

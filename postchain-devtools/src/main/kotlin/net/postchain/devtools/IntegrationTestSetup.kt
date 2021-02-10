@@ -228,18 +228,31 @@ open class IntegrationTestSetup : AbstractIntegration() {
     fun createPeerInfos(nodeCount: Int): Array<PeerInfo> = createPeerInfosWithReplicas(nodeCount, 0)
 
     protected fun buildBlock(chainId: Long, toHeight: Long, vararg txs: TestTransaction) {
+        buildBlock(nodes, chainId, toHeight, *txs)
+    }
+
+    protected fun buildBlock(nodes: List<PostchainTestNode>, chainId: Long, toHeight: Long, vararg txs: TestTransaction) {
+        buildBlockNoWait(nodes, chainId, toHeight, *txs)
+        awaitHeight(nodes, chainId, toHeight)
+    }
+
+    protected fun buildBlockNoWait(nodes: List<PostchainTestNode>, chainId: Long, toHeight: Long, vararg txs: TestTransaction) {
         nodes.forEach {
             it.enqueueTxs(chainId, *txs)
         }
         nodes.forEach {
             it.buildBlocksUpTo(chainId, toHeight)
         }
-        awaitHeight(chainId, toHeight)
     }
 
     protected fun awaitHeight(chainId: Long, height: Long) {
+        awaitHeight(nodes, chainId, height)
+    }
+
+    protected fun awaitHeight(nodes: List<PostchainTestNode>, chainId: Long, height: Long) {
         nodes.forEach {
             it.awaitHeight(chainId, height)
         }
     }
+
 }

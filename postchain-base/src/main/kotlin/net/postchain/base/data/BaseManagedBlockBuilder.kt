@@ -111,7 +111,7 @@ class BaseManagedBlockBuilder(
     }
 
     override fun commit(blockWitness: BlockWitness) {
-        logger.debug("${eContext.nodeID} committing block - start -------------------")
+        logger.trace("${eContext.nodeID} committing block - start -------------------")
 
         synchronized(storage) {
             if (!closed) {
@@ -123,7 +123,7 @@ class BaseManagedBlockBuilder(
             }
         }
 
-        logger.debug("${eContext.nodeID} committing block - end -------------------")
+        logger.trace("${eContext.nodeID} committing block - end -------------------")
     }
 
     override fun rollback() {

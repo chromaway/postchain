@@ -2,11 +2,11 @@
 
 package net.postchain.base
 
-import net.postchain.common.hexStringToByteArray
-import net.postchain.core.*
-import net.postchain.gtv.*
-import net.postchain.gtv.GtvFactory.gtv
-import org.apache.commons.configuration2.Configuration
+import net.postchain.core.BlockchainContext
+import net.postchain.core.NODE_ID_AUTO
+import net.postchain.core.NODE_ID_READ_ONLY
+import net.postchain.gtv.Gtv
+import net.postchain.gtv.GtvDictionary
 
 class BaseBlockchainConfigurationData(
         val data: GtvDictionary,
@@ -91,46 +91,6 @@ class BaseBlockchainConfigurationData(
         const val KEY_DEPENDENCIES = "dependencies"
 
         const val KEY_HISTORIC_BRID = "historic_brid"
-
-
-        @Deprecated("Deprecated in v2.4.4. Will be deleted in v3.0")
-        private fun convertGTXConfigToGtv(config: Configuration): Gtv {
-            val properties: MutableList<Pair<String, Gtv>> = mutableListOf(
-                    "modules" to gtv(
-                            config.getStringArray("gtx.modules").map { gtv(it) }
-                    )
-            )
-
-            if (config.containsKey("gtx.ft.assets")) {
-                val ftProps = mutableListOf<Pair<String, Gtv>>()
-                val assets = config.getStringArray("gtx.ft.assets")
-
-                ftProps.add("assets" to gtv(*assets.map { assetName ->
-                    val issuers = gtv(
-                            *config.getStringArray("gtx.ft.asset.$assetName.issuers").map(
-                                    { gtv(it.hexStringToByteArray()) }
-                            ).toTypedArray())
-
-                    gtv(
-                            "name" to gtv(assetName),
-                            "issuers" to issuers
-                    )
-                }.toTypedArray()))
-                properties.add("ft" to gtv(*ftProps.toTypedArray()))
-            }
-
-            if (config.containsKey("gtx.sqlmodules")) {
-                properties.add("sqlmodules" to gtv(*
-                config.getStringArray("gtx.sqlmodules").map { gtv(it) }.toTypedArray()
-                ))
-            }
-
-            if (config.containsKey("gtx.rellSrcModule")) {
-                properties.add("rellSrcModule" to gtv(config.getString("gtx.rellSrcModule")))
-            }
-
-            return gtv(*properties.toTypedArray())
-        }
     }
 
     private fun resolveNodeID(nodeID: Int): Int {

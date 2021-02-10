@@ -191,8 +191,8 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
         return stateOf(xPeerId).isBlacklisted()
     }
 
-    fun countSyncable(height: Long): Int {
-        return statuses.count { it.value.isSyncable(height) }
+    fun getSyncable(height: Long): Set<XPeerID> {
+        return statuses.filterValues { it.isSyncable(height) }.map {it.key}.toSet()
     }
 
     fun clear() {

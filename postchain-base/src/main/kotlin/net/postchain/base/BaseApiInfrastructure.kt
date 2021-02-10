@@ -73,7 +73,6 @@ class BaseApiInfrastructure(
     }
 
     private fun blockchainRID(process: BlockchainProcess): String {
-        return (process.getEngine().getConfiguration() as BaseBlockchainConfiguration) // TODO: [et]: Resolve type cast
-                .blockchainRid.toHex()
+        return process.getEngine().getConfiguration().blockchainRid.toHex()
     }
 }

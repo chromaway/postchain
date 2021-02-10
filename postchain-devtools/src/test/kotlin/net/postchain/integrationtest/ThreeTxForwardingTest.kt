@@ -51,7 +51,7 @@ class ThreeTxForwardingTest : IntegrationTestSetup() {
 
         val bockQueries = nodes[2].getBlockchainInstance().getEngine().getBlockQueries()
         for (i in 0..2) {
-            val blockData = bockQueries.getBlockAtHeight(i.toLong()).get()
+            val blockData = bockQueries.getBlockAtHeight(i.toLong()).get()!!
             Assert.assertEquals(3, blockData.transactions.size)
         }
     }

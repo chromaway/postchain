@@ -43,7 +43,7 @@ interface BlockDatabase {
 
     fun verifyBlockSignature(s: Signature): Boolean
     fun getBlockSignature(blockRID: ByteArray): Promise<Signature, Exception>
-    fun getBlockAtHeight(height: Long, includeTransactions: Boolean = true): Promise<BlockDataWithWitness, Exception>
+    fun getBlockAtHeight(height: Long, includeTransactions: Boolean = true): Promise<BlockDataWithWitness?, Exception>
 }
 
 sealed class BlockIntent {

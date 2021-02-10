@@ -91,7 +91,7 @@ open class ManagedBlockchainProcessManager(
         }
     }
 
-    private fun buildChain0ManagedDataSource(): ManagedNodeDataSource {
+    protected open fun buildChain0ManagedDataSource(): ManagedNodeDataSource {
         val chain0 = 0L
         val storage = StorageBuilder.buildStorage(
                 nodeConfigProvider.getConfiguration().appConfig, NODE_ID_NA)
@@ -308,7 +308,7 @@ open class ManagedBlockchainProcessManager(
      *
      * @return all chainIids chain zero thinks we should run.
      */
-    private fun retrieveBlockchainsToLaunch(): Array<Long> {
+    open protected fun retrieveBlockchainsToLaunch(): Array<Long> {
         // chain-zero is always in the list
         val blockchains = mutableListOf(0L)
 

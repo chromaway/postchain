@@ -168,16 +168,20 @@ open class BaseBlockQueries(private val blockchainConfiguration: BlockchainConfi
      * @throws UserMistake No block could be found at the specified height
      * @throws ProgrammerMistake Too many blocks (>1) found at the specified height
      */
-    override fun getBlockAtHeight(height: Long, includeTransactions: Boolean): Promise<BlockDataWithWitness, Exception> {
+    override fun getBlockAtHeight(height: Long, includeTransactions: Boolean): Promise<BlockDataWithWitness?, Exception> {
         return runOp {
-            val blockRID = blockStore.getBlockRID(it, height) ?: throw UserMistake("No block at height $height")
-            val headerBytes = blockStore.getBlockHeader(it, blockRID)
-            val witnessBytes = blockStore.getWitnessData(it, blockRID)
-            val txBytes = if (includeTransactions) blockStore.getBlockTransactions(it, blockRID) else listOf()
-            val header = blockchainConfiguration.decodeBlockHeader(headerBytes)
-            val witness = blockchainConfiguration.decodeWitness(witnessBytes)
+            val blockRID = blockStore.getBlockRID(it, height)
+            if (blockRID == null) {
+                null
+            } else {
+                val headerBytes = blockStore.getBlockHeader(it, blockRID)
+                val witnessBytes = blockStore.getWitnessData(it, blockRID)
+                val txBytes = if (includeTransactions) blockStore.getBlockTransactions(it, blockRID) else listOf()
+                val header = blockchainConfiguration.decodeBlockHeader(headerBytes)
+                val witness = blockchainConfiguration.decodeWitness(witnessBytes)
 
-            BlockDataWithWitness(header, txBytes, witness)
+                BlockDataWithWitness(header, txBytes, witness)
+            }
         }
     }
 }

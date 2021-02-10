@@ -42,7 +42,7 @@ open class AbstractSyncTest : IntegrationTestSetup() {
         val nodeSetups = peerInfos.associate { NodeSeqNumber(i) to nodeSetup(i++, peerInfos, true, blockchainSetup.rid) }
 
         val systemSetup = SystemSetup(nodeSetups, mapOf(chainId to blockchainSetup), true,
-                "legacy", "unused", "base/ebft", true)
+                "unused", "unused", "base/ebft", true)
 
         createNodesFromSystemSetup(systemSetup)
         return nodeSetups.values.toTypedArray()
@@ -62,8 +62,8 @@ open class AbstractSyncTest : IntegrationTestSetup() {
         node.setMustSyncUntil(setup.chainId.toLong(), setup.rid, mustSyncUntil)
     }
 
-    protected fun restartNodeClean(nodeSetup: NodeSetup, brid: BlockchainRid) {
-        val nodeIndex = nodeSetup.sequenceNumber.nodeNumber
+    protected fun restartNodeClean(nodeIndex: Int, brid: BlockchainRid) {
+        val nodeSetup = systemSetup.nodeMap[NodeSeqNumber(nodeIndex)]!!
         val peerInfoMap = nodeSetup.configurationProvider!!.getConfiguration().peerInfoMap
         nodes[nodeIndex].shutdown()
         val newSetup = nodeSetup(nodeIndex, peerInfoMap.values.toTypedArray(), true, brid)
@@ -105,8 +105,7 @@ open class AbstractSyncTest : IntegrationTestSetup() {
         }
     }
 
-    //Faked node.properties file.
-    fun nodeConfigurationMap(nodeIndex: Int, peerInfo: PeerInfo): Configuration {
+    open fun nodeConfigurationMap(nodeIndex: Int, peerInfo: PeerInfo): Configuration {
         val privKey = KeyPairHelper.privKey(peerInfo.pubKey)
         return MapConfiguration(mapOf(
                 "database.driverclass" to "org.postgresql.Driver",
@@ -158,7 +157,7 @@ open class AbstractSyncTest : IntegrationTestSetup() {
         }
         syncIndex.forEach {
             logger.debug { "Restarting clean ${n(it)}" }
-            restartNodeClean(nodeSetups[it], blockchainRid)
+            restartNodeClean(it, blockchainRid)
             logger.debug { "Restarting clean ${n(it)} done" }
         }
 

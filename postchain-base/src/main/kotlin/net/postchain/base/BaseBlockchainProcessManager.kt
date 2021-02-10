@@ -4,6 +4,8 @@ package net.postchain.base
 
 import mu.KLogging
 import net.postchain.StorageBuilder
+import net.postchain.base.data.BaseBlockchainConfiguration
+import net.postchain.base.data.DatabaseAccess
 import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
@@ -15,7 +17,6 @@ import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import kotlin.concurrent.timer
 
 /**
  * Will run many chains as [BlockchainProcess]:es and keep them in a map.
@@ -82,13 +83,42 @@ open class BaseBlockchainProcessManager(
                         val engine = blockchainInfrastructure.makeBlockchainEngine(processName, blockchainConfig, restartHandler(chainId))
                         logger.debug { "$processName: BlockchainEngine has been created: chainId: $chainId" }
 
-                        blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(processName, engine)
+                        /*
+                        Definition: cross-fetching is the process of downloading blocks from another blockchain
+                        over the peer-to-peer network. This is used when forking a chain when we don't have
+                        the old chain locally and we haven't been able to sync using the new chain rid.
+
+                        Problem: in order to cross-fetch blocks, we'd like to get the old blockchain's
+                        configuration (to find nodes to connect to). But that's difficult. We don't always
+                        have it, and we might not have the most recent configuration.
+
+                        If we don't have that, we can use the current blockchain's configuration to
+                        find nodes to sync from, since at least a quorum of the signers from old chain
+                        must also be signers of the new chain.
+
+                        To simplify things, we will always use current blockchain configuration to find
+                        nodes to cross-fetch from. We'll also use sync-nodes.
+                         */
+
+                        var histConf: HistoricBlockchain? = null
+                        if (blockchainConfig.effectiveBlockchainRID != blockchainConfig.blockchainRid) {
+                            histConf = HistoricBlockchain(blockchainConfig.effectiveBlockchainRID)
+                            val db = DatabaseAccess.of(eContext)
+                            val historicChainIid = db.getChainId(eContext, blockchainConfig.effectiveBlockchainRID)
+                            if (historicChainIid != null) {
+                                val histConfBytes = blockchainConfigProvider.getConfiguration(eContext, historicChainIid)
+                                if (histConfBytes != null) {
+                                    val historicBlockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(histConfBytes, eContext, NODE_ID_READ_ONLY, historicChainIid)
+                                    val historicBaseConfig = historicBlockchainConfig as BaseBlockchainConfiguration
+                                    val historicBlockQueries = historicBaseConfig.makeBlockQueries(storage)
+                                    histConf.historicBlockQueries = historicBlockQueries
+                                }
+                            }
+                        }
+
+                        blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(processName, engine, histConf)
                         logger.debug { "$processName: BlockchainProcess has been launched: chainId: $chainId" }
 
-                        blockchainProcessesLoggers[chainId] = timer(
-                                period = 3000,
-                                action = { logPeerTopology(chainId) }
-                        )
                         logger.info("$processName: Blockchain has been started: chainId: $chainId")
                         blockchainConfig.blockchainRid
 
