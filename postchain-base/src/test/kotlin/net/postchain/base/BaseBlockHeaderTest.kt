@@ -9,7 +9,7 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class BaseBlockHeaderTest {
-    val blockchainRID = BlockchainRid.EMPTY_RID//buildRepeat("0".toByte())
+    val blockchainRID = BlockchainRid.ZERO_RID
     val prevBlockRID0 = ByteArray(32, {if (it==31) 99 else 0}) // This is incorrect. Should include 99 at the end
     val cryptoSystem = SECP256K1CryptoSystem()
 

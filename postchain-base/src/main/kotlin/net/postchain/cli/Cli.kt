@@ -33,7 +33,7 @@ class Cli {
             , CommandBlockchainReplicaAdd()
             , CommandBlockchainReplicaRemove()
 
-            , CommandSetMustSyncUntil()
+            , CommandMustSyncUntil()
 
     ).map { it.key() to it }.toMap()
 

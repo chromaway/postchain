@@ -18,7 +18,7 @@ class GtxDataFactoryTest {
 
     val op_name = "op_name"
     val op_args = listOf(1,2,3,4)
-    val blockchainRID = BlockchainRid.EMPTY_RID
+    val blockchainRID = BlockchainRid.ZERO_RID
     val aliceSigner: ByteArray = "010101".hexStringToByteArray()
     val aliceSignature: ByteArray = "DDDDDD".hexStringToByteArray()
 

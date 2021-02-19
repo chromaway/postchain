@@ -598,7 +598,7 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
         return true
     }
 
-    override fun getMustSyncUntil(ctx: AppContext): Map<Long, Long>? {
+    override fun getMustSyncUntil(ctx: AppContext): Map<Long, Long> {
 
         val query = "SELECT * FROM ${tableMustSyncUntil()}"
         val raw: MutableList<MutableMap<String, Any>> = queryRunner.query(
@@ -613,7 +613,7 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
         }.toMap()
     }
 
-    override fun getChainIds(ctx: AppContext): Map<BlockchainRid, Long>? {
+    override fun getChainIds(ctx: AppContext): Map<BlockchainRid, Long> {
         val sql = "SELECT * FROM ${tableBlockchains()}"
         val raw: MutableList<MutableMap<String, Any>> = queryRunner.query(
                 ctx.conn, sql, MapListHandler())

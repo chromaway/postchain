@@ -84,8 +84,8 @@ interface DatabaseAccess {
 
     //Avoid potential chain split
     fun setMustSyncUntil(ctx: AppContext, blockchainRID: BlockchainRid, height: Long): Boolean
-    fun getMustSyncUntil(ctx: AppContext): Map<Long, Long>?
-    fun getChainIds(ctx: AppContext): Map<BlockchainRid, Long>?
+    fun getMustSyncUntil(ctx: AppContext): Map<Long, Long>
+    fun getChainIds(ctx: AppContext): Map<BlockchainRid, Long>
 
     companion object {
         fun of(ctx: AppContext): DatabaseAccess {

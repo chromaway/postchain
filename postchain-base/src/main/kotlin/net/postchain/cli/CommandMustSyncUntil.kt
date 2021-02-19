@@ -12,7 +12,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
 
 @Parameters(commandDescription = "Set this to ensure that chain is not split after a database loss.")
-class CommandSetMustSyncUntil : Command {
+class CommandMustSyncUntil : Command {
 
     @Parameter(
             names = ["-nc", "--node-config"],

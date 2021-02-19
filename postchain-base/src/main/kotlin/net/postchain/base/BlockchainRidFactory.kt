@@ -36,7 +36,7 @@ data class BlockchainRid(val data: ByteArray) {
 
     companion object {
 
-        val EMPTY_RID = BlockchainRid(ByteArray(32))
+        val ZERO_RID = BlockchainRid(ByteArray(32))
 
         fun buildFromHex(str: String) = BlockchainRid(str.hexStringToByteArray())
 

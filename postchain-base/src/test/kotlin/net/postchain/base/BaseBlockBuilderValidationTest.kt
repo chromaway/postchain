@@ -25,7 +25,7 @@ class BaseBlockBuilderValidationTest {
     // Real stuff
     var bbs = BaseBlockStore()
     val tf = BaseTransactionFactory()
-    val myBlockchainRid = BlockchainRid.EMPTY_RID
+    val myBlockchainRid = BlockchainRid.ZERO_RID
     val empty32Bytes = ByteArray(32, { 0 })
     val rootHash = "46AF9064F12528CAD6A7C377204ACD0AC38CDC6912903E7DAB3703764C8DD5E5".hexStringToByteArray()
     val badRootHash = "46AF9064F12FFFFFFFFFFFFFF04ACD0AC38CDC6912903E7DAB3703764C8DD5E5".hexStringToByteArray()

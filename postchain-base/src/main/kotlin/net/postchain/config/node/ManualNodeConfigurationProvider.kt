@@ -48,13 +48,13 @@ open class ManualNodeConfigurationProvider(
         }
     }
 
-    open fun getSyncUntilHeight(appConfig: AppConfig): Map<Long, Long>? {
+    open fun getSyncUntilHeight(appConfig: AppConfig): Map<Long, Long> {
         return storage.withReadConnection { ctx ->
             DatabaseAccess.of(ctx).getMustSyncUntil(ctx)
         }
     }
 
-    open fun getChainIDs(appConfig: AppConfig): Map<BlockchainRid, Long>? {
+    open fun getChainIDs(appConfig: AppConfig): Map<BlockchainRid, Long> {
         return storage.withReadConnection { ctx ->
             DatabaseAccess.of(ctx).getChainIds(ctx)
         }

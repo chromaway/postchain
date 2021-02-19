@@ -78,7 +78,7 @@ class SAPHanaSQLDatabaseAccess : SQLDatabaseAccess() {
 
     override fun cmdCreateTableMustSyncUntil(): String {
         return "CREATE TABLE ${tableMustSyncUntil()} (" +
-                " $TABLE_SYNC_UNTIL_FIELD_CHAIN_IID text PRIMARY KEY NOT NULL" +
+                " $TABLE_SYNC_UNTIL_FIELD_CHAIN_IID text PRIMARY KEY NOT NULL REFERENCES ${tableBlockchains()} (chain_iid)" +
                 ", $TABLE_SYNC_UNTIL_FIELD_HEIGHT BIGINT NOT NULL" +
                 ")"
     }

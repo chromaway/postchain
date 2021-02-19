@@ -5,14 +5,10 @@ package net.postchain.gtx.gtxml
 import assertk.assert
 import assertk.assertions.isEqualTo
 import net.postchain.base.BlockchainRid
-import net.postchain.cli.AlreadyExistMode
-import net.postchain.cli.CliExecution
 import net.postchain.devtools.MockCryptoSystem
 import net.postchain.gtx.GTXTransactionBodyData
 import net.postchain.gtx.GTXTransactionData
 import org.junit.Test
-import kotlin.test.assertNull
-import kotlin.test.fail
 
 class GTXMLTransactionParserBlockchainRIDTest {
     val blockchainRID = BlockchainRid.buildRepeat(0x0A)
@@ -71,7 +67,7 @@ class GTXMLTransactionParserBlockchainRIDTest {
         """.trimIndent()
 
         val expectedBody = GTXTransactionBodyData(
-                BlockchainRid.EMPTY_RID,
+                BlockchainRid.ZERO_RID,
                 arrayOf(), arrayOf())
 
         val expectedTx = GTXTransactionData(expectedBody, arrayOf())
@@ -106,7 +102,7 @@ class GTXMLTransactionParserBlockchainRIDTest {
         assert(actual).isEqualTo(expectedTx)
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException::class)
     fun parseGTXMLTransaction_in_context_with_blockchainRID_not_equal_to_context_one() {
         val xml = """
             <transaction blockchainRID="0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A">
@@ -115,12 +111,9 @@ class GTXMLTransactionParserBlockchainRIDTest {
         """.trimIndent()
 
         val blockchainRID1 = BlockchainRid.buildRepeat(0x01)
-        try {
-            GTXMLTransactionParser.parseGTXMLTransaction(xml,
-                    TransactionContext(blockchainRID1),
-                    MockCryptoSystem())
-            fail()
-        } catch (e: IllegalArgumentException) {
-        }
+
+        GTXMLTransactionParser.parseGTXMLTransaction(xml,
+                TransactionContext(blockchainRID1),
+                MockCryptoSystem())
     }
 }
