@@ -82,6 +82,11 @@ interface DatabaseAccess {
     fun addBlockchainReplica(ctx: AppContext, brid: String, pubKey: String): Boolean
     fun removeBlockchainReplica(ctx: AppContext, brid: String?, pubKey: String): Set<BlockchainRid>
 
+    //Avoid potential chain split
+    fun setMustSyncUntil(ctx: AppContext, blockchainRID: BlockchainRid, height: Long): Boolean
+    fun getMustSyncUntil(ctx: AppContext): Map<Long, Long>
+    fun getChainIds(ctx: AppContext): Map<BlockchainRid, Long>
+
     companion object {
         fun of(ctx: AppContext): DatabaseAccess {
             return ctx.getInterface(DatabaseAccess::class.java)

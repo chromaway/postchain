@@ -28,18 +28,15 @@ object BlockchainRidFactory {
 
 data class BlockchainRid(val data: ByteArray) {
 
-    /*
-    // TODO Olle Add this and fix test-
     init {
         if (data.size != 32) {
-            throw IllegalArgumentException("Wrong size of Blockchain RID, was ${data.size} should be 32")
+            throw IllegalArgumentException("Wrong size of Blockchain RID, was ${data.size} should be 32 (64 characters)")
         }
     }
-    */
 
     companion object {
 
-        val EMPTY_RID = BlockchainRid(ByteArray(0))
+        val ZERO_RID = BlockchainRid(ByteArray(32))
 
         fun buildFromHex(str: String) = BlockchainRid(str.hexStringToByteArray())
 

@@ -10,7 +10,7 @@ import kotlin.test.assertEquals
 
 class BlockHeaderDataFactoryTest {
 
-    val dummyBcRid = BlockchainRid("a".toByteArray())
+    val dummyBcRid = BlockchainRid.ZERO_RID
     val dummyPrevBlockRid = "b".toByteArray()
     val dummyBlockIID: Long = 1L
     val dummyChainID: Long = 2L

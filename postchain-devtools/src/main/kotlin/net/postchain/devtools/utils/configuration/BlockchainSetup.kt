@@ -1,11 +1,8 @@
 package net.postchain.devtools.utils.configuration
 
-import net.postchain.base.BlockchainRelatedInfo
 import net.postchain.base.BlockchainRid
-import net.postchain.common.toHex
-import net.postchain.devtools.KeyPairHelper.pubKeyFromByteArray
+import net.postchain.devtools.PostchainTestNode
 import net.postchain.gtv.Gtv
-import net.postchain.gtv.gtvml.GtvMLParser
 
 
 /**
@@ -27,6 +24,15 @@ data class BlockchainSetup(
         val signerNodeList: List<NodeSeqNumber>,
         val chainDependencies: Set<Int> = setOf() // default is none
 ) {
+
+    /**
+     * Function with default bc preparations. These commands are separated here, so that they can be replaced with another
+     * prepare function. An example is found in AbstractSyncTest.kt
+     */
+    var prepareBlockchainOnNode: (BlockchainSetup, PostchainTestNode) -> Unit = { blockchainSetup, node ->
+        node.addBlockchain(blockchainSetup)
+        node.mapBlockchainRID(blockchainSetup.chainId.toLong(), blockchainSetup.rid)
+    }
 
     companion object {
 
@@ -52,7 +58,6 @@ data class BlockchainSetup(
          * Will take a GTV configuration and return a setup
          */
         fun buildFromGtv(chainId: Int, gtvConfig: Gtv): BlockchainSetup = BlockchainSetupFactory.buildFromGtv(chainId, gtvConfig)
-
 
 
     }

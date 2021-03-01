@@ -10,4 +10,5 @@ interface PeerInfoDataSource {
     fun getPeerInfos(): Array<PeerInfo>
     fun getNodeReplicaMap(): Map<XPeerID, List<XPeerID>>
     fun getBlockchainReplicaNodeMap(): Map<BlockchainRid, List<XPeerID>>
+    fun getSyncUntilHeight(): Map<BlockchainRid, Long>
 }

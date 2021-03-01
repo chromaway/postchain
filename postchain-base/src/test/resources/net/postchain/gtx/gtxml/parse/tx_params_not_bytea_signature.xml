@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Copyright (c) 2020 ChromaWay AB. See README for license information. -->
 
-<transaction blockchainRID="23213213" failure="true">
+<transaction blockchainRID="1234567812345678123456781234567812345678123456781234567812345678" failure="true">
     <signers>
         <bytea>12387123</bytea>
     </signers>

@@ -52,7 +52,8 @@ data class FastSyncParameters(var resurrectDrainedTime: Long = 10000,
                               var exitDelay: Long = 60000,
                               var pollPeersInterval: Long = 10000,
                               var jobTimeout: Long = 10000,
-                              var loopInteval: Long = 100)
+                              var loopInteval: Long = 100,
+                              var mustSyncUntilHeight: Long = -1)
 
 /**
  * This class syncs blocks from its peers by requesting <parallelism> blocks
@@ -94,7 +95,7 @@ data class FastSyncParameters(var resurrectDrainedTime: Long = 10000,
 class FastSynchronizer(private val workerContext: WorkerContext,
                        val blockDatabase: BlockDatabase,
                        val params: FastSyncParameters
-): Messaging(workerContext.engine.getBlockQueries(), workerContext.communicationManager) {
+) : Messaging(workerContext.engine.getBlockQueries(), workerContext.communicationManager) {
     private val blockchainConfiguration = workerContext.engine.getConfiguration()
     private val configuredPeers = workerContext.peerCommConfiguration.networkNodes.getPeerIds()
     private val jobs = TreeMap<Long, Job>()
@@ -104,7 +105,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
     // This is the communication mechanism from the async commitBlock callback to main loop
     private val finishedJobs = LinkedBlockingQueue<Job>()
 
-    companion object: KLogging()
+    companion object : KLogging()
 
     var blockHeight: Long = workerContext.engine.getBlockQueries().getBestHeight().get()
         private set
@@ -164,7 +165,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
     }
 
     fun syncUntilShutdown() {
-        syncUntil {false}
+        syncUntil { false }
     }
 
     /**
@@ -201,7 +202,8 @@ class FastSynchronizer(private val workerContext: WorkerContext,
         val timeout = System.currentTimeMillis() + params.exitDelay
         debug("exitDelay: ${params.exitDelay}")
         syncUntil {
-            timeout < System.currentTimeMillis() && peerStatuses.countSyncable(blockHeight+1) == 0
+            timeout < System.currentTimeMillis() && peerStatuses.countSyncable(blockHeight + 1) == 0 &&
+                    blockHeight >= params.mustSyncUntilHeight
         }
     }
 
@@ -483,10 +485,10 @@ class FastSynchronizer(private val workerContext: WorkerContext,
     private fun handleUnfinishedBlock(peerId: XPeerID, header: ByteArray, txs: List<ByteArray>) {
         val h = blockchainConfiguration.decodeBlockHeader(header)
         if (h !is BaseBlockHeader) {
-            throw BadDataMistake(BadDataType.BAD_MESSAGE,"Expected BaseBlockHeader")
+            throw BadDataMistake(BadDataType.BAD_MESSAGE, "Expected BaseBlockHeader")
         }
         val height = getHeight(h)
-        val j = jobs[height]?:return
+        val j = jobs[height] ?: return
         debug("handleUnfinishedBlock received for $j")
         val expectedHeader = j.header
         if (j.block != null || peerId != j.peerId ||
@@ -534,7 +536,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
 
     private fun commitBlock(job: Job) {
         val p = blockDatabase.addBlock(job.block!!)
-        p.success {_ ->
+        p.success { _ ->
             finishedJobs.add(job)
         }
         p.fail {
@@ -553,7 +555,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
                 continue
             }
             val message = packet.second
-            if (message is GetBlockHeaderAndBlock || message is BlockHeaderMessage ) {
+            if (message is GetBlockHeaderAndBlock || message is BlockHeaderMessage) {
                 peerStatuses.confirmModern(peerId)
             }
             try {
@@ -563,7 +565,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
                     is BlockHeaderMessage -> handleBlockHeader(peerId, message.header, message.witness, message.requestedHeight)
                     is UnfinishedBlock -> handleUnfinishedBlock(peerId, message.header, message.transactions)
                     is CompleteBlock -> handleCompleteBlock(peerId, message.data, message.height, message.witness)
-                    is Status -> peerStatuses.statusReceived(peerId, message.height-1)
+                    is Status -> peerStatuses.statusReceived(peerId, message.height - 1)
                     else -> debug("Unhandled type ${message} from peer $peerId")
                 }
             } catch (e: Exception) {
