@@ -335,6 +335,10 @@ class MockManagedNodeDataSource(val nodeIndex: Int) : ManagedNodeDataSource {
         return emptyArray()
     }
 
+    override fun getSyncUntilHeight(): Map<BlockchainRid, Long> {
+        return emptyMap()
+    }
+
     override fun getNodeReplicaMap(): Map<XPeerID, List<XPeerID>> {
         return mapOf()
     }

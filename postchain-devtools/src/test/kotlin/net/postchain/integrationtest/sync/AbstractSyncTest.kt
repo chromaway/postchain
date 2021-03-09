@@ -116,6 +116,7 @@ open class AbstractSyncTest : IntegrationTestSetup() {
                 "messaging.pubkey" to peerInfo.pubKey.toHex(),
                 "messaging.privkey" to privKey.toHex(),
                 "fastsync.exit_delay" to 2000, // All tests are multinode, see FastSyncParameters.exitDelay
+                "fastsync.job_timeout" to 1000, // Don't let unresponsive test peers stall tests for long
                 "api.port" to "-1"))
     }
 

@@ -44,6 +44,7 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                 getEngine(), getEngine().getBlockQueries(), NODE_ID_READ_ONLY)
         val params = FastSyncParameters()
         params.exitDelay = workerContext.nodeConfig.fastSyncExitDelay
+        params.jobTimeout = workerContext.nodeConfig.fastSyncJobTimeout
         fastSynchronizer = FastSynchronizer(workerContext, blockDatabase, params)
 
         thread(name = "historicSync-${workerContext.processName}") {

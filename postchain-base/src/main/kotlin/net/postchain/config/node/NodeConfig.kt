@@ -92,6 +92,9 @@ open class NodeConfig(val appConfig: AppConfig) {
     val fastSyncExitDelay: Long
         get() = config.getLong("fastsync.exit_delay", 60000)
 
+    val fastSyncJobTimeout: Long
+        get() = config.getLong("fastsync.job_timeout", 10000)
+
     /**
      * Active Chains
      *
