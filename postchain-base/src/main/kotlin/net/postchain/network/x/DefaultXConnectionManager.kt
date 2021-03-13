@@ -237,6 +237,7 @@ class DefaultXConnectionManager<PacketType>(
         val chain = if (chainID != null) chains[chainID] else null
         if (chain == null) {
             logger.warn("${logger(descriptor)}: Peer disconnected: chain not found by blockchainRID = ${descriptor.blockchainRID} / chainID = $chainID")
+            connection.close()
             return
         }
 
@@ -244,7 +245,7 @@ class DefaultXConnectionManager<PacketType>(
             // It's the connection we're using, so we have to remove it
             chain.connections.remove(descriptor.peerId)
         }
-
+        connection.close()
         if (chain.connectAll) {
             peersConnectionStrategy.connectionLost(chainID!!, descriptor.peerId, descriptor.isOutgoing())
         }

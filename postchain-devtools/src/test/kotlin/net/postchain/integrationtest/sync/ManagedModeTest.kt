@@ -28,7 +28,6 @@ import java.lang.Thread.sleep
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.locks.ReentrantLock
 import kotlin.test.assertTrue
 
 open class ManagedModeTest : AbstractSyncTest() {
@@ -41,6 +40,13 @@ open class ManagedModeTest : AbstractSyncTest() {
         fun contains(i: Int) = signers.contains(i) || replicas.contains(i)
         fun all(): Set<Int> = signers.union(replicas)
         fun nodes() = nodes.filterIndexed { i, p -> contains(i) }
+        /**
+         * Creates a new NodeSet as a copy of this NodeSet, but
+         * with some nodes removed
+         */
+        fun remove(nodesToRemove: Set<Int>): ManagedModeTest.NodeSet {
+            return NodeSet(chain, signers.minus(nodesToRemove), replicas.minus(nodesToRemove))
+        }
     }
 
     fun dataSources(nodeSet: NodeSet): Map<Int, MockManagedNodeDataSource> {
@@ -95,10 +101,11 @@ open class ManagedModeTest : AbstractSyncTest() {
         addBlockchainConfiguration(nodeSet, null, 0)
     }
 
-    fun newBlockchainConfiguration(nodeSet: NodeSet, historicChain: Long? = null, height: Long = 0) {
+    fun newBlockchainConfiguration(nodeSet: NodeSet, historicChain: Long?, height: Long, excludeChain0Nodes: Set<Int> = setOf()) {
         addBlockchainConfiguration(nodeSet, historicChain, height)
-        val currentHeightOfC0 = c0.nodes()[0].currentHeight(c0.chain)
-        buildBlock(0, currentHeightOfC0+1) // To trigger restartHandler to launch new blockchain
+        // We need to build a block on c0 to trigger c0's restartHandler, otherwise
+        // the node manager won't become aware of the new configuration
+        buildBlock(c0.remove(excludeChain0Nodes))
     }
 
     protected fun awaitChainRunning(index: Int, chainId: Long, atLeastHeight: Long) {
@@ -113,6 +120,11 @@ open class ManagedModeTest : AbstractSyncTest() {
 
     fun buildBlock(nodeSet: NodeSet, toHeight: Long) {
         buildBlock(nodes.filterIndexed { i,p -> nodeSet.contains(i) }, nodeSet.chain.toLong(), toHeight)
+    }
+
+    fun buildBlock(nodeSet: NodeSet) {
+        val currentHeight = nodeSet.nodes()[0].currentHeight(nodeSet.chain)
+        buildBlock(nodeSet, currentHeight+1)
     }
 
     fun awaitHeight(nodeSet: NodeSet, height: Long) {
@@ -297,15 +309,15 @@ typealias Key = Pair<BlockchainRid, Long>
 class MockManagedNodeDataSource(val nodeIndex: Int) : ManagedNodeDataSource {
     // Brid -> (height -> Pair<BlockchainConfiguration, NodeSet>)
     private val bridToConfs: MutableMap<BlockchainRid, MutableMap<Long, BlockchainConfiguration>> = mutableMapOf()
-    private val chainIidToNodeSet: MutableMap<Long, NodeSet> = mutableMapOf()
-    val extraReplicas = mutableMapOf<BlockchainRid, List<XPeerID>>()
+    private val chainToNodeSet: MutableMap<BlockchainRid, NodeSet> = mutableMapOf()
+    private val extraReplicas = mutableMapOf<BlockchainRid, MutableSet<XPeerID>>()
 
     override fun getPeerListVersion(): Long {
         return 1L
     }
 
     override fun computeBlockchainList(): List<ByteArray> {
-        return chainIidToNodeSet.filterValues { it.contains(nodeIndex) }.keys.map { chainRidOf(it).data }
+        return chainToNodeSet.filterValues { it.contains(nodeIndex) }.keys.map { it.data }
     }
 
     override fun getConfiguration(blockchainRIDRaw: ByteArray, height: Long): ByteArray? {
@@ -345,13 +357,17 @@ class MockManagedNodeDataSource(val nodeIndex: Int) : ManagedNodeDataSource {
 
     override fun getBlockchainReplicaNodeMap(): Map<BlockchainRid, List<XPeerID>> {
         val result = mutableMapOf<BlockchainRid, List<XPeerID>>()
-        chainIidToNodeSet.forEach {
-            var replicas = it.value.replicas.map { XPeerID(KeyPairHelper.pubKey(it)) }
-            val brid = chainRidOf(it.key)
-            replicas = replicas.union(extraReplicas[brid]?.toList() ?: emptyList()).toList()
-            result.put(brid, replicas)
+        chainToNodeSet.keys.union(extraReplicas.keys).forEach {
+            val replicaSet = chainToNodeSet[it]?.replicas ?: emptySet()
+            var replicas = replicaSet.map { XPeerID(KeyPairHelper.pubKey(it)) }.toMutableSet()
+            replicas.addAll(extraReplicas[it] ?: emptySet())
+            result.put(it, replicas.toList())
         }
         return result
+    }
+
+    fun addExtraReplica(brid: BlockchainRid, replica: XPeerID) {
+        extraReplicas.computeIfAbsent(brid) { mutableSetOf<XPeerID>() }.add(replica)
     }
 
     private fun key(brid: BlockchainRid, height: Long): Key {
@@ -382,11 +398,15 @@ class MockManagedNodeDataSource(val nodeIndex: Int) : ManagedNodeDataSource {
         if (confs!!.put(height, conf) != null) {
             throw IllegalArgumentException("Setting blockchain configuraion for height that already has a configuration")
         }
-        chainIidToNodeSet.put(nodeSet.chain, nodeSet)
+        chainToNodeSet.put(chainRidOf(nodeSet.chain), nodeSet)
     }
 
+    /**
+     * This is to force a node to become totally unaware of a certain blockchain.
+     */
     fun delBlockchain(rid: BlockchainRid) {
         bridToConfs.remove(rid)
         extraReplicas.remove(rid)
+        chainToNodeSet.remove(rid)
     }
 }

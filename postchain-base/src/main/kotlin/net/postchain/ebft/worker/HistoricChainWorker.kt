@@ -54,8 +54,8 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                     copyBlocksLocally(blockDatabase)
 
                     // CommManager is already inited when this worker is started. Hack around that.
-                    // We need to shutdown/init the communication managers for both fastsynchronizers
-                    // in this while loop so that they don't step on eachother's toes.
+                    // We need to shutdown/init the communication managers for all fastsynchronizers
+                    // in this while loop so that they don't step on each other's toes.
                     if (!firstLoop) {
                         workerContext.communicationManager.init()
                     } else {
@@ -71,14 +71,23 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                     // sync from the network. But let's keep it simple for now
 
                     fastSynchronizer.syncUntilResponsiveNodesDrained()
+                    workerContext.communicationManager.shutdown()
                     if (shutdown.get()) {
                         break
                     }
-                    workerContext.communicationManager.shutdown()
-                    val historicWorkerContext = historicBlockchain.contextCreator()
-                    historicSynchronizer = FastSynchronizer(historicWorkerContext, blockDatabase, params)
-                    historicSynchronizer!!.syncUntilResponsiveNodesDrained()
-                    historicWorkerContext.communicationManager.shutdown()
+
+                    val oldChainsToSyncFrom = mutableListOf(historicBlockchain.historicBrid)
+                    oldChainsToSyncFrom.addAll(historicBlockchain.aliases.keys)
+
+                    for (blockchainRid in oldChainsToSyncFrom) {
+                        val historicWorkerContext = historicBlockchain.contextCreator(blockchainRid)
+                        historicSynchronizer = FastSynchronizer(historicWorkerContext, blockDatabase, params)
+                        historicSynchronizer!!.syncUntilResponsiveNodesDrained()
+                        historicWorkerContext.communicationManager.shutdown()
+                        if (shutdown.get()) {
+                            break
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 logger.error(e) { "Error syncing forkchain" }

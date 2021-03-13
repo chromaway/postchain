@@ -79,12 +79,18 @@ class EBFTSynchronizationInfrastructure(
         */
         return if (historicBlockchain != null) {
             historicBlockchain.contextCreator = {
-                val historicPeerCommConfiguration = buildPeerCommConfiguration(nodeConfig, blockchainConfig, historicBlockchain)
-                val histCommManager = buildXCommunicationManager(processName, blockchainConfig, historicPeerCommConfiguration, historicBlockchain.historicBrid)
+                val historicPeerCommConfiguration = if (it == historicBlockchain.historicBrid) {
+                    buildPeerCommConfiguration(nodeConfig, blockchainConfig, historicBlockchain)
+                } else {
+                    // It's an alias brid for historicBrid
+                    buildPeerCommConfigurationForAlias(nodeConfig, historicBlockchain, it)
+                }
+                val histCommManager = buildXCommunicationManager(processName, blockchainConfig, historicPeerCommConfiguration, it)
 
                 WorkerContext(processName, blockchainConfig.signers,
                         engine, blockchainConfig.configData.context.nodeID, histCommManager, historicPeerCommConfiguration,
                         nodeConfig, unregisterBlockchainDiagnosticData)
+
             }
             HistoricChainWorker(workerContext, historicBlockchain)
         } else if (blockchainConfig.configData.context.nodeID != NODE_ID_READ_ONLY) {
@@ -126,6 +132,21 @@ class EBFTSynchronizationInfrastructure(
                 packetDecoder,
                 processName
         ).apply { init() }
+    }
+
+    private fun buildPeerCommConfigurationForAlias(nodeConfig: NodeConfig, historicBlockchain: HistoricBlockchain, aliasBrid: BlockchainRid): PeerCommConfiguration {
+        val myPeerID = XPeerID(nodeConfig.pubKeyByteArray)
+        val peersThatServeAliasBrid = historicBlockchain.aliases[aliasBrid]!!
+
+        val relevantPeerMap = nodeConfig.peerInfoMap.filterKeys {
+            it in peersThatServeAliasBrid || it == myPeerID
+        }
+
+        return BasePeerCommConfiguration.build(
+                relevantPeerMap.values,
+                SECP256K1CryptoSystem(),
+                nodeConfig.privKeyByteArray,
+                nodeConfig.pubKeyByteArray)
     }
 
     private fun buildPeerCommConfiguration(nodeConfig: NodeConfig, blockchainConfig: BaseBlockchainConfiguration, historicBlockchain: HistoricBlockchain? = null): PeerCommConfiguration {

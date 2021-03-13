@@ -322,42 +322,20 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
         }
     }
 
-    // TODO: [POS-128]: Remove it as soon as prefixes `c0.` are used
-    private fun createIfNotExist(ctx: EContext, table: String, createCmd: String) {
-        if (!tableExists(ctx.conn, table)) {
-            queryRunner.update(ctx.conn, createCmd)
-        }
-    }
-
     override fun initializeBlockchain(ctx: EContext, blockchainRid: BlockchainRid) {
-        // TODO: [POS-128]: Temporal solution
         val initialized = getBlockchainRid(ctx) != null
 
-        createIfNotExist(ctx, tableBlocks(ctx), cmdCreateTableBlocks(ctx))
-        createIfNotExist(ctx, tableTransactions(ctx), cmdCreateTableTransactions(ctx))
-        createIfNotExist(ctx, tableConfigurations(ctx), cmdCreateTableConfigurations(ctx))
+        queryRunner.update(ctx.conn, cmdCreateTableBlocks(ctx))
+        queryRunner.update(ctx.conn, cmdCreateTableTransactions(ctx))
+        queryRunner.update(ctx.conn, cmdCreateTableConfigurations(ctx))
 
-        // TODO: [POS-128]: Temporal solution
-        val indexCreated = tableExists(ctx.conn, tableTransactions(ctx))
-        if (!indexCreated) {
-            val sql = "CREATE INDEX ${tableName(ctx, "transactions_block_iid_idx")} " +
-                    "ON ${tableTransactions(ctx)}(block_iid)"
-            queryRunner.update(ctx.conn, sql)
-        }
+        val txIndex = "CREATE INDEX IF NOT EXISTS ${tableName(ctx, "transactions_block_iid_idx")} " +
+                "ON ${tableTransactions(ctx)}(block_iid)"
+        queryRunner.update(ctx.conn, txIndex)
 
-        // TODO: [POS-128]: Temporal solution
-        val indexCreated2 = tableExists(ctx.conn, tableBlocks(ctx))
-        if (!indexCreated2) {
-            val sql = "CREATE INDEX ${tableName(ctx, "blocks_timestamp_idx")} " +
-                    "ON ${tableBlocks(ctx)}(timestamp)"
-            queryRunner.update(ctx.conn, sql)
-        }
-
-        /*
-        if (!tableExists(configurations)) {
-            queryRunner.update(connection, """CREATE INDEX configurations_chain_iid_to_height ON configurations(chain_iid, height)""")
-        }
-         */
+        val blockIndex = "CREATE INDEX IF NOT EXISTS ${tableName(ctx, "blocks_timestamp_idx")} " +
+                "ON ${tableBlocks(ctx)}(timestamp)"
+        queryRunner.update(ctx.conn, blockIndex)
 
         if (!initialized) {
             // Inserting chainId -> blockchainRid

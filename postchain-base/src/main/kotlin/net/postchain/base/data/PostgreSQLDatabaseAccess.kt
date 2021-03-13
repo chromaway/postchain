@@ -27,7 +27,7 @@ class PostgreSQLDatabaseAccess : SQLDatabaseAccess() {
     }
 
     override fun cmdCreateTableBlocks(ctx: EContext): String {
-        return "CREATE TABLE ${tableBlocks(ctx)}" +
+        return "CREATE TABLE IF NOT EXISTS ${tableBlocks(ctx)}" +
                 " (block_iid BIGSERIAL PRIMARY KEY," +
                 "  block_height BIGINT NOT NULL, " +
                 "  block_rid BYTEA," +
@@ -45,7 +45,7 @@ class PostgreSQLDatabaseAccess : SQLDatabaseAccess() {
     }
 
     override fun cmdCreateTableTransactions(ctx: EContext): String {
-        return "CREATE TABLE ${tableTransactions(ctx)} (" +
+        return "CREATE TABLE IF NOT EXISTS ${tableTransactions(ctx)} (" +
                 "    tx_iid BIGSERIAL PRIMARY KEY, " +
                 "    tx_rid BYTEA NOT NULL," +
                 "    tx_data BYTEA NOT NULL," +
@@ -55,7 +55,7 @@ class PostgreSQLDatabaseAccess : SQLDatabaseAccess() {
     }
 
     override fun cmdCreateTableConfigurations(ctx: EContext): String {
-        return "CREATE TABLE ${tableConfigurations(ctx)} (" +
+        return "CREATE TABLE IF NOT EXISTS ${tableConfigurations(ctx)} (" +
                 "height BIGINT PRIMARY KEY" +
                 ", configuration_data BYTEA NOT NULL" +
                 ")"

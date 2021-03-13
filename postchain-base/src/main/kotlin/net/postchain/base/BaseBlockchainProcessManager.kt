@@ -102,7 +102,8 @@ open class BaseBlockchainProcessManager(
 
                         var histConf: HistoricBlockchain? = null
                         if (blockchainConfig.effectiveBlockchainRID != blockchainConfig.blockchainRid) {
-                            histConf = HistoricBlockchain(blockchainConfig.effectiveBlockchainRID)
+                            val aliases = nodeConfig.blockchainAliases[blockchainConfig.effectiveBlockchainRID]
+                            histConf = HistoricBlockchain(blockchainConfig.effectiveBlockchainRID, aliases ?: emptyMap())
                             val db = DatabaseAccess.of(eContext)
                             val historicChainIid = db.getChainId(eContext, blockchainConfig.effectiveBlockchainRID)
                             if (historicChainIid != null) {

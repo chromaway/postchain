@@ -7,6 +7,7 @@ import io.netty.channel.*
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
+import io.netty.util.concurrent.DefaultThreadFactory
 import net.postchain.core.Shutdownable
 import java.net.SocketAddress
 import java.util.concurrent.TimeUnit
@@ -22,7 +23,7 @@ class NettyClient : Shutdownable {
     }
 
     fun connect(peerAddress: SocketAddress): ChannelFuture {
-        eventLoopGroup = NioEventLoopGroup(1)
+        eventLoopGroup = NioEventLoopGroup(1, DefaultThreadFactory("NettyClient"))
 
         client = Bootstrap()
                 .group(eventLoopGroup)

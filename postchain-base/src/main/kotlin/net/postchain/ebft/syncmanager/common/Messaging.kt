@@ -32,7 +32,7 @@ abstract class Messaging(val blockQueries: BlockQueries, val communicationManage
     fun sendBlockAtHeight(peerId: XPeerID, height: Long) {
         val blockData = blockQueries.getBlockAtHeight(height).get()
         if (blockData == null) {
-            logger.error("No block at height $height, as requested by $peerId")
+            logger.debug("No block at height $height, as requested by $peerId")
             return
         }
         val packet = CompleteBlock(BlockData(blockData.header.rawData, blockData.transactions), height, blockData.witness.getRawData())
