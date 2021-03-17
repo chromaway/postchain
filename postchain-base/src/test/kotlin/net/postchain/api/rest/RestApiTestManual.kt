@@ -41,13 +41,13 @@ class RestApiTestManual {
                 .then()
                 .statusCode(200)
 
-        val transaction = GTXTransactionFactory(BlockchainRid.EMPTY_RID, GTXTestModule(), cryptoSystem)
+        val transaction = GTXTransactionFactory(BlockchainRid.ZERO_RID, GTXTestModule(), cryptoSystem)
                 .decodeTransaction(txBytes)
         RestTools.awaitConfirmed(port, blockchainRID!!.toHex(), transaction.getRID().toHex())
     }
 
     private fun buildTestTx(id: Long, value: String): ByteArray {
-        val b = GTXDataBuilder(BlockchainRid.EMPTY_RID, arrayOf(pubKey(0)), cryptoSystem)
+        val b = GTXDataBuilder(BlockchainRid.ZERO_RID, arrayOf(pubKey(0)), cryptoSystem)
         b.addOperation("gtx_test", arrayOf(gtv(id), gtv(value)))
         b.finish()
         b.sign(cryptoSystem.buildSigMaker(pubKey(0), privKey(0)))

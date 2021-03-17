@@ -25,7 +25,7 @@ import org.junit.Test
 
 class IntNettyConnector2PeersCommunicationIT {
 
-    private val blockchainRid = BlockchainRid(byteArrayOf(0x01))
+    private val blockchainRid = BlockchainRid.buildRepeat(0x01)
     private lateinit var peerInfo1: PeerInfo
     private lateinit var peerInfo2: PeerInfo
     private lateinit var context1: IntTestContext

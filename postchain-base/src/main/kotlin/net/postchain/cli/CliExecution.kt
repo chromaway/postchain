@@ -101,7 +101,7 @@ object CliExecution {
 
             fun init() = try {
                 configStore.addConfigurationData(ctx, height, blockchainConfig)
-                addFutureSignersAsReplicas(height, ctx, blockchainConfig, allowUnknownSigners)
+                addFutureSignersAsReplicas(ctx, height, blockchainConfig, allowUnknownSigners)
             } catch (e: BadDataMistake) {
                 if (e.type == BadDataType.MISSING_PEERINFO) {
                     throw CliError.Companion.CliException(e.message + " Please add node with command peerinfo-add or set flag --allow-unknown-signers.")
@@ -138,7 +138,7 @@ object CliExecution {
     /** When a new (height > 0) configuration is added, we automatically add signers in that config to table
      * blockchainReplicaNodes (for current blockchain). Useful for synchronization.
      */
-    private fun addFutureSignersAsReplicas(height: Long, eContext: EContext, gtvData: Gtv, allowUnknownSigners: Boolean) {
+    private fun addFutureSignersAsReplicas(eContext: EContext, height: Long, gtvData: Gtv, allowUnknownSigners: Boolean) {
         if (height > 0) {
             val db = DatabaseAccess.of(eContext)
             val brid = db.getBlockchainRid(eContext)!!
@@ -157,6 +157,20 @@ object CliExecution {
                             "Signer ${nodePubkey} does not exist in peerinfos.")
                 }
             }
+        }
+    }
+
+
+    fun setMustSyncUntil(nodeConfigFile: String, blockchainRID: BlockchainRid, height: Long): Boolean {
+        return runStorageCommand(nodeConfigFile) { ctx ->
+            val db = DatabaseAccess.of(ctx)
+            db.setMustSyncUntil(ctx, blockchainRID, height)
+        }
+    }
+
+    fun getMustSyncUntilHeight(nodeConfigFile: String): Map<Long, Long>? {
+        return runStorageCommand(nodeConfigFile) { ctx ->
+            DatabaseAccess.of(ctx).getMustSyncUntil(ctx)
         }
     }
 

@@ -76,6 +76,13 @@ class SAPHanaSQLDatabaseAccess : SQLDatabaseAccess() {
                 ", PRIMARY KEY ($TABLE_REPLICAS_FIELD_BRID, $TABLE_REPLICAS_FIELD_PUBKEY))"
     }
 
+    override fun cmdCreateTableMustSyncUntil(): String {
+        return "CREATE TABLE ${tableMustSyncUntil()} (" +
+                " $TABLE_SYNC_UNTIL_FIELD_CHAIN_IID text PRIMARY KEY NOT NULL REFERENCES ${tableBlockchains()} (chain_iid)" +
+                ", $TABLE_SYNC_UNTIL_FIELD_HEIGHT BIGINT NOT NULL" +
+                ")"
+    }
+
     override fun cmdCreateTableMeta(): String {
         return "CREATE TABLE ${tableMeta()} (key VARCHAR(255) PRIMARY KEY, value VARCHAR(1000))"
     }

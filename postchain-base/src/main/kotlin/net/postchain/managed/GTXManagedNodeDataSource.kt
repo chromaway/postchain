@@ -68,6 +68,23 @@ class GTXManagedNodeDataSource(val queries: BlockQueries, val nodeConfig: NodeCo
         return GtvFactory.gtv(*args)
     }
 
+    override fun getSyncUntilHeight(): Map<BlockchainRid, Long> {
+        val blockchains = computeBlockchainList()
+//        query get_blockchain_last_height_map(blockchain_rids: list<byte_array>) : list<integer>
+        val heights = queries.query(
+                "nm_get_blockchain_last_height_map",
+                buildArgs("blockchain_rids" to GtvFactory.gtv(
+                        *(blockchains.map { GtvFactory.gtv(it) }.toTypedArray())
+                ))
+        ).get().asArray()
+
+        return blockchains.mapIndexed { i, brid ->
+            BlockchainRid(brid) to if (i < heights.size) {
+                heights[i].asInteger()
+            } else -1
+        }.toMap()
+    }
+
     override fun getBlockchainReplicaNodeMap(): Map<BlockchainRid, List<XPeerID>> {
         val blockchains = computeBlockchainList()
 

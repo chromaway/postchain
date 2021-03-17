@@ -12,10 +12,10 @@ import org.junit.Test
 class BlockchainRidTest {
 
     @Test
-    fun testConstructorEmpty() {
-        val actual = BlockchainRid.EMPTY_RID
+    fun testConstructorZeroRid() {
+        val actual = BlockchainRid.ZERO_RID
 
-        assert(actual.data).isContentEqualTo(byteArrayOf())
+        assert(actual.data).isContentEqualTo(ByteArray(32) { 0 })
     }
 
     @Test

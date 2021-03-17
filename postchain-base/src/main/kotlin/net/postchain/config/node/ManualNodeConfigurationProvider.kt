@@ -22,6 +22,7 @@ open class ManualNodeConfigurationProvider(
             override val peerInfoMap = getPeerInfoCollection(appConfig)
                     .associateBy(PeerInfo::peerId)
             override val blockchainReplicaNodes = getBlockchainReplicaCollection(appConfig)
+            override val mustSyncUntilHeight: Map<Long, Long>? = getSyncUntilHeight(appConfig)
         }
     }
 
@@ -44,6 +45,18 @@ open class ManualNodeConfigurationProvider(
     open fun getBlockchainReplicaCollection(appConfig: AppConfig): Map<BlockchainRid, List<XPeerID>> {
         return storage.withReadConnection { ctx ->
             DatabaseAccess.of(ctx).getBlockchainReplicaCollection(ctx)
+        }
+    }
+
+    open fun getSyncUntilHeight(appConfig: AppConfig): Map<Long, Long> {
+        return storage.withReadConnection { ctx ->
+            DatabaseAccess.of(ctx).getMustSyncUntil(ctx)
+        }
+    }
+
+    open fun getChainIDs(appConfig: AppConfig): Map<BlockchainRid, Long> {
+        return storage.withReadConnection { ctx ->
+            DatabaseAccess.of(ctx).getChainIds(ctx)
         }
     }
 }

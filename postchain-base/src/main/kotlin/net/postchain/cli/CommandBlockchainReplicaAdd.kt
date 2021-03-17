@@ -31,16 +31,16 @@ class CommandBlockchainReplicaAdd : Command {
     private var blockchainRID = ""
 
 
-    override fun key(): String = "add-blockchain-replica"
+    override fun key(): String = "blockchain-replica-add"
 
     override fun execute(): CliResult {
-        println("add-blockchain will be executed with options: " +
+        println(key() + " will be executed with options: " +
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
         return try {
             val added = addReplica(blockchainRID, pubKey)
             return when {
-                added -> Ok("Blockchain replica has been added successfully")
+                added -> Ok(key() + " finished successfully")
                 else -> Ok("Blockchain replica already exists")
             }
         } catch (e: CliError.Companion.CliException) {
