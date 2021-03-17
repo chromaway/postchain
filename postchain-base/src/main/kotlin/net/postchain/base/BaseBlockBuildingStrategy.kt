@@ -42,7 +42,7 @@ class BaseBlockBuildingStrategy(val configData: BaseBlockchainConfigurationData,
 
         if (now - lastBlockTime > maxBlockTime) return true
         if (now - lastBlockTime < minInterBlockInterval) return false
-        if (now - firstTxTime > maxTxDelay) return true
+        if (firstTxTime > 0 && now - firstTxTime > maxTxDelay) return true
 
         val transactionQueueSize = txQueue.getTransactionQueueSize()
         if (transactionQueueSize >= maxBlockTransactions) return true
