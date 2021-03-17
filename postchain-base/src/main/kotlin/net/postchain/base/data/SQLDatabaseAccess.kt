@@ -306,6 +306,13 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
                 throw UserMistake("Unexpected version '$version' in database. Expected '$expectedDbVersion'")
             }
 
+            // Make some upgrades to the database schema
+            if (!tableExists(connection, tableBlockchainReplicas())) {
+                queryRunner.update(connection, cmdCreateTableBlockchainReplicas())
+            }
+            if (!tableExists(connection, tableMustSyncUntil())) {
+                queryRunner.update(connection, cmdCreateTableMustSyncUntil())
+            }
         } else {
             logger.info("Meta table does not exist! Assume database does not exist and create it (version: $expectedDbVersion).")
             queryRunner.update(connection, cmdCreateTableMeta())
