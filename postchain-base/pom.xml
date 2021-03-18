@@ -15,7 +15,7 @@
     <properties>
         <main-class>net.postchain.AppKt</main-class>
         <commons-dbutils.version>1.6</commons-dbutils.version>
-        <postgresql.version>42.2.0</postgresql.version>
+        <postgresql.version>42.2.11</postgresql.version>
         <spongycastle.core.version>1.56.0.0</spongycastle.core.version>
         <commons-dbcp2.version>2.6.0</commons-dbcp2.version>
         <commons-configuration2.version>2.1.1</commons-configuration2.version>
