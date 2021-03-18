@@ -81,6 +81,7 @@ interface DatabaseAccess {
     fun existsBlockchainReplica(ctx: AppContext, brid: String, pubkey: String): Boolean
     fun addBlockchainReplica(ctx: AppContext, brid: String, pubKey: String): Boolean
     fun removeBlockchainReplica(ctx: AppContext, brid: String?, pubKey: String): Set<BlockchainRid>
+    fun getBlockchainsToReplicate(ctx: AppContext, pubkey: String): Set<BlockchainRid>
 
     //Avoid potential chain split
     fun setMustSyncUntil(ctx: AppContext, blockchainRID: BlockchainRid, height: Long): Boolean

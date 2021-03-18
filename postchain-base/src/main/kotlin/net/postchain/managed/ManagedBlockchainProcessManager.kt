@@ -314,27 +314,32 @@ open class ManagedBlockchainProcessManager(
 
         withWriteConnection(storage, 0) { ctx0 ->
             val db = DatabaseAccess.of(ctx0)
-            dataSource.computeBlockchainList()
-                    .map { brid ->
-                        val blockchainRid = BlockchainRid(brid)
-                        val chainId = db.getChainId(ctx0, blockchainRid)
-                        logger.debug("Blockchain to launch: chainIid: $chainId,  BC RID: ${blockchainRid.toShortHex()} ")
-                        if (chainId == null) {
-                            val newChainId = db.getMaxChainId(ctx0)
-                                    ?.let { maxOf(it + 1, 100) }
-                                    ?: 100
-                            withReadWriteConnection(storage, newChainId) { newCtx ->
-                                db.initializeBlockchain(newCtx, blockchainRid)
-                            }
-                            newChainId
-                        } else {
-                            chainId
-                        }
+            val locallyConfiguredReplicas = db.getBlockchainsToReplicate(ctx0, nodeConfig.pubKey)
+
+            val domainBlockchainList = dataSource.computeBlockchainList().map { BlockchainRid(it) }
+            val allMyBlockchains = domainBlockchainList.toMutableList()
+            locallyConfiguredReplicas.forEach {
+                if (it !in domainBlockchainList) {
+                    allMyBlockchains.add(it)
+                }
+            }
+            allMyBlockchains.map { blockchainRid ->
+                val chainId = db.getChainId(ctx0, blockchainRid)
+                logger.debug("Blockchain to launch: chainIid: $chainId,  BC RID: ${blockchainRid.toShortHex()} ")
+                if (chainId == null) {
+                    val newChainId = db.getMaxChainId(ctx0)
+                            ?.let { maxOf(it + 1, 100) }
+                            ?: 100
+                    withReadWriteConnection(storage, newChainId) { newCtx ->
+                        db.initializeBlockchain(newCtx, blockchainRid)
                     }
-                    .filter { it != 0L }
-                    .forEach {
-                        blockchains.add(it)
-                    }
+                    newChainId
+                } else {
+                    chainId
+                }
+            }.filter { it != 0L }.forEach {
+                blockchains.add(it)
+            }
             true
         }
 

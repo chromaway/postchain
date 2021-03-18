@@ -540,6 +540,13 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
                 valueTransform = { XPeerID((it[TABLE_REPLICAS_FIELD_PUBKEY] as String).hexStringToByteArray()) })
     }
 
+    override fun getBlockchainsToReplicate(ctx: AppContext, pubkey: String): Set<BlockchainRid>  {
+        val query = "SELECT $TABLE_REPLICAS_FIELD_BRID FROM ${tableBlockchainReplicas()} WHERE $TABLE_REPLICAS_FIELD_PUBKEY = ?"
+
+        val result = queryRunner.query(ctx.conn, query, ColumnListHandler<String>(TABLE_REPLICAS_FIELD_BRID), pubkey)
+        return result.map { BlockchainRid.buildFromHex(it) }.toSet()
+    }
+
     override fun existsBlockchainReplica(ctx: AppContext, brid: String, pubkey: String): Boolean {
         val query = """
             SELECT count($TABLE_REPLICAS_FIELD_PUBKEY) 
