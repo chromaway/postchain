@@ -95,37 +95,47 @@ class ManagedNodeConfigurationProvider(
         return setOf(*a.toTypedArray(), *b.toTypedArray()).toList()
     }
 
-    override fun getSyncUntilHeight(appConfig: AppConfig): Map<Long, Long> {
-        //collect from local table: mapOf<chainID,height>
-        val localMap = super.getSyncUntilHeight(appConfig)
+    /**
+     * Removing getSyncUntilHeight and mergeLong for now until
+     * we can safely call managedPeerSource?.getSyncUntilHeight() without
+     * breaking compatibility with old blockchains. Wwe need api query
+     * nm_get_blockchain_last_height_map in the blockchain configuration
+     * for c0 for this to work, and it's not available on old systems
+     * such as chromia.
+     *
+     * For now we have to settle with local configuration in superclass
+     */
+//    override fun getSyncUntilHeight(appConfig: AppConfig): Map<Long, Long> {
+//        //collect from local table: mapOf<chainID,height>
+//        val localMap = super.getSyncUntilHeight(appConfig)
+//
+//        //collect from chain0 table. Mapped to brid instead of chainID, since chainID does not exist here. It is local.
+//        val bridToHeightMap = managedPeerSource?.getSyncUntilHeight() ?: mapOf()
+//
+//        //brid2Height => chainID2height
+//        val bridToChainID = super.getChainIDs(appConfig)
+//        val c0Heights = mutableMapOf<Long, Long>()
+//        for (x in bridToHeightMap) {
+//            val chainIdKey = bridToChainID[x.key]
+//            c0Heights.put(chainIdKey!!, x.value)
+//        }
+//
+//        // Primary source of height information is from local table, if not found there, use values from c0 tables.
+//        val resMap = mutableMapOf<Long, Long>()
+//        val allKeys = localMap.keys + c0Heights.keys
+//        for (k in allKeys) {
+//            resMap[k] = mergeLong(localMap[k], c0Heights[k])
+//        }
+//        return resMap
+//    }
 
-        //collect from chain0 table. Mapped to brid instead of chainID, since chainID does not exist here. It is local.
-        val bridToHeightMap = managedPeerSource?.getSyncUntilHeight() ?: mapOf()
-
-        //brid2Height => chainID2height
-        val bridToChainID = super.getChainIDs(appConfig)
-        val c0Heights = mutableMapOf<Long, Long>()
-        for (x in bridToHeightMap) {
-            val chainIdKey = bridToChainID[x.key]
-            c0Heights.put(chainIdKey!!, x.value)
-        }
-
-        // Primary source of height information is from local table, if not found there, use values from c0 tables.
-        val resMap = mutableMapOf<Long, Long>()
-        val allKeys = localMap.keys + c0Heights.keys
-        for (k in allKeys) {
-            resMap[k] = mergeLong(localMap[k], c0Heights[k])
-        }
-        return resMap
-    }
-
-    fun mergeLong(a: Long?, b: Long?): Long {
-        if (a == null) {
-            return b!!
-        }
-        if (b == null) {
-            return a
-        }
-        return maxOf(a,b)
-    }
+//    fun mergeLong(a: Long?, b: Long?): Long {
+//        if (a == null) {
+//            return b!!
+//        }
+//        if (b == null) {
+//            return a
+//        }
+//        return maxOf(a,b)
+//    }
 }
