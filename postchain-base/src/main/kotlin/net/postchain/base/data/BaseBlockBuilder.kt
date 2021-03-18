@@ -9,6 +9,7 @@ import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.core.ValidationResult.Result.*
 import net.postchain.getBFTRequiredSignatureCount
+import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtv.merkleHash
@@ -43,6 +44,8 @@ open class BaseBlockBuilder(
 
     companion object : KLogging()
 
+    private val eventProcessors = mutableMapOf<String, TxEventSink>()
+
     private val calc = GtvMerkleHashCalculator(cryptoSystem)
 
     private var blockSize: Long = 0L
@@ -59,6 +62,18 @@ open class BaseBlockBuilder(
         val gtvArr = gtv(digests.map { gtv(it) })
 
         return gtvArr.merkleHash(calc)
+    }
+
+    fun installEventProcessor(type: String, sink: TxEventSink) {
+        if (type in eventProcessors) throw ProgrammerMistake("Conflicting event processors in block builder, type ${type}")
+        eventProcessors[type] = sink
+    }
+
+    override fun processEmittedEvent(ctxt: TxEContext, type: String, data: Gtv) {
+        when (val proc = eventProcessors[type]) {
+            null -> throw ProgrammerMistake("Event sink for ${type} not found")
+            else -> proc.processEmittedEvent(ctxt, type, data)
+        }
     }
 
     override fun begin(partialBlockHeader: BlockHeader?) {
