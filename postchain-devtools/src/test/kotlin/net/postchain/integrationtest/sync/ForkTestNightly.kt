@@ -11,7 +11,7 @@ import java.lang.Thread.sleep
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class ForkTest : ManagedModeTest() {
+class ForkTestNightly : ManagedModeTest() {
 
     @Test
     fun testSyncManagedBlockchain() {

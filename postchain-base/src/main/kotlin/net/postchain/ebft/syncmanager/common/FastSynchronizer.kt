@@ -82,22 +82,7 @@ data class FastSyncParameters(var resurrectDrainedTime: Long = 10000,
  * peer, at least temporarily. Otherwise it will hold up the syncing process
  * every now and then when that peer has been (randomly) selected.
  *
- * When we start this process we have no knowledge of which peers we are connected
- * to. It's important to quickly get to know as many peers as possible, because the more
- * peers we have the more reliable we can determine if we're up-to-date or not.
- *
- * We rely on two discovery mechanisms:
- *
- * 1. Request blocks from random peers via communicationManager.sendToRandomPeer(), which returns
- * the peerId of the peer that the request was sent to.
- *
- * 2. Listen for messages from our peers. For example Status messages from peers that
- * are in normal sync mode are typically sent every ~1s, and block requests from peers in fastsync
- * mode are sent as often as they can, spread randomly across its peers, so the more peers it has,
- * the less often we receive requests from it. On the other hand if there are lots of peers we don't
- * need all peers to sync.
- *
- * These two methods should give us a pretty complete picture of the network within a few seconds.
+ * We only use random known peers (from the peerCommConfiguration) to sync from.
  *
  * If there are no live peers, it will wait [params.exitDelay] until it leaves fastsync and starts
  * trying to build blocks on its own. This is not a problem in a real world scenario, since you can wait a minute
