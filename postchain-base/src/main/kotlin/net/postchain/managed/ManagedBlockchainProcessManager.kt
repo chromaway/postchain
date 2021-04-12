@@ -11,6 +11,7 @@ import net.postchain.config.node.ManagedNodeConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
 import net.postchain.debug.NodeDiagnosticContext
+import net.postchain.network.x.XPeerID
 
 /**
  * Extends on the [BaseBlockchainProcessManager] with managed mode. "Managed" means that the nodes automatically
@@ -314,9 +315,18 @@ open class ManagedBlockchainProcessManager(
 
         withWriteConnection(storage, 0) { ctx0 ->
             val db = DatabaseAccess.of(ctx0)
-            dataSource.computeBlockchainList()
-                    .map { brid ->
-                        val blockchainRid = BlockchainRid(brid)
+
+            val bcsFromChain0 = dataSource.computeBlockchainList().map { BlockchainRid(it) }.toSet()
+            val nodeConfig = nodeConfigProvider.getConfiguration()
+            val myPeerID = XPeerID(nodeConfig.pubKeyByteArray)
+
+            // TODO: optimize, move this computation to NodeConfig
+            val bcsFromLocalReplicaConfig = nodeConfig.blockchainReplicaNodes.filter {
+                it.value.contains(myPeerID)
+            }.keys
+
+            bcsFromChain0.union(bcsFromLocalReplicaConfig)
+                    .map { blockchainRid ->
                         val chainId = db.getChainId(ctx0, blockchainRid)
                         logger.debug("Blockchain to launch: chainIid: $chainId,  BC RID: ${blockchainRid.toShortHex()} ")
                         if (chainId == null) {

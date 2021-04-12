@@ -8,11 +8,13 @@ import net.postchain.base.data.BaseTransactionFactory
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.InitialBlockData
+import net.postchain.core.TxEContext
 import net.postchain.core.ValidationResult.Result.INVALID_TIMESTAMP
 import net.postchain.core.ValidationResult.Result.OK
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.MockCryptoSystem
+import net.postchain.gtv.Gtv
 import org.easymock.EasyMock.mock
 import org.junit.Test
 import java.sql.Connection
@@ -24,7 +26,14 @@ class BaseBlockBuilderTest {
     val tf = BaseTransactionFactory()
     val db = mock(DatabaseAccess::class.java)
     val ctx = BaseEContext(mock(Connection::class.java), 2L, 0, db)
-    val bctx = BaseBlockEContext(ctx, 0, 1, 10, mapOf())
+
+    val dummyEventSink = object : TxEventSink {
+        override fun processEmittedEvent(ctxt: TxEContext, type: String, data: Gtv) {
+            TODO("Not yet implemented")
+        }
+    }
+
+    val bctx = BaseBlockEContext(ctx, 0, 1, 10, mapOf(), dummyEventSink)
     val myMerkleRootHash = "46AF9064F12528CAD6A7C377204ACD0AC38CDC6912903E7DAB3703764C8DD5E5".hexStringToByteArray()
     val myBlockchainRid = BlockchainRid.ZERO_RID
     val dummy = ByteArray(32, { 0 })

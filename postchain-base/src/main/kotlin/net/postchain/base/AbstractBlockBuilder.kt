@@ -7,6 +7,7 @@ import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.core.ValidationResult.Result.OK
 import net.postchain.core.ValidationResult.Result.PREV_BLOCK_MISMATCH
+import net.postchain.gtv.Gtv
 
 /**
  * This class includes the bare minimum functionality required by a real block builder
@@ -25,7 +26,7 @@ abstract class AbstractBlockBuilder(
         val blockchainRID: BlockchainRid,
         val store: BlockStore,
         val txFactory: TransactionFactory
-) : BlockBuilder {
+) : BlockBuilder, TxEventSink {
 
     // functions which need to be implemented in a concrete BlockBuilder:
     abstract fun makeBlockHeader(): BlockHeader
@@ -60,7 +61,9 @@ abstract class AbstractBlockBuilder(
                 initialBlockData.height,
                 initialBlockData.blockIID,
                 initialBlockData.timestamp,
-                blockchainDependencies!!.extractChainIdToHeightMap())
+                blockchainDependencies!!.extractChainIdToHeightMap(),
+                this
+        )
         buildingNewBlock = partialBlockHeader != null
     }
 
@@ -93,6 +96,7 @@ abstract class AbstractBlockBuilder(
         // In case of errors, tx.apply may either return false or throw UserMistake
         TimeLog.startSum("AbstractBlockBuilder.appendTransaction().apply")
         if (tx.apply(txctx)) {
+            txctx.done()
             transactions.add(tx)
             rawTransactions.add(tx.getRawData())
         } else {
