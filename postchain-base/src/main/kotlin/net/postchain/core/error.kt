@@ -4,17 +4,19 @@ package net.postchain.core
 
 open class ProgrammerMistake(message: String, cause: Exception? = null) : RuntimeException(message, cause)
 
+open class PmEngineIsAlreadyClosed(message: String, cause: Exception? = null) : ProgrammerMistake(message, cause)
+
 open class UserMistake(message: String, cause: Exception? = null) : RuntimeException(message, cause)
 
 /**
  * Used when the format of some data is incorrect, see [BadDataType] for examples
  */
-open class BadDataMistake(val type: BadDataType, message: String, cause: Exception? = null): RuntimeException(message, cause) {
+open class BadDataMistake(val type: BadDataType, message: String, cause: Exception? = null) : RuntimeException(message, cause) {
     override val message: String?
         get() = "$type: ${super.message}"
 }
 
-class BlockValidationMistake(message: String, cause: Exception? = null): BadDataMistake(BadDataType.BAD_BLOCK, message, cause)
+class BlockValidationMistake(message: String, cause: Exception? = null) : BadDataMistake(BadDataType.BAD_BLOCK, message, cause)
 
 enum class BadDataType(val type: Int) {
     BAD_GTV(1), // Something wrong on GTV level, for example GtvDictionary is broken.

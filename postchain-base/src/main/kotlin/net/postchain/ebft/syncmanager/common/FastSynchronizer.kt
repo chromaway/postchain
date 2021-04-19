@@ -202,7 +202,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
         val timeout = System.currentTimeMillis() + params.exitDelay
         trace("exitDelay: ${params.exitDelay}")
         syncUntil {
-            val syncableCount = peerStatuses.getSyncable(blockHeight+1).intersect(configuredPeers).size
+            val syncableCount = peerStatuses.getSyncable(blockHeight + 1).intersect(configuredPeers).size
             timeout < System.currentTimeMillis() && syncableCount == 0 && blockHeight >= params.mustSyncUntilHeight
         }
     }
@@ -252,6 +252,12 @@ class FastSynchronizer(private val workerContext: WorkerContext,
             j.witness = null
             lastJob = j
         } else {
+            if (exception is PmEngineIsAlreadyClosed) {
+                trace("Add block failed for job $j because Db Engine is already closed.")
+                removeJob(j)
+                return
+            }
+
             if (exception is BadDataMistake && exception.type == BadDataType.PREV_BLOCK_MISMATCH) {
                 // If we can't connect block, then either
                 // previous block is bad or this block is bad. Unfortunately,
@@ -274,7 +280,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
             // not by us).
             val bestHeight = blockQueries.getBestHeight().get()
             if (bestHeight >= j.height) {
-                trace("Add block failed for job ${j} because block already in db.")
+                trace("Add block failed for job $j because block already in db.")
                 blockHeight++ // as if this block was successful.
                 removeJob(j)
                 return
@@ -566,7 +572,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
                     is BlockHeaderMessage -> handleBlockHeader(peerId, message.header, message.witness, message.requestedHeight)
                     is UnfinishedBlock -> handleUnfinishedBlock(peerId, message.header, message.transactions)
                     is CompleteBlock -> handleCompleteBlock(peerId, message.data, message.height, message.witness)
-                    is Status -> peerStatuses.statusReceived(peerId, message.height-1)
+                    is Status -> peerStatuses.statusReceived(peerId, message.height - 1)
                     else -> trace("Unhandled type ${message} from peer $peerId")
                 }
             } catch (e: Exception) {

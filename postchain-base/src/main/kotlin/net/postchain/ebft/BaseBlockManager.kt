@@ -7,6 +7,7 @@ import net.postchain.common.toHex
 import net.postchain.core.BlockBuildingStrategy
 import net.postchain.core.BlockData
 import net.postchain.core.BlockDataWithWitness
+import net.postchain.core.PmEngineIsAlreadyClosed
 import net.postchain.debug.BlockchainProcessName
 import nl.komponents.kovenant.Promise
 
@@ -22,6 +23,7 @@ class BaseBlockManager(
 
     @Volatile
     var processing = false
+
     @Volatile
     var intent: BlockIntent = DoNothingIntent
 
@@ -63,8 +65,13 @@ class BaseBlockManager(
                         currentBlock = block
                     }
                 }, { exception ->
-                    logger.error("$processName: Can't parse unfinished block ${theIntent.blockRID.toHex()}: " +
-                            "${exception.message}")
+                    val msg = "$processName: Can't load unfinished block ${theIntent.blockRID.toHex()}: " +
+                            "${exception.message}"
+                    if (exception is PmEngineIsAlreadyClosed) {
+                        logger.debug(msg)
+                    } else {
+                        logger.error(msg)
+                    }
                 })
             }
         }
@@ -81,8 +88,13 @@ class BaseBlockManager(
                         currentBlock = null
                     }
                 }, { exception ->
-                    logger.error("$processName: Can't parse received block ${block.header.blockRID.toHex()} " +
-                            "at height $height: ${exception.message}")
+                    val msg = "$processName: Can't add received block ${block.header.blockRID.toHex()} " +
+                            "at height $height: ${exception.message}"
+                    if (exception is PmEngineIsAlreadyClosed) {
+                        logger.debug(msg)
+                    } else {
+                        logger.error(msg)
+                    }
                 })
             }
         }
@@ -131,8 +143,12 @@ class BaseBlockManager(
                         currentBlock = block
                     }
                 }, { exception ->
-                    // TODO: POS-111: Put `blockRID` to log message
-                    logger.error("$processName: Can't build block _____: ${exception.message}")
+                    val msg = "$processName: Can't build block at height ${statusManager.myStatus.height + 1}: ${exception.message}"
+                    if (exception is PmEngineIsAlreadyClosed) {
+                        logger.debug(msg)
+                    } else {
+                        logger.error(msg)
+                    }
                 })
             }
 

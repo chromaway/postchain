@@ -71,7 +71,7 @@ open class BaseBlockchainEngine(
 
     private fun makeBlockBuilder(): ManagedBlockBuilder {
         if (!initialized) throw ProgrammerMistake("Engine is not initialized yet")
-        if (closed) throw ProgrammerMistake("Engine is already closed")
+        if (closed) throw PmEngineIsAlreadyClosed("Engine is already closed")
         val eContext = storage.openWriteConnection(chainID) // TODO: Close eContext
 
         return BaseManagedBlockBuilder(eContext, storage, blockchainConfiguration.makeBlockBuilder(eContext), { },
