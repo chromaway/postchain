@@ -60,14 +60,23 @@ class DefaultXConnectionManager<PacketType>(
         }
 
         if (isShutDown) throw ProgrammerMistake("Already shut down")
+
+
         val chainID = peerConfig.chainID
         var ok = true
         if (chainID in chains) {
+            throw ProgrammerMistake("Chain is already connected ${chainID}")
+            /*
             disconnectChain(chainID, loggingPrefix)
             ok = false
+             */
+        }
+        val blockchainRid = peerConfig.blockchainRID
+        if (blockchainRid in chainIDforBlockchainRID) {
+            throw ProgrammerMistake("Chain is already connected ${peerConfig.blockchainRID}")
         }
         chains[peerConfig.chainID] = Chain(peerConfig, autoConnectAll)
-        chainIDforBlockchainRID[peerConfig.blockchainRID] = peerConfig.chainID
+        chainIDforBlockchainRID[blockchainRid] = peerConfig.chainID
 
         // We used to create the connector at object init. But a
         // problem with initiating the connector before connecting all chains

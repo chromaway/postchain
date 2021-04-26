@@ -28,7 +28,11 @@ class DefaultXCommunicationManager<PacketType>(
 
     private var inboundPackets = mutableListOf<Pair<XPeerID, PacketType>>()
 
+    var connected = false
+
+    @Synchronized
     override fun init() {
+        if (connected) return
         val peerConfig = XChainPeerConfiguration(
                 chainID,
                 blockchainRID,
@@ -37,6 +41,7 @@ class DefaultXCommunicationManager<PacketType>(
         )
 
         connectionManager.connectChain(peerConfig, true) { processName.toString() }
+        connected = true
     }
 
     @Synchronized
@@ -78,8 +83,11 @@ class DefaultXCommunicationManager<PacketType>(
         }
     }
 
+    @Synchronized
     override fun shutdown() {
+        if (!connected) return
         connectionManager.disconnectChain(chainID) { processName.toString() }
+        connected = false
     }
 
     private fun decodeAndEnqueue(peerID: XPeerID, packet: ByteArray) {
