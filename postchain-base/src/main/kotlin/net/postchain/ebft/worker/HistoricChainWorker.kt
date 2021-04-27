@@ -16,6 +16,7 @@ import net.postchain.ebft.BlockDatabase
 import net.postchain.ebft.syncmanager.common.FastSyncParameters
 import net.postchain.ebft.syncmanager.common.FastSynchronizer
 import nl.komponents.kovenant.Promise
+import java.lang.Thread.sleep
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
@@ -65,9 +66,13 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                 chainsToSyncFrom.addAll(historicBlockchain.aliases.keys)
 
                 while (!shutdown.get()) {
+                    val bestHeightSoFar = engine.getBlockQueries().getBestHeight().get()
+                    logger.debug("Historic sync bc ${myBRID}, height: ${bestHeightSoFar}")
+
                     // try local sync first
                     for (brid in chainsToSyncFrom) {
                         if (shutdown.get()) break
+                        if (brid == myBRID) continue
                         copyBlocksLocally(brid, blockDatabase)
                     }
 
@@ -75,6 +80,7 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                     for (brid in chainsToSyncFrom) {
                         if (shutdown.get()) break
                         if (brid == myBRID) {
+                            logger.debug("Historic sync: try network sync using own BRID")
                             // using our own BRID
                             workerContext.communicationManager.init()
                             fastSynchronizer.syncUntilResponsiveNodesDrained()
@@ -85,6 +91,7 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                             }
                             if (localChainID == null) {
                                 // we try syncing over network iff chain is not locally present
+                                logger.debug("Historic sync: try network sync using historic BRID")
                                 try {
                                     val historicWorkerContext = historicBlockchain.contextCreator(brid)
                                     historicSynchronizer = FastSynchronizer(historicWorkerContext, blockDatabase, params)
@@ -95,7 +102,9 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                                 }
                             }
                         }
+                        sleep(2000)
                     }
+                    sleep(2000)
                 }
             } catch (e: Exception) {
                 logger.error(e) { "Error syncing forkchain" }
@@ -130,7 +139,6 @@ class HistoricChainWorker(val workerContext: WorkerContext,
         }
         if (localChainID == null) return // can't sync locally
         logger.debug("Cross syncing locally from blockchain ${historicBlockchain.historicBrid}")
-
 
         val fromCtx = storage.openReadConnection(localChainID)
         val fromBstore = BaseBlockStore()

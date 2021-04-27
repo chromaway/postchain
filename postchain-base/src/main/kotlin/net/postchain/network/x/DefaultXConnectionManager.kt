@@ -63,13 +63,8 @@ class DefaultXConnectionManager<PacketType>(
 
 
         val chainID = peerConfig.chainID
-        var ok = true
         if (chainID in chains) {
             throw ProgrammerMistake("Chain is already connected ${chainID}")
-            /*
-            disconnectChain(chainID, loggingPrefix)
-            ok = false
-             */
         }
         val blockchainRid = peerConfig.blockchainRID
         if (blockchainRid in chainIDforBlockchainRID) {
@@ -99,8 +94,6 @@ class DefaultXConnectionManager<PacketType>(
             val commConf = peerConfig.commConfiguration
             peersConnectionStrategy.connectAll(chainID, commConf.networkNodes.getPeerIds())
         }
-
-        if (!ok) throw ProgrammerMistake("Error: multiple connections to for one chain")
 
         logger.debug { "${logger(peerConfig)}: Chain connected: ${peerConfig.chainID}" }
     }
@@ -175,6 +168,7 @@ class DefaultXConnectionManager<PacketType>(
         // reconnect in onPeerDisconnected()
         val chain = chains.remove(chainID)
         if (chain != null) {
+            chainIDforBlockchainRID.remove(chain.peerConfig.blockchainRID)
             chain.connections.forEach { (_, conn) ->
                 conn.close()
             }

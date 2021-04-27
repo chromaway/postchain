@@ -23,6 +23,9 @@
         -->
         <string>net.postchain.devtools.testinfra.TestBlockchainConfigurationFactory</string>
     </entry>
+    <entry key="tag">
+        <string>broken bruised forgotten sore</string>
+    </entry>
     <entry key="signers">
         <array>
             <!-- Key0 -->
