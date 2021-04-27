@@ -141,7 +141,7 @@ class ForkTestNightly : ManagedModeTest() {
         buildBlock(c1, 17)
         awaitHeight(c2_15, 17)
         awaitHeight(c3, 17)
-        val c2_19 = addBlockchainConfiguration(c2_15, 19, setOf(2), setOf(1), null)
+        val c2_19 = addBlockchainConfiguration(c2_15, 19, setOf(2), setOf(0, 1), null)
         val c3_19 = addBlockchainConfiguration(c3, 19, setOf(2), setOf(0), c2_19.chain)
         buildBlock(c1, 20)
         awaitChainRestarted(c2_19, 18)
