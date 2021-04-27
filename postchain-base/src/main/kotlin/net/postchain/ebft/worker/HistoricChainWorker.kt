@@ -102,9 +102,9 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                                 }
                             }
                         }
-                        sleep(2000)
+                        sleep(1000)
                     }
-                    sleep(2000)
+                    sleep(1000)
                 }
             } catch (e: Exception) {
                 logger.error(e) { "Error syncing forkchain" }

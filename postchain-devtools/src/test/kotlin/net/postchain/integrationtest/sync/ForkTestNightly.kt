@@ -6,6 +6,7 @@ import net.postchain.devtools.currentHeight
 import net.postchain.network.x.XPeerID
 import org.apache.commons.configuration2.Configuration
 import org.junit.Assert
+import org.junit.Ignore
 import org.junit.Test
 import java.lang.Thread.sleep
 import kotlin.test.assertEquals
@@ -129,7 +130,7 @@ class ForkTestNightly : ManagedModeTest() {
         assertCantBuildBlock(c2, 11)
     }
 
-    @Test
+    @Test @Ignore
     fun testRecursiveFork() {
         val (c1, c2) = makeFork()
         val c2_15 = addBlockchainConfiguration(c2, 15, setOf(0), setOf(1), c1.chain)
