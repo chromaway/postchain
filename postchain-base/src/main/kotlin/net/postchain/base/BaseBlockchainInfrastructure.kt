@@ -91,8 +91,8 @@ open class BaseBlockchainInfrastructure(
     }
 
     override fun makeBlockchainProcess(processName: BlockchainProcessName, engine: BlockchainEngine,
-                                       historicBlockchain: HistoricBlockchain?): BlockchainProcess {
-        return synchronizationInfrastructure.makeBlockchainProcess(processName, engine, historicBlockchain)
+                                       historicBlockchainContext: HistoricBlockchainContext?): BlockchainProcess {
+        return synchronizationInfrastructure.makeBlockchainProcess(processName, engine, historicBlockchainContext)
                 .also(apiInfrastructure::connectProcess)
     }
 

@@ -130,7 +130,7 @@ class ForkTestNightly : ManagedModeTest() {
         assertCantBuildBlock(c2, 11)
     }
 
-    @Test @Ignore
+    @Test
     fun testRecursiveFork() {
         val (c1, c2) = makeFork()
         val c2_15 = addBlockchainConfiguration(c2, 15, setOf(0), setOf(1), c1.chain)

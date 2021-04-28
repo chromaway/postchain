@@ -100,22 +100,11 @@ open class BaseBlockchainProcessManager(
                         nodes to cross-fetch from. We'll also use sync-nodes.
                          */
 
-                        var histConf: HistoricBlockchain? = null
-                        if (blockchainConfig.effectiveBlockchainRID != blockchainConfig.blockchainRid) {
-                            val aliases = nodeConfig.blockchainAliases[blockchainConfig.effectiveBlockchainRID]
-                            histConf = HistoricBlockchain(blockchainConfig.effectiveBlockchainRID, aliases ?: emptyMap())
-                            val db = DatabaseAccess.of(eContext)
-                            val historicChainIid = db.getChainId(eContext, blockchainConfig.effectiveBlockchainRID)
-                            if (historicChainIid != null) {
-                                val histConfBytes = blockchainConfigProvider.getConfiguration(eContext, historicChainIid)
-                                if (histConfBytes != null) {
-                                    val historicBlockchainConfig = blockchainInfrastructure.makeBlockchainConfiguration(histConfBytes, eContext, NODE_ID_READ_ONLY, historicChainIid)
-                                    val historicBaseConfig = historicBlockchainConfig as BaseBlockchainConfiguration
-                                    val historicBlockQueries = historicBaseConfig.makeBlockQueries(storage)
-                                    histConf.historicBlockQueries = historicBlockQueries
-                                }
-                            }
-                        }
+                        val histConf: HistoricBlockchainContext? =
+                                if (blockchainConfig.effectiveBlockchainRID != blockchainConfig.blockchainRid) {
+                                    val aliases = nodeConfig.blockchainAliases[blockchainConfig.effectiveBlockchainRID]
+                                    HistoricBlockchainContext(blockchainConfig.effectiveBlockchainRID, aliases ?: emptyMap())
+                                } else null
 
                         blockchainProcesses[chainId] = blockchainInfrastructure.makeBlockchainProcess(processName, engine, histConf)
                         logger.debug { "$processName: BlockchainProcess has been launched: chainId: $chainId" }

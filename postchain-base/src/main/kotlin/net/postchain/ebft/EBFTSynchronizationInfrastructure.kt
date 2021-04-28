@@ -49,7 +49,7 @@ class EBFTSynchronizationInfrastructure(
     }
 
     override fun makeBlockchainProcess(processName: BlockchainProcessName, engine: BlockchainEngine,
-                                       historicBlockchain: HistoricBlockchain?): BlockchainProcess {
+                                       historicBlockchainContext: HistoricBlockchainContext?): BlockchainProcess {
         val blockchainConfig = engine.getConfiguration() as BaseBlockchainConfiguration // TODO: [et]: Resolve type cast
         val unregisterBlockchainDiagnosticData: () -> Unit = {
             blockchainProcessesDiagnosticData.remove(blockchainConfig.blockchainRid)
@@ -77,13 +77,13 @@ class EBFTSynchronizationInfrastructure(
         3 Sync from FB until drained or timeout
         4 Goto 2
         */
-        return if (historicBlockchain != null) {
-            historicBlockchain.contextCreator = {
-                val historicPeerCommConfiguration = if (it == historicBlockchain.historicBrid) {
-                    buildPeerCommConfiguration(nodeConfig, blockchainConfig, historicBlockchain)
+        return if (historicBlockchainContext != null) {
+            historicBlockchainContext.contextCreator = {
+                val historicPeerCommConfiguration = if (it == historicBlockchainContext.historicBrid) {
+                    buildPeerCommConfiguration(nodeConfig, blockchainConfig, historicBlockchainContext)
                 } else {
                     // It's an alias brid for historicBrid
-                    buildPeerCommConfigurationForAlias(nodeConfig, historicBlockchain, it)
+                    buildPeerCommConfigurationForAlias(nodeConfig, historicBlockchainContext, it)
                 }
                 val histCommManager = buildXCommunicationManager(processName, blockchainConfig, historicPeerCommConfiguration, it)
 
@@ -92,7 +92,7 @@ class EBFTSynchronizationInfrastructure(
                         nodeConfig, unregisterBlockchainDiagnosticData)
 
             }
-            HistoricChainWorker(workerContext, historicBlockchain)
+            HistoricChainWorker(workerContext, historicBlockchainContext)
         } else if (blockchainConfig.configData.context.nodeID != NODE_ID_READ_ONLY) {
             registerBlockchainDiagnosticData(blockchainConfig.blockchainRid, DpNodeType.NODE_TYPE_VALIDATOR)
             ValidatorWorker(workerContext)
@@ -134,9 +134,9 @@ class EBFTSynchronizationInfrastructure(
         ).apply { init() }
     }
 
-    private fun buildPeerCommConfigurationForAlias(nodeConfig: NodeConfig, historicBlockchain: HistoricBlockchain, aliasBrid: BlockchainRid): PeerCommConfiguration {
+    private fun buildPeerCommConfigurationForAlias(nodeConfig: NodeConfig, historicBlockchainContext: HistoricBlockchainContext, aliasBrid: BlockchainRid): PeerCommConfiguration {
         val myPeerID = XPeerID(nodeConfig.pubKeyByteArray)
-        val peersThatServeAliasBrid = historicBlockchain.aliases[aliasBrid]!!
+        val peersThatServeAliasBrid = historicBlockchainContext.aliases[aliasBrid]!!
 
         val relevantPeerMap = nodeConfig.peerInfoMap.filterKeys {
             it in peersThatServeAliasBrid || it == myPeerID
@@ -149,14 +149,14 @@ class EBFTSynchronizationInfrastructure(
                 nodeConfig.pubKeyByteArray)
     }
 
-    private fun buildPeerCommConfiguration(nodeConfig: NodeConfig, blockchainConfig: BaseBlockchainConfiguration, historicBlockchain: HistoricBlockchain? = null): PeerCommConfiguration {
+    private fun buildPeerCommConfiguration(nodeConfig: NodeConfig, blockchainConfig: BaseBlockchainConfiguration, historicBlockchainContext: HistoricBlockchainContext? = null): PeerCommConfiguration {
         val myPeerID = XPeerID(nodeConfig.pubKeyByteArray)
         val signers = blockchainConfig.signers.map { XPeerID(it) }
         val signersReplicas = signers.flatMap {
             nodeConfig.nodeReplicas[it] ?: listOf()
         }
-        val blockchainReplicas = if (historicBlockchain != null) {
-            (nodeConfig.blockchainReplicaNodes[historicBlockchain.historicBrid] ?: listOf()).union(
+        val blockchainReplicas = if (historicBlockchainContext != null) {
+            (nodeConfig.blockchainReplicaNodes[historicBlockchainContext.historicBrid] ?: listOf()).union(
                     nodeConfig.blockchainReplicaNodes[blockchainConfig.blockchainRid] ?: listOf())
         } else {
             nodeConfig.blockchainReplicaNodes[blockchainConfig.blockchainRid] ?: listOf()

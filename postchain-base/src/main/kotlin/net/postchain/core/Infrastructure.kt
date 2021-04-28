@@ -2,7 +2,7 @@
 
 package net.postchain.core
 
-import net.postchain.base.HistoricBlockchain
+import net.postchain.base.HistoricBlockchainContext
 import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.debug.BlockchainProcessName
@@ -13,7 +13,7 @@ interface SynchronizationInfrastructure : Shutdownable {
     fun makeBlockchainProcess(
             processName: BlockchainProcessName,
             engine: BlockchainEngine,
-            historicBlockchain: HistoricBlockchain? = null
+            historicBlockchainContext: HistoricBlockchainContext? = null
     ): BlockchainProcess
 
 }

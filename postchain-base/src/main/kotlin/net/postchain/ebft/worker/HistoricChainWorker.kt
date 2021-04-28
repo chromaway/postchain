@@ -5,11 +5,10 @@ package net.postchain.ebft.worker
 import mu.KLogging
 import net.postchain.base.BaseBlockchainEngine
 import net.postchain.base.BlockchainRid
-import net.postchain.base.HistoricBlockchain
+import net.postchain.base.HistoricBlockchainContext
 import net.postchain.base.data.BaseBlockStore
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.base.withReadConnection
-import net.postchain.common.toHex
 import net.postchain.core.*
 import net.postchain.ebft.BaseBlockDatabase
 import net.postchain.ebft.BlockDatabase
@@ -34,7 +33,7 @@ import kotlin.concurrent.thread
  *
  */
 class HistoricChainWorker(val workerContext: WorkerContext,
-                          val historicBlockchain: HistoricBlockchain) : BlockchainProcess {
+                          val historicBlockchainContext: HistoricBlockchainContext) : BlockchainProcess {
 
     override fun getEngine() = workerContext.engine
 
@@ -61,9 +60,9 @@ class HistoricChainWorker(val workerContext: WorkerContext,
             try {
                 val chainsToSyncFrom = mutableListOf(
                         myBRID,
-                        historicBlockchain.historicBrid
+                        historicBlockchainContext.historicBrid
                 )
-                chainsToSyncFrom.addAll(historicBlockchain.aliases.keys)
+                chainsToSyncFrom.addAll(historicBlockchainContext.aliases.keys)
 
                 while (!shutdown.get()) {
                     val bestHeightSoFar = engine.getBlockQueries().getBestHeight().get()
@@ -93,7 +92,7 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                                 // we try syncing over network iff chain is not locally present
                                 logger.debug("Historic sync: try network sync using historic BRID")
                                 try {
-                                    val historicWorkerContext = historicBlockchain.contextCreator(brid)
+                                    val historicWorkerContext = historicBlockchainContext.contextCreator(brid)
                                     historicSynchronizer = FastSynchronizer(historicWorkerContext, blockDatabase, params)
                                     historicSynchronizer!!.syncUntilResponsiveNodesDrained()
                                     historicWorkerContext.communicationManager.shutdown()
@@ -138,7 +137,7 @@ class HistoricChainWorker(val workerContext: WorkerContext,
             DatabaseAccess.of(it).getChainId(it, brid)
         }
         if (localChainID == null) return // can't sync locally
-        logger.debug("Cross syncing locally from blockchain ${historicBlockchain.historicBrid}")
+        logger.debug("Cross syncing locally from blockchain ${historicBlockchainContext.historicBrid}")
 
         val fromCtx = storage.openReadConnection(localChainID)
         val fromBstore = BaseBlockStore()
@@ -162,7 +161,7 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                     val historicBlock = getBlockFromStore(fromBstore, fromCtx, heightToCopy)
                     if (historicBlock == null) {
                         // TODO: better message
-                        logger.debug("Done cross syncing ... blocks locally from blockchain ${historicBlockchain.historicBrid}")
+                        logger.debug("Done cross syncing ... blocks locally from blockchain ${historicBlockchainContext.historicBrid}")
                         break
                     }
                     pendingPromise = newBlockDatabase.addBlock(historicBlock)
