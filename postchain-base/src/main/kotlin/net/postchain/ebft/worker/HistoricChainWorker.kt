@@ -78,29 +78,7 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                     // try syncing via network
                     for (brid in chainsToSyncFrom) {
                         if (shutdown.get()) break
-                        if (brid == myBRID) {
-                            logger.debug("Historic sync: try network sync using own BRID")
-                            // using our own BRID
-                            workerContext.communicationManager.init()
-                            fastSynchronizer.syncUntilResponsiveNodesDrained()
-                            workerContext.communicationManager.shutdown()
-                        } else {
-                            val localChainID = withReadConnection(storage, -1) {
-                                bs.getChainId(it, brid)
-                            }
-                            if (localChainID == null) {
-                                // we try syncing over network iff chain is not locally present
-                                logger.debug("Historic sync: try network sync using historic BRID")
-                                try {
-                                    val historicWorkerContext = historicBlockchainContext.contextCreator(brid)
-                                    historicSynchronizer = FastSynchronizer(historicWorkerContext, blockDatabase, params)
-                                    historicSynchronizer!!.syncUntilResponsiveNodesDrained()
-                                    historicWorkerContext.communicationManager.shutdown()
-                                } catch (e: Exception) {
-                                    logger.error(e) { "Exception while attempting remote sync" }
-                                }
-                            }
-                        }
+                        copyBlocksNetwork(brid, myBRID, blockDatabase, params)
                         sleep(1000)
                     }
                     sleep(1000)
@@ -110,6 +88,52 @@ class HistoricChainWorker(val workerContext: WorkerContext,
             } finally {
                 blockDatabase.stop()
                 done.countDown()
+            }
+        }
+    }
+
+    /**
+     * When network sync begins our starting point is the height where we left off
+     * after copying blocks from our local DB.
+     */
+    private fun copyBlocksNetwork(
+            brid: BlockchainRid, // the BC we are trying to pull blocks from
+            myBRID: BlockchainRid, // our BC
+            blockDatabase: BlockDatabase,
+            params: FastSyncParameters) {
+
+        if (brid == myBRID) {
+            logger.debug("Historic sync: try network sync using own BRID")
+            // using our own BRID
+            workerContext.communicationManager.init()
+            fastSynchronizer.syncUntilResponsiveNodesDrained()
+            workerContext.communicationManager.shutdown()
+        } else {
+            val localChainID = getLocalChainId(brid)
+            if (localChainID == null) {
+                // we ONLY try syncing over network iff chain is not locally present
+                // Reason for this is a bit complicated:
+                //
+                // TODO: When chain2 is started it migth fail because 0x02 is already
+                // associated in conman to chain3.
+                // So two ways to deal with this:
+                // 1. eliminate race using mutexes and such
+                // 2. create a new flag to make connection pre-emptible, so e.g.
+                // chain3 can connect but if it's pre-emptible conman can disconnect it once chain2 can connect. we also need to make sure that fastsynchronizer understands disconnects.
+                //
+                //TL;DR: we can make it nicer at expense of higher complexity. "BRID is in DB thus we avoid this" is very simple rule.
+                // Option 3: teach procman to distinguish restart from shutdown, e.g. keep a set of chainID which are "potentially will be launched soon".
+                //Then we can ask procman if it's something to be concerned about.
+
+                logger.debug("Historic sync: try network sync using historic BRID since chainId $localChainID is new" )
+                try {
+                    val historicWorkerContext = historicBlockchainContext.contextCreator(brid)
+                    historicSynchronizer = FastSynchronizer(historicWorkerContext, blockDatabase, params)
+                    historicSynchronizer!!.syncUntilResponsiveNodesDrained()
+                    historicWorkerContext.communicationManager.shutdown()
+                } catch (e: Exception) {
+                    logger.error(e) { "Exception while attempting remote sync" }
+                }
             }
         }
     }
@@ -132,46 +156,64 @@ class HistoricChainWorker(val workerContext: WorkerContext,
         }
     }
 
-    private fun copyBlocksLocally(brid: BlockchainRid, newBlockDatabase: BlockDatabase) {
-        val localChainID = withReadConnection(storage, -1) {
+    private fun getLocalChainId(brid: BlockchainRid): Long? {
+        return withReadConnection(storage, -1) {
             DatabaseAccess.of(it).getChainId(it, brid)
         }
+    }
+
+    private fun copyBlocksLocally(brid: BlockchainRid, newBlockDatabase: BlockDatabase) {
+        val localChainID = getLocalChainId(brid)
         if (localChainID == null) return // can't sync locally
         logger.debug("Cross syncing locally from blockchain ${historicBlockchainContext.historicBrid}")
 
         val fromCtx = storage.openReadConnection(localChainID)
         val fromBstore = BaseBlockStore()
+        var heightToCopy: Long = -2L
+        var lastHeight: Long = -2L
         try {
-            val lastHeight = fromBstore.getLastBlockHeight(fromCtx)
+            lastHeight = fromBstore.getLastBlockHeight(fromCtx)
             if (lastHeight == -1L) return // no block = nothing to do
             val ourHeight = getEngine().getBlockQueries().getBestHeight().get()
             if (lastHeight > ourHeight) {
                 if (ourHeight > -1L) {
-                    val historictBRID = BlockchainRid(fromBstore.getBlockRID(fromCtx, ourHeight)!!)
-                    val ourLastBRID = BlockchainRid(getEngine().getBlockQueries().getBlockRid(ourHeight).get()!!)
-                    if (historictBRID != ourLastBRID) {
-                        throw BadDataMistake(BadDataType.OTHER,
-                                "Historic blockchain and fork chain disagree on block RID at height" +
-                                        "${ourHeight}. Historic: $historictBRID, fork: ${ourLastBRID}")
-                    }
+                    // Just a verification of Block RID being the same
+                    verifyBlockAtHeightIsTheSame(fromBstore, fromCtx, ourHeight)
                 }
-                var heightToCopy = ourHeight + 1
+                heightToCopy = ourHeight + 1
                 var pendingPromise: Promise<Unit, java.lang.Exception>? = null
                 while (!shutdown.get()) {
                     val historicBlock = getBlockFromStore(fromBstore, fromCtx, heightToCopy)
                     if (historicBlock == null) {
-                        // TODO: better message
-                        logger.debug("Done cross syncing ... blocks locally from blockchain ${historicBlockchainContext.historicBrid}")
+                        logger.debug("Done cross syncing height: $heightToCopy locally from blockchain ${historicBlockchainContext.historicBrid}")
                         break
                     }
                     pendingPromise = newBlockDatabase.addBlock(historicBlock)
+                    if (pendingPromise != null) pendingPromise.get() // wait pending block
                     heightToCopy += 1
                 }
                 if (pendingPromise != null) pendingPromise.get() // wait pending block
             }
 
         } finally {
+            logger.debug("Shutdown cross syncing, lastHeight: $lastHeight , got to height: $heightToCopy blocks locally from blockchain ${historicBlockchainContext.historicBrid}")
             storage.closeReadConnection(fromCtx)
+        }
+    }
+
+    /**
+     * We don't want to proceed if our last block isn't the same as the one in the historic chain.
+     *
+     * NOTE: Here we are actually comparing Block RIDs but using the [BlockchainRid] type for convenience.
+     * TODO: Should we have a BlockRID type?
+     */
+    private fun verifyBlockAtHeightIsTheSame(fromBstore: BaseBlockStore, fromCtx: EContext, ourHeight: Long) {
+        val historictBlockRID = BlockchainRid(fromBstore.getBlockRID(fromCtx, ourHeight)!!)
+        val ourLastBlockRID = BlockchainRid(getEngine().getBlockQueries().getBlockRid(ourHeight).get()!!)
+        if (historictBlockRID != ourLastBlockRID) {
+            throw BadDataMistake(BadDataType.OTHER,
+                    "Historic blockchain and fork chain disagree on block RID at height" +
+                            "${ourHeight}. Historic: $historictBlockRID, fork: ${ourLastBlockRID}")
         }
     }
 

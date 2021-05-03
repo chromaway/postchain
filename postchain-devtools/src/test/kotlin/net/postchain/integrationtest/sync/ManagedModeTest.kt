@@ -24,6 +24,7 @@ import net.postchain.managed.ManagedEBFTInfrastructureFactory
 import net.postchain.managed.ManagedNodeDataSource
 import net.postchain.network.x.XPeerID
 import org.apache.commons.configuration2.Configuration
+import java.lang.IllegalStateException
 import java.lang.Thread.sleep
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.ConcurrentHashMap
@@ -95,6 +96,9 @@ open class ManagedModeTest : AbstractSyncTest() {
 
     fun setupDataSources(nodeSet: NodeSet) {
         for (i in 0 until nodeSet.size) {
+            if (!nodeSet.contains(i)) {
+                throw IllegalStateException("We don't have node nr: " + i)
+            }
             val dataSource = MockManagedNodeDataSource(i)
             mockDataSources.put(i, dataSource)
         }
@@ -110,7 +114,7 @@ open class ManagedModeTest : AbstractSyncTest() {
 
     protected fun awaitChainRunning(index: Int, chainId: Long, atLeastHeight: Long) {
         val pm = nodes[index].processManager as TestManagedBlockchainProcessManager
-        pm.awaitStarted(chainId, atLeastHeight)
+        pm.awaitStarted(index, chainId, atLeastHeight)
     }
 
     fun restartNodeClean(index: Int, nodeSet: NodeSet, atLeastHeight: Long) {
@@ -128,7 +132,9 @@ open class ManagedModeTest : AbstractSyncTest() {
     }
 
     fun awaitHeight(nodeSet: NodeSet, height: Long) {
+        System.out.println("========= AWAIT ALL NODES chain: " + nodeSet.chain + ", height: " + height)
         awaitHeight(nodeSet.nodes(), nodeSet.chain, height)
+        System.out.println("========= DONE AWAIT ALL NODES chain: " + nodeSet.chain + ", height: " + height)
     }
 
     fun assertCantBuildBlock(nodeSet: NodeSet, height: Long) {
@@ -246,6 +252,7 @@ class TestManagedBlockchainProcessManager(blockchainInfrastructure: BlockchainIn
         nodeDiagnosticContext) {
 
     private val blockchainStarts = ConcurrentHashMap<Long, BlockingQueue<Long>>()
+    val awaitDebugLog = true
 
     override fun buildChain0ManagedDataSource(): ManagedNodeDataSource {
         return dataSource
@@ -284,9 +291,39 @@ class TestManagedBlockchainProcessManager(blockchainInfrastructure: BlockchainIn
         return blockchainRid
     }
 
-    fun awaitStarted(chainId: Long, atLeastHeight: Long) {
+    fun awaitStarted(nodeIndex: Int, chainId: Long, atLeastHeight: Long) {
+        awaitDebug("++++++ AWAIT node idx: " + nodeIndex + ", chain: " + chainId + ", height: " + atLeastHeight)
+        var process = getProcess(nodeIndex, chainId, atLeastHeight)
+
         while (lastHeightStarted.get(chainId) ?: -2L < atLeastHeight) {
             sleep(10)
+            if (process.getEngine().isRunning()) {
+                val queries = process.getEngine().getBlockQueries()
+                val currentHeight = queries.getBestHeight().get()
+                awaitDebug("+++++++ Current height: " + currentHeight + " (node idx: " + nodeIndex + ", chain: " + chainId + ", height: " + atLeastHeight + ")")
+                lastHeightStarted[chainId] = currentHeight
+            } else {
+                awaitDebug("+++++++ Process down, get new process (node idx: " + nodeIndex + ", chain: " + chainId + ", height: " + atLeastHeight + ")")
+                process = getProcess(nodeIndex, chainId, atLeastHeight)
+            }
+        }
+        awaitDebug("++++++ WAIT OVER! node idx: " + nodeIndex + ", chain: " + chainId + ", height: " + atLeastHeight)
+    }
+
+    fun getProcess(nodeIndex: Int, chainId: Long, atLeastHeight: Long): BlockchainProcess {
+        var maybeProcess = blockchainProcesses[chainId]
+        while (maybeProcess == null) {
+            awaitDebug("+++++++ Cannot find the BC Process (for node idx: " + nodeIndex + " ,chain: " + chainId + ")")
+            sleep(10)
+            maybeProcess = blockchainProcesses[chainId]
+        }
+        awaitDebug("+++++++ HAVE BC PROCESS (chain: " + chainId + ")")
+        return maybeProcess!!
+    }
+
+    protected fun awaitDebug(dbg: String) {
+        if (awaitDebugLog) {
+            System.out.println(dbg)
         }
     }
 }

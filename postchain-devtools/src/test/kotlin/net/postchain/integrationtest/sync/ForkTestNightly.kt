@@ -208,6 +208,7 @@ class ForkTestNightly : ManagedModeTest() {
         // historicBrid) source for the blocks is unavailable
         nodes[1].shutdown()
         nodes[2].shutdown()
+        System.out.println("++++++++++++++ Begin ++++++++++++++")
 
         val c4 = chains[4]!!
         val c5 = startNewBlockchain(setOf(1), setOf(5), c1.chain, setOf(1, 2), false)

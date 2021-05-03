@@ -149,6 +149,15 @@ class EBFTSynchronizationInfrastructure(
                 nodeConfig.pubKeyByteArray)
     }
 
+    /**
+     * To calculate the [relevantPeerMap] we need to:
+     *
+     * 1. begin with the signers (from the BC config)
+     * 2. add all NODE replicas (from node config)
+     * 3. add BC replicas (from node config)
+     *
+     * TODO: Could getRelevantPeers() be a method inside [NodeConfig]?
+     */
     private fun buildPeerCommConfiguration(nodeConfig: NodeConfig, blockchainConfig: BaseBlockchainConfiguration, historicBlockchainContext: HistoricBlockchainContext? = null): PeerCommConfiguration {
         val myPeerID = XPeerID(nodeConfig.pubKeyByteArray)
         val signers = blockchainConfig.signers.map { XPeerID(it) }

@@ -33,6 +33,8 @@ open class BaseBlockchainEngine(
     private var closed = false
     private var restartHandler: RestartHandler = { false }
 
+    override fun isRunning() = !closed
+
     override fun initialize() {
         if (initialized) {
             throw ProgrammerMistake("Engine is already initialized")

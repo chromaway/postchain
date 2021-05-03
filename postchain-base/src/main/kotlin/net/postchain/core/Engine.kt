@@ -16,6 +16,7 @@ interface Synchronizable {
  * Blockchain engine used for building and adding new blocks
  */
 interface BlockchainEngine : Shutdownable {
+    fun isRunning(): Boolean
     fun initialize()
     fun setRestartHandler(restartHandler: RestartHandler)
 
