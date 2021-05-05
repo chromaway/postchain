@@ -4,6 +4,7 @@ package net.postchain.network.netty2
 
 import mu.KLogging
 import net.postchain.base.PeerInfo
+import net.postchain.base.peerId
 import net.postchain.network.XPacketDecoder
 import net.postchain.network.XPacketEncoder
 import net.postchain.network.x.XConnector
@@ -51,7 +52,7 @@ class NettyConnector<PacketType>(
                             eventReceiver.onPeerDisconnected(this)
                         })
             } catch (e: Exception) {
-                logger.error { e.message }
+                logger.error("Netty Connect Failed, ${peerConnectionDescriptor.loggingPrefix(peerInfo.peerId())}, with message: ${e.message}")
                 eventReceiver.onPeerDisconnected(this) // TODO: [et]: Maybe create different event receiver.
             }
         }

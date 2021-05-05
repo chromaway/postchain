@@ -170,6 +170,28 @@ class ForkTestNightly : ManagedModeTest() {
         assertEqualAtHeight(c2, c3, 10)
     }
 
+    /**
+     * This is a pretty brutal test, runs many nodes and chains.
+     * When reading logs you might find this map describing what chains run on what node useful:
+     *
+     * ------- ------- ------------- -----
+     *                  Signing       Replica
+     * NodeId  NodeHex  Chains        Chains
+     * ------- -------- ------------- -----
+     * 0       70       0
+     * 1       8F       1,2,3,4,(5?)
+     * 2       94       2,3,4,(5?)
+     * 3       5D       3,4,(5?)
+     * 4       D1       4,(5?)
+     * 5       68                     5 (replica at all heights)
+     * 6       E4
+     * ------- -------- ------------- -----
+     *
+     * NOTE:
+     * Node 1-5 are all signers for chain 5, but at different heights.
+     * Chain 5 is started after all the other chains have been built, so
+     * the actual test is to observe in chain 5 will manage to get blocks or not.
+     */
     @Test
     fun testAliasesManyLevels() {
         extraNodeProperties[5] = mapOf(
@@ -178,6 +200,7 @@ class ForkTestNightly : ManagedModeTest() {
 
         startManagedSystem(7, 0)
 
+        awaitDebug("++++++++++++++ Begin Alias Many Levels ++++++++++++++")
         val c1 = startNewBlockchain(setOf(1), setOf(), null)
         buildBlock(c1, 10)
         // Chain id is same as node id, for example node 3 is the final signer of chain 3
@@ -186,6 +209,7 @@ class ForkTestNightly : ManagedModeTest() {
             val c = startNewBlockchain(setOf(1), setOf(), c1.chain)
             chains[node] = c
             for (config in 2..node) {
+                // Node 4 will get chain 4, Node 3 will get chain 3,4, Node 2 will get all chains
                 val configHeight = 10L * (config-1)
                 val chainConfig = if (config == node) {
                     addBlockchainConfiguration(c, configHeight, setOf(config), setOf(), null)
@@ -208,7 +232,7 @@ class ForkTestNightly : ManagedModeTest() {
         // historicBrid) source for the blocks is unavailable
         nodes[1].shutdown()
         nodes[2].shutdown()
-        System.out.println("++++++++++++++ Begin ++++++++++++++")
+        awaitDebug("++++++++++++++ Begin Alias Many Levels ACTUAL test ++++++++++++++")
 
         val c4 = chains[4]!!
         val c5 = startNewBlockchain(setOf(1), setOf(5), c1.chain, setOf(1, 2), false)
@@ -266,7 +290,9 @@ class ForkTestNightly : ManagedModeTest() {
 
 
     private fun awaitChainRestarted(nodeSet: NodeSet, atLeastHeight: Long) {
+        awaitDebug("========= AWAIT ALL ${nodeSet.size} NODES RESTART chain:  ${nodeSet.chain}, at least height:  $atLeastHeight")
         nodeSet.all().forEach { awaitChainRunning(it, nodeSet.chain, atLeastHeight) }
+        awaitDebug("========= DONE WAITING ALL ${nodeSet.size} NODES RESTART chain:  ${nodeSet.chain}, at least height:  $atLeastHeight")
     }
 
     private fun makeFork(): Pair<NodeSet, NodeSet> {

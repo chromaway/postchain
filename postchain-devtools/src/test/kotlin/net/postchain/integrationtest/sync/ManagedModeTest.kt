@@ -132,9 +132,9 @@ open class ManagedModeTest : AbstractSyncTest() {
     }
 
     fun awaitHeight(nodeSet: NodeSet, height: Long) {
-        System.out.println("========= AWAIT ALL NODES chain: " + nodeSet.chain + ", height: " + height)
+        awaitDebug("========= AWAIT ALL ${nodeSet.size} NODES chain:  ${nodeSet.chain}, height:  $height")
         awaitHeight(nodeSet.nodes(), nodeSet.chain, height)
-        System.out.println("========= DONE AWAIT ALL NODES chain: " + nodeSet.chain + ", height: " + height)
+        awaitDebug("========= DONE AWAIT ALL ${nodeSet.size} NODES chain: ${nodeSet.chain}, height: $height")
     }
 
     fun assertCantBuildBlock(nodeSet: NodeSet, height: Long) {
@@ -252,7 +252,6 @@ class TestManagedBlockchainProcessManager(blockchainInfrastructure: BlockchainIn
         nodeDiagnosticContext) {
 
     private val blockchainStarts = ConcurrentHashMap<Long, BlockingQueue<Long>>()
-    val awaitDebugLog = true
 
     override fun buildChain0ManagedDataSource(): ManagedNodeDataSource {
         return dataSource
@@ -321,10 +320,16 @@ class TestManagedBlockchainProcessManager(blockchainInfrastructure: BlockchainIn
         return maybeProcess!!
     }
 
-    protected fun awaitDebug(dbg: String) {
-        if (awaitDebugLog) {
-            System.out.println(dbg)
-        }
+}
+
+val awaitDebugLog = false
+
+/**
+ * Sometimes we want to monitor how long we are waiting and WHAT we are weighting for, then we can turn on this flag.
+ */
+fun awaitDebug(dbg: String) {
+    if (awaitDebugLog) {
+        System.out.println(dbg)
     }
 }
 
@@ -434,6 +439,8 @@ class MockManagedNodeDataSource(val nodeIndex: Int) : ManagedNodeDataSource {
         val confs = bridToConfs.computeIfAbsent(rid) { sortedMapOf()}
         if (confs!!.put(height, conf) != null) {
             throw IllegalArgumentException("Setting blockchain configuraion for height that already has a configuration")
+        } else {
+            awaitDebug("### NEW BC CONFIG for chain: ${nodeSet.chain} (bc rid: ${rid.toShortHex()}) at height: $height")
         }
         chainToNodeSet.put(chainRidOf(nodeSet.chain), nodeSet)
     }

@@ -41,6 +41,17 @@ open class IntegrationTestSetup : AbstractIntegration() {
 
     companion object : KLogging()
 
+    val awaitDebugLog = false
+
+    /**
+     * Sometimes we want to monitor how long we are waiting and WHAT we are weighting for, then we can turn on this flag.
+     */
+    fun awaitDebug(dbg: String) {
+        if (awaitDebugLog) {
+            System.out.println(dbg)
+        }
+    }
+
     @After
     override fun tearDown() {
         try {
@@ -246,12 +257,18 @@ open class IntegrationTestSetup : AbstractIntegration() {
     }
 
     protected fun awaitHeight(chainId: Long, height: Long) {
+        awaitDebug("========= AWAIT ALL ${nodes.size} NODES chain:  $chainId, height:  $height (i)")
         awaitHeight(nodes, chainId, height)
+        awaitDebug("========= DONE AWAIT ALL ${nodes.size} NODES chain: $chainId, height: $height (i)")
     }
 
     protected fun awaitHeight(nodes: List<PostchainTestNode>, chainId: Long, height: Long) {
+        var idx = 1
         nodes.forEach {
+            awaitDebug("++++++ AWAIT node idx: $idx, chain: $chainId, height: $height (i)")
             it.awaitHeight(chainId, height)
+            awaitDebug("++++++ WAIT OVER node idx: $idx, chain: $chainId, height: $height (i)")
+            idx++
         }
     }
 
