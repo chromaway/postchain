@@ -277,7 +277,10 @@ class TestManagedBlockchainProcessManager(blockchainInfrastructure: BlockchainIn
         }
     }
 
+    // Marks the BC height directly after the last BC restart.
+    // (The ACTUAL BC height will often proceed beyond this height, but we don't track that here)
     var lastHeightStarted = ConcurrentHashMap<Long, Long>()
+
     override fun startBlockchain(chainId: Long): BlockchainRid? {
         val blockchainRid = super.startBlockchain(chainId)
         if (blockchainRid == null) {
@@ -290,36 +293,17 @@ class TestManagedBlockchainProcessManager(blockchainInfrastructure: BlockchainIn
         return blockchainRid
     }
 
+    /**
+     * The reason this works is because for every new configuration the BC will get restarted before the
+     * configuration can be used. Every time this happens the [lastHeightStarted] gets updated.
+     */
     fun awaitStarted(nodeIndex: Int, chainId: Long, atLeastHeight: Long) {
         awaitDebug("++++++ AWAIT node idx: " + nodeIndex + ", chain: " + chainId + ", height: " + atLeastHeight)
-        var process = getProcess(nodeIndex, chainId, atLeastHeight)
-
         while (lastHeightStarted.get(chainId) ?: -2L < atLeastHeight) {
             sleep(10)
-            if (process.getEngine().isRunning()) {
-                val queries = process.getEngine().getBlockQueries()
-                val currentHeight = queries.getBestHeight().get()
-                awaitDebug("+++++++ Current height: " + currentHeight + " (node idx: " + nodeIndex + ", chain: " + chainId + ", height: " + atLeastHeight + ")")
-                lastHeightStarted[chainId] = currentHeight
-            } else {
-                awaitDebug("+++++++ Process down, get new process (node idx: " + nodeIndex + ", chain: " + chainId + ", height: " + atLeastHeight + ")")
-                process = getProcess(nodeIndex, chainId, atLeastHeight)
-            }
         }
         awaitDebug("++++++ WAIT OVER! node idx: " + nodeIndex + ", chain: " + chainId + ", height: " + atLeastHeight)
     }
-
-    fun getProcess(nodeIndex: Int, chainId: Long, atLeastHeight: Long): BlockchainProcess {
-        var maybeProcess = blockchainProcesses[chainId]
-        while (maybeProcess == null) {
-            awaitDebug("+++++++ Cannot find the BC Process (for node idx: " + nodeIndex + " ,chain: " + chainId + ")")
-            sleep(10)
-            maybeProcess = blockchainProcesses[chainId]
-        }
-        awaitDebug("+++++++ HAVE BC PROCESS (chain: " + chainId + ")")
-        return maybeProcess!!
-    }
-
 }
 
 val awaitDebugLog = false

@@ -9,6 +9,7 @@ import net.postchain.core.Signature
 import net.postchain.ebft.*
 import net.postchain.ebft.message.*
 import net.postchain.ebft.message.BlockData
+import net.postchain.ebft.message.BlockHeader
 import net.postchain.ebft.message.Transaction
 import net.postchain.ebft.rest.contract.serialize
 import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockData
@@ -141,6 +142,11 @@ class ValidatorSyncManager(private val workerContext: WorkerContext,
                                 is GetUnfinishedBlock -> sendUnfinishedBlock(nodeIndex)
                                 is GetBlockSignature -> sendBlockSignature(nodeIndex, message.blockRID)
                                 is Transaction -> handleTransaction(nodeIndex, message)
+                                is BlockHeader -> {
+                                    // TODO: Harmless! This might happen because we've already extited FastSync but
+                                    // other nodes are still responding to our old requests. Is harmless since.
+                                }
+
 
                                 else -> throw ProgrammerMistake("Unhandled type ${message::class}")
                             }
