@@ -281,6 +281,13 @@ class TestManagedBlockchainProcessManager(blockchainInfrastructure: BlockchainIn
     // (The ACTUAL BC height will often proceed beyond this height, but we don't track that here)
     var lastHeightStarted = ConcurrentHashMap<Long, Long>()
 
+    /**
+     * Overriding the original startBlockchain() and adding extra logic for measuring restarts.
+     *
+     * (This method will run for for every new height where we have a new BC configuration,
+     * b/c the BC will get restarted before the configuration can be used.
+     * Every time this method runs the [lastHeightStarted] gets updated with the restart height.)
+     */
     override fun startBlockchain(chainId: Long): BlockchainRid? {
         val blockchainRid = super.startBlockchain(chainId)
         if (blockchainRid == null) {
@@ -294,8 +301,12 @@ class TestManagedBlockchainProcessManager(blockchainInfrastructure: BlockchainIn
     }
 
     /**
-     * The reason this works is because for every new configuration the BC will get restarted before the
-     * configuration can be used. Every time this happens the [lastHeightStarted] gets updated.
+     * Awaits a start/restart of a BC.
+     *
+     * @param nodeIndex the node we should wait for
+     * @param chainId the chain we should wait for
+     * @param atLeastHeight the height we should wait for. Note that this height MUST be a height where we have a
+     *           new BC configuration kicking in, because that's when the BC will be restarted.
      */
     fun awaitStarted(nodeIndex: Int, chainId: Long, atLeastHeight: Long) {
         awaitDebug("++++++ AWAIT node idx: " + nodeIndex + ", chain: " + chainId + ", height: " + atLeastHeight)

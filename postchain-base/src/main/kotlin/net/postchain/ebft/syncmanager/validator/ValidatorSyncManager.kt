@@ -143,8 +143,8 @@ class ValidatorSyncManager(private val workerContext: WorkerContext,
                                 is GetBlockSignature -> sendBlockSignature(nodeIndex, message.blockRID)
                                 is Transaction -> handleTransaction(nodeIndex, message)
                                 is BlockHeader -> {
-                                    // TODO: Harmless! This might happen because we've already extited FastSync but
-                                    // other nodes are still responding to our old requests. Is harmless since.
+                                    // TODO: This might happen because we've already exited FastSync but other nodes
+                                    //  are still responding to our old requests. For this case this is harmless.
                                 }
 
 
