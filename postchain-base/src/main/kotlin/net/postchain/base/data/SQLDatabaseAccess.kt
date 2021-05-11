@@ -298,11 +298,16 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
          * We need to know whether it exists or not in order to
          * make decisions on upgrade
          */
+        logger.info("Initialize database")
         if (tableExists(connection, tableMeta())) {
             // meta table already exists. Check the version
             val sql = "SELECT value FROM ${tableMeta()} WHERE key='version'"
             val version = queryRunner.query(connection, sql, ScalarHandler<String>()).toInt()
-            if (version != expectedDbVersion) {
+            if (version < expectedDbVersion) {
+                logger.info("Current version ${version} is lower than expectedVersion ${expectedDbVersion}")
+                queryRunner.update(connection, cmdCreateTableBlockchainReplicas())
+                queryRunner.update(connection, cmdCreateTableMustSyncUntil())
+            } else if (version != expectedDbVersion) {
                 throw UserMistake("Unexpected version '$version' in database. Expected '$expectedDbVersion'")
             }
 
