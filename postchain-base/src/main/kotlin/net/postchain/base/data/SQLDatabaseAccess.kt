@@ -307,6 +307,11 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
                 logger.info("Current version ${version} is lower than expectedVersion ${expectedDbVersion}")
                 queryRunner.update(connection, cmdCreateTableBlockchainReplicas())
                 queryRunner.update(connection, cmdCreateTableMustSyncUntil())
+
+                // need to update db version to latest
+                var sql = "UPDATE ${tableMeta()} set value = ? where key = 'version'"
+                queryRunner.update(connection, sql, expectedDbVersion)
+                logger.info("Database version has been update to version: ${expectedDbVersion}")
             } else if (version != expectedDbVersion) {
                 throw UserMistake("Unexpected version '$version' in database. Expected '$expectedDbVersion'")
             }
