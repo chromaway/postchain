@@ -298,7 +298,6 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
          * We need to know whether it exists or not in order to
          * make decisions on upgrade
          */
-        logger.info("Initialize database")
         if (tableExists(connection, tableMeta())) {
             // meta table already exists. Check the version
             val sql = "SELECT value FROM ${tableMeta()} WHERE key='version'"
