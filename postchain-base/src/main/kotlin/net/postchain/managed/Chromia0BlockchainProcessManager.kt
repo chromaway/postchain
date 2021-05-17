@@ -65,12 +65,12 @@ class Chromia0BlockchainProcessManager(
             return baseHandler
         else {
             return {
-                rhDebug("Begin", chainId, it)
+                rhTrace("Begin", chainId, it)
                 try {
                     anchorLastBlock(chainId)
-                    rhDebug("Anchored", chainId, it)
+                    rhTrace("Anchored", chainId, it)
                 } catch (e: Exception) {
-                    logger.error("Error when anchoring ${e.toString()}")
+                    logger.error("Error when anchoring $e", e)
                     e.printStackTrace()
                 }
                 baseHandler(it)
@@ -79,9 +79,9 @@ class Chromia0BlockchainProcessManager(
     }
 
     //  restartHandler()
-    private fun rhDebug(str: String, chainId: Long, bbDebug: BlockTrace?) {
-        if (logger.isDebugEnabled) {
-            logger.debug("[${nodeName()}]: RestartHandler CHROMIA 0 -- $str: chainId: $chainId, block causing handler to run: $bbDebug")
+    private fun rhTrace(str: String, chainId: Long, bTrace: BlockTrace?) {
+        if (logger.isTraceEnabled) {
+            logger.trace("[${nodeName()}]: RestartHandler CHROMIA 0 -- $str: chainId: $chainId, block causing handler to run: $bTrace")
         }
     }
 }

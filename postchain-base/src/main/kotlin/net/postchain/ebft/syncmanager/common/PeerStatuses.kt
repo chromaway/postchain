@@ -36,11 +36,13 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
      * height + 1). They also serve as a discovery mechanism, in which we become
      * aware of our neiborhood.
      */
-    private class KnownState(val params: FastSyncParameters) {
+    class KnownState(val params: FastSyncParameters): KLogging() {
         private enum class State {
             BLACKLISTED, UNRESPONSIVE, SYNCABLE, DRAINED
         }
+
         private var state = State.SYNCABLE
+
         /**
          * [maybeLegacy] and [confirmedModern] are transitional and should be
          * removed once most nodes have upgraded, because then
@@ -52,8 +54,21 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
         private var unresponsiveTime: Long = System.currentTimeMillis()
         private var drainedTime: Long = System.currentTimeMillis()
         private var drainedHeight: Long = -1
+        private var errorCount = 0
+        private var timeOfLastError: Long = 0
 
-        fun isBlacklisted() = state == State.BLACKLISTED
+        fun isBlacklisted() = isBlacklisted(System.currentTimeMillis())
+        fun isBlacklisted(now: Long): Boolean {
+            if (state == State.BLACKLISTED && (now > timeOfLastError + params.blacklistingTimeoutMs)) {
+                // Alex suggested that peers should be given new chances often
+                logger.debug("Peer timed out of blacklist")
+                this.state = State.SYNCABLE
+                this.timeOfLastError = 0
+                this.errorCount = 0
+            }
+
+            return state == State.BLACKLISTED
+        }
         fun isUnresponsive() = state == State.UNRESPONSIVE
         fun isMaybeLegacy() = !confirmedModern && maybeLegacy
         fun isConfirmedModern() = confirmedModern
@@ -79,10 +94,11 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
                 state = State.SYNCABLE
             }
         }
-        fun unresponsive() {
+        fun unresponsive(desc: String, now: Long) {
             if (this.state != State.UNRESPONSIVE) {
                 this.state = State.UNRESPONSIVE
-                unresponsiveTime = System.currentTimeMillis()
+                unresponsiveTime = now
+                logger.debug("Peer is UNRESPONSIVE: $desc")
             }
         }
         fun maybeLegacy(isLegacy: Boolean) {
@@ -94,8 +110,21 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
             this.confirmedModern = true
             this.maybeLegacy = false
         }
-        fun blacklist() {
-            this.state = State.BLACKLISTED
+
+        fun blacklist(desc: String, now: Long) {
+            if (this.state != State.BLACKLISTED) {
+                errorCount++
+                if (errorCount >= params.maxErrorsBeforeBlacklisting) {
+                    logger.warn("Blacklisting peer: $desc")
+                    this.state = State.BLACKLISTED
+                    this.timeOfLastError = now
+                } else {
+                    if (logger.isTraceEnabled) {
+                        logger.trace("Not blacklisting peer: $desc")
+                    }
+                    this.timeOfLastError = now
+                }
+            }
         }
         fun resurrect(now: Long) {
             if (state == State.DRAINED && drainedTime + params.resurrectDrainedTime < now ||
@@ -146,12 +175,17 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
         status.statusReceived(height)
     }
 
-    fun unresponsive(peerId: XPeerID) {
+    /**
+     * @param peerId is the peer that's not responding
+     * @param desc is the text we will log, surrounding the circumstances.
+     *             (This could be caused by a bug, if so it has to be traced)
+     */
+    fun unresponsive(peerId: XPeerID, desc: String) {
         val status = stateOf(peerId)
         if (status.isBlacklisted()) {
             return
         }
-        status.unresponsive()
+        status.unresponsive(desc, System.currentTimeMillis())
     }
 
     fun setMaybeLegacy(peerId: XPeerID, isLegacy: Boolean) {
@@ -172,8 +206,15 @@ class PeerStatuses(val params: FastSyncParameters): KLogging() {
         stateOf(peerId).confirmedModern()
     }
 
-    fun blacklist(peerId: XPeerID) {
-        stateOf(peerId).blacklist()
+    /**
+     * Might blacklist this peer depending on number of failures.
+     *
+     * @param peerId is the peer that's behaving badly
+     * @param desc is the text we will log, surrounding the circumstances.
+     *             (This could be caused by a bug, if so it has to be traced)
+     */
+    fun maybeBlacklist(peerId: XPeerID, desc: String) {
+        stateOf(peerId).blacklist(desc, System.currentTimeMillis())
     }
 
     private fun stateOf(peerId: XPeerID): KnownState {

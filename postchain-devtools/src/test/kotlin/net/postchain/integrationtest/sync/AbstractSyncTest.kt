@@ -107,7 +107,7 @@ open class AbstractSyncTest : IntegrationTestSetup() {
 
     open fun nodeConfigurationMap(nodeIndex: Int, peerInfo: PeerInfo): Configuration {
         val privKey = KeyPairHelper.privKey(peerInfo.pubKey)
-        testDebug("DB Schema: " + this.javaClass.simpleName.toLowerCase() + "_$nodeIndex")
+        testLog("DB Schema: " + this.javaClass.simpleName.toLowerCase() + "_$nodeIndex")
         return MapConfiguration(mapOf(
                 "database.driverclass" to "org.postgresql.Driver",
                 "database.url" to "jdbc:postgresql://localhost:5432/postchain",

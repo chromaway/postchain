@@ -6,7 +6,6 @@ import net.postchain.devtools.currentHeight
 import net.postchain.network.x.XPeerID
 import org.apache.commons.configuration2.Configuration
 import org.junit.Assert
-import org.junit.Ignore
 import org.junit.Test
 import java.lang.Thread.sleep
 import kotlin.test.assertEquals
@@ -221,7 +220,7 @@ class ForkTestNightly : ManagedModeTest() {
 
         startManagedSystem(7, 0)
 
-        awaitDebug("++++++++++++++ Begin Alias Many Levels ++++++++++++++")
+        awaitLog("++++++++++++++ Begin Alias Many Levels ++++++++++++++")
         val c1 = startNewBlockchain(setOf(1), setOf(), null)
         buildBlock(c1, 10)
         // Chain id is same as node id, for example node 3 is the final signer of chain 3
@@ -253,7 +252,7 @@ class ForkTestNightly : ManagedModeTest() {
         // historicBrid) source for the blocks is unavailable
         nodes[1].shutdown()
         nodes[2].shutdown()
-        awaitDebug("++++++++++++++ Begin Alias Many Levels ACTUAL test ++++++++++++++")
+        awaitLog("++++++++++++++ Begin Alias Many Levels ACTUAL test ++++++++++++++")
 
         val c4 = chains[4]!!
         val c5 = startNewBlockchain(setOf(1), setOf(5), c1.chain, setOf(1, 2), false)
@@ -311,9 +310,9 @@ class ForkTestNightly : ManagedModeTest() {
 
 
     private fun awaitChainRestarted(nodeSet: NodeSet, atLeastHeight: Long) {
-        awaitDebug("========= AWAIT ALL ${nodeSet.size} NODES RESTART chain:  ${nodeSet.chain}, at least height:  $atLeastHeight")
+        awaitLog("========= AWAIT ALL ${nodeSet.size} NODES RESTART chain:  ${nodeSet.chain}, at least height:  $atLeastHeight")
         nodeSet.all().forEach { awaitChainRunning(it, nodeSet.chain, atLeastHeight) }
-        awaitDebug("========= DONE WAITING ALL ${nodeSet.size} NODES RESTART chain:  ${nodeSet.chain}, at least height:  $atLeastHeight")
+        awaitLog("========= DONE WAITING ALL ${nodeSet.size} NODES RESTART chain:  ${nodeSet.chain}, at least height:  $atLeastHeight")
     }
 
     private fun makeFork(): Pair<NodeSet, NodeSet> {

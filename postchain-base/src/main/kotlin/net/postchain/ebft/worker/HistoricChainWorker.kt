@@ -137,19 +137,7 @@ class HistoricChainWorker(val workerContext: WorkerContext,
             if (localChainID == null) {
                 // we ONLY try syncing over network iff chain is not locally present
                 // Reason for this is a bit complicated:
-                //
-                // (Excerpt from Alex discussion)
-                // TODO: When chain2 is started it might fail because 0x02 is already associated in conman to chain3.
-                //
-                // So two ways to deal with this:
-                // 1. eliminate race using mutexes and such
-                // 2. create a new flag to make connection pre-emptible, so e.g.
-                // chain3 can connect but if it's pre-emptible conman can disconnect it once chain2 can connect. we also need to make sure that fastsynchronizer understands disconnects.
-                //
-                //TL;DR: we can make it nicer at expense of higher complexity. "BRID is in DB thus we avoid this" is very simple rule.
-                // Option 3: teach procman to distinguish restart from shutdown, e.g. keep a set of chainID which are "potentially will be launched soon".
-                //Then we can ask procman if it's something to be concerned about.
-
+                // (Alex:) "BRID is in DB thus we avoid this" is very simple rule.
                 logger.debug("$procName Historic sync: try network sync using historic BRID since chainId $localChainID is new" )
                 try {
                     val historicWorkerContext = historicBlockchainContext.contextCreator(brid)
@@ -219,31 +207,19 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                     if (historicBlock == null) {
                         copyInfo("Done cross syncing height", heightToCopy)
                     } else {
-                        // DEBUG
-                        var bbDebug: BlockTrace? = if (logger.isTraceEnabled) {
-                            this.blockTrace = BlockTrace.buildBeforeBlock(procName, heightToCopy) // At this point we don't have the Block RID.
-                            copyLog("Got block height", heightToCopy)
-                            this.blockTrace
-                        } else {
-                            null // Use null for speed
-                        }
-
-                        // ADD BLOCK
+                        var bTrace: BlockTrace? = getCopyBTrace(heightToCopy)
                         if (!shutdown.get()) {
-                            pendingPromise = newBlockDatabase.addBlock(historicBlock, bbDebug)
+                            pendingPromise = newBlockDatabase.addBlock(historicBlock, bTrace)
                             if (pendingPromise != null) {
                                 copyLog("Got promise to add", heightToCopy)
                                 try {
                                     if (awaitPromise(pendingPromise, heightToCopy)) {
                                         if (pendingPromise.isSuccess()) {
-                                            if (logger.isTraceEnabled) { // To avoid NPE when looking at the bbDebug object
-                                                copyTrace("Successfully added RID: ${bbDebug!!.blockRid} ", heightToCopy) // Now we should have the block RID in the debug
-                                            }
+                                            copyTrace("Successfully added", bTrace, heightToCopy) // Now we should have the block RID in the debug
                                             heightToCopy += 1
                                             readMoreBlocks = true // this went well, let's continue
                                         } else if (pendingPromise.isFailure()) {
                                             copyErr("Failed to add", heightToCopy, pendingPromise.getError())
-                                            logger.error("copyBlocksLocally() -- : $heightToCopy to DB (blockchain ${historicBlockchainContext.historicBrid}). err:  ")
                                         } else {
                                             throw IllegalStateException("copyBlocksLocally() -- The promise is \"done\" why don't we have a result? $heightToCopy to DB (blockchain ${historicBlockchainContext.historicBrid}).")
                                         }
@@ -368,9 +344,10 @@ class HistoricChainWorker(val workerContext: WorkerContext,
 
 
     // copyBlocksLocally()
-    private fun copyTrace(str: String, heightToCopy: Long) {
+    private fun copyTrace(str: String, bTrace: BlockTrace?, heightToCopy: Long) {
         if (logger.isTraceEnabled) {
-            logger.trace("copyBlocksLocally() -- $str: $heightToCopy locally from blockchain ${historicBlockchainContext.historicBrid}")
+            logger.trace("copyBlocksLocally() -- $str: $heightToCopy ,RID: ${bTrace!!.blockRid}, " +
+                    "locally from blockchain ${historicBlockchainContext.historicBrid}")
         }
     }
     private fun copyLog(str: String, heightToCopy: Long) {
@@ -388,6 +365,15 @@ class HistoricChainWorker(val workerContext: WorkerContext,
     }
     private fun copyErr(str: String, heightToCopy: Long, err: String) {
         logger.error("copyBlocksLocally() - $str: $heightToCopy locally from blockchain ${historicBlockchainContext.historicBrid}, err: $err")
+    }
+    private fun getCopyBTrace(heightToCopy: Long): BlockTrace? {
+        return if (logger.isTraceEnabled) {
+            this.blockTrace = BlockTrace.buildBeforeBlock(procName, heightToCopy) // At this point we don't have the Block RID.
+            copyLog("Got block height", heightToCopy)
+            this.blockTrace
+        } else {
+            null // Use null for speed
+        }
     }
 
     // AwaitPromise

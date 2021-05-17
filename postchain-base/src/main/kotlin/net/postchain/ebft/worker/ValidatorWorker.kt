@@ -82,9 +82,7 @@ class ValidatorWorker(val workerContext: WorkerContext
         updateLoop = thread(name = "updateLoop-${workerContext.processName}") {
             while (!shutdown.get()) {
                 try {
-                    startUpdateLog("Wake up")
                     syncManager.update()
-                    startUpdateLog("Sleep")
                     Thread.sleep(20)
                 } catch (e: Exception) {
                     startUpdateErr("Failing to update", e)

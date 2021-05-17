@@ -33,38 +33,51 @@ Configuration:
       - ref: FileAppender
 
     Logger:
+      # ------------------
+      # Common Postchain setting
+      # ------------------
     - name: net.postchain
-      level: debug # If we should turn down logging for tests: 1) either put "info" here, or 2) downgrade a bunch of DB logs to "trace"
+      level: debug #I suggest we keep this on debug on the checked in version.
       additivity: false
       AppenderRef:
       - ref: ConsoleAppender
       - ref: FileAppender
 
-    - name: net.postchain.ebft.BaseBlockDatabase
-      level: debug #Don't check in your local settings. Too confusing for the rest of the team
-      additivity: false
-      AppenderRef:
-      - ref: ConsoleAppender
-      - ref: FileAppender
-
-    - name: net.postchain.base.data.BaseBlockBuilder
-      level: debug #Don't check in your local settings. Too confusing for the rest of the team
-      additivity: false
-      AppenderRef:
-      - ref: ConsoleAppender
-      - ref: FileAppender
-
-    - name: net.postchain.base.BaseBlockchainEngine
-      level: debug #Don't check in your local settings. Too confusing for the rest of the team
-      additivity: false
-      AppenderRef:
-      - ref: ConsoleAppender
-      - ref: FileAppender
-
-    - name: net.postchain.base.data.SQLDatabaseAccess
-      level: debug #Don't check in your local settings. Too confusing for the rest of the team
-      additivity: false
-      AppenderRef:
-      - ref: ConsoleAppender
-      - ref: FileAppender
+      # ------------------
+      # Specific settings
+      # ------------------
+#    - name: net.postchain.ebft
+#      level: trace #Don't check in your local settings. Too confusing for the rest of the team
+#      additivity: false
+#      AppenderRef:
+#      - ref: ConsoleAppender
+#      - ref: FileAppender
+#
+#    - name: net.postchain.managed
+#      level: trace #Don't check in your local settings. Too confusing for the rest of the team
+#      additivity: false
+#      AppenderRef:
+#        - ref: ConsoleAppender
+#        - ref: FileAppender
+#
+#    - name: net.postchain.base.data
+#      level: trace #Don't check in your local settings. Too confusing for the rest of the team
+#      additivity: false
+#      AppenderRef:
+#      - ref: ConsoleAppender
+#      - ref: FileAppender
+#
+#    - name: net.postchain.base.BaseBlockchainEngine
+#      level: trace #Don't check in your local settings. Too confusing for the rest of the team
+#      additivity: false
+#      AppenderRef:
+#        - ref: ConsoleAppender
+#        - ref: FileAppender
+#
+#    - name: net.postchain.base.data.SQLDatabaseAccess
+#      level: debug #Don't check in your local settings. Too confusing for the rest of the team
+#      additivity: false
+#      AppenderRef:
+#      - ref: ConsoleAppender
+#      - ref: FileAppender
 

@@ -149,7 +149,7 @@ open class BaseBlockchainEngine(
         var exception: Exception? = null
 
         try {
-            loadLog("Start",blockBuilder.getBTrace())
+            loadLog("Start", blockBuilder.getBTrace())
             if (logger.isTraceEnabled) {
                 blockBuilder.setBTrace(getBlockTrace(block.header))
             }
@@ -169,7 +169,7 @@ open class BaseBlockchainEngine(
                 logger.info("$processName: Loaded block: $prettyBlockHeader")
             }
 
-            loadLog("End",blockBuilder.getBTrace())
+            loadLog("End", blockBuilder.getBTrace())
         } catch (e: Exception) {
             exception = e
         }

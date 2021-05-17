@@ -195,7 +195,7 @@ class BaseBlockManager(
                 } else {
                     null
                 }
-                blockDB.setBlockTrace(BlockTrace.build(processName, currentBlock!!.header.blockRID, heightIntent))
+                blockDB.setBlockTrace(BlockTrace.build(processName, currentBlock?.header?.blockRID, heightIntent))
             } catch (e: java.lang.Exception) {
                 // Doesn't matter
                 logger.trace("$processName: ERROR where adding bTrace.", e);

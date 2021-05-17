@@ -40,8 +40,8 @@ class BlockTrace(
         var height: Long?) { // What height
 
     companion object : KLogging() {
-        fun build(procName: BlockchainProcessName?, blockRid: ByteArray, height: Long?): BlockTrace {
-            return BlockTrace(procName, blockRid.toHex() , height)
+        fun build(procName: BlockchainProcessName?, blockRid: ByteArray?, height: Long?): BlockTrace {
+            return BlockTrace(procName, blockRid?.toHex(), height)
         }
 
         /**

@@ -133,9 +133,9 @@ open class ManagedModeTest : AbstractSyncTest() {
     }
 
     fun awaitHeight(nodeSet: NodeSet, height: Long) {
-        awaitDebug("========= AWAIT ALL ${nodeSet.size} NODES chain:  ${nodeSet.chain}, height:  $height")
+        awaitLog("========= AWAIT ALL ${nodeSet.size} NODES chain:  ${nodeSet.chain}, height:  $height")
         awaitHeight(nodeSet.nodes(), nodeSet.chain, height)
-        awaitDebug("========= DONE AWAIT ALL ${nodeSet.size} NODES chain: ${nodeSet.chain}, height: $height")
+        awaitLog("========= DONE AWAIT ALL ${nodeSet.size} NODES chain: ${nodeSet.chain}, height: $height")
     }
 
     fun assertCantBuildBlock(nodeSet: NodeSet, height: Long) {

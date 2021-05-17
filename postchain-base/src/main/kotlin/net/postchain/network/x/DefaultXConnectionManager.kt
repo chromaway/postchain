@@ -208,7 +208,8 @@ class DefaultXConnectionManager<PacketType>(
         }
         val chain = chains[chainID]
         if (chain == null) {
-            logger.warn("${logger(descriptor)}: onPeerConnected: Chain not found by chainID = $chainID / blockchainRID = ${descriptor.blockchainRID}")
+            logger.warn("${logger(descriptor)}: onPeerConnected: Chain not found by chainID = $chainID / blockchainRID = ${descriptor.blockchainRID}. " +
+                    "(This is expected if it happens after this chain was restarted).")
             connection.close()
             return null
         }
