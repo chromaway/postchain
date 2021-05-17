@@ -208,7 +208,7 @@ class DefaultXConnectionManager<PacketType>(
         }
         val chain = chains[chainID]
         if (chain == null) {
-            logger.warn("${logger(descriptor)}: onPeerConnected: Chain not found by chainID = ${chainID}} / blockchainRID = ${descriptor.blockchainRID}")
+            logger.warn("${logger(descriptor)}: onPeerConnected: Chain not found by chainID = $chainID / blockchainRID = ${descriptor.blockchainRID}")
             connection.close()
             return null
         }
@@ -241,6 +241,7 @@ class DefaultXConnectionManager<PacketType>(
 
     /**
      * We often don't know why we got a disconnect.
+     * It could be because we did "disconnectChain()" ourselves, and for those cases we don't even have the BC is chain[].
      */
     @Synchronized
     override fun onPeerDisconnected(connection: XPeerConnection) {
@@ -255,7 +256,9 @@ class DefaultXConnectionManager<PacketType>(
         }
         val chain = chains[chainID]
         if (chain == null) {
-            logger.warn("${descriptor.loggingPrefix(myPeerInfo.peerId())}: Peer disconnected: Why is entire chain gone? peer: ${peerName(descriptor.peerId)} " +
+            // This is not an error
+            logger.debug("${descriptor.loggingPrefix(myPeerInfo.peerId())}: Peer disconnected: chain structure gone, probably "+
+                    " removed by disconnectChain(). peer: ${peerName(descriptor.peerId)} " +
                     ", direction: ${descriptor.dir}, blockchainRID = ${descriptor.blockchainRID} / chainID = $chainID.\") . ")
             connection.close()
             return

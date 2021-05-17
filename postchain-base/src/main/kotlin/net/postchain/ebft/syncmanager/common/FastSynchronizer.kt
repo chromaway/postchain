@@ -7,6 +7,7 @@ import net.postchain.base.BaseBlockHeader
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.core.*
 import net.postchain.core.BlockHeader
+import net.postchain.debug.BlockTrace
 import net.postchain.ebft.BlockDatabase
 import net.postchain.ebft.message.*
 import net.postchain.ebft.message.BlockData
@@ -497,6 +498,10 @@ class FastSynchronizer(private val workerContext: WorkerContext,
         val height = getHeight(h)
         val j = jobs[height] ?: return
         trace("handleUnfinishedBlock received for $j")
+        var bbDebug: BlockTrace? = null
+        if (logger.isDebugEnabled) {
+            bbDebug = BlockTrace.build(null, h.blockRID, height)
+        }
         val expectedHeader = j.header
         if (j.block != null || peerId != j.peerId ||
                 expectedHeader == null ||
@@ -518,7 +523,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
             if (!job.blockCommitting) {
                 trace("handleUnfinishedBlock committing block for ${job}")
                 job.blockCommitting = true
-                commitBlock(job)
+                commitBlock(job, bbDebug)
             }
         }
     }
@@ -541,8 +546,8 @@ class FastSynchronizer(private val workerContext: WorkerContext,
         handleUnfinishedBlock(peerId, blockData.header, blockData.transactions)
     }
 
-    private fun commitBlock(job: Job) {
-        val p = blockDatabase.addBlock(job.block!!)
+    private fun commitBlock(job: Job, bTrace: BlockTrace?) {
+        val p = blockDatabase.addBlock(job.block!!, bTrace)
         p.success { _ ->
             finishedJobs.add(job)
         }

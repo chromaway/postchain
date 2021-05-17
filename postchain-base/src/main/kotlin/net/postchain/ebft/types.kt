@@ -5,6 +5,7 @@ package net.postchain.ebft
 import net.postchain.core.BlockData
 import net.postchain.core.BlockDataWithWitness
 import net.postchain.core.Signature
+import net.postchain.debug.BlockTrace
 import nl.komponents.kovenant.Promise
 import java.util.*
 
@@ -36,7 +37,7 @@ class NodeStatus (var height: Long, var serial: Long) {
 }
 
 interface BlockDatabase {
-    fun addBlock(block: BlockDataWithWitness): Promise<Unit, Exception> // add a complete block after the current one
+    fun addBlock(block: BlockDataWithWitness, bTrace: BlockTrace?): Promise<Unit, Exception> // add a complete block after the current one
     fun loadUnfinishedBlock(block: BlockData): Promise<Signature, Exception> // returns block signature if successful
     fun commitBlock(signatures: Array<Signature?>): Promise<Unit, Exception>
     fun buildBlock(): Promise<Pair<BlockData, Signature>, Exception>
@@ -44,6 +45,8 @@ interface BlockDatabase {
     fun verifyBlockSignature(s: Signature): Boolean
     fun getBlockSignature(blockRID: ByteArray): Promise<Signature, Exception>
     fun getBlockAtHeight(height: Long, includeTransactions: Boolean = true): Promise<BlockDataWithWitness?, Exception>
+
+    fun setBlockTrace(blockTrace: BlockTrace) // Only debugging
 }
 
 sealed class BlockIntent {

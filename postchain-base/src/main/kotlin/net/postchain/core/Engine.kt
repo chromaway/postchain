@@ -3,6 +3,7 @@
 package net.postchain.core
 
 import net.postchain.base.BlockchainRid
+import net.postchain.debug.BlockTrace
 
 interface Shutdownable {
     fun shutdown()
@@ -34,11 +35,11 @@ interface BlockchainProcess {
 }
 
 interface BlockchainProcessManager : Shutdownable, Synchronizable {
-    fun startBlockchain(chainId: Long): BlockchainRid?
+    fun startBlockchain(chainId: Long, bTrace: BlockTrace?): BlockchainRid?
     fun retrieveBlockchain(chainId: Long): BlockchainProcess?
-    fun stopBlockchain(chainId: Long)
+    fun stopBlockchain(chainId: Long, bTrace: BlockTrace?)
 }
 
 // A return value of "true" means a restart is needed.
-typealias RestartHandler = () -> Boolean
+typealias RestartHandler = (BlockTrace?) -> Boolean
 

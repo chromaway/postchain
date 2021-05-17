@@ -172,6 +172,10 @@ class ForkTestNightly : ManagedModeTest() {
 
     /**
      * This is a pretty brutal test, runs many nodes and chains.
+     *
+     * ============
+     * Setup
+     * ============
      * When reading logs you might find this map describing what chains run on what node useful:
      *
      * ------- ------- ------------- -----
@@ -187,10 +191,27 @@ class ForkTestNightly : ManagedModeTest() {
      * 6       E4
      * ------- -------- ------------- -----
      *
-     * NOTE:
-     * Node 1-5 are all signers for chain 5, but at different heights.
+     * NOTE: Node 1-5 are all signers for chain 5, but at different heights.
+     *
+     * ============
+     * Testing
+     * ============
      * Chain 5 is started after all the other chains have been built, so
      * the actual test is to observe in chain 5 will manage to get blocks or not.
+     *
+     * The core idea of this test is to see if chain 5 can fetch the early blocks
+     * (via the aliases) despite node 1 and 2 being down.
+     *
+     * - Chain 1 has one alias:   chain 3 on node 3
+     * - Chain 2 has two aliases: chain 3 on node 3, and
+     *                            chain 4 on node 4
+     *
+     * ============
+     * NOTE
+     * ============
+     * This test also tests that we won't get deadlock when we restart a chain that's being copied via [HistoricChainWorker].
+     * This is a side effect of this test, that has been very valuable during debugging of deadlocks
+     *
      */
     @Test
     fun testAliasesManyLevels() {

@@ -10,6 +10,7 @@ import net.postchain.core.BlockDataWithWitness
 import net.postchain.core.PmEngineIsAlreadyClosed
 import net.postchain.debug.BlockchainProcessName
 import nl.komponents.kovenant.Promise
+import net.postchain.debug.BlockTrace
 
 /**
  * Manages intents and acts as a wrapper for [blockDatabase] and [statusManager]
@@ -59,6 +60,7 @@ class BaseBlockManager(
             val theIntent = intent
             if (theIntent is FetchUnfinishedBlockIntent && theIntent.blockRID.contentEquals(block.header.blockRID)) {
                 runDBOp({
+                    blockTrace(theIntent)
                     blockDB.loadUnfinishedBlock(block)
                 }, { signature ->
                     if (statusManager.onReceivedBlock(block.header.blockRID, signature)) {
@@ -82,7 +84,13 @@ class BaseBlockManager(
             val theIntent = intent
             if (theIntent is FetchBlockAtHeightIntent && theIntent.height == height) {
                 runDBOp({
-                    blockDB.addBlock(block)
+                    val bTrace = if (logger.isTraceEnabled) {
+                        BlockTrace.build(processName, block.header.blockRID, height)
+                    } else {
+                        null // Use null for performance
+                    }
+
+                    blockDB.addBlock(block, bTrace)
                 }, {
                     if (statusManager.onHeightAdvance(height + 1)) {
                         currentBlock = null
@@ -112,7 +120,12 @@ class BaseBlockManager(
                     logger.error("$processName: Don't have a block StatusManager wants me to commit")
                     return
                 }
+                if (logger.isTraceEnabled) {
+                    logger.trace("$processName: Schedule commit of block ${currentBlock!!.header.blockRID.toHex()}")
+                }
+
                 runDBOp({
+                    blockTrace(blockIntent)
                     blockDB.commitBlock(statusManager.commitSignatures)
                 }, {
                     statusManager.onCommittedBlock(currentBlock!!.header.blockRID)
@@ -134,7 +147,12 @@ class BaseBlockManager(
                 if (!blockStrategy.shouldBuildBlock()) {
                     return
                 }
+                if (logger.isTraceEnabled) {
+                    logger.trace("$processName: Schedule build block. ${statusManager.myStatus.height + 1}")
+                }
+
                 runDBOp({
+                    blockTrace(blockIntent)
                     blockDB.buildBlock()
                 }, { blockAndSignature ->
                     val block = blockAndSignature.first
@@ -167,4 +185,22 @@ class BaseBlockManager(
         }
         return intent
     }
+
+    // DEBUG only
+    private fun blockTrace(blockIntent: BlockIntent) {
+        if (logger.isTraceEnabled) {
+            try {
+                val heightIntent: Long? = if (blockIntent is FetchBlockAtHeightIntent) {
+                    (blockIntent as FetchBlockAtHeightIntent).height  // In this case we should know the height, let's add it
+                } else {
+                    null
+                }
+                blockDB.setBlockTrace(BlockTrace.build(processName, currentBlock!!.header.blockRID, heightIntent))
+            } catch (e: java.lang.Exception) {
+                // Doesn't matter
+                logger.trace("$processName: ERROR where adding bTrace.", e);
+            }
+        }
+    }
+
 }

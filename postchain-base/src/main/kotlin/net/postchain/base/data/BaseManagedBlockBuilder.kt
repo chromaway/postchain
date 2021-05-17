@@ -7,6 +7,7 @@ import net.postchain.base.Storage
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.debug.BlockTrace
 
 /**
  * Wrapper around BlockBuilder providing more control over the process of building blocks,
@@ -19,6 +20,10 @@ import net.postchain.core.*
  * @property onCommit Clean-up function to be called when block has been commited
  * @property closed Boolean for if block is open to further modifications and queries. It is closed if
  * an operation fails to execute in full or if a witness is created and the block commited.
+ *
+ * NOTE: Re logging
+ * Looks like this class used to do too much logging, so now everything has been scaled down one notch
+ * (debug -> trace, etc). IMO this is better than blocking the logging from YAML (which might be hard to remember)
  */
 class BaseManagedBlockBuilder(
         private val eContext: EContext,
@@ -30,6 +35,8 @@ class BaseManagedBlockBuilder(
     companion object : KLogging()
 
     private var closed = false
+
+    var blocTrace: BlockTrace? = null // Only for logging, remains "null" unless TRACE
 
     /**
      * Wrapper for blockbuilder operations. Will close current working block for further modifications
@@ -111,31 +118,90 @@ class BaseManagedBlockBuilder(
     }
 
     override fun commit(blockWitness: BlockWitness) {
-        logger.trace("${eContext.nodeID} committing block - start -------------------")
+        commitLog("Start")
+        getOrBuildBlockTrace()
 
         synchronized(storage) {
             if (!closed) {
+                commitLog("Got lock")
                 beforeCommit(blockBuilder)
                 runOpSafely { blockBuilder.commit(blockWitness) }
                 storage.closeWriteConnection(eContext, true)
                 closed = true
+                commitLog("Do after commit")
                 afterCommit(blockBuilder)
             }
         }
 
-        logger.trace("${eContext.nodeID} committing block - end -------------------")
+        commitLog("End")
     }
 
     override fun rollback() {
-        logger.debug("${eContext.nodeID} rolling back block - start -------------------")
-
+        rollbackDebugLog("Start")
         synchronized(storage) {
             if (!closed) {
+                rollbackLog("Got lock")
                 storage.closeWriteConnection(eContext, false)
                 closed = true
             }
         }
-
-        logger.debug("${eContext.nodeID} rolling back block - end -------------------")
+        rollbackDebugLog("End")
     }
+
+
+    // --------------------------------
+
+    // Only used during logging
+    override fun getBTrace(): BlockTrace? {
+        return blocTrace
+    }
+
+    // Only used during logging
+    override fun setBTrace(newBlockDebug: BlockTrace) {
+        if (blocTrace == null) {
+            blocTrace = newBlockDebug
+        } else {
+            // Update existing object with missing info
+            blocTrace!!.addDataIfMissing(newBlockDebug)
+        }
+    }
+
+    /**
+     * We are a "[BlockBuilder]" but we are also decorating the "real" [BlockBuilder] so
+     * the inner one should get the [BlockTrace] data from us.
+     */
+    private fun getOrBuildBlockTrace() {
+        if (logger.isTraceEnabled) {
+            if (getBTrace() != null) {
+                var inner = blockBuilder.getBTrace()
+                if (inner != null) {
+                    inner.addDataIfMissing(getBTrace())
+                } else {
+                    blockBuilder.setBTrace(getBTrace()!!)
+                }
+            }
+        }
+    }
+
+    private fun commitLog(str: String) {
+        if (logger.isTraceEnabled) {
+            logger.trace("${eContext.chainID} commit() -- $str, from block: ${getBTrace()}")
+        }
+    }
+
+    private fun rollbackLog(str: String) {
+        if (logger.isTraceEnabled) {
+            logger.trace("${eContext.chainID} rollback() -- $str, from block: ${getBTrace()}")
+        }
+    }
+
+    private fun rollbackDebugLog(str: String) {
+        if (logger.isDebugEnabled) {
+            logger.debug("${eContext.chainID} rollback() -- $str")
+        }
+        if (logger.isTraceEnabled) {
+            logger.trace("${eContext.chainID} rollback() -- $str, from block: ${getBTrace()}")
+        }
+    }
+
 }

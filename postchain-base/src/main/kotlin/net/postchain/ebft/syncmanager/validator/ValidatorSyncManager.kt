@@ -300,6 +300,36 @@ class ValidatorSyncManager(private val workerContext: WorkerContext,
         processingIntentDeadline = Date().time + currentTimeout
     }
 
+
+    /**
+     * Log status of all nodes including their latest block RID and if they have the signature or not
+     */
+    private fun logFastSyncStatus(currentBlockHeight: Long) {
+        if (logger.isDebugEnabled) {
+            val smIntent = statusManager.getBlockIntent()
+            val bmIntent = blockManager.getBlockIntent()
+            val primary = if (statusManager.isMyNodePrimary()) {
+                "I'm primary, "
+            } else {
+                "(prim = ${statusManager.primaryIndex()}),"
+            }
+            logger.debug("$processName: (Fast sync) Height: $currentBlockHeight. My node: ${statusManager.getMyIndex()}, $primary block mngr: $bmIntent, status mngr: $smIntent")
+        }
+        for ((idx, ns) in statusManager.nodeStatuses.withIndex()) {
+            val blockRID = ns.blockRID
+            val haveSignature = statusManager.commitSignatures[idx] != null
+            if (logger.isDebugEnabled) {
+                logger.debug {
+                    "$processName: (Fast sync) node:$idx he:${ns.height} ro:${ns.round} st:${ns.state}" +
+                            (if (ns.revolting) " R" else "") +
+                            " blockRID:${blockRID?.toHex() ?: "null"}" +
+                            " havesig:$haveSignature"
+                }
+            }
+        }
+    }
+
+
     /**
      * Log status of all nodes including their latest block RID and if they have the signature or not
      */
@@ -340,6 +370,7 @@ class ValidatorSyncManager(private val workerContext: WorkerContext,
      */
     override fun update() {
         if (useFastSyncAlgorithm) {
+            logger.debug("$processName Using fast sync") // Doesn't happen very often
             fastSynchronizer.syncUntilResponsiveNodesDrained()
             // turn off fast sync, reset current block to null, and query for the last known state from db to prevent
             // possible race conditions
@@ -347,6 +378,7 @@ class ValidatorSyncManager(private val workerContext: WorkerContext,
             val currentBlockHeight = blockQueries.getBestHeight().get()
             statusManager.fastForwardHeight(currentBlockHeight)
             blockManager.currentBlock = null
+            logFastSyncStatus(currentBlockHeight)
         } else {
             synchronized(statusManager) {
                 // Process all messages from peers, one at a time. Some

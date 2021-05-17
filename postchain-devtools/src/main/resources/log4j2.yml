@@ -34,35 +34,35 @@ Configuration:
 
     Logger:
     - name: net.postchain
-      level: debug
+      level: debug # If we should turn down logging for tests: 1) either put "info" here, or 2) downgrade a bunch of DB logs to "trace"
       additivity: false
       AppenderRef:
       - ref: ConsoleAppender
       - ref: FileAppender
 
     - name: net.postchain.ebft.BaseBlockDatabase
-      level: warn
+      level: debug #Don't check in your local settings. Too confusing for the rest of the team
       additivity: false
       AppenderRef:
       - ref: ConsoleAppender
       - ref: FileAppender
 
     - name: net.postchain.base.data.BaseBlockBuilder
-      level: warn
+      level: debug #Don't check in your local settings. Too confusing for the rest of the team
       additivity: false
       AppenderRef:
       - ref: ConsoleAppender
       - ref: FileAppender
 
     - name: net.postchain.base.BaseBlockchainEngine
-      level: warn
+      level: debug #Don't check in your local settings. Too confusing for the rest of the team
       additivity: false
       AppenderRef:
       - ref: ConsoleAppender
       - ref: FileAppender
 
     - name: net.postchain.base.data.SQLDatabaseAccess
-      level: warn
+      level: debug #Don't check in your local settings. Too confusing for the rest of the team
       additivity: false
       AppenderRef:
       - ref: ConsoleAppender

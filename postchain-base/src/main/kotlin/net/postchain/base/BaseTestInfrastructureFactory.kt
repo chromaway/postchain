@@ -2,20 +2,35 @@
 
 package net.postchain.base
 
+import mu.KLogging
 import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.blockchain.ManualBlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
+import net.postchain.debug.BlockTrace
 import net.postchain.debug.BlockchainProcessName
 import net.postchain.debug.NodeDiagnosticContext
 
 class TestBlockchainProcess(val _engine: BlockchainEngine) : BlockchainProcess {
+
+    companion object: KLogging()
+    // Need this stuff to make this test class look a bit "normal"
+    val processName: BlockchainProcessName = BlockchainProcessName("?" ,_engine.getConfiguration().blockchainRid)
+
     override fun getEngine(): BlockchainEngine {
         return _engine
     }
 
     override fun shutdown() {
+        shutdownDebug("Begin")
         _engine.shutdown()
+        shutdownDebug("End")
+    }
+
+    private fun shutdownDebug(str: String) {
+        if (logger.isDebugEnabled) {
+            logger.debug("$processName: shutdown() - $str.")
+        }
     }
 }
 

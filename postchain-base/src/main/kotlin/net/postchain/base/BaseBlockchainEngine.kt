@@ -8,14 +8,27 @@ import net.postchain.base.gtv.BlockHeaderData
 import net.postchain.common.TimeLog
 import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.debug.BlockTrace
 import net.postchain.debug.BlockchainProcessName
 import net.postchain.gtv.GtvArray
 import net.postchain.gtv.GtvDecoder
 import nl.komponents.kovenant.task
 import java.lang.Long.max
 
-const val LOG_STATS = true
+const val LOG_STATS = false // Was this the reason this entire class was muted?
 
+/**
+ * An [BlockchainEngine] will only produce [BlockBuilder]s for a single chain.
+ * This class produces [ManagedBlockBuilder]s, which means we have to check for BC restart after a block is built.
+ *
+ * NOTE: Re logging
+ * Looks like this class used to do too much logging, so now everything has been scaled down one notch
+ * (debug -> trace, etc). IMO this is better than blocking the logging from YAML (which might be hard to remember)
+ *
+ * NOTE: Logging TXs
+ * TODO: Since I've turned all logging down, doing logging per transaction cannot even be TRACE
+ * (since this is once-per-block logging now). One idea is to add a custom Log4j level below TRACE for TX logging
+ */
 open class BaseBlockchainEngine(
         private val processName: BlockchainProcessName,
         private val blockchainConfiguration: BlockchainConfiguration,
@@ -31,7 +44,10 @@ open class BaseBlockchainEngine(
     private lateinit var blockQueries: BlockQueries
     private var initialized = false
     private var closed = false
-    private var restartHandler: RestartHandler = { false }
+    private var restartHandlerInternal: (BlockTrace?) -> Boolean = {
+        false
+    }
+    private var restartHandler: RestartHandler = restartHandlerInternal
 
     override fun isRunning() = !closed
 
@@ -76,12 +92,14 @@ open class BaseBlockchainEngine(
 
         return BaseManagedBlockBuilder(eContext, storage, blockchainConfiguration.makeBlockBuilder(eContext), { },
                 {
+                    afterLog("Begin", it.getBTrace())
                     val blockBuilder = it as AbstractBlockBuilder
                     transactionQueue.removeAll(blockBuilder.transactions)
                     strategy.blockCommitted(blockBuilder.getBlockData())
-                    if (restartHandler()) {
+                    if (restartHandler(blockBuilder.getBTrace())) { // This is a big reason for BTrace to exist
                         closed = true
                     }
+                    afterLog("End", it.getBTrace())
                 })
     }
 
@@ -131,6 +149,10 @@ open class BaseBlockchainEngine(
         var exception: Exception? = null
 
         try {
+            loadLog("Start",blockBuilder.getBTrace())
+            if (logger.isTraceEnabled) {
+                blockBuilder.setBTrace(getBlockTrace(block.header))
+            }
             blockBuilder.begin(block.header)
 
             val netStart = System.nanoTime()
@@ -147,6 +169,7 @@ open class BaseBlockchainEngine(
                 logger.info("$processName: Loaded block: $prettyBlockHeader")
             }
 
+            loadLog("End",blockBuilder.getBTrace())
         } catch (e: Exception) {
             exception = e
         }
@@ -156,6 +179,7 @@ open class BaseBlockchainEngine(
 
     override fun buildBlock(): Pair<ManagedBlockBuilder, Exception?> {
         TimeLog.startSum("BaseBlockchainEngine.buildBlock().buildBlock")
+        buildLog("Begin")
         val grossStart = System.nanoTime()
 
         val blockBuilder = makeBlockBuilder()
@@ -175,12 +199,12 @@ open class BaseBlockchainEngine(
             var rejectedTxs = 0
 
             while (true) {
-                logger.debug("$processName: Checking transaction queue")
+                //logger.trace("$processName: Checking transaction queue") // Was this the reason logging for this entire class was disabled??
                 TimeLog.startSum("BaseBlockchainEngine.buildBlock().takeTransaction")
                 val tx = transactionQueue.takeTransaction()
                 TimeLog.end("BaseBlockchainEngine.buildBlock().takeTransaction")
                 if (tx != null) {
-                    logger.debug("$processName: Appending transaction ${tx.getRID().toHex()}")
+                    //logger.trace("$processName: Appending transaction ${tx.getRID().toHex()}") // Was this the reason logging for this entire class was disabled??
                     TimeLog.startSum("BaseBlockchainEngine.buildBlock().maybeApppendTransaction")
                     if (tx.isSpecial()) {
                         rejectedTxs++
@@ -196,7 +220,7 @@ open class BaseBlockchainEngine(
                         acceptedTxs++
                         // tx is fine, consider stopping
                         if (strategy.shouldStopBuildingBlock(abstractBlockBuilder)) {
-                            logger.debug("$processName: Block size limit is reached")
+                            buildDebug("Block size limit is reached")
                             break
                         }
                     }
@@ -221,12 +245,21 @@ open class BaseBlockchainEngine(
                 logger.info("$processName: Block is finalized")
             }
 
+            if (logger.isTraceEnabled) {
+                blockBuilder.setBTrace(getBlockTrace(blockHeader))
+                buildLog("End", blockBuilder.getBTrace())
+            }
+
         } catch (e: Exception) {
             exception = e
         }
 
         return blockBuilder to exception
     }
+
+    // -----------------
+    // Logging only
+    // -----------------
 
     private fun prettyBlockHeader(
             blockHeader: BlockHeader,
@@ -254,4 +287,40 @@ open class BaseBlockchainEngine(
                 ", prev-block-rid: ${blockHeader.prevBlockRID.toHex()}"
     }
 
+    /**
+     * @return a [BlockTrace] holding as much info we can get about the block
+     */
+    private fun getBlockTrace(blockHeader: BlockHeader): BlockTrace {
+        val gtvBlockHeader = GtvDecoder.decodeGtv(blockHeader.rawData)
+        val blockHeaderData = BlockHeaderData.fromGtv(gtvBlockHeader as GtvArray)
+        return BlockTrace.build(null, blockHeader.blockRID, blockHeaderData.gtvHeight.asInteger())
+    }
+
+    private fun afterLog(str: String, bTrace: BlockTrace?) {
+        if (logger.isTraceEnabled) {
+            logger.trace { "$processName After-commit-hook: $str, coming from block: $bTrace" }
+        }
+    }
+
+    private fun loadLog(str: String, bTrace: BlockTrace?) {
+        if (logger.isTraceEnabled) {
+            logger.trace { "$processName loadUnfinishedBlockImpl() -- $str, coming from block: $bTrace" }
+        }
+    }
+
+    private fun buildLog(str: String) {
+        if (logger.isTraceEnabled) {
+            logger.trace { "$processName buildBlock() -- $str" }
+        }
+    }
+    private fun buildLog(str: String, bTrace: BlockTrace?) {
+        if (logger.isTraceEnabled) {
+            logger.trace { "$processName buildBlock() -- $str, for block: $bTrace" }
+        }
+    }
+    private fun buildDebug(str: String) {
+        if (logger.isDebugEnabled) {
+            logger.debug { "$processName buildBlock() - $str" }
+        }
+    }
 }

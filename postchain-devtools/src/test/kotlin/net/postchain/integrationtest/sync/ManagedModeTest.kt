@@ -10,6 +10,7 @@ import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfig
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
+import net.postchain.debug.BlockTrace
 import net.postchain.debug.NodeDiagnosticContext
 import net.postchain.devtools.*
 import net.postchain.devtools.testinfra.TestTransactionFactory
@@ -216,6 +217,9 @@ class TestManagedEBFTInfrastructureFactory : ManagedEBFTInfrastructureFactory() 
 
 class TestBlockchainConfigurationProvider(val mockDataSource: ManagedNodeDataSource):
         BlockchainConfigurationProvider {
+
+    companion object: KLogging()
+
     override fun getConfiguration(eContext: EContext, chainId: Long): ByteArray? {
         val db = DatabaseAccess.of(eContext)
         val height = db.getLastBlockHeight(eContext)
@@ -227,6 +231,7 @@ class TestBlockchainConfigurationProvider(val mockDataSource: ManagedNodeDataSou
         val height = dba.getLastBlockHeight(eContext)
         val blockchainRid = chainRidOf(chainId)
         val nextConfigHeight = mockDataSource.findNextConfigurationHeight(blockchainRid.data, height)
+        logger.debug("needsConfigurationChange() - height: $height, next conf at: $nextConfigHeight")
         return (nextConfigHeight != null) && (nextConfigHeight == height + 1)
     }
 }
@@ -251,23 +256,31 @@ class TestManagedBlockchainProcessManager(blockchainInfrastructure: BlockchainIn
         blockchainConfigProvider,
         nodeDiagnosticContext) {
 
+    companion object : KLogging()
+
     private val blockchainStarts = ConcurrentHashMap<Long, BlockingQueue<Long>>()
 
     override fun buildChain0ManagedDataSource(): ManagedNodeDataSource {
         return dataSource
     }
 
+    /**
+     * Overriding the original method, so that we now, instead of checking the DB for what
+     * BCs to launch we instead
+     */
     override fun retrieveBlockchainsToLaunch(): Array<Long> {
+        retrieveDebug("NOTE TEST! - Begin ")
         val result = mutableListOf<Long>()
         dataSource.computeBlockchainList().forEach {
             val brid = BlockchainRid(it)
             val chainIid = chainIidOf(brid)
             result.add(chainIid)
+            retrieveDebug("NOTE TEST! -- launch chainIid: $chainIid,  BC RID: ${brid.toShortHex()} ")
             withReadWriteConnection(storage, chainIid) { newCtx ->
                 DatabaseAccess.of(newCtx).initializeBlockchain(newCtx, brid)
             }
-            val i = 0
         }
+        retrieveDebug("NOTE TEST! - End, restart: ${result.size} ")
         return result.toTypedArray()
     }
 
@@ -288,8 +301,8 @@ class TestManagedBlockchainProcessManager(blockchainInfrastructure: BlockchainIn
      * b/c the BC will get restarted before the configuration can be used.
      * Every time this method runs the [lastHeightStarted] gets updated with the restart height.)
      */
-    override fun startBlockchain(chainId: Long): BlockchainRid? {
-        val blockchainRid = super.startBlockchain(chainId)
+    override fun startBlockchain(chainId: Long, bTrace: BlockTrace?): BlockchainRid? {
+        val blockchainRid = super.startBlockchain(chainId, bTrace)
         if (blockchainRid == null) {
             return null
         }
@@ -307,6 +320,7 @@ class TestManagedBlockchainProcessManager(blockchainInfrastructure: BlockchainIn
      * @param chainId the chain we should wait for
      * @param atLeastHeight the height we should wait for. Note that this height MUST be a height where we have a
      *           new BC configuration kicking in, because that's when the BC will be restarted.
+     *           Example: if a new BC config starts at height 10, then we should put [atLeastHeight] to 9.
      */
     fun awaitStarted(nodeIndex: Int, chainId: Long, atLeastHeight: Long) {
         awaitDebug("++++++ AWAIT node idx: " + nodeIndex + ", chain: " + chainId + ", height: " + atLeastHeight)
@@ -321,10 +335,11 @@ val awaitDebugLog = false
 
 /**
  * Sometimes we want to monitor how long we are waiting and WHAT we are weighting for, then we can turn on this flag.
+ * Using System.out to separate this from "real" logs
  */
 fun awaitDebug(dbg: String) {
     if (awaitDebugLog) {
-        System.out.println(dbg)
+        System.out.println("TEST: $dbg")
     }
 }
 

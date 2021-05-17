@@ -420,6 +420,7 @@ class BaseStatusManager(
             if (count >= this.quorum) {
                 // check if we have (2f+1) commit signatures including ours, in that case we signal commit intent.
                 intent = CommitBlockIntent
+                logger.debug("setting CommitBlockIntent for idx: $myIndex ")
                 return true
             } else {
                 // otherwise we set intent to FetchCommitSignatureIntent with current blockRID and list of nodes which

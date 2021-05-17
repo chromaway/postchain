@@ -2,10 +2,14 @@
 
 package net.postchain.ebft.worker
 
+import mu.KLogging
 import net.postchain.base.NetworkAwareTxQueue
+import net.postchain.base.data.BaseManagedBlockBuilder
 import net.postchain.core.BlockchainEngine
 import net.postchain.core.BlockchainProcess
 import net.postchain.core.NodeStateTracker
+import net.postchain.debug.BlockTrace
+import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.BaseBlockDatabase
 import net.postchain.ebft.BaseBlockManager
 import net.postchain.ebft.BaseStatusManager
@@ -22,6 +26,8 @@ import kotlin.concurrent.thread
  */
 class ValidatorWorker(val workerContext: WorkerContext
 ) : BlockchainProcess {
+
+    companion object: KLogging()
 
     private lateinit var updateLoop: Thread
     private val shutdown = AtomicBoolean(false)
@@ -76,10 +82,12 @@ class ValidatorWorker(val workerContext: WorkerContext
         updateLoop = thread(name = "updateLoop-${workerContext.processName}") {
             while (!shutdown.get()) {
                 try {
+                    startUpdateLog("Wake up")
                     syncManager.update()
+                    startUpdateLog("Sleep")
                     Thread.sleep(20)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    startUpdateErr("Failing to update", e)
                 }
             }
         }
@@ -89,10 +97,31 @@ class ValidatorWorker(val workerContext: WorkerContext
      * Stop the postchain node
      */
     override fun shutdown() {
+        shutdowDebug("Begin")
         syncManager.shutdown()
         shutdown.set(true)
         updateLoop.join()
         blockDatabase.stop()
         workerContext.shutdown()
+        shutdowDebug("End")
+    }
+
+    // --------
+    // Logging
+    // --------
+
+    private fun shutdowDebug(str: String) {
+        if (logger.isDebugEnabled) {
+            logger.debug("${workerContext.processName} shutdown() - $str")
+        }
+    }
+
+    private fun startUpdateLog(str: String) {
+        if (logger.isTraceEnabled) {
+            logger.trace("${workerContext.processName} startUpdateLoop() -- $str")
+        }
+    }
+    private fun startUpdateErr(str: String, e: Exception) {
+        logger.error("${workerContext.processName} startUpdateLoop() -- $str", e)
     }
 }

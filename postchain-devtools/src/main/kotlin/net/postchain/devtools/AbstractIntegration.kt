@@ -5,6 +5,7 @@ import net.postchain.core.BlockBuilder
 import net.postchain.core.BlockWitness
 import net.postchain.core.BlockchainEngine
 import net.postchain.core.MultiSigBlockWitnessBuilder
+import net.postchain.debug.BlockTrace
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.gtvml.GtvMLParser
 
@@ -70,6 +71,7 @@ abstract class AbstractIntegration {
             i++
         }
         val witness = witnessBuilder.getWitness()
+        blockBuilder.setBTrace(BlockTrace.build(null, blockHeader.blockRID, null))
         blockBuilder.commit(witness)
         return witness
     }
