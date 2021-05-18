@@ -6,6 +6,7 @@ import net.postchain.devtools.currentHeight
 import net.postchain.network.x.XPeerID
 import org.apache.commons.configuration2.Configuration
 import org.junit.Assert
+import org.junit.Ignore
 import org.junit.Test
 import java.lang.Thread.sleep
 import kotlin.test.assertEquals
@@ -213,10 +214,12 @@ class ForkTestNightly : ManagedModeTest() {
      *
      */
     @Test
+    @Ignore
     fun testAliasesManyLevels() {
         extraNodeProperties[5] = mapOf(
-                "blockchain_aliases.${chainRidOf(1)}" to listOf(alias(3,3)),
-                "blockchain_aliases.${chainRidOf(2)}" to listOf(alias(4,4),alias(3,3)))
+                "blockchain_aliases.${chainRidOf(1)}" to listOf(alias(3, 3)),
+                "blockchain_aliases.${chainRidOf(2)}" to listOf(alias(4, 4),
+                        alias(3, 3)))
 
         startManagedSystem(7, 0)
 

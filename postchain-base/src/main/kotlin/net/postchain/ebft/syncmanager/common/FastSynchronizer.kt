@@ -6,11 +6,10 @@ import mu.KLogging
 import net.postchain.base.BaseBlockHeader
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.core.*
-import net.postchain.core.BlockHeader
 import net.postchain.debug.BlockTrace
 import net.postchain.ebft.BlockDatabase
+import net.postchain.ebft.CompletionPromise
 import net.postchain.ebft.message.*
-import net.postchain.ebft.message.BlockData
 import net.postchain.ebft.worker.WorkerContext
 import net.postchain.network.x.XPeerID
 import java.lang.Thread.sleep
@@ -104,7 +103,9 @@ class FastSynchronizer(private val workerContext: WorkerContext,
     private val jobs = TreeMap<Long, Job>()
     private val peerStatuses = PeerStatuses(params)
     private var lastJob: Job? = null
-    private val commitQueue = CommitQueue() // This object is thread safe
+
+    // this is used to track pending asynchronous BlockDatabase.addBlock tasks to make sure failure to commit propagates properly
+    private var addBlockCompletionPromise: CompletionPromise? = null
 
     // This is the communication mechanism from the async commitBlock callback to main loop
     private val finishedJobs = LinkedBlockingQueue<Job>()
@@ -128,7 +129,6 @@ class FastSynchronizer(private val workerContext: WorkerContext,
     }
 
     private val shutdown = AtomicBoolean(false)
-
 
     fun syncUntil(exitCondition: () -> Boolean) {
         try {
@@ -579,6 +579,8 @@ class FastSynchronizer(private val workerContext: WorkerContext,
     }
 
     /**
+     * NOTE: this comment is somewhat obsolete as BlockDatabase now has internal queuing support
+     *
      * Put the given block in commit queue and checks if it is ready to be committed.
      *
      * Requirements:
@@ -592,26 +594,24 @@ class FastSynchronizer(private val workerContext: WorkerContext,
      */
     private fun commitBlock(job: Job, bTrace: BlockTrace?) {
         if (shutdown.get()) return
-        commitQueue.scheduleForCommit(job)
-        commitBlockInner(true, job.height, bTrace)
-    }
 
-    private fun commitBlockInner(syncLoop: Boolean, nextHeight: Long, bTrace: BlockTrace?) {
-        val job = commitQueue.isJobReadyForCommit(syncLoop, nextHeight) ?: return
+        if (addBlockCompletionPromise?.isDone() == true) {
+            addBlockCompletionPromise = null
+        }
 
         // We are free to commit this Job, go on and add it to DB
         // (this is usually slow and is therefore handled via a promise).
-        val p = blockDatabase.addBlock(job.block!!, bTrace)
+        val p = blockDatabase.addBlock(job.block!!, addBlockCompletionPromise, bTrace)
+        addBlockCompletionPromise = p
         p.success { _ ->
             finishedJobs.add(job)
-            commitBlockInner(false, job.height+1, bTrace)
         }
         p.fail {
             // We got an invalid block from peer. Let's blacklist this
             // peer and try another peer
             warn("Exception committing block ${job}", it)
             job.addBlockException = it
-            commitQueue.setRunning(false)
+            addBlockCompletionPromise = null
             finishedJobs.add(job)
         }
     }

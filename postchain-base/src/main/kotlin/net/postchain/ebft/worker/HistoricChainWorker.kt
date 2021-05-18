@@ -9,16 +9,16 @@ import net.postchain.base.HistoricBlockchainContext
 import net.postchain.base.data.BaseBlockStore
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.base.withReadConnection
+import net.postchain.config.node.NodeConfig
 import net.postchain.core.*
 import net.postchain.debug.BlockTrace
 import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.BaseBlockDatabase
 import net.postchain.ebft.BlockDatabase
+import net.postchain.ebft.CompletionPromise
 import net.postchain.ebft.syncmanager.common.FastSyncParameters
 import net.postchain.ebft.syncmanager.common.FastSynchronizer
 import nl.komponents.kovenant.Promise
-import net.postchain.config.node.NodeConfig
-import java.lang.IllegalStateException
 import java.lang.Thread.sleep
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
@@ -199,39 +199,31 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                     verifyBlockAtHeightIsTheSame(fromBstore, fromCtx, ourHeight)
                 }
                 heightToCopy = ourHeight + 1
-                var pendingPromise: Promise<Unit, java.lang.Exception>? = null
-                var readMoreBlocks = true
-                while (!shutdown.get() && readMoreBlocks) {
-                    readMoreBlocks = false
+                var pendingPromise: CompletionPromise? = null
+                val readMoreBlocks = AtomicBoolean(true)
+                while (!shutdown.get() && readMoreBlocks.get()) {
+                    if (newBlockDatabase.getQueuedBlockCount() > 3) {
+                        sleep(1)
+                        continue
+                    }
                     val historicBlock = getBlockFromStore(fromBstore, fromCtx, heightToCopy)
                     if (historicBlock == null) {
                         copyInfo("Done cross syncing height", heightToCopy)
+                        break
                     } else {
-                        var bTrace: BlockTrace? = getCopyBTrace(heightToCopy)
-                        if (!shutdown.get()) {
-                            pendingPromise = newBlockDatabase.addBlock(historicBlock, bTrace)
-                            if (pendingPromise != null) {
-                                copyLog("Got promise to add", heightToCopy)
-                                try {
-                                    if (awaitPromise(pendingPromise, heightToCopy)) {
-                                        if (pendingPromise.isSuccess()) {
-                                            copyTrace("Successfully added", bTrace, heightToCopy) // Now we should have the block RID in the debug
-                                            heightToCopy += 1
-                                            readMoreBlocks = true // this went well, let's continue
-                                        } else if (pendingPromise.isFailure()) {
-                                            copyErr("Failed to add", heightToCopy, pendingPromise.getError())
-                                        } else {
-                                            throw IllegalStateException("copyBlocksLocally() -- The promise is \"done\" why don't we have a result? $heightToCopy to DB (blockchain ${historicBlockchainContext.historicBrid}).")
-                                        }
-                                    }
-                                } catch (e: java.lang.Exception) {
-                                    logger.error("copyBlocksLocally() - Exception caught: Failed to add: $heightToCopy to DB (blockchain ${historicBlockchainContext.historicBrid}). err: ${pendingPromise.getError()}.", e)
-                                } finally {
-                                    pendingPromise = null
-                                }
-                            } else {
-                                logger.warn("copyBlocksLocally() -- Didn't get a promise to add: $heightToCopy to DB (blockchain ${historicBlockchainContext.historicBrid}).")
+                        val bTrace: BlockTrace? = getCopyBTrace(heightToCopy)
+                        if (!shutdown.get() && readMoreBlocks.get()) {
+                            pendingPromise = newBlockDatabase.addBlock(historicBlock, pendingPromise, bTrace)
+                            val myHeightToCopy = heightToCopy
+                            pendingPromise.success {
+                                copyTrace("Successfully added", bTrace, myHeightToCopy) // Now we should have the block RID in the debug
                             }
+                            pendingPromise.fail {
+                                copyErr("Failed to add", myHeightToCopy, it)
+                                readMoreBlocks.set(false)
+                            }
+                            copyLog("Got promise to add", heightToCopy)
+                            heightToCopy += 1
                         }
                     }
                 }
@@ -239,7 +231,6 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                 if (pendingPromise != null) awaitPromise(pendingPromise, heightToCopy) // wait pending block
                 copyLog("End at height", heightToCopy)
             }
-
         } finally {
             copyInfo("Shutdown cross syncing, lastHeight: $lastHeight", heightToCopy)
             storage.closeReadConnection(fromCtx)
@@ -259,14 +250,13 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                 return true
             } else {
                 awaitDebug("sleep", height)
-                sleep(100)
+                sleep(10)
                 awaitDebug("wake up", height)
             }
         }
         awaitDebug("BC is shutting down", height)
         return false
     }
-
 
     /**
      * We don't want to proceed if our last block isn't the same as the one in the historic chain.

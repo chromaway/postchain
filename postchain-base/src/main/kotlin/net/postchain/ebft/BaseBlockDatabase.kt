@@ -8,8 +8,10 @@ import net.postchain.core.*
 import net.postchain.debug.BlockTrace
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
-import java.util.concurrent.Executors
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * A wrapper class for the [engine] and [blockQueries], starting new threads when running
@@ -24,14 +26,19 @@ class BaseBlockDatabase(
         val nodeIndex: Int
 ) : BlockDatabase {
 
-    private val executor = Executors.newSingleThreadExecutor {
-        Thread(it, "$nodeIndex-BaseBlockDatabaseWorker")
-                .apply {
-                    isDaemon = true // So it can't block the JVM from exiting if still running
-                }
-    }
+    private val executor = ThreadPoolExecutor(1, 1,
+            0L, TimeUnit.MILLISECONDS,
+            LinkedBlockingQueue<Runnable>(),
+            { r: Runnable ->
+                Thread(r, "$nodeIndex-BaseBlockDatabaseWorker")
+                        .apply {
+                            isDaemon = true // So it can't block the JVM from exiting if still running
+                        }
+            })
+
     private var blockBuilder: ManagedBlockBuilder? = null
     private var witnessBuilder: MultiSigBlockWitnessBuilder? = null
+    private val queuedBlockCount = AtomicInteger(0)
 
     companion object : KLogging()
 
@@ -41,6 +48,10 @@ class BaseBlockDatabase(
         executor.awaitTermination(1000, TimeUnit.MILLISECONDS) // TODO: [et]: 1000 ms
         maybeRollback()
         logger.debug("stop() - End, node: $nodeIndex")
+    }
+
+    override fun getQueuedBlockCount(): Int {
+        return queuedBlockCount.get()
     }
 
     private fun <RT> runOpAsync(name: String, op: () -> RT): Promise<RT, Exception> {
@@ -72,8 +83,6 @@ class BaseBlockDatabase(
         witnessBuilder = null
     }
 
-
-
     /**
      * Adding a block is different from building a block. Here we just want to push this (existing) block into the DB.
      *
@@ -86,13 +95,25 @@ class BaseBlockDatabase(
      * @param block to be added
      * @param existingBTrace is the trace data of the block we have at current moment. For production this is "null"
      */
-    override fun addBlock(block: BlockDataWithWitness, existingBTrace: BlockTrace?): Promise<Unit, Exception> {
+    override fun addBlock(block: BlockDataWithWitness, prevCompletionPromise: CompletionPromise?,
+                          existingBTrace: BlockTrace?): Promise<Unit, Exception> {
+        queuedBlockCount.incrementAndGet()
         return runOpAsync("addBlock ${block.header.blockRID.toHex()}") {
+            queuedBlockCount.decrementAndGet()
+            if (prevCompletionPromise != null) {
+                if (!prevCompletionPromise.isSuccess()) {
+                    if (prevCompletionPromise.isFailure()) {
+                        throw BadDataMistake(BadDataType.OTHER, "Skipping block because dependency failed")
+                    } else {
+                        throw ProgrammerMistake("Previous completion is unfinished ${prevCompletionPromise.isDone()}")
+                    }
+                }
+            }
             addBlockLog("Begin")
             maybeRollback()
             val (theBlockBuilder, exception) = engine.loadUnfinishedBlock(block)
             if (exception != null) {
-                addBlockLog("Got error when loading: ${exception.message}" )
+                addBlockLog("Got error when loading: ${exception.message}")
                 try {
                     theBlockBuilder.rollback()
                 } catch (ignore: Exception) {
