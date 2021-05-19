@@ -214,7 +214,6 @@ class ForkTestNightly : ManagedModeTest() {
      *
      */
     @Test
-    @Ignore
     fun testAliasesManyLevels() {
         extraNodeProperties[5] = mapOf(
                 "blockchain_aliases.${chainRidOf(1)}" to listOf(alias(3, 3)),

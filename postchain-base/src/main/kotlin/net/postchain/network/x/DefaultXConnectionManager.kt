@@ -181,6 +181,7 @@ class DefaultXConnectionManager<PacketType>(
         // reconnect in onPeerDisconnected()
         val chain = chains.remove(chainID)
         if (chain != null) {
+            chainIDforBlockchainRID.remove(chain.peerConfig.blockchainRID)
             chain.connections.forEach { (_, conn) ->
                 conn.close()
             }

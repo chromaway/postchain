@@ -191,7 +191,7 @@ class BaseBlockManager(
         if (logger.isTraceEnabled) {
             try {
                 val heightIntent: Long? = if (blockIntent is FetchBlockAtHeightIntent) {
-                    (blockIntent as FetchBlockAtHeightIntent).height  // In this case we should know the height, let's add it
+                    blockIntent.height  // In this case we should know the height, let's add it
                 } else {
                     null
                 }

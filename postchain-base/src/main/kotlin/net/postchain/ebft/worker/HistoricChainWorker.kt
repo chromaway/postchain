@@ -143,6 +143,7 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                     val historicWorkerContext = historicBlockchainContext.contextCreator(brid)
                     historicSynchronizer = FastSynchronizer(historicWorkerContext, blockDatabase, params)
                     historicSynchronizer!!.syncUntilResponsiveNodesDrained()
+                    logger.debug("$procName Historic sync: done network sync" )
                     historicWorkerContext.communicationManager.shutdown()
                 } catch (e: Exception) {
                     logger.error(e) { "Exception while attempting remote sync" }

@@ -103,7 +103,7 @@ class BaseBlockDatabase(
             if (prevCompletionPromise != null) {
                 if (!prevCompletionPromise.isSuccess()) {
                     if (prevCompletionPromise.isFailure()) {
-                        throw BadDataMistake(BadDataType.OTHER, "Skipping block because dependency failed")
+                        throw BDBAbortException(block, prevCompletionPromise)
                     } else {
                         throw ProgrammerMistake("Previous completion is unfinished ${prevCompletionPromise.isDone()}")
                     }
