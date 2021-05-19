@@ -549,11 +549,11 @@ class FastSynchronizer(private val workerContext: WorkerContext,
             // The values are iterated in key-ascending order (see TreeMap)
             if (job.block == null) {
                 // The next block to be committed hasn't arrived yet
-                unfinishedTrace("Done. Next job, ${job}, to commit hasn't arrived yet.")
+                unfinishedTrace("Done. Next job, $job, to commit hasn't arrived yet.")
                 return
             }
             if (!job.blockCommitting) {
-                unfinishedTrace("Committing block for ${job}")
+                unfinishedTrace("Committing block for $job")
                 job.blockCommitting = true
                 commitBlock(job, bTrace)
             }
@@ -579,11 +579,11 @@ class FastSynchronizer(private val workerContext: WorkerContext,
     }
 
     /**
-     * Put the given block in commit queue and checks if it is ready to be committed.
+     * Puts the given block in commit queue and checks if it is ready to be committed.
      *
      * Requirements:
      * 1. Must commit in order of height.
-     * 1. If one block fails to commit, we should not commit of blocks coming after it.
+     * 2. If one block fails to commit, we should not commit of blocks coming after it.
      *
      * Therefore:
      * we cannot start all commits in parallel, since that might cause us to commit a block even though
@@ -609,7 +609,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
         p.fail {
             // We got an invalid block from peer. Let's blacklist this
             // peer and try another peer
-            warn("Exception committing block ${job}", it)
+            warn("Exception committing block $job", it)
             job.addBlockException = it
             commitQueue.setRunning(false)
             finishedJobs.add(job)

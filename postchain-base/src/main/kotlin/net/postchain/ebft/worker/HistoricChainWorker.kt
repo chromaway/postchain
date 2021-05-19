@@ -41,6 +41,8 @@ class HistoricChainWorker(val workerContext: WorkerContext,
 
     override fun getEngine() = workerContext.engine
 
+    val AWAIT_PROMISE_MS = 5L // The amount of millis we wait before we check if the add block promise has been completed
+
     private val fastSynchronizer: FastSynchronizer
     private var historicSynchronizer: FastSynchronizer? = null
     private val done = CountDownLatch(1)
@@ -127,7 +129,7 @@ class HistoricChainWorker(val workerContext: WorkerContext,
             params: FastSyncParameters) {
 
         if (brid == myBRID) {
-            netDebug("try network sync using own BRID")
+            netDebug("Try network sync using own BRID")
             // using our own BRID
             workerContext.communicationManager.init()
             fastSynchronizer.syncUntilResponsiveNodesDrained()
@@ -138,14 +140,14 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                 // we ONLY try syncing over network iff chain is not locally present
                 // Reason for this is a bit complicated:
                 // (Alex:) "BRID is in DB thus we avoid this" is very simple rule.
-                logger.debug("$procName Historic sync: try network sync using historic BRID since chainId $localChainID is new" )
+                netDebug("Try network sync using historic BRID since chainId $localChainID is new")
                 try {
                     val historicWorkerContext = historicBlockchainContext.contextCreator(brid)
                     historicSynchronizer = FastSynchronizer(historicWorkerContext, blockDatabase, params)
                     historicSynchronizer!!.syncUntilResponsiveNodesDrained()
                     historicWorkerContext.communicationManager.shutdown()
                 } catch (e: Exception) {
-                    logger.error(e) { "Exception while attempting remote sync" }
+                    netErr("Exception while attempting remote sync", e)
                 }
             }
         }
@@ -255,12 +257,12 @@ class HistoricChainWorker(val workerContext: WorkerContext,
     private fun awaitPromise(pendingPromise: Promise<Unit, java.lang.Exception>, height: Long): Boolean {
         while (!shutdown.get()) {
             if (pendingPromise.isDone()) {
-                awaitDebug("done", height)
+                awaitTrace("done", height)
                 return true
             } else {
-                awaitDebug("sleep", height)
-                sleep(100)
-                awaitDebug("wake up", height)
+                awaitTrace("sleep", height)
+                sleep(AWAIT_PROMISE_MS)
+                awaitTrace("wake up", height)
             }
         }
         awaitDebug("BC is shutting down", height)
@@ -317,29 +319,21 @@ class HistoricChainWorker(val workerContext: WorkerContext,
     //copyBlocksNetwork()
     private fun netTrace(str: String, heightToCopy: Long) {
         if (logger.isTraceEnabled) {
-            logger.trace("copyBlocksNetwork() -- $str: $heightToCopy from blockchain ${historicBlockchainContext.historicBrid}")
+            logger.trace("$procName copyBlocksNetwork() -- $str: $heightToCopy from blockchain ${historicBlockchainContext.historicBrid}")
         }
     }
     private fun netDebug(str: String) {
         if (logger.isDebugEnabled) {
-            logger.debug("copyBlocksNetwork() -- $str from blockchain ${historicBlockchainContext.historicBrid}")
-        }
-    }
-    private fun netDebug(str: String, heightToCopy: Long) {
-        if (logger.isDebugEnabled) {
-            logger.debug("copyBlocksNetwork() -- $str: $heightToCopy from blockchain ${historicBlockchainContext.historicBrid}")
+            logger.debug("$procName copyBlocksNetwork() -- $str from blockchain ${historicBlockchainContext.historicBrid}")
         }
     }
     private fun netInfo(str: String, heightToCopy: Long) {
         if (logger.isInfoEnabled) {
-            logger.info("copyBlocksNetwork() - $str: $heightToCopy from blockchain ${historicBlockchainContext.historicBrid}")
+            logger.info("$procName copyBlocksNetwork() - $str: $heightToCopy from blockchain ${historicBlockchainContext.historicBrid}")
         }
     }
-    private fun netErr(str: String, heightToCopy: Long, e: Exception) {
-        logger.error("copyBlocksNetwork() - $str: $heightToCopy from blockchain ${historicBlockchainContext.historicBrid}", e)
-    }
-    private fun netErr(str: String, heightToCopy: Long, err: String) {
-        logger.error("copyBlocksNetwork() - $str: $heightToCopy locally from blockchain ${historicBlockchainContext.historicBrid}, err: $err")
+    private fun netErr(str: String, e: Exception) {
+        logger.error("$procName copyBlocksNetwork() - $str, from blockchain ${historicBlockchainContext.historicBrid}", e)
     }
 
 
@@ -377,9 +371,14 @@ class HistoricChainWorker(val workerContext: WorkerContext,
     }
 
     // AwaitPromise
+    private fun awaitTrace(str: String, height: Long) {
+        if (logger.isTraceEnabled) {
+            logger.trace("awaitPromise() -- height: $height, $str")
+        }
+    }
     private fun awaitDebug(str: String, height: Long) {
         if (logger.isDebugEnabled) {
-            logger.debug("awaitPromise() - height: $height, $str")
+            logger.debug("awaitPromise() -- height: $height, $str")
         }
     }
 
