@@ -8,9 +8,9 @@ import net.postchain.core.BlockBuildingStrategy
 import net.postchain.core.BlockData
 import net.postchain.core.BlockDataWithWitness
 import net.postchain.core.PmEngineIsAlreadyClosed
+import net.postchain.debug.BlockTrace
 import net.postchain.debug.BlockchainProcessName
 import nl.komponents.kovenant.Promise
-import net.postchain.debug.BlockTrace
 
 /**
  * Manages intents and acts as a wrapper for [blockDatabase] and [statusManager]
@@ -90,7 +90,7 @@ class BaseBlockManager(
                         null // Use null for performance
                     }
 
-                    blockDB.addBlock(block, bTrace)
+                    blockDB.addBlock(block, null, bTrace)
                 }, {
                     if (statusManager.onHeightAdvance(height + 1)) {
                         currentBlock = null
