@@ -92,7 +92,7 @@ object StorageBuilder {
 
     private fun createTablesIfNotExists(dataSource: DataSource, db: DatabaseAccess) {
         dataSource.connection.use { connection ->
-            db.initializeApp(connection, expectedDbVersion = 1) // TODO: [et]: Extract version
+            db.initializeApp(connection, expectedDbVersion = 2) // TODO: [et]: Extract version
             connection.commit()
         }
     }
