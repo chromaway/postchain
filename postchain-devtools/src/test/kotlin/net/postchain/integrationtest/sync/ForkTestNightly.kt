@@ -171,6 +171,90 @@ class ForkTestNightly : ManagedModeTest() {
     }
 
     /**
+     * (This test originated from a discussion with alex)
+     * What should happen if we at some point use an alias over the network, but later move it to the local node.
+     * This test is three steps, and they are described graphically so look at the pictures:
+     *
+     * doc/blockchain_alias_usage_step1.png to ...step3
+     *
+     * ------- ------- -------------- ------- -----
+     *                  Signing
+     * NodeId  NodeHex  Chains        Replica Alias
+     * ------- -------- ------------- ------- -----
+     * 0       70       0
+     * 1       8F       1             0
+     * 2       94       2             0       Chain2 is alias for Chain1
+     * 3       5D       3,(2),(4)
+     * ------- -------- ------------- ------- ------
+     *
+     * Test
+     * This tests that we can sync from a chain via alias (chain2 is alias for chain1) AND that we can
+     * also run that chain locally and sync locally (from chain2 as an alias for chain1).
+     *
+     * Note:
+     * To do this successfully we must do the different steps in succession, we cannot for example do step1 and step2
+     * in parallel, since ConnMgr will not allow us to connect to the same chain  (chain2 on Node2) using different names.
+     */
+    @Test
+    fun testAliasesNetworkThenLocally() {
+        extraNodeProperties[0] = mapOf("blockchain_aliases.${chainRidOf(1)}" to listOf(alias(3,2)))
+
+        startManagedSystem(4, 0)
+
+        awaitLog("++++++++++++++ Begin Alias Network then Locally ++++++++++++++")
+
+        val c1 = startNewBlockchain(setOf(1), setOf(0), null)
+        buildBlock(c1, 10)
+        val chains = mutableMapOf(1 to c1)
+
+        // Add chain2 on Node2
+        val c2 = startNewBlockchain(setOf(2), setOf(0), c1.chain)
+        buildBlock(c0) // trigger blockchain changes
+        buildBlock(c2, 10)
+        awaitHeight(c2, 10)
+        chains[2] = c2
+
+        // ============
+        // Step 1 - sync Chain3 remote via Chain2 (=alias for Chain1)
+        // ============
+        // -- Shutdown Node1, so that it will be impossible to get chain1 blocks from Node1
+        nodes[1].shutdown()
+
+        // -- Create chain 3 on Node3
+        val c3 = startNewBlockchain(setOf(3), setOf(), c1.chain)
+        buildBlock(c0) // trigger blockchain changes
+        buildBlock(c3, 10)
+        awaitHeight(c3, 10)
+        assertEqualAtHeight(c2, c3, 10)
+        chains[3] = c3
+
+        // ============
+        // Step 2 - copy chain2 Node2 -> Node3
+        // ============
+        val c2_node3 = addBlockchainConfiguration(c2, 10, setOf(3), setOf(), null)
+        buildBlock(c0) // trigger blockchain changes
+        buildBlock(c2_node3, 20)
+        awaitHeight(c2_node3,  20)
+        assertEqualAtHeight(c2_node3, c2, 10)
+
+        // ============
+        // Step 3 - sync Chain4 locally via Chain2 (=alias for Chain1)
+        // ============
+        // -- Shutdown Node2, so that it will be impossible to get chain2 blocks from Node2
+        nodes[2].shutdown()
+
+        // -- Sync Chain4 from Chain2 locally on Node3
+        val c4 = startNewBlockchain(setOf(3), setOf(), c1.chain)
+        buildBlock(c0) // trigger blockchain changes
+        buildBlock(c4, 10)
+        awaitHeight(c4, 10)
+        assertEqualAtHeight(c3, c4, 10)
+        chains[4] = c4
+
+        awaitLog("++++++++++++++ End Alias Network then Locally ++++++++++++++")
+    }
+
+    /**
      * This is a pretty brutal test, runs many nodes and chains.
      *
      * ============
@@ -206,6 +290,11 @@ class ForkTestNightly : ManagedModeTest() {
      * - Chain 2 has two aliases: chain 3 on node 3, and
      *                            chain 4 on node 4
      *
+     * To be clear, node 3,4 and 5 must fetch:
+     * - blocks 1-9 from the alias on node 3, and
+     * - blocks 10-19 from the alias on node 4.
+     * since the original masters of chain 1 and 2 are down.
+     *
      * ============
      * NOTE
      * ============
@@ -214,7 +303,6 @@ class ForkTestNightly : ManagedModeTest() {
      *
      */
     @Test
-    @Ignore
     fun testAliasesManyLevels() {
         extraNodeProperties[5] = mapOf(
                 "blockchain_aliases.${chainRidOf(1)}" to listOf(alias(3, 3)),
@@ -235,6 +323,8 @@ class ForkTestNightly : ManagedModeTest() {
                 // Node 4 will get chain 4, Node 3 will get chain 3,4, Node 2 will get all chains
                 val configHeight = 10L * (config-1)
                 val chainConfig = if (config == node) {
+                    // For Node 2, BC 2 will be the "original" (unforked chain),
+                    // Node 3 will have the "original" for BC 3 etc.
                     addBlockchainConfiguration(c, configHeight, setOf(config), setOf(), null)
                 } else {
                     addBlockchainConfiguration(c, configHeight, setOf(config), setOf(), config.toLong())
@@ -258,11 +348,19 @@ class ForkTestNightly : ManagedModeTest() {
         awaitLog("++++++++++++++ Begin Alias Many Levels ACTUAL test ++++++++++++++")
 
         val c4 = chains[4]!!
+
+        // -----------------
+        // Chain5
+        // -----------------
+        // Chain5 will have different signers for every 10 blocks, AND new historic chain for every 10 blocks
+        // so this is a really tricky test!
         val c5 = startNewBlockchain(setOf(1), setOf(5), c1.chain, setOf(1, 2), false)
         addBlockchainConfiguration(c5, 10, setOf(2), setOf(5), 2L, setOf(1, 2))
         addBlockchainConfiguration(c5, 20, setOf(3), setOf(5), 3L, setOf(1, 2))
         addBlockchainConfiguration(c5, 30, setOf(4), setOf(5), 4L, setOf(1, 2))
+        // In the last step, where Node5 signs blocks above 40, we no longer consider this a fork
         val c5_5 = addBlockchainConfiguration(c5, 40, setOf(5), setOf(), null, setOf(1, 2))
+
         buildBlock(c0.remove(setOf(1, 2)))
         awaitChainRestarted(c5_5, 39)
         buildBlock(c5_5, 40)

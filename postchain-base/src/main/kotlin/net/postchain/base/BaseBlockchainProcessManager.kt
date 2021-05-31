@@ -264,12 +264,22 @@ open class BaseBlockchainProcessManager(
     // Start BC
     private fun startDebug(str: String, chainId: Long, bTrace: BlockTrace?) {
         if (logger.isDebugEnabled) {
-            logger.debug("[${nodeName()}]: startBlockchain() -- $str: chainId: $chainId, block causing the start: $bTrace")
+            val extraStr = if (bTrace != null) {
+                ", block causing the start: $bTrace"
+            } else {
+                ""
+            }
+            logger.debug("[${nodeName()}]: startBlockchain() -- $str: chainId: $chainId $extraStr")
         }
     }
     private fun startDebug(str: String, processName: BlockchainProcessName, chainId: Long, bTrace: BlockTrace?) {
         if (logger.isDebugEnabled) {
-            logger.debug("$processName: startBlockchain() -- $str: chainId: $chainId, block causing the start: $bTrace")
+            val extraStr = if (bTrace != null) {
+                ", block causing the start: $bTrace"
+            } else {
+                ""
+            }
+            logger.debug("$processName: startBlockchain() -- $str: chainId: $chainId $extraStr")
         }
     }
     private fun startInfo(str: String, chainId: Long) {

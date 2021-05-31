@@ -7,6 +7,7 @@ import net.postchain.base.BaseBlockHeader
 import net.postchain.base.data.BaseBlockchainConfiguration
 import net.postchain.core.*
 import net.postchain.debug.BlockTrace
+import net.postchain.ebft.BDBAbortException
 import net.postchain.ebft.BlockDatabase
 import net.postchain.ebft.CompletionPromise
 import net.postchain.ebft.message.*
@@ -250,6 +251,15 @@ class FastSynchronizer(private val workerContext: WorkerContext,
             if (exception is PmEngineIsAlreadyClosed) {
                 doneTrace("Add block failed for job $j because Db Engine is already closed.")
                 removeJob(j)
+                return
+            }
+
+            if (exception is BDBAbortException) {
+                // the problem happened because of a previous block, clean up this
+                // job and resubmit
+                j.blockCommitting = false
+                j.addBlockException = null
+                commitJobsAsNeccessary(null) // TODO: bTrace?
                 return
             }
 
@@ -545,6 +555,10 @@ class FastSynchronizer(private val workerContext: WorkerContext,
         // The witness has already been verified in handleBlockHeader().
         j.block = BlockDataWithWitness(h, txs, j.witness!!)
 
+        commitJobsAsNeccessary(bTrace)
+    }
+
+    private fun commitJobsAsNeccessary(bTrace: BlockTrace?) {
         // We have to make sure blocks are committed in the correct order. If we are missing a block we have to wait for it.
         for (job in jobs.values) {
             // The values are iterated in key-ascending order (see TreeMap)
@@ -608,7 +622,6 @@ class FastSynchronizer(private val workerContext: WorkerContext,
             // peer and try another peer
             warn("Exception committing block ${job}", it)
             job.addBlockException = it
-            addBlockCompletionPromise = null
             finishedJobs.add(job)
         }
     }

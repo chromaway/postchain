@@ -272,9 +272,9 @@ open class IntegrationTestSetup : AbstractIntegration() {
 
     protected fun awaitHeight(nodes: List<PostchainTestNode>, chainId: Long, height: Long) {
         nodes.forEach {
-            awaitLog("++++++ AWAIT node BcRID: ${PeerNameHelper.peerName(it.pubKey)}, chain: $chainId, height: $height (i)")
+            awaitLog("++++++ AWAIT node RID: ${PeerNameHelper.peerName(it.pubKey)}, chain: $chainId, height: $height (i)")
             it.awaitHeight(chainId, height)
-            awaitLog("++++++ WAIT OVER node BcRID: ${PeerNameHelper.peerName(it.pubKey)}, chain: $chainId, height: $height (i)")
+            awaitLog("++++++ WAIT OVER node RID: ${PeerNameHelper.peerName(it.pubKey)}, chain: $chainId, height: $height (i)")
         }
     }
 

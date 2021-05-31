@@ -72,11 +72,7 @@ class HistoricChainWorker(val workerContext: WorkerContext,
 
         thread(name = "historicSync-${workerContext.processName}") {
             try {
-                val chainsToSyncFrom = mutableListOf(
-                        myBRID,
-                        historicBlockchainContext.historicBrid
-                )
-                chainsToSyncFrom.addAll(historicBlockchainContext.aliases.keys)
+                val chainsToSyncFrom = historicBlockchainContext.getChainsToSyncFrom(myBRID)
 
                 while (!shutdown.get()) {
                     val bestHeightSoFar = engine.getBlockQueries().getBestHeight().get()
@@ -145,6 +141,7 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                     val historicWorkerContext = historicBlockchainContext.contextCreator(brid)
                     historicSynchronizer = FastSynchronizer(historicWorkerContext, blockDatabase, params)
                     historicSynchronizer!!.syncUntilResponsiveNodesDrained()
+                    netDebug("Done network sync" )
                     historicWorkerContext.communicationManager.shutdown()
                 } catch (e: Exception) {
                     netErr("Exception while attempting remote sync", e)
@@ -181,10 +178,13 @@ class HistoricChainWorker(val workerContext: WorkerContext,
      * The fastest way is always to get the blocks we need from the local database, if we have them.
      *
      * NOTE: the tricky part is to handle shutdown of the blockchains without deadlock.
+     *
+     * @param brid is the BC RID we are trying to copy from. Very likely we don't have it, and then we just exit
+     * @param newBlockDatabase
      */
     private fun copyBlocksLocally(brid: BlockchainRid, newBlockDatabase: BlockDatabase) {
         val localChainID = getLocalChainId(brid)
-        if (localChainID == null) return // can't sync locally
+        if (localChainID == null) return // Don't have the chain, can't sync locally
         copyInfo("Begin cross syncing locally", -1)
 
         val fromCtx = storage.openReadConnection(localChainID)
