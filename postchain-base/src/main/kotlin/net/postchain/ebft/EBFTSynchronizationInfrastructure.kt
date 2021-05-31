@@ -82,7 +82,7 @@ class EBFTSynchronizationInfrastructure(
                 val historicPeerCommConfiguration = if (it == historicBlockchainContext.historicBrid) {
                     buildPeerCommConfiguration(nodeConfig, blockchainConfig, historicBlockchainContext)
                 } else {
-                    // It's an alias brid for historicBrid
+                    // It's an ancestor brid for historicBrid
                     buildPeerCommConfigurationForAncestor(nodeConfig, historicBlockchainContext, it)
                 }
                 val histCommManager = buildXCommunicationManager(processName, blockchainConfig, historicPeerCommConfiguration, it)

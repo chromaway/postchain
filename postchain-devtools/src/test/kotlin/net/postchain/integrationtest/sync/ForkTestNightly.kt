@@ -194,7 +194,7 @@ class ForkTestNightly : ManagedModeTest() {
      * ------- -------- ------------- ------- -----
      * 0       70       0
      * 1       8F       1             0
-     * 2       94       2             0       Chain2 is ancestor for Chain1
+     * 2       94       2             0       Chain2 has Chain1 ancestor
      * 3       5D       3,(2),(4)
      * ------- -------- ------------- ------- ------
      *
@@ -209,7 +209,7 @@ class ForkTestNightly : ManagedModeTest() {
     @Ignore // Incomplete test, never worked and probably incorrect setup.
     @Test
     fun testAncestorNetworkThenLocally() {
-        extraNodeProperties[0] = mapOf("blockchain_ancestors.${chainRidOf(1)}" to listOf(ancestor(3,2)))
+        extraNodeProperties[0] = mapOf("blockchain_ancestors.${chainRidOf(3)}" to listOf(ancestor(2,2)))
 
         startManagedSystem(4, 0)
 

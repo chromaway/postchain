@@ -9,7 +9,7 @@ class HistoricBlockchainContext(val historicBrid: BlockchainRid,
 
 
     /**
-     * We want to use all aliases we have when we look for blocks
+     * We want to use all ancestors we have when we look for blocks
      * Aliases are "sneaky links" used to pretend that some other blockchain is the one we need.
      *
      * @param myBRID is a BC RID we always wanna use, i.e. the "real" one
