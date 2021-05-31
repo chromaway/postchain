@@ -7,6 +7,7 @@ import net.postchain.network.x.XPeerID
 import org.apache.commons.configuration2.Configuration
 import org.junit.Assert
 import org.junit.Test
+import org.junit.Ignore
 import java.lang.Thread.sleep
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -129,6 +130,12 @@ class ForkTestNightly : ManagedModeTest() {
         assertCantBuildBlock(c2, 11)
     }
 
+    /**
+     * The chart at doc/ForkTestNightly_recursiveFork.graphml (or .png) to understand how the
+     * chain1's and chain2's configurations relate.
+     * (chain3 isn't on the pic, but it starts out as a chain1 fork and moves to be a chain2 fork at height 19.
+     *  Rather tricky IMO)
+     */
     @Test
     fun testRecursiveFork() {
         val (c1, c2) = makeFork()
@@ -140,6 +147,8 @@ class ForkTestNightly : ManagedModeTest() {
         buildBlock(c1, 17)
         awaitHeight(c2_15, 17)
         awaitHeight(c3, 17)
+
+        // From height 19 chain2 is standalone (=is no longer a fork of chain1).
         val c2_19 = addBlockchainConfiguration(c2_15, 19, setOf(2), setOf(0, 1), null)
         val c3_19 = addBlockchainConfiguration(c3, 19, setOf(2), setOf(0), c2_19.chain)
         buildBlock(c1, 20)
@@ -149,6 +158,8 @@ class ForkTestNightly : ManagedModeTest() {
         awaitHeight(c3_19, 19)
         assertEqualAtHeight(c2_19, c3_19, 19)
         assertNotEqualAtHeight(c1, c3_19, 19)
+
+        // From height 21 chain3 is standalone (=is no longer a fork of chain2).
         val c3_21 = addBlockchainConfiguration(c3_19, 21, setOf(0), setOf(), null)
         buildBlock(c2_19, 22)
         awaitChainRestarted(c3_21, 20)
@@ -172,36 +183,37 @@ class ForkTestNightly : ManagedModeTest() {
 
     /**
      * (This test originated from a discussion with alex)
-     * What should happen if we at some point use an alias over the network, but later move it to the local node.
+     * What should happen if we at some point use an ancestor over the network, but later move it to the local node.
      * This test is three steps, and they are described graphically so look at the pictures:
      *
-     * doc/blockchain_alias_usage_step1.png to ...step3
+     * doc/blockchain_ancestor_usage_step1.png to ...step3
      *
      * ------- ------- -------------- ------- -----
      *                  Signing
-     * NodeId  NodeHex  Chains        Replica Alias
+     * NodeId  NodeHex  Chains        Replica Ancestor
      * ------- -------- ------------- ------- -----
      * 0       70       0
      * 1       8F       1             0
-     * 2       94       2             0       Chain2 is alias for Chain1
+     * 2       94       2             0       Chain2 is ancestor for Chain1
      * 3       5D       3,(2),(4)
      * ------- -------- ------------- ------- ------
      *
      * Test
-     * This tests that we can sync from a chain via alias (chain2 is alias for chain1) AND that we can
-     * also run that chain locally and sync locally (from chain2 as an alias for chain1).
+     * This tests that we can sync from a chain via ancestor (chain2 is ancestor for chain1) AND that we can
+     * also run that chain locally and sync locally (from chain2 as an ancestor for chain1).
      *
      * Note:
      * To do this successfully we must do the different steps in succession, we cannot for example do step1 and step2
      * in parallel, since ConnMgr will not allow us to connect to the same chain  (chain2 on Node2) using different names.
      */
+    @Ignore // Incomplete test, never worked and probably incorrect setup.
     @Test
-    fun testAliasesNetworkThenLocally() {
-        extraNodeProperties[0] = mapOf("blockchain_aliases.${chainRidOf(1)}" to listOf(alias(3,2)))
+    fun testAncestorNetworkThenLocally() {
+        extraNodeProperties[0] = mapOf("blockchain_ancestors.${chainRidOf(1)}" to listOf(ancestor(3,2)))
 
         startManagedSystem(4, 0)
 
-        awaitLog("++++++++++++++ Begin Alias Network then Locally ++++++++++++++")
+        awaitLog("++++++++++++++ Begin Ancestor Network then Locally ++++++++++++++")
 
         val c1 = startNewBlockchain(setOf(1), setOf(0), null)
         buildBlock(c1, 10)
@@ -215,7 +227,7 @@ class ForkTestNightly : ManagedModeTest() {
         chains[2] = c2
 
         // ============
-        // Step 1 - sync Chain3 remote via Chain2 (=alias for Chain1)
+        // Step 1 - sync Chain3 remote via Chain2 (=ancestor for Chain1)
         // ============
         // -- Shutdown Node1, so that it will be impossible to get chain1 blocks from Node1
         nodes[1].shutdown()
@@ -238,7 +250,7 @@ class ForkTestNightly : ManagedModeTest() {
         assertEqualAtHeight(c2_node3, c2, 10)
 
         // ============
-        // Step 3 - sync Chain4 locally via Chain2 (=alias for Chain1)
+        // Step 3 - sync Chain4 locally via Chain2 (=ancestor for Chain1)
         // ============
         // -- Shutdown Node2, so that it will be impossible to get chain2 blocks from Node2
         nodes[2].shutdown()
@@ -251,7 +263,7 @@ class ForkTestNightly : ManagedModeTest() {
         assertEqualAtHeight(c3, c4, 10)
         chains[4] = c4
 
-        awaitLog("++++++++++++++ End Alias Network then Locally ++++++++++++++")
+        awaitLog("++++++++++++++ End Ancestor Network then Locally ++++++++++++++")
     }
 
     /**
@@ -284,13 +296,13 @@ class ForkTestNightly : ManagedModeTest() {
      * the actual test is to observe in chain 5 will manage to get blocks or not.
      *
      * The core idea of this test is to see if chain 5 can fetch the early blocks
-     * (via the aliases) despite node 1 and 2 being down.
+     * (via the ancestors) despite node 1 and 2 being down.
      *
      * ...
      *
      * To be clear, node 3,4 and 5 must fetch:
-     * - blocks 1-9 from the alias on node 3, and
-     * - blocks 10-19 from the alias on node 4.
+     * - blocks 1-9 from the ancestor on node 3, and
+     * - blocks 10-19 from the ancestors on node 4.
      * since the original masters of chain 1 and 2 are down.
      *
      * ============
@@ -311,7 +323,7 @@ class ForkTestNightly : ManagedModeTest() {
 
         startManagedSystem(7, 0)
 
-        awaitLog("++++++++++++++ Begin Alias Many Levels ++++++++++++++")
+        awaitLog("++++++++++++++ Begin Ancestor Many Levels ++++++++++++++")
         val c1 = startNewBlockchain(setOf(1), setOf(), null)
         buildBlock(c1, 10)
         // Chain id is same as node id, for example node 3 is the final signer of chain 3
@@ -345,7 +357,7 @@ class ForkTestNightly : ManagedModeTest() {
         // historicBrid) source for the blocks is unavailable
         nodes[1].shutdown()
         nodes[2].shutdown()
-        awaitLog("++++++++++++++ Begin Alias Many Levels ACTUAL test ++++++++++++++")
+        awaitLog("++++++++++++++ Begin Ancestor Many Levels ACTUAL test ++++++++++++++")
 
         val c4 = chains[4]!!
 
