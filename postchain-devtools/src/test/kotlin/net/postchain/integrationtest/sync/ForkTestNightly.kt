@@ -6,7 +6,6 @@ import net.postchain.devtools.currentHeight
 import net.postchain.network.x.XPeerID
 import org.apache.commons.configuration2.Configuration
 import org.junit.Assert
-import org.junit.Ignore
 import org.junit.Test
 import java.lang.Thread.sleep
 import kotlin.test.assertEquals
@@ -158,8 +157,9 @@ class ForkTestNightly : ManagedModeTest() {
     }
 
     @Test
-    fun testAliases() {
-        extraNodeProperties[0] = mapOf("blockchain_aliases.${chainRidOf(1)}" to listOf(alias(1,2)))
+    fun testAncestors() {
+        extraNodeProperties[0] = mapOf("blockchain_ancestors.${chainRidOf(3)}"
+                to listOf(ancestor(1,2)))
         val (c1, c2) = makeFork() // c1 and c2 both consist of node index 0 (signer) and 1 (replica)
         dataSources(c1).forEach {
             it.value.delBlockchain(chainRidOf(c1.chain))
@@ -202,9 +202,7 @@ class ForkTestNightly : ManagedModeTest() {
      * The core idea of this test is to see if chain 5 can fetch the early blocks
      * (via the aliases) despite node 1 and 2 being down.
      *
-     * - Chain 1 has one alias:   chain 3 on node 3
-     * - Chain 2 has two aliases: chain 3 on node 3, and
-     *                            chain 4 on node 4
+     * ...
      *
      * ============
      * NOTE
@@ -214,11 +212,13 @@ class ForkTestNightly : ManagedModeTest() {
      *
      */
     @Test
-    fun testAliasesManyLevels() {
+    fun testAncestorsManyLevels() {
+        // ancestors for chain 5 are 3 and 4
         extraNodeProperties[5] = mapOf(
-                "blockchain_aliases.${chainRidOf(1)}" to listOf(alias(3, 3)),
-                "blockchain_aliases.${chainRidOf(2)}" to listOf(alias(4, 4),
-                        alias(3, 3)))
+                "blockchain_ancestors.${chainRidOf(5)}" to listOf(
+                        ancestor(3, 3),
+                        ancestor(4, 4)
+                        ))
 
         startManagedSystem(7, 0)
 
@@ -299,7 +299,7 @@ class ForkTestNightly : ManagedModeTest() {
 //        sleep(1000000000)
 //    }
 
-    private fun alias(index: Int, blockchain: Long): String {
+    private fun ancestor(index: Int, blockchain: Long): String {
         return "${XPeerID(KeyPairHelper.pubKey(index))}:${chainRidOf(blockchain)}"
     }
 

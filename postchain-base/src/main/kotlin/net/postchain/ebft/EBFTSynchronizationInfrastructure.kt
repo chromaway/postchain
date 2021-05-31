@@ -83,7 +83,7 @@ class EBFTSynchronizationInfrastructure(
                     buildPeerCommConfiguration(nodeConfig, blockchainConfig, historicBlockchainContext)
                 } else {
                     // It's an alias brid for historicBrid
-                    buildPeerCommConfigurationForAlias(nodeConfig, historicBlockchainContext, it)
+                    buildPeerCommConfigurationForAncestor(nodeConfig, historicBlockchainContext, it)
                 }
                 val histCommManager = buildXCommunicationManager(processName, blockchainConfig, historicPeerCommConfiguration, it)
 
@@ -134,12 +134,12 @@ class EBFTSynchronizationInfrastructure(
         ).apply { init() }
     }
 
-    private fun buildPeerCommConfigurationForAlias(nodeConfig: NodeConfig, historicBlockchainContext: HistoricBlockchainContext, aliasBrid: BlockchainRid): PeerCommConfiguration {
+    private fun buildPeerCommConfigurationForAncestor(nodeConfig: NodeConfig, historicBlockchainContext: HistoricBlockchainContext, ancBrid: BlockchainRid): PeerCommConfiguration {
         val myPeerID = XPeerID(nodeConfig.pubKeyByteArray)
-        val peersThatServeAliasBrid = historicBlockchainContext.aliases[aliasBrid]!!
+        val peersThatServeAncestorBrid = historicBlockchainContext.ancestors[ancBrid]!!
 
         val relevantPeerMap = nodeConfig.peerInfoMap.filterKeys {
-            it in peersThatServeAliasBrid || it == myPeerID
+            it in peersThatServeAncestorBrid || it == myPeerID
         }
 
         return BasePeerCommConfiguration.build(

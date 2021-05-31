@@ -74,7 +74,7 @@ class HistoricChainWorker(val workerContext: WorkerContext,
                         myBRID,
                         historicBlockchainContext.historicBrid
                 )
-                chainsToSyncFrom.addAll(historicBlockchainContext.aliases.keys)
+                chainsToSyncFrom.addAll(historicBlockchainContext.ancestors.keys)
 
                 while (!shutdown.get()) {
                     val bestHeightSoFar = engine.getBlockQueries().getBestHeight().get()
