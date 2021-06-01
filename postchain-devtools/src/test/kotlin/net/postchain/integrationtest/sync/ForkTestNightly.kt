@@ -297,13 +297,8 @@ class ForkTestNightly : ManagedModeTest() {
      *
      * The core idea of this test is to see if chain 5 can fetch the early blocks
      * (via the ancestors) despite node 1 and 2 being down.
-     *
-     * ...
-     *
-     * To be clear, node 3,4 and 5 must fetch:
-     * - blocks 1-9 from the ancestor on node 3, and
-     * - blocks 10-19 from the ancestors on node 4.
-     * since the original masters of chain 1 and 2 are down.
+     * (To be clear, node 3,4 and 5 must fetch blocks 1-19 from the ancestors on node 4.
+     * since the original masters of chain 1 and 2 are down)
      *
      * ============
      * NOTE
@@ -316,10 +311,7 @@ class ForkTestNightly : ManagedModeTest() {
     fun testAncestorsManyLevels() {
         // ancestors for chain 5 are 3 and 4
         extraNodeProperties[5] = mapOf(
-                "blockchain_ancestors.${chainRidOf(5)}" to listOf(
-                        ancestor(3, 3),
-                        ancestor(4, 4)
-                        ))
+                "blockchain_ancestors.${chainRidOf(5)}" to listOf(ancestor(4, 4)))
 
         startManagedSystem(7, 0)
 

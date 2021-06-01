@@ -16,6 +16,10 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * A wrapper class for the [engine] and [blockQueries], starting new threads when running
  *
+ * NOTE: Re threading
+ * [ThreadPoolExecutor] will queue up tasks and execute them in the order they were given.
+ * We use only one thread, which means we know the previous task was completed before we begin the next.
+ *
  * NOTE: Re logging
  * Looks like this class used to do too much logging, so now everything has been scaled down one notch
  * (debug -> trace, etc). IMO this is better than blocking the logging from YAML (which might be hard to remember)
@@ -26,6 +30,7 @@ class BaseBlockDatabase(
         val nodeIndex: Int
 ) : BlockDatabase {
 
+    // The executor will only execute one thing at a time, in order
     private val executor = ThreadPoolExecutor(1, 1,
             0L, TimeUnit.MILLISECONDS,
             LinkedBlockingQueue<Runnable>(),
@@ -55,14 +60,20 @@ class BaseBlockDatabase(
     }
 
     private fun <RT> runOpAsync(name: String, op: () -> RT): Promise<RT, Exception> {
-        logger.trace("runOpAsync() - $nodeIndex putting job $name on queue")
+        if (logger.isTraceEnabled) {
+            logger.trace("runOpAsync() - $nodeIndex putting job $name on queue")
+        }
 
         val deferred = deferred<RT, Exception>()
         executor.execute {
             try {
-                logger.trace("Starting job $name")
+                if (logger.isTraceEnabled) {
+                    logger.trace("Starting job $name")
+                }
                 val res = op()
-                logger.trace("Finish job $name")
+                if (logger.isTraceEnabled) {
+                    logger.trace("Finished job $name")
+                }
                 deferred.resolve(res)
             } catch (e: Exception) {
                 logger.debug("Failed job $name", e) // Shouldn't this be at leas WARN?
@@ -93,6 +104,8 @@ class BaseBlockDatabase(
      * This is why we there is no use setting the [BlockTrace] for this method, we have to send the bTrace instance
      *
      * @param block to be added
+     * @param prevCompletionPromise is the promise for the previous block (by the time we access this promise it
+     *                              will be "done").
      * @param existingBTrace is the trace data of the block we have at current moment. For production this is "null"
      */
     override fun addBlock(block: BlockDataWithWitness, prevCompletionPromise: CompletionPromise?,
@@ -105,6 +118,8 @@ class BaseBlockDatabase(
                     if (prevCompletionPromise.isFailure()) {
                         throw BDBAbortException(block, prevCompletionPromise)
                     } else {
+                        // The [ThreadPoolExecutor] guarantees prev promise will be "done" at this point.
+                        // If we get here the caller must have sent the incorrect promise.
                         throw ProgrammerMistake("Previous completion is unfinished ${prevCompletionPromise.isDone()}")
                     }
                 }
