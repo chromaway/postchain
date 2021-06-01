@@ -19,27 +19,6 @@ class ManualNodeConfigurationProviderTest {
     private val peerInfo1 = PeerInfo("127.0.0.1", 9901, "BBBB".hexStringToByteArray(), Instant.EPOCH)
 
     @Test
-    fun testGetConfiguration() {
-        // Expected
-        val expected = arrayOf(peerInfo0, peerInfo1)
-        val actual = mapOf(
-                peerInfo0.peerId() to peerInfo0,
-                peerInfo1.peerId() to peerInfo1)
-
-        // Mock
-        val appConfig = AppConfig(mock())
-        val mockStorage = MockStorage.mock(expected)
-
-        // SUT
-        val provider = ManualNodeConfigurationProvider(appConfig) { mockStorage }
-
-        // Assert
-        val config = provider.getConfiguration()
-        assertk.assert(config.appConfig).isSameAs(appConfig)
-        assertk.assert(config.peerInfoMap).isEqualTo(actual)
-    }
-
-    @Test
     fun testGetPeerInfoCollection() {
         // Expected
         val expected = arrayOf(peerInfo1, peerInfo0)

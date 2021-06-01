@@ -26,27 +26,6 @@ class ManagedNodeConfigurationProviderTest {
     private val peerInfo2 = PeerInfo("127.0.0.1", 9902, "CCCC".hexStringToByteArray(), Instant.EPOCH)
     private val peerInfo2New = PeerInfo("127.0.0.1", 9902, "CCCC".hexStringToByteArray(), Instant.now())
 
-    @Test
-    fun testGetConfiguration() {
-        // Expected
-        val expected = arrayOf(peerInfo0, peerInfo1)
-        val actual = mapOf(
-                peerInfo1.peerId() to peerInfo1,
-                peerInfo0.peerId() to peerInfo0)
-
-        // Mock
-        val appConfig = AppConfig(mock())
-        val mockStorage = MockStorage.mock(expected)
-
-        // SUT
-        val provider = ManualNodeConfigurationProvider(appConfig) { mockStorage }
-
-        // Assert
-        val config = provider.getConfiguration()
-        assertk.assert(config.appConfig).isSameAs(appConfig)
-        assertk.assert(config.peerInfoMap).isEqualTo(actual)
-    }
-
     /**
      * Implementation of most tests
      */
