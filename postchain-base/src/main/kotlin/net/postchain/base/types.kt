@@ -4,6 +4,7 @@ package net.postchain.base
 
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.core.*
+import net.postchain.gtv.Gtv
 import java.sql.Connection
 
 class ConfirmationProofMaterial(val txHash: ByteArrayKey,
@@ -37,13 +38,25 @@ open class BaseEContext(
     }
 }
 
+interface TxEventSink {
+    fun processEmittedEvent(ctxt: TxEContext, type: String, data: Gtv)
+}
+
 open class BaseBlockEContext(
         val ectx: EContext,
         override val height: Long,
         override val blockIID: Long,
         override val timestamp: Long,
-        val dependencyHeightMap: Map<Long, Long>
+        val dependencyHeightMap: Map<Long, Long>,
+        val txEventSink: TxEventSink
 ) : EContext by ectx, BlockEContext {
+
+
+    override fun <T> getInterface(c: Class<T>): T? {
+        return if (c == TxEventSink::class.java) {
+            txEventSink as T?
+        } else ectx.getInterface(c)
+    }
 
     /**
      * @param chainID is the blockchain dependency we want to look at
@@ -59,5 +72,22 @@ open class BaseBlockEContext(
 
 open class BaseTxEContext(
         val bectx: BlockEContext,
-        override val txIID: Long
+        override val txIID: Long,
+        val tx: Transaction
 ) : BlockEContext by bectx, TxEContext
+{
+    val events = mutableListOf<Pair<String, Gtv>>()
+
+    override fun emitEvent(type: String, data: Gtv) {
+        events.add(Pair(type, data))
+    }
+
+    override fun done() {
+        if (!events.isEmpty()) {
+            val eventSink = bectx.getInterface(TxEventSink::class.java)!!
+            for (e in events) {
+                eventSink.processEmittedEvent(this, e.first, e.second)
+            }
+        }
+    }
+}

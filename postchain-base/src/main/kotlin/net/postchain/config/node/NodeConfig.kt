@@ -84,6 +84,8 @@ open class NodeConfig(val appConfig: AppConfig) {
      * Peers
      */
     open val peerInfoMap: Map<XPeerID, PeerInfo> = mapOf()
+
+    // list of replicas for a given node
     open val nodeReplicas: Map<XPeerID, List<XPeerID>> = mapOf()
     open val blockchainReplicaNodes: Map<BlockchainRid, List<XPeerID>> = mapOf()
     open val blockchainAncestors: Map<BlockchainRid, Map<BlockchainRid, Set<XPeerID>>> = getAncestors()

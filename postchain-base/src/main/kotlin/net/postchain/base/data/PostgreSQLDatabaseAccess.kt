@@ -71,14 +71,14 @@ class PostgreSQLDatabaseAccess : SQLDatabaseAccess() {
     }
 
     override fun cmdCreateTableBlockchainReplicas(): String {
-        return "CREATE TABLE ${tableBlockchainReplicas()} (" +
+        return "CREATE TABLE IF NOT EXISTS ${tableBlockchainReplicas()} (" +
                 " $TABLE_REPLICAS_FIELD_BRID text NOT NULL" +
                 ", $TABLE_REPLICAS_FIELD_PUBKEY text NOT NULL REFERENCES ${tablePeerinfos()} (${TABLE_PEERINFOS_FIELD_PUBKEY})" +
                 ", PRIMARY KEY ($TABLE_REPLICAS_FIELD_BRID, $TABLE_REPLICAS_FIELD_PUBKEY))"
     }
 
     override fun cmdCreateTableMustSyncUntil(): String {
-        return "CREATE TABLE ${tableMustSyncUntil()} (" +
+        return "CREATE TABLE IF NOT EXISTS ${tableMustSyncUntil()} (" +
                 " $TABLE_SYNC_UNTIL_FIELD_CHAIN_IID BIGINT PRIMARY KEY NOT NULL REFERENCES ${tableBlockchains()} (chain_iid)" +
                 ", $TABLE_SYNC_UNTIL_FIELD_HEIGHT BIGINT NOT NULL" +
                 ")"

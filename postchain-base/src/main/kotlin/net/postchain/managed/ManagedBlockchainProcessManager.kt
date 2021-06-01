@@ -13,6 +13,7 @@ import net.postchain.core.*
 import net.postchain.debug.NodeDiagnosticContext
 import net.postchain.debug.BlockTrace
 import net.postchain.debug.BlockchainProcessName
+import net.postchain.network.x.XPeerID
 
 /**
  * Extends on the [BaseBlockchainProcessManager] with managed mode. "Managed" means that the nodes automatically
@@ -249,7 +250,7 @@ open class ManagedBlockchainProcessManager(
 
             // Launching blockchain 0
             if (reloadChain0) {
-                ssaInfo("Reloading of blockchain 0 is required, launching it", 0L)
+                ssaInfo("Reloading of blockchai 0 is required, launching it", 0L)
                 startBlockchain(0L, bTrace)
             }
 
@@ -336,6 +337,23 @@ open class ManagedBlockchainProcessManager(
 
         withWriteConnection(storage, 0) { ctx0 ->
             val db = DatabaseAccess.of(ctx0)
+            /*
+            // These are Alex's changes. Don't know how to merge this
+            // with kalle's stuff.
+
+            val bcsFromChain0 = dataSource.computeBlockchainList().map { BlockchainRid(it) }.toSet()
+            val nodeConfig = nodeConfigProvider.getConfiguration()
+            val myPeerID = XPeerID(nodeConfig.pubKeyByteArray)
+
+            // TODO: optimize, move this computation to NodeConfig
+            val bcsFromLocalReplicaConfig = nodeConfig.blockchainReplicaNodes.filter {
+              it.value.contains(myPeerID)
+             }.keys
+
+            bcsFromChain0.union(bcsFromLocalReplicaConfig)
+                                .map { blockchainRid ->
+                                    */
+
             val locallyConfiguredReplicas = db.getBlockchainsToReplicate(ctx0, nodeConfig.pubKey)
 
             val domainBlockchainList = dataSource.computeBlockchainList().map { BlockchainRid(it) }

@@ -8,10 +8,12 @@ import net.postchain.base.data.BaseTransactionFactory
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.common.hexStringToByteArray
 import net.postchain.core.InitialBlockData
+import net.postchain.core.TxEContext
 import net.postchain.core.ValidationResult.Result.*
 import net.postchain.devtools.KeyPairHelper.privKey
 import net.postchain.devtools.KeyPairHelper.pubKey
 import net.postchain.devtools.MockCryptoSystem
+import net.postchain.gtv.Gtv
 import org.easymock.EasyMock.mock
 import org.junit.Test
 import java.sql.Connection
@@ -35,7 +37,14 @@ class BaseBlockBuilderValidationTest {
     // Objects using mocks
     val db = mock(DatabaseAccess::class.java)
     val ctx = BaseEContext(mockedConn, 2L, 0, db)
-    val bctx = BaseBlockEContext(ctx, 0, 1, 10, mapOf())
+
+    val dummyEventSink = object : TxEventSink {
+        override fun processEmittedEvent(ctxt: TxEContext, type: String, data: Gtv) {
+            TODO("Not yet implemented")
+        }
+    }
+
+    val bctx = BaseBlockEContext(ctx, 0, 1, 10, mapOf(), dummyEventSink)
     val bbb = BaseBlockBuilder(BlockchainRid.buildRepeat(0), cryptoSystem, ctx, bbs, tf,
             NullSpecialTransactionHandler(),
             subjects, sigMaker, listOf(), false)
