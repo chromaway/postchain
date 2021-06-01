@@ -10,10 +10,8 @@ import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.ManagedNodeConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.*
-import net.postchain.debug.NodeDiagnosticContext
 import net.postchain.debug.BlockTrace
-import net.postchain.debug.BlockchainProcessName
-import net.postchain.network.x.XPeerID
+import net.postchain.debug.NodeDiagnosticContext
 
 /**
  * Extends on the [BaseBlockchainProcessManager] with managed mode. "Managed" means that the nodes automatically
@@ -337,8 +335,6 @@ open class ManagedBlockchainProcessManager(
 
         withWriteConnection(storage, 0) { ctx0 ->
             val db = DatabaseAccess.of(ctx0)
-
-            nodeConfig.blockchainsToReplicate
 
             val locallyConfiguredReplicas = nodeConfig.blockchainsToReplicate
             val domainBlockchainSet = dataSource.computeBlockchainList().map { BlockchainRid(it) } .toSet()
