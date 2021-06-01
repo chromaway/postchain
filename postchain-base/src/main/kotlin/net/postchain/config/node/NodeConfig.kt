@@ -88,6 +88,7 @@ open class NodeConfig(val appConfig: AppConfig) {
     // list of replicas for a given node
     open val nodeReplicas: Map<XPeerID, List<XPeerID>> = mapOf()
     open val blockchainReplicaNodes: Map<BlockchainRid, List<XPeerID>> = mapOf()
+    open val blockchainsToReplicate: Set<BlockchainRid> = setOf()
     open val blockchainAncestors: Map<BlockchainRid, Map<BlockchainRid, Set<XPeerID>>> = getAncestors()
 
     open val mustSyncUntilHeight: Map<Long, Long>? = mapOf() //mapOf<chainID, height>

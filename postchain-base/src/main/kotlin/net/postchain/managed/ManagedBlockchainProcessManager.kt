@@ -337,32 +337,12 @@ open class ManagedBlockchainProcessManager(
 
         withWriteConnection(storage, 0) { ctx0 ->
             val db = DatabaseAccess.of(ctx0)
-            /*
-            // These are Alex's changes. Don't know how to merge this
-            // with kalle's stuff.
 
-            val bcsFromChain0 = dataSource.computeBlockchainList().map { BlockchainRid(it) }.toSet()
-            val nodeConfig = nodeConfigProvider.getConfiguration()
-            val myPeerID = XPeerID(nodeConfig.pubKeyByteArray)
+            nodeConfig.blockchainsToReplicate
 
-            // TODO: optimize, move this computation to NodeConfig
-            val bcsFromLocalReplicaConfig = nodeConfig.blockchainReplicaNodes.filter {
-              it.value.contains(myPeerID)
-             }.keys
-
-            bcsFromChain0.union(bcsFromLocalReplicaConfig)
-                                .map { blockchainRid ->
-                                    */
-
-            val locallyConfiguredReplicas = db.getBlockchainsToReplicate(ctx0, nodeConfig.pubKey)
-
-            val domainBlockchainList = dataSource.computeBlockchainList().map { BlockchainRid(it) }
-            val allMyBlockchains = domainBlockchainList.toMutableList()
-            locallyConfiguredReplicas.forEach {
-                if (it !in domainBlockchainList) {
-                    allMyBlockchains.add(it)
-                }
-            }
+            val locallyConfiguredReplicas = nodeConfig.blockchainsToReplicate
+            val domainBlockchainSet = dataSource.computeBlockchainList().map { BlockchainRid(it) } .toSet()
+            val allMyBlockchains = domainBlockchainSet.union(locallyConfiguredReplicas)
             allMyBlockchains.map { blockchainRid ->
                 val chainId = db.getChainId(ctx0, blockchainRid)
                 retrieveTrace( "launch chainIid: $chainId,  BC RID: ${blockchainRid.toShortHex()} ")
