@@ -4,12 +4,9 @@ package net.postchain.ebft.worker
 
 import mu.KLogging
 import net.postchain.base.NetworkAwareTxQueue
-import net.postchain.base.data.BaseManagedBlockBuilder
 import net.postchain.core.BlockchainEngine
 import net.postchain.core.BlockchainProcess
 import net.postchain.core.NodeStateTracker
-import net.postchain.debug.BlockTrace
-import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.BaseBlockDatabase
 import net.postchain.ebft.BaseBlockManager
 import net.postchain.ebft.BaseStatusManager
@@ -24,10 +21,9 @@ import kotlin.concurrent.thread
  *
  * @param workerContext The stuff needed to start working.
  */
-class ValidatorWorker(val workerContext: WorkerContext
-) : BlockchainProcess {
+class ValidatorWorker(val workerContext: WorkerContext) : BlockchainProcess {
 
-    companion object: KLogging()
+    companion object : KLogging()
 
     private lateinit var updateLoop: Thread
     private val shutdown = AtomicBoolean(false)
@@ -119,6 +115,7 @@ class ValidatorWorker(val workerContext: WorkerContext
             logger.trace("${workerContext.processName} startUpdateLoop() -- $str")
         }
     }
+
     private fun startUpdateErr(str: String, e: Exception) {
         logger.error("${workerContext.processName} startUpdateLoop() -- $str", e)
     }

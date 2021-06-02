@@ -33,7 +33,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         processManager = infrastructureFactory.makeProcessManager(
                 nodeConfigProvider, blockchainInfrastructure, blockchainConfigProvider, diagnosticContext)
 
-        diagnosticContext.addProperty(DiagnosticProperty.VERSION, "3.0.1") // TODO: [POS-97]
+        diagnosticContext.addProperty(DiagnosticProperty.VERSION, getVersion())
         diagnosticContext.addProperty(DiagnosticProperty.PUB_KEY, nodeConfigProvider.getConfiguration().pubKey)
     }
 
@@ -89,4 +89,7 @@ open class PostchainNode(val nodeConfigProvider: NodeConfigurationProvider) : Sh
         }
     }
 
+    private fun getVersion(): String {
+        return javaClass.getPackage()?.implementationVersion ?: "null"
+    }
 }

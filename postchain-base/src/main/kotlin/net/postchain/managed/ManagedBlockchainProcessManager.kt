@@ -279,10 +279,10 @@ open class ManagedBlockchainProcessManager(
 
     private fun logChains(toLaunch: Array<Long>, launched: Set<Long>, reloadChain0: Boolean = false) {
         // FYI: Message for testing only. It can be deleted later.
-        if (logger.isInfoEnabled /*isDebugEnabled*/) {
+        if (/*logger.isInfoEnabled*/ logger.isDebugEnabled) {
             val toLaunch0 = if (reloadChain0 && 0L !in toLaunch) toLaunch.plus(0L) else toLaunch
 
-            logger.info /*debug*/ {
+            logger./*info*/ debug {
                 val pubKey = nodeConfigProvider.getConfiguration().pubKey
                 val peerInfos = nodeConfigProvider.getConfiguration().peerInfoMap
                 "pubKey: $pubKey" +

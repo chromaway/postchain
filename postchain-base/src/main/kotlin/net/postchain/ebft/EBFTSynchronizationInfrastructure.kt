@@ -32,7 +32,7 @@ class EBFTSynchronizationInfrastructure(
 
     private val nodeConfig get() = nodeConfigProvider.getConfiguration()
     val connectionManager: XConnectionManager
-    private val blockchainProcessesDiagnosticData = mutableMapOf<BlockchainRid, MutableMap<String, Any>>()
+    private val blockchainProcessesDiagnosticData = mutableMapOf<BlockchainRid, MutableMap<String, () -> Any>>()
 
     init {
         connectionManager = DefaultXConnectionManager(
@@ -92,13 +92,23 @@ class EBFTSynchronizationInfrastructure(
                         nodeConfig, unregisterBlockchainDiagnosticData)
 
             }
-            HistoricChainWorker(workerContext, historicBlockchainContext)
+            HistoricChainWorker(workerContext, historicBlockchainContext).also {
+                registerBlockchainDiagnosticData(blockchainConfig.blockchainRid, DpNodeType.NODE_TYPE_SIGNER) {
+                    "TODO: Implement getHeight()"
+                }
+            }
         } else if (blockchainConfig.configData.context.nodeID != NODE_ID_READ_ONLY) {
-            registerBlockchainDiagnosticData(blockchainConfig.blockchainRid, DpNodeType.NODE_TYPE_VALIDATOR)
-            ValidatorWorker(workerContext)
+            ValidatorWorker(workerContext).also {
+                registerBlockchainDiagnosticData(blockchainConfig.blockchainRid, DpNodeType.NODE_TYPE_SIGNER) {
+                    it.syncManager.getHeight().toString()
+                }
+            }
         } else {
-            registerBlockchainDiagnosticData(blockchainConfig.blockchainRid, DpNodeType.NODE_TYPE_REPLICA)
-            ReadOnlyWorker(workerContext)
+            ReadOnlyWorker(workerContext).also {
+                registerBlockchainDiagnosticData(blockchainConfig.blockchainRid, DpNodeType.NODE_TYPE_REPLICA) {
+                    it.getHeight().toString()
+                }
+            }
         }
     }
 
@@ -189,19 +199,24 @@ class EBFTSynchronizationInfrastructure(
             connectionManager.getPeersTopology().forEach { (blockchainRid, topology) ->
                 diagnosticData.computeIfPresent(BlockchainRid.buildFromHex(blockchainRid)) { _, properties ->
                     properties.apply {
-                        put(DiagnosticProperty.BLOCKCHAIN_NODE_PEERS.prettyName, topology)
+                        put(DiagnosticProperty.BLOCKCHAIN_NODE_PEERS.prettyName) { topology }
                     }
                 }
             }
 
-            diagnosticData.values.toTypedArray()
+            diagnosticData
+                    .mapValues { (_, v) ->
+                        v.mapValues { (_, v2) -> v2() }
+                    }
+                    .values.toTypedArray()
         }
     }
 
-    private fun registerBlockchainDiagnosticData(blockchainRid: BlockchainRid, nodeType: DpNodeType) {
-        blockchainProcessesDiagnosticData[blockchainRid] = mutableMapOf<String, Any>(
-                DiagnosticProperty.BLOCKCHAIN_RID.prettyName to blockchainRid.toHex(),
-                DiagnosticProperty.BLOCKCHAIN_NODE_TYPE.prettyName to nodeType.prettyName
+    private fun registerBlockchainDiagnosticData(blockchainRid: BlockchainRid, nodeType: DpNodeType, getCurrentHeight: () -> String) {
+        blockchainProcessesDiagnosticData[blockchainRid] = mutableMapOf<String, () -> Any>(
+                DiagnosticProperty.BLOCKCHAIN_RID.prettyName to { blockchainRid.toHex() },
+                DiagnosticProperty.BLOCKCHAIN_NODE_TYPE.prettyName to { nodeType.prettyName },
+                DiagnosticProperty.BLOCKCHAIN_CURRENT_HEIGHT.prettyName to getCurrentHeight
         )
     }
 }

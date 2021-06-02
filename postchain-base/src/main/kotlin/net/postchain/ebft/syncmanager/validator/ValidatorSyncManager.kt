@@ -4,13 +4,11 @@ package net.postchain.ebft.syncmanager.validator
 
 import mu.KLogging
 import net.postchain.common.toHex
-import net.postchain.core.*
+import net.postchain.core.NodeStateTracker
+import net.postchain.core.ProgrammerMistake
 import net.postchain.core.Signature
 import net.postchain.ebft.*
 import net.postchain.ebft.message.*
-import net.postchain.ebft.message.BlockData
-import net.postchain.ebft.message.BlockHeader
-import net.postchain.ebft.message.Transaction
 import net.postchain.ebft.rest.contract.serialize
 import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockData
 import net.postchain.ebft.syncmanager.BlockDataDecoder.decodeBlockDataWithWitness
@@ -44,6 +42,7 @@ class ValidatorSyncManager(private val workerContext: WorkerContext,
     private var lastStatusLogged: Long
     private val processName = workerContext.processName
     private var useFastSyncAlgorithm: Boolean = true
+
     companion object : KLogging()
 
     private val fastSynchronizer: FastSynchronizer
@@ -89,7 +88,7 @@ class ValidatorSyncManager(private val workerContext: WorkerContext,
                     is GetBlockAtHeight -> sendBlockAtHeight(xPeerId, message.height)
                     is GetBlockHeaderAndBlock -> {
                         sendBlockHeaderAndBlock(xPeerId, message.height,
-                                this.statusManager.myStatus.height-1)
+                                this.statusManager.myStatus.height - 1)
                     }
                     else -> {
                         if (!isReadOnlyNode) { // TODO: [POS-90]: Is it necessary here `isReadOnlyNode`?
@@ -413,6 +412,11 @@ class ValidatorSyncManager(private val workerContext: WorkerContext,
                 }
             }
         }
+    }
+
+    fun getHeight(): Long {
+        return if (useFastSyncAlgorithm) fastSynchronizer.blockHeight
+        else nodeStateTracker.blockHeight
     }
 
     fun isInFastSync(): Boolean {
