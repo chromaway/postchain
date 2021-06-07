@@ -25,7 +25,12 @@ object BaseConfigurationDataStore : KLogging(), ConfigurationDataStore {
     }
 
     override fun addConfigurationData(context: EContext, height: Long, gtvData: Gtv) {
-        DatabaseAccess.of(context).addConfigurationData(
+        return DatabaseAccess.of(context).addConfigurationData(
                 context, height, GtvEncoder.encodeGtv(gtvData))
     }
+
+    override fun setMustSyncUntil(context: EContext, brid: BlockchainRid, height: Long): Boolean {
+        return DatabaseAccess.of(context).setMustSyncUntil(context, brid, height)
+    }
+
 }

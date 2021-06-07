@@ -9,13 +9,15 @@ import net.postchain.config.node.NodeConfig
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.Transaction
 import net.postchain.devtools.KeyPairHelper.pubKey
+import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.devtools.utils.configuration.*
 import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
+import net.postchain.ebft.worker.ValidatorWorker
 import org.apache.commons.configuration2.MapConfiguration
+import org.awaitility.kotlin.await
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertTrue
-import org.junit.Before
 
 /**
  * This class uses the [SystemSetup] helper class to construct tests, and this way skips node config files, but
@@ -39,19 +41,48 @@ open class IntegrationTestSetup : AbstractIntegration() {
 
     companion object : KLogging()
 
+    val awaitDebugLog = false
+
+    /**
+     * If we want to monitor how long we are waiting and WHAT we are waiting for, then we can turn on this flag.
+     *
+     * NOTE: The reason we do simple System Out is because running multiple nodes with a common logfile
+     * and enforced waiting is a situation unique for tests, so it's better if these "logs" look different from "real" logs.
+     */
+    fun awaitLog(dbg: String) {
+        if (awaitDebugLog) {
+            System.out.println("TEST: $dbg")
+        }
+    }
+
+    // For important test info we always want to log
+    fun testLog(dbg: String) {
+        System.out.println("TEST: $dbg")
+    }
+
     @After
     override fun tearDown() {
-        logger.debug("Integration test -- TEARDOWN")
-        nodes.forEach { it.shutdown() }
-        nodes.clear()
-        nodeMap.clear()
-        logger.debug("Closed nodes")
-        peerInfos = null
-        expectedSuccessRids = mutableMapOf()
-        configOverrides.clear()
-        TestBlockchainRidCache.clear()
+        try {
+            logger.debug("Integration test -- TEARDOWN")
+            nodes.forEach { it.shutdown() }
+            nodes.clear()
+            nodeMap.clear()
+            logger.debug("Closed nodes")
+            peerInfos = null
+            expectedSuccessRids = mutableMapOf()
+            configOverrides.clear()
+            TestBlockchainRidCache.clear()
+            logger.debug("teadDown() done")
+        } catch (t: Throwable) {
+            logger.error("tearDown() failed", t)
+        }
+    }
 
-        System.gc()
+    protected fun strategy(node: PostchainTestNode): OnDemandBlockBuildingStrategy {
+        return node
+                .getBlockchainInstance()
+                .getEngine()
+                .getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
     }
 
     // TODO: [et]: Check out nullability for return value
@@ -144,6 +175,27 @@ open class IntegrationTestSetup : AbstractIntegration() {
             nodes.add(newPTNode)
             nodeMap[nodeSetup.sequenceNumber] = newPTNode
         }
+        // Await FastSynch to complete. This is to prevent a situation where
+        // 1. Test starts all nodes
+        // 2. post a transaction
+        // 3. await block 0 (with timeout of 10 seconds)
+        // 4. Fastsync doesn't succeed within a timeout of X>10 seconds
+        // This can happen in rare occations. It's common enough to happen at avery
+        // other -Pci build on travis.
+        // This code waits for sync on all signer nodes before returning in step 1.
+        systemSetup.nodeMap.values.forEach {
+            val ns = it
+            it.chainsToSign.forEach {
+                val process = nodes[ns.sequenceNumber.nodeNumber].getBlockchainInstance(it.toLong())
+                await.until {
+                    if (process is ValidatorWorker) {
+                        !process.syncManager.isInFastSync()
+                    } else {
+                        true
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -194,5 +246,36 @@ open class IntegrationTestSetup : AbstractIntegration() {
 
     fun createPeerInfos(nodeCount: Int): Array<PeerInfo> = createPeerInfosWithReplicas(nodeCount, 0)
 
+    protected fun buildBlock(chainId: Long, toHeight: Long, vararg txs: TestTransaction) {
+        buildBlock(nodes, chainId, toHeight, *txs)
+    }
+
+    protected fun buildBlock(nodes: List<PostchainTestNode>, chainId: Long, toHeight: Long, vararg txs: TestTransaction) {
+        buildBlockNoWait(nodes, chainId, toHeight, *txs)
+        awaitHeight(nodes, chainId, toHeight)
+    }
+
+    protected fun buildBlockNoWait(nodes: List<PostchainTestNode>, chainId: Long, toHeight: Long, vararg txs: TestTransaction) {
+        nodes.forEach {
+            it.enqueueTxs(chainId, *txs)
+        }
+        nodes.forEach {
+            it.buildBlocksUpTo(chainId, toHeight)
+        }
+    }
+
+    protected fun awaitHeight(chainId: Long, height: Long) {
+        awaitLog("========= AWAIT ALL ${nodes.size} NODES chain:  $chainId, height:  $height (i)")
+        awaitHeight(nodes, chainId, height)
+        awaitLog("========= DONE AWAIT ALL ${nodes.size} NODES chain: $chainId, height: $height (i)")
+    }
+
+    protected fun awaitHeight(nodes: List<PostchainTestNode>, chainId: Long, height: Long) {
+        nodes.forEach {
+            awaitLog("++++++ AWAIT node RID: ${PeerNameHelper.peerName(it.pubKey)}, chain: $chainId, height: $height (i)")
+            it.awaitHeight(chainId, height)
+            awaitLog("++++++ WAIT OVER node RID: ${PeerNameHelper.peerName(it.pubKey)}, chain: $chainId, height: $height (i)")
+        }
+    }
 
 }

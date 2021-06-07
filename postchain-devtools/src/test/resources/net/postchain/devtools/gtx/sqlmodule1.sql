@@ -52,7 +52,7 @@ $$ LANGUAGE sql;
 CREATE FUNCTION test_null_value(q_chain_id bigint)
     RETURNS TABLE (val text)
 AS $$
-SELECT NULL
+SELECT NULL::text
 FROM test_kv;
 $$ LANGUAGE sql;
 

@@ -23,6 +23,7 @@
         -->
         <string>net.postchain.devtools.testinfra.TestBlockchainConfigurationFactory</string>
     </entry>
+    <entry key="tag"><string>somewhat damanged</string></entry>
     <entry key="signers">
         <array>
             <!-- Key0 -->

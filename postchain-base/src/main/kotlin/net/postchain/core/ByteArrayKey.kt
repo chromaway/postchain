@@ -21,6 +21,11 @@ class ByteArrayKey(val byteArray: ByteArray): Comparable<ByteArrayKey> {
         return byteArray.toHex()
     }
 
+    fun shortString(): String {
+        val s = toString()
+        return "${s.substring(0, 4)}:${s.substring(s.length-2, s.length)}"
+    }
+
     override fun compareTo(other: ByteArrayKey): Int {
         return Arrays.compareUnsigned(this.byteArray, other.byteArray)
     }

@@ -5,7 +5,7 @@
     <parent>
         <artifactId>postchain</artifactId>
         <groupId>net.postchain</groupId>
-        <version>3.3.0</version>
+        <version>3.3.1</version>
     </parent>
     <artifactId>postchain-base</artifactId>
     <packaging>jar</packaging>
@@ -15,7 +15,7 @@
     <properties>
         <main-class>net.postchain.AppKt</main-class>
         <commons-dbutils.version>1.6</commons-dbutils.version>
-        <postgresql.version>42.2.0</postgresql.version>
+        <postgresql.version>42.2.11</postgresql.version>
         <spongycastle.core.version>1.56.0.0</spongycastle.core.version>
         <commons-dbcp2.version>2.6.0</commons-dbcp2.version>
         <commons-configuration2.version>2.1.1</commons-configuration2.version>
@@ -260,6 +260,9 @@
                             <archive>
                                 <manifest>
                                     <mainClass>net.postchain.AppKt</mainClass>
+                                    <!-- To be able get current version: javaClass.getPackage().implementationVersion  -->
+                                    <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                    <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                                 </manifest>
                                 <manifestEntries>
                                     <Class-Path>backend.jar</Class-Path>

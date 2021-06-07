@@ -13,7 +13,7 @@ class CommandAddBlockchain : Command {
     // TODO: Eliminate it later or reduce to DbConfig only
     @Parameter(
             names = ["-nc", "--node-config"],
-            description = "Configuration file of blockchain (.properties file)")
+            description = "Configuration file of node (.properties file)")
     private var nodeConfigFile = ""
 
     @Parameter(
@@ -29,7 +29,7 @@ class CommandAddBlockchain : Command {
 
     @Parameter(
             names = ["-bc", "--blockchain-config"],
-            description = "Configuration file of blockchain (gtxml or binary)",
+            description = "Configuration file of blockchain (GtvML (*.xml) or Gtv (*.gtv))",
             required = true)
     private var blockchainConfigFile = ""
 

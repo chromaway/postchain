@@ -90,9 +90,9 @@ object GTXMLTransactionParser {
 
     private fun parseBlockchainRID(blockchainRID: String?, contextBlockchainRID: BlockchainRid?): BlockchainRid {
         return if (blockchainRID.isNullOrEmpty()) {
-            contextBlockchainRID ?: BlockchainRid.EMPTY_RID
+            contextBlockchainRID ?: BlockchainRid.ZERO_RID
         } else {
-            val data = blockchainRID!!.hexStringToByteArray()
+            val data = blockchainRID.hexStringToByteArray()
                     .takeIf { contextBlockchainRID == null || it.contentEquals(contextBlockchainRID.data) }
                     ?: throw IllegalArgumentException(
                             "BlockchainRID = '$blockchainRID' of parsed xml transaction is not equal to " +

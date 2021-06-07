@@ -18,7 +18,7 @@ class EbftTestContext(val config: PeerCommConfiguration, val blockchainRid: Bloc
     val packets: XPacketHandler = mock()
 
     val events: XConnectorEvents = mock {
-        on { onPeerConnected(any(), any()) } doReturn packets
+        on { onPeerConnected(any()) } doReturn packets
     }
 
     val peer = NettyConnector<Message>(events)

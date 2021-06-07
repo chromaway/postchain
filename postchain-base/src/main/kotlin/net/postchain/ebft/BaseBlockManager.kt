@@ -7,6 +7,8 @@ import net.postchain.common.toHex
 import net.postchain.core.BlockBuildingStrategy
 import net.postchain.core.BlockData
 import net.postchain.core.BlockDataWithWitness
+import net.postchain.core.PmEngineIsAlreadyClosed
+import net.postchain.debug.BlockTrace
 import net.postchain.debug.BlockchainProcessName
 import nl.komponents.kovenant.Promise
 
@@ -22,6 +24,7 @@ class BaseBlockManager(
 
     @Volatile
     var processing = false
+
     @Volatile
     var intent: BlockIntent = DoNothingIntent
 
@@ -57,14 +60,20 @@ class BaseBlockManager(
             val theIntent = intent
             if (theIntent is FetchUnfinishedBlockIntent && theIntent.blockRID.contentEquals(block.header.blockRID)) {
                 runDBOp({
+                    blockTrace(theIntent)
                     blockDB.loadUnfinishedBlock(block)
                 }, { signature ->
                     if (statusManager.onReceivedBlock(block.header.blockRID, signature)) {
                         currentBlock = block
                     }
                 }, { exception ->
-                    logger.error("$processName: Can't parse unfinished block ${theIntent.blockRID.toHex()}: " +
-                            "${exception.message}")
+                    val msg = "$processName: Can't load unfinished block ${theIntent.blockRID.toHex()}: " +
+                            "${exception.message}"
+                    if (exception is PmEngineIsAlreadyClosed) {
+                        logger.debug(msg)
+                    } else {
+                        logger.error(msg)
+                    }
                 })
             }
         }
@@ -75,14 +84,25 @@ class BaseBlockManager(
             val theIntent = intent
             if (theIntent is FetchBlockAtHeightIntent && theIntent.height == height) {
                 runDBOp({
-                    blockDB.addBlock(block)
+                    val bTrace = if (logger.isTraceEnabled) {
+                        BlockTrace.build(processName, block.header.blockRID, height)
+                    } else {
+                        null // Use null for performance
+                    }
+
+                    blockDB.addBlock(block, null, bTrace)
                 }, {
                     if (statusManager.onHeightAdvance(height + 1)) {
                         currentBlock = null
                     }
                 }, { exception ->
-                    logger.error("$processName: Can't parse received block ${block.header.blockRID.toHex()} " +
-                            "at height $height: ${exception.message}")
+                    val msg = "$processName: Can't add received block ${block.header.blockRID.toHex()} " +
+                            "at height $height: ${exception.message}"
+                    if (exception is PmEngineIsAlreadyClosed) {
+                        logger.debug(msg)
+                    } else {
+                        logger.error(msg)
+                    }
                 })
             }
         }
@@ -100,7 +120,12 @@ class BaseBlockManager(
                     logger.error("$processName: Don't have a block StatusManager wants me to commit")
                     return
                 }
+                if (logger.isTraceEnabled) {
+                    logger.trace("$processName: Schedule commit of block ${currentBlock!!.header.blockRID.toHex()}")
+                }
+
                 runDBOp({
+                    blockTrace(blockIntent)
                     blockDB.commitBlock(statusManager.commitSignatures)
                 }, {
                     statusManager.onCommittedBlock(currentBlock!!.header.blockRID)
@@ -122,7 +147,12 @@ class BaseBlockManager(
                 if (!blockStrategy.shouldBuildBlock()) {
                     return
                 }
+                if (logger.isTraceEnabled) {
+                    logger.trace("$processName: Schedule build block. ${statusManager.myStatus.height + 1}")
+                }
+
                 runDBOp({
+                    blockTrace(blockIntent)
                     blockDB.buildBlock()
                 }, { blockAndSignature ->
                     val block = blockAndSignature.first
@@ -131,8 +161,12 @@ class BaseBlockManager(
                         currentBlock = block
                     }
                 }, { exception ->
-                    // TODO: POS-111: Put `blockRID` to log message
-                    logger.error("$processName: Can't build block _____: ${exception.message}")
+                    val msg = "$processName: Can't build block at height ${statusManager.myStatus.height + 1}: ${exception.message}"
+                    if (exception is PmEngineIsAlreadyClosed) {
+                        logger.debug(msg)
+                    } else {
+                        logger.error(msg)
+                    }
                 })
             }
 
@@ -151,4 +185,22 @@ class BaseBlockManager(
         }
         return intent
     }
+
+    // DEBUG only
+    private fun blockTrace(blockIntent: BlockIntent) {
+        if (logger.isTraceEnabled) {
+            try {
+                val heightIntent: Long? = if (blockIntent is FetchBlockAtHeightIntent) {
+                    (blockIntent as FetchBlockAtHeightIntent).height  // In this case we should know the height, let's add it
+                } else {
+                    null
+                }
+                blockDB.setBlockTrace(BlockTrace.build(processName, currentBlock?.header?.blockRID, heightIntent))
+            } catch (e: java.lang.Exception) {
+                // Doesn't matter
+                logger.trace("$processName: ERROR where adding bTrace.", e);
+            }
+        }
+    }
+
 }

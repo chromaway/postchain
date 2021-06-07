@@ -23,9 +23,12 @@ object KeyPairHelper {
     // TODO Olle POS-114 Note A bit sad that I had to do this, but it's the usage of [pubKeyFromByteArray()] from BlockchainSetupFactory that breaks
     init {
         for(i in 0..10) {
-            val x = pubKey(i)
-            //println("$i = ${x.toHex()}")
+            pubKey(i)
         }
+    }
+
+    fun privKey(pubKey: ByteArray): ByteArray {
+        return privKeys[pubKeyHexToIndex[pubKey.toHex()]]!!.first
     }
 
     fun privKey(index: Int): ByteArray {

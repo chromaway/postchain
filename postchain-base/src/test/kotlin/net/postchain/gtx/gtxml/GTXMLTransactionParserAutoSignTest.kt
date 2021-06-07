@@ -18,6 +18,7 @@ import net.postchain.gtx.OpData
 import org.junit.Test
 
 class GTXMLTransactionParserAutoSignTest {
+    val blockchainRID = BlockchainRid.buildFromHex("1234567812345678123456781234567812345678123456781234567812345678")
 
     @Test
     fun autoSign_autosigning_for_empty_signatures_successfully() {
@@ -34,7 +35,7 @@ class GTXMLTransactionParserAutoSignTest {
         val sigMaker1 = MockCryptoSystem().buildSigMaker(pubKey1, privKey1)
 
         val expectedBody = GTXTransactionBodyData(
-                BlockchainRid.buildFromHex("23213213"),
+                blockchainRID,
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
@@ -100,7 +101,7 @@ class GTXMLTransactionParserAutoSignTest {
         val pubKey1 = pubKey(1)
 
         val expectedBody = GTXTransactionBodyData(
-                BlockchainRid.buildFromHex("23213213"),
+                blockchainRID,
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(
@@ -151,7 +152,7 @@ class GTXMLTransactionParserAutoSignTest {
         val sigMaker1 = MockCryptoSystem().buildSigMaker(pubKey1, privKey1)
 
         val expectedBody = GTXTransactionBodyData(
-                BlockchainRid.buildFromHex("23213213"),
+                blockchainRID,
                 arrayOf(
                         OpData("ft_transfer",
                                 arrayOf(

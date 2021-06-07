@@ -4,6 +4,7 @@ package net.postchain.core
 
 import net.postchain.base.BlockchainRid
 import net.postchain.base.merkle.Hash
+import net.postchain.debug.BlockTrace
 import net.postchain.gtv.Gtv
 import nl.komponents.kovenant.Promise
 
@@ -21,7 +22,7 @@ interface BlockStore {
     fun beginBlock(ctx: EContext, blockchainRID: BlockchainRid, blockHeightDependencies: Array<Hash?>?): InitialBlockData
     fun addTransaction(bctx: BlockEContext, tx: Transaction): TxEContext
     fun finalizeBlock(bctx: BlockEContext, bh: BlockHeader)
-    fun commitBlock(bctx: BlockEContext, w: BlockWitness?)
+    fun commitBlock(bctx: BlockEContext, w: BlockWitness)
     fun getBlockHeightFromOwnBlockchain(ctx: EContext, blockRID: ByteArray): Long? // returns null if not found
     fun getBlockHeightFromAnyBlockchain(ctx: EContext, blockRID: ByteArray, chainId: Long): Long? // returns null if not found
     fun getChainId(ctx: EContext, blockchainRID: BlockchainRid): Long? // returns null if not found
@@ -53,7 +54,7 @@ interface BlockQueries {
     fun getBlockSignature(blockRID: ByteArray): Promise<Signature, Exception>
     fun getBestHeight(): Promise<Long, Exception>
     fun getBlockRid(height: Long): Promise<ByteArray?, Exception>
-    fun getBlockAtHeight(height: Long): Promise<BlockDataWithWitness, Exception>
+    fun getBlockAtHeight(height: Long, includeTransactions: Boolean = true): Promise<BlockDataWithWitness?, Exception>
     fun getBlockHeader(blockRID: ByteArray): Promise<BlockHeader, Exception>
     fun getBlocks(beforeTime: Long, limit: Int, partialTx: Boolean): Promise<List<BlockDetail>, Exception>
     fun getBlock(blockRID: ByteArray, partialTx: Boolean): Promise<BlockDetail?, Exception>
@@ -88,7 +89,10 @@ interface BlockBuilder {
     fun finalizeAndValidate(blockHeader: BlockHeader)
     fun getBlockData(): BlockData
     fun getBlockWitnessBuilder(): BlockWitnessBuilder?
-    fun commit(blockWitness: BlockWitness?)
+    fun commit(blockWitness: BlockWitness)
+    // Just debug
+    fun getBTrace(): BlockTrace? // Use this function to get quick debug info about the block, note: ONLY for logging!
+    fun setBTrace(bTrace: BlockTrace)
 }
 
 /**

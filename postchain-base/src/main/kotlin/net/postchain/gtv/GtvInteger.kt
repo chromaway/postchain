@@ -13,7 +13,7 @@ data class GtvInteger(val integer: BigInteger) : GtvPrimitive() {
     override val type: GtvType = GtvType.INTEGER
 
     override fun asInteger(): Long {
-        return integer.toLong()
+        return integer.longValueExact()
     }
 
     override fun asBigInteger(): BigInteger {

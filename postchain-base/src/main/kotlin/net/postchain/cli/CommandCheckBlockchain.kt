@@ -13,7 +13,7 @@ class CommandCheckBlockchain : Command {
     // TODO: Eliminate it later or reduce to DbConfig only
     @Parameter(
             names = ["-nc", "--node-config"],
-            description = "Configuration file of blockchain (.properties file)",
+            description = "Configuration file of node (.properties file)",
             required = true)
     private var nodeConfigFile = ""
 

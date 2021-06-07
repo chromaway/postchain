@@ -2,8 +2,10 @@
 
 package net.postchain.core
 
+import net.postchain.base.HistoricBlockchainContext
 import net.postchain.config.blockchain.BlockchainConfigurationProvider
 import net.postchain.config.node.NodeConfigurationProvider
+import net.postchain.debug.BlockTrace
 import net.postchain.debug.BlockchainProcessName
 import net.postchain.debug.NodeDiagnosticContext
 
@@ -11,7 +13,8 @@ interface SynchronizationInfrastructure : Shutdownable {
 
     fun makeBlockchainProcess(
             processName: BlockchainProcessName,
-            engine: BlockchainEngine
+            engine: BlockchainEngine,
+            historicBlockchainContext: HistoricBlockchainContext? = null
     ): BlockchainProcess
 
 }
@@ -27,7 +30,7 @@ interface BlockchainInfrastructure : SynchronizationInfrastructure {
     fun makeBlockchainEngine(
             processName: BlockchainProcessName,
             configuration: BlockchainConfiguration,
-            restartHandler: RestartHandler
+            restartHandler: (BlockTrace?) -> Boolean
     ): BlockchainEngine
 
 }

@@ -17,7 +17,7 @@ class IntegrationTestContext(
             peerInfos, mock(), KeyPairHelper.privKey(myIndex), KeyPairHelper.pubKey(myIndex))
 
     val connectionManager = DefaultXConnectionManager(
-            connectorFactory, mock(), mock(), mock(), SECP256K1CryptoSystem())
+            connectorFactory, mock(), mock(), SECP256K1CryptoSystem())
 
     val communicationManager = DefaultXCommunicationManager<Int>(
             connectionManager, peerCommunicationConfig, 1L, mock(), mock(), mock(), mock())

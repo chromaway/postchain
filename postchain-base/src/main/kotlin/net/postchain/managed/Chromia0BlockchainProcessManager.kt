@@ -11,6 +11,7 @@ import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.core.BlockchainInfrastructure
 import net.postchain.core.ByteArrayKey
 import net.postchain.core.RestartHandler
+import net.postchain.debug.BlockTrace
 import net.postchain.debug.NodeDiagnosticContext
 import net.postchain.gtv.GtvArray
 import net.postchain.gtv.GtvByteArray
@@ -58,20 +59,29 @@ class Chromia0BlockchainProcessManager(
         }
     }
 
-    override fun restartHandler(chainId: Long): RestartHandler {
-        val baseHandler = super.restartHandler(chainId)
+    override fun buildRestartHandler(chainId: Long): RestartHandler {
+        val baseHandler = super.buildRestartHandler(chainId)
         if (chainId == 0L)
             return baseHandler
         else {
             return {
+                rhTrace("Begin", chainId, it)
                 try {
                     anchorLastBlock(chainId)
+                    rhTrace("Anchored", chainId, it)
                 } catch (e: Exception) {
-                    logger.error("Error when anchoring ${e.toString()}")
+                    logger.error("Error when anchoring $e", e)
                     e.printStackTrace()
                 }
-                baseHandler()
+                baseHandler(it)
             }
+        }
+    }
+
+    //  restartHandler()
+    private fun rhTrace(str: String, chainId: Long, bTrace: BlockTrace?) {
+        if (logger.isTraceEnabled) {
+            logger.trace("[${nodeName()}]: RestartHandler CHROMIA 0 -- $str: chainId: $chainId, block causing handler to run: $bTrace")
         }
     }
 }

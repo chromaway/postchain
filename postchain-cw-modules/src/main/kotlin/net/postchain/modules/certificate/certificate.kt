@@ -24,8 +24,8 @@ class certificate_op (val config: CertificateConfig, data: ExtOpData): GTXOperat
         if (data.args.size != 6)
             return false
         if (!data.signers.any { signer ->
-            signer.contentEquals(authority)
-        })
+                    signer.contentEquals(authority)
+                })
             return false
 
         if (pubkey.size != 33) return false

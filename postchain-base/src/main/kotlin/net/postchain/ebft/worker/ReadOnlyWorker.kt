@@ -2,55 +2,56 @@
 
 package net.postchain.ebft.worker
 
-import net.postchain.base.NetworkAwareTxQueue
-import net.postchain.core.BlockchainEngine
+import mu.KLogging
+import net.postchain.core.BlockchainProcess
 import net.postchain.core.NODE_ID_READ_ONLY
-import net.postchain.core.NodeStateTracker
-import net.postchain.debug.BlockchainProcessName
 import net.postchain.ebft.BaseBlockDatabase
-import net.postchain.ebft.message.Message
-import net.postchain.ebft.syncmanager.SyncManager
-import net.postchain.ebft.syncmanager.replica.ReplicaSyncManager
-import net.postchain.network.CommunicationManager
+import net.postchain.ebft.syncmanager.common.FastSyncParameters
+import net.postchain.ebft.syncmanager.common.FastSynchronizer
+import java.util.concurrent.CountDownLatch
+import kotlin.concurrent.thread
 
-/**
- * A blockchain instance replica worker
- * @property updateLoop the main thread
- */
-class ReadOnlyWorker(
-        override val processName: BlockchainProcessName,
-        signers: List<ByteArray>,
-        override val blockchainEngine: BlockchainEngine,
-        private val communicationManager: CommunicationManager<Message>
-) : AbstractBlockchainProcess() {
+class ReadOnlyWorker(val workerContext: WorkerContext) : BlockchainProcess {
 
-    override val blockDatabase: BaseBlockDatabase
-    override val syncManager: SyncManager
-    override val networkAwareTxQueue: NetworkAwareTxQueue
-    override val nodeStateTracker = NodeStateTracker()
+    companion object : KLogging()
+
+    override fun getEngine() = workerContext.engine
+
+    private val fastSynchronizer: FastSynchronizer
+
+    private val done = CountDownLatch(1)
+
+    private val blockDatabase = BaseBlockDatabase(
+            getEngine(), getEngine().getBlockQueries(), NODE_ID_READ_ONLY)
 
     init {
-        blockDatabase = BaseBlockDatabase(
-                blockchainEngine, blockchainEngine.getBlockQueries(), NODE_ID_READ_ONLY)
 
-        syncManager = ReplicaSyncManager(
-                processName,
-                signers,
-                communicationManager,
-                nodeStateTracker,
-                blockDatabase,
-                blockchainEngine.getBlockQueries(),
-                blockchainEngine.getConfiguration())
+        val params = FastSyncParameters()
+        params.jobTimeout = workerContext.nodeConfig.fastSyncJobTimeout
 
-        networkAwareTxQueue = NetworkAwareTxQueue(
-                blockchainEngine.getTransactionQueue(),
-                communicationManager)
-
-        startUpdateLoop(syncManager)
+        fastSynchronizer = FastSynchronizer(workerContext,
+                blockDatabase, params)
+        thread(name = "replicaSync-${workerContext.processName}") {
+            fastSynchronizer.syncUntilShutdown()
+            done.countDown()
+        }
     }
 
+    fun getHeight(): Long = fastSynchronizer.blockHeight
+
     override fun shutdown() {
-        super.shutdown()
-        communicationManager.shutdown()
+        shutdownDebug("Begin")
+        fastSynchronizer.shutdown()
+        blockDatabase.stop()
+        shutdownDebug("Wait for \"done\"")
+        done.await()
+        workerContext.shutdown()
+        shutdownDebug("End")
+    }
+
+    private fun shutdownDebug(str: String) {
+        if (logger.isDebugEnabled) {
+            logger.debug("${workerContext.processName}: shutdown() - $str.")
+        }
     }
 }

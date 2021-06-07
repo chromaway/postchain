@@ -23,6 +23,9 @@
         -->
         <string>net.postchain.gtx.GTXBlockchainConfigurationFactory</string>
     </entry>
+    <entry key="tag">
+        <string>This is the second one.</string>
+    </entry>
     <entry key="signers">
         <array>
             <!-- Key0 -->

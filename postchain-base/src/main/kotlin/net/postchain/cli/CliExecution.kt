@@ -6,13 +6,15 @@ import net.postchain.PostchainNode
 import net.postchain.base.*
 import net.postchain.base.data.DatabaseAccess
 import net.postchain.base.data.DependenciesValidator
+import net.postchain.common.toHex
 import net.postchain.config.app.AppConfig
 import net.postchain.config.node.NodeConfigurationProviderFactory
-import net.postchain.gtv.Gtv
-import net.postchain.gtv.gtvml.GtvMLParser
+import net.postchain.core.BadDataMistake
+import net.postchain.core.BadDataType
+import net.postchain.core.EContext
+import net.postchain.gtv.*
 import org.apache.commons.configuration2.ex.ConfigurationException
 import org.apache.commons.dbcp2.BasicDataSource
-import java.io.File
 import java.sql.Connection
 import java.sql.SQLException
 
@@ -28,17 +30,26 @@ object CliExecution {
             mode: AlreadyExistMode = AlreadyExistMode.IGNORE,
             givenDependencies: List<BlockchainRelatedInfo> = listOf()
     ): BlockchainRid {
+        val gtv = GtvFileReader.readFile(blockchainConfigFile)
+        return addBlockchainGtv(nodeConfigFile, chainId, gtv, mode, givenDependencies)
+    }
 
-        val gtvData = parseGtvML(blockchainConfigFile)
+    private fun addBlockchainGtv(
+            nodeConfigFile: String,
+            chainId: Long,
+            blockchainConfig: Gtv,
+            mode: AlreadyExistMode = AlreadyExistMode.IGNORE,
+            givenDependencies: List<BlockchainRelatedInfo> = listOf()
+    ): BlockchainRid {
 
         return runStorageCommand(nodeConfigFile, chainId) { ctx ->
             val db = DatabaseAccess.of(ctx)
 
             fun init(): BlockchainRid {
-                val brid = BlockchainRidFactory.calculateBlockchainRid(gtvData)
+                val brid = BlockchainRidFactory.calculateBlockchainRid(blockchainConfig)
                 db.initializeBlockchain(ctx, brid)
                 DependenciesValidator.validateBlockchainRids(ctx, givenDependencies)
-                BaseConfigurationDataStore.addConfigurationData(ctx, 0, gtvData)
+                BaseConfigurationDataStore.addConfigurationData(ctx, 0, blockchainConfig)
                 return brid
             }
 
@@ -68,15 +79,36 @@ object CliExecution {
             blockchainConfigFile: String,
             chainId: Long,
             height: Long,
-            mode: AlreadyExistMode = AlreadyExistMode.IGNORE
+            mode: AlreadyExistMode = AlreadyExistMode.IGNORE,
+            allowUnknownSigners: Boolean = false
+    ) {
+        val gtv = GtvFileReader.readFile(blockchainConfigFile)
+        addConfigurationGtv(nodeConfigFile, gtv, chainId, height, mode, allowUnknownSigners)
+    }
+
+    private fun addConfigurationGtv(
+            nodeConfigFile: String,
+            blockchainConfig: Gtv,
+            chainId: Long,
+            height: Long,
+            mode: AlreadyExistMode = AlreadyExistMode.IGNORE,
+            allowUnknownSigners: Boolean
     ) {
 
         val configStore = BaseConfigurationDataStore
-        val gtvConfig = parseGtvML(blockchainConfigFile)
 
         runStorageCommand(nodeConfigFile, chainId) { ctx ->
 
-            fun init() = configStore.addConfigurationData(ctx, height, gtvConfig)
+            fun init() = try {
+                configStore.addConfigurationData(ctx, height, blockchainConfig)
+                addFutureSignersAsReplicas(ctx, height, blockchainConfig, allowUnknownSigners)
+            } catch (e: BadDataMistake) {
+                if (e.type == BadDataType.MISSING_PEERINFO) {
+                    throw CliError.Companion.CliException(e.message + " Please add node with command peerinfo-add or set flag --allow-unknown-signers.")
+                } else {
+                    throw CliError.Companion.CliException("Bad configuration format.")
+                }
+            }
 
             when (mode) {
                 AlreadyExistMode.ERROR -> {
@@ -98,6 +130,78 @@ object CliExecution {
                     } else {
                         println("Blockchain configuration of chainId $chainId at height $height already exists")
                     }
+                }
+            }
+        }
+    }
+
+    /** When a new (height > 0) configuration is added, we automatically add signers in that config to table
+     * blockchainReplicaNodes (for current blockchain). Useful for synchronization.
+     */
+    private fun addFutureSignersAsReplicas(eContext: EContext, height: Long, gtvData: Gtv, allowUnknownSigners: Boolean) {
+        if (height > 0) {
+            val db = DatabaseAccess.of(eContext)
+            val brid = db.getBlockchainRid(eContext)!!
+            val confGtvDict = gtvData as GtvDictionary
+            val signers = confGtvDict[BaseBlockchainConfigurationData.KEY_SIGNERS]!!.asArray().map { it.asByteArray() }
+            for (sig in signers) {
+                val nodePubkey = sig.toHex()
+                // Node must be in PeerInfo, or else it cannot be a blockchain replica.
+                val foundInPeerInfo = db.findPeerInfo(eContext, null, null, nodePubkey)
+                if (foundInPeerInfo.isNotEmpty()) {
+                    db.addBlockchainReplica(eContext, brid.toHex(), nodePubkey)
+                    // If the node is not in the peerinfo table and we do not allow unknown signers in a configuration,
+                    // throw error
+                } else if (!allowUnknownSigners) {
+                    throw BadDataMistake(BadDataType.MISSING_PEERINFO,
+                            "Signer ${nodePubkey} does not exist in peerinfos.")
+                }
+            }
+        }
+    }
+
+
+    fun setMustSyncUntil(nodeConfigFile: String, blockchainRID: BlockchainRid, height: Long): Boolean {
+        return runStorageCommand(nodeConfigFile) { ctx ->
+            val db = DatabaseAccess.of(ctx)
+            db.setMustSyncUntil(ctx, blockchainRID, height)
+        }
+    }
+
+    fun getMustSyncUntilHeight(nodeConfigFile: String): Map<Long, Long>? {
+        return runStorageCommand(nodeConfigFile) { ctx ->
+            DatabaseAccess.of(ctx).getMustSyncUntil(ctx)
+        }
+    }
+
+    fun peerinfoAdd(nodeConfigFile: String, host: String, port: Int, pubKey: String, mode: AlreadyExistMode): Boolean {
+        return runStorageCommand(nodeConfigFile) { ctx ->
+            val db = DatabaseAccess.of(ctx)
+
+            val found: Array<PeerInfo> = db.findPeerInfo(ctx, host, port, null)
+            if (found.isNotEmpty()) {
+                throw CliError.Companion.CliException("Peerinfo with port, host already exists.")
+            }
+
+            val found2 = db.findPeerInfo(ctx, null, null, pubKey)
+            if (found2.isNotEmpty()) {
+                when (mode) {
+                    // mode tells us how to react upon an error caused if pubkey already exist (throw error or force write).
+                    AlreadyExistMode.ERROR -> {
+                        throw CliError.Companion.CliException("Peerinfo with pubkey already exists. Using -f to force update")
+                    }
+                    AlreadyExistMode.FORCE -> {
+                        db.updatePeerInfo(ctx, host, port, pubKey)
+                    }
+                    else -> false
+                }
+            } else {
+                when (mode) {
+                    // In this branch, the pubkey do not already exist, thus we whant to add it, regarless of mode.
+                    AlreadyExistMode.ERROR, AlreadyExistMode.FORCE -> {
+                        db.addPeerInfo(ctx, host, port, pubKey)
+                    }
+                    else -> false
                 }
             }
         }
@@ -135,6 +239,14 @@ object CliExecution {
         }
     }
 
+    fun getConfiguration(nodeConfigFile: String, chainId: Long, height: Long): ByteArray? {
+        return runStorageCommand(nodeConfigFile, chainId) { ctx ->
+            val db = DatabaseAccess.of(ctx)
+            db.getConfigurationData(ctx, height)
+        }
+    }
+
+
     fun waitDb(retryTimes: Int, retryInterval: Long, nodeConfigFile: String): CliResult {
         return tryCreateBasicDataSource(nodeConfigFile)?.let { Ok() } ?: if (retryTimes > 0) {
             Thread.sleep(retryInterval)
@@ -163,7 +275,4 @@ object CliExecution {
         }
     }
 
-    private fun parseGtvML(blockchainConfigFile: String): Gtv {
-        return GtvMLParser.parseGtvML(File(blockchainConfigFile).readText())
-    }
 }

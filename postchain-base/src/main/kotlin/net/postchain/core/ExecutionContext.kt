@@ -2,6 +2,7 @@
 
 package net.postchain.core
 
+import net.postchain.gtv.Gtv
 import java.sql.Connection
 
 interface AppContext {
@@ -19,6 +20,7 @@ interface ExecutionContext : AppContext {
 typealias EContext = ExecutionContext
 
 interface BlockEContext : EContext {
+    val height: Long
     val blockIID: Long
     val timestamp: Long
     fun getChainDependencyHeight(chainID: Long): Long
@@ -26,6 +28,9 @@ interface BlockEContext : EContext {
 
 interface TxEContext : BlockEContext {
     val txIID: Long
+    fun emitEvent(type: String, data: Gtv)
+    // called after transaction was added to DB
+    fun done()
 }
 
 /**

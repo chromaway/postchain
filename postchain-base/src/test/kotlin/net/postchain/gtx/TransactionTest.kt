@@ -24,11 +24,11 @@ fun makeNOPGTX(bcRid: BlockchainRid): ByteArray {
 class GTXTransactionTest {
 
     val module = StandardOpsGTXModule()
-    val gtxData = makeNOPGTX(BlockchainRid.EMPTY_RID)
+    val gtxData = makeNOPGTX(BlockchainRid.ZERO_RID)
 
     @Test
     fun runtx() {
-        val factory = GTXTransactionFactory(BlockchainRid.EMPTY_RID, module, myCS)
+        val factory = GTXTransactionFactory(BlockchainRid.ZERO_RID, module, myCS)
         val tx = factory.decodeTransaction(gtxData)
         assertTrue(tx.getRID().size > 1)
         assertTrue(tx.getRawData().size > 1)

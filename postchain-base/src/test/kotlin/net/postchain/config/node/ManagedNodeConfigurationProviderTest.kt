@@ -12,8 +12,10 @@ import net.postchain.base.PeerInfo
 import net.postchain.base.peerId
 import net.postchain.common.hexStringToByteArray
 import net.postchain.config.app.AppConfig
+import net.postchain.network.x.XPeerID
 import org.junit.Test
 import java.time.Instant
+import kotlin.test.assertEquals
 
 class ManagedNodeConfigurationProviderTest {
 
@@ -23,27 +25,6 @@ class ManagedNodeConfigurationProviderTest {
     private val peerInfo1New = PeerInfo("127.0.0.1", 9901, "BBBB".hexStringToByteArray(), Instant.now())
     private val peerInfo2 = PeerInfo("127.0.0.1", 9902, "CCCC".hexStringToByteArray(), Instant.EPOCH)
     private val peerInfo2New = PeerInfo("127.0.0.1", 9902, "CCCC".hexStringToByteArray(), Instant.now())
-
-    @Test
-    fun testGetConfiguration() {
-        // Expected
-        val expected = arrayOf(peerInfo0, peerInfo1)
-        val actual = mapOf(
-                peerInfo1.peerId() to peerInfo1,
-                peerInfo0.peerId() to peerInfo0)
-
-        // Mock
-        val appConfig = AppConfig(mock())
-        val mockStorage = MockStorage.mock(expected)
-
-        // SUT
-        val provider = ManualNodeConfigurationProvider(appConfig) { mockStorage }
-
-        // Assert
-        val config = provider.getConfiguration()
-        assertk.assert(config.appConfig).isSameAs(appConfig)
-        assertk.assert(config.peerInfoMap).isEqualTo(actual)
-    }
 
     /**
      * Implementation of most tests
@@ -197,5 +178,20 @@ class ManagedNodeConfigurationProviderTest {
                 arrayOf(peerInfo0New, peerInfo1, peerInfo2New),
                 arrayOf(peerInfo0New, peerInfo1New, peerInfo2New)
         )
+    }
+
+    @Test
+    fun testMerge() {
+        val a = listOf(p(1), p(2))
+        val b = listOf(p(3), p(2))
+        val expectedMerged = setOf(p(1), p(2), p(3))
+        val provider = ManagedNodeConfigurationProvider(mock()) { mock() }
+        val result = provider.merge(a, b)
+        assertEquals(expectedMerged.size, result.size)
+        assertEquals(expectedMerged, result.toSet())
+    }
+
+    fun p(s: Int): XPeerID {
+        return XPeerID(byteArrayOf(s.toByte()))
     }
 }

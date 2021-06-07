@@ -3,7 +3,7 @@ package net.postchain.devtools
 import net.postchain.config.node.NodeConfigurationProvider
 import net.postchain.devtools.utils.configuration.NodeSetup
 import net.postchain.devtools.utils.configuration.SystemSetup
-import org.apache.commons.configuration2.MapConfiguration
+import org.apache.commons.configuration2.Configuration
 import org.apache.commons.configuration2.PropertiesConfiguration
 
 /**
@@ -27,9 +27,8 @@ object TestLegacyNodeConfigProducer {
     fun createNodeConfig(testName: String,
                          nodeSetup: NodeSetup,
                          systemSetup: SystemSetup,
-                         startConfig: PropertiesConfiguration? = null,
-                         configOverrides: MapConfiguration? = null
-    ): PropertiesConfiguration {
+                         startConfig: PropertiesConfiguration? = null
+    ): Configuration {
 
         val baseConfig = startConfig ?: PropertiesConfiguration()
 
@@ -39,6 +38,7 @@ object TestLegacyNodeConfigProducer {
         // peers
         setPeerConfig(nodeSetup, systemSetup, baseConfig)
 
+        setSyncTuningParams(systemSetup, baseConfig)
 
         setConfProvider(systemSetup.nodeConfProvider, baseConfig)
         setConfInfrastructure(systemSetup.confInfrastructure, baseConfig)
@@ -48,6 +48,9 @@ object TestLegacyNodeConfigProducer {
         return baseConfig
     }
 
+    fun setSyncTuningParams(systemSetup: SystemSetup, baseConfig: PropertiesConfiguration) {
+        baseConfig.setProperty("fastsync.exit_delay", if (systemSetup.nodeMap.size == 1) 0 else 1000)
+    }
 
     fun setConfProvider(str: String, baseConfig: PropertiesConfiguration) {
         baseConfig.setProperty("configuration.provider.node", str)

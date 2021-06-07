@@ -47,8 +47,12 @@ open class TransactionInfoExt(
 )
 
 data class ValidationResult(
-        val result: Boolean,
-        val message: String? = null)
+        val result: Result,
+        val message: String = "") {
+    enum class Result {
+        OK, PREV_BLOCK_MISMATCH, BLOCK_FROM_THE_FUTURE, DUPLICATE_BLOCK, SPLIT, INVALID_TIMESTAMP,
+        MISSING_BLOCKCHAIN_DEPENDENCY, INVALID_ROOT_HASH }
+}
 
 /**
  * Witness is a generalization over signatures.
@@ -59,7 +63,7 @@ interface BlockWitness {
     fun getRawData(): ByteArray
 }
 
-open class BlockDataWithWitness(header: BlockHeader, transactions: List<ByteArray>, val witness: BlockWitness?)
+open class BlockDataWithWitness(header: BlockHeader, transactions: List<ByteArray>, val witness: BlockWitness)
     : BlockData(header, transactions)
 
 interface MultiSigBlockWitness : BlockWitness {

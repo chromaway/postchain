@@ -7,12 +7,14 @@ import net.postchain.core.TxEContext
 import net.postchain.core.UserMistake
 
 class GTXOpMistake(message: String, opData: ExtOpData, argPos: Int? = null, cause: Exception? = null)
-    : UserMistake( message +
+    : UserMistake(message +
         " (in ${opData.opName} #${opData.opIndex} " +
         (if (argPos != null) "(arg ${argPos})" else "") + ")",
         cause)
 
-abstract class GTXOperation(val data: ExtOpData): Transactor
+abstract class GTXOperation(val data: ExtOpData) : Transactor {
+    override fun isSpecial(): Boolean = false
+}
 
 class SimpleGTXOperation(data: ExtOpData,
                          val applyF: (TxEContext) -> Boolean,
@@ -24,6 +26,10 @@ class SimpleGTXOperation(data: ExtOpData,
 
     override fun isCorrect(): Boolean {
         return isCorrectF()
+    }
+
+    override fun isSpecial(): Boolean {
+        return data.opName.startsWith("__")
     }
 }
 

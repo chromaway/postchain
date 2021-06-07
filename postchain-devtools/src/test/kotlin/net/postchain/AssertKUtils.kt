@@ -28,12 +28,3 @@ fun <T : Map<*, *>> Assert<T>.isEmpty() {
     if (actual.isEmpty()) return
     expected("to be empty but was:${show(actual)}")
 }
-
-/**
- * Asserts the map contains exactly the expected keys. There must not be any extra elements.
- * @see [containsAll]
- */
-fun <K, V> Assert<Map<K, V>>.containsExactlyKeys(vararg keys: K) {
-    if (actual.size == keys.size && keys.all { actual.containsKey(it) }) return
-    expected("to contain exactly keys:${show(keys)} but was:${show(actual.keys)}")
-}

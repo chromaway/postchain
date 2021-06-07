@@ -57,6 +57,8 @@ class BaseTransactionQueue(queueCapacity: Int = 2500) : TransactionQueue {
     }
 
     override fun enqueue(tx: Transaction): TransactionResult {
+        if (tx.isSpecial()) return TransactionResult.INVALID
+
         val rid = ByteArrayKey(tx.getRID())
         synchronized(this) {
             if (queueMap.contains(rid)) {

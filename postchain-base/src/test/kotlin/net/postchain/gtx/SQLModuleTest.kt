@@ -23,7 +23,7 @@ class SQLModuleTest {
         )
 
         val mf = SQLGTXModuleFactory()
-        val module = mf.makeModule(config, BlockchainRid.EMPTY_RID)
+        val module = mf.makeModule(config, BlockchainRid.ZERO_RID)
 
         val appConfig = AppConfig(getDatabaseConfig())
         val storage = StorageBuilder.buildStorage(appConfig, 0)

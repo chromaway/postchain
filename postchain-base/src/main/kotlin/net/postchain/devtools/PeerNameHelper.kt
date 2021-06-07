@@ -16,6 +16,6 @@ object PeerNameHelper {
     fun shortHash(byteArrayHash: ByteArray): String = shorten(byteArrayHash.toHex())
 
     private fun shorten(word: String) = word.run {
-        "${take(2)}:${takeLast(2)}"
+        "${take(4)}:${takeLast(2)}"
     }
 }

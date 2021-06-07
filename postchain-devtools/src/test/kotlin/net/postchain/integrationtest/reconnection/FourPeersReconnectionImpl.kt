@@ -2,40 +2,18 @@ package net.postchain.integrationtest.reconnection
 
 import net.postchain.devtools.PostchainTestNode
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
-import net.postchain.devtools.testinfra.TestTransaction
-import net.postchain.integrationtest.assertChainNotStarted
-import net.postchain.integrationtest.assertChainStarted
-import net.postchain.integrationtest.assertNodeConnectedWith
+import net.postchain.devtools.assertChainNotStarted
+import net.postchain.devtools.assertChainStarted
+import net.postchain.devtools.assertNodeConnectedWith
 import org.awaitility.Awaitility
 import org.awaitility.Duration
 import org.junit.Assert
-import kotlin.random.Random
 
 open class FourPeersReconnectionImpl : ReconnectionTest() {
 
-    private var txCounter = 0
     private var builtBlocksCount = 0L
-
     protected fun reset() {
         builtBlocksCount = 0
-    }
-
-    protected fun nextTx(): TestTransaction {
-        return TestTransaction(txCounter++)
-    }
-
-    /**
-     * Returns random node from the list [node0, node1, node2, node3]
-     */
-    protected fun randNode(): PostchainTestNode {
-        return nodes[Random.nextInt(1_000_000) % 4]
-    }
-
-    /**
-     * Returns random node from the list [node0, node1, node2]
-     */
-    protected fun randNode3(): PostchainTestNode {
-        return nodes[Random.nextInt(1_000_000) % 3]
     }
 
     fun assertHeightForAllNodes(height: Long) {
@@ -46,15 +24,6 @@ open class FourPeersReconnectionImpl : ReconnectionTest() {
                     Assert.assertEquals(height, queries(nodes[2]) { it.getBestHeight() })
                     Assert.assertEquals(height, queries(nodes[3]) { it.getBestHeight() })
                 }
-    }
-
-    fun buildNotEmptyBlocks(numberOfBlocks: Int, target: PostchainTestNode) {
-        repeat(numberOfBlocks) { height ->
-            enqueueTransactions(target, nextTx(), nextTx())
-            awaitBuiltBlock(target, builtBlocksCount + height)
-        }
-
-        builtBlocksCount += numberOfBlocks
     }
 
     /**

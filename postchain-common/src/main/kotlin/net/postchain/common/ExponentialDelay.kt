@@ -15,18 +15,19 @@ class ExponentialDelay (
             const val DELAY_POWER_BASE: Double = 2.0
         }
 
-        fun getDelayMillis(): Long {
+        fun getDelayMillisAndIncrease(): Long {
+            val result = delayCounterMillis;
             if (delayCounterMillis < MAX_DELAY_MILLIS) {
+                executionCounter += 1
                 // must calculate new delay
                 //println("ec = $executionCounter")
                 delayCounterMillis = (delayCounterMillis * (Math.pow(DELAY_POWER_BASE, executionCounter.toDouble()))).toLong()
-                executionCounter += 1
                 if (delayCounterMillis > MAX_DELAY_MILLIS) {
                     delayCounterMillis = MAX_DELAY_MILLIS
                 }
             }
 
-            return delayCounterMillis
+            return result
         }
 
 }

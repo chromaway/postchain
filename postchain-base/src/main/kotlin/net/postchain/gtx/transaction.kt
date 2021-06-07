@@ -42,6 +42,10 @@ class GTXTransaction (
         return myHash
     }
 
+    override fun isSpecial(): Boolean {
+        return ops.any { it.isSpecial() }
+    }
+
     override fun isCorrect(): Boolean {
         if (isChecked) return true
 

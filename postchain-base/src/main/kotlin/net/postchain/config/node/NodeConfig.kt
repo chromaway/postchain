@@ -80,19 +80,48 @@ open class NodeConfig(val appConfig: AppConfig) {
     val restApiSslCertificatePassword: String
         get() = config.getString("api.ssl_certificate.password", "")
 
-
     /**
      * Peers
      */
     open val peerInfoMap: Map<XPeerID, PeerInfo> = mapOf()
+
+    // list of replicas for a given node
     open val nodeReplicas: Map<XPeerID, List<XPeerID>> = mapOf()
     open val blockchainReplicaNodes: Map<BlockchainRid, List<XPeerID>> = mapOf()
+    open val blockchainsToReplicate: Set<BlockchainRid> = setOf()
+    open val blockchainAncestors: Map<BlockchainRid, Map<BlockchainRid, Set<XPeerID>>> = getAncestors()
 
+    open val mustSyncUntilHeight: Map<Long, Long>? = mapOf() //mapOf<chainID, height>
+
+    val fastSyncExitDelay: Long
+        get() = config.getLong("fastsync.exit_delay", 60000)
+
+    val fastSyncJobTimeout: Long
+        get() = config.getLong("fastsync.job_timeout", 10000)
+
+    private fun getAncestors(): Map<BlockchainRid, Map<BlockchainRid, Set<XPeerID>>> {
+        val ancestors = config.subset("blockchain_ancestors") ?: return emptyMap()
+        val forBrids = ancestors.getKeys()
+        val result = mutableMapOf<BlockchainRid, MutableMap<BlockchainRid, MutableSet<XPeerID>>>()
+        forBrids.forEach {
+            val list = ancestors.getList(String::class.java, it)
+            val map = LinkedHashMap<BlockchainRid, MutableSet<XPeerID>>()
+            list.forEach {
+                val peerAndBrid = it.split(":")
+                val peer = XPeerID(peerAndBrid[0].hexStringToByteArray())
+                val brid = BlockchainRid.buildFromHex(peerAndBrid[1])
+                map.computeIfAbsent(brid) { mutableSetOf() }.add(peer)
+            }
+            result[BlockchainRid.buildFromHex(it)] = map
+        }
+        return result
+    }
 
     /**
      * Active Chains
      *
      * Note: This is only needed for tests (asked Tykulov about it)
+     * TODO: [et]: Resolve this issue ('activeChainIds')
      */
     val activeChainIds: Array<String>
         get() {

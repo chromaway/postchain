@@ -9,6 +9,10 @@ package net.postchain.core
  * representation as we only care about storing of the whole Transaction
  */
 interface Transactor {
+    // special transactions cannot be added to a transaction queue,
+    // they can only be appended directly by blockchain engine
+    fun isSpecial(): Boolean
+
     fun isCorrect(): Boolean
     fun apply(ctx: TxEContext): Boolean
 }

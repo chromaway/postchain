@@ -7,13 +7,14 @@ import com.beust.jcommander.Parameters
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
 
-@Parameters(commandDescription = "Adds configuration")
+@Parameters(commandDescription = "Adds a blockchain configuration. All signers in the new configuration must " +
+        "exist in the list of added peerInfos. Else flag --allow-unknown-signers must be set.")
 class CommandAddConfiguration : Command {
 
     // TODO: Eliminate it later or reduce to DbConfig only
     @Parameter(
             names = ["-nc", "--node-config"],
-            description = "Configuration file of blockchain (.properties file)",
+            description = "Configuration file of node (.properties file)",
             required = true)
     private var nodeConfigFile: String? = null
 
@@ -35,7 +36,7 @@ class CommandAddConfiguration : Command {
 
     @Parameter(
             names = ["-bc", "--blockchain-config"],
-            description = "Configuration file of blockchain (gtxml or binary)",
+            description = "Configuration file of blockchain (GtvML (*.xml) or Gtv (*.gtv))",
             required = true)
     private var blockchainConfigFile: String? = null
 
@@ -45,6 +46,11 @@ class CommandAddConfiguration : Command {
                     "which already exists of specified chain-id at height")
     private var force = false
 
+    @Parameter(
+            names = ["-a", "--allow-unknown-signers"],
+            description = "Allow signers that are not in the list of peerInfos.")
+    private var allowUnknownSigners = false
+
     override fun key(): String = "add-configuration"
 
     override fun execute(): CliResult {
@@ -53,7 +59,7 @@ class CommandAddConfiguration : Command {
 
         return try {
             val mode = if (force) AlreadyExistMode.FORCE else AlreadyExistMode.ERROR
-            CliExecution.addConfiguration(nodeConfigFile!!, blockchainConfigFile!!, chainId!!, height, mode)
+            CliExecution.addConfiguration(nodeConfigFile!!, blockchainConfigFile!!, chainId!!, height, mode, allowUnknownSigners)
             Ok("Configuration has been added successfully")
         } catch (e: CliError.Companion.CliException) {
             CliError.CommandNotAllowed(message = e.message)

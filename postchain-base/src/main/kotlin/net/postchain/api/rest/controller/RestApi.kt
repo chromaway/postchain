@@ -204,7 +204,7 @@ class RestApi(
 
             }, gson::toJson)
 
-            http.get("/blocks/$PARAM_BLOCKCHAIN_RID/$PARAM_HASH_HEX", "applicatin/json", { request, _ ->
+            http.get("/blocks/$PARAM_BLOCKCHAIN_RID/$PARAM_HASH_HEX", "application/json", { request, _ ->
                 val model = model(request)
                 val blockRID = request.params(PARAM_HASH_HEX).hexStringToByteArray()
                 val paramsMap = request.queryMap()

@@ -12,12 +12,10 @@ class ManualBlockchainConfigurationProvider : BlockchainConfigurationProvider {
     companion object : KLogging()
 
     override fun needsConfigurationChange(eContext: EContext, chainId: Long): Boolean {
-        val lastHeight = DatabaseAccess.of(eContext).getLastBlockHeight(eContext)
-        val currentConfigHeight = BaseConfigurationDataStore.findConfigurationHeightForBlock(eContext, lastHeight)
-        val nextConfigHeight = BaseConfigurationDataStore.findConfigurationHeightForBlock(eContext, lastHeight + 1)
-
-        logger.debug { "lastHeight: $lastHeight, currentConfigHeight: $currentConfigHeight, nextConfigHeight: $nextConfigHeight" }
-
+        val height = DatabaseAccess.of(eContext).getLastBlockHeight(eContext)
+        val currentConfigHeight = BaseConfigurationDataStore.findConfigurationHeightForBlock(eContext, height)
+        val nextConfigHeight = BaseConfigurationDataStore.findConfigurationHeightForBlock(eContext, height + 1)
+        logger.debug("needsConfigurationChange() - height: $height, next conf at: $nextConfigHeight (currentConfigHeight: $currentConfigHeight)")
         return (currentConfigHeight != nextConfigHeight)
     }
 

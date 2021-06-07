@@ -23,21 +23,6 @@ open class ReconnectionTest : ConfigFileBasedIntegrationTest() {
     protected val tx100 = TestTransaction(100)
     protected val tx101 = TestTransaction(101)
 
-    protected fun enqueueTransactions(node: PostchainTestNode, vararg txs: TestTransaction) {
-        val txQueue = node.getBlockchainInstance().getEngine().getTransactionQueue()
-        txs.forEach { txQueue.enqueue(it) }
-    }
-
-    protected fun awaitBuiltBlock(node: PostchainTestNode, height: Long) {
-        val strategy = node
-                .getBlockchainInstance()
-                .getEngine()
-                .getBlockBuildingStrategy() as OnDemandBlockBuildingStrategy
-
-        strategy.buildBlocksUpTo(height)
-        strategy.awaitCommitted(height.toInt())
-    }
-
     protected fun <T> queries(node: PostchainTestNode, action: (BlockQueries) -> Promise<T, Exception>): T {
         return node
                 .getBlockchainInstance()

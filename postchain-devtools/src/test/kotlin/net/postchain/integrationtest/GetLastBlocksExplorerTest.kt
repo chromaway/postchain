@@ -10,6 +10,8 @@ import net.postchain.core.Transaction
 import net.postchain.core.TxDetail
 import net.postchain.devtools.IntegrationTestSetup
 import net.postchain.devtools.PostchainTestNode.Companion.DEFAULT_CHAIN_IID
+import net.postchain.devtools.assertChainStarted
+import net.postchain.devtools.enqueueTxsAndAwaitBuiltBlock
 import net.postchain.devtools.testinfra.TestTransaction
 import net.postchain.devtools.utils.configuration.system.SystemSetupFactory
 import org.awaitility.Awaitility.await
@@ -58,12 +60,12 @@ class GetLastBlocksExplorerTest : IntegrationTestSetup() {
         val last6Txs = nodes[0].getRestApiModel().getTransactionsInfo(Long.MAX_VALUE, 6) // get one tx at block_height = 1
         assertk.assert(last6Txs).hasSize(6)
         val block1 = last6Txs[5]
-        assertk.assert(block1.blockHeight.equals(1)) // get block n. 1
+        assertk.assert(block1.blockHeight == 1L) // get block n. 1
 
         // get 2 txs from blocks before block1 => block0
         val first2Transactions = nodes[0].getRestApiModel().getTransactionsInfo(block1.timestamp, 2)
         assertk.assert(first2Transactions).hasSize(2)
-        assertk.assert { first2Transactions.map { tx -> tx.blockHeight.equals(0) } }
+        assertk.assert { first2Transactions.map { tx -> tx.blockHeight == 0L } }
     }
 
     @Test

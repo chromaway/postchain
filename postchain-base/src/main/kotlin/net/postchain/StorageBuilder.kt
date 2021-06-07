@@ -27,7 +27,7 @@ object StorageBuilder {
         val writeDataSource = createBasicDataSource(appConfig).apply {
             maxWaitMillis = 0
             defaultAutoCommit = false
-            maxTotal = 1
+            maxTotal = 2
         }
 
         return BaseStorage(
@@ -60,7 +60,7 @@ object StorageBuilder {
     private fun createBasicDataSource(appConfig: AppConfig, withSchema: Boolean = true): BasicDataSource {
         return BasicDataSource().apply {
             driverClassName = appConfig.databaseDriverclass
-            url = appConfig.databaseUrl // ?loggerLevel=OFF
+            url = appConfig.databaseUrl // + "?loggerLevel=TRACE&loggerFile=db.log"
             username = appConfig.databaseUsername
             password = appConfig.databasePassword
             defaultAutoCommit = false
@@ -92,7 +92,7 @@ object StorageBuilder {
 
     private fun createTablesIfNotExists(dataSource: DataSource, db: DatabaseAccess) {
         dataSource.connection.use { connection ->
-            db.initializeApp(connection, expectedDbVersion = 1) // TODO: [et]: Extract version
+            db.initializeApp(connection, expectedDbVersion = 2) // TODO: [et]: Extract version
             connection.commit()
         }
     }

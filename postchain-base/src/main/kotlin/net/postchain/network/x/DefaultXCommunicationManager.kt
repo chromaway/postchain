@@ -6,6 +6,8 @@ import mu.KLogging
 import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerCommConfiguration
 import net.postchain.common.toHex
+import net.postchain.core.BadDataMistake
+import net.postchain.core.BadDataType
 import net.postchain.debug.BlockchainProcessName
 import net.postchain.devtools.PeerNameHelper.peerName
 import net.postchain.network.CommunicationManager
@@ -26,17 +28,20 @@ class DefaultXCommunicationManager<PacketType>(
 
     private var inboundPackets = mutableListOf<Pair<XPeerID, PacketType>>()
 
+    var connected = false
+
+    @Synchronized
     override fun init() {
+        if (connected) return
         val peerConfig = XChainPeerConfiguration(
                 chainID,
                 blockchainRID,
                 config,
-                { data: ByteArray, peerID: XPeerID -> decodeAndEnqueue(peerID, data) },
-                packetEncoder,
-                packetDecoder
+                { data: ByteArray, peerID: XPeerID -> decodeAndEnqueue(peerID, data) }
         )
 
         connectionManager.connectChain(peerConfig, true) { processName.toString() }
+        connected = true
     }
 
     @Synchronized
@@ -67,18 +72,40 @@ class DefaultXCommunicationManager<PacketType>(
                 chainID)
     }
 
+    override fun sendToRandomPeer(packet: PacketType, amongPeers: Set<XPeerID>): XPeerID? {
+        try {
+            val peer = connectionManager.getConnectedPeers(chainID).intersect(amongPeers).random()
+            logger.trace { "$processName: sendToRandomPeer($packet, ${peerName(peer.toString())})" }
+            sendPacket(packet, peer)
+            return peer
+        } catch (e: Exception) {
+            return null
+        }
+    }
+
+    @Synchronized
     override fun shutdown() {
+        if (!connected) return
         connectionManager.disconnectChain(chainID) { processName.toString() }
+        connected = false
     }
 
     private fun decodeAndEnqueue(peerID: XPeerID, packet: ByteArray) {
-        // packet decoding should not be synchronized so we can make
-        // use of parallel processing in different threads
-        logger.trace("receiving a packet from peer: ${peerID.byteArray.toHex()}")
-        val decodedPacket = packetDecoder.decodePacket(peerID.byteArray, packet)
-        synchronized(this) {
-            logger.trace("Successfully decoded the package, now adding it ")
-            inboundPackets.add(peerID to decodedPacket)
+        try {
+            // packet decoding should not be synchronized so we can make
+            // use of parallel processing in different threads
+            logger.trace("receiving a packet from peer: ${peerID.byteArray.toHex()}")
+            val decodedPacket = packetDecoder.decodePacket(peerID.byteArray, packet)
+            synchronized(this) {
+                logger.trace("Successfully decoded the package, now adding it ")
+                inboundPackets.add(peerID to decodedPacket)
+            }
+        } catch (e: BadDataMistake) {
+            if (e.type == BadDataType.BAD_MESSAGE) {
+                logger.info("Bad message received from peer ${peerID}: ${e.message}")
+            } else {
+                logger.error("Error when receiving message from peer ${peerID}", e)
+            }
         }
     }
 }

@@ -4,9 +4,7 @@ package net.postchain.cli
 
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
-import net.postchain.base.PeerInfo
-import net.postchain.base.data.DatabaseAccess
-import net.postchain.base.runStorageCommand
+import net.postchain.common.hexStringToByteArray
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.ToStringStyle
 
@@ -16,7 +14,7 @@ class CommandPeerInfoAdd : Command {
     // TODO: Eliminate it later or reduce to DbConfig only
     @Parameter(
             names = ["-nc", "--node-config"],
-            description = "Configuration file of blockchain (.properties file)",
+            description = "Configuration file of node (.properties file)",
             required = true)
     private var nodeConfigFile = ""
 
@@ -46,49 +44,32 @@ class CommandPeerInfoAdd : Command {
     override fun key(): String = "peerinfo-add"
 
     override fun execute(): CliResult {
+        // Check that pubKey has length 66
+        if (pubKey.length != 66) {
+            return CliError.CommandNotAllowed(message = "Public key must have length 66")
+        }
+
+        //Check that pubkey can be parsed to a byteArray (holds exclusively values 0-9, a-f)
+        try {
+            pubKey.hexStringToByteArray()
+        } catch (e: Exception) {
+            return CliError.CommandNotAllowed(message = e.message + " Allowed characters in public keys are 0-9, a-f, A-F")
+        }
+
         println("peerinfo-add will be executed with options: " +
                 ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE))
 
         return try {
             val mode = if (force) AlreadyExistMode.FORCE else AlreadyExistMode.ERROR
-            val added = peerinfoAdd(nodeConfigFile, host, port, pubKey, mode)
-            return when {
+            // Make all pubkey strings in db upper case. It will then be consistent with package net.postchain.common.
+            //with HEX_CHARS = "0123456789ABCDEF"
+            val added = CliExecution.peerinfoAdd(nodeConfigFile, host, port, pubKey.toUpperCase(), mode)
+            when {
                 added -> Ok("Peerinfo has been added successfully")
                 else -> Ok("Peerinfo hasn't been added")
             }
         } catch (e: CliError.Companion.CliException) {
             CliError.CommandNotAllowed(message = e.message)
-        }
-    }
-
-    private fun peerinfoAdd(nodeConfigFile: String, host: String, port: Int, pubKey: String, mode: AlreadyExistMode): Boolean {
-        return runStorageCommand(nodeConfigFile) { ctx ->
-            val db = DatabaseAccess.of(ctx)
-
-            val found: Array<PeerInfo> = db.findPeerInfo(ctx, host, port, null)
-            if (found.isNotEmpty()) {
-                throw CliError.Companion.CliException("Peerinfo with port, host already exists.")
-            }
-
-            val found2 = db.findPeerInfo(ctx, null, null, pubKey)
-            if (found2.isNotEmpty()) {
-                when (mode) {
-                    AlreadyExistMode.ERROR -> {
-                        throw CliError.Companion.CliException("Peerinfo with pubkey already exists. Using -f to force update")
-                    }
-                    AlreadyExistMode.FORCE -> {
-                        db.updatePeerInfo(ctx, host, port, pubKey)
-                    }
-                    else -> false
-                }
-            } else {
-                when (mode) {
-                    AlreadyExistMode.ERROR, AlreadyExistMode.FORCE -> {
-                        db.addPeerInfo(ctx, host, port, pubKey)
-                    }
-                    else -> false
-                }
-            }
         }
     }
 }

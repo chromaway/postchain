@@ -30,7 +30,7 @@ import net.postchain.devtools.utils.configuration.pre.SystemPreSetup
 
  *
  * @property nodeMap is a map from node seq number to [NodeSetup]. Represents all nodes in the system.
- * @property blockchainMap is a map from node ID to [BlockchainSetup]. Represents all BCs in the system.
+ * @property blockchainMap is a map from chain ID to [BlockchainSetup]. Represents all BCs in the system.
  * @property realGtxTransactions is true if the test should produce real [GTXTransaction]. This is default
  * @property nodeConfProvider is a node configuration attribute (present in the node's conf file). We use "legacy" as default.
  * @property chainConfProvider is a node configuration attribute (present in the node's conf file). (NOTE: Putting this
@@ -121,7 +121,7 @@ data class SystemSetup(
     }
 
     /**
-     * Get all [BlockchainSetup] that a node should run
+     * Get all [BlockchainSetup] that a node should sign
      */
     fun getBlockchainsANodeShouldRun(nodeNr: NodeSeqNumber): List<BlockchainSetup> {
         return blockchainMap.values.filter { bc -> bc.signerNodeList.contains(nodeNr) }

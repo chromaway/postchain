@@ -6,8 +6,8 @@ import mu.KLogging
 import net.postchain.devtools.ConfigFileBasedIntegrationTest
 import net.postchain.devtools.OnDemandBlockBuildingStrategy
 import net.postchain.devtools.testinfra.TestTransaction
-import net.postchain.integrationtest.assertChainStarted
-import net.postchain.integrationtest.assertNodeConnectedWith
+import net.postchain.devtools.assertChainStarted
+import net.postchain.devtools.assertNodeConnectedWith
 import net.postchain.util.NodesTestHelper.selectAnotherRandNode
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration.ONE_MINUTE
@@ -110,7 +110,7 @@ open class FullEbftMultipleChainsTestNightly : ConfigFileBasedIntegrationTest() 
                     assertNotNull(blockRids)
 
                     // Asserting txs count
-                    val txs = queries.getBlockTransactionRids(blockRids!!).get()
+                    val txs = queries.getBlockTransactionRids(blockRids).get()
                     assertEquals(txPerBlock, txs.size)
 
                     // Asserting txs content

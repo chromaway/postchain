@@ -27,7 +27,7 @@ class PostgreSQLDatabaseAccess : SQLDatabaseAccess() {
     }
 
     override fun cmdCreateTableBlocks(ctx: EContext): String {
-        return "CREATE TABLE ${tableBlocks(ctx)}" +
+        return "CREATE TABLE IF NOT EXISTS ${tableBlocks(ctx)}" +
                 " (block_iid BIGSERIAL PRIMARY KEY," +
                 "  block_height BIGINT NOT NULL, " +
                 "  block_rid BYTEA," +
@@ -45,7 +45,7 @@ class PostgreSQLDatabaseAccess : SQLDatabaseAccess() {
     }
 
     override fun cmdCreateTableTransactions(ctx: EContext): String {
-        return "CREATE TABLE ${tableTransactions(ctx)} (" +
+        return "CREATE TABLE IF NOT EXISTS ${tableTransactions(ctx)} (" +
                 "    tx_iid BIGSERIAL PRIMARY KEY, " +
                 "    tx_rid BYTEA NOT NULL," +
                 "    tx_data BYTEA NOT NULL," +
@@ -55,7 +55,7 @@ class PostgreSQLDatabaseAccess : SQLDatabaseAccess() {
     }
 
     override fun cmdCreateTableConfigurations(ctx: EContext): String {
-        return "CREATE TABLE ${tableConfigurations(ctx)} (" +
+        return "CREATE TABLE IF NOT EXISTS ${tableConfigurations(ctx)} (" +
                 "height BIGINT PRIMARY KEY" +
                 ", configuration_data BYTEA NOT NULL" +
                 ")"
@@ -67,6 +67,20 @@ class PostgreSQLDatabaseAccess : SQLDatabaseAccess() {
                 ", $TABLE_PEERINFOS_FIELD_PORT integer NOT NULL" +
                 ", $TABLE_PEERINFOS_FIELD_PUBKEY text PRIMARY KEY NOT NULL" +
                 ", $TABLE_PEERINFOS_FIELD_TIMESTAMP timestamp NOT NULL" +
+                ")"
+    }
+
+    override fun cmdCreateTableBlockchainReplicas(): String {
+        return "CREATE TABLE IF NOT EXISTS ${tableBlockchainReplicas()} (" +
+                " $TABLE_REPLICAS_FIELD_BRID text NOT NULL" +
+                ", $TABLE_REPLICAS_FIELD_PUBKEY text NOT NULL REFERENCES ${tablePeerinfos()} (${TABLE_PEERINFOS_FIELD_PUBKEY})" +
+                ", PRIMARY KEY ($TABLE_REPLICAS_FIELD_BRID, $TABLE_REPLICAS_FIELD_PUBKEY))"
+    }
+
+    override fun cmdCreateTableMustSyncUntil(): String {
+        return "CREATE TABLE IF NOT EXISTS ${tableMustSyncUntil()} (" +
+                " $TABLE_SYNC_UNTIL_FIELD_CHAIN_IID BIGINT PRIMARY KEY NOT NULL REFERENCES ${tableBlockchains()} (chain_iid)" +
+                ", $TABLE_SYNC_UNTIL_FIELD_HEIGHT BIGINT NOT NULL" +
                 ")"
     }
 

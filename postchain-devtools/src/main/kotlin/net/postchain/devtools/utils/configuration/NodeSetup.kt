@@ -114,8 +114,7 @@ data class NodeSetup(
             logger.debug("Node ${sequenceNumber.nodeNumber}: Chain is already running: chainId: ${chain.chainId}")
         } else {
             logger.debug("Node ${sequenceNumber.nodeNumber}: Begin starting $chainLogType chainId: ${chain.chainId}")
-            node.addBlockchain(chain)
-            node.mapBlockchainRID(chain.chainId.toLong(), chain.rid)
+            chain.prepareBlockchainOnNode(chain, node)
             node.startBlockchain(chain.chainId.toLong())
             logger.debug("Node ${sequenceNumber.nodeNumber}: Finished starting $chainLogType chainId: ${chain.chainId}")
         }

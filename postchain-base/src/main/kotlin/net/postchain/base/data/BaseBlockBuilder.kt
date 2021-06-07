@@ -7,7 +7,9 @@ import net.postchain.base.*
 import net.postchain.base.merkle.Hash
 import net.postchain.common.toHex
 import net.postchain.core.*
+import net.postchain.core.ValidationResult.Result.*
 import net.postchain.getBFTRequiredSignatureCount
+import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvFactory.gtv
 import net.postchain.gtv.merkle.GtvMerkleHashCalculator
 import net.postchain.gtv.merkleHash
@@ -31,19 +33,23 @@ open class BaseBlockBuilder(
         eContext: EContext,
         store: BlockStore,
         txFactory: TransactionFactory,
+        val specialTxHandler: SpecialTransactionHandler,
         val subjects: Array<ByteArray>,
         val blockSigMaker: SigMaker,
         val blockchainRelatedInfoDependencyList: List<BlockchainRelatedInfo>,
         val usingHistoricBRID: Boolean,
-        val maxBlockSize : Long = 20*1024*1024, // 20mb
-        val maxBlockTransactions : Long = 100
+        val maxBlockSize: Long = 20 * 1024 * 1024, // 20mb
+        val maxBlockTransactions: Long = 100
 ): AbstractBlockBuilder(eContext, blockchainRID, store, txFactory) {
 
     companion object : KLogging()
 
+    private val eventProcessors = mutableMapOf<String, TxEventSink>()
+
     private val calc = GtvMerkleHashCalculator(cryptoSystem)
 
-    private var blockSize : Long = 0L
+    private var blockSize: Long = 0L
+    private var haveSpecialEndTransaction = false
 
     /**
      * Computes the root hash for the Merkle tree of transactions currently in a block
@@ -58,11 +64,30 @@ open class BaseBlockBuilder(
         return gtvArr.merkleHash(calc)
     }
 
+    fun installEventProcessor(type: String, sink: TxEventSink) {
+        if (type in eventProcessors) throw ProgrammerMistake("Conflicting event processors in block builder, type ${type}")
+        eventProcessors[type] = sink
+    }
+
+    override fun processEmittedEvent(ctxt: TxEContext, type: String, data: Gtv) {
+        when (val proc = eventProcessors[type]) {
+            null -> throw ProgrammerMistake("Event sink for ${type} not found")
+            else -> proc.processEmittedEvent(ctxt, type, data)
+        }
+    }
+
     override fun begin(partialBlockHeader: BlockHeader?) {
         if (partialBlockHeader == null && usingHistoricBRID) {
             throw UserMistake("Cannot build new blocks in historic mode (check configuration)")
         }
         super.begin(partialBlockHeader)
+        if (buildingNewBlock
+                && specialTxHandler.needsSpecialTransaction(SpecialTransactionPosition.Begin)) {
+            appendTransaction(specialTxHandler.createSpecialTransaction(
+                    SpecialTransactionPosition.Begin,
+                    bctx
+            ))
+        }
     }
 
     /**
@@ -81,6 +106,8 @@ open class BaseBlockBuilder(
      * Validate block header:
      * - check that previous block RID is used in this block
      * - check for correct height
+     *   - If height is too low check if it's a split or dublicate
+     *   - If too high, it's from the future
      * - check that timestamp occurs after previous blocks timestamp
      * - check if all required dependencies are present
      * - check for correct root hash
@@ -91,25 +118,38 @@ open class BaseBlockBuilder(
         val header = blockHeader as BaseBlockHeader
 
         val computedMerkleRoot = computeMerkleRootHash()
+        val height = header.blockHeaderRec.getHeight()
+        val expectedHeight = initialBlockData.height
         return when {
             !header.prevBlockRID.contentEquals(initialBlockData.prevBlockRID) ->
-                ValidationResult(false, "header.prevBlockRID != initialBlockData.prevBlockRID," +
+                ValidationResult(PREV_BLOCK_MISMATCH, "header.prevBlockRID != initialBlockData.prevBlockRID," +
                         "( ${header.prevBlockRID.toHex()} != ${initialBlockData.prevBlockRID.toHex()} ), " +
-                        " height: ${header.blockHeaderRec.getHeight()} and ${initialBlockData.height} ")
+                        " height: $height and $expectedHeight ")
 
-            header.blockHeaderRec.getHeight() != initialBlockData.height ->
-                ValidationResult(false, "header.blockHeaderRec.height != initialBlockData.height")
+            // These checks are for belts-and-suspenders. We shouldn't call this method
+            // if there's a height mismatch, and we probably don't. But if we do, let's
+            // check the stuff we can before reporting an error.
+            height > expectedHeight ->
+                ValidationResult(BLOCK_FROM_THE_FUTURE, "Expected height: $expectedHeight, got: $height, Block RID: ${header.blockRID.toHex()}")
+            height < expectedHeight -> {
+                val ourBlockRID = store.getBlockRID(ectx, height)
+                if (ourBlockRID!!.contentEquals(header.blockRID))
+                    ValidationResult(DUPLICATE_BLOCK, "Duplicate block at height ${height}, Block RID: ${header.blockRID.toHex()}")
+                else
+                    ValidationResult(SPLIT, "Blockchain split detected at height $height. Our block: ${ourBlockRID.toHex()}, " +
+                            "received block: ${header.blockRID.toHex()}")
+            }
 
             bctx.timestamp >= header.timestamp ->
-                ValidationResult(false, "bctx.timestamp >= header.timestamp")
+                ValidationResult(INVALID_TIMESTAMP, "bctx.timestamp >= header.timestamp")
 
             !header.checkIfAllBlockchainDependenciesArePresent(blockchainRelatedInfoDependencyList) ->
-                ValidationResult(false, "checkIfAllBlockchainDependenciesArePresent() is false")
+                ValidationResult(MISSING_BLOCKCHAIN_DEPENDENCY, "checkIfAllBlockchainDependenciesArePresent() is false")
 
             !Arrays.equals(header.blockHeaderRec.getMerkleRootHash(), computedMerkleRoot) -> // Do this last since most expensive check!
-                ValidationResult(false, "header.blockHeaderRec.rootHash != computeRootHash()")
+                ValidationResult(INVALID_ROOT_HASH, "header.blockHeaderRec.rootHash != computeRootHash()")
 
-            else -> ValidationResult(true)
+            else -> ValidationResult(OK)
         }
     }
 
@@ -213,15 +253,54 @@ open class BaseBlockBuilder(
         return witnessBuilder
     }
 
-    override fun appendTransaction(tx: Transaction) {
-        super.appendTransaction(tx)
-        blockSize = transactions.map { t -> t.getRawData().size.toLong() }.sum()
-        if (blockSize >= maxBlockSize) {
-            throw UserMistake("block size exceeds max block size ${maxBlockSize} bytes")
-        } else if (transactions.size >= maxBlockTransactions) {
-            throw UserMistake("Number of transactions exceeds max ${maxBlockTransactions} transactions in block")
+    override fun finalizeBlock(): BlockHeader {
+        if (buildingNewBlock && specialTxHandler.needsSpecialTransaction(SpecialTransactionPosition.End))
+            appendTransaction(specialTxHandler.createSpecialTransaction(SpecialTransactionPosition.End, bctx))
+        return super.finalizeBlock()
+    }
+
+    override fun finalizeAndValidate(blockHeader: BlockHeader) {
+        if (specialTxHandler.needsSpecialTransaction(SpecialTransactionPosition.End) && !haveSpecialEndTransaction)
+            throw BadDataMistake(BadDataType.BAD_BLOCK,"End special transaction is missing")
+        super.finalizeAndValidate(blockHeader)
+    }
+
+    private fun checkSpecialTransaction(tx: Transaction) {
+        if (haveSpecialEndTransaction) {
+            throw BlockValidationMistake("Cannot append transactions after end special transaction")
+        }
+        val expectBeginTx = specialTxHandler.needsSpecialTransaction(SpecialTransactionPosition.Begin) && transactions.size == 0
+        if (tx.isSpecial()) {
+            if (expectBeginTx) {
+                if (!specialTxHandler.validateSpecialTransaction(SpecialTransactionPosition.Begin, tx, bctx)) {
+                    throw BlockValidationMistake("Special transaction validation failed")
+                }
+                return // all is well, the first transaction is special and valid
+            }
+            val needEndTx = specialTxHandler.needsSpecialTransaction(SpecialTransactionPosition.End)
+            if (!needEndTx) {
+                throw BlockValidationMistake("Found unexpected special transaction")
+            }
+            if (!specialTxHandler.validateSpecialTransaction(SpecialTransactionPosition.End, tx, bctx)) {
+                throw BlockValidationMistake("Special transaction validation failed")
+            }
+            haveSpecialEndTransaction = true
+        } else {
+            if (expectBeginTx) {
+                throw BlockValidationMistake("First transaction must be special transaction")
+            }
         }
     }
 
+    override fun appendTransaction(tx: Transaction) {
+        checkSpecialTransaction(tx) // note: we check even transactions we construct ourselves
+        super.appendTransaction(tx)
+        blockSize += tx.getRawData().size
+        if (blockSize >= maxBlockSize) {
+            throw BlockValidationMistake("block size exceeds max block size ${maxBlockSize} bytes")
+        } else if (transactions.size >= maxBlockTransactions) {
+            throw BlockValidationMistake("Number of transactions exceeds max ${maxBlockTransactions} transactions in block")
+        }
+    }
 
 }

@@ -9,8 +9,9 @@ enum class DiagnosticProperty(val prettyName: String) {
     PUB_KEY("pub-key"),
 
     BLOCKCHAIN("blockchain"),
-    BLOCKCHAIN_RID("blockchain-rid"),
+    BLOCKCHAIN_RID("brid"),
     BLOCKCHAIN_NODE_TYPE("node-type"),
+    BLOCKCHAIN_CURRENT_HEIGHT("height"),
     BLOCKCHAIN_NODE_PEERS("peers"),
 
     @Deprecated("POS-90")
@@ -18,6 +19,6 @@ enum class DiagnosticProperty(val prettyName: String) {
 }
 
 enum class DpNodeType(val prettyName: String) {
-    NODE_TYPE_VALIDATOR("Validator"),
-    NODE_TYPE_REPLICA("Replica")
+    NODE_TYPE_SIGNER("signer"),
+    NODE_TYPE_REPLICA("replica")
 }

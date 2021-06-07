@@ -4,6 +4,7 @@ package net.postchain.network.netty2
 
 import mu.KLogging
 import net.postchain.base.PeerInfo
+import net.postchain.base.peerId
 import net.postchain.network.XPacketDecoder
 import net.postchain.network.XPacketEncoder
 import net.postchain.network.x.XConnector
@@ -22,12 +23,12 @@ class NettyConnector<PacketType>(
         server = NettyServer().apply {
             setChannelHandler {
                 NettyServerPeerConnection(packetDecoder)
-                        .onConnected { descriptor, connection ->
-                            eventReceiver.onPeerConnected(descriptor, connection)
+                        .onConnected { connection ->
+                            eventReceiver.onPeerConnected(connection)
                                     ?.also { connection.accept(it) }
                         }
-                        .onDisconnected { descriptor, connection ->
-                            eventReceiver.onPeerDisconnected(descriptor, connection)
+                        .onDisconnected { connection ->
+                            eventReceiver.onPeerDisconnected(connection)
                         }
             }
 
@@ -40,19 +41,19 @@ class NettyConnector<PacketType>(
             peerInfo: PeerInfo,
             packetEncoder: XPacketEncoder<PacketType>
     ) {
-        with(NettyClientPeerConnection(peerInfo, packetEncoder)) {
+        with(NettyClientPeerConnection(peerInfo, packetEncoder, peerConnectionDescriptor)) {
             try {
                 open(
                         onConnected = {
-                            eventReceiver.onPeerConnected(peerConnectionDescriptor, this)
+                            eventReceiver.onPeerConnected(this)
                                     ?.also { this.accept(it) }
                         },
                         onDisconnected = {
-                            eventReceiver.onPeerDisconnected(peerConnectionDescriptor, this)
+                            eventReceiver.onPeerDisconnected(this)
                         })
             } catch (e: Exception) {
-                logger.error { e.message }
-                eventReceiver.onPeerDisconnected(peerConnectionDescriptor, this) // TODO: [et]: Maybe create different event receiver.
+                logger.error("Netty Connect Failed, ${peerConnectionDescriptor.loggingPrefix(peerInfo.peerId())}, with message: ${e.message}")
+                eventReceiver.onPeerDisconnected(this) // TODO: [et]: Maybe create different event receiver.
             }
         }
     }

@@ -17,6 +17,10 @@ open class TestTransaction(
         return correct
     }
 
+    override fun isSpecial(): Boolean {
+        return false
+    }
+
     override fun apply(ctx: TxEContext): Boolean {
         return good
     }

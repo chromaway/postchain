@@ -211,15 +211,16 @@ class ApiIntegrationTestNightly : IntegrationTestSetup() {
 
             println("----------------- Running testConfirmationProof with txCount: $txCount ---------------------")
             val txList = mutableListOf<TestOneOpGtxTransaction>()
-            var lastTx: TestOneOpGtxTransaction? = null
             for (i in 1..txCount) {
-                lastTx = postGtxTransaction(factory, ++currentId, blockHeight, nodeCount, blockchainRIDBytes)
-                txList.add(lastTx!!)
+                txList.add(postGtxTransaction(factory, ++currentId, blockHeight, nodeCount, blockchainRIDBytes))
             }
 
-            val lastTxRid = lastTx!!.getRID()
-
-            awaitConfirmed(blockchainRID, lastTxRid) // Should be enough to wait for the last one to confirm
+            txList.forEach {
+                // Wait for all txs to confirm. They are posted to different nodes and all
+                // txs might not arrive at all nodes prior to block building. It's therefore not
+                // enough to await last tx being confirmed on node 0.
+                awaitConfirmed(blockchainRID, it.getRID())
+            }
 
             txList.reverse() // We begin with the last TX that we saved from last step
             val txArr = txList.toTypedArray()
@@ -281,7 +282,7 @@ class ApiIntegrationTestNightly : IntegrationTestSetup() {
             blockHeight: Int,
             nodeCount: Int,
             bcRid: BlockchainRid
-    ): TestOneOpGtxTransaction? {
+    ): TestOneOpGtxTransaction {
 
         val tx = TestOneOpGtxTransaction(factory, currentId)
         val strHexData = tx.getRawData().toHex()

@@ -65,18 +65,9 @@ class NetworkNodes(
     operator fun get(key: XPeerID): PeerInfo? = peerInfoMap[key]
     operator fun get(key: ByteArray): PeerInfo? = peerInfoMap[ByteArrayKey(key)]
 
-    /**
-     * Will run an action once for all peers. The trick for connections is to not make it happen twice.
-     *
-     * @param filterFun is the function that picks the peers who we should do the action on.
-     *                    (The reason we filter is that it is enough to have only ONE peer in a connection do the action)
-     * @param action is the action to perform
-     */
-    fun filterAndRunActionOnPeers(filterFun: (Map<XPeerID, PeerInfo>, myKey: XPeerID) -> Set<PeerInfo>, action: (PeerInfo) -> Unit) {
-        val filtered = filterFun(peerInfoMap, XPeerID(myself.pubKey))
-        filtered.forEach(action)
+    fun getPeerIds(): Set<XPeerID> {
+        return peerInfoMap.keys
     }
-
 
     /**
      * Call this method before serving a read-only node
@@ -90,7 +81,7 @@ class NetworkNodes(
             val totalCalls = readOnlyNodeContacts.values.sum()
             logger.info("------------------------------------")
             logger.info("Clearing the read-only node overuse counter. " +
-                    "Number of read-only nodes in contact since yesterday: $readOnlyNodeContacts.size. " +
+                    "Number of read-only nodes in contact since yesterday: ${readOnlyNodeContacts.size}. " +
                     "Total calls from read-only nodes: $totalCalls")
             logger.info("------------------------------------")
             nextTimestamp = now + DAY_IN_MILLIS

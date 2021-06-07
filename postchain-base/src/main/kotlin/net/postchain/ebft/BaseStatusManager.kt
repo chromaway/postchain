@@ -70,9 +70,13 @@ class BaseStatusManager(
     override fun onStatusUpdate(nodeIndex: Int, status: NodeStatus) {
         val existingStatus = nodeStatuses[nodeIndex]
         if (
-                (status.serial > existingStatus.serial)
-                || (status.height > existingStatus.height)
-                || ((status.height == existingStatus.height) && (status.round > existingStatus.round))
+            // A restarted peer will have its serial reset, but
+            // this will not cause a problem because the serial is
+            // initialized based on current time. See init block
+            // of this class
+            (status.serial > existingStatus.serial)
+            || (status.height > existingStatus.height)
+            || ((status.height == existingStatus.height) && (status.round > existingStatus.round))
         ) {
             nodeStatuses[nodeIndex] = status
             recomputeStatus()
@@ -125,18 +129,19 @@ class BaseStatusManager(
     /**
      * Fast forward height
      *
-     * @param height the new height
+     * @param committedHeight the new committed height
      * @return success or failure
      */
     @Synchronized
-    override fun fastForwardHeight(height: Long): Boolean {
-        if (height < myStatus.height) {
+    override fun fastForwardHeight(committedHeight: Long): Boolean {
+        val nextHeight = committedHeight + 1
+        if (nextHeight < myStatus.height) {
             logger.error("Failed to fast forward negative increment.")
             return false
         }
 
-        logger.debug("Advancing block height from ${myStatus.height} to ${height + 1} ...")
-        (myStatus.height..height).forEach { _ -> advanceHeight() }
+        logger.debug("Advancing block height from ${myStatus.height} to $nextHeight ...")
+        (myStatus.height until nextHeight).forEach { _ -> advanceHeight() }
 
         logger.debug("Current state: ${myStatus.height}")
         return true
@@ -323,8 +328,8 @@ class BaseStatusManager(
          * we might want to synch.
          */
         fun potentiallyDoSynch(): FlowStatus {
-            var sameHeightCount: Int = 0
-            var higherHeightCount: Int = 0
+            var sameHeightCount = 0
+            var higherHeightCount = 0
             for (ns in nodeStatuses) {
                 if (ns.height == myStatus.height) sameHeightCount++
                 else if (ns.height > myStatus.height) higherHeightCount++
@@ -362,8 +367,8 @@ class BaseStatusManager(
          * Handles possible revolts
          */
         fun potentiallyRevolt(): FlowStatus {
-            var nHighRound: Int = 0
-            var nRevolting: Int = 0
+            var nHighRound = 0
+            var nRevolting = 0
             for (ns in nodeStatuses) {
                 if (ns.height != myStatus.height) continue
                 if (ns.round == myStatus.round) {
@@ -415,6 +420,7 @@ class BaseStatusManager(
             if (count >= this.quorum) {
                 // check if we have (2f+1) commit signatures including ours, in that case we signal commit intent.
                 intent = CommitBlockIntent
+                logger.debug("setting CommitBlockIntent for idx: $myIndex ")
                 return true
             } else {
                 // otherwise we set intent to FetchCommitSignatureIntent with current blockRID and list of nodes which
@@ -488,7 +494,7 @@ class BaseStatusManager(
         }
 
         // We should make sure we have enough nodes who can participate in building a block.
-        // (If we are in [Perpared] state we ignore this check, it has been done before we got here)
+        // (If we are in [Prepared] state we ignore this check, it has been done before we got here)
         if (myStatus.state != NodeState.Prepared) {
             when (potentiallyDoSynch()) {
                 FlowStatus.Break -> return false

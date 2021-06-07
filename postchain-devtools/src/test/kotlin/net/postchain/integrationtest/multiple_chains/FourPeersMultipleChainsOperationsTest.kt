@@ -4,10 +4,10 @@ package net.postchain.integrationtest.multiple_chains
 
 import mu.KLogging
 import net.postchain.devtools.ConfigFileBasedIntegrationTest
-import net.postchain.integrationtest.addBlockchainAndStart
-import net.postchain.integrationtest.assertChainNotStarted
-import net.postchain.integrationtest.assertChainStarted
-import net.postchain.integrationtest.assertNodeConnectedWith
+import net.postchain.devtools.addBlockchainAndStart
+import net.postchain.devtools.assertChainNotStarted
+import net.postchain.devtools.assertChainStarted
+import net.postchain.devtools.assertNodeConnectedWith
 import org.awaitility.Awaitility.await
 import org.awaitility.Duration
 import org.junit.Ignore
