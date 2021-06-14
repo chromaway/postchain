@@ -15,7 +15,7 @@ import net.postchain.gtv.GtvDecoder
 import nl.komponents.kovenant.task
 import java.lang.Long.max
 
-const val LOG_STATS = false // Was this the reason this entire class was muted?
+const val LOG_STATS = true // Was this the reason this entire class was muted?
 
 /**
  * An [BlockchainEngine] will only produce [BlockBuilder]s for a single chain.
