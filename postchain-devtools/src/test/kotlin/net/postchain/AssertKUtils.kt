@@ -26,5 +26,5 @@ fun <T : Map<*, *>> Assert<T>.hasSize(size: Int) {
  */
 fun <T : Map<*, *>> Assert<T>.isEmpty() {
     if (actual.isEmpty()) return
-    expected("to be empty but was:${show(actual)}")
+    this.expected("to be empty but was:${show(actual)}")
 }

@@ -17,6 +17,7 @@ interface SynchronizationInfrastructure : Shutdownable {
             historicBlockchainContext: HistoricBlockchainContext? = null
     ): BlockchainProcess
 
+    fun exitBlockchainProcess(chainId: Long)
 }
 
 interface BlockchainInfrastructure : SynchronizationInfrastructure {

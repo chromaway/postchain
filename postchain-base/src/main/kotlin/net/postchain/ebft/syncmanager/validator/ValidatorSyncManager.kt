@@ -41,11 +41,10 @@ class ValidatorSyncManager(private val workerContext: WorkerContext,
     private var processingIntentDeadline = 0L
     private var lastStatusLogged: Long
     private val processName = workerContext.processName
-    private var useFastSyncAlgorithm: Boolean = true
+    private var useFastSyncAlgorithm: Boolean = workerContext.startWithFastSync
+    private val fastSynchronizer: FastSynchronizer
 
     companion object : KLogging()
-
-    private val fastSynchronizer: FastSynchronizer
 
     init {
         this.currentTimeout = defaultTimeout
