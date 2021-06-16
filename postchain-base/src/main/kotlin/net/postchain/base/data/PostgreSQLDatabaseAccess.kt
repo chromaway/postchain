@@ -38,16 +38,24 @@ class PostgreSQLDatabaseAccess : SQLDatabaseAccess() {
                 "  UNIQUE (block_height))"
     }
 
-    override fun cmdCreateTableEvent(ctx: EContext): String {
-        return "CREATE TABLE ${tableEvents(ctx)}" +
+    /**
+     * @param ctx is the context
+     * @param prefix is what the events will be used for, for example "l2" or "icmf"
+     */
+    override fun cmdCreateTableEvent(ctx: EContext, prefix: String): String {
+        return "CREATE TABLE ${tableEvents(ctx, prefix)}" +
                 " (event_iid BIGSERIAL PRIMARY KEY," +
                 " block_height BIGINT NOT NULL, " +
                 " hash BYTEA NOT NULL," +
                 " data BYTEA NOT NULL)"
     }
 
-    override fun cmdCreateTableState(ctx: EContext): String {
-        return "CREATE TABLE ${tableStates(ctx)}" +
+    /**
+     * @param ctx is the context
+     * @param prefix is what the state will be used for, for example "l2"
+     */
+    override fun cmdCreateTableState(ctx: EContext, prefix: String): String {
+        return "CREATE TABLE ${tableStates(ctx, prefix)}" +
                 " (state_iid BIGSERIAL PRIMARY KEY," +
                 " block_height BIGINT NOT NULL, " +
                 " state_n BIGINT NOT NULL, " +
@@ -137,12 +145,45 @@ class PostgreSQLDatabaseAccess : SQLDatabaseAccess() {
         return queryRunner.query(ctx.conn, sql, longRes, tx.getRID(), tx.getRawData(), tx.getHash(), ctx.blockIID)
     }
 
-    override fun cmdInsertEvents(ctx: EContext): String {
-        return "INSERT INTO ${tableEvents(ctx)} (block_height, hash, data) " + "VALUES (?, ?, ?)"
+    /**
+     * @param ctx is the context
+     * @param prefix is what the state will be used for, for example "l2" or "icmf"
+     */
+    override fun cmdInsertEvents(ctx: EContext, prefix: String): String {
+        return "INSERT INTO ${tableEvents(ctx, prefix)} (block_height, hash, data) " + "VALUES (?, ?, ?)"
     }
 
-    override fun cmdInsertStates(ctx: EContext): String {
-        return "INSERT INTO ${tableStates(ctx)} (block_height, state_n, data) " + "VALUES (?, ?, ?)"
+    /**
+     * @param ctx is the context
+     * @param prefix is what the state will be used for, for example "l2"
+     */
+    override fun cmdInsertStates(ctx: EContext, prefix: String): String {
+        return "INSERT INTO ${tableStates(ctx, prefix)} (block_height, state_n, data) " + "VALUES (?, ?, ?)"
+    }
+
+    /**
+     * Deletes data from the table where height is <= given minimum-height-to-keep
+     *
+     * @param ctx is the context
+     * @param prefix is what the state will be used for, for example "l2" or "icmf"
+     */
+    override fun cmdPruneEvents(ctx: EContext, prefix: String): String {
+        return "DELETE FROM ${tableEvents(ctx, prefix)} WHERE height <= ?"
+    }
+
+    /**
+     * Deletes data from the table where:
+     *
+     * 1. state_n is between left and right
+     * 2. height is <= given minimum-height-to-keep
+     *
+     * TODO: Haven't tried this, could be off by one in the between
+     *
+     * @param ctx is the context
+     * @param prefix is what the state will be used for, for example "l2"
+     */
+    override fun cmdPruneStates(ctx: EContext, prefix: String): String {
+        return "DELETE FROM ${tableStates(ctx, prefix)} WHERE (state_n BETWEEN ? and ?) AND height <= ?"
     }
 
     override fun addConfigurationData(ctx: EContext, height: Long, data: ByteArray) {

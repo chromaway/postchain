@@ -7,7 +7,7 @@ import net.postchain.gtv.GtvNull
 
 class GtxEventDataSerializer {
 
-    private fun serializeToGtv(event: DatabaseAccess.EventInfo?): Gtv {
+    fun serializeToGtv(event: DatabaseAccess.EventInfo?): Gtv {
         if (event == null) return GtvNull
         return GtvFactory.gtv(GtvFactory.gtv(event.blockHeight), GtvFactory.gtv(event.pos), GtvFactory.gtv(event.hash), GtvFactory.gtv(event.data))
     }

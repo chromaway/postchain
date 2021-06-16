@@ -82,10 +82,12 @@ interface DatabaseAccess {
     fun addConfigurationData(ctx: EContext, height: Long, data: ByteArray)
 
     // Event and State
-    fun insertEvent(ctx: EContext, height: Long, hash: Hash, data: ByteArray)
-    fun getEvent(ctx: EContext, blockHeight: Long, eventHash: ByteArray): EventInfo?
-    fun insertState(ctx: EContext, height: Long, state_n: Long, data: ByteArray)
-    fun getAccountState(ctx: EContext, height: Long, state_n: Long): AccountState?
+    fun insertEvent(ctx: EContext, prefix: String, height: Long, hash: Hash, data: ByteArray)
+    fun getEvent(ctx: EContext, prefix: String, blockHeight: Long, eventHash: ByteArray): EventInfo?
+    fun pruneEvents(ctx: EContext, prefix: String, height: Long)
+    fun insertState(ctx: EContext, prefix: String, height: Long, state_n: Long, data: ByteArray)
+    fun getAccountState(ctx: EContext, prefix: String, height: Long, state_n: Long): AccountState?
+    fun pruneAccountStates(ctx: EContext, prefix: String, left: Long, right: Long, height: Long)
 
     // Peers
     fun getPeerInfoCollection(ctx: AppContext): Array<PeerInfo>

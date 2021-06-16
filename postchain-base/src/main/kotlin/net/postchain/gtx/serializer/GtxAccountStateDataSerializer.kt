@@ -7,7 +7,7 @@ import net.postchain.gtv.GtvNull
 
 class GtxAccountStateDataSerializer {
 
-    private fun serializeToGtv(state: DatabaseAccess.AccountState?): Gtv {
+    fun serializeToGtv(state: DatabaseAccess.AccountState?): Gtv {
         if (state == null) return GtvNull
         return GtvFactory.gtv(GtvFactory.gtv(state.blockHeight), GtvFactory.gtv(state.stateN), GtvFactory.gtv(state.data))
     }
