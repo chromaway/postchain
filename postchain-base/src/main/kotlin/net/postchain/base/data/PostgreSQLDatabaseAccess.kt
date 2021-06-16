@@ -38,6 +38,22 @@ class PostgreSQLDatabaseAccess : SQLDatabaseAccess() {
                 "  UNIQUE (block_height))"
     }
 
+    override fun cmdCreateTableEvent(ctx: EContext): String {
+        return "CREATE TABLE ${tableEvents(ctx)}" +
+                " (event_iid BIGSERIAL PRIMARY KEY," +
+                " block_height BIGINT NOT NULL, " +
+                " hash BYTEA NOT NULL," +
+                " data BYTEA NOT NULL)"
+    }
+
+    override fun cmdCreateTableState(ctx: EContext): String {
+        return "CREATE TABLE ${tableStates(ctx)}" +
+                " (state_iid BIGSERIAL PRIMARY KEY," +
+                " block_height BIGINT NOT NULL, " +
+                " state_n BIGINT NOT NULL, " +
+                " data BYTEA NOT NULL)"
+    }
+
     override fun cmdCreateTableBlockchains(): String {
         return "CREATE TABLE ${tableBlockchains()} " +
                 " (chain_iid BIGINT PRIMARY KEY," +
@@ -119,6 +135,14 @@ class PostgreSQLDatabaseAccess : SQLDatabaseAccess() {
                 "VALUES (?, ?, ?, ?) RETURNING tx_iid"
 
         return queryRunner.query(ctx.conn, sql, longRes, tx.getRID(), tx.getRawData(), tx.getHash(), ctx.blockIID)
+    }
+
+    override fun cmdInsertEvents(ctx: EContext): String {
+        return "INSERT INTO ${tableEvents(ctx)} (block_height, hash, data) " + "VALUES (?, ?, ?)"
+    }
+
+    override fun cmdInsertStates(ctx: EContext): String {
+        return "INSERT INTO ${tableStates(ctx)} (block_height, state_n, data) " + "VALUES (?, ?, ?)"
     }
 
     override fun addConfigurationData(ctx: EContext, height: Long, data: ByteArray) {
