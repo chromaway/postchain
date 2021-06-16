@@ -4,6 +4,7 @@ import mu.KLogging
 import net.postchain.base.BaseBlockHeader
 import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerInfo
+import net.postchain.common.data.Hash
 import net.postchain.common.hexStringToByteArray
 import net.postchain.common.toHex
 import net.postchain.core.*
@@ -26,6 +27,10 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
     protected fun tableTransactions(ctx: EContext): String = tableName(ctx, "transactions")
     protected fun tableBlocks(ctx: EContext): String = tableName(ctx, "blocks")
     protected fun tableBlocks(chainId: Long): String = tableName(chainId, "blocks")
+    protected fun tablePages(ctx: EContext, name: String): String = tableName(ctx, "${name}_pages")
+    protected fun tableEvents(ctx: EContext): String = tableName(ctx, "events")
+    protected fun tableStates(ctx: EContext): String = tableName(ctx, "states")
+
     fun tableGtxModuleVersion(ctx: EContext): String = tableName(ctx, "gtx_module_version")
 
     override fun tableName(ctx: EContext, table: String): String {
@@ -36,6 +41,7 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
         return "\"c${chainId}.$table\""
     }
 
+    // --- Create Table ---
     protected abstract fun cmdCreateTableMeta(): String
     protected abstract fun cmdCreateTableBlockchains(): String
     protected abstract fun cmdCreateTablePeerInfos(): String
@@ -45,8 +51,14 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
     protected abstract fun cmdCreateTableTransactions(ctx: EContext): String
     protected abstract fun cmdCreateTableBlocks(ctx: EContext): String
     protected abstract fun cmdInsertBlocks(ctx: EContext): String
+    protected abstract fun cmdCreateTableEvent(ctx: EContext): String
+    protected abstract fun cmdCreateTableState(ctx: EContext): String
+
+    // --- Insert ---
     protected abstract fun cmdInsertTransactions(ctx: EContext): String
     protected abstract fun cmdInsertConfiguration(ctx: EContext): String
+    protected abstract fun cmdInsertEvents(ctx: EContext): String
+    protected abstract fun cmdInsertStates(ctx: EContext): String
     abstract fun cmdCreateTableGtxModuleVersion(ctx: EContext): String
 
     var queryRunner = QueryRunner()
@@ -291,6 +303,46 @@ abstract class SQLDatabaseAccess : DatabaseAccess {
         val data = queryRunner.query(ctx.conn, sql, nullableByteArrayRes, ctx.chainID)
         return data?.let(::BlockchainRid)
     }
+
+    // ---- Event and State ----
+
+    override fun getEvent(ctx: EContext, blockHeight: Long, eventHash: ByteArray): DatabaseAccess.EventInfo? {
+        val sql = """SELECT * FROM (SELECT block_height, hash, data, 
+            RANK() OVER (ORDER BY event_iid) rank_number 
+            FROM ${tableEvents(ctx)} 
+            WHERE block_height = ?) x WHERE hash = ?"""
+        val rows = queryRunner.query(ctx.conn, sql, mapListHandler, blockHeight, eventHash)
+        if (rows.isEmpty()) return null
+        val data = rows.first()
+        return DatabaseAccess.EventInfo(
+                (data["rank_number"] as Long) - 1,
+                data["block_height"] as Long,
+                data["hash"] as Hash,
+                data["data"] as ByteArray
+        )
+    }
+
+    override fun getAccountState(ctx: EContext, height: Long, state_n: Long): DatabaseAccess.AccountState? {
+        val sql = """SELECT block_height, state_n, data FROM ${tableStates(ctx)} WHERE block_height <= ? AND state_n = ?"""
+        val rows = queryRunner.query(ctx.conn, sql, mapListHandler, height, state_n)
+        if (rows.isEmpty()) return null
+        val data = rows.first()
+        return DatabaseAccess.AccountState(
+                data["block_height"] as Long,
+                data["state_n"] as Long,
+                data["data"] as ByteArray
+        )
+    }
+
+    override fun insertEvent(ctx: EContext, height: Long, hash: Hash, data: ByteArray) {
+        queryRunner.update(ctx.conn, cmdInsertEvents(ctx), height, hash, data)
+    }
+
+    override fun insertState(ctx: EContext, height: Long, state_n: Long, data: ByteArray) {
+        queryRunner.update(ctx.conn, cmdInsertStates(ctx), height, state_n, data)
+    }
+
+    // --- Init App ----
 
     override fun initializeApp(connection: Connection, expectedDbVersion: Int) {
         /**

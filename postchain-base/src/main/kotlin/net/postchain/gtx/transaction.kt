@@ -3,7 +3,7 @@
 package net.postchain.gtx
 
 import net.postchain.base.CryptoSystem
-import net.postchain.base.merkle.Hash
+import net.postchain.common.data.Hash
 import net.postchain.core.*
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.GtvEncoder

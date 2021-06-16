@@ -2,7 +2,7 @@
 
 package net.postchain.gtv.merkle.proof
 
-import net.postchain.base.merkle.Hash
+import net.postchain.common.data.Hash
 import net.postchain.base.merkle.MerkleBasics.UNKNOWN_SIZE_IN_BYTE
 import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.base.merkle.proof.*

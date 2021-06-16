@@ -3,7 +3,7 @@
 package net.postchain.base.merkle.proof
 
 import net.postchain.base.merkle.BinaryTreeFactory
-import net.postchain.base.merkle.Hash
+import net.postchain.common.data.Hash
 import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.base.path.PathSet
 import net.postchain.gtv.Gtv
