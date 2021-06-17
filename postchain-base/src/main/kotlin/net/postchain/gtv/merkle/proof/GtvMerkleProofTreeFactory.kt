@@ -11,6 +11,8 @@ import net.postchain.gtv.merkle.GtvBinaryTree
 import net.postchain.gtv.merkle.GtvDictHeadNode
 import net.postchain.gtv.merkle.GtvMerkleBasics
 import net.postchain.gtv.path.*
+import net.postchain.common.data.Hash
+
 
 
 /**
