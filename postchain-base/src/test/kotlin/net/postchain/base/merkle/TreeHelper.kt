@@ -2,6 +2,8 @@
 
 package net.postchain.base.merkle
 
+import net.postchain.common.data.Hash
+
 object TreeHelper {
 
     fun transformIntToHash(hexStrings: List<String>): MutableList<Hash> {

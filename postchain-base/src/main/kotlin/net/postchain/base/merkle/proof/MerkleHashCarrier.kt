@@ -2,7 +2,7 @@
 
 package net.postchain.base.merkle.proof
 
-import net.postchain.base.merkle.Hash
+import net.postchain.common.data.Hash
 import java.util.*
 
 /**

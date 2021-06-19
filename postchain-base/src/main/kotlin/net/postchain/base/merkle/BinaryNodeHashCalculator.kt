@@ -3,6 +3,7 @@
 package net.postchain.base.merkle
 
 import net.postchain.base.CryptoSystem
+import net.postchain.common.data.Hash
 
 abstract class BinaryNodeHashCalculator(val cryptoSystem: CryptoSystem?) {
 

@@ -2,7 +2,7 @@
 
 package net.postchain.base
 
-import net.postchain.base.merkle.Hash
+import net.postchain.common.data.Hash
 import net.postchain.core.Signature
 import org.spongycastle.crypto.digests.SHA256Digest
 import org.spongycastle.crypto.ec.CustomNamedCurves

@@ -6,7 +6,7 @@ import mu.KLogging
 import net.postchain.base.BlockchainRid
 import net.postchain.base.CryptoSystem
 import net.postchain.base.SigMaker
-import net.postchain.base.merkle.Hash
+import net.postchain.common.data.Hash
 import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.core.ProgrammerMistake
 import net.postchain.core.Signature
