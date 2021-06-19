@@ -66,7 +66,7 @@ data class FastSyncParameters(var resurrectDrainedTime: Long = 10000,
                               var exitDelay: Long = 60000,
                               var pollPeersInterval: Long = 10000,
                               var jobTimeout: Long = 10000,
-                              var loopInteval: Long = 100,
+                              var loopInterval: Long = 100,
                               var mustSyncUntilHeight: Long = -1,
                               var maxErrorsBeforeBlacklisting: Int = 10,
                               /**
@@ -141,7 +141,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
                 processMessages()
                 processDoneJobs()
                 processStaleJobs()
-                sleep(params.loopInteval)
+                sleep(params.loopInterval)
             }
         } catch (e: BadDataMistake) {
             error("Fatal error, shutting down blockchain for safety reasons. Needs manual investigation.", e)
