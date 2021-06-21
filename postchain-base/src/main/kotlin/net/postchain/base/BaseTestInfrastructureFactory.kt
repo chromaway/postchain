@@ -41,7 +41,9 @@ class TestSynchronizationInfrastructure : SynchronizationInfrastructure {
         return TestBlockchainProcess(engine)
     }
 
-    override fun exitBlockchainProcess(chainId: Long) = Unit
+    override fun exitBlockchainProcess(process: BlockchainProcess) = Unit
+    override fun restartBlockchainProcess(process: BlockchainProcess) = Unit
+
 
     override fun shutdown() = Unit
 }

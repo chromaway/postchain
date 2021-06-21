@@ -116,8 +116,15 @@ class EBFTSynchronizationInfrastructure(
         }
     }
 
-    override fun exitBlockchainProcess(chainId: Long) {
-        forgetStartWithFastSyncValue(chainId)
+    override fun exitBlockchainProcess(process: BlockchainProcess) { }
+
+    override fun restartBlockchainProcess(process: BlockchainProcess) {
+        var fastSyncStatus = true
+        val chainID = process.getEngine().getConfiguration().chainID
+        if (process is ValidatorWorker) {
+            fastSyncStatus = process.isInFastSyncMode()
+        }
+        startWithFastSync[chainID] = fastSyncStatus
     }
 
     @Deprecated("POS-90")
@@ -229,11 +236,6 @@ class EBFTSynchronizationInfrastructure(
     }
 
     private fun getStartWithFastSyncValue(chainId: Long): Boolean {
-        return startWithFastSync.putIfAbsent(chainId, false) ?: true
+        return startWithFastSync[chainId] ?: true
     }
-
-    private fun forgetStartWithFastSyncValue(chainId: Long) {
-        startWithFastSync.remove(chainId)
-    }
-
 }

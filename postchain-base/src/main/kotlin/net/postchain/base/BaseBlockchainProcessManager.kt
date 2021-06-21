@@ -150,10 +150,12 @@ open class BaseBlockchainProcessManager(
             stopInfoDebug("Stopping of Blockchain", chainId, bTrace)
 
             blockchainProcesses.remove(chainId)?.also {
-                it.shutdown()
-                if (!restart) {
-                    blockchainInfrastructure.exitBlockchainProcess(chainId)
+                if (restart) {
+                    blockchainInfrastructure.restartBlockchainProcess(it)
+                } else {
+                    blockchainInfrastructure.exitBlockchainProcess(it)
                 }
+                it.shutdown()
             }
             stopInfoDebug("Stopping blockchain, shutdown complete", chainId, bTrace)
 
@@ -171,8 +173,8 @@ open class BaseBlockchainProcessManager(
         executor.awaitTermination(1000, TimeUnit.MILLISECONDS)
 
         blockchainProcesses.forEach {
+            blockchainInfrastructure.exitBlockchainProcess(it.value)
             it.value.shutdown()
-            blockchainInfrastructure.exitBlockchainProcess(it.key)
         }
         blockchainProcesses.clear()
 
