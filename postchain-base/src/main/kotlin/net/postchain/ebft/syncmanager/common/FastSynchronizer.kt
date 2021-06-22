@@ -11,7 +11,6 @@ import net.postchain.ebft.BDBAbortException
 import net.postchain.ebft.BlockDatabase
 import net.postchain.ebft.CompletionPromise
 import net.postchain.ebft.message.*
-import net.postchain.ebft.message.BlockData
 import net.postchain.ebft.worker.WorkerContext
 import net.postchain.network.x.XPeerID
 import java.lang.Thread.sleep
@@ -197,7 +196,11 @@ class FastSynchronizer(private val workerContext: WorkerContext,
         trace("exitDelay: ${params.exitDelay}")
         syncUntil {
             val syncableCount = peerStatuses.getSyncable(blockHeight + 1).intersect(configuredPeers).size
-            timeout < System.currentTimeMillis() && syncableCount == 0 && blockHeight >= params.mustSyncUntilHeight
+
+            // Keep syncing until this becomes true, i.e. to exit we must have:
+            timeout < System.currentTimeMillis()                 // 1. must have timeout
+                    && syncableCount == 0                        // 2. must have no syncable nodes
+                    && blockHeight >= params.mustSyncUntilHeight // 3. must BC height above the minimum specified height
         }
     }
 

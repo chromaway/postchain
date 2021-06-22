@@ -100,7 +100,6 @@ open class BaseBlockchainInfrastructure(
         synchronizationInfrastructure.exitBlockchainProcess(process)
     }
 
-
     override fun restartBlockchainProcess(process: BlockchainProcess) {
         synchronizationInfrastructure.restartBlockchainProcess(process)
     }
