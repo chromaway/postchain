@@ -17,6 +17,7 @@ import java.lang.Thread.sleep
 import java.util.*
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
+import net.postchain.ebft.message.BlockData as MessageBlockData
 import net.postchain.ebft.message.BlockHeader as BlockHeaderMessage
 
 
@@ -581,7 +582,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
     /**
      * This is used for syncing from old nodes that doesn't have this new FastSynchronizer algorithm
      */
-    private fun handleCompleteBlock(peerId: XPeerID, blockData: BlockData, height: Long, witness: ByteArray) {
+    private fun handleCompleteBlock(peerId: XPeerID, blockData: MessageBlockData, height: Long, witness: ByteArray) {
         // We expect height to be the requested height. If the peer didn't have the block we wouldn't
         // get any block at all.
         if (!peerStatuses.isMaybeLegacy(peerId)) {
