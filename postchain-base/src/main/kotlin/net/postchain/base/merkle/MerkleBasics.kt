@@ -3,6 +3,7 @@
 package net.postchain.base.merkle
 
 import net.postchain.base.CryptoSystem
+import net.postchain.common.data.Hash
 import net.postchain.core.ProgrammerMistake
 import net.postchain.gtv.Gtv
 import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
@@ -55,7 +56,6 @@ import net.postchain.gtv.merkle.proof.GtvMerkleProofTree
  * --------
  */
 
-typealias Hash = ByteArray
 
 object MerkleBasics {
 

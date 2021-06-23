@@ -11,13 +11,13 @@ import net.postchain.ebft.BDBAbortException
 import net.postchain.ebft.BlockDatabase
 import net.postchain.ebft.CompletionPromise
 import net.postchain.ebft.message.*
-import net.postchain.ebft.message.BlockData
 import net.postchain.ebft.worker.WorkerContext
 import net.postchain.network.x.XPeerID
 import java.lang.Thread.sleep
 import java.util.*
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
+import net.postchain.ebft.message.BlockData as MessageBlockData
 import net.postchain.ebft.message.BlockHeader as BlockHeaderMessage
 
 
@@ -66,13 +66,13 @@ data class FastSyncParameters(var resurrectDrainedTime: Long = 10000,
                               var exitDelay: Long = 60000,
                               var pollPeersInterval: Long = 10000,
                               var jobTimeout: Long = 10000,
-                              var loopInteval: Long = 100,
+                              var loopInterval: Long = 100,
                               var mustSyncUntilHeight: Long = -1,
                               var maxErrorsBeforeBlacklisting: Int = 10,
                               /**
                                * 10 minutes in milliseconds
                                */
-                              var blacklistingTimeoutMs: Long = 10 * 60 * 1000 )
+                              var blacklistingTimeoutMs: Long = 10 * 60 * 1000)
 
 /**
  * This class syncs blocks from its peers by requesting <parallelism> blocks
@@ -141,7 +141,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
                 processMessages()
                 processDoneJobs()
                 processStaleJobs()
-                sleep(params.loopInteval)
+                sleep(params.loopInterval)
             }
         } catch (e: BadDataMistake) {
             error("Fatal error, shutting down blockchain for safety reasons. Needs manual investigation.", e)
@@ -197,7 +197,11 @@ class FastSynchronizer(private val workerContext: WorkerContext,
         trace("exitDelay: ${params.exitDelay}")
         syncUntil {
             val syncableCount = peerStatuses.getSyncable(blockHeight + 1).intersect(configuredPeers).size
-            timeout < System.currentTimeMillis() && syncableCount == 0 && blockHeight >= params.mustSyncUntilHeight
+
+            // Keep syncing until this becomes true, i.e. to exit we must have:
+            timeout < System.currentTimeMillis()                 // 1. must have timeout
+                    && syncableCount == 0                        // 2. must have no syncable nodes
+                    && blockHeight >= params.mustSyncUntilHeight // 3. must BC height above the minimum specified height
         }
     }
 
@@ -259,7 +263,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
                 // job and resubmit
                 j.blockCommitting = false
                 j.addBlockException = null
-                commitJobsAsNeccessary(null) // TODO: bTrace?
+                commitJobsAsNecessary(null) // TODO: bTrace?
                 return
             }
 
@@ -273,8 +277,8 @@ class FastSynchronizer(private val workerContext: WorkerContext,
                 // We take the cautious approach and always shutdown the
                 // blockchain. We also log this block's job and last block's job
                 doneInfo("Previous block mismatch. " +
-                        "Previous block ${lastJob?.header!!.blockRID} received from ${lastJob?.peerId}, " +
-                        "This block ${j.header!!.blockRID} received from ${j.peerId}.")
+                        "Previous block ${lastJob?.header?.blockRID} received from ${lastJob?.peerId}, " +
+                        "This block ${j.header?.blockRID} received from ${j.peerId}.")
                 throw exception
             }
 
@@ -328,7 +332,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
                 // This might be because it's a legacy node and thus doesn't respond to
                 // GetBlockHeaderAndBlock messages or because it's just unresponsive
                 if (peerStatuses.isConfirmedModern(j.peerId)) {
-                    peerStatuses.unresponsive(j.peerId,"Synch: Marking modern peer for job ${j} unresponsive")
+                    peerStatuses.unresponsive(j.peerId, "Synch: Marking modern peer for job ${j} unresponsive")
                 } else if (!legacyPeers.contains(j.peerId) && peerStatuses.isMaybeLegacy(j.peerId)) {
                     // Peer is marked as legacy, but still appears unresponsive.
                     // This probably wasn't a legacy node, but simply an unresponsive one.
@@ -490,7 +494,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
             // 2. The blockchain will restart before requestedHeight is added, so the
             // sync process will restart fresh with new configuration. Worst case is if
             // we download parallelism blocks before restarting.
-            var dbg = debugJobString(j, requestedHeight, peerId)
+            val dbg = debugJobString(j, requestedHeight, peerId)
             peerStatuses.maybeBlacklist(peerId, "Synch: Invalid header received. $dbg")
             return false
         }
@@ -555,10 +559,10 @@ class FastSynchronizer(private val workerContext: WorkerContext,
         // The witness has already been verified in handleBlockHeader().
         j.block = BlockDataWithWitness(h, txs, j.witness!!)
 
-        commitJobsAsNeccessary(bTrace)
+        commitJobsAsNecessary(bTrace)
     }
 
-    private fun commitJobsAsNeccessary(bTrace: BlockTrace?) {
+    private fun commitJobsAsNecessary(bTrace: BlockTrace?) {
         // We have to make sure blocks are committed in the correct order. If we are missing a block we have to wait for it.
         for (job in jobs.values) {
             // The values are iterated in key-ascending order (see TreeMap)
@@ -578,7 +582,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
     /**
      * This is used for syncing from old nodes that doesn't have this new FastSynchronizer algorithm
      */
-    private fun handleCompleteBlock(peerId: XPeerID, blockData: BlockData, height: Long, witness: ByteArray) {
+    private fun handleCompleteBlock(peerId: XPeerID, blockData: MessageBlockData, height: Long, witness: ByteArray) {
         // We expect height to be the requested height. If the peer didn't have the block we wouldn't
         // get any block at all.
         if (!peerStatuses.isMaybeLegacy(peerId)) {
@@ -620,7 +624,11 @@ class FastSynchronizer(private val workerContext: WorkerContext,
         p.fail {
             // We got an invalid block from peer. Let's blacklist this
             // peer and try another peer
-            warn("Exception committing block ${job}", it)
+            if (it is PmEngineIsAlreadyClosed || it is BDBAbortException) {
+                warn("Exception committing block $job: ${it.message}")
+            } else {
+                warn("Exception committing block $job", it)
+            }
             job.addBlockException = it
             finishedJobs.add(job)
         }
@@ -661,9 +669,11 @@ class FastSynchronizer(private val workerContext: WorkerContext,
             logger.trace("${workerContext.processName}: $message", e)
         }
     }
+
     fun error(message: String, e: Exception? = null) {
         logger.error("${workerContext.processName}: $message", e)
     }
+
     fun warn(message: String, e: Exception? = null) {
         logger.warn("${workerContext.processName}: $message", e)
     }
@@ -674,6 +684,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
             logger.debug("${workerContext.processName}: syncUntil() -- $message", e)
         }
     }
+
     private fun syncDebug(message: String, height: Long, e: Exception? = null) {
         if (logger.isDebugEnabled) {
             logger.debug("${workerContext.processName}: syncUntil() -- $message, at height: $height", e)
@@ -686,14 +697,17 @@ class FastSynchronizer(private val workerContext: WorkerContext,
             logger.trace("${workerContext.processName}: processDoneJob() --- $message", e)
         }
     }
+
     private fun doneDebug(message: String, e: Exception? = null) {
         if (logger.isDebugEnabled) {
             logger.debug("${workerContext.processName}: processDoneJob() -- $message", e)
         }
     }
+
     private fun doneInfo(message: String, e: Exception? = null) {
         logger.info("${workerContext.processName}: processDoneJob() - $message", e)
     }
+
     private fun doneError(message: String, e: Exception? = null) {
         logger.error("${workerContext.processName}: processDoneJob() $message", e)
     }
@@ -724,6 +738,7 @@ class FastSynchronizer(private val workerContext: WorkerContext,
             logger.trace("${workerContext.processName}: handleBlockHeader() -- $message", e)
         }
     }
+
     private fun headerTrace(message: String, height: Long, e: Exception? = null) {
         if (logger.isTraceEnabled) {
             logger.trace("${workerContext.processName}: handleBlockHeader() -- $message, at height: $height", e)

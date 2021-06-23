@@ -376,7 +376,8 @@ class RestApi(
 
     private fun handleDebugQuery(request: Request): String {
         logger.debug("Request body: ${request.body()}")
-        return model0(request).debugQuery(request.params(SUBQUERY))
+        return models.values.firstOrNull()?.debugQuery(request.params(SUBQUERY))
+                ?: throw NotFoundError("There are no running chains")
     }
 
     private fun checkTxHashHex(request: Request): String {
@@ -431,14 +432,6 @@ class RestApi(
         val blockchainRID = checkBlockchainRID(request)
         return models[blockchainRID.toUpperCase()]
                 ?: throw NotFoundError("Can't find blockchain with blockchainRID: $blockchainRID")
-    }
-
-    private fun model0(request: Request): Model {
-        val chain0Rid = bridByIID[0L]
-                ?: throw NotFoundError("Can't find chain0 in DB. Is this node in managed mode?")
-
-        return models[chain0Rid]
-                ?: throw NotFoundError("Can't find blockchain with blockchainRID: $chain0Rid")
     }
 
     private fun parseMultipleQueriesRequest(request: Request): JsonArray {

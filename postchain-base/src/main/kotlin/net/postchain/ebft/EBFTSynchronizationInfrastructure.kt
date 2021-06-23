@@ -33,6 +33,7 @@ class EBFTSynchronizationInfrastructure(
     private val nodeConfig get() = nodeConfigProvider.getConfiguration()
     val connectionManager: XConnectionManager
     private val blockchainProcessesDiagnosticData = mutableMapOf<BlockchainRid, MutableMap<String, () -> Any>>()
+    private val startWithFastSync: MutableMap<Long, Boolean> = mutableMapOf() // { chainId -> true/false }
 
     init {
         connectionManager = DefaultXConnectionManager(
@@ -56,12 +57,15 @@ class EBFTSynchronizationInfrastructure(
         }
         val peerCommConfiguration = buildPeerCommConfiguration(nodeConfig, blockchainConfig)
 
-        val workerContext = WorkerContext(processName, blockchainConfig.signers, engine,
+        val workerContext = WorkerContext(
+                processName, blockchainConfig.signers, engine,
                 blockchainConfig.configData.context.nodeID,
                 buildXCommunicationManager(processName, blockchainConfig, peerCommConfiguration),
                 peerCommConfiguration,
                 nodeConfig,
-                unregisterBlockchainDiagnosticData)
+                unregisterBlockchainDiagnosticData,
+                getStartWithFastSyncValue(blockchainConfig.chainID)
+        )
 
         /*
         Block building is prohibited on FB if its current configuration has a historicBrid set.
@@ -110,6 +114,20 @@ class EBFTSynchronizationInfrastructure(
                 }
             }
         }
+    }
+
+    override fun exitBlockchainProcess(process: BlockchainProcess) {
+        val chainID = process.getEngine().getConfiguration().chainID
+        startWithFastSync.remove(chainID) // remove status when process is gone
+    }
+
+    override fun restartBlockchainProcess(process: BlockchainProcess) {
+        var fastSyncStatus = true
+        val chainID = process.getEngine().getConfiguration().chainID
+        if (process is ValidatorWorker) {
+            fastSyncStatus = process.isInFastSyncMode()
+        }
+        startWithFastSync[chainID] = fastSyncStatus
     }
 
     @Deprecated("POS-90")
@@ -218,5 +236,9 @@ class EBFTSynchronizationInfrastructure(
                 DiagnosticProperty.BLOCKCHAIN_NODE_TYPE.prettyName to { nodeType.prettyName },
                 DiagnosticProperty.BLOCKCHAIN_CURRENT_HEIGHT.prettyName to getCurrentHeight
         )
+    }
+
+    private fun getStartWithFastSyncValue(chainId: Long): Boolean {
+        return startWithFastSync[chainId] ?: true
     }
 }

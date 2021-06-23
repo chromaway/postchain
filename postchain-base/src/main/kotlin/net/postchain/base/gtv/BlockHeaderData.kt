@@ -2,7 +2,7 @@
 
 package net.postchain.base.gtv
 
-import net.postchain.base.merkle.Hash
+import net.postchain.common.data.Hash
 import net.postchain.core.BadDataMistake
 import net.postchain.core.BadDataType
 import net.postchain.core.UserMistake

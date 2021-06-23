@@ -4,7 +4,7 @@ package net.postchain.base
 
 import net.postchain.base.gtv.BlockHeaderData
 import net.postchain.base.gtv.BlockHeaderDataFactory
-import net.postchain.base.merkle.Hash
+import net.postchain.common.data.Hash
 import net.postchain.common.toHex
 import net.postchain.core.BlockHeader
 import net.postchain.core.ByteArrayKey

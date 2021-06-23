@@ -10,7 +10,7 @@ import assertk.assertions.support.fail
  */
 fun Assert<ByteArray>.isContentEqualTo(expected: ByteArray) {
     if (actual.contentEquals(expected)) return
-    fail(expected, actual)
+    this.fail(expected, actual)
 }
 
 /**
@@ -19,5 +19,5 @@ fun Assert<ByteArray>.isContentEqualTo(expected: ByteArray) {
  */
 fun <T> Assert<Array<out T>>.isContentEqualTo(expected: Array<out T>) {
     if (actual.contentEquals(expected)) return
-    fail(expected, actual)
+    this.fail(expected, actual)
 }

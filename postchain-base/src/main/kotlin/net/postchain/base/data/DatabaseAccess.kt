@@ -5,6 +5,7 @@ package net.postchain.base.data
 import net.postchain.base.BlockchainRid
 import net.postchain.base.PeerInfo
 import net.postchain.core.*
+import net.postchain.common.data.Hash
 import net.postchain.network.x.XPeerID
 import java.sql.Connection
 import java.time.Instant
@@ -22,6 +23,17 @@ interface DatabaseAccess {
             val blockHeader: ByteArray,
             val witness: ByteArray,
             val timestamp: Long)
+
+    class EventInfo(
+            val pos: Long,
+            val blockHeight: Long,
+            val hash: Hash,
+            val data: ByteArray)
+
+    class AccountState(
+            val blockHeight: Long,
+            val stateN: Long,
+            val data: ByteArray)
 
     fun tableName(ctx: EContext, table: String): String
 
@@ -69,6 +81,15 @@ interface DatabaseAccess {
     fun getConfigurationData(ctx: EContext, height: Long): ByteArray?
     fun addConfigurationData(ctx: EContext, height: Long, data: ByteArray)
 
+    // Event and State
+    fun insertEvent(ctx: EContext, prefix: String, height: Long, hash: Hash, data: ByteArray)
+    fun getEvent(ctx: EContext, prefix: String, blockHeight: Long, eventHash: ByteArray): EventInfo?
+    fun pruneEvents(ctx: EContext, prefix: String, height: Long)
+    fun insertState(ctx: EContext, prefix: String, height: Long, state_n: Long, data: ByteArray)
+    fun getAccountState(ctx: EContext, prefix: String, height: Long, state_n: Long): AccountState?
+    fun pruneAccountStates(ctx: EContext, prefix: String, left: Long, right: Long, height: Long)
+
+    // Peers
     fun getPeerInfoCollection(ctx: AppContext): Array<PeerInfo>
     fun findPeerInfo(ctx: AppContext, host: String?, port: Int?, pubKeyPattern: String?): Array<PeerInfo>
     fun addPeerInfo(ctx: AppContext, peerInfo: PeerInfo): Boolean

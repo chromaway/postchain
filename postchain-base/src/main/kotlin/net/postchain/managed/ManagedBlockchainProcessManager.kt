@@ -337,11 +337,11 @@ open class ManagedBlockchainProcessManager(
             val db = DatabaseAccess.of(ctx0)
 
             val locallyConfiguredReplicas = nodeConfig.blockchainsToReplicate
-            val domainBlockchainSet = dataSource.computeBlockchainList().map { BlockchainRid(it) } .toSet()
+            val domainBlockchainSet = dataSource.computeBlockchainList().map { BlockchainRid(it) }.toSet()
             val allMyBlockchains = domainBlockchainSet.union(locallyConfiguredReplicas)
             allMyBlockchains.map { blockchainRid ->
                 val chainId = db.getChainId(ctx0, blockchainRid)
-                retrieveTrace( "launch chainIid: $chainId,  BC RID: ${blockchainRid.toShortHex()} ")
+                retrieveTrace("launch chainIid: $chainId,  BC RID: ${blockchainRid.toShortHex()} ")
                 if (chainId == null) {
                     val newChainId = db.getMaxChainId(ctx0)
                             ?.let { maxOf(it + 1, 100) }
@@ -371,6 +371,7 @@ open class ManagedBlockchainProcessManager(
             logger.trace("${nodeName()}: startStopBlockchainsAsync() -- $str: block causing the start-n-stop async: $bTrace")
         }
     }
+
     private fun ssaInfo(str: String, chainId: Long) {
         if (logger.isInfoEnabled) {
             logger.info("[${nodeName()}]: startStopBlockchainsAsync() - $str: chainId: $chainId")
@@ -390,6 +391,7 @@ open class ManagedBlockchainProcessManager(
             logger.debug("${nodeName()}: reloadBlockchainsAsync() -- $str: block causing full reload: $bTrace")
         }
     }
+
     private fun reloadAllInfo(str: String, chainId: Long) {
         if (logger.isDebugEnabled) {
             logger.debug("${nodeName()}: reloadBlockchainsAsync() -- $str: chainId: $chainId")
@@ -402,6 +404,7 @@ open class ManagedBlockchainProcessManager(
             logger.trace("retrieveBlockchainsToLaunch() -- $str ")
         }
     }
+
     protected fun retrieveDebug(str: String) {
         if (logger.isDebugEnabled) {
             logger.debug("retrieveBlockchainsToLaunch() -- $str ")

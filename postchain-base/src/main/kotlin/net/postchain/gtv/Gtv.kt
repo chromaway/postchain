@@ -2,7 +2,7 @@
 
 package net.postchain.gtv
 
-import net.postchain.base.merkle.Hash
+import net.postchain.common.data.Hash
 import net.postchain.base.merkle.MerkleHashCalculator
 import net.postchain.base.merkle.proof.MerkleHashSummary
 import net.postchain.gtv.merkle.GtvMerkleBasics
