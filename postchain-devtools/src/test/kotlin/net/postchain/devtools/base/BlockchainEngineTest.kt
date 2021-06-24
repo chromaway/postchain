@@ -143,7 +143,11 @@ class BlockchainEngineTest : IntegrationTestSetup() {
         assertEquals(-1, getBestHeight(node1))
     }
 
-    @Test
+    // TODO: this test DOES NOT work. You cannot use block builder to produce
+    // an oversized block it doesn't work to produce.
+    // To test this, you need to nodes to run different configurations (i.e. tweak node 0 to
+    // allow higher limit) OR produce this block manually e.g. just taking a bunch of transactions
+    @Test @Ignore
     fun testMaxBlockTransactionsFail() {
         val (node0, node1) = createNodes(2, "/net/postchain/devtools/blocks/blockchain_config_max_block_transaction.xml")
         val blockBuilder = createBlockWithTx(node0, 8)
