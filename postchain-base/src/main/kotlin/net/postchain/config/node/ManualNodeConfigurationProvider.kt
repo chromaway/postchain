@@ -23,7 +23,7 @@ open class ManualNodeConfigurationProvider(
                     .associateBy(PeerInfo::peerId)
             override val blockchainReplicaNodes = getBlockchainReplicaCollection(appConfig)
             override val blockchainsToReplicate: Set<BlockchainRid> = getBlockchainsToReplicate(appConfig, pubKey)
-            override val mustSyncUntilHeight: Map<Long, Long>? = getSyncUntilHeight(appConfig)
+            override val mustSyncUntilHeight: Map<Long, Long> = getSyncUntilHeight(appConfig)
         }
     }
 
