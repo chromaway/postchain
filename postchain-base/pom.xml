@@ -19,7 +19,7 @@
         <spongycastle.core.version>1.56.0.0</spongycastle.core.version>
         <commons-dbcp2.version>2.6.0</commons-dbcp2.version>
         <commons-configuration2.version>2.1.1</commons-configuration2.version>
-        <commons-beanutils.version>1.9.3</commons-beanutils.version>
+        <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <netty.version>4.1.43.Final</netty.version>
         <spark-core.version>2.7.2</spark-core.version>
         <easymock.version>3.6</easymock.version>
