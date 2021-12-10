@@ -37,7 +37,7 @@
         <!-- Logging -->
         <kotlin-logging.version>1.6.26</kotlin-logging.version>
         <slf4j.version>1.7.26</slf4j.version>
-        <log4j2.version>2.11.2</log4j2.version>
+        <log4j2.version>2.15.0</log4j2.version>
         <jackson.version>2.10.1</jackson.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
